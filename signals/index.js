@@ -46,6 +46,16 @@ class Signal {
     return this._value;
   }
 
+  /**
+   * Store a value without notifying: the one write path a subclass uses, so
+   * the field stays declared here (a checker that sees `this._value = …` in
+   * a subclass method would declare it twice).
+   * @param {T} value
+   */
+  _assign(value) {
+    this._value = value;
+  }
+
   _notify() {
     for (const subscriber of [...this._subscribers])
       if (batchDepth > 0)
@@ -142,7 +152,7 @@ class Computed extends Signal {
       eff._dependencies.clear();
 
       try {
-        this._value = this._fn();
+        this._assign(this._fn());
       } finally {
         currentEffect = prevEffect;
         this._stale = false;

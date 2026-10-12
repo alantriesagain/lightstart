@@ -29,6 +29,9 @@ importers:
       playwright:
         specifier: ^1.58.2
         version: 1.64.0
+      scriptc:
+        specifier: 0.2.10
+        version: 0.2.10
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -92,6 +95,41 @@ packages:
   '@humanwhocodes/retry@0.4.3':
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
+
+  '@scriptc/cli-darwin-arm64@0.2.10':
+    resolution: {integrity: sha512-lO7Aeg3TTjLNc6Djb60PVXqm9xxJh2i29h07JJrDqbuVk9bz62+CTmNiDgSPfGhE2u17QWFCzkDjqF/gEKNwBA==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@scriptc/cli-darwin-x64@0.2.10':
+    resolution: {integrity: sha512-yRvZVfrtOiANHoHmohN9Nyk+8BwbuKZUddci0dgNDazLEN32HBwBfQiG+Q3eRUgWqha8qMc/X5HJe8D6DiMt/w==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@scriptc/cli-linux-arm64-gnu@0.2.10':
+    resolution: {integrity: sha512-zFf3jy1vvIDd3u0EvohAYKdU7w3LHlHytpajnXdo4ZUyek8hpDjWTp3XqnoIRTwPJog+GTSBp8lnnHHqgb3q3g==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@scriptc/cli-linux-arm64-musl@0.2.10':
+    resolution: {integrity: sha512-ZhbrqYiIObS+uq7YNC2BqCJSSSwx3LvHJ1JB3BVZbzvwPWYTzmig/5y41FAv3GoWHmOWnzBq196z1FqI24cKeQ==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@scriptc/cli-linux-x64-gnu@0.2.10':
+    resolution: {integrity: sha512-hhd2Cfg2cuQf9xiKMHHVTk3mMvszOKJnKNPPGxl5J/FTzgZ0DscP9aswJc2i1x0xoCH6Xp/Lcb5zUkuxa5ixrA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@scriptc/cli-linux-x64-musl@0.2.10':
+    resolution: {integrity: sha512-WJNnuKEoHeL7L0ExfZvq/ULasf9TXFKD844B7yrcFYzabnrWP+ugDmn/irzZGqgOy+FhYq+XThIpmlfTUWulBA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@scriptc/cli-win32-x64-msvc@0.2.10':
+    resolution: {integrity: sha512-YBkpWcH5bL8K9OfnnpkK0jtvKYR0eKCQM8BWsbLKyYdVYGGqY6w6nR+YeGs97/4XgR2oDcCoBKmx3fwlrqo3AA==}
+    cpu: [x64]
+    os: [win32]
 
   '@stylistic/eslint-plugin@2.13.0':
     resolution: {integrity: sha512-RnO1SaiCFHn666wNz2QfZEFxvmiNRqhzaMXHXxXXKt+MEP7aajlPxUSMIQpKAaJfverpovEYqjBOXDq6dDcaOQ==}
@@ -455,6 +493,11 @@ packages:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
     engines: {node: '>=4'}
 
+  scriptc@0.2.10:
+    resolution: {integrity: sha512-ifXkd6UuXfTfGIW4gjyY2yjGY6upx7WzVcyLBdCCzDXzHwVvfyjCWvQmC6BRbd6/EcoRytNdlX6F3wTrGj/Feg==}
+    engines: {node: '>=24'}
+    hasBin: true
+
   semver@7.8.5:
     resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
@@ -577,6 +620,27 @@ snapshots:
   '@humanwhocodes/module-importer@1.0.1': {}
 
   '@humanwhocodes/retry@0.4.3': {}
+
+  '@scriptc/cli-darwin-arm64@0.2.10':
+    optional: true
+
+  '@scriptc/cli-darwin-x64@0.2.10':
+    optional: true
+
+  '@scriptc/cli-linux-arm64-gnu@0.2.10':
+    optional: true
+
+  '@scriptc/cli-linux-arm64-musl@0.2.10':
+    optional: true
+
+  '@scriptc/cli-linux-x64-gnu@0.2.10':
+    optional: true
+
+  '@scriptc/cli-linux-x64-musl@0.2.10':
+    optional: true
+
+  '@scriptc/cli-win32-x64-msvc@0.2.10':
+    optional: true
 
   '@stylistic/eslint-plugin@2.13.0(eslint@9.39.5)(typescript@5.9.3)':
     dependencies:
@@ -931,6 +995,16 @@ snapshots:
   punycode@2.3.1: {}
 
   resolve-from@4.0.0: {}
+
+  scriptc@0.2.10:
+    optionalDependencies:
+      '@scriptc/cli-darwin-arm64': 0.2.10
+      '@scriptc/cli-darwin-x64': 0.2.10
+      '@scriptc/cli-linux-arm64-gnu': 0.2.10
+      '@scriptc/cli-linux-arm64-musl': 0.2.10
+      '@scriptc/cli-linux-x64-gnu': 0.2.10
+      '@scriptc/cli-linux-x64-musl': 0.2.10
+      '@scriptc/cli-win32-x64-msvc': 0.2.10
 
   semver@7.8.5: {}
 

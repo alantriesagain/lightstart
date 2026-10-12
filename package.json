@@ -53,6 +53,7 @@
     "typecheck": "tsc --noEmit",
     "check": "node bin/light.js check",
     "test": "node --test check/*.test.js check/parse/*.test.js check/rules/*.test.js eslint/*.test.js eslint/rules/*.test.js navigation/*.test.js signals/*.test.js theme/variant-rules.test.js types/*.test.js test/*.test.js $(find components -name \"*.test.js\" -not -name \"*.browser.test.js\") && node bin/light.js test env/*.browser.test.js html/*.browser.test.js theme/*.browser.test.js view/*.browser.test.js components/*/*.browser.test.js",
+    "probes": "node native/probes/run.js",
     "verify": "npm run lint && npm run typecheck && npm run check && npm test"
   },
   "devDependencies": {
@@ -63,6 +64,7 @@
     "globals": "^15.14.0",
     "marked": "^18.1.0",
     "playwright": "^1.58.2",
+    "scriptc": "0.2.10",
     "typescript": "^5.7.0"
   },
   "peerDependencies": {
@@ -247,5 +249,10 @@
         "view/no-raw-localstorage": "off"
       }
     }
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "scriptc"
+    ]
   }
 }
