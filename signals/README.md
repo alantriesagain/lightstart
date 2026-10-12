@@ -23,8 +23,14 @@ Notes that earn their place here:
   write other reactive state (bump a counter, set a view property) without
   subscribing itself to it; before this contract, a read-modify-write in a
   callback re-triggered its own effect forever.
-- The dependency protocol (`getCurrentEffect`, the `Reactive` shape) is
-  public API: external reactive sources (the store's per-key reads,
-  renderer thunk parts) register with the running effect through it.
+- The dependency protocol (`Dep` for the subscriber side, `Reactive` for the
+  reader side, `getCurrentEffect`) is public API: external reactive sources
+  (the store's per-key reads, renderer thunk parts) hold a `Dep` and call
+  `_track()` on reads and `_notify()` on writes.
+- A write notifies in waves: computed invalidations run first, then the
+  effects they reach, each once per write or batch, so a diamond
+  (`a → b, c → effect(b, c)`) never runs the effect on a half-updated state.
+- `Computed` is a sibling of `Signal`, not a subclass: a native build cannot
+  specialise a generic subclass of a generic class. Both read the same way.
 
 Tests are the spec: `signals.test.js` (node).

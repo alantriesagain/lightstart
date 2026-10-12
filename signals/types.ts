@@ -1,10 +1,4 @@
-import type { Signal } from "./index.js";
-
-export interface Reactive {
-  _execute(): void;
-  _dependencies: Set<Signal<unknown>>;
-  _cleanup?(): void;
-}
+export type { Dep, Reactive } from "./index.js";
 
 /** One declared state field: a default plus optional (de)serialization. */
 export interface StateDef {

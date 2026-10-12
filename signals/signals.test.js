@@ -581,3 +581,41 @@ describe("light/signals", () => {
     });
   });
 });
+
+describe("glitch-free notification", () => {
+  it("runs an effect once per write with consistent computed values in a diamond", () => {
+    const a = signal(1);
+    const b = computed(() => a.value + 1);
+    const c = computed(() => a.value * 10);
+    /** @type {string[]} */
+    const seen = [];
+    effect(() => {
+      seen.push(`${b.value}/${c.value}`);
+    });
+    a.value = 2;
+    assert.deepEqual(seen, ["2/10", "3/20"]);
+    batch(() => {
+      a.value = 3;
+      a.value = 4;
+    });
+    assert.deepEqual(seen, ["2/10", "3/20", "5/40"]);
+  });
+
+  it("runs an effect scheduled by another effect after the first finishes", () => {
+    const a = signal(0);
+    const b = signal(0);
+    /** @type {string[]} */
+    const order = [];
+    effect(() => {
+      order.push(`b:${b.value}`);
+    });
+    effect(() => {
+      const next = a.value;
+      order.push(`a:${next}`);
+      if (next > 0) b.value = next;
+      order.push(`a-done:${next}`);
+    });
+    a.value = 1;
+    assert.deepEqual(order, ["b:0", "a:0", "a-done:0", "a:1", "a-done:1", "b:1"]);
+  });
+});

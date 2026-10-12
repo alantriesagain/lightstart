@@ -9,7 +9,7 @@
 
 /** @import { StateDef, Store } from "./types.ts" */
 
-import { getCurrentEffect } from "./index.js";
+import { Dep } from "./index.js";
 
 /** @param {any} def @returns {StateDef} */
 const normalize = (def) =>
@@ -39,7 +39,7 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
   const listeners = new Map();
   /** @type {Set<(key: string, value: any, oldValue: any) => void>} */
   const observers = new Set();
-  /** @type {Map<string, { _subscribers: Set<any> }>} */
+  /** @type {Map<string, Dep>} */
   const effectDeps = new Map();
 
   /** @param {string} key */
@@ -47,15 +47,12 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
 
   /** @param {string} key */
   const trackRead = (key) => {
-    const eff = getCurrentEffect();
-    if (!eff) return;
     let dep = effectDeps.get(key);
     if (!dep) {
-      dep = { _subscribers: new Set() };
+      dep = new Dep();
       effectDeps.set(key, dep);
     }
-    dep._subscribers.add(eff);
-    eff._dependencies.add(/** @type {any} */ (dep));
+    dep._track();
   };
 
   for (const [key, def] of Object.entries(defs)) {
@@ -73,7 +70,7 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
     if (set) for (const cb of set) cb(values[key], oldValue);
     for (const cb of observers) cb(key, values[key], oldValue);
     const dep = effectDeps.get(key);
-    if (dep) for (const eff of [...dep._subscribers]) eff._execute();
+    if (dep) dep._notify();
   };
 
   const store = {
