@@ -9,6 +9,7 @@ primitives that replaced lit's directives. 9.1 KB min+gzip bundled with esbuild,
 | File | What it owns |
 |---|---|
 | `index.js` | The whole public API: `html`, `svg`, `render`, `nothing`, `unsafeHTML`, `key`, `element`, `configure`, `disposeTree` |
+| `values.js` | The value classes a template holds: `TemplateResult`, `Keyed`, `ElementSpec`, `Unsafe`, and the `html`/`svg`/`key`/`element`/`unsafeHTML` factories |
 | `parser.js` | Quasi state machine → markup + parts list (binding positions, error cases) |
 | `template.js` | Template prep, WeakMap identity cache, instance cloning |
 | `parts.js` | Part classes, commit semantics, keyed reconciliation, `render()` |

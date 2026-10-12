@@ -1,4 +1,4 @@
-import { TPL, nothing } from "./constants.js";
+import { nothing } from "./constants.js";
 
 export type TemplateKind = 1 | 2;
 
@@ -36,11 +36,11 @@ export type Renderable = string | number | boolean | bigint | symbol | null | un
 /** What a template value may be; only functions are narrowed, the rest is left open. */
 export type TemplateValue = Renderable | TemplateHandler;
 
-export interface TemplateResult {
-  [TPL]: TemplateStringsArray;
-  kind: TemplateKind;
-  values: unknown[];
-}
+export type { TemplateResult, ElementSpec, Keyed, Unsafe } from "./values.js";
+/** @deprecated use Keyed */
+export type KeySpec = import("./values.js").Keyed;
+/** @deprecated use Unsafe */
+export type UnsafeSpec = import("./values.js").Unsafe;
 
 export type RenderContainer = Element | DocumentFragment;
 
@@ -115,20 +115,5 @@ export interface ParseResult {
 export type ElementBindings = Record<string, unknown> & {
   ref?: (el: Element | null) => void;
 };
-
-export interface ElementSpec {
-  tag: string;
-  bindings?: ElementBindings;
-  children?: unknown;
-}
-
-export interface KeySpec {
-  k: unknown;
-  v: unknown;
-}
-
-export interface UnsafeSpec {
-  s: string;
-}
 
 export * from "./index.js";

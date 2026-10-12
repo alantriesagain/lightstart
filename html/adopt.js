@@ -1,4 +1,4 @@
-import { ASSIGNED_ATTR, MARKER_END, MARKER_START, ROOT_MARKER_END, ROOT_MARKER_START, TPL, UNSLOTTED_TAG } from "./constants.js";
+import { ASSIGNED_ATTR, MARKER_END, MARKER_START, ROOT_MARKER_END, ROOT_MARKER_START, UNSLOTTED_TAG } from "./constants.js";
 import { ChildPart, createPart } from "./parts.js";
 import { TemplateInstance, getTemplate } from "./template.js";
 
@@ -400,7 +400,7 @@ const matchTemplate = (template, start, end) => {
  * @param {boolean} bind
  */
 export const adoptTemplateResult = (part, result, bind) => {
-  const template = getTemplate(result[TPL], result.kind);
+  const template = getTemplate(result.strings, result.kind);
   const match = matchTemplate(template, part.start, part.end);
   if (!match) return false;
   const { targets, fresh, parked } = match;

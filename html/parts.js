@@ -1,19 +1,17 @@
 import { adoptTemplateResult, elementChildPair, itemRanges, normalizedEqual, singleElementIn, singleTextIn, topLevelPair } from "./adopt.js";
-import { MARKER_END, MARKER_START, ROOT_MARKER_END, ROOT_MARKER_START, TPL, WRAP, nothing } from "./constants.js";
+import { MARKER_END, MARKER_START, ROOT_MARKER_END, ROOT_MARKER_START, nothing } from "./constants.js";
 import { disposeThunk, resolveEager, setThunk } from "./reactive.js";
 import { SlotPart } from "./slots.js";
 import { TemplateInstance, getTemplate } from "./template.js";
+import { ElementSpec, Keyed, TemplateResult, Unsafe } from "./values.js";
 
-/** @import { ElementSpec, KeySpec, NothingValue, PartSpec, RenderOptions, UnsafeSpec } from "./types.ts" */
+/** @import { NothingValue, PartSpec, RenderOptions } from "./types.ts" */
 /** @import { EffectHandle } from "./types.ts" */
 
 const NOT_SET = Symbol();
 const VALID_TAG = /^[a-zA-Z][a-zA-Z0-9-]*$/;
 
 let warnedMixedKeys = false;
-
-/** @param {unknown} v */
-const isKeyWrap = (v) => v !== null && typeof v === "object" && /** @type {Record<PropertyKey, unknown>} */ (v)[WRAP] === "key";
 
 class EventBinding {
   /**
@@ -389,13 +387,13 @@ export class ChildPart {
     const t = typeof value;
     if (t === "string" || t === "number" || t === "bigint" || t === "boolean")
       return this._commitText(String(value));
+    if (value instanceof TemplateResult) return this._commitTemplate(value);
+    if (value instanceof Keyed) return this._commitKeyed(value);
+    if (value instanceof ElementSpec) return this._commitElement(value);
+    if (value instanceof Unsafe) return this._commitUnsafe(value);
+    if (Array.isArray(value)) return this._commitItems(value);
     if (t === "object") {
       const v = /** @type {any} */ (value);
-      if (v[TPL]) return this._commitTemplate(v);
-      const wrap = v[WRAP];
-      if (wrap === "key") return this._commitKeyed(v);
-      if (wrap === "el") return this._commitElement(v);
-      if (wrap === "unsafe") return this._commitUnsafe(v);
       if (v.nodeType) return this._commitNode(v);
       if (typeof v[Symbol.iterator] === "function") return this._commitItems(v);
     }
@@ -418,9 +416,9 @@ export class ChildPart {
     this.state = { type: "text", node, text };
   }
 
-  /** @param {any} result */
+  /** @param {TemplateResult} result */
   _commitTemplate(result) {
-    const template = getTemplate(result[TPL], result.kind);
+    const template = getTemplate(result.strings, result.kind);
     const st = this.state;
     if (st.type === "template" && st.instance.template === template)
       return st.instance.commit(result.values);
@@ -441,7 +439,7 @@ export class ChildPart {
     this.state = { type: "node", node };
   }
 
-  /** @param {UnsafeSpec} wrap */
+  /** @param {Unsafe} wrap */
   _commitUnsafe(wrap) {
     const st = this.state;
     if (st.type === "unsafe" && st.s === wrap.s) return;
@@ -452,7 +450,7 @@ export class ChildPart {
     this.state = { type: "unsafe", s: wrap.s };
   }
 
-  /** @param {KeySpec} wrap */
+  /** @param {Keyed} wrap */
   _commitKeyed(wrap) {
     const st = this.state;
     if (st.type === "keyed" && st.k === wrap.k) return st.inner.commit(wrap.v);
@@ -563,7 +561,7 @@ export class ChildPart {
     let keyed = raw.length > 0;
     let sawWrap = false;
     for (const item of raw)
-      if (isKeyWrap(item)) sawWrap = true;
+      if (item instanceof Keyed) sawWrap = true;
       else keyed = false;
     if (!keyed && sawWrap && !warnedMixedKeys) {
       warnedMixedKeys = true;
@@ -575,8 +573,8 @@ export class ChildPart {
       st = { type: "items", parts: [], keys: null };
       this.state = st;
     }
-    const values = raw.map((item) => (isKeyWrap(item) ? /** @type {any} */ (item).v : item));
-    const newKeys = keyed ? raw.map((item) => /** @type {any} */ (item).k) : null;
+    const values = raw.map((item) => (item instanceof Keyed ? item.v : item));
+    const newKeys = keyed ? raw.map((item) => (item instanceof Keyed ? item.k : undefined)) : null;
     if (keyed && st.keys !== null) {
       st.parts = this._reconcileKeyed(st.parts, st.keys, values, /** @type {unknown[]} */ (newKeys));
       st.keys = newKeys;
@@ -827,10 +825,8 @@ export class ChildPart {
       this._commitResolved(value);
       return;
     }
-    if (t === "object") {
-      const v = /** @type {any} */ (value);
-      if (v[TPL]) {
-        if (adoptTemplateResult(this, v, bind)) return;
+    if (value instanceof TemplateResult) {
+      if (adoptTemplateResult(this, value, bind)) return;
         const where = [
           `host=<${/** @type {Element | undefined} */ (this.host)?.tagName?.toLowerCase() ?? "?"}>`,
           `in=<${this.start?.parentElement?.tagName?.toLowerCase() ?? "?"}>`,
@@ -839,34 +835,35 @@ export class ChildPart {
           console.debug("[light/html] keeping a served region the client draws differently; it stays unbound until it renders", ...where);
           return;
         }
-        console.debug("[light/html] re-rendering a region the client draws differently from the server", ...where);
-        this._clearPending();
-        this._commitResolved(value);
-        return;
-      }
-      const wrap = v[WRAP];
-      if (wrap === "key") {
-        const inner = this._child(this.start, this.end);
-        inner.state = { type: "pending" };
-        this.state = { type: "keyed", k: v.k, inner };
-        inner._resolvePending(v.v, bind);
-        return;
-      }
-      if (wrap === "el") {
-        const el = singleElementIn(this.start, this.end);
-        if (el && el.tagName.toLowerCase() === String(v.tag).toLowerCase())
-          return this._adoptElement(el, v, bind);
-        if (bind || this._defer(value)) return;
-        this._clearPending();
-        this._commitResolved(value);
-        return;
-      }
-      if (wrap === "unsafe" || v.nodeType) {
-        if (bind || this._defer(value)) return;
-        this._clearPending();
-        this._commitResolved(value);
-        return;
-      }
+      console.debug("[light/html] re-rendering a region the client draws differently from the server", ...where);
+      this._clearPending();
+      this._commitResolved(value);
+      return;
+    }
+    if (value instanceof Keyed) {
+      const inner = this._child(this.start, this.end);
+      inner.state = { type: "pending" };
+      this.state = { type: "keyed", k: value.k, inner };
+      inner._resolvePending(value.v, bind);
+      return;
+    }
+    if (value instanceof ElementSpec) {
+      const el = singleElementIn(this.start, this.end);
+      if (el && el.tagName.toLowerCase() === String(value.tag).toLowerCase())
+        return this._adoptElement(el, value, bind);
+      if (bind || this._defer(value)) return;
+      this._clearPending();
+      this._commitResolved(value);
+      return;
+    }
+    if (value instanceof Unsafe || (t === "object" && /** @type {any} */ (value).nodeType)) {
+      if (bind || this._defer(value)) return;
+      this._clearPending();
+      this._commitResolved(value);
+      return;
+    }
+    if (t === "object") {
+      const v = /** @type {any} */ (value);
       if (typeof v[Symbol.iterator] === "function") {
         const raw = Array.isArray(v) ? v : [...v];
         const ranges = itemRanges(this.start, this.end);
@@ -877,14 +874,14 @@ export class ChildPart {
           return;
         }
         let keyed = raw.length > 0;
-        for (const item of raw) if (!isKeyWrap(item)) keyed = false;
-        const values = raw.map((item) => (isKeyWrap(item) ? /** @type {any} */ (item).v : item));
+        for (const item of raw) if (!(item instanceof Keyed)) keyed = false;
+        const values = raw.map((item) => (item instanceof Keyed ? item.v : item));
         const parts = ranges.map((r) => {
           const p = this._child(r.start, r.end);
           p.state = { type: "pending" };
           return p;
         });
-        this.state = { type: "items", parts, keys: keyed ? raw.map((item) => /** @type {any} */ (item).k) : null };
+        this.state = { type: "items", parts, keys: keyed ? raw.map((item) => (item instanceof Keyed ? item.k : undefined)) : null };
         for (let i = 0; i < parts.length; i++) parts[i]._resolvePending(values[i], bind);
         return;
       }
