@@ -1,8 +1,12 @@
-import { ASSIGNED_ATTR, MARKER_END, MARKER_START, ROOT_MARKER_END, ROOT_MARKER_START, UNSLOTTED_TAG } from "./constants.js";
-import { ChildPart, createPart } from "./parts.js";
-import { TemplateInstance, getTemplate } from "./template.js";
+import { ASSIGNED_ATTR, MARKER_END, MARKER_START, ROOT_MARKER_END, ROOT_MARKER_START, UNSLOTTED_TAG, nothing } from "../html/constants.js";
+import { AttributePart, BooleanAttributePart, ChildPart, EventPart, NOT_SET, PropertyPart, RawTextPart, createPart, installAdoption } from "../html/parts.js";
+import { setThunk } from "../html/reactive.js";
+import { ElementSpec, Keyed, TemplateResult, Unsafe } from "../html/values.js";
+import { TemplateInstance, getTemplate } from "../html/template.js";
 
-/** @import { ProjectedUnit, TemplateResult } from "./types.ts" */
+/** @import { ProjectedUnit } from "./types.ts" */
+/** @import { ElementState, RenderOptions } from "../html/types.ts" */
+/** @import { Part } from "../html/parts.js" */
 /** @import { SlotPart } from "./slots.js" */
 
 /** @param {Node} node */
@@ -232,7 +236,7 @@ export const normalizedEqual = (a, b) => a.replace(/\s+/g, " ").trim() === b.rep
  * which the served page lacks, gets its parts anchored on a fresh clone of
  * the template and handed to the slot part as its parked content.
  *
- * @param {import("./template.js").Template} template
+ * @param {import("../html/template.js").Template} template
  * @param {Comment} start
  * @param {Comment} end
  */
@@ -402,7 +406,7 @@ const matchTemplate = (template, start, end) => {
  */
 export const adoptTemplateResult = (part, result, bind) => {
   const template = getTemplate(result.strings, result.kind);
-  const match = matchTemplate(template, part.start, part.end);
+  const match = matchTemplate(template, /** @type {Comment} */ (part.start), /** @type {Comment} */ (part.end));
   if (!match) return false;
   const { targets, fresh, parked } = match;
   const specs = template.parts;
@@ -426,7 +430,248 @@ export const adoptTemplateResult = (part, result, bind) => {
     if (spec.kind === "slot" && parked.has(targets[i])) /** @type {SlotPart} */ (p).parked = parked.get(targets[i]) ?? null;
     instance.parts.push(p);
   }
-  for (let i = 0; i < specs.length; i++) if (!fresh.has(i)) instance.parts[i].adopt(result.values, bind);
+  for (let i = 0; i < specs.length; i++) if (!fresh.has(i)) adoptPart(instance.parts[i], result.values, bind);
   part.state = { type: "template", instance };
   return true;
 };
+
+/**
+ * What `adopt(values, bind)` did on each part class: with `bind` the DOM is
+ * the source of truth for attributes and raw text, otherwise the values
+ * commit as on a fresh render.
+ * @param {Part} part
+ * @param {unknown[]} values
+ * @param {boolean} bind
+ */
+export const adoptPart = (part, values, bind) => {
+  if (part instanceof ChildPart) return resolvePending(part, values[part.valueIndex], bind);
+  if (part instanceof AttributePart) {
+    if (!bind) return part.setFromValues(values);
+    const el = /** @type {Element} */ (part.el);
+    part.committed = el.hasAttribute(part.name) ? el.getAttribute(part.name) : nothing;
+    return;
+  }
+  if (part instanceof BooleanAttributePart) {
+    if (!bind) return part.setFromValues(values);
+    part.committed = /** @type {Element} */ (part.el).hasAttribute(part.name);
+    return;
+  }
+  if (part instanceof RawTextPart) {
+    if (!bind) return part.setFromValues(values);
+    part.committed = /** @type {Element} */ (part.el).textContent;
+    return;
+  }
+  if (part instanceof PropertyPart || part instanceof EventPart) return part.setFromValues(values);
+  part.adopt(values, bind);
+};
+
+/**
+ * Hold a value the served range cannot adopt until the app has settled, so
+ * the served content stays while the data the server rendered from is still
+ * on its way. Answers true while holding; false once the app has settled, or
+ * when no settle hook was given, and the caller then commits the value.
+ * The latest held value is what commits at settle, unless an adoptable one
+ * has arrived first.
+ * @param {ChildPart} part
+ * @param {unknown} value
+ */
+export const deferValue = (part, value) => {
+  if (!part._settle || part._settled) return false;
+  part._deferred = value;
+  if (!part._settleWaiting) {
+    part._settleWaiting = true;
+    part._settle().then(() => {
+      part._settled = true;
+      if (part.state.type !== "pending" || part._deferred === NOT_SET) return;
+      const held = part._deferred;
+      part._deferred = NOT_SET;
+      resolvePending(part, held, false);
+    });
+  }
+  return true;
+};
+
+/**
+ * Resolve a part whose range holds prerendered content. A thunk is bound
+ * to the part first, so its own first evaluation is what adopts and every
+ * later one commits: a view whose whole body is `${loaded(res, ...)}` has a
+ * thunk at its root, and a part that never evaluates it never binds a single
+ * handler under it. With `bind`
+ * true (adoption stage one) the incoming value only wires the part up:
+ * events attach, structure anchors, content stays exactly as
+ * prerendered; unresolvable shapes stay pending for a later commit.
+ * With `bind` false (stage two) the value commits in place: matching
+ * content no-ops, drifted content updates only where it differs, and an
+ * unadoptable shape clears its own range and renders fresh. Every shape
+ * behaves the same way under `bind`: it keeps what the server wrote and
+ * stays pending. Stage one is not allowed to throw away content, because
+ * the value it is holding is this client's first render, made before the
+ * data the server rendered from has arrived. Neither is a value that comes
+ * before the app has settled: a resource's pending flag flipping re-runs
+ * the thunk with the same spinner, and a list that is still empty renders
+ * its empty state again, and both are the client still waiting rather than
+ * a state change. With a settle hook (`RenderOptions.settle`, the view
+ * passes `$APP.settle.whenIdle`) an unadoptable value is held until the app
+ * is idle; whatever arrives before then and matches adopts, and a region
+ * still drifted at settle renders fresh, which is the safety net for real
+ * drift between the build and the code.
+ *
+ * @param {ChildPart} part
+ * @param {unknown} value
+ * @param {boolean} bind
+ */
+export const resolvePending = (part, value, bind) => {
+  const start = /** @type {Comment} */ (part.start);
+  const end = /** @type {Comment} */ (part.end);
+  if (typeof value === "function") {
+    part._bindNext = bind;
+    return setThunk(part, /** @type {() => unknown} */ (value), (v) => part._commitResolved(v));
+  }
+  if (value === nothing || value == null) {
+    if (bind || deferValue(part, value)) return;
+    part._clearPending();
+    return;
+  }
+  const t = typeof value;
+  if (t === "string" || t === "number" || t === "bigint" || t === "boolean") {
+    const text = String(value);
+    const node = singleTextIn(start, end);
+    if (bind) {
+      if (node) part.state = { type: "text", node, text: normalizedEqual(node.data, text) ? text : node.data };
+      return;
+    }
+    if (node) {
+      if (!normalizedEqual(node.data, text)) node.data = text;
+      part.state = { type: "text", node, text };
+      return;
+    }
+    if (deferValue(part, value)) return;
+    part._clearPending();
+    part._commitResolved(value);
+    return;
+  }
+  if (value instanceof TemplateResult) {
+    if (adoptTemplateResult(part, value, bind)) return;
+      const where = [
+        `host=<${/** @type {Element | undefined} */ (part.owner)?.tagName?.toLowerCase() ?? "?"}>`,
+        `in=<${start.parentElement?.tagName?.toLowerCase() ?? "?"}>`,
+      ];
+      if (bind || deferValue(part, value)) {
+        console.debug("[light/html] keeping a served region the client draws differently; it stays unbound until it renders", ...where);
+        return;
+      }
+    console.debug("[light/html] re-rendering a region the client draws differently from the server", ...where);
+    part._clearPending();
+    part._commitResolved(value);
+    return;
+  }
+  if (value instanceof Keyed) {
+    const inner = part._child(start, end);
+    inner.state = { type: "pending" };
+    part.state = { type: "keyed", k: value.k, inner };
+    resolvePending(inner, value.v, bind);
+    return;
+  }
+  if (value instanceof ElementSpec) {
+    const el = singleElementIn(start, end);
+    if (el && el.tagName.toLowerCase() === String(value.tag).toLowerCase())
+      return adoptElement(part, el, value, bind);
+    if (bind || deferValue(part, value)) return;
+    part._clearPending();
+    part._commitResolved(value);
+    return;
+  }
+  if (value instanceof Unsafe || (t === "object" && /** @type {any} */ (value).nodeType)) {
+    if (bind || deferValue(part, value)) return;
+    part._clearPending();
+    part._commitResolved(value);
+    return;
+  }
+  if (t === "object") {
+    const v = /** @type {any} */ (value);
+    if (typeof v[Symbol.iterator] === "function") {
+      const raw = Array.isArray(v) ? v : [...v];
+      const ranges = itemRanges(start, end);
+      if (!ranges || ranges.length !== raw.length) {
+        if (bind || deferValue(part, raw)) return;
+        part._clearPending();
+        part._commitResolved(raw);
+        return;
+      }
+      let keyed = raw.length > 0;
+      for (const item of raw) if (!(item instanceof Keyed)) keyed = false;
+      const values = raw.map((item) => (item instanceof Keyed ? item.v : item));
+      const parts = ranges.map((r) => {
+        const p = part._child(r.start, r.end);
+        p.state = { type: "pending" };
+        return p;
+      });
+      part.state = { type: "items", parts, keys: keyed ? raw.map((item) => (item instanceof Keyed ? item.k : undefined)) : null };
+      for (let i = 0; i < parts.length; i++) resolvePending(parts[i], values[i], bind);
+      return;
+    }
+  }
+  if (bind || deferValue(part, value)) return;
+  part._clearPending();
+  part._commitResolved(value);
+};
+
+/**
+ * @param {ChildPart} part
+ * @param {Element} el
+ * @param {ElementSpec} spec
+ * @param {boolean} bind
+ */
+const adoptElement = (part, el, spec, bind) => {
+  const st = /** @type {ElementState} */ ({
+    type: "element",
+    tag: spec.tag,
+    el,
+    committed: new Map(),
+    events: new Map(),
+    ref: null,
+    childPart: null,
+  });
+  const bindings = spec.bindings ?? {};
+  for (const [rawKey, value] of Object.entries(bindings)) {
+    if (rawKey === "ref") continue;
+    const prefix = rawKey[0];
+    if (bind && prefix !== "@" && prefix !== ".") {
+      if (prefix === "?") st.committed.set(rawKey, el.hasAttribute(rawKey.slice(1)));
+      else st.committed.set(rawKey, el.hasAttribute(rawKey) ? el.getAttribute(rawKey) : nothing);
+      continue;
+    }
+    part._applyElementBinding(st, rawKey, value);
+  }
+  const pair = elementChildPair(el);
+  if (pair) {
+    st.childPart = part._child(pair.start, pair.end);
+    st.childPart.state = { type: "pending" };
+    resolvePending(st.childPart, spec.children === undefined ? nothing : spec.children, bind);
+  } else if (spec.children !== undefined)
+    part._ensureElementChildPart(st).commit(spec.children);
+  part.state = st;
+  st.ref = typeof bindings.ref === "function" ? bindings.ref : null;
+  st.ref?.(el);
+};
+
+/**
+ * The root part for a container that was served with adoption markers, or
+ * null to render fresh.
+ * @param {unknown} container
+ * @param {RenderOptions} options
+ */
+export const rootPart = (container, options) => {
+  const pair = topLevelPair(/** @type {Element | DocumentFragment} */ (container));
+  if (!pair) {
+    console.debug("[light/html] no adoption markers found, rendering fresh");
+    return null;
+  }
+  const part = new ChildPart(pair.start, pair.end, options.host);
+  part.state = { type: "pending" };
+  part._bindNext = options.adopt === "bind";
+  part._settle = options.settle ?? null;
+  return part;
+};
+
+installAdoption({ resolvePending, rootPart, adoptPart });

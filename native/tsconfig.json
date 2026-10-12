@@ -1,0 +1,22 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["es2024"],
+    "types": ["node"]
+  },
+  "include": [
+    "../html/constants.js",
+    "../html/parser.js",
+    "../html/values.js",
+    "../html/host.js",
+    "../html/template.js",
+    "../html/parts.js",
+    "../html/reactive.js",
+    "../html/core.js",
+    "../html/types.ts",
+    "../signals/index.js",
+    "../signals/store.js",
+    "../signals/types.ts"
+  ],
+  "exclude": []
+}

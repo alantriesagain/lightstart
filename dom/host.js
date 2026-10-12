@@ -9,7 +9,7 @@
 import { Clone, Host, ListenerOptions, Prepared } from "../html/host.js";
 import { MARKER_START, SVG_KIND } from "../html/constants.js";
 import { parseTemplate } from "../html/parser.js";
-import { SlotPart } from "../html/slots.js";
+import { SlotPart } from "./slots.js";
 
 /** @import { HostNode } from "../html/host.js" */
 /** @import { PartSpec } from "../html/types.ts" */

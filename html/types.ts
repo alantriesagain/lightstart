@@ -4,8 +4,22 @@ export type TemplateKind = 1 | 2;
 
 export type NothingValue = typeof nothing;
 
+/** A node of whichever host is installed; only the host reads it. */
+export type HostNode = unknown;
+
+type Global = typeof globalThis;
+
+/** The browser's Element where the DOM lib is present, unknown elsewhere. */
+export type HostElement = Global extends { Element: { prototype: infer E } } ? E : unknown;
+
+/** The browser's EventTarget where present, unknown elsewhere. */
+export type HostEventTarget = Global extends { EventTarget: { prototype: infer E } } ? E : unknown;
+
+/** The browser's Event where present, unknown elsewhere. */
+export type HostEvent = Global extends { Event: { prototype: infer E } } ? E : unknown;
+
 /** An event target read through a template handler: the element's members are open. */
-export type HandlerTarget = EventTarget & Record<string, any>;
+export type HandlerTarget = HostEventTarget & Record<string, any>;
 
 /**
  * The event a template handler receives: an Event whose `target` and
@@ -14,7 +28,7 @@ export type HandlerTarget = EventTarget & Record<string, any>;
  * knowable from the template, so a handler that needs it annotates its
  * own parameter.
  */
-export type HandlerEvent = Event & { target: HandlerTarget; currentTarget: HandlerTarget } & Record<string, any>;
+export type HandlerEvent = HostEvent & { target: HandlerTarget; currentTarget: HandlerTarget } & Record<string, any>;
 
 /** Method-style so the parameter compares bivariantly: a handler may declare the concrete DOM event its binding delivers. */
 interface HandlerSignature {
@@ -42,7 +56,8 @@ export type KeySpec = import("./values.js").Keyed;
 /** @deprecated use Unsafe */
 export type UnsafeSpec = import("./values.js").Unsafe;
 
-export type RenderContainer = Element | DocumentFragment;
+/** Where `render` puts its root part: an element of the installed host. */
+export type RenderContainer = unknown;
 
 export interface RenderOptions {
   host?: object;
@@ -57,41 +72,9 @@ export interface EffectHandle {
 
 export type EffectAdapter = (fn: () => void) => EffectHandle;
 
-export interface ThunkHolder {
-  start?: Node | null;
-  el?: Element;
-  _thunk: (() => unknown) | undefined;
-  _effect: EffectHandle | null;
-  _thunkLive: boolean;
-}
+export type { ThunkHolder } from "./reactive.js";
 
 export type PartKind = "child" | "attr" | "prop" | "bool" | "event" | "rawtext" | "slot";
-
-/**
- * An element whose templates project its light children into the `<slot>`
- * elements they render: it registers every slot part cloned under it and
- * runs projection once the clone is in the tree.
- */
-export interface SlotHost extends Element {
-  /** Null on a host that renders into a shadow root, where the browser projects. */
-  $slotParts: Set<import("./slots.js").SlotPart> | null;
-  $root: { start: Comment; end: Comment } | null;
-  /** The hidden holder of content no rendered slot takes, present only while it holds something. */
-  $unslotted: Element | null;
-  $queueProject(): void;
-}
-
-/** What a host hands `projectSlots` to be told which nodes to watch and which slot names it lacks. */
-export interface ProjectHooks {
-  watchSlot(el: Element): void;
-  watchUnit(el: Element): void;
-  unknown(name: string): void;
-}
-
-/** One thing a served host projected, as its parent's walker sees it: a child-part range or an element, with the slot it sits in (null for the light area). */
-export type ProjectedUnit =
-  | { range: true; start: Comment; end: Comment; slot: string | null; taken: boolean }
-  | { range: false; node: Element; slot: string; taken: boolean };
 
 export interface ParsedPart {
   kind: PartKind;
@@ -113,7 +96,30 @@ export interface ParseResult {
 }
 
 export type ElementBindings = Record<string, unknown> & {
-  ref?: (el: Element | null) => void;
+  ref?: (el: HostElement | null) => void;
 };
 
-export * from "./index.js";
+/** The state of a child part rendering an `element()`: the element, what each binding committed, its listeners and its own child part. */
+export type ElementState = {
+  type: "element";
+  tag: string;
+  el: HostNode;
+  committed: Map<string, unknown>;
+  events: Map<string, import("./parts.js").EventBinding>;
+  ref: ((el: HostElement | null) => void) | null;
+  childPart: import("./parts.js").ChildPart | null;
+};
+
+/** What a child part currently renders; `pending` is a served range awaiting adoption. */
+export type ChildState =
+  | { type: "empty" }
+  | { type: "pending" }
+  | { type: "text"; node: HostNode; text: string }
+  | { type: "template"; instance: import("./template.js").TemplateInstance }
+  | { type: "items"; parts: import("./parts.js").ChildPart[]; keys: unknown[] | null }
+  | { type: "keyed"; k: unknown; inner: import("./parts.js").ChildPart }
+  | { type: "node"; node: HostNode }
+  | { type: "unsafe"; s: string }
+  | ElementState;
+
+export * from "./core.js";

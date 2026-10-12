@@ -66,7 +66,8 @@ const storeDefs = (properties) =>
   );
 
 /** @import { TypeDefinition } from "../types/types.ts" */
-/** @import { ProjectHooks, SlotPart } from "../html/types.ts" */
+/** @import { ProjectHooks } from "../dom/types.ts" */
+/** @import { SlotPart } from "../dom/slots.js" */
 /**
  * @import {
  *   PropertiesSchema, LifecycleHook, LifecycleEventDetail,

@@ -9,9 +9,10 @@
  * anything is assigned and put back when the last unit leaves.
  */
 import { balancedEnd, topLevelPair } from "./adopt.js";
-import { ASSIGNED_ATTR, MARKER_START, UNSLOTTED_TAG } from "./constants.js";
+import { ASSIGNED_ATTR, MARKER_START, UNSLOTTED_TAG } from "../html/constants.js";
 
-/** @import { PartSpec, ProjectHooks, SlotHost } from "./types.ts" */
+/** @import { PartSpec } from "../html/types.ts" */
+/** @import { ProjectHooks, SlotHost } from "./types.ts" */
 
 export { ASSIGNED_ATTR, UNSLOTTED_TAG };
 
@@ -107,7 +108,7 @@ export const isMoving = () => moving > 0;
 
 /**
  * @param {ChildNode | null} first
- * @param {{ start: Comment, end: Comment } | null} skip
+ * @param {{ start: unknown, end: unknown } | null} skip
  * @param {Element | null} holder
  * @returns {ChildNode[]}
  */
@@ -117,7 +118,7 @@ const collectUnits = (first, skip, holder) => {
   let node = first;
   while (node) {
     if (skip && node === skip.start) {
-      node = skip.end.nextSibling;
+      node = /** @type {Comment} */ (skip.end).nextSibling;
       continue;
     }
     if (holder && node === holder) {
@@ -218,8 +219,8 @@ export class SlotPart {
   release() {
     const host = this.host;
     if (!host) return;
-    const root = host.$root;
-    const ref = root && root.start.parentNode === host ? root.start : null;
+    const rootStart = host.$root ? /** @type {Comment} */ (host.$root.start) : null;
+    const ref = rootStart && rootStart.parentNode === host ? rootStart : null;
     for (const unit of this.units) if (unit.parentNode === this.el) moveUnit(unit, host, ref);
     this.units = [];
     this.restore();
@@ -269,8 +270,8 @@ export const projectSlots = (host, hooks) => {
   if (host.$unslotted) for (const unit of unitsIn(host.$unslotted)) route(unit);
   for (const unit of lightUnits(host)) route(unit);
 
-  const root = host.$root;
-  const ref = root && root.start.parentNode === host ? root.start : null;
+  const rootStart = host.$root ? /** @type {Comment} */ (host.$root.start) : null;
+  const ref = rootStart && rootStart.parentNode === host ? rootStart : null;
   if (stray.length) {
     const holder = host.$unslotted ?? holdUnslotted(host, ref);
     let cursor = holder.firstChild;

@@ -15,9 +15,9 @@ primitives that replaced lit's directives. 9.1 KB min+gzip bundled with esbuild,
 | `parser.js` | Quasi state machine → markup + parts list (binding positions, error cases) |
 | `template.js` | Template prep, WeakMap identity cache, instance cloning |
 | `parts.js` | Part classes, commit semantics, keyed reconciliation, `render()` |
-| `adopt.js` | Two-stage adoption: structural match walk, marker pairs, child-root skipping, projected hosts matched through their slots |
-| `slots.js` | Light-DOM `<slot>` projection: unit walkers, `SlotPart`, `projectSlots`, the `<unslotted>` holder |
-| `reactive.js` | Thunk ↔ effect-adapter seam (`configure({ effect })`) |
+| `reactive.js` | Thunk ↔ effect-adapter seam (`configure({ effect, host })`) |
+| `../dom/adopt.js` | Two-stage adoption of browser-prerendered DOM, installed into the engine through `installAdoption` |
+| `../dom/slots.js` | Light-DOM `<slot>` projection: unit walkers, `SlotPart`, `projectSlots`, the `<unslotted>` holder |
 
 Tests are the spec: `html.browser.test.js` (semantics), `parity.browser.test.js`
 (locked against real lit-html), `adopt.browser.test.js` (adoption incl. the minify

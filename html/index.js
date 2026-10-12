@@ -10,5 +10,5 @@ import { setHost } from "./host.js";
 setHost(new DomHost());
 
 export * from "./core.js";
-export { ASSIGNED_ATTR, SlotPart, UNSLOTTED_TAG, isMoving, projectSlots, unprojectUnits } from "./slots.js";
-export { topLevelPair } from "./adopt.js";
+export { ASSIGNED_ATTR, SlotPart, UNSLOTTED_TAG, isMoving, projectSlots, unprojectUnits } from "../dom/slots.js";
+export { topLevelPair } from "../dom/adopt.js";

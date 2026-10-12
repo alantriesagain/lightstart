@@ -1,23 +1,39 @@
-import { adoptTemplateResult, elementChildPair, itemRanges, normalizedEqual, singleElementIn, singleTextIn, topLevelPair } from "./adopt.js";
 import { MARKER_END, MARKER_START, ROOT_MARKER_END, ROOT_MARKER_START, nothing } from "./constants.js";
 import { currentHost } from "./host.js";
 
 /** @import { ListenerOptions } from "./host.js" */
-import { disposeThunk, resolveEager, setThunk } from "./reactive.js";
+import { ThunkHolder, disposeThunk, resolveEager, setThunk } from "./reactive.js";
 import { TemplateInstance, getTemplate } from "./template.js";
 import { ElementSpec, Keyed, TemplateResult, Unsafe } from "./values.js";
 
-/** @import { NothingValue, PartSpec, RenderOptions } from "./types.ts" */
-/** @import { EffectHandle } from "./types.ts" */
+/** @import { ChildState, ElementState, HostElement, HostNode, NothingValue, PartSpec, RenderOptions } from "./types.ts" */
 
-const NOT_SET = Symbol();
+/** The uncommitted sentinel a part compares its first value against. */
+export const NOT_SET = Symbol();
 const VALID_TAG = /^[a-zA-Z][a-zA-Z0-9-]*$/;
 
 let warnedMixedKeys = false;
 
-class EventBinding {
+/**
+ * Adoption of prerendered content, installed by the host that supports it
+ * (the DOM host's `dom/adopt.js`). Without it a pending part renders fresh.
+ * @typedef {object} Adoption
+ * @property {(part: ChildPart, value: unknown, bind: boolean) => void} resolvePending
+ * @property {(container: unknown, options: RenderOptions) => ChildPart | null} rootPart
+ * @property {(part: Part, values: unknown[], bind: boolean) => void} adoptPart
+ */
+
+/** @type {Adoption | null} */
+let adoption = null;
+
+/** @param {Adoption} a */
+export const installAdoption = (a) => {
+  adoption = a;
+};
+
+export class EventBinding {
   /**
-   * @param {Element} el
+   * @param {HostNode} el
    * @param {string} name
    * @param {object | undefined} owner
    */
@@ -69,10 +85,10 @@ class EventBinding {
   }
 }
 
-class EventPart {
+export class EventPart {
   /**
    * @param {PartSpec} spec
-   * @param {Element} el
+   * @param {HostNode} el
    * @param {object | undefined} owner
    */
   constructor(spec, el, owner) {
@@ -85,20 +101,15 @@ class EventPart {
     this.binding.commit(values[this.valueIndex]);
   }
 
-  /** @param {unknown[]} values */
-  adopt(values) {
-    this.setFromValues(values);
-  }
-
   dispose() {
     this.binding.dispose();
   }
 }
 
-class PropertyPart {
+export class PropertyPart {
   /**
    * @param {PartSpec} spec
-   * @param {Element} el
+   * @param {HostNode} el
    */
   constructor(spec, el) {
     this.el = el;
@@ -117,30 +128,24 @@ class PropertyPart {
     currentHost().setProperty(this.el, this.name, value);
   }
 
-  /** @param {unknown[]} values */
-  adopt(values) {
-    this.setFromValues(values);
-  }
-
   dispose() {}
 }
 
-class BooleanAttributePart {
+export class BooleanAttributePart extends ThunkHolder {
   /**
    * @param {PartSpec} spec
-   * @param {Element} el
+   * @param {HostNode} el
    */
   constructor(spec, el) {
+    super();
     this.el = el;
     this.name = /** @type {string} */ (spec.name);
     this.valueIndex = spec.valueIndex;
     /** @type {unknown} */
     this.committed = NOT_SET;
-    /** @type {(() => unknown) | undefined} */
-    this._thunk = undefined;
-    /** @type {EffectHandle | null} */
-    this._effect = null;
-    this._thunkLive = false;
+  }
+  _anchor() {
+    return this.el;
   }
 
   /** @param {unknown[]} values */
@@ -163,26 +168,18 @@ class BooleanAttributePart {
     currentHost().toggleAttribute(this.el, this.name, on);
   }
 
-  /**
-   * @param {unknown[]} values
-   * @param {boolean} bind
-   */
-  adopt(values, bind) {
-    if (bind) this.committed = this.el.hasAttribute(this.name);
-    else this.setFromValues(values);
-  }
-
   dispose() {
     disposeThunk(this);
   }
 }
 
-class AttributePart {
+export class AttributePart extends ThunkHolder {
   /**
    * @param {PartSpec} spec
-   * @param {Element} el
+   * @param {HostNode} el
    */
   constructor(spec, el) {
+    super();
     this.el = el;
     this.name = /** @type {string} */ (spec.name);
     this.statics = /** @type {string[]} */ (spec.statics);
@@ -191,11 +188,9 @@ class AttributePart {
     this.single = spec.valueCount === 1 && this.statics[0] === "" && this.statics[1] === "";
     /** @type {unknown} */
     this.committed = NOT_SET;
-    /** @type {(() => unknown) | undefined} */
-    this._thunk = undefined;
-    /** @type {EffectHandle | null} */
-    this._effect = null;
-    this._thunkLive = false;
+  }
+  _anchor() {
+    return this.el;
   }
 
   /** @param {unknown[]} values */
@@ -230,35 +225,25 @@ class AttributePart {
     else currentHost().setAttribute(this.el, this.name, value);
   }
 
-  /**
-   * @param {unknown[]} values
-   * @param {boolean} bind
-   */
-  adopt(values, bind) {
-    if (bind) this.committed = this.el.hasAttribute(this.name) ? this.el.getAttribute(this.name) : nothing;
-    else this.setFromValues(values);
-  }
-
   dispose() {
     disposeThunk(this);
   }
 }
 
-class RawTextPart {
+export class RawTextPart extends ThunkHolder {
   /**
    * @param {PartSpec} spec
-   * @param {Element} el
+   * @param {HostNode} el
    */
   constructor(spec, el) {
+    super();
     this.el = el;
     this.valueIndex = spec.valueIndex;
     /** @type {unknown} */
     this.committed = NOT_SET;
-    /** @type {(() => unknown) | undefined} */
-    this._thunk = undefined;
-    /** @type {EffectHandle | null} */
-    this._effect = null;
-    this._thunkLive = false;
+  }
+  _anchor() {
+    return this.el;
   }
 
   /** @param {unknown[]} values */
@@ -281,38 +266,25 @@ class RawTextPart {
     currentHost().setContent(this.el, text);
   }
 
-  /**
-   * @param {unknown[]} values
-   * @param {boolean} bind
-   */
-  adopt(values, bind) {
-    if (bind) this.committed = this.el.textContent;
-    else this.setFromValues(values);
-  }
-
   dispose() {
     disposeThunk(this);
   }
 }
 
-export class ChildPart {
+export class ChildPart extends ThunkHolder {
   /**
-   * @param {Comment} start
-   * @param {Comment} end
+   * @param {HostNode} start
+   * @param {HostNode} end
    * @param {object | undefined} [owner]
    */
   constructor(start, end, owner) {
+    super();
     this.start = start;
     this.end = end;
     this.owner = owner;
     this.valueIndex = 0;
-    /** @type {any} */
+    /** @type {ChildState} */
     this.state = { type: "empty" };
-    /** @type {(() => unknown) | undefined} */
-    this._thunk = undefined;
-    /** @type {EffectHandle | null} */
-    this._effect = null;
-    this._thunkLive = false;
     this._bindNext = false;
     /** @type {(() => Promise<unknown>) | null} */
     this._settle = null;
@@ -322,10 +294,14 @@ export class ChildPart {
     this._deferred = NOT_SET;
   }
 
+  _anchor() {
+    return this.start;
+  }
+
   /**
    * A part for a range inside this one, sharing the host and the settle hook.
-   * @param {Comment} start
-   * @param {Comment} end
+   * @param {HostNode} start
+   * @param {HostNode} end
    */
   _child(start, end) {
     const part = new ChildPart(start, end, this.owner);
@@ -334,42 +310,9 @@ export class ChildPart {
     return part;
   }
 
-  /**
-   * Hold a value the served range cannot adopt until the app has settled, so
-   * the served content stays while the data the server rendered from is still
-   * on its way. Answers true while holding; false once the app has settled, or
-   * when no settle hook was given, and the caller then commits the value.
-   * The latest held value is what commits at settle, unless an adoptable one
-   * has arrived first.
-   * @param {unknown} value
-   */
-  _defer(value) {
-    if (!this._settle || this._settled) return false;
-    this._deferred = value;
-    if (!this._settleWaiting) {
-      this._settleWaiting = true;
-      this._settle().then(() => {
-        this._settled = true;
-        if (this.state.type !== "pending" || this._deferred === NOT_SET) return;
-        const held = this._deferred;
-        this._deferred = NOT_SET;
-        this._resolvePending(held, false);
-      });
-    }
-    return true;
-  }
-
   /** @param {unknown[]} values */
   setFromValues(values) {
     this.commit(values[this.valueIndex]);
-  }
-
-  /**
-   * @param {unknown[]} values
-   * @param {boolean} bind
-   */
-  adopt(values, bind) {
-    this._resolvePending(values[this.valueIndex], bind);
   }
 
   /** @param {unknown} value */
@@ -384,7 +327,8 @@ export class ChildPart {
     if (this.state.type === "pending") {
       const bind = this._bindNext;
       this._bindNext = false;
-      return this._resolvePending(value, bind);
+      if (adoption !== null) return adoption.resolvePending(this, value, bind);
+      this._clearPending();
     }
     if (value === nothing || value == null) return this._clear();
     const t = typeof value;
@@ -398,7 +342,7 @@ export class ChildPart {
     if (t === "object") {
       const host = currentHost();
       const node = host.asNode(value);
-      if (node !== null) return this._commitNode(/** @type {Node} */ (node));
+      if (node !== null) return this._commitNode(node);
       const list = host.toList(value);
       if (list !== null) return this._commitItems(list);
       return this._commitText(host.stringify(value));
@@ -417,7 +361,7 @@ export class ChildPart {
       return;
     }
     this._clear();
-    const node = /** @type {Text} */ (currentHost().createText(text));
+    const node = currentHost().createText(text);
     this._insert(node);
     this.state = { type: "text", node, text };
   }
@@ -430,13 +374,13 @@ export class ChildPart {
       return st.instance.commit(result.values);
     this._clear();
     const instance = new TemplateInstance(template, this.owner);
-    const fragment = /** @type {Node} */ (instance.clone());
+    const fragment = instance.clone();
     instance.commit(result.values);
     this._insert(fragment);
     this.state = { type: "template", instance };
   }
 
-  /** @param {Node} node */
+  /** @param {HostNode} node */
   _commitNode(node) {
     const st = this.state;
     if (st.type === "node" && st.node === node) return;
@@ -450,7 +394,7 @@ export class ChildPart {
     const st = this.state;
     if (st.type === "unsafe" && st.s === wrap.s) return;
     this._clear();
-    this._insert(/** @type {Node} */ (currentHost().parseMarkup(wrap.s)));
+    this._insert(currentHost().parseMarkup(wrap.s));
     this.state = { type: "unsafe", s: wrap.s };
   }
 
@@ -471,16 +415,16 @@ export class ChildPart {
     if (!VALID_TAG.test(spec.tag))
       throw new Error(`[light/html] invalid element() tag: ${String(spec.tag)}`);
     this._clear();
-    const el = /** @type {Element} */ (currentHost().createElement(spec.tag));
-    const next = {
+    const el = currentHost().createElement(spec.tag);
+    const next = /** @type {ElementState} */ ({
       type: "element",
       tag: spec.tag,
       el,
       committed: new Map(),
       events: new Map(),
-      ref: /** @type {((el: Element | null) => void) | null} */ (null),
-      childPart: /** @type {ChildPart | null} */ (null),
-    };
+      ref: null,
+      childPart: null,
+    });
     const bindings = spec.bindings ?? {};
     for (const [rawKey, value] of Object.entries(bindings)) {
       if (rawKey === "ref") continue;
@@ -490,11 +434,11 @@ export class ChildPart {
     this._insert(el);
     this.state = next;
     next.ref = typeof bindings.ref === "function" ? bindings.ref : null;
-    next.ref?.(el);
+    next.ref?.(/** @type {HostElement} */ (el));
   }
 
   /**
-   * @param {any} st
+   * @param {ElementState} st
    * @param {ElementSpec} spec
    */
   _updateElement(st, spec) {
@@ -511,18 +455,18 @@ export class ChildPart {
     if (ref !== st.ref) {
       st.ref?.(null);
       st.ref = ref;
-      ref?.(st.el);
+      ref?.(/** @type {HostElement} */ (st.el));
     }
     if (spec.children !== undefined || st.childPart)
       this._ensureElementChildPart(st).commit(spec.children === undefined ? nothing : spec.children);
   }
 
-  /** @param {any} st */
+  /** @param {ElementState} st */
   _ensureElementChildPart(st) {
     if (!st.childPart) {
       const host = currentHost();
-      const start = /** @type {Comment} */ (host.createAnchor(MARKER_START));
-      const end = /** @type {Comment} */ (host.createAnchor(MARKER_END));
+      const start = host.createAnchor(MARKER_START);
+      const end = host.createAnchor(MARKER_END);
       host.insertBefore(st.el, start, null);
       host.insertBefore(st.el, end, null);
       st.childPart = new ChildPart(start, end, this.owner);
@@ -531,7 +475,7 @@ export class ChildPart {
   }
 
   /**
-   * @param {any} st
+   * @param {ElementState} st
    * @param {string} rawKey
    * @param {unknown} value
    */
@@ -583,7 +527,7 @@ export class ChildPart {
     const values = raw.map((item) => (item instanceof Keyed ? item.v : item));
     const newKeys = keyed ? raw.map((item) => (item instanceof Keyed ? item.k : undefined)) : null;
     if (keyed && st.keys !== null) {
-      st.parts = this._reconcileKeyed(st.parts, st.keys, values, /** @type {unknown[]} */ (newKeys));
+      st.parts = this._reconcileKeyed(st.parts.slice(), st.keys, values, /** @type {unknown[]} */ (newKeys));
       st.keys = newKeys;
       return;
     }
@@ -592,10 +536,10 @@ export class ChildPart {
     for (let i = 0; i < shared; i++) parts[i].commit(values[i]);
     if (values.length > shared) {
       const host = currentHost();
-      const fragment = /** @type {Node} */ (host.createFragment());
+      const fragment = host.createFragment();
       for (let i = shared; i < values.length; i++) {
-        const start = /** @type {Comment} */ (host.createAnchor(MARKER_START));
-        const end = /** @type {Comment} */ (host.createAnchor(MARKER_END));
+        const start = host.createAnchor(MARKER_START);
+        const end = host.createAnchor(MARKER_END);
         host.insertBefore(fragment, start, null);
         host.insertBefore(fragment, end, null);
         const part = new ChildPart(start, end, this.owner);
@@ -604,7 +548,10 @@ export class ChildPart {
       }
       this._insert(fragment);
     }
-    while (parts.length > values.length) this._removeItemPart(parts.pop());
+    while (parts.length > values.length) {
+      const last = parts.pop();
+      if (last !== undefined) this._removeItemPart(last);
+    }
     st.keys = newKeys;
   }
 
@@ -620,8 +567,9 @@ export class ChildPart {
    * @param {unknown[]} newKeys
    */
   _reconcileKeyed(oldParts, oldKeys, newValues, newKeys) {
-    /** @type {ChildPart[]} */
-    const newParts = new Array(newValues.length);
+    /** @type {(ChildPart | null)[]} */
+    const newParts = [];
+    for (let i = 0; i < newValues.length; i++) newParts.push(null);
     let oldHead = 0;
     let oldTail = oldParts.length - 1;
     let newHead = 0;
@@ -698,15 +646,21 @@ export class ChildPart {
       const part = oldParts[oldHead++];
       if (part !== null) this._removeItemPart(part);
     }
-    return newParts;
+    /** @type {ChildPart[]} */
+    const out = [];
+    for (const p of newParts) {
+      if (p === null) throw new Error("[light/html] keyed reconcile left a hole");
+      out.push(p);
+    }
+    return out;
   }
 
-  /** @param {Node} refNode */
+  /** @param {HostNode} refNode */
   _createItemPart(refNode) {
     const host = currentHost();
     const parent = host.parentOf(this.end);
-    const start = /** @type {Comment} */ (host.createAnchor(MARKER_START));
-    const end = /** @type {Comment} */ (host.createAnchor(MARKER_END));
+    const start = host.createAnchor(MARKER_START);
+    const end = host.createAnchor(MARKER_END);
     host.insertBefore(parent, start, refNode);
     host.insertBefore(parent, end, refNode);
     return new ChildPart(start, end, this.owner);
@@ -716,9 +670,10 @@ export class ChildPart {
   _removeItemPart(part) {
     part.dispose();
     const host = currentHost();
-    let node = /** @type {ChildNode | null} */ (part.start);
-    while (node) {
-      const next = node === part.end ? null : /** @type {ChildNode | null} */ (host.nextSibling(node));
+    /** @type {HostNode | null} */
+    let node = part.start;
+    while (node !== null && node !== undefined) {
+      const next = node === part.end ? null : host.nextSibling(node);
       host.remove(node);
       node = next;
     }
@@ -732,18 +687,19 @@ export class ChildPart {
     const refNode = refPart ? refPart.start : this.end;
     const host = currentHost();
     const parent = host.parentOf(this.end);
-    /** @type {ChildNode[]} */
+    /** @type {HostNode[]} */
     const nodes = [];
-    let node = /** @type {ChildNode | null} */ (part.start);
-    while (node) {
+    /** @type {HostNode | null} */
+    let node = part.start;
+    while (node !== null && node !== undefined) {
       nodes.push(node);
       if (node === part.end) break;
-      node = /** @type {ChildNode | null} */ (host.nextSibling(node));
+      node = host.nextSibling(node);
     }
     for (const n of nodes) host.insertBefore(parent, n, refNode);
   }
 
-  /** @param {Node} node */
+  /** @param {HostNode} node */
   _insert(node) {
     const host = currentHost();
     host.insertBefore(host.parentOf(this.end), node, this.end);
@@ -751,9 +707,9 @@ export class ChildPart {
 
   _removeRange() {
     const host = currentHost();
-    let node = /** @type {ChildNode | null} */ (host.nextSibling(this.start));
-    while (node && node !== this.end) {
-      const next = /** @type {ChildNode | null} */ (host.nextSibling(node));
+    let node = host.nextSibling(this.start);
+    while (node !== null && node !== undefined && node !== this.end) {
+      const next = host.nextSibling(node);
       host.remove(node);
       node = next;
     }
@@ -783,166 +739,6 @@ export class ChildPart {
     this.state = { type: "empty" };
   }
 
-  /**
-   * Resolve a part whose range holds prerendered content. A thunk is bound
-   * to the part first, so its own first evaluation is what adopts and every
-   * later one commits: a view whose whole body is `${loaded(res, ...)}` has a
-   * thunk at its root, and a part that never evaluates it never binds a single
-   * handler under it. With `bind`
-   * true (adoption stage one) the incoming value only wires the part up:
-   * events attach, structure anchors, content stays exactly as
-   * prerendered; unresolvable shapes stay pending for a later commit.
-   * With `bind` false (stage two) the value commits in place: matching
-   * content no-ops, drifted content updates only where it differs, and an
-   * unadoptable shape clears its own range and renders fresh. Every shape
-   * behaves the same way under `bind`: it keeps what the server wrote and
-   * stays pending. Stage one is not allowed to throw away content, because
-   * the value it is holding is this client's first render, made before the
-   * data the server rendered from has arrived. Neither is a value that comes
-   * before the app has settled: a resource's pending flag flipping re-runs
-   * the thunk with the same spinner, and a list that is still empty renders
-   * its empty state again, and both are the client still waiting rather than
-   * a state change. With a settle hook (`RenderOptions.settle`, the view
-   * passes `$APP.settle.whenIdle`) an unadoptable value is held until the app
-   * is idle; whatever arrives before then and matches adopts, and a region
-   * still drifted at settle renders fresh, which is the safety net for real
-   * drift between the build and the code.
-   *
-   * @param {unknown} value
-   * @param {boolean} bind
-   */
-  _resolvePending(value, bind) {
-    if (typeof value === "function") {
-      this._bindNext = bind;
-      return setThunk(this, /** @type {() => unknown} */ (value), (v) => this._commitResolved(v));
-    }
-    if (value === nothing || value == null) {
-      if (bind || this._defer(value)) return;
-      this._clearPending();
-      return;
-    }
-    const t = typeof value;
-    if (t === "string" || t === "number" || t === "bigint" || t === "boolean") {
-      const text = String(value);
-      const node = singleTextIn(this.start, this.end);
-      if (bind) {
-        if (node) this.state = { type: "text", node, text: normalizedEqual(node.data, text) ? text : node.data };
-        return;
-      }
-      if (node) {
-        if (!normalizedEqual(node.data, text)) node.data = text;
-        this.state = { type: "text", node, text };
-        return;
-      }
-      if (this._defer(value)) return;
-      this._clearPending();
-      this._commitResolved(value);
-      return;
-    }
-    if (value instanceof TemplateResult) {
-      if (adoptTemplateResult(this, value, bind)) return;
-        const where = [
-          `host=<${/** @type {Element | undefined} */ (this.owner)?.tagName?.toLowerCase() ?? "?"}>`,
-          `in=<${this.start?.parentElement?.tagName?.toLowerCase() ?? "?"}>`,
-        ];
-        if (bind || this._defer(value)) {
-          console.debug("[light/html] keeping a served region the client draws differently; it stays unbound until it renders", ...where);
-          return;
-        }
-      console.debug("[light/html] re-rendering a region the client draws differently from the server", ...where);
-      this._clearPending();
-      this._commitResolved(value);
-      return;
-    }
-    if (value instanceof Keyed) {
-      const inner = this._child(this.start, this.end);
-      inner.state = { type: "pending" };
-      this.state = { type: "keyed", k: value.k, inner };
-      inner._resolvePending(value.v, bind);
-      return;
-    }
-    if (value instanceof ElementSpec) {
-      const el = singleElementIn(this.start, this.end);
-      if (el && el.tagName.toLowerCase() === String(value.tag).toLowerCase())
-        return this._adoptElement(el, value, bind);
-      if (bind || this._defer(value)) return;
-      this._clearPending();
-      this._commitResolved(value);
-      return;
-    }
-    if (value instanceof Unsafe || (t === "object" && /** @type {any} */ (value).nodeType)) {
-      if (bind || this._defer(value)) return;
-      this._clearPending();
-      this._commitResolved(value);
-      return;
-    }
-    if (t === "object") {
-      const v = /** @type {any} */ (value);
-      if (typeof v[Symbol.iterator] === "function") {
-        const raw = Array.isArray(v) ? v : [...v];
-        const ranges = itemRanges(this.start, this.end);
-        if (!ranges || ranges.length !== raw.length) {
-          if (bind || this._defer(raw)) return;
-          this._clearPending();
-          this._commitResolved(raw);
-          return;
-        }
-        let keyed = raw.length > 0;
-        for (const item of raw) if (!(item instanceof Keyed)) keyed = false;
-        const values = raw.map((item) => (item instanceof Keyed ? item.v : item));
-        const parts = ranges.map((r) => {
-          const p = this._child(r.start, r.end);
-          p.state = { type: "pending" };
-          return p;
-        });
-        this.state = { type: "items", parts, keys: keyed ? raw.map((item) => (item instanceof Keyed ? item.k : undefined)) : null };
-        for (let i = 0; i < parts.length; i++) parts[i]._resolvePending(values[i], bind);
-        return;
-      }
-    }
-    if (bind || this._defer(value)) return;
-    this._clearPending();
-    this._commitResolved(value);
-  }
-
-  /**
-   * @param {Element} el
-   * @param {any} spec
-   * @param {boolean} bind
-   */
-  _adoptElement(el, spec, bind) {
-    const st = {
-      type: "element",
-      tag: spec.tag,
-      el,
-      committed: new Map(),
-      events: new Map(),
-      ref: /** @type {((el: Element | null) => void) | null} */ (null),
-      childPart: /** @type {ChildPart | null} */ (null),
-    };
-    const bindings = spec.bindings ?? {};
-    for (const [rawKey, value] of Object.entries(bindings)) {
-      if (rawKey === "ref") continue;
-      const prefix = rawKey[0];
-      if (bind && prefix !== "@" && prefix !== ".") {
-        if (prefix === "?") st.committed.set(rawKey, el.hasAttribute(rawKey.slice(1)));
-        else st.committed.set(rawKey, el.hasAttribute(rawKey) ? el.getAttribute(rawKey) : nothing);
-        continue;
-      }
-      this._applyElementBinding(st, rawKey, value);
-    }
-    const pair = elementChildPair(el);
-    if (pair) {
-      st.childPart = this._child(pair.start, pair.end);
-      st.childPart.state = { type: "pending" };
-      st.childPart._resolvePending(spec.children === undefined ? nothing : spec.children, bind);
-    } else if (spec.children !== undefined)
-      this._ensureElementChildPart(st).commit(spec.children);
-    this.state = st;
-    st.ref = typeof bindings.ref === "function" ? bindings.ref : null;
-    st.ref?.(el);
-  }
-
   dispose() {
     disposeThunk(this);
     this._disposeState();
@@ -958,28 +754,29 @@ export class ChildPart {
 export const createPart = (spec, node, owner) => {
   switch (spec.kind) {
     case "child": {
-      const start = /** @type {Comment} */ (node);
-      const part = new ChildPart(start, /** @type {Comment} */ (currentHost().nextSibling(start)), owner);
+      const part = new ChildPart(node, currentHost().nextSibling(node), owner);
       part.valueIndex = spec.valueIndex;
       return part;
     }
     case "attr":
-      return new AttributePart(spec, /** @type {Element} */ (node));
+      return new AttributePart(spec, node);
     case "prop":
-      return new PropertyPart(spec, /** @type {Element} */ (node));
+      return new PropertyPart(spec, node);
     case "bool":
-      return new BooleanAttributePart(spec, /** @type {Element} */ (node));
+      return new BooleanAttributePart(spec, node);
     case "event":
-      return new EventPart(spec, /** @type {Element} */ (node), owner);
+      return new EventPart(spec, node, owner);
     case "slot":
       return currentHost().createSlotPart(spec, node, owner);
     default:
-      return new RawTextPart(spec, /** @type {Element} */ (node));
+      return new RawTextPart(spec, node);
   }
 };
 
 /** @type {WeakMap<object, ChildPart>} */
 const roots = new WeakMap();
+
+/** @typedef {ReturnType<typeof createPart>} Part */
 
 /**
  * Render a value into a container. The root part is cached per container,
@@ -988,48 +785,42 @@ const roots = new WeakMap();
  * DOM nodes, thunks, and null/undefined/nothing (clears).
  *
  * @param {unknown} value
- * @param {Element | DocumentFragment} container
+ * @param {unknown} container
  * @param {RenderOptions} [options]
  */
 export const render = (value, container, options = {}) => {
-  let part = roots.get(container);
+  const key = /** @type {object} */ (container);
+  let part = roots.get(key);
   if (!part) {
-    if (options.adopt) {
-      const pair = topLevelPair(container);
-      if (pair) {
-        part = new ChildPart(pair.start, pair.end, options.host);
-        part.state = { type: "pending" };
-        part._bindNext = options.adopt === "bind";
-        part._settle = options.settle ?? null;
-      } else console.debug("[light/html] no adoption markers found, rendering fresh");
-    }
+    if (options.adopt && adoption !== null) part = adoption.rootPart(container, options) ?? undefined;
     if (!part) {
       const host = currentHost();
-      const start = /** @type {Comment} */ (host.createAnchor(ROOT_MARKER_START));
-      const end = /** @type {Comment} */ (host.createAnchor(ROOT_MARKER_END));
+      const start = host.createAnchor(ROOT_MARKER_START);
+      const end = host.createAnchor(ROOT_MARKER_END);
       host.insertBefore(container, start, null);
       host.insertBefore(container, end, null);
       part = new ChildPart(start, end, options.host);
     }
-    roots.set(container, part);
+    roots.set(key, part);
   }
   part.commit(value == null ? nothing : value);
   return part;
 };
 
-/** @param {Element | DocumentFragment} container */
-export const hasRootPart = (container) => roots.has(container);
+/** @param {unknown} container */
+export const hasRootPart = (container) => roots.has(/** @type {object} */ (container));
 
 /**
  * Dispose the part tree rendered into a container; tears down thunk
  * effects, event listeners, and ref callbacks. Rendered DOM is left in
  * place.
  *
- * @param {Element | DocumentFragment} container
+ * @param {unknown} container
  */
 export const disposeTree = (container) => {
-  const part = roots.get(container);
+  const key = /** @type {object} */ (container);
+  const part = roots.get(key);
   if (!part) return;
   part.dispose();
-  roots.delete(container);
+  roots.delete(key);
 };
