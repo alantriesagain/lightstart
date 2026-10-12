@@ -21,6 +21,8 @@ Each run opens a fresh page. For every step the runner records:
 
 The table shows the median of the runs.
 
+Run comparisons from a copy of the package outside any folder an editor watches (a git worktree under `/tmp`, say): staging rewrites `dist/`, and an editor's file watcher and language server reacting to that run on the same machine as the browser and skew every step by a quarter or more.
+
 ## Pages
 
 | Page | What it measures |

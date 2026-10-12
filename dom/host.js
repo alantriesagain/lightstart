@@ -33,6 +33,11 @@ export class DomPrepared extends Prepared {
 const isNode = (value) => value !== null && typeof value === "object" && typeof (/** @type {{ nodeType?: unknown }} */ (value).nodeType) === "number";
 
 export class DomHost extends Host {
+  /** @type {(() => void) | null} */
+  _flush = null;
+  _frameId = 0;
+  _watchingVisibility = false;
+
   /**
    * @param {ReadonlyArray<string>} strings
    * @param {number} kind
@@ -276,6 +281,29 @@ export class DomHost extends Host {
   /** @param {() => void} flush */
   scheduleFlush(flush) {
     if (document.visibilityState === "hidden") setTimeout(flush, 0);
-    else requestAnimationFrame(flush);
+    else {
+      this._flush = flush;
+      this._frameId = requestAnimationFrame(() => {
+        this._flush = null;
+        flush();
+      });
+      if (!this._watchingVisibility) {
+        this._watchingVisibility = true;
+        document.addEventListener("visibilitychange", () => this._onVisibilityChange());
+      }
+    }
+  }
+
+  _onVisibilityChange() {
+    const flush = this._flush;
+    if (document.visibilityState !== "hidden" || flush === null) return;
+    cancelAnimationFrame(this._frameId);
+    this._flush = null;
+    setTimeout(flush, 0);
+  }
+
+  /** @param {unknown} error */
+  reportError(error) {
+    reportError(error);
   }
 }

@@ -49,6 +49,7 @@ export class Dep {
   }
 
   _notify() {
+    if (this._subscribers.size === 0) return;
     batchDepth++;
     try {
       for (const reactive of Array.from(this._subscribers)) reactive._schedule();

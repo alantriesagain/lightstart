@@ -2208,3 +2208,153 @@ describe("light - View.define's shapes", () => {
     assert.equal(Object.getPrototypeOf(C), B);
   });
 });
+
+describe("light - a class with signal fields", () => {
+  const frames = (n) => new Promise((resolve) => {
+    let left = n;
+    const step = () => (--left <= 0 ? resolve() : requestAnimationFrame(step));
+    requestAnimationFrame(step);
+  });
+
+  it("re-renders when a signal its render read changes, and resolves the update it scheduled", async () => {
+    const tag = getUniqueTag("class-counter");
+    let renders = 0;
+    class Counter extends View {
+      count = signal(0);
+      render() {
+        renders++;
+        return html`<b>${this.count.value}</b>`;
+      }
+    }
+    assert.equal(View.register(tag, Counter), Counter);
+    assert.equal(Counter.tag, tag);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "0");
+    el.count.value = 1;
+    assert.ok(el.$updatePromise, "the signal write scheduled an update");
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "1");
+    assert.equal(renders, 2);
+    el.remove();
+  });
+
+  it("recommits one part for a thunk without re-rendering", async () => {
+    const tag = getUniqueTag("class-thunk");
+    let renders = 0;
+    class Label extends View {
+      text = signal("a");
+      render() {
+        renders++;
+        return html`<i>${() => this.text.value}</i>`;
+      }
+    }
+    View.register(tag, Label);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("i").textContent, "a");
+    el.text.value = "b";
+    await frames(1);
+    assert.equal(el.querySelector("i").textContent, "b");
+    assert.equal(renders, 1);
+    el.remove();
+  });
+
+  it("runs the lifecycle methods in order, hands the update hooks the changed props, and runs owned teardowns on remove", async () => {
+    const tag = getUniqueTag("class-hooks");
+    const seen = [];
+    class Hooked extends View {
+      n = signal(0);
+      connected() {
+        seen.push("connected");
+        this.$own(() => seen.push("teardown"));
+      }
+      willUpdate(changed) {
+        seen.push(`willUpdate:${[...changed.keys()].join(",")}`);
+      }
+      firstUpdated(changed) {
+        seen.push(`firstUpdated:${changed instanceof Map}`);
+      }
+      updated(changed) {
+        seen.push(`updated:${changed instanceof Map}`);
+      }
+      disconnected() {
+        seen.push("disconnected");
+      }
+      render() {
+        return html`<span>${this.n.value}</span>`;
+      }
+    }
+    View.register(tag, Hooked);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    el.n.value = 1;
+    await el.$requestUpdate();
+    el.remove();
+    assert.deepEqual(seen, [
+      "connected",
+      "willUpdate:",
+      "firstUpdated:true",
+      "updated:true",
+      "willUpdate:",
+      "updated:true",
+      "teardown",
+      "disconnected",
+    ]);
+  });
+
+  it("stops following its signals once removed, and follows them again when it returns", async () => {
+    const tag = getUniqueTag("class-detached");
+    let renders = 0;
+    class Gone extends View {
+      n = signal(0);
+      render() {
+        renders++;
+        return html`${this.n.value}`;
+      }
+    }
+    View.register(tag, Gone);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    el.remove();
+    el.n.value = 1;
+    await frames(2);
+    assert.equal(renders, 1);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.textContent, "1");
+    el.n.value = 2;
+    await el.$requestUpdate();
+    assert.equal(el.textContent, "2");
+    assert.equal(renders, 3);
+    el.remove();
+  });
+
+  it("leaves a defined component's render untracked: its properties drive its updates", async () => {
+    const tag = getUniqueTag("defined-untracked");
+    const outside = signal(0);
+    let renders = 0;
+    View.define(tag, {
+      props: { label: "x" },
+      render() {
+        renders++;
+        return html`<span>${this.label}:${outside.value}</span>`;
+      },
+    });
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.$ctor.$trackRender, false);
+    outside.value = 1;
+    await frames(2);
+    assert.equal(renders, 1);
+    el.label = "y";
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("span").textContent, "y:1");
+    el.remove();
+  });
+});

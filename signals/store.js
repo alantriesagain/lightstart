@@ -9,7 +9,7 @@
 
 /** @import { StateDef, Store } from "./types.ts" */
 
-import { Dep } from "./index.js";
+import { Dep, getCurrentEffect } from "./index.js";
 
 /** @param {any} def @returns {StateDef} */
 const normalize = (def) =>
@@ -47,6 +47,7 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
 
   /** @param {string} key */
   const trackRead = (key) => {
+    if (getCurrentEffect() === null) return;
     let dep = effectDeps.get(key);
     if (!dep) {
       dep = new Dep();

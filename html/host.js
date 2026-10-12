@@ -309,6 +309,14 @@ export class Host {
   scheduleFlush(flush) {
     unsupported(`frame scheduling (${String(flush === null)})`);
   }
+
+  /**
+   * Report an error an update threw, without unwinding the flush.
+   * @param {unknown} error
+   */
+  reportError(error) {
+    console.error(error);
+  }
 }
 
 let host = new Host();
