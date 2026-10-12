@@ -8,9 +8,8 @@
  * `configure({ host: new MarkupHost(), effect })`.
  */
 import { Clone, Host, ListenerOptions, Prepared } from "../html/host.js";
-import { MARKER_START } from "../html/constants.js";
 import { parseTemplate } from "../html/parser.js";
-import { TplComment, TplElement, TplNode, TplText, tokenize } from "../html/tokenizer.js";
+import { TplComment, TplElement, TplNode, TplText, indexParts, tokenize } from "../html/tokenizer.js";
 import { MComment, MElement, MFragment, MListener, MNode, MText, insertBefore, isConnected, nextSiblingOf, removeNode } from "./node.js";
 
 /** @import { HostNode } from "../html/host.js" */
@@ -93,29 +92,7 @@ export class MarkupHost extends Host {
   prepare(strings, kind) {
     const { markup, parts } = parseTemplate(strings, kind);
     const tree = tokenize(markup, kind);
-    /** @type {number[]} */
-    const elIndex = [];
-    /** @type {number[]} */
-    const childIndex = [];
-    let nodeIndex = -1;
-    const visit = (/** @type {TplNode[]} */ nodes) => {
-      for (const node of nodes)
-        if (node instanceof TplElement) {
-          nodeIndex++;
-          if (node.marked) elIndex.push(nodeIndex);
-          visit(node.children);
-        } else if (node instanceof TplComment) {
-          nodeIndex++;
-          if (node.data === MARKER_START) childIndex.push(nodeIndex);
-        }
-    };
-    visit(tree);
-    const specs = parts
-      .map((p) => ({
-        ...p,
-        nodeIndex: p.kind === "child" ? childIndex[/** @type {number} */ (p.childOrd)] : elIndex[/** @type {number} */ (p.elOrd)],
-      }))
-      .sort((a, b) => a.nodeIndex - b.nodeIndex || a.valueIndex - b.valueIndex);
+    const specs = indexParts(tree, parts);
     return new MarkupPrepared(specs, tree);
   }
 

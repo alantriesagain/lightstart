@@ -62,6 +62,13 @@ export class ListenerOptions {
 /** The renderer interface. Every method throws here; a host overrides what it supports. */
 export class Host {
   /**
+   * Whether a handler function is called with the owner as `this`, as in a
+   * browser; a host that cannot bind one calls it with the event alone.
+   * @type {boolean}
+   */
+  bindsHandlerThis = true;
+
+  /**
    * @param {ReadonlyArray<string>} strings
    * @param {number} kind
    * @returns {Prepared}

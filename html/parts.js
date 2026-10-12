@@ -70,7 +70,7 @@ export class EventBinding {
   /** @param {unknown} event */
   handleEvent(event) {
     const h = this.handler;
-    if (typeof h === "function") return h.call(this.owner ?? this.el, event);
+    if (typeof h === "function") return currentHost().bindsHandlerThis ? h.call(this.owner ?? this.el, event) : h(event);
     if (h === undefined) return undefined;
     return currentHost().invokeListener(h, event);
   }

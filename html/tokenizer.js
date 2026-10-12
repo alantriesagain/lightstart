@@ -10,7 +10,9 @@
  * are decoded. It does not reproduce the HTML parser's implied end tags or
  * table fixups: elements nest as written.
  */
-import { HTML_KIND } from "./constants.js";
+import { HTML_KIND, MARKER_START } from "./constants.js";
+
+/** @import { ParsedPart, PartSpec } from "./types.ts" */
 
 const ELEMENT_MARKER = "data-$$";
 const VOID_TAGS = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"]);
@@ -307,3 +309,47 @@ class Tokenizer {
  * @returns {TplNode[]}
  */
 export const tokenize = (markup, kind) => new Tokenizer(markup, kind).run();
+
+/**
+ * The part specs of a template tree, each with the index of the node it
+ * binds to: elements and comments counted in document order, the way a
+ * browser's TreeWalker counts them, so a clone finds its targets by the
+ * same walk.
+ * @param {TplNode[]} tree
+ * @param {ParsedPart[]} parts
+ * @returns {PartSpec[]}
+ */
+export const indexParts = (tree, parts) => {
+  /** @type {number[]} */
+  const elIndex = [];
+  /** @type {number[]} */
+  const childIndex = [];
+  let nodeIndex = -1;
+  /** @param {TplNode[]} nodes */
+  const visit = (nodes) => {
+    for (const node of nodes)
+      if (node instanceof TplElement) {
+        nodeIndex++;
+        if (node.marked) elIndex.push(nodeIndex);
+        visit(node.children);
+      } else if (node instanceof TplComment) {
+        nodeIndex++;
+        if (node.data === MARKER_START) childIndex.push(nodeIndex);
+      }
+  };
+  visit(tree);
+  /** @type {PartSpec[]} */
+  const specs = [];
+  for (const p of parts) {
+    const nodeIndexOf = p.kind === "child" ? childIndex[p.childOrd ?? 0] : elIndex[p.elOrd ?? 0];
+    specs.push({ kind: p.kind, valueIndex: p.valueIndex, valueCount: p.valueCount, name: p.name, statics: p.statics, elOrd: p.elOrd, childOrd: p.childOrd, nodeIndex: nodeIndexOf });
+  }
+  specs.sort(
+    /**
+     * @param {PartSpec} a
+     * @param {PartSpec} b
+     */
+    (a, b) => a.nodeIndex - b.nodeIndex || a.valueIndex - b.valueIndex,
+  );
+  return specs;
+};

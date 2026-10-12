@@ -77,7 +77,7 @@ for (const adapter of hosts)
         assert.equal(text(), "obj");
       });
 
-      it("renders a non-array iterable as a list", () => {
+      it("renders a non-array iterable as a list", { skip: !adapter.iterables }, () => {
         render(html`<ul>${new Set([html`<li>a</li>`, html`<li>b</li>`])}</ul>`, container);
         assert.equal(markup(), "<ul><li>a</li><li>b</li></ul>");
       });
@@ -155,7 +155,7 @@ for (const adapter of hosts)
     });
 
     describe("events", () => {
-      it("invokes the current handler with the element as this", () => {
+      it("invokes the current handler with the element as this", { skip: !adapter.handlerThis }, () => {
         /** @type {unknown[]} */
         const seen = [];
         render(html`<button @click=${/** @this {unknown} */ function (/** @type {unknown} */ e) { seen.push(this, e); }}></button>`, container);
@@ -164,7 +164,15 @@ for (const adapter of hosts)
         assert.deepEqual(seen, [first(), event]);
       });
 
-      it("uses options.host as this when given", () => {
+      it("invokes the current handler with the event", () => {
+        /** @type {string[]} */
+        const seen = [];
+        render(html`<button @click=${(/** @type {{ type: string, detail: string }} */ e) => seen.push(`${e.type}:${e.detail}`)}></button>`, container);
+        adapter.fire(first(), "click", { detail: "d" });
+        assert.deepEqual(seen, ["click:d"]);
+      });
+
+      it("uses options.host as this when given", { skip: !adapter.handlerThis }, () => {
         const owner = {};
         /** @type {unknown[]} */
         const seen = [];

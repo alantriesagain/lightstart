@@ -294,9 +294,8 @@ export const parseTemplate = (strings, kind) => {
             state = TAG_BODY;
             continue;
           }
-          a.value = c;
+          a.value = "";
           state = ATTR_VALUE_UNQ;
-          i++;
           continue;
         }
         case ATTR_VALUE_DQ: {
@@ -305,7 +304,8 @@ export const parseTemplate = (strings, kind) => {
             i++;
             continue;
           }
-          /** @type {NonNullable<typeof attr>} */ (attr).value += c;
+          const a = /** @type {NonNullable<typeof attr>} */ (attr);
+          a.value += c;
           i++;
           continue;
         }
@@ -315,7 +315,8 @@ export const parseTemplate = (strings, kind) => {
             i++;
             continue;
           }
-          /** @type {NonNullable<typeof attr>} */ (attr).value += c;
+          const a = /** @type {NonNullable<typeof attr>} */ (attr);
+          a.value += c;
           i++;
           continue;
         }
@@ -324,7 +325,8 @@ export const parseTemplate = (strings, kind) => {
             finishAttr('"');
             continue;
           }
-          /** @type {NonNullable<typeof attr>} */ (attr).value += c;
+          const a = /** @type {NonNullable<typeof attr>} */ (attr);
+          a.value += c;
           i++;
           continue;
         }

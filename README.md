@@ -193,6 +193,8 @@ export default [recommended];
 | `dom/view.js` | The browser `View`: the custom element, the property system, attributes, slots, plugins, `View.define`, `View.register` |
 | `dom/host.js` | The browser host of the renderer (`DomHost`); `dom/` holds everything that needs a document |
 | `markup/` | The renderer on an in-memory tree: server prerendering a page adopts, and the host every other host is measured against |
+| `tdom/` | The terminal host: a node tree, layout, paint, a screen diff, key input, an editor, and `View` on it |
+| `native/` | Light as a native binary: the scriptc entry, the parity tests, the coverage gate, the compiler probes |
 | `env/`, `navigation/` | The page's environment and the host's router, as components read them |
 | `theme/` | Tokens, presets, `theme.css`, the color scheme, icons |
 | `components/` | The component library, one directory per category, a `.css` and a `.demo.js` beside each component |

@@ -22,7 +22,9 @@
     "../signals/store.js",
     "../signals/types.ts",
     "../view/core.js",
-    "../html/tokenizer.js"
+    "../html/tokenizer.js",
+    "../tdom/*.js",
+    "../native/index.js"
   ],
   "exclude": []
 }
