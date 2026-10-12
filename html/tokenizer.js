@@ -65,7 +65,7 @@ export const decodeEntities = (s) => {
   let i = 0;
   const n = s.length;
   while (i < n) {
-    const c = s[i];
+    const c = s.charAt(i);
     if (c !== "&") {
       out += c;
       i++;
@@ -83,7 +83,7 @@ export const decodeEntities = (s) => {
       const hex = name[1] === "x" || name[1] === "X";
       const digits = hex ? name.slice(2) : name.slice(1);
       let ok = digits.length > 0;
-      for (let k = 0; k < digits.length; k++) if (!(hex ? isHexDigit(digits[k]) : isDigit(digits[k]))) ok = false;
+      for (let k = 0; k < digits.length; k++) if (!(hex ? isHexDigit(digits.charAt(k)) : isDigit(digits.charAt(k)))) ok = false;
       if (ok) {
         const code = parseInt(digits, hex ? 16 : 10);
         if (code > 0 && code <= 0x10ffff) decoded = String.fromCodePoint(code);
@@ -179,7 +179,7 @@ class Tokenizer {
     const markup = this.markup;
     const n = markup.length;
     while (this.i < n) {
-      const c = markup[this.i];
+      const c = markup.charAt(this.i);
       if (c === "<") {
         if (markup.startsWith("<!--", this.i)) {
           this.flushText();
@@ -194,7 +194,8 @@ class Tokenizer {
           this.i = end < 0 ? n : end + 1;
           continue;
         }
-        if (markup[this.i + 1] === "/" && this.i + 2 < n && isTagStart(markup[this.i + 2])) {
+        const after = this.i + 2 < n ? markup.charAt(this.i + 2) : "";
+        if (markup.charAt(this.i + 1) === "/" && isTagStart(after)) {
           this.flushText();
           const end = markup.indexOf(">", this.i);
           const name = this.normalizeName(markup.slice(this.i + 2, end < 0 ? n : end).trim());
@@ -202,7 +203,8 @@ class Tokenizer {
           this.i = end < 0 ? n : end + 1;
           continue;
         }
-        if (this.i + 1 < n && isTagStart(markup[this.i + 1])) {
+        const next = this.i + 1 < n ? markup.charAt(this.i + 1) : "";
+        if (isTagStart(next)) {
           this.flushText();
           this.openTag();
           continue;
@@ -220,19 +222,23 @@ class Tokenizer {
     const n = markup.length;
     let i = this.i + 1;
     const nameStart = i;
-    while (i < n && !isWS(markup[i]) && markup[i] !== ">" && markup[i] !== "/") i++;
+    while (i < n) {
+      const c = markup.charAt(i);
+      if (isWS(c) || c === ">" || c === "/") break;
+      i++;
+    }
     const el = new TplElement(this.normalizeName(markup.slice(nameStart, i)));
     let selfClosing = false;
     while (i < n) {
-      while (i < n && isWS(markup[i])) i++;
+      while (i < n && isWS(markup.charAt(i))) i++;
       if (i >= n) break;
-      const c = markup[i];
+      const c = markup.charAt(i);
       if (c === ">") {
         i++;
         break;
       }
       if (c === "/") {
-        if (markup[i + 1] === ">") {
+        if (markup.charAt(i + 1) === ">") {
           selfClosing = true;
           i += 2;
           break;
@@ -241,22 +247,22 @@ class Tokenizer {
         continue;
       }
       const attrStart = i;
-      while (i < n && !isWS(markup[i]) && markup[i] !== "=" && markup[i] !== ">" && !(markup[i] === "/" && markup[i + 1] === ">")) i++;
+      while (i < n && !isWS(markup.charAt(i)) && markup.charAt(i) !== "=" && markup.charAt(i) !== ">" && !(markup.charAt(i) === "/" && markup.charAt(i + 1) === ">")) i++;
       const name = this.normalizeName(markup.slice(attrStart, i));
       let value = "";
       let j = i;
-      while (j < n && isWS(markup[j])) j++;
-      if (markup[j] === "=") {
+      while (j < n && isWS(markup.charAt(j))) j++;
+      if (markup.charAt(j) === "=") {
         j++;
-        while (j < n && isWS(markup[j])) j++;
-        const q = markup[j];
+        while (j < n && isWS(markup.charAt(j))) j++;
+        const q = markup.charAt(j);
         if (q === "\"" || q === "'") {
           const end = markup.indexOf(q, j + 1);
           value = end < 0 ? markup.slice(j + 1) : markup.slice(j + 1, end);
           j = end < 0 ? n : end + 1;
         } else {
           const valueStart = j;
-          while (j < n && !isWS(markup[j]) && markup[j] !== ">") j++;
+          while (j < n && !isWS(markup.charAt(j)) && markup.charAt(j) !== ">") j++;
           value = markup.slice(valueStart, j);
         }
         i = j;
@@ -285,7 +291,7 @@ class Tokenizer {
     while (end >= 0) {
       const at = end + 2 + el.tag.length;
       if (at >= lower.length) break;
-      const after = lower[at];
+      const after = lower.charAt(at);
       if (after === ">" || isWS(after) || after === "/") break;
       end = lower.indexOf("</" + el.tag, end + 1);
     }

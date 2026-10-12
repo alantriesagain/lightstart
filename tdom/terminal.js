@@ -9,7 +9,7 @@ export class Terminal {
     this.cols = 80;
     this.rows = 24;
     this.entered = false;
-    /** @type {((chunk: Buffer) => void)[]} */
+    /** @type {((chunk: Uint8Array) => void)[]} */
     this.inputListeners = [];
     /** @type {(() => void)[]} */
     this.resizeListeners = [];
@@ -26,7 +26,11 @@ export class Terminal {
     this.rows = typeof r === "number" && r > 0 ? r : 24;
   }
 
-  /** @param {(chunk: Buffer) => void} fn */
+  /**
+   * Hear every chunk the terminal sends; a Buffer is a Uint8Array, and the
+   * narrower type keeps a listener callable from a program compiled natively.
+   * @param {(chunk: Uint8Array) => void} fn
+   */
   onInput(fn) {
     this.inputListeners.push(fn);
   }
@@ -48,7 +52,7 @@ export class Terminal {
     this.write(ALT_SCREEN_ON + CURSOR_HIDE + PASTE_ON + MOUSE_ON + CLEAR + HOME);
     if (process.stdin.isTTY === true) process.stdin.setRawMode(true);
     process.stdin.resume();
-    process.stdin.on("data", (/** @type {Buffer} */ chunk) => {
+    process.stdin.on("data", (/** @type {Uint8Array} */ chunk) => {
       for (const fn of this.inputListeners.slice()) fn(chunk);
     });
     process.on("SIGWINCH", () => {

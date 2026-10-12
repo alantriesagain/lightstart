@@ -12,6 +12,7 @@ import { parseTemplate } from "../html/parser.js";
 import { SlotPart } from "./slots.js";
 
 /** @import { HostNode } from "../html/host.js" */
+/** @import { EventBinding } from "../html/parts.js" */
 /** @import { PartSpec } from "../html/types.ts" */
 
 const SHOW_ELEMENT_AND_COMMENT = 129;
@@ -232,7 +233,7 @@ export class DomHost extends Host {
   /**
    * @param {HostNode} el
    * @param {string} name
-   * @param {{ handleEvent: (event: unknown) => unknown }} binding
+   * @param {EventBinding} binding
    * @param {ListenerOptions | null} options
    */
   addListener(el, name, binding, options) {
@@ -244,7 +245,7 @@ export class DomHost extends Host {
   /**
    * @param {HostNode} el
    * @param {string} name
-   * @param {{ handleEvent: (event: unknown) => unknown }} binding
+   * @param {EventBinding} binding
    * @param {ListenerOptions | null} options
    */
   removeListener(el, name, binding, options) {

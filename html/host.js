@@ -9,6 +9,7 @@
  */
 
 /** @import { PartSpec } from "./types.ts" */
+/** @import { EventBinding } from "./parts.js" */
 
 /** @typedef {unknown} HostNode An opaque node of the active host; only the host reads it. */
 
@@ -243,7 +244,7 @@ export class Host {
   /**
    * @param {HostNode} el
    * @param {string} name
-   * @param {{ handleEvent: (event: unknown) => unknown }} binding
+   * @param {EventBinding} binding the engine's binding; calling its `handleEvent(event)` runs the handler
    * @param {ListenerOptions | null} options
    */
   addListener(el, name, binding, options) {
@@ -253,7 +254,7 @@ export class Host {
   /**
    * @param {HostNode} el
    * @param {string} name
-   * @param {{ handleEvent: (event: unknown) => unknown }} binding
+   * @param {EventBinding} binding
    * @param {ListenerOptions | null} options
    */
   removeListener(el, name, binding, options) {

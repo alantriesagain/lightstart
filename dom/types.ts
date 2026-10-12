@@ -25,3 +25,7 @@ export interface ProjectHooks {
 export type ProjectedUnit =
   | { range: true; start: Comment; end: Comment; slot: string | null; taken: boolean }
   | { range: false; node: Element; slot: string; taken: boolean };
+
+/** Re-export the runtime so `@bootstrapp/light/dom` surfaces the browser View and the host beside these declarations. */
+export * from "./index.js";
+export { default } from "./index.js";

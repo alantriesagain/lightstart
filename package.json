@@ -12,10 +12,19 @@
       "types": "./view/types.ts",
       "default": "./view/index.js"
     },
+    "./view/core": "./view/core.js",
+    "./dom": {
+      "types": "./dom/types.ts",
+      "default": "./dom/index.js"
+    },
+    "./markup": "./markup/index.js",
+    "./tdom": "./tdom/index.js",
+    "./native": "./native/index.js",
     "./html": {
       "types": "./html/types.ts",
       "default": "./html/index.js"
     },
+    "./html/core": "./html/core.js",
     "./signals": {
       "types": "./signals/types.ts",
       "default": "./signals/index.js"

@@ -183,6 +183,10 @@ import recommended from "@bootstrapp/light/eslint/recommended.js";
 export default [recommended];
 ```
 
+## Hosts
+
+One engine, three hosts. The renderer and the view core never touch a document: a host (`html/host.js`) answers for nodes, attributes, listeners, template cloning and frames. `@bootstrapp/light` and `@bootstrapp/light/html` install the browser host (`dom/`); `@bootstrapp/light/markup` renders on an in-memory tree and serializes markup a page adopts, which also makes it the host the engine's conformance suite runs on under plain node; `@bootstrapp/light/native` installs the terminal host (`tdom/`), a node tree with its own layout, painter, screen diff, input decoder, editor, mouse and focus, and compiles with [scriptc](https://github.com/vercel-labs/scriptc) to a static binary with no JavaScript engine in it. A component on the terminal is a `View` with signal fields and a `render()` that returns an `html` template; the HTML tag names map onto the terminal's box, text, span and input. `native/README.md` has the gates, the benchmark and the compiler's rules.
+
 ## Files
 
 | File | What it owns |

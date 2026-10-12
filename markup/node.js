@@ -6,6 +6,8 @@
  * descendants count as connected.
  */
 
+/** @import { EventBinding } from "../html/parts.js" */
+
 export class MNode {
   constructor() {
     /** @type {MElement | null} */
@@ -32,7 +34,7 @@ export class MComment extends MNode {
 /** A listener an element holds: the engine's binding and the options it was added with. */
 export class MListener {
   /**
-   * @param {{ handleEvent: (event: unknown) => unknown }} binding
+   * @param {EventBinding} binding
    * @param {{ capture: boolean, once: boolean, passive: boolean } | null} options
    */
   constructor(binding, options) {

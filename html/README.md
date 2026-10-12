@@ -18,6 +18,10 @@ primitives that replaced lit's directives. 9.1 KB min+gzip bundled with esbuild,
 | `reactive.js` | Thunk ↔ effect-adapter seam (`configure({ effect, host })`) |
 | `tokenizer.js` | Marker markup → template tree, for hosts without an HTML parser (`markup/`, the terminal) |
 | `conformance.test.js`, `conformance-hosts.js` | The engine's behaviour as every host must show it, run under `node --test` against each host adapter listed |
+
+## Hosts
+
+The engine never touches a document: every node, attribute and listener operation goes through the `Host` installed with `configure({ host, effect })`, and templates are prepared and cloned by it. Three hosts ship: `dom/host.js` for the browser (installed by `@bootstrapp/light/html` and `@bootstrapp/light`), `markup/host.js` for an in-memory tree that serializes to markup a page adopts, and `tdom/host.js` for the terminal, which `@bootstrapp/light/native` installs. A host answers `prepare`/`clone`, the node operations, `asNode` (what child values are nodes of its own), `listenerOptions`/`addListener`/`removeListener`, `bindsHandlerThis`, `parseMarkup`, `scheduleFlush` and `reportError`; `html/conformance.test.js` is what it must pass.
 | `../dom/adopt.js` | Two-stage adoption of browser-prerendered DOM, installed into the engine through `installAdoption` |
 | `../dom/slots.js` | Light-DOM `<slot>` projection: unit walkers, `SlotPart`, `projectSlots`, the `<unslotted>` holder |
 

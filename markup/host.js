@@ -13,6 +13,7 @@ import { TplComment, TplElement, TplNode, TplText, indexParts, tokenize } from "
 import { MComment, MElement, MFragment, MListener, MNode, MText, insertBefore, isConnected, nextSiblingOf, removeNode } from "./node.js";
 
 /** @import { HostNode } from "../html/host.js" */
+/** @import { EventBinding } from "../html/parts.js" */
 /** @import { PartSpec } from "../html/types.ts" */
 
 /** A prepared markup template: the part specs with the node index each binds to, and the template tree. */
@@ -240,7 +241,7 @@ export class MarkupHost extends Host {
   /**
    * @param {HostNode} el
    * @param {string} name
-   * @param {{ handleEvent: (event: unknown) => unknown }} binding
+   * @param {EventBinding} binding
    * @param {ListenerOptions | null} options
    */
   addListener(el, name, binding, options) {
@@ -257,7 +258,7 @@ export class MarkupHost extends Host {
   /**
    * @param {HostNode} el
    * @param {string} name
-   * @param {{ handleEvent: (event: unknown) => unknown }} binding
+   * @param {EventBinding} binding
    * @param {ListenerOptions | null} options
    */
   removeListener(el, name, binding, options) {

@@ -4,8 +4,9 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const LIGHT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const LEFT_OUT = new Set([".bootstrapp", "benchmarks", "dist", "eslint.config.js", "examples", "fixtures", "node_modules", "scripts", "skills", "website"]);
+const LEFT_OUT = new Set([".bootstrapp", "benchmarks", "dist", "eslint.config.js", "examples", "fixtures", "node_modules", "probes", "scripts", "skills", "website"]);
 const SIDE_FILE = /\.(test|demo)\.js$/;
+const TOOL_FILE = /^(native\/(run|coverage|bench|microbench|demo|assert)\.js|html\/conformance-hosts\.js)$/;
 
 /** Where the staged package lands. */
 export const DIST = join(LIGHT, "dist");
@@ -25,7 +26,7 @@ const walk = (dir) =>
  */
 export const stage = () => {
   rmSync(DIST, { recursive: true, force: true });
-  const sources = walk(LIGHT).map((file) => relative(LIGHT, file)).filter((file) => /\.(js|ts|css)$/.test(file) && !SIDE_FILE.test(file));
+  const sources = walk(LIGHT).map((file) => relative(LIGHT, file)).filter((file) => /\.(js|ts|css)$/.test(file) && !SIDE_FILE.test(file) && !TOOL_FILE.test(file));
   const docs = ["README.md", "LICENSE"].filter((file) => existsSync(join(LIGHT, file)));
   for (const file of [...sources, ...docs]) {
     mkdirSync(dirname(join(DIST, file)), { recursive: true });

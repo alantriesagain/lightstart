@@ -327,21 +327,21 @@ export class TermHost extends Host {
   /**
    * @param {HostNode} el
    * @param {string} name
-   * @param {{ handleEvent: (event: unknown) => unknown }} binding
+   * @param {EventBinding} binding
    * @param {ListenerOptions | null} options
    */
   addListener(el, name, binding, options) {
-    /** @type {TElement} */ (el).addHandler(name, /** @type {EventBinding} */ (binding), options !== null && options.once);
+    /** @type {TElement} */ (el).addHandler(name, binding, options !== null && options.once);
   }
 
   /**
    * @param {HostNode} el
    * @param {string} name
-   * @param {{ handleEvent: (event: unknown) => unknown }} binding
+   * @param {EventBinding} binding
    * @param {ListenerOptions | null} _options
    */
   removeListener(el, name, binding, _options) {
-    /** @type {TElement} */ (el).removeHandler(name, /** @type {EventBinding} */ (binding));
+    /** @type {TElement} */ (el).removeHandler(name, binding);
   }
 
   /**
