@@ -2,13 +2,17 @@
  * @bootstrapp/light/tdom/renderer: frames. Layout, paint, diff and write,
  * one per scheduler tick after the views flushed. A key goes to the
  * focused editor first, then bubbles from it (or the root) through the
- * element handlers.
+ * element handlers; Tab and Shift+Tab move the focus along the focusable
+ * elements, Enter and Space click the focused one. A mouse press focuses
+ * what it lands on, a release on the same element clicks it, the wheel
+ * scrolls the nearest scrolling box under the pointer.
  */
 import { CLEAR, CURSOR_HIDE, CURSOR_SHOW, cup } from "./ansi.js";
-import { KeyEvent } from "./events.js";
+import { FocusEvent, KeyEvent, MouseEvent, WheelEvent } from "./events.js";
 import { editorHandleKey } from "./editor.js";
+import { hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.js";
 import { InputDecoder } from "./input.js";
-import { layout } from "./layout.js";
+import { layout, scrollBy } from "./layout.js";
 import { TElement, TInput, TRoot } from "./node.js";
 import { Caret, Clip, paint } from "./paint.js";
 import { Screen, diffScreens } from "./screen.js";
@@ -26,9 +30,13 @@ export class Renderer {
     this.root = root;
     this.front = new Screen(term.cols, term.rows);
     this.back = new Screen(term.cols, term.rows);
-    /** @type {TInput | null} */
+    /** @type {TElement | null} */
     this.focus = null;
+    /** @type {TElement | null} */
+    this.pressed = null;
     this.decoder = new InputDecoder((e) => this.dispatchKey(e));
+    this.decoder.onMouse = (e) => this.dispatchMouse(e);
+    this.decoder.onWheel = (e) => this.dispatchWheel(e);
     this.cursorShown = false;
     this.stopped = false;
     this.frameCount = 0;
@@ -92,20 +100,85 @@ export class Renderer {
     return this.back.text();
   }
 
+  /**
+   * Give `el` the focus: the one that had it gets a blur event, the new one
+   * a focus event. Null clears it.
+   * @param {TElement | null} el
+   */
+  setFocus(el) {
+    const prev = this.focus;
+    if (prev === el) return;
+    this.focus = el;
+    if (prev !== null) prev.dispatch(new FocusEvent("blur"));
+    if (el !== null) el.dispatch(new FocusEvent("focus"));
+    frames.request();
+  }
+
+  /**
+   * Move the focus one step along the focusable elements, wrapping around.
+   * @param {number} delta 1 forward, -1 back
+   */
+  moveFocus(delta) {
+    const current = this.focus !== null && this.focus.isConnected() ? this.focus : null;
+    this.setFocus(nextFocusable(this.root, current, delta));
+  }
+
   /** @param {KeyEvent} e */
   dispatchKey(e) {
     if (this.onKey !== null && this.onKey(e)) {
       frames.request();
       return;
     }
+    if (e.key === "tab" && !e.ctrl && !e.alt) {
+      this.moveFocus(e.shift ? -1 : 1);
+      return;
+    }
     const f = this.focus;
     if (f !== null && f.isConnected()) {
-      if (editorHandleKey(f, e)) {
+      if (f instanceof TInput) {
+        if (editorHandleKey(f, e)) {
+          frames.request();
+          return;
+        }
+      } else if (e.key === "enter" || (e.key === "char" && e.text === " " && !e.ctrl && !e.alt)) {
+        f.dispatch(new MouseEvent("click", f.x, f.y, 0, e.ctrl, e.alt, e.shift));
         frames.request();
         return;
       }
       f.dispatch(e);
     } else this.root.dispatch(e);
+    frames.request();
+  }
+
+  /** @param {MouseEvent} e */
+  dispatchMouse(e) {
+    const target = hitTest(this.root, e.x, e.y);
+    if (e.type === "mousedown") {
+      this.pressed = target;
+      if (target !== null) {
+        /** @type {TElement | null} */
+        let candidate = target;
+        while (candidate !== null && !isFocusable(candidate)) candidate = candidate.parent;
+        if (candidate !== null) this.setFocus(candidate);
+      }
+    }
+    if (target !== null) target.dispatch(e);
+    if (e.type === "mouseup") {
+      const pressed = this.pressed;
+      this.pressed = null;
+      if (pressed !== null && pressed === target) target.dispatch(new MouseEvent("click", e.x, e.y, e.button, e.ctrl, e.alt, e.shift));
+    }
+    frames.request();
+  }
+
+  /** @param {WheelEvent} e */
+  dispatchWheel(e) {
+    const target = hitTest(this.root, e.x, e.y);
+    const consumed = target !== null && target.dispatch(e);
+    if (!consumed) {
+      const box = scrollBoxOf(target);
+      if (box !== null) scrollBy(box, e.delta * 3);
+    }
     frames.request();
   }
 

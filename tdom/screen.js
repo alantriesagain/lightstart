@@ -109,6 +109,22 @@ export class Screen {
     }
   }
 
+  /**
+   * Set an attribute bit on every cell of a rectangle, clipped to the grid.
+   * @param {number} x
+   * @param {number} y
+   * @param {number} w
+   * @param {number} h
+   * @param {number} bit
+   */
+  addAttr(x, y, w, h, bit) {
+    const x0 = x < 0 ? 0 : x;
+    const y0 = y < 0 ? 0 : y;
+    const x1 = x + w > this.w ? this.w : x + w;
+    const y1 = y + h > this.h ? this.h : y + h;
+    for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) this.attrs[yy * this.w + xx] |= bit;
+  }
+
   /** @param {number} i */
   styleAt(i) {
     return new Style(this.fg[i], this.bg[i], this.attrs[i]);

@@ -52,4 +52,26 @@ dec.push(bytes);
 dec.push(new Uint8Array([0xa9, 0x21]));
 eq("utf8 split across chunks", got.join(" "), "h é !");
 
+/** @type {string[]} */
+const mouse = [];
+dec.onMouse = (e) => {
+  mouse.push(e.type + "@" + String(e.x) + "," + String(e.y) + ":" + String(e.button) + (e.ctrl ? "+ctrl" : "") + (e.shift ? "+shift" : "") + (e.alt ? "+alt" : ""));
+};
+dec.onWheel = (e) => {
+  mouse.push("wheel" + String(e.delta) + "@" + String(e.x) + "," + String(e.y));
+};
+got.length = 0;
+dec.pushText("\x1b[<0;10;5M\x1b[<0;10;5m");
+eq("sgr press and release", mouse.join(" "), "mousedown@9,4:0 mouseup@9,4:0");
+mouse.length = 0;
+dec.pushText("\x1b[<2;1;1M\x1b[<18;3;3M\x1b[<6;3;3m");
+eq("buttons and modifiers", mouse.join(" "), "mousedown@0,0:2 mousedown@2,2:2+ctrl mouseup@2,2:2+shift");
+mouse.length = 0;
+dec.pushText("\x1b[<32;7;8M\x1b[<64;7;8M\x1b[<65;7;9M");
+eq("motion and wheel", mouse.join(" "), "mousemove@6,7:0 wheel-1@6,7 wheel1@6,8");
+mouse.length = 0;
+dec.pushText("\x1b[<0;10");
+dec.pushText(";5Mq");
+eq("split mouse report then text", mouse.join(" ") + " " + got.join(" "), "mousedown@9,4:0 q");
+
 done();

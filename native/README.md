@@ -8,6 +8,8 @@ npm run coverage:native    # scriptc coverage native/index.js: fully static, not
 npm run test:native        # every native/*.test.js under node and under scriptc run; outputs must match
 npm run probes             # the compiler probes (native/probes/) that decided how the core is written
 node native/bench.js       # 10k keyed rows, update every 10th: node against the native binary
+node native/demo.js        # a counter button, a scrolling list, an editor; --log <file> records what happens
+native/pty.sh              # builds the demo natively and drives it in a pty: click, wheel, Tab, Enter, submit
 ```
 
 | File | What it owns |
@@ -15,7 +17,8 @@ node native/bench.js       # 10k keyed rows, update every 10th: node against the
 | `index.js` | The entry: configures the terminal host and re-exports the html core, the signals, the view core and `tdom/` |
 | `assert.js` | `ok`, `eq`, `eqn`, `throws`, `done`: the checks a native test uses, since node:test does not run under scriptc |
 | `run.js`, `coverage.js` | The parity runner and the coverage gate `npm run verify` runs |
-| `*.test.js` | Parts and views on the terminal host, layout and paint, wrapping and widths, the editor, the input decoder |
+| `*.test.js` | Parts and views on the terminal host, layout and paint, wrapping and widths, the editor, the input decoder, the hit test and focus ring with a renderer on a test terminal |
+| `demo.js`, `pty.sh` | The demo screen and the pty gate that clicks, scrolls, focuses and submits in it as a binary (3.3 MB stripped) |
 | `probes/` | One-file programs that pin what the compiler accepts, and the decisions they produced (`probes/README.md`) |
 | `tsconfig.json` | The native graph: what `typecheck:native` checks against `es2024` with node types |
 
@@ -29,6 +32,6 @@ Measured with `node native/bench.js` against the stripped binary (2.35 MB) on 20
 | reverse 10k keyed rows | 1704 ms | 4563 ms |
 | clear | 16 ms | 243 ms |
 
-The binary is an order of magnitude slower than V8 on this engine today; `native/microbench.js` times the operations one by one to show where. A terminal screen holds hundreds of nodes, not ten thousand, so a frame still fits; the gap is the next thing to measure and narrow.
+The binary is an order of magnitude slower than V8 on this engine today. `native/microbench.js` times the operations one by one, and probes p-n to p-s pin the cause: in scriptc 0.2.10 an instance of any class whose methods are called costs 1 to 4 µs to allocate, 0.35 µs per field write and about 0.5 µs per method call, while a class used as plain data costs what C does; a `Map` keyed by objects scales linearly with its size. A terminal screen holds hundreds of nodes, not ten thousand, so a frame still takes milliseconds; the gap is the compiler's to close, and `native/microbench.js` is the yardstick for each release.
 
 The rules the shared code follows so that it compiles statically are in `probes/README.md`. The short form: values are `unknown` and are told apart by `typeof`, `instanceof` on module-level classes and `Array.isArray`; identity lives in classes, never in interfaces; a generic class never extends a generic class; a function-typed field never shares its name with a method; a callback handed to a library method annotates its parameters; no `any`.

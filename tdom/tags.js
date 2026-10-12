@@ -15,11 +15,11 @@ const TEXT = new Set(["text", "p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "b
 const INLINE = new Set(["span", "b", "strong", "i", "em", "u", "s", "del", "code", "kbd", "a", "small", "mark", "br", "q", "abbr", "sub", "sup", "time", "var"]);
 const INPUT = new Set(["input", "textarea"]);
 
-const COMMON_PROPS = ["fg", "bg", "bold", "dim", "italic", "underline", "inverse", "strike", "hidden", "class", "id", "style"];
+const COMMON_PROPS = ["fg", "bg", "bold", "dim", "italic", "underline", "inverse", "strike", "hidden", "class", "id", "style", "tabindex", "disabled"];
 const BOX_PROPS = ["direction", "flex", "width", "height", "padding", "gap", "border", "title", "scroll", "scrollTop", "stickToBottom", "align"];
 const TEXT_PROPS = ["wrap"];
 const INPUT_PROPS = ["placeholder", "minLines", "maxLines", "value"];
-export const EVENT_NAMES = ["key", "submit", "change"];
+export const EVENT_NAMES = ["key", "submit", "change", "click", "mousedown", "mouseup", "mousemove", "wheel", "focus", "blur"];
 
 /**
  * The node kind a tag creates.

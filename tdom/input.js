@@ -1,10 +1,10 @@
 /**
  * @bootstrapp/light/tdom/input: bytes from the terminal into key events.
  * CSI and SS3 sequences with modifiers, the kitty keyboard protocol's `u`
- * form, bracketed paste, Alt as an ESC prefix, control characters, and
- * UTF-8 text split into graphemes.
+ * form, bracketed paste, SGR mouse reports, Alt as an ESC prefix, control
+ * characters, and UTF-8 text split into graphemes.
  */
-import { KeyEvent } from "./events.js";
+import { KeyEvent, MouseEvent, WheelEvent } from "./events.js";
 import { graphemes } from "./width.js";
 
 /** @type {Map<number, string>} */
@@ -110,6 +110,10 @@ export class InputDecoder {
   /** @param {(e: KeyEvent) => void} deliver */
   constructor(deliver) {
     this.deliver = deliver;
+    /** @type {((e: MouseEvent) => void) | null} */
+    this.onMouse = null;
+    /** @type {((e: WheelEvent) => void) | null} */
+    this.onWheel = null;
     this.dec = new Utf8Decoder();
     this.buf = "";
     this.pasting = false;
@@ -269,6 +273,10 @@ export class InputDecoder {
       this.pasteBuf = "";
       return;
     }
+    if (params.startsWith("<") && (final === "M" || final === "m")) {
+      this.emitMouse(params.slice(1), final === "M");
+      return;
+    }
     const parts = params.length > 0 ? params.split(";") : [];
     const p0 = parts.length > 0 && parts[0].length > 0 ? Number(parts[0]) : 1;
     const mod = parts.length > 1 && parts[1].length > 0 ? Number(parts[1]) : 1;
@@ -296,5 +304,32 @@ export class InputDecoder {
     }
     const key = LETTER_KEYS.get(final);
     if (key !== undefined) this.deliver(new KeyEvent(key, "", ctrl, alt, shift));
+  }
+
+  /**
+   * An SGR mouse report: `CSI < b ; x ; y M` for a press, `m` for a release.
+   * The low bits of `b` are the button, 4 shift, 8 alt, 16 ctrl, 32 motion,
+   * 64 the wheel (64 up, 65 down).
+   * @param {string} params
+   * @param {boolean} pressed
+   */
+  emitMouse(params, pressed) {
+    const parts = params.split(";");
+    if (parts.length < 3) return;
+    const b = Number(parts[0]);
+    const x = Number(parts[1]) - 1;
+    const y = Number(parts[2]) - 1;
+    if (!Number.isFinite(b) || !Number.isFinite(x) || !Number.isFinite(y)) return;
+    const shift = (b & 4) !== 0;
+    const alt = (b & 8) !== 0;
+    const ctrl = (b & 16) !== 0;
+    if ((b & 64) !== 0) {
+      if (this.onWheel !== null) this.onWheel(new WheelEvent(x, y, (b & 1) === 0 ? -1 : 1, ctrl, alt, shift));
+      return;
+    }
+    const button = b & 3;
+    const motion = (b & 32) !== 0;
+    const type = motion ? "mousemove" : pressed ? "mousedown" : "mouseup";
+    if (this.onMouse !== null) this.onMouse(new MouseEvent(type, x, y, button === 3 ? 0 : button, ctrl, alt, shift));
   }
 }

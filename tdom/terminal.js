@@ -2,7 +2,7 @@
  * @bootstrapp/light/tdom/terminal: raw-mode setup and teardown. Everything
  * is idempotent so every exit path restores the terminal exactly once.
  */
-import { ALT_SCREEN_OFF, ALT_SCREEN_ON, CLEAR, CURSOR_HIDE, CURSOR_SHOW, HOME, PASTE_OFF, PASTE_ON, RESET } from "./ansi.js";
+import { ALT_SCREEN_OFF, ALT_SCREEN_ON, CLEAR, CURSOR_HIDE, CURSOR_SHOW, HOME, MOUSE_OFF, MOUSE_ON, PASTE_OFF, PASTE_ON, RESET } from "./ansi.js";
 
 export class Terminal {
   constructor() {
@@ -45,7 +45,7 @@ export class Terminal {
     if (this.entered) return;
     this.entered = true;
     this.readSize();
-    this.write(ALT_SCREEN_ON + CURSOR_HIDE + PASTE_ON + CLEAR + HOME);
+    this.write(ALT_SCREEN_ON + CURSOR_HIDE + PASTE_ON + MOUSE_ON + CLEAR + HOME);
     if (process.stdin.isTTY === true) process.stdin.setRawMode(true);
     process.stdin.resume();
     process.stdin.on("data", (/** @type {Buffer} */ chunk) => {
@@ -71,7 +71,7 @@ export class Terminal {
   leave() {
     if (!this.entered) return;
     this.entered = false;
-    this.write(RESET + PASTE_OFF + CURSOR_SHOW + ALT_SCREEN_OFF);
+    this.write(RESET + MOUSE_OFF + PASTE_OFF + CURSOR_SHOW + ALT_SCREEN_OFF);
     if (process.stdin.isTTY === true) process.stdin.setRawMode(false);
     process.stdin.pause();
   }

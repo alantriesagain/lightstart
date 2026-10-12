@@ -4,7 +4,7 @@
  */
 import { TAnchor, TBox, TElement, TInput, TNode, TRun, TText } from "./node.js";
 import { Screen } from "./screen.js";
-import { Style } from "./style.js";
+import { ATTR_INVERSE, Style } from "./style.js";
 import { graphemeWidth, graphemes } from "./width.js";
 import { WrappedLine } from "./wrap.js";
 import { textLayoutOf } from "./layout.js";
@@ -140,7 +140,7 @@ const drawBorder = (screen, clip, box, style) => {
  * @param {Clip} clip
  * @param {Style} inherited
  * @param {Caret} caret
- * @param {TInput | null} focus
+ * @param {TElement | null} focus the focused element: an input shows its caret, anything else shows inverse
  */
 export const paint = (node, screen, clip, inherited, caret, focus) => {
   if (node instanceof TAnchor) return;
@@ -151,9 +151,11 @@ export const paint = (node, screen, clip, inherited, caret, focus) => {
   }
   if (!(node instanceof TElement)) return;
   if (node.hidden) return;
+  const focused = focus === node && !(node instanceof TInput);
   const style = node.style.inherit(inherited);
   if (node instanceof TText) {
     paintLines(screen, clip, textLayoutOf(node).lines, node.x, node.y, node.w, node.h);
+    if (focused) invert(screen, clip, node);
     return;
   }
   if (node instanceof TInput) {
@@ -173,7 +175,19 @@ export const paint = (node, screen, clip, inherited, caret, focus) => {
     const pad = node.padding + (node.border ? 1 : 0);
     const inner = clip.intersect(node.x + pad, node.y + pad, node.w - pad * 2, node.h - pad * 2);
     for (const c of node.children) paint(c, screen, inner, style, caret, focus);
+    if (focused) invert(screen, clip, node);
   }
+};
+
+/**
+ * The focus ring: every cell of the element shown inverse, over what it painted.
+ * @param {Screen} screen
+ * @param {Clip} clip
+ * @param {TElement} node
+ */
+const invert = (screen, clip, node) => {
+  const c = clip.intersect(node.x, node.y, node.w, node.h);
+  if (!c.empty) screen.addAttr(c.x0, c.y0, c.x1 - c.x0, c.y1 - c.y0, ATTR_INVERSE);
 };
 
 /**
