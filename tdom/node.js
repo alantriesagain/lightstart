@@ -2,9 +2,13 @@
  * @bootstrapp/light/tdom/node: the terminal node tree, the DOM's
  * replacement. Elements are typed classes with closed prop tables for what
  * they lay out and paint; an attribute an element has no prop for is kept
- * as an attribute, inert. Mutations bump versions up the ancestor chain
- * and request a frame. A view that owns an element is attached when the
- * element joins a root's tree and detached when it leaves.
+ * as an attribute, inert. Children are a doubly linked list (`firstChild`,
+ * `lastChild`, `prev`, `next`), so inserting before a sibling, removing and
+ * stepping to the next sibling cost nothing that grows with the tree;
+ * `childNodes()` snapshots them for a reader. Mutations bump versions up
+ * the ancestor chain and request a frame. A view that owns an element is
+ * attached when the element joins a root's tree and detached when it
+ * leaves.
  */
 import { parseColor } from "./color.js";
 import { frames } from "./scheduler.js";
@@ -13,6 +17,7 @@ import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDER
 
 /** @import { ViewCore } from "../view/core.js" */
 /** @import { EventBinding } from "../html/parts.js" */
+/** @import { ScrollState, TextLayout } from "./layout.js" */
 
 /** @typedef {string | number | boolean | null} PropValue */
 
@@ -20,11 +25,17 @@ export class TNode {
   constructor() {
     /** @type {TElement | null} */
     this.parent = null;
+    /** @type {TNode | null} */
+    this.prev = null;
+    /** @type {TNode | null} */
+    this.next = null;
     this.x = 0;
     this.y = 0;
     this.w = 0;
     this.h = 0;
     this.version = 0;
+    /** @type {TextLayout | null} */
+    this.textLayout = null;
   }
 
   isConnected() {
@@ -48,16 +59,28 @@ export class TNode {
   }
 
   nextSibling() {
-    const p = this.parent;
-    if (p === null) return null;
-    const i = p.children.indexOf(this);
-    return i >= 0 && i + 1 < p.children.length ? p.children[i + 1] : null;
+    return this.next;
   }
 
   dispose() {
     this.parent = null;
+    this.prev = null;
+    this.next = null;
   }
 }
+
+/**
+ * The children of an element as an array, a snapshot for readers; the tree
+ * itself walks `firstChild` and `next`.
+ * @param {TElement} el
+ * @returns {TNode[]}
+ */
+export const childNodes = (el) => {
+  /** @type {TNode[]} */
+  const out = [];
+  for (let c = el.firstChild; c !== null; c = c.next) out.push(c);
+  return out;
+};
 
 /** A zero-size marker; a child part owns the range between a start and an end anchor. */
 export class TAnchor extends TNode {
@@ -159,8 +182,10 @@ export class TElement extends TNode {
     super();
     this.kind = kind;
     this.tag = tag;
-    /** @type {TNode[]} */
-    this.children = [];
+    /** @type {TNode | null} */
+    this.firstChild = null;
+    /** @type {TNode | null} */
+    this.lastChild = null;
     this.style = DEFAULT_STYLE;
     this.hidden = false;
     /** @type {Map<string, string>} */
@@ -179,15 +204,33 @@ export class TElement extends TNode {
    * @param {TNode | null} ref
    */
   insertBefore(node, ref) {
+    if (ref !== null && ref.parent !== this) throw new Error("[tdom] insertBefore: the reference node is not a child of <" + this.tag + ">");
     if (node.parent !== null) node.parent.remove(node);
-    if (ref === null) this.children.push(node);
-    else {
-      const i = this.children.indexOf(ref);
-      if (i < 0) throw new Error("[tdom] insertBefore: the reference node is not a child of <" + this.tag + ">");
-      this.children.splice(i, 0, node);
-    }
-    node.parent = this;
+    this.link(node, ref);
     node.invalidate();
+  }
+
+  /**
+   * Put `node` before `ref` (at the end when null) without a frame request:
+   * what cloning a template does for every node it creates.
+   * @param {TNode} node
+   * @param {TNode | null} ref
+   */
+  link(node, ref) {
+    node.parent = this;
+    if (ref === null) {
+      node.prev = this.lastChild;
+      node.next = null;
+      if (this.lastChild !== null) this.lastChild.next = node;
+      else this.firstChild = node;
+      this.lastChild = node;
+      return;
+    }
+    node.next = ref;
+    node.prev = ref.prev;
+    if (ref.prev !== null) ref.prev.next = node;
+    else this.firstChild = node;
+    ref.prev = node;
   }
 
   /** @param {TNode} node */
@@ -197,16 +240,27 @@ export class TElement extends TNode {
 
   /** @param {TNode} node */
   remove(node) {
-    const i = this.children.indexOf(node);
-    if (i < 0) return;
-    this.children.splice(i, 1);
+    if (node.parent !== this) return;
+    if (node.prev !== null) node.prev.next = node.next;
+    else this.firstChild = node.next;
+    if (node.next !== null) node.next.prev = node.prev;
+    else this.lastChild = node.prev;
     node.parent = null;
+    node.prev = null;
+    node.next = null;
     this.invalidate();
   }
 
-  /** @param {TNode} node */
-  indexOf(node) {
-    return this.children.indexOf(node);
+  clearChildren() {
+    for (let c = this.firstChild; c !== null;) {
+      const next = c.next;
+      c.parent = null;
+      c.prev = null;
+      c.next = null;
+      c = next;
+    }
+    this.firstChild = null;
+    this.lastChild = null;
   }
 
   /**
@@ -360,8 +414,13 @@ export class TElement extends TNode {
   }
 
   dispose() {
-    for (const c of this.children) c.dispose();
-    this.children.length = 0;
+    for (let c = this.firstChild; c !== null;) {
+      const next = c.next;
+      c.dispose();
+      c = next;
+    }
+    this.firstChild = null;
+    this.lastChild = null;
     this.handlers.length = 0;
     super.dispose();
   }
@@ -388,6 +447,8 @@ export class TBox extends TElement {
     this.stickToBottom = false;
     this.align = "stretch";
     this.rule = false;
+    /** @type {ScrollState | null} */
+    this.scrollState = null;
   }
 
   /**

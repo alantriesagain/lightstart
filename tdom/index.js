@@ -6,7 +6,7 @@ export { colorSgr, parseColor } from "./color.js";
 export { ChangeEvent, FocusEvent, KeyEvent, MouseEvent, SubmitEvent, UIEvent, WheelEvent } from "./events.js";
 export { focusables, hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.js";
 export { FLUSH_AFTER, FLUSH_RENDER, FLUSH_VIEWS, FrameScheduler, frames } from "./scheduler.js";
-export { HandlerEntry, TAnchor, TBox, TElement, TFragment, TInput, TNode, TRoot, TRun, TSpan, TText, asBool, asEnum, asNumber, asNumberOrNull, asString } from "./node.js";
+export { HandlerEntry, TAnchor, TBox, TElement, TFragment, TInput, TNode, TRoot, TRun, TSpan, TText, asBool, asEnum, asNumber, asNumberOrNull, asString, childNodes } from "./node.js";
 export { EVENT_NAMES, createElement, isKnownProp, isKnownTag, kindOf } from "./tags.js";
 export { dumpTree, textOf } from "./dump.js";
 export { codePointWidth, graphemeWidth, graphemes, stringWidth } from "./width.js";

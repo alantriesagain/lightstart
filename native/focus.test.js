@@ -1,4 +1,4 @@
-import { ATTR_INVERSE, DEFAULT_STYLE, FocusEvent, KeyEvent, MouseEvent, Renderer, TBox, TElement, TInput, TRoot, Terminal, WheelEvent, focusables, frames, hitTest, html, layout, nextFocusable, render, scrollBoxOf } from "./index.js";
+import { ATTR_INVERSE, DEFAULT_STYLE, FocusEvent, KeyEvent, MouseEvent, Renderer, TBox, TElement, TInput, TRoot, Terminal, WheelEvent, childNodes, focusables, frames, hitTest, html, layout, nextFocusable, render, scrollBoxOf } from "./index.js";
 import { done, eq, eqn, ok } from "./assert.js";
 
 class TestTerminal extends Terminal {
@@ -38,10 +38,10 @@ render(html`<box border>
   <button disabled>off</button>
 </box>`, root);
 layout(root, 30, 10, DEFAULT_STYLE);
-const outer = /** @type {TBox} */ (root.children[1]);
+const outer = /** @type {TBox} */ (childNodes(root)[1]);
 /** @type {TElement[]} */
 const kids = [];
-for (const c of outer.children) if (c instanceof TElement) kids.push(c);
+for (const c of childNodes(outer)) if (c instanceof TElement) kids.push(c);
 const button = kids[1];
 /** @type {TBox | null} */
 let scroller = null;

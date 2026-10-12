@@ -86,8 +86,7 @@ class CloneWalk {
  * @param {TNode} node
  */
 const push = (parent, node) => {
-  node.parent = parent;
-  parent.children.push(node);
+  parent.link(node, null);
 };
 
 /**
@@ -132,7 +131,7 @@ const setAttached = (node, on) => {
     if (on) node.owner.$attach();
     else node.owner.$detach();
   }
-  for (const c of node.children) setAttached(c, on);
+  for (let c = node.firstChild; c !== null; c = c.next) setAttached(c, on);
 };
 
 export class TermHost extends Host {
@@ -205,11 +204,11 @@ export class TermHost extends Host {
     const r = ref === null ? null : /** @type {TNode} */ (ref);
     const connected = p.isConnected();
     if (n instanceof TFragment) {
-      const kids = n.children.splice(0, n.children.length);
-      for (const k of kids) {
-        k.parent = null;
-        p.insertBefore(k, r);
-      }
+      /** @type {TNode[]} */
+      const kids = [];
+      for (let k = n.firstChild; k !== null; k = k.next) kids.push(k);
+      n.clearChildren();
+      for (const k of kids) p.insertBefore(k, r);
       if (connected) for (const k of kids) setAttached(k, true);
       return;
     }
@@ -234,7 +233,7 @@ export class TermHost extends Host {
 
   /** @param {HostNode} node */
   nextSibling(node) {
-    return /** @type {TNode} */ (node).nextSibling();
+    return /** @type {TNode} */ (node).next;
   }
 
   /** @param {HostNode} node */
@@ -311,8 +310,7 @@ export class TermHost extends Host {
       setValue(e, text);
       return;
     }
-    for (const c of e.children) c.parent = null;
-    e.children.length = 0;
+    e.clearChildren();
     push(e, new TRun(text));
     e.invalidate();
   }

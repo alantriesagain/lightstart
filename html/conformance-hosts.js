@@ -5,7 +5,7 @@
  * way to fire an event), so one suite reads the same on every host.
  */
 import { MRoot, MarkupHost, descendants, dispatch, markupOf, textContent } from "../markup/index.js";
-import { TAnchor, TElement, TNode, TRoot, TRun, TermHost, UIEvent, frames, textOf } from "../tdom/index.js";
+import { TAnchor, TElement, TNode, TRoot, TRun, TermHost, UIEvent, childNodes, frames, textOf } from "../tdom/index.js";
 
 /**
  * @typedef {{
@@ -58,7 +58,7 @@ const termMarkup = (node) => {
   if (node instanceof TRun) return node.text;
   if (node instanceof TAnchor || !(node instanceof TElement)) return "";
   let out = "";
-  for (const child of node.children) out += termMarkup(child);
+  for (const child of childNodes(node)) out += termMarkup(child);
   if (node instanceof TRoot || node.kind === "fragment") return out;
   let attrs = "";
   for (const [name, value] of node.attrs) attrs += ` ${name}="${value}"`;
@@ -69,7 +69,7 @@ const termMarkup = (node) => {
 const termElements = (node) => {
   /** @type {TElement[]} */
   const out = [];
-  for (const child of node.children)
+  for (const child of childNodes(node))
     if (child instanceof TElement) {
       out.push(child);
       out.push(...termElements(child));

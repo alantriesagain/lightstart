@@ -174,7 +174,7 @@ export const paint = (node, screen, clip, inherited, caret, focus) => {
     if (node.border) drawBorder(screen, clip, node, style);
     const pad = node.padding + (node.border ? 1 : 0);
     const inner = clip.intersect(node.x + pad, node.y + pad, node.w - pad * 2, node.h - pad * 2);
-    for (const c of node.children) paint(c, screen, inner, style, caret, focus);
+    for (let c = node.firstChild; c !== null; c = c.next) paint(c, screen, inner, style, caret, focus);
     if (focused) invert(screen, clip, node);
   }
 };

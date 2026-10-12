@@ -1,4 +1,4 @@
-import { Caret, Clip, DEFAULT_STYLE, KeyEvent, Screen, TBox, TElement, TRoot, TRun, View, disposeTree, dumpTree, frames, html, key, layout, mount, paint, render, signal, textOf, unmount } from "./index.js";
+import { Caret, Clip, DEFAULT_STYLE, KeyEvent, Screen, TBox, TElement, TRoot, TRun, View, childNodes, disposeTree, dumpTree, frames, html, key, layout, mount, paint, render, signal, textOf, unmount } from "./index.js";
 import { done, eq, eqn, ok, throws } from "./assert.js";
 
 /**
@@ -17,9 +17,9 @@ const screenOf = (root, w, h) => {
   const root = new TRoot();
   render("hello", root);
   eq("text dump", dumpTree(root, true), ["root", "  |", '  "hello"', "  |"].join("\n"));
-  const run = root.children[1];
+  const run = childNodes(root)[1];
   render("world", root);
-  ok("same run node", root.children[1] === run && run instanceof TRun && run.text === "world");
+  ok("same run node", childNodes(root)[1] === run && run instanceof TRun && run.text === "world");
   render(42, root);
   eq("number as text", textOf(root), "42");
   render(null, root);
@@ -35,13 +35,13 @@ const screenOf = (root, w, h) => {
    */
   const view = (name, n) => html`<box border title=${name}><text>Count: ${n}</text></box>`;
   render(view("a", 1), root);
-  const box = root.children[1];
+  const box = childNodes(root)[1];
   eq("template dump", dumpTree(root, false), ["root", '  box[border,title="a"]', "    text", '      "Count: "', '      "1"'].join("\n"));
   render(view("b", 2), root);
-  ok("same element after re-render", root.children[1] === box);
+  ok("same element after re-render", childNodes(root)[1] === box);
   eq("template updated", dumpTree(root, false), ["root", '  box[border,title="b"]', "    text", '      "Count: "', '      "2"'].join("\n"));
   render(html`<text>other</text>`, root);
-  ok("different template replaces", root.children[1] !== box);
+  ok("different template replaces", childNodes(root)[1] !== box);
   eq("replaced dump", dumpTree(root, false), ["root", "  text", '    "other"'].join("\n"));
   disposeTree(root);
 }
@@ -56,14 +56,14 @@ const screenOf = (root, w, h) => {
    */
   const tpl = (w, hidden, fg, t) => html`<box width=${w} ?hidden=${hidden} fg=${fg} title="[${t}]" border padding=2 direction="row"></box>`;
   render(tpl(10, false, "red", "x"), root);
-  const box = /** @type {TBox} */ (root.children[1]);
+  const box = /** @type {TBox} */ (childNodes(root)[1]);
   eq("props set", box.describe(), 'box[direction=row,width=10,padding=2,border,title="[x]",fg=red]');
   render(tpl(null, true, "#00ff00", "y"), root);
   eq("props updated", box.describe(), 'box[direction=row,padding=2,border,title="[y]",fg=#00ff00,hidden]');
   throws("bad prop value", () => render(html`<box flex=${"lots"}></box>`, new TRoot()), "expects a number");
   throws("bad color", () => render(html`<box fg="salmon"></box>`, new TRoot()), "invalid color");
   render(html`<box class="card" id=${"main"} data-x="1"></box>`, root);
-  eq("unknown attributes are kept inert", /** @type {TBox} */ (root.children[1]).describe(), 'box[class="card",data-x="1",id="main"]');
+  eq("unknown attributes are kept inert", /** @type {TBox} */ (childNodes(root)[1]).describe(), 'box[class="card",data-x="1",id="main"]');
   disposeTree(root);
 }
 
@@ -72,25 +72,25 @@ const screenOf = (root, w, h) => {
   /** @param {string[]} items */
   const list = (items) => html`<box>${items.map((s) => html`<text>${s}</text>`)}</box>`;
   render(list(["a", "b"]), root);
-  const box = /** @type {TElement} */ (root.children[1]);
+  const box = /** @type {TElement} */ (childNodes(root)[1]);
   eq("list initial", textOf(box), "ab");
   render(list(["a", "b", "c"]), root);
   eq("list grows", textOf(box), "abc");
-  const textA = box.children[2];
+  const textA = childNodes(box)[2];
   render(list(["a"]), root);
   eq("list shrinks", textOf(box), "a");
-  ok("index diff keeps the first element", box.children[2] === textA);
+  ok("index diff keeps the first element", childNodes(box)[2] === textA);
 
   /** @param {string[]} items */
   const keyedList = (items) => html`<box>${items.map((s) => key(s, html`<text>${s}</text>`))}</box>`;
   const r2 = new TRoot();
   render(keyedList(["a", "b", "c"]), r2);
-  const kbox = /** @type {TElement} */ (r2.children[1]);
-  const elems = kbox.children.filter((n) => n instanceof TElement);
+  const kbox = /** @type {TElement} */ (childNodes(r2)[1]);
+  const elems = childNodes(kbox).filter((n) => n instanceof TElement);
   eqn("keyed elements", elems.length, 3);
   render(keyedList(["c", "a", "b"]), r2);
   eq("keyed reorder", textOf(kbox), "cab");
-  const after = kbox.children.filter((n) => n instanceof TElement);
+  const after = childNodes(kbox).filter((n) => n instanceof TElement);
   ok("keyed reorder preserves identity", after[0] === elems[2] && after[1] === elems[0] && after[2] === elems[1]);
   render(keyedList(["b", "x", "c"]), r2);
   eq("keyed remove+insert", textOf(kbox), "bxc");
@@ -165,8 +165,8 @@ const screenOf = (root, w, h) => {
     seen.push(e.describe());
     e.consume();
   }}><text>x</text></box>`, root);
-  const box = /** @type {TElement} */ (root.children[1]);
-  const inner = /** @type {TElement} */ (box.children[0]);
+  const box = /** @type {TElement} */ (childNodes(root)[1]);
+  const inner = /** @type {TElement} */ (childNodes(box)[0]);
   ok("key event bubbles to the handler and is consumed", inner.dispatch(new KeyEvent("char", "q", false, false, false)));
   eq("handler saw the key", seen.join(","), "q");
   ok("other events pass through", !inner.dispatch(new KeyEvent("submit", "", false, false, false)) || true);

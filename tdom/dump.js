@@ -22,7 +22,7 @@ const walk = (node, depth, showAnchors, lines) => {
   }
   if (node instanceof TElement) {
     lines.push(pad + node.describe());
-    for (const c of node.children) walk(c, depth + 1, showAnchors, lines);
+    for (let c = node.firstChild; c !== null; c = c.next) walk(c, depth + 1, showAnchors, lines);
   }
 };
 
@@ -47,7 +47,7 @@ export const textOf = (node) => {
   if (node instanceof TRun) return node.text;
   if (node instanceof TElement) {
     let s = "";
-    for (const c of node.children) s += textOf(c);
+    for (let c = node.firstChild; c !== null; c = c.next) s += textOf(c);
     return s;
   }
   return "";

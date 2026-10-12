@@ -2,7 +2,7 @@
  * @bootstrapp/light/tdom/layout: two passes, measure bottom-up and arrange
  * top-down. One flex axis per box, fixed sizes, padding, a one-cell border,
  * scroll boxes that stick to the bottom. Wrapped text and scroll positions
- * are cached per node across frames by version.
+ * are cached on the node across frames by version.
  */
 import { TAnchor, TBox, TElement, TInput, TNode, TRun, TSpan, TText } from "./node.js";
 import { Style } from "./style.js";
@@ -31,17 +31,10 @@ export class TextLayout {
   }
 }
 
-/** @type {Map<TNode, TextLayout>} */
-const textLayouts = new Map();
-
 /** @param {TNode} node */
 export const textLayoutOf = (node) => {
-  let t = textLayouts.get(node);
-  if (t === undefined) {
-    t = new TextLayout();
-    textLayouts.set(node, t);
-  }
-  return t;
+  if (node.textLayout === null) node.textLayout = new TextLayout();
+  return node.textLayout;
 };
 
 /** Scroll state kept per box across frames. */
@@ -52,17 +45,10 @@ export class ScrollState {
   }
 }
 
-/** @type {Map<TBox, ScrollState>} */
-const scrollStates = new Map();
-
 /** @param {TBox} box */
 export const scrollStateOf = (box) => {
-  let s = scrollStates.get(box);
-  if (s === undefined) {
-    s = new ScrollState();
-    scrollStates.set(box, s);
-  }
-  return s;
+  if (box.scrollState === null) box.scrollState = new ScrollState();
+  return box.scrollState;
 };
 
 /**
@@ -73,7 +59,7 @@ export const scrollStateOf = (box) => {
  */
 export const inlineRuns = (el, base, out) => {
   const style = el.style.inherit(base);
-  for (const c of el.children)
+  for (let c = el.firstChild; c !== null; c = c.next)
     if (c instanceof TRun) out.push(new InlineRun(c.text, style));
     else if (c instanceof TSpan) inlineRuns(c, style, out);
     else if (c instanceof TText) inlineRuns(c, style, out);
@@ -86,7 +72,7 @@ const chrome = (box) => box.padding * 2 + (box.border ? 2 : 0);
 const visibleChildren = (el) => {
   /** @type {TNode[]} */
   const out = [];
-  for (const c of el.children) {
+  for (let c = el.firstChild; c !== null; c = c.next) {
     if (c instanceof TAnchor) continue;
     if (c instanceof TElement && c.hidden) continue;
     out.push(c);
@@ -359,7 +345,7 @@ export const scrollBy = (box, delta) => {
  * @param {TNode} node
  */
 export const forgetLayout = (node) => {
-  textLayouts.delete(node);
-  if (node instanceof TBox) scrollStates.delete(node);
-  if (node instanceof TElement) for (const c of node.children) forgetLayout(c);
+  node.textLayout = null;
+  if (node instanceof TBox) node.scrollState = null;
+  if (node instanceof TElement) for (let c = node.firstChild; c !== null; c = c.next) forgetLayout(c);
 };

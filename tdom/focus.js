@@ -31,8 +31,8 @@ export const hitTest = (node, x, y) => {
     const pad = node.padding + (node.border ? 1 : 0);
     const inside = x >= node.x + pad && x < node.x + node.w - pad && y >= node.y + pad && y < node.y + node.h - pad;
     if (inside)
-      for (let i = node.children.length - 1; i >= 0; i--) {
-        const hit = hitTest(node.children[i], x, y);
+      for (let c = node.lastChild; c !== null; c = c.prev) {
+        const hit = hitTest(c, x, y);
         if (hit !== null) return hit;
       }
   }
@@ -55,7 +55,7 @@ export const isFocusable = (el) => {
 export const focusables = (node, out) => {
   if (!(node instanceof TElement) || node.hidden) return out;
   if (isFocusable(node)) out.push(node);
-  for (const c of node.children) focusables(c, out);
+  for (let c = node.firstChild; c !== null; c = c.next) focusables(c, out);
   return out;
 };
 

@@ -50,7 +50,7 @@ class Demo extends View {
 const findScroll = (node) => {
   if (!(node instanceof TElement)) return null;
   if (node instanceof TBox && node.scroll) return node;
-  for (const c of node.children) {
+  for (let c = node.firstChild; c !== null; c = c.next) {
     const found = findScroll(c);
     if (found !== null) return found;
   }

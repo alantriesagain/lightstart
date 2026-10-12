@@ -22,15 +22,17 @@ native/pty.sh              # builds the demo natively and drives it in a pty: cl
 | `probes/` | One-file programs that pin what the compiler accepts, and the decisions they produced (`probes/README.md`) |
 | `tsconfig.json` | The native graph: what `typecheck:native` checks against `es2024` with node types |
 
-Measured with `node native/bench.js` against the stripped binary (2.35 MB) on 2026-10-12:
+Measured with `node native/bench.js` against the stripped binary on 2026-10-12, before and after the terminal tree's children became a linked list and its layout caches moved onto the node:
 
-| Step | node | native |
-|---|---|---|
-| create 10k keyed rows | 313 ms | 8472 ms |
-| layout 10k rows | 84 ms | 1065 ms |
-| update every 10th row | 22 ms | 237 ms |
-| reverse 10k keyed rows | 1704 ms | 4563 ms |
-| clear | 16 ms | 243 ms |
+| Step | node, array | node, linked | native, array | native, linked |
+|---|---|---|---|---|
+| create 10k keyed rows | 313 ms | 64 ms | 8472 ms | 3289 ms |
+| layout 10k rows | 84 ms | 41 ms | 1065 ms | 859 ms |
+| update every 10th row | 22 ms | 9 ms | 237 ms | 183 ms |
+| reverse 10k keyed rows | 1704 ms | 27 ms | 4563 ms | 542 ms |
+| clear | 16 ms | 10 ms | 243 ms | 339 ms |
+
+The quadratic sibling scan is gone on both. Natively a single insert got dearer (10k appends: 104 ms as an array, 288 ms linked), because every link is several field writes on an object the compiler keeps in its dynamic representation, where a write is a named lookup; that is why the 1k-row create is slower linked (232 ms to 352 ms) while 10k is 2.6 times faster. On the harness's screen the change is invisible: first frame 10 to 18 ms, 3 ms per keystroke, 5.8 MB resident.
 
 The binary is an order of magnitude slower than V8 on this engine today. `native/microbench.js` times the operations one by one, and probes p-n to p-s pin the cause: in scriptc 0.2.10 an instance of any class whose methods are called costs 1 to 4 µs to allocate, 0.35 µs per field write and about 0.5 µs per method call, while a class used as plain data costs what C does; a `Map` keyed by objects scales linearly with its size. A terminal screen holds hundreds of nodes, not ten thousand, so a frame still takes milliseconds; the gap is the compiler's to close, and `native/microbench.js` is the yardstick for each release.
 
