@@ -1,8 +1,14 @@
-import { nothing } from "./constants.js";
+/**
+ * @bootstrapp/light/html/index.js: the browser entry of the renderer. It
+ * installs the DOM host and re-exports the renderer-agnostic API from
+ * `core.js` together with the browser-only adoption and slot helpers.
+ */
 
-export { ElementSpec, Keyed, TemplateResult, Unsafe, element, html, key, svg, unsafeHTML } from "./values.js";
-export { nothing };
-export { disposeTree, hasRootPart, render } from "./parts.js";
+import { DomHost } from "../dom/host.js";
+import { setHost } from "./host.js";
+
+setHost(new DomHost());
+
+export * from "./core.js";
 export { ASSIGNED_ATTR, SlotPart, UNSLOTTED_TAG, isMoving, projectSlots, unprojectUnits } from "./slots.js";
 export { topLevelPair } from "./adopt.js";
-export { configure } from "./reactive.js";

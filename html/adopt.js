@@ -381,7 +381,8 @@ const matchTemplate = (template, start, end) => {
     return units.every((u) => u.taken);
   };
 
-  if (!walkLevel(template.el.content.firstChild, start.nextSibling, end)) return null;
+  const prepared = /** @type {import("../dom/host.js").DomPrepared} */ (template.prepared);
+  if (!walkLevel(prepared.el.content.firstChild, start.nextSibling, end)) return null;
   if (partIdx !== specs.length) return null;
   return { targets, fresh, parked };
 };
@@ -405,11 +406,11 @@ export const adoptTemplateResult = (part, result, bind) => {
   if (!match) return false;
   const { targets, fresh, parked } = match;
   const specs = template.parts;
-  const instance = new TemplateInstance(template, part.host);
+  const instance = new TemplateInstance(template, part.owner);
   for (let i = 0; i < specs.length; i++) {
     const spec = specs[i];
     if (fresh.has(i)) {
-      const p = createPart(spec, spec.kind === "child" ? targets[i].start : targets[i], part.host);
+      const p = createPart(spec, spec.kind === "child" ? targets[i].start : targets[i], part.owner);
       p.setFromValues(result.values);
       instance.parts.push(p);
       continue;
@@ -421,7 +422,7 @@ export const adoptTemplateResult = (part, result, bind) => {
       instance.parts.push(child);
       continue;
     }
-    const p = createPart(spec, targets[i], part.host);
+    const p = createPart(spec, targets[i], part.owner);
     if (spec.kind === "slot" && parked.has(targets[i])) /** @type {SlotPart} */ (p).parked = parked.get(targets[i]) ?? null;
     instance.parts.push(p);
   }

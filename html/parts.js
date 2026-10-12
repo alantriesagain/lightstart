@@ -1,7 +1,9 @@
 import { adoptTemplateResult, elementChildPair, itemRanges, normalizedEqual, singleElementIn, singleTextIn, topLevelPair } from "./adopt.js";
 import { MARKER_END, MARKER_START, ROOT_MARKER_END, ROOT_MARKER_START, nothing } from "./constants.js";
+import { currentHost } from "./host.js";
+
+/** @import { ListenerOptions } from "./host.js" */
 import { disposeThunk, resolveEager, setThunk } from "./reactive.js";
-import { SlotPart } from "./slots.js";
 import { TemplateInstance, getTemplate } from "./template.js";
 import { ElementSpec, Keyed, TemplateResult, Unsafe } from "./values.js";
 
@@ -17,14 +19,16 @@ class EventBinding {
   /**
    * @param {Element} el
    * @param {string} name
-   * @param {object | undefined} host
+   * @param {object | undefined} owner
    */
-  constructor(el, name, host) {
+  constructor(el, name, owner) {
     this.el = el;
     this.name = name;
-    this.host = host;
-    /** @type {any} */
+    this.owner = owner;
+    /** @type {unknown} */
     this.handler = undefined;
+    /** @type {ListenerOptions | null} */
+    this.options = null;
     this.attached = false;
   }
 
@@ -32,37 +36,36 @@ class EventBinding {
   commit(value) {
     const next = value == null || value === nothing ? undefined : value;
     if (next === this.handler) return;
-    const nextOpts = next !== undefined && typeof next === "object" ? /** @type {any} */ (next) : undefined;
-    const prevOpts = this.handler !== undefined && typeof this.handler === "object" ? this.handler : undefined;
-    const optsChanged =
-      nextOpts?.capture !== prevOpts?.capture ||
-      nextOpts?.once !== prevOpts?.once ||
-      nextOpts?.passive !== prevOpts?.passive;
+    const host = currentHost();
+    const nextOpts = next === undefined ? null : host.listenerOptions(next);
+    const optsChanged = nextOpts === null ? this.options !== null : !nextOpts.equals(this.options);
     if (this.attached && (next === undefined || optsChanged)) {
-      this.el.removeEventListener(this.name, this, prevOpts);
+      host.removeListener(this.el, this.name, this, this.options);
       this.attached = false;
     }
     this.handler = next;
+    this.options = nextOpts;
     if (next !== undefined && !this.attached) {
-      this.el.addEventListener(this.name, this, nextOpts);
+      host.addListener(this.el, this.name, this, nextOpts);
       this.attached = true;
     }
   }
 
-  /** @param {Event} event */
+  /** @param {unknown} event */
   handleEvent(event) {
     const h = this.handler;
-    if (typeof h === "function") return h.call(this.host ?? this.el, event);
-    return h?.handleEvent?.(event);
+    if (typeof h === "function") return h.call(this.owner ?? this.el, event);
+    if (h === undefined) return undefined;
+    return currentHost().invokeListener(h, event);
   }
 
   dispose() {
     if (this.attached) {
-      const opts = this.handler !== undefined && typeof this.handler === "object" ? this.handler : undefined;
-      this.el.removeEventListener(this.name, this, opts);
+      currentHost().removeListener(this.el, this.name, this, this.options);
       this.attached = false;
     }
     this.handler = undefined;
+    this.options = null;
   }
 }
 
@@ -70,11 +73,11 @@ class EventPart {
   /**
    * @param {PartSpec} spec
    * @param {Element} el
-   * @param {object | undefined} host
+   * @param {object | undefined} owner
    */
-  constructor(spec, el, host) {
+  constructor(spec, el, owner) {
     this.valueIndex = spec.valueIndex;
-    this.binding = new EventBinding(el, /** @type {string} */ (spec.name), host);
+    this.binding = new EventBinding(el, /** @type {string} */ (spec.name), owner);
   }
 
   /** @param {unknown[]} values */
@@ -111,7 +114,7 @@ class PropertyPart {
     if (value === nothing) value = undefined;
     if (value === this.committed) return;
     this.committed = value;
-    /** @type {any} */ (this.el)[this.name] = value;
+    currentHost().setProperty(this.el, this.name, value);
   }
 
   /** @param {unknown[]} values */
@@ -157,7 +160,7 @@ class BooleanAttributePart {
     const on = Boolean(value) && value !== nothing;
     if (on === this.committed) return;
     this.committed = on;
-    this.el.toggleAttribute(this.name, on);
+    currentHost().toggleAttribute(this.el, this.name, on);
   }
 
   /**
@@ -223,8 +226,8 @@ class AttributePart {
   _commitString(value) {
     if (value === this.committed) return;
     this.committed = value;
-    if (value === nothing) this.el.removeAttribute(this.name);
-    else this.el.setAttribute(this.name, value);
+    if (value === nothing) currentHost().removeAttribute(this.el, this.name);
+    else currentHost().setAttribute(this.el, this.name, value);
   }
 
   /**
@@ -275,7 +278,7 @@ class RawTextPart {
     const text = value === nothing || value == null ? "" : String(value);
     if (text === this.committed) return;
     this.committed = text;
-    this.el.textContent = text;
+    currentHost().setContent(this.el, text);
   }
 
   /**
@@ -296,12 +299,12 @@ export class ChildPart {
   /**
    * @param {Comment} start
    * @param {Comment} end
-   * @param {object | undefined} [host]
+   * @param {object | undefined} [owner]
    */
-  constructor(start, end, host) {
+  constructor(start, end, owner) {
     this.start = start;
     this.end = end;
-    this.host = host;
+    this.owner = owner;
     this.valueIndex = 0;
     /** @type {any} */
     this.state = { type: "empty" };
@@ -325,7 +328,7 @@ export class ChildPart {
    * @param {Comment} end
    */
   _child(start, end) {
-    const part = new ChildPart(start, end, this.host);
+    const part = new ChildPart(start, end, this.owner);
     part._settle = this._settle;
     part._settled = this._settled;
     return part;
@@ -393,9 +396,12 @@ export class ChildPart {
     if (value instanceof Unsafe) return this._commitUnsafe(value);
     if (Array.isArray(value)) return this._commitItems(value);
     if (t === "object") {
-      const v = /** @type {any} */ (value);
-      if (v.nodeType) return this._commitNode(v);
-      if (typeof v[Symbol.iterator] === "function") return this._commitItems(v);
+      const host = currentHost();
+      const node = host.asNode(value);
+      if (node !== null) return this._commitNode(/** @type {Node} */ (node));
+      const list = host.toList(value);
+      if (list !== null) return this._commitItems(list);
+      return this._commitText(host.stringify(value));
     }
     return this._commitText(String(value));
   }
@@ -405,13 +411,13 @@ export class ChildPart {
     const st = this.state;
     if (st.type === "text") {
       if (st.text !== text) {
-        st.node.data = text;
+        currentHost().setText(st.node, text);
         st.text = text;
       }
       return;
     }
     this._clear();
-    const node = new Text(text);
+    const node = /** @type {Text} */ (currentHost().createText(text));
     this._insert(node);
     this.state = { type: "text", node, text };
   }
@@ -423,8 +429,8 @@ export class ChildPart {
     if (st.type === "template" && st.instance.template === template)
       return st.instance.commit(result.values);
     this._clear();
-    const instance = new TemplateInstance(template, this.host);
-    const fragment = instance.clone();
+    const instance = new TemplateInstance(template, this.owner);
+    const fragment = /** @type {Node} */ (instance.clone());
     instance.commit(result.values);
     this._insert(fragment);
     this.state = { type: "template", instance };
@@ -444,9 +450,7 @@ export class ChildPart {
     const st = this.state;
     if (st.type === "unsafe" && st.s === wrap.s) return;
     this._clear();
-    const template = document.createElement("template");
-    template.innerHTML = wrap.s;
-    this._insert(template.content);
+    this._insert(/** @type {Node} */ (currentHost().parseMarkup(wrap.s)));
     this.state = { type: "unsafe", s: wrap.s };
   }
 
@@ -455,7 +459,7 @@ export class ChildPart {
     const st = this.state;
     if (st.type === "keyed" && st.k === wrap.k) return st.inner.commit(wrap.v);
     this._clear();
-    const inner = new ChildPart(this.start, this.end, this.host);
+    const inner = new ChildPart(this.start, this.end, this.owner);
     inner.commit(wrap.v);
     this.state = { type: "keyed", k: wrap.k, inner };
   }
@@ -467,7 +471,7 @@ export class ChildPart {
     if (!VALID_TAG.test(spec.tag))
       throw new Error(`[light/html] invalid element() tag: ${String(spec.tag)}`);
     this._clear();
-    const el = document.createElement(spec.tag);
+    const el = /** @type {Element} */ (currentHost().createElement(spec.tag));
     const next = {
       type: "element",
       tag: spec.tag,
@@ -516,10 +520,12 @@ export class ChildPart {
   /** @param {any} st */
   _ensureElementChildPart(st) {
     if (!st.childPart) {
-      const start = new Comment(MARKER_START);
-      const end = new Comment(MARKER_END);
-      st.el.append(start, end);
-      st.childPart = new ChildPart(start, end, this.host);
+      const host = currentHost();
+      const start = /** @type {Comment} */ (host.createAnchor(MARKER_START));
+      const end = /** @type {Comment} */ (host.createAnchor(MARKER_END));
+      host.insertBefore(st.el, start, null);
+      host.insertBefore(st.el, end, null);
+      st.childPart = new ChildPart(start, end, this.owner);
     }
     return st.childPart;
   }
@@ -535,7 +541,7 @@ export class ChildPart {
     if (prefix === "@") {
       let eventBinding = st.events.get(rawKey);
       if (!eventBinding) {
-        eventBinding = new EventBinding(el, rawKey.slice(1), this.host);
+        eventBinding = new EventBinding(el, rawKey.slice(1), this.owner);
         st.events.set(rawKey, eventBinding);
       }
       eventBinding.commit(value === nothing ? undefined : value);
@@ -543,16 +549,17 @@ export class ChildPart {
     }
     if (st.committed.get(rawKey) === value) return;
     st.committed.set(rawKey, value);
+    const host = currentHost();
     if (prefix === ".") {
-      el[rawKey.slice(1)] = value === nothing ? undefined : value;
+      host.setProperty(el, rawKey.slice(1), value === nothing ? undefined : value);
       return;
     }
     if (prefix === "?") {
-      el.toggleAttribute(rawKey.slice(1), Boolean(value) && value !== nothing);
+      host.toggleAttribute(el, rawKey.slice(1), Boolean(value) && value !== nothing);
       return;
     }
-    if (value === nothing || value == null) el.removeAttribute(rawKey);
-    else el.setAttribute(rawKey, String(value));
+    if (value === nothing || value == null) host.removeAttribute(el, rawKey);
+    else host.setAttribute(el, rawKey, String(value));
   }
 
   /** @param {Iterable<unknown>} iterable */
@@ -584,12 +591,14 @@ export class ChildPart {
     const shared = Math.min(parts.length, values.length);
     for (let i = 0; i < shared; i++) parts[i].commit(values[i]);
     if (values.length > shared) {
-      const fragment = document.createDocumentFragment();
+      const host = currentHost();
+      const fragment = /** @type {Node} */ (host.createFragment());
       for (let i = shared; i < values.length; i++) {
-        const start = new Comment(MARKER_START);
-        const end = new Comment(MARKER_END);
-        fragment.append(start, end);
-        const part = new ChildPart(start, end, this.host);
+        const start = /** @type {Comment} */ (host.createAnchor(MARKER_START));
+        const end = /** @type {Comment} */ (host.createAnchor(MARKER_END));
+        host.insertBefore(fragment, start, null);
+        host.insertBefore(fragment, end, null);
+        const part = new ChildPart(start, end, this.owner);
         part.commit(values[i]);
         parts.push(part);
       }
@@ -694,21 +703,23 @@ export class ChildPart {
 
   /** @param {Node} refNode */
   _createItemPart(refNode) {
-    const parent = /** @type {Node} */ (this.end.parentNode);
-    const start = new Comment(MARKER_START);
-    const end = new Comment(MARKER_END);
-    parent.insertBefore(start, refNode);
-    parent.insertBefore(end, refNode);
-    return new ChildPart(start, end, this.host);
+    const host = currentHost();
+    const parent = host.parentOf(this.end);
+    const start = /** @type {Comment} */ (host.createAnchor(MARKER_START));
+    const end = /** @type {Comment} */ (host.createAnchor(MARKER_END));
+    host.insertBefore(parent, start, refNode);
+    host.insertBefore(parent, end, refNode);
+    return new ChildPart(start, end, this.owner);
   }
 
   /** @param {ChildPart} part */
   _removeItemPart(part) {
     part.dispose();
+    const host = currentHost();
     let node = /** @type {ChildNode | null} */ (part.start);
     while (node) {
-      const next = node === part.end ? null : node.nextSibling;
-      detach(node);
+      const next = node === part.end ? null : /** @type {ChildNode | null} */ (host.nextSibling(node));
+      host.remove(node);
       node = next;
     }
   }
@@ -719,28 +730,31 @@ export class ChildPart {
    */
   _moveItemPart(part, refPart) {
     const refNode = refPart ? refPart.start : this.end;
-    const parent = /** @type {Node} */ (this.end.parentNode);
+    const host = currentHost();
+    const parent = host.parentOf(this.end);
     /** @type {ChildNode[]} */
     const nodes = [];
     let node = /** @type {ChildNode | null} */ (part.start);
     while (node) {
       nodes.push(node);
       if (node === part.end) break;
-      node = node.nextSibling;
+      node = /** @type {ChildNode | null} */ (host.nextSibling(node));
     }
-    for (const n of nodes) parent.insertBefore(n, refNode);
+    for (const n of nodes) host.insertBefore(parent, n, refNode);
   }
 
   /** @param {Node} node */
   _insert(node) {
-    /** @type {Node} */ (this.end.parentNode).insertBefore(node, this.end);
+    const host = currentHost();
+    host.insertBefore(host.parentOf(this.end), node, this.end);
   }
 
   _removeRange() {
-    let node = this.start.nextSibling;
+    const host = currentHost();
+    let node = /** @type {ChildNode | null} */ (host.nextSibling(this.start));
     while (node && node !== this.end) {
-      const next = node.nextSibling;
-      detach(node);
+      const next = /** @type {ChildNode | null} */ (host.nextSibling(node));
+      host.remove(node);
       node = next;
     }
   }
@@ -828,7 +842,7 @@ export class ChildPart {
     if (value instanceof TemplateResult) {
       if (adoptTemplateResult(this, value, bind)) return;
         const where = [
-          `host=<${/** @type {Element | undefined} */ (this.host)?.tagName?.toLowerCase() ?? "?"}>`,
+          `host=<${/** @type {Element | undefined} */ (this.owner)?.tagName?.toLowerCase() ?? "?"}>`,
           `in=<${this.start?.parentElement?.tagName?.toLowerCase() ?? "?"}>`,
         ];
         if (bind || this._defer(value)) {
@@ -938,14 +952,14 @@ export class ChildPart {
 
 /**
  * @param {PartSpec} spec
- * @param {Node} node
- * @param {object | undefined} host
+ * @param {unknown} node
+ * @param {object | undefined} owner
  */
-export const createPart = (spec, node, host) => {
+export const createPart = (spec, node, owner) => {
   switch (spec.kind) {
     case "child": {
       const start = /** @type {Comment} */ (node);
-      const part = new ChildPart(start, /** @type {Comment} */ (start.nextSibling), host);
+      const part = new ChildPart(start, /** @type {Comment} */ (currentHost().nextSibling(start)), owner);
       part.valueIndex = spec.valueIndex;
       return part;
     }
@@ -956,22 +970,12 @@ export const createPart = (spec, node, host) => {
     case "bool":
       return new BooleanAttributePart(spec, /** @type {Element} */ (node));
     case "event":
-      return new EventPart(spec, /** @type {Element} */ (node), host);
+      return new EventPart(spec, /** @type {Element} */ (node), owner);
     case "slot":
-      return new SlotPart(spec, /** @type {Element} */ (node), host);
+      return currentHost().createSlotPart(spec, node, owner);
     default:
       return new RawTextPart(spec, /** @type {Element} */ (node));
   }
-};
-
-/**
- * Remove a node through the DOM's own method, so a component that defines a
- * `remove()` of its own cannot keep itself in the tree.
- * @param {Node} node
- */
-const detach = (node) => {
-  const parent = node.parentNode;
-  if (parent) Node.prototype.removeChild.call(parent, node);
 };
 
 /** @type {WeakMap<object, ChildPart>} */
@@ -1000,9 +1004,11 @@ export const render = (value, container, options = {}) => {
       } else console.debug("[light/html] no adoption markers found, rendering fresh");
     }
     if (!part) {
-      const start = new Comment(ROOT_MARKER_START);
-      const end = new Comment(ROOT_MARKER_END);
-      container.append(start, end);
+      const host = currentHost();
+      const start = /** @type {Comment} */ (host.createAnchor(ROOT_MARKER_START));
+      const end = /** @type {Comment} */ (host.createAnchor(ROOT_MARKER_END));
+      host.insertBefore(container, start, null);
+      host.insertBefore(container, end, null);
       part = new ChildPart(start, end, options.host);
     }
     roots.set(container, part);

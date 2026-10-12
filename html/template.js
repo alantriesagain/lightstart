@@ -1,11 +1,15 @@
-import { MARKER_START, SVG_KIND } from "./constants.js";
-import { parseTemplate } from "./parser.js";
+/**
+ * @bootstrapp/light/html/template.js: prepared templates and their instances.
+ * A template is prepared once per strings identity by the installed host
+ * (`host.prepare`), which keeps whatever it needs beside the part specs; an
+ * instance is a host clone of it with one part per spec, in document order.
+ */
+
+import { currentHost } from "./host.js";
 import { createPart } from "./parts.js";
 
+/** @import { Prepared } from "./host.js" */
 /** @import { PartSpec } from "./types.ts" */
-
-const SHOW_ELEMENT_AND_COMMENT = 129;
-const ELEMENT_MARKER = "data-$$";
 
 /** @type {WeakMap<ReadonlyArray<string>, Template>} */
 const templateCache = new WeakMap();
@@ -16,48 +20,10 @@ export class Template {
    * @param {number} kind
    */
   constructor(strings, kind) {
-    const { markup, parts } = parseTemplate(strings, kind);
-    const el = document.createElement("template");
-    el.innerHTML = kind === SVG_KIND ? `<svg>${markup}</svg>` : markup;
-    if (kind === SVG_KIND) {
-      const wrapper = /** @type {Element} */ (el.content.firstChild);
-      wrapper.replaceWith(.../** @type {Iterable<ChildNode>} */ (/** @type {unknown} */ (wrapper.childNodes)));
-    }
-    const walker = document.createTreeWalker(
-      el.content,
-      SHOW_ELEMENT_AND_COMMENT,
-    );
-    /** @type {number[]} */
-    const elIndex = [];
-    /** @type {number[]} */
-    const childIndex = [];
-    let nodeIndex = -1;
-    let node;
-    while ((node = walker.nextNode())) {
-      nodeIndex++;
-      if (
-        node.nodeType === 1 &&
-        /** @type {Element} */ (node).hasAttribute(ELEMENT_MARKER)
-      ) {
-        /** @type {Element} */ (node).removeAttribute(ELEMENT_MARKER);
-        elIndex.push(nodeIndex);
-      } else if (
-        node.nodeType === 8 &&
-        /** @type {Comment} */ (node).data === MARKER_START
-      )
-        childIndex.push(nodeIndex);
-    }
+    /** @type {Prepared} */
+    this.prepared = currentHost().prepare(strings, kind);
     /** @type {PartSpec[]} */
-    this.parts = parts
-      .map((p) => ({
-        ...p,
-        nodeIndex:
-          p.kind === "child"
-            ? childIndex[/** @type {number} */ (p.childOrd)]
-            : elIndex[/** @type {number} */ (p.elOrd)],
-      }))
-      .sort((a, b) => a.nodeIndex - b.nodeIndex || a.valueIndex - b.valueIndex);
-    this.el = el;
+    this.parts = this.prepared.parts;
     this.kind = kind;
   }
 }
@@ -82,38 +48,21 @@ export const getTemplate = (strings, kind) => {
 export class TemplateInstance {
   /**
    * @param {Template} template
-   * @param {object | undefined} host
+   * @param {object | undefined} owner
    */
-  constructor(template, host) {
+  constructor(template, owner) {
     this.template = template;
-    this.host = host;
+    this.owner = owner;
     /** @type {ReturnType<typeof createPart>[]} */
     this.parts = [];
   }
 
+  /** @returns {unknown} the clone's root, to insert where the instance renders */
   clone() {
-    const fragment = document.importNode(this.template.el.content, true);
+    const clone = currentHost().clone(this.template.prepared);
     const specs = this.template.parts;
-    if (specs.length > 0) {
-      const walker = document.createTreeWalker(
-        fragment,
-        SHOW_ELEMENT_AND_COMMENT,
-      );
-      let nodeIndex = -1;
-      let partIdx = 0;
-      let node;
-      while (partIdx < specs.length && (node = walker.nextNode())) {
-        nodeIndex++;
-        while (
-          partIdx < specs.length &&
-          specs[partIdx].nodeIndex === nodeIndex
-        ) {
-          this.parts.push(createPart(specs[partIdx], node, this.host));
-          partIdx++;
-        }
-      }
-    }
-    return fragment;
+    for (let i = 0; i < specs.length; i++) this.parts.push(createPart(specs[i], clone.targets[i], this.owner));
+    return clone.root;
   }
 
   /** @param {unknown[]} values */

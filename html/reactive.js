@@ -1,3 +1,5 @@
+import { currentHost, setHost } from "./host.js";
+
 /** @import { EffectAdapter, ThunkHolder } from "./types.ts" */
 
 /** @type {EffectAdapter | null} */
@@ -9,10 +11,11 @@ let adapter = null;
  * loads. Without an adapter,
  * thunks are evaluated once per parent render, correct but coarse.
  *
- * @param {{ effect?: EffectAdapter }} [config]
+ * @param {{ effect?: EffectAdapter, host?: import("./host.js").Host }} [config]
  */
-export const configure = ({ effect } = {}) => {
+export const configure = ({ effect, host } = {}) => {
   adapter = effect ?? null;
+  if (host !== undefined) setHost(host);
 };
 
 /** @param {ThunkHolder} part */
@@ -44,7 +47,7 @@ export const setThunk = (part, fn, commit) => {
   }
   part._effect = adapter(() => {
     const anchor = part.start ?? part.el;
-    if (anchor?.isConnected) part._thunkLive = true;
+    if (anchor !== undefined && anchor !== null && currentHost().isConnected(anchor)) part._thunkLive = true;
     else if (part._thunkLive) {
       disposeThunk(part);
       return;
