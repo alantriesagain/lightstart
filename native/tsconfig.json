@@ -1,8 +1,12 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "lib": ["es2024"],
-    "types": ["node"]
+    "lib": [
+      "es2024"
+    ],
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "../html/constants.js",
@@ -16,7 +20,9 @@
     "../html/types.ts",
     "../signals/index.js",
     "../signals/store.js",
-    "../signals/types.ts"
+    "../signals/types.ts",
+    "../view/core.js",
+    "../html/tokenizer.js"
   ],
   "exclude": []
 }

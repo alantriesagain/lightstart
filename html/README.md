@@ -16,6 +16,8 @@ primitives that replaced lit's directives. 9.1 KB min+gzip bundled with esbuild,
 | `template.js` | Template prep, WeakMap identity cache, instance cloning |
 | `parts.js` | Part classes, commit semantics, keyed reconciliation, `render()` |
 | `reactive.js` | Thunk ↔ effect-adapter seam (`configure({ effect, host })`) |
+| `tokenizer.js` | Marker markup → template tree, for hosts without an HTML parser (`markup/`, the terminal) |
+| `conformance.test.js`, `conformance-hosts.js` | The engine's behaviour as every host must show it, run under `node --test` against each host adapter listed |
 | `../dom/adopt.js` | Two-stage adoption of browser-prerendered DOM, installed into the engine through `installAdoption` |
 | `../dom/slots.js` | Light-DOM `<slot>` projection: unit walkers, `SlotPart`, `projectSlots`, the `<unslotted>` holder |
 

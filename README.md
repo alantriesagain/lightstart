@@ -187,8 +187,12 @@ export default [recommended];
 
 | File | What it owns |
 |---|---|
-| `view/index.js` | `View`, the property system, the update queue, plugins, `defineComponent`, `defineMixin`, `configureView` |
+| `view/index.js` | The browser entry: `View`, `defineComponent`, `defineMixin`, `configureView` |
+| `view/core.js` | `ViewCore`, the host-neutral update cycle and queue every host's `View` forwards to; `configureView`, `trackWork`, `translate` |
 | `view/definition.js` | Definition composition: mixins, hook chaining, the define-time key guard |
+| `dom/view.js` | The browser `View`: the custom element, the property system, attributes, slots, plugins, `View.define`, `View.register` |
+| `dom/host.js` | The browser host of the renderer (`DomHost`); `dom/` holds everything that needs a document |
+| `markup/` | The renderer on an in-memory tree: server prerendering a page adopts, and the host every other host is measured against |
 | `env/`, `navigation/` | The page's environment and the host's router, as components read them |
 | `theme/` | Tokens, presets, `theme.css`, the color scheme, icons |
 | `components/` | The component library, one directory per category, a `.css` and a `.demo.js` beside each component |
@@ -196,7 +200,7 @@ export default [recommended];
 | `test/` | `node:test` and `node:assert` for the browser, the runner page, the loop and `light test` |
 | `eslint/` | The eslint plugin: the checker as two rules, the two style rules, the recommended config |
 | `check/` | The convention checker: the rule contract, the parsers of a definition and its templates, the project context, the engine, `light check`, and light's own rules under `check/rules/` |
-| `html/` | The renderer |
+| `html/` | The renderer; `html/core.js` is the engine without a host, `html/host.js` the seam a host implements |
 | `signals/index.js` | The signals |
 | `signals/store.js` | The keyed reactive store behind `$state` |
 | `types/index.js` | `T` and attribute parsing |

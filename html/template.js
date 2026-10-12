@@ -8,11 +8,11 @@
 import { currentHost } from "./host.js";
 import { createPart } from "./parts.js";
 
-/** @import { Prepared } from "./host.js" */
+/** @import { Host, Prepared } from "./host.js" */
 /** @import { PartSpec } from "./types.ts" */
 
-/** @type {WeakMap<ReadonlyArray<string>, Template>} */
-const templateCache = new WeakMap();
+/** @type {WeakMap<Host, WeakMap<ReadonlyArray<string>, Template>>} */
+const templateCaches = new WeakMap();
 
 export class Template {
   /**
@@ -37,10 +37,16 @@ export class Template {
  * @param {number} kind
  */
 export const getTemplate = (strings, kind) => {
-  let template = templateCache.get(strings);
-  if (!template) {
+  const host = currentHost();
+  let cache = templateCaches.get(host);
+  if (cache === undefined) {
+    cache = new WeakMap();
+    templateCaches.set(host, cache);
+  }
+  let template = cache.get(strings);
+  if (template === undefined) {
     template = new Template(strings, kind);
-    templateCache.set(strings, template);
+    cache.set(strings, template);
   }
   return template;
 };
