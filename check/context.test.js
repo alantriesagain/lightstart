@@ -320,3 +320,29 @@ test("invalidate(rel, text) stands the text in for the file until invalidated wi
   ctx.invalidate("views/card.js");
   assert.deepEqual([...ctx.componentIndex().propsOf("fx-card")], ["a"]);
 });
+
+test("controllers() reads every defineController call in the project's scripts, tests and comments aside", () => {
+  const map = {
+    "controllers/ledger.js": 'export default defineController({ name: "ledger", props: { month: "" } });',
+    "lib/stores.js": 'export const a = defineController({ name: "a" });\nexport const b = defineController({ name: "b" });',
+    "lib/doc.js": "/** Build one with defineController({ name }). */\nexport const x = 1;",
+    "controllers/ledger.test.js": 'defineController({ name: "fixture" });',
+    "tests/helpers.js": 'defineController({ name: "helper" });',
+  };
+  const ctx = contextFromFiles(map);
+  assert.deepEqual(ctx.controllers().map((c) => [c.file, c.name]), [["controllers/ledger.js", "ledger"], ["lib/stores.js", "a"], ["lib/stores.js", "b"]]);
+  assert.deepEqual(ctx.dependencyControllers(), []);
+  ctx.invalidate("lib/stores.js", 'export const c = defineController({ name: "c" });');
+  assert.deepEqual(ctx.controllers().map((c) => c.name), ["ledger", "c"]);
+});
+
+test("a host's controller files are the dependency controllers; its adapter names join the ones the project registers", () => {
+  const ctx = contextFromFiles({
+    "node_modules/@bootstrapp/devices/controllers/devices.js": 'export default defineController({ name: "devices" });',
+    "frontend.js": 'registerAdapter("custom", makeAdapter());\n// registerAdapter("commented", x);',
+    "lib/doc.js": 'export const doc = createDocumentAdapter("notes-doc");',
+  }, { host: { controllerFiles: () => ["node_modules/@bootstrapp/devices/controllers/devices.js"], syncAdapters: ["local"] } });
+  assert.deepEqual(ctx.dependencyControllers().map((c) => c.name), ["devices"]);
+  assert.deepEqual(ctx.controllers(), []);
+  assert.deepEqual([...ctx.syncAdapters()].sort(), ["custom", "local", "notes-doc"]);
+});

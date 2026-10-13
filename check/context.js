@@ -6,7 +6,8 @@
  * `host` is what a host of the engine adds: the component maps of the
  * project's dependencies, extra component directories, what the walk leaves
  * out, the hooks and events its plugins give every component, its own notion
- * of a dependency and of the styling engine.
+ * of a dependency and of the styling engine, the controllers of its
+ * dependencies and the sync adapter names it registers itself.
  */
 
 import { existsSync, readFileSync, statSync } from "node:fs";
@@ -15,17 +16,20 @@ import { toRel, walkFiles } from "./walk.js";
 import { stripComments } from "./strip-comments.js";
 import { parseImports } from "./parse/imports.js";
 import { parseComponentSources } from "./parse/component.js";
+import { parseControllerSources } from "./parse/controller.js";
 import { moduleScripts } from "./parse/html.js";
 import { htmlTemplates } from "./parse/templates.js";
 import { elements, parseTemplates } from "./parse/markup.js";
 import { createComponentIndex } from "./component-index.js";
 
-/** @import { ClassAttr, HostOptions, PackageJson, ParsedComponent, ParsedTemplate, ProjectContext, View } from "./types.ts" */
+/** @import { ClassAttr, Controller, HostOptions, PackageJson, ParsedComponent, ParsedTemplate, ProjectContext, View } from "./types.ts" */
 
 export const DEFAULT_IGNORED_DIRS = ["node_modules", ".git", "dist", "build", "coverage"];
 export const TEXT_EXTENSIONS = [".js", ".mjs", ".ts", ".css", ".json", ".html", ".md"];
 const COMPONENT_DEPTH = 4;
 const DEFINES = /\.define\(/;
+const DEFINES_CONTROLLER = /\bdefineController\(/;
+const REGISTERS_ADAPTER = /\b(?:registerAdapter|createDocumentAdapter)\(\s*["']([\w-]+)["']/g;
 const isScript = (/** @type {string} */ f) => /\.(js|ts)$/.test(f) && !f.endsWith(".test.js");
 
 /**
@@ -45,6 +49,14 @@ export function createContext({ projectDir, fileMap = null, pkg: givenPkg = null
   const viewCache = new Map();
   /** @type {Map<string, ParsedTemplate[]>} */
   const markupCache = new Map();
+  /** @type {Map<string, Controller[]>} */
+  const controllerCache = new Map();
+  /** @type {Controller[] | null} */
+  let controllersCache = null;
+  /** @type {Controller[] | null} */
+  let dependencyControllersCache = null;
+  /** @type {Set<string> | null} */
+  let syncAdaptersCache = null;
   /** @type {string[] | null} */
   let filesCache = null;
   /** @type {string[] | null} */
@@ -213,6 +225,32 @@ export function createContext({ projectDir, fileMap = null, pkg: givenPkg = null
     return out;
   };
 
+  /** @returns {Controller[]} */
+  const controllersIn = (/** @type {string} */ rel) => {
+    const cached = controllerCache.get(rel);
+    if (cached) return cached;
+    const source = script(rel) || "";
+    /** @type {Controller[]} */
+    let parsed = [];
+    if (DEFINES_CONTROLLER.test(source))
+      try {
+        parsed = parseControllerSources(source, rel).map((p) => ({ file: rel, source, ...p }));
+      } catch {
+        parsed = [];
+      }
+    controllerCache.set(rel, parsed);
+    return parsed;
+  };
+  const ownScripts = () => files().filter((f) => (isScript(f) || f.endsWith(".html")) && !f.startsWith("tests/"));
+  const controllers = () => (controllersCache ??= ownScripts().filter((f) => DEFINES_CONTROLLER.test(code(f) ?? "")).flatMap(controllersIn));
+  const dependencyControllers = () => (dependencyControllersCache ??= (host.controllerFiles?.(model) ?? []).flatMap(controllersIn));
+  const syncAdapters = () => {
+    if (syncAdaptersCache) return syncAdaptersCache;
+    const names = new Set(host.syncAdapters ?? []);
+    for (const f of ownScripts()) for (const m of (code(f) ?? "").matchAll(REGISTERS_ADAPTER)) names.add(m[1]);
+    return (syncAdaptersCache = names);
+  };
+
   const relOf = (/** @type {string} */ abs) => {
     const rel = toRel(projectDir, abs);
     return rel.startsWith("..") || path.isAbsolute(rel) ? null : rel;
@@ -272,6 +310,10 @@ export function createContext({ projectDir, fileMap = null, pkg: givenPkg = null
     viewsCache = null;
     lineIndexCache.delete(rel);
     markupCache.delete(rel);
+    controllerCache.delete(rel);
+    controllersCache = null;
+    dependencyControllersCache = null;
+    syncAdaptersCache = null;
     if (viewCache.delete(rel) || componentDirs().some((d) => rel.startsWith(d)) || DEFINES.test(script(rel) ?? "")) index.clear();
     const known = filesCache?.includes(rel) ?? false;
     const present = fileMap ? rel in fileMap : existsSync(path.join(projectDir, rel));
@@ -308,6 +350,10 @@ export function createContext({ projectDir, fileMap = null, pkg: givenPkg = null
     imports,
     classAttrs,
     assetFiles,
+    controllers,
+    controllersIn,
+    dependencyControllers,
+    syncAdapters,
     invalidate,
   };
   return model;

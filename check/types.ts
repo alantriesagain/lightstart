@@ -86,6 +86,43 @@ export interface View extends ParsedComponent {
   isComponent: boolean;
 }
 
+/** A declared controller property; `sync` is its sync block target when that is a name. */
+export interface ControllerProperty { name: string; offset: number; hasNonNullDefault: boolean; sync: string | null }
+export interface MemberInfo { name: string; offset: number; kind: "method" | "value" | "shorthand" }
+/** One entry of a controller's `sync` block. */
+export interface SyncEntryInfo {
+  prop: string;
+  offset: number;
+  /** The target when it is a string literal: an adapter or controller name. */
+  target: string | null;
+  targetOffset: number;
+  /** The target's source text, whatever it is. */
+  targetText: string;
+  /** The long form's `key`, when it is a string literal. */
+  key: string | null;
+}
+
+/** A `defineController({...})` call whose definition is a literal. */
+export interface ParsedController {
+  name: string | null;
+  /** Each `mixins: [...]` entry that is a named import (or a call on one): the module specifier and exported name. */
+  mixins: Array<{ spec: string; exported: string }>;
+  topLevelKeys: string[];
+  keyOffsets: Record<string, number>;
+  propertyNames: ControllerProperty[];
+  memberNames: MemberInfo[];
+  syncEntries: SyncEntryInfo[];
+  literal: import("typescript").ObjectLiteralExpression;
+  sf: import("typescript").SourceFile;
+  /** Where the `defineController` call starts in the file. */
+  offset: number;
+}
+
+export interface Controller extends ParsedController {
+  file: string;
+  source: string;
+}
+
 export interface Template { content: string; start: number }
 /**
  * A `class` value: the static text (an expression inside it stands as `${}`),
@@ -181,6 +218,10 @@ export interface HostOptions {
   hasDep?: (dep: string, ctx: ProjectModel) => boolean;
   styling?: Styling;
   scope?: string;
+  /** The files outside the project's own walk that define controllers it reaches by name (a dependency's), relative to the project. */
+  controllerFiles?: (ctx: ProjectModel) => string[];
+  /** The sync adapter names the host registers itself, so `sync: "<name>"` binds in every project it runs. */
+  syncAdapters?: Iterable<string>;
 }
 
 /** The project model a rule reads. */
@@ -211,6 +252,13 @@ export interface ProjectModel {
   imports(rel: string): ParsedImport[];
   classAttrs(rel: string): ClassAttr[];
   assetFiles(dir: string): string[];
+  /** Every `defineController` call in the project's scripts, tests aside. */
+  controllers(): Controller[];
+  controllersIn(rel: string): Controller[];
+  /** The controllers of the host's `controllerFiles`. */
+  dependencyControllers(): Controller[];
+  /** The sync adapter names a `sync: "<name>"` can bind to: the host's and every `registerAdapter("<name>", ...)` or `createDocumentAdapter("<name>")` in the project. */
+  syncAdapters(): Set<string>;
 }
 
 /** The model plus what the runners need. */

@@ -1,6 +1,6 @@
 /**
  * The instance surface a definition literal reaches through `this`, shared by
- * the controller and view `declare-instance-surface` rules: every `this.<name>`
+ * `declare-instance-surface` and `controller-declare-instance-surface`: every `this.<name>`
  * that is assigned, member-accessed or called, and the names a `mixins:`
  * fragment declares (resolved through the module that exports it, and through
  * that fragment's own mixins).
