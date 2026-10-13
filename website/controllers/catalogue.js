@@ -1,5 +1,5 @@
 import $APP from "bootstrapp";
-import { defineController } from "bootstrapp/controller";
+import { defineController } from "@bootstrapp/light/controller";
 import presets, { loadPreset } from "@bootstrapp/light/theme/presets.js";
 import { componentPath } from "../lib/paths.js";
 

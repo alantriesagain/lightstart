@@ -248,11 +248,12 @@ export const resolveSync = (sync) => (typeof sync === "function" ? sync() : sync
  * options it reads beyond `to`, `key` and `scope` (`query`, `dependsOn`); a
  * property declaring one of those needs a target a binder that reads it claims,
  * or a thunk. A binder that reads `query` keeps the host's `dataPending` true
- * while a load is in flight, when the host declares one.
+ * while a load is in flight, when the host declares one. Registering the same
+ * binder again changes nothing.
  * @param {SyncBinder} binder
  */
 export const registerSyncBinder = (binder) => {
-  binders.push(binder);
+  if (!binders.includes(binder)) binders.push(binder);
 };
 
 /**
