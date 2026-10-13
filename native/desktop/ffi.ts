@@ -18,3 +18,12 @@ export declare function desktop_return(w: bigint, id: string, status: number, js
 export declare function desktop_pump(w: bigint): number;
 export declare function desktop_terminate(w: bigint): void;
 export declare function desktop_destroy(w: bigint): void;
+export declare function desktop_minimize(w: bigint): void;
+export declare function desktop_maximize(w: bigint, on: number): void;
+export declare function desktop_is_maximized(w: bigint): number;
+export declare function desktop_inspector(w: bigint): void;
+export declare function desktop_message(w: bigint, title: string, text: string): void;
+export declare function desktop_dialog_bind(w: bigint, fn: (id: number, status: number, paths: string) => void): number;
+export declare function desktop_dialog_unbind(w: bigint, fn: (id: number, status: number, paths: string) => void): void;
+export declare function desktop_dialog_open(w: bigint, kind: number, title: string, path: string, multi: number): number;
+export declare function desktop_dialog_cancel(w: bigint, id: number): void;

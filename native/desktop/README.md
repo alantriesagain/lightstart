@@ -108,6 +108,15 @@ the program. The view runs its user scripts in registration order on every page 
 binding is registered in `open()` before any `init` script: a script may call `window.__desktop`
 at document start. `DesktopApp` is light's bridge and asset server on top of a `DesktopWindow`.
 
+The window's own surface, GTK on Linux (the other backends get theirs when they are verified):
+`minimize()`, `maximize(on)`, `isMaximized()`; `inspector()` shows the engine's developer tools
+when the view was created with `debug` (a right-click offers "Inspect Element" either way);
+`message(title, text)` is a message box; `dialog(kind, title, path, multi)` opens a file chooser
+(`kind` 0 files, 1 a folder, 2 save) and answers the chosen paths newline-joined, or "" when
+cancelled; `pendingDialogs()` and `cancelDialog(id)` withdraw one. Dialogs and the message box
+are the non-modal kind: their answers arrive inside a later pump through a bound function, so the
+program's loop never parks while one is open.
+
 ### The backend
 
 `DesktopApp` (`host.js`):
@@ -172,7 +181,7 @@ its `exports`, and the prefix `@bootstrapp/light/` at them.
 
 | File | Owns |
 |---|---|
-| `window.js` | `DesktopWindow`: the web view, the binding, the init scripts, the pump. |
+| `window.js` | `DesktopWindow`: the web view, the binding, the init scripts, the pump, the window controls, the inspector, dialogs. |
 | `host.js` | `DesktopApp`, `Route`, `Listener`, the narrowing helpers. |
 | `server.js` | The loopback asset server. |
 | `client.js` | `connect()` for the page. |

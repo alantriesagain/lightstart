@@ -89,6 +89,20 @@ const FUNCTIONS = [
   { name: "desktop_pump", symbol: "desktop_pump", params: ["pointer"], returns: "i32" },
   { name: "desktop_terminate", symbol: "desktop_terminate", params: ["pointer"], returns: "void" },
   { name: "desktop_destroy", symbol: "desktop_destroy", params: ["pointer"], returns: "void" },
+  { name: "desktop_minimize", symbol: "desktop_minimize", params: ["pointer"], returns: "void" },
+  { name: "desktop_maximize", symbol: "desktop_maximize", params: ["pointer", "i32"], returns: "void" },
+  { name: "desktop_is_maximized", symbol: "desktop_is_maximized", params: ["pointer"], returns: "i32" },
+  { name: "desktop_inspector", symbol: "desktop_inspector", params: ["pointer"], returns: "void" },
+  { name: "desktop_message", symbol: "desktop_message", params: ["pointer", "string", "string"], returns: "void" },
+  {
+    name: "desktop_dialog_bind",
+    symbol: "desktop_dialog_bind",
+    params: ["pointer", { callback: { id: "on_dialog", params: ["i32", "i32", "cstring", { context: "on_dialog" }], returns: "void", lifetime: "retained" } }, { context: "on_dialog" }],
+    returns: "i32",
+  },
+  { name: "desktop_dialog_unbind", symbol: "desktop_dialog_unbind", params: ["pointer", { callback: { release: "desktop_dialog_bind:on_dialog" } }, { context: "desktop_dialog_bind:on_dialog" }], returns: "void" },
+  { name: "desktop_dialog_open", symbol: "desktop_dialog_open", params: ["pointer", "i32", "string", "string", "i32"], returns: "i32" },
+  { name: "desktop_dialog_cancel", symbol: "desktop_dialog_cancel", params: ["pointer", "i32"], returns: "void" },
 ];
 
 /**

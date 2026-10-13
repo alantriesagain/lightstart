@@ -2,12 +2,13 @@
  * @bootstrapp/light/native/desktop/window: the operating system's web view as one object. A
  * DesktopWindow creates the view through the shim, binds the one page-callable function
  * `__desktop` (before any init script, since the view runs its user scripts in registration
- * order on every page load), installs init scripts, navigates, evaluates, answers calls, and pumps
- * the platform's event loop from a timer so the program's own loop keeps running. It knows
+ * order on every page load), installs init scripts, navigates, evaluates, answers calls, pumps
+ * the platform's event loop from a timer so the program's own loop keeps running, and offers the
+ * window's controls, the engine's inspector, a message box and non-modal file choosers. It knows
  * nothing of pages or protocols: DesktopApp builds light's bridge on it, and a host with its own
  * bridge and its own server builds on it directly. One window per process.
  */
-import { desktop_bind, desktop_create, desktop_destroy, desktop_eval, desktop_init, desktop_navigate, desktop_pump, desktop_return, desktop_set_size, desktop_set_title, desktop_terminate, desktop_unbind } from "./ffi.ts";
+import { desktop_bind, desktop_create, desktop_destroy, desktop_dialog_bind, desktop_dialog_cancel, desktop_dialog_open, desktop_dialog_unbind, desktop_eval, desktop_init, desktop_inspector, desktop_is_maximized, desktop_maximize, desktop_message, desktop_minimize, desktop_navigate, desktop_pump, desktop_return, desktop_set_size, desktop_set_title, desktop_terminate, desktop_unbind } from "./ffi.ts";
 
 /** @import { DesktopWindowOptions } from "./types.ts" */
 
@@ -24,6 +25,16 @@ const onCall = (id, req) => {
   if (active !== null) active.receive(id, req);
 };
 
+/**
+ * The one function dialog results arrive through, a module constant for the same reason.
+ * @param {number} id
+ * @param {number} status
+ * @param {string} paths
+ */
+const onDialog = (id, status, paths) => {
+  if (active !== null) active.dialogResult(id, status, paths);
+};
+
 export class DesktopWindow {
   /** @param {DesktopWindowOptions} options */
   constructor(options) {
@@ -36,6 +47,8 @@ export class DesktopWindow {
     this.onRequest = null;
     /** @type {(() => void) | null} */
     this.onClose = null;
+    /** @type {Map<number, (status: number, paths: string) => void>} */
+    this.dialogs = new Map();
     this.w = 0n;
     this.running = false;
     this.pumping = false;
@@ -50,10 +63,88 @@ export class DesktopWindow {
     desktop_set_title(w, this.title);
     desktop_set_size(w, this.width, this.height, 0);
     desktop_bind(w, "__desktop", onCall);
+    desktop_dialog_bind(w, onDialog);
     process.on("exit", () => {
-      if (this.w !== 0n) desktop_unbind(this.w, "__desktop", onCall);
+      if (this.w === 0n) return;
+      desktop_dialog_unbind(this.w, onDialog);
+      desktop_unbind(this.w, "__desktop", onCall);
     });
     this.tick();
+  }
+
+  minimize() {
+    if (this.running) desktop_minimize(this.w);
+  }
+
+  /** @param {boolean} on */
+  maximize(on) {
+    if (this.running) desktop_maximize(this.w, on ? 1 : 0);
+  }
+
+  isMaximized() {
+    return this.running && desktop_is_maximized(this.w) === 1;
+  }
+
+  inspector() {
+    if (this.running) desktop_inspector(this.w);
+  }
+
+  /**
+   * A non-modal message box.
+   * @param {string} title
+   * @param {string} text
+   */
+  message(title, text) {
+    if (this.running) desktop_message(this.w, title, text);
+  }
+
+  /**
+   * Open a file chooser: `kind` 0 picks files, 1 a folder, 2 a file to save. Answers the chosen
+   * paths (newline-joined; "" when cancelled) once the user is done; the dialog is not modal, the
+   * pump keeps running. `path` is the folder to start in, or the suggested file for a save.
+   * @param {number} kind
+   * @param {string} title
+   * @param {string} path
+   * @param {boolean} multi
+   * @returns {Promise<string>}
+   */
+  dialog(kind, title, path, multi) {
+    return new Promise((resolve) => {
+      if (!this.running) {
+        resolve("");
+        return;
+      }
+      const id = desktop_dialog_open(this.w, kind, title, path, multi ? 1 : 0);
+      if (id < 0) {
+        resolve("");
+        return;
+      }
+      this.dialogs.set(id, (status, paths) => resolve(status === 1 ? paths : ""));
+    });
+  }
+
+  pendingDialogs() {
+    /** @type {number[]} */
+    const ids = [];
+    for (const id of this.dialogs.keys()) ids.push(id);
+    return ids;
+  }
+
+  /** Withdraw an open dialog; it answers as cancelled. @param {number} id */
+  cancelDialog(id) {
+    if (this.running) desktop_dialog_cancel(this.w, id);
+  }
+
+  /**
+   * @param {number} id
+   * @param {number} status
+   * @param {string} paths
+   */
+  dialogResult(id, status, paths) {
+    const settle = this.dialogs.get(id);
+    if (settle === undefined) return;
+    this.dialogs.delete(id);
+    settle(status, paths);
   }
 
   /**
