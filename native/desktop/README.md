@@ -245,6 +245,20 @@ its `exports`, and the prefix `@bootstrapp/light/` at them.
 | `mac-arm64` | WKWebView | `clang++`, `clang -fobjc-arc` (Xcode command line tools) | `shim/shim_mac.m` and the build branch written, unverified: not yet built on a Mac. |
 | `win-x64` | WebView2 (its runtime is on every Windows 10 and 11 since 2021) | `zig cc` targeting `x86_64-windows-gnu`, after `node native/desktop/shim/fetch-webview2.js` fetched `WebView2.h` | Build branch written, unverified; the backend itself needs scriptc's Windows runtime pack. |
 
+The first build on a Mac should walk this list, since the Cocoa code has never been compiled:
+
+1. `node native/desktop/build.js shim --target mac` builds `shim.c`, `shim_mac.m` and webview.
+2. `light desktop run native/desktop/demo/backend.js` opens the demo: the traffic lights sit over a
+   transparent bar, the page's bar leaves room for them (78px), no drawn `_ □ ×` appears.
+3. A drag on the bar moves the window (`performWindowDragWithEvent:` with the press the pump
+   saw); the program's loop is parked while the drag runs, which is AppKit's own tracking loop.
+4. A click on a page button inside the 38px band reaches the page (the empty toolbar must not
+   swallow it); a double-click zooms once, not twice (page and system).
+5. Resizing keeps the transparent bar (webview rewrites the style mask on resize; the shim
+   re-applies it); full screen drops the inset.
+6. The minimize and close paths, `window.__desktopWindow`'s state, and the file chooser (GTK-only
+   today: a Cocoa `NSOpenPanel` branch is still to write).
+
 On macOS the shim does what `NSApplication.run` would, one step at a time: `finishLaunching`
 on the first pump, then `nextEventMatchingMask`, `sendEvent`, `updateWindows`; a
 `NSWindowWillCloseNotification` observer records the close. On Windows the pump is a
