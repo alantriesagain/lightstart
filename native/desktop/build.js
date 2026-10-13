@@ -70,7 +70,7 @@ const outDir = (target) => {
 };
 
 const FUNCTIONS = [
-  { name: "desktop_create", symbol: "desktop_create", params: ["i32"], returns: "pointer" },
+  { name: "desktop_create", symbol: "desktop_create", params: ["i32", "i32"], returns: "pointer" },
   { name: "desktop_window", symbol: "desktop_window", params: ["pointer"], returns: "pointer" },
   { name: "desktop_set_title", symbol: "desktop_set_title", params: ["pointer", "string"], returns: "void" },
   { name: "desktop_set_size", symbol: "desktop_set_size", params: ["pointer", "i32", "i32", "i32"], returns: "void" },
@@ -93,6 +93,9 @@ const FUNCTIONS = [
   { name: "desktop_maximize", symbol: "desktop_maximize", params: ["pointer", "i32"], returns: "void" },
   { name: "desktop_is_maximized", symbol: "desktop_is_maximized", params: ["pointer"], returns: "i32" },
   { name: "desktop_inspector", symbol: "desktop_inspector", params: ["pointer"], returns: "void" },
+  { name: "desktop_begin_move", symbol: "desktop_begin_move", params: ["pointer"], returns: "void" },
+  { name: "desktop_close", symbol: "desktop_close", params: ["pointer"], returns: "void" },
+  { name: "desktop_window_state", symbol: "desktop_window_state", params: ["pointer"], returns: "i32" },
   { name: "desktop_message", symbol: "desktop_message", params: ["pointer", "string", "string"], returns: "void" },
   {
     name: "desktop_dialog_bind",
@@ -168,10 +171,14 @@ export const smoke = (target, wait) => {
   const exe = join(dir, "smoke");
   run("cc", ["-O2", ...cflags, "-c", join(shimDir, "smoke.c"), "-o", join(dir, "smoke.o")]);
   run("g++", [join(dir, "smoke.o"), join(dir, "libdesktop.a"), ...libs, "-ldl", "-lpthread", "-lm", "-o", exe]);
-  const r = spawnSync(exe, wait ? ["--wait"] : [], { encoding: "utf8" });
+  const r = spawnSync(exe, wait ? ["--wait"] : [], { encoding: "utf8", env: { ...process.env, G_DEBUG: "fatal-criticals" } });
   process.stdout.write(r.stdout ?? "");
   process.stderr.write(r.stderr ?? "");
-  return r.status === 0;
+  if (r.status !== 0 || wait) return r.status === 0;
+  const frameless = spawnSync(exe, ["--frameless"], { encoding: "utf8", env: { ...process.env, G_DEBUG: "fatal-criticals" } });
+  process.stdout.write(frameless.stdout ?? "");
+  process.stderr.write(frameless.stderr ?? "");
+  return frameless.status === 0;
 };
 
 /**

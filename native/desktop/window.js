@@ -55,7 +55,7 @@ export class DesktopWindow {
   }
 
   open() {
-    const w = desktop_create(this.debug ? 1 : 0);
+    const w = desktop_create(this.debug ? 1 : 0, 0);
     if (w === 0n) throw new Error("[desktop] the web view could not be created; is WebKitGTK (Linux) or the WebView2 runtime (Windows) installed?");
     this.w = w;
     this.running = true;

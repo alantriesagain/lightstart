@@ -24,7 +24,20 @@
 #define DESKTOP_COCOA 1
 int32_t desktop_pump_mac(void *window, int32_t *closed);
 void desktop_watch_close_mac(void *window, int32_t *closed);
+void desktop_frameless_mac(void *window);
+void desktop_begin_move_mac(void *window);
+int32_t desktop_state_mac(void *window);
+void desktop_minimize_mac(void *window);
+void desktop_maximize_mac(void *window, int32_t on);
+void desktop_close_mac(void *window);
 #endif
+
+#define DESKTOP_FRAMELESS 1
+#define DESKTOP_STATE_MAXIMIZED 1
+#define DESKTOP_STATE_FULLSCREEN 2
+#define DESKTOP_STATE_FOCUSED 4
+#define DESKTOP_STATE_MINIMIZED 8
+#define DESKTOP_STATE_FRAMELESS 16
 
 typedef void (*desktop_dialog_fn)(int32_t id, int32_t status, const char *paths, void *ctx);
 
@@ -38,6 +51,8 @@ struct dialog_request {
 struct desktop {
   webview_t w;
   int32_t closed;
+  int32_t frameless;
+  void *own_window;
   desktop_dialog_fn dialog_fn;
   void *dialog_ctx;
   int32_t next_dialog;
@@ -61,20 +76,62 @@ static void on_destroy(GtkWidget *widget, gpointer data) {
 }
 #endif
 
-void *desktop_create(int32_t debug) {
+#ifdef DESKTOP_GTK
+/* A window with client-side decorations and an empty, never-shown titlebar: no title bar is drawn,
+   GTK keeps its resize handles in the shadow margin. It has to be set before the window is
+   realized, which webview does inside webview_create for a window it owns, so the shim creates the
+   window and hands it over. */
+static GtkWidget *frameless_window(void) {
+  if (!gtk_init_check(NULL, NULL)) return NULL;
+  GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_titlebar(GTK_WINDOW(window), gtk_label_new(NULL));
+  gtk_style_context_add_class(gtk_widget_get_style_context(window), "light-frameless");
+  return window;
+}
+#endif
+
+/* flags: DESKTOP_FRAMELESS asks for a window without the system title bar (GTK: client-side
+   decorations with no titlebar; Cocoa: a transparent, full-size-content title bar that keeps the
+   traffic lights; Win32: ignored, the native caption stays). */
+void *desktop_create(int32_t debug, int32_t flags) {
   struct desktop *d = (struct desktop *)calloc(1, sizeof(struct desktop));
   if (d == NULL) return NULL;
-  d->w = webview_create(debug != 0 ? 1 : 0, NULL);
+  void *given = NULL;
+#ifdef DESKTOP_GTK
+  if ((flags & DESKTOP_FRAMELESS) != 0) {
+    given = frameless_window();
+    if (given == NULL) {
+      free(d);
+      return NULL;
+    }
+  }
+#endif
+  d->w = webview_create(debug != 0 ? 1 : 0, given);
   if (d->w == NULL) {
+#ifdef DESKTOP_GTK
+    if (given != NULL) gtk_widget_destroy(GTK_WIDGET(given));
+#endif
     free(d);
     return NULL;
   }
 #ifdef DESKTOP_GTK
+  if (given != NULL) {
+    d->own_window = given;
+    d->frameless = 1;
+    GtkWidget *view = (GtkWidget *)webview_get_native_handle(d->w, WEBVIEW_NATIVE_HANDLE_KIND_UI_WIDGET);
+    if (view != NULL) gtk_widget_grab_focus(view);
+    gtk_widget_show(GTK_WIDGET(given));
+  }
   g_signal_connect(G_OBJECT(webview_get_window(d->w)), "destroy", G_CALLBACK(on_destroy), d);
 #endif
 #ifdef DESKTOP_COCOA
   desktop_watch_close_mac(webview_get_window(d->w), &d->closed);
+  if ((flags & DESKTOP_FRAMELESS) != 0) {
+    desktop_frameless_mac(webview_get_window(d->w));
+    d->frameless = 1;
+  }
 #endif
+  (void)flags;
   return d;
 }
 
@@ -90,7 +147,12 @@ void desktop_set_title(void *w, const uint8_t *s, size_t n) {
 }
 
 void desktop_set_size(void *w, int32_t width, int32_t height, int32_t hint) {
-  webview_set_size(((struct desktop *)w)->w, (int)width, (int)height, (webview_hint_t)hint);
+  struct desktop *d = (struct desktop *)w;
+  webview_set_size(d->w, (int)width, (int)height, (webview_hint_t)hint);
+#ifdef DESKTOP_COCOA
+  /* webview rewrites the style mask when it sizes a Cocoa window. */
+  if (d->frameless) desktop_frameless_mac(webview_get_window(d->w));
+#endif
 }
 
 void desktop_navigate(void *w, const uint8_t *s, size_t n) {
@@ -309,6 +371,9 @@ void desktop_message(void *w, const uint8_t *ts, size_t tn, const uint8_t *ms, s
 }
 
 void desktop_minimize(void *w) {
+#ifdef DESKTOP_COCOA
+  desktop_minimize_mac(webview_get_window(((struct desktop *)w)->w));
+#endif
 #ifdef DESKTOP_GTK
   gtk_window_iconify(GTK_WINDOW(webview_get_window(((struct desktop *)w)->w)));
 #endif
@@ -318,6 +383,9 @@ void desktop_minimize(void *w) {
 }
 
 void desktop_maximize(void *w, int32_t on) {
+#ifdef DESKTOP_COCOA
+  desktop_maximize_mac(webview_get_window(((struct desktop *)w)->w), on);
+#endif
 #ifdef DESKTOP_GTK
   GtkWindow *window = GTK_WINDOW(webview_get_window(((struct desktop *)w)->w));
   if (on != 0) gtk_window_maximize(window);
@@ -329,6 +397,9 @@ void desktop_maximize(void *w, int32_t on) {
 }
 
 int32_t desktop_is_maximized(void *w) {
+#ifdef DESKTOP_COCOA
+  return (desktop_state_mac(webview_get_window(((struct desktop *)w)->w)) & DESKTOP_STATE_MAXIMIZED) != 0 ? 1 : 0;
+#endif
 #ifdef DESKTOP_GTK
   return gtk_window_is_maximized(GTK_WINDOW(webview_get_window(((struct desktop *)w)->w))) ? 1 : 0;
 #endif
@@ -336,6 +407,74 @@ int32_t desktop_is_maximized(void *w) {
   return IsZoomed((HWND)webview_get_window(((struct desktop *)w)->w)) ? 1 : 0;
 #endif
   return 0;
+}
+
+/* Start moving the window with the pointer, as a press on a title bar does. Called from a page
+   call that arrives in a later pump than the page's mousedown, so it reads the pointer from the
+   seat and does nothing once the button is up (a quick click must not start a move). */
+void desktop_begin_move(void *w) {
+  struct desktop *d = (struct desktop *)w;
+  if (d->closed) return;
+#ifdef DESKTOP_GTK
+  GtkWindow *window = GTK_WINDOW(webview_get_window(d->w));
+  GdkWindow *gdkwin = gtk_widget_get_window(GTK_WIDGET(window));
+  if (gdkwin == NULL) return;
+  GdkDevice *pointer = gdk_seat_get_pointer(gdk_display_get_default_seat(gdk_window_get_display(gdkwin)));
+  GdkModifierType mask = 0;
+  gdk_window_get_device_position(gdkwin, pointer, NULL, NULL, &mask);
+  if ((mask & GDK_BUTTON1_MASK) == 0) return;
+  gint x = 0;
+  gint y = 0;
+  gdk_device_get_position(pointer, NULL, &x, &y);
+  gtk_window_begin_move_drag(window, 1, x, y, GDK_CURRENT_TIME);
+#endif
+#ifdef DESKTOP_COCOA
+  desktop_begin_move_mac(webview_get_window(d->w));
+#endif
+}
+
+/* Ask the platform to close the window, as its own close button does: the window goes away on a
+   later pump and the pump reports it, so nothing is freed while a page call is being answered. */
+void desktop_close(void *w) {
+  struct desktop *d = (struct desktop *)w;
+  if (d->closed) return;
+#ifdef DESKTOP_GTK
+  gtk_window_close(GTK_WINDOW(webview_get_window(d->w)));
+#endif
+#ifdef DESKTOP_WIN32
+  PostMessageW((HWND)webview_get_window(d->w), WM_CLOSE, 0, 0);
+#endif
+#ifdef DESKTOP_COCOA
+  desktop_close_mac(webview_get_window(d->w));
+#endif
+}
+
+/* The window's state as bits: maximized 1, fullscreen 2, focused 4, minimized 8, frameless 16. */
+int32_t desktop_window_state(void *w) {
+  struct desktop *d = (struct desktop *)w;
+  int32_t bits = d->frameless ? DESKTOP_STATE_FRAMELESS : 0;
+  if (d->closed) return bits;
+#ifdef DESKTOP_GTK
+  GtkWidget *window = GTK_WIDGET(webview_get_window(d->w));
+  GdkWindow *gdkwin = gtk_widget_get_window(window);
+  if (gdkwin != NULL) {
+    GdkWindowState state = gdk_window_get_state(gdkwin);
+    if ((state & GDK_WINDOW_STATE_MAXIMIZED) != 0) bits |= DESKTOP_STATE_MAXIMIZED;
+    if ((state & GDK_WINDOW_STATE_FULLSCREEN) != 0) bits |= DESKTOP_STATE_FULLSCREEN;
+    if ((state & GDK_WINDOW_STATE_ICONIFIED) != 0) bits |= DESKTOP_STATE_MINIMIZED;
+  }
+  if (gtk_window_is_active(GTK_WINDOW(window))) bits |= DESKTOP_STATE_FOCUSED;
+#endif
+#ifdef DESKTOP_WIN32
+  HWND hwnd = (HWND)webview_get_window(d->w);
+  if (IsZoomed(hwnd)) bits |= DESKTOP_STATE_MAXIMIZED;
+  if (IsIconic(hwnd)) bits |= DESKTOP_STATE_MINIMIZED;
+  if (GetForegroundWindow() == hwnd) bits |= DESKTOP_STATE_FOCUSED;
+#endif
+#ifdef DESKTOP_COCOA
+  bits |= desktop_state_mac(webview_get_window(d->w));
+#endif
+  return bits;
 }
 
 /* Show the engine's inspector (developer tools); needs the view created with debug. */
@@ -355,6 +494,15 @@ void desktop_terminate(void *w) {
 void desktop_destroy(void *w) {
   struct desktop *d = (struct desktop *)w;
   while (d->dialogs != NULL) finish_dialog(d->dialogs, 0, "");
-  if (!d->closed) webview_destroy(d->w);
+  if (!d->closed) {
+    webview_destroy(d->w);
+#ifdef DESKTOP_GTK
+    /* webview only detaches its view from a window it was given; the window is the shim's. */
+    if (d->own_window != NULL) {
+      gtk_widget_destroy(GTK_WIDGET(d->own_window));
+      for (int i = 0; i < 64 && g_main_context_pending(NULL); i++) g_main_context_iteration(NULL, FALSE);
+    }
+#endif
+  }
   free(d);
 }
