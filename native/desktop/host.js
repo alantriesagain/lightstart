@@ -3,8 +3,8 @@
  * the operating system's web view through the shim, serves the page to it over loopback, pumps
  * the platform's event loop from a timer (so the program's own loop, with its timers, child
  * processes and sockets, keeps running), and carries the bridge: the page calls methods the app
- * registered with `handle`, the app pushes events with `emit`. Compiled by scriptc into the app's
- * executable; never run under node.
+ * registered with `handle`, the app pushes events with `emit`, the page pushes its own to the
+ * app's `on` listeners. Compiled by scriptc into the app's executable; never run under node.
  */
 import { dirname, join } from "node:path";
 import { desktop_bind, desktop_create, desktop_destroy, desktop_eval, desktop_init, desktop_navigate, desktop_pump, desktop_return, desktop_set_size, desktop_set_title, desktop_terminate, desktop_unbind } from "./ffi.ts";
@@ -22,6 +22,19 @@ export class Route {
   constructor(name, invoke) {
     this.name = name;
     this.invoke = invoke;
+  }
+}
+
+/** One listener of an event the page emits; `active` goes false when its unlisten function ran. */
+export class Listener {
+  /**
+   * @param {string} name
+   * @param {(value: unknown) => void} receive
+   */
+  constructor(name, receive) {
+    this.name = name;
+    this.receive = receive;
+    this.active = true;
   }
 }
 
@@ -91,6 +104,8 @@ export class DesktopApp {
     this.webDir = options.web ?? argValue("--web") ?? join(dirname(process.execPath), "web");
     /** @type {Map<string, Route>} */
     this.routes = new Map();
+    /** @type {Listener[]} */
+    this.listeners = [];
     /** @type {(() => void) | null} */
     this.onConnect = null;
     /** @type {(() => void) | null} */
@@ -112,6 +127,24 @@ export class DesktopApp {
    */
   handle(name, invoke) {
     this.routes.set(name, new Route(name, invoke));
+  }
+
+  /**
+   * Listen for an event the page emits with `emit(name, value)`; the value arrives parsed from
+   * JSON as `unknown`. Answers the function that removes the listener.
+   * @param {string} name
+   * @param {(value: unknown) => void} receive
+   */
+  on(name, receive) {
+    const listener = new Listener(name, receive);
+    /** @type {Listener[]} */
+    const kept = [];
+    for (const l of this.listeners) if (l.active) kept.push(l);
+    kept.push(listener);
+    this.listeners = kept;
+    return () => {
+      listener.active = false;
+    };
   }
 
   /**
@@ -193,6 +226,14 @@ export class DesktopApp {
       this.ready = true;
       const onConnect = this.onConnect;
       if (onConnect !== null) onConnect();
+      this.reply(id, true, null);
+      return;
+    }
+    if (method === "$emit") {
+      const name = str(args, 0);
+      const value = args.length > 1 ? args[1] : null;
+      const current = this.listeners.slice();
+      for (const l of current) if (l.active && l.name === name) l.receive(value);
       this.reply(id, true, null);
       return;
     }

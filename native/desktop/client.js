@@ -1,9 +1,10 @@
 /**
  * @bootstrapp/light/native/desktop/client: the page half of the bridge. `connect()` answers the
  * contract as a typed proxy whose every method calls the backend through the webview's
- * `window.__desktop` binding, the event listeners the init script installed, a log that reaches
- * the backend's stderr, and `ready()`, which tells the backend the page is up. Browser code; a
- * page loads it through the import map as @bootstrapp/light/native/desktop/client.js.
+ * `window.__desktop` binding, the event listeners the init script installed, `emit` for the
+ * page's own events to the backend, a log that reaches the backend's stderr, and `ready()`,
+ * which tells the backend the page is up. Browser code; a page loads it through the import map
+ * as @bootstrapp/light/native/desktop/client.js.
  */
 
 /** @import { Contract, Desktop, Events } from "./types.ts" */
@@ -36,21 +37,46 @@ const invoke = async (method, args) => {
 };
 
 /**
- * Connect to the backend. The type parameters are the app's contract and events, declared once
- * and imported by both sides.
+ * Connect to the backend. The type parameters are the app's contract, the backend's events and
+ * the page's events, declared once and imported by both sides.
  * @template {Contract} C
  * @template {Events} E
- * @returns {Desktop<C, E>}
+ * @template {Events} [P=Events]
+ * @returns {Desktop<C, E, P>}
  */
 export const connect = () => {
   const b = bridge();
-  const call = /** @type {Desktop<C, E>["call"]} */ (new Proxy({}, {
+  const call = /** @type {Desktop<C, E, P>["call"]} */ (new Proxy({}, {
     get: (_target, property) => (/** @type {unknown[]} */ ...args) => invoke(String(property), args),
   }));
+  /**
+   * @param {string} name
+   * @param {(value: never) => void} fn
+   */
+  const on = (name, fn) => {
+    b.__desktopListen(name, fn);
+    return () => b.__desktopUnlisten(name, fn);
+  };
+  /**
+   * @param {string} name
+   * @param {(value: never) => void} fn
+   */
+  const once = (name, fn) => {
+    /** @param {never} value */
+    const wrapped = (value) => {
+      b.__desktopUnlisten(name, wrapped);
+      fn(value);
+    };
+    return on(name, wrapped);
+  };
   return {
     call,
-    on: /** @type {Desktop<C, E>["on"]} */ ((name, fn) => b.__desktopListen(name, fn)),
-    off: /** @type {Desktop<C, E>["off"]} */ ((name, fn) => b.__desktopUnlisten(name, fn)),
+    on: /** @type {Desktop<C, E, P>["on"]} */ (on),
+    once: /** @type {Desktop<C, E, P>["once"]} */ (once),
+    off: /** @type {Desktop<C, E, P>["off"]} */ ((name, fn) => b.__desktopUnlisten(name, fn)),
+    emit: async (name, value) => {
+      await invoke("$emit", [name, value]);
+    },
     log: async (level, text) => {
       await invoke("$log", [level, text]);
     },

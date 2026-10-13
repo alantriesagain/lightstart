@@ -5,6 +5,12 @@ export interface DemoApi {
   quit(): void;
 }
 
+/** What the backend emits. */
 export interface DemoEvents {
   tick: number;
+}
+
+/** What the page emits. */
+export interface DemoPageEvents {
+  hello: string;
 }

@@ -24,7 +24,9 @@ runs the three desktop gates (`typecheck:desktop`, `coverage:desktop`, `test:des
 that need the shim skip themselves with a notice where WebKitGTK's development package or a
 display is missing. The first build compiles
 the vendored webview library and the shim into `out/<target>/libdesktop.a` and writes the FFI
-manifest beside it; later builds reuse the archive until a shim source changes.
+manifest beside it; later builds reuse the archive until a shim source changes. Every build
+stages light's package files afresh beside the page; `--keep-light` skips that for speed, and
+is wrong whenever a light file changed (the page would load the old copy).
 
 On Linux the build needs `pkg-config`, `g++`, `cc`, `ar` and the development package of WebKitGTK
 (`libwebkit2gtk-4.1-dev` on Debian and Ubuntu, which brings GTK 3). A built app needs only the
@@ -40,8 +42,11 @@ export interface Api {
   add(a: number, b: number): number;
   quit(): void;
 }
-export interface Events {
+export interface Events {        // the backend emits these
   tick: number;
+}
+export interface PageEvents {    // the page emits these
+  draft: string;
 }
 ```
 
@@ -55,6 +60,9 @@ app.handle("quit", () => {
   setTimeout(() => app.quit(), 0);
   return Promise.resolve(null);
 });
+app.on("draft", (value) => {
+  if (typeof value === "string") console.log("draft: " + value);
+});
 app.onConnect = () => app.emit("tick", 1);
 app.start();
 ```
@@ -65,7 +73,7 @@ import View from "@bootstrapp/light";
 import { html } from "@bootstrapp/light/html";
 import { connect } from "@bootstrapp/light/native/desktop/client.js";
 
-/** @type {import("@bootstrapp/light/native/desktop/types.ts").Desktop<Api, Events>} */
+/** @type {import("@bootstrapp/light/native/desktop/types.ts").Desktop<Api, Events, PageEvents>} */
 const desktop = connect();
 View.define("my-page", {
   props: { ticks: 0, sum: 0 },
@@ -73,6 +81,7 @@ View.define("my-page", {
     desktop.on("tick", (n) => { this.ticks = n; });
     await desktop.ready();
     this.sum = await desktop.call.add(2, 3);
+    await desktop.emit("draft", "hello");
   },
   render() {
     return html`<p>${this.ticks} ticks, 2 + 3 = ${this.sum}</p>`;
@@ -94,6 +103,7 @@ itself; `--web <dir>` on its command line points it elsewhere.
 | `new DesktopApp({ title, width, height, web, debug, pumpMs })` | Options only; nothing opens yet. `web` defaults to `--web` on the command line, then `web/` beside the executable. `debug` opens the engine's developer tools. |
 | `handle(name, invoke)` | Registers a method: `invoke(args)` gets the page's arguments parsed from JSON as `unknown[]` and answers a Promise; its value goes back as JSON. A rejection becomes the page's rejection with the error's message. |
 | `emit(name, value)` | Pushes an event to the page's listeners. Nothing is pushed before the page said it is ready. |
+| `on(name, receive)` | Listens for an event the page emits; `receive(value)` gets it parsed from JSON as `unknown`. Answers the function that removes the listener. |
 | `start()` | Opens the window, serves the page, starts pumping. |
 | `quit()` | Closes the window and exits; the user closing the window does the same. |
 | `onConnect`, `onClose`, `onLog` | Nullable callback fields: the page is up (push initial state here), the window is going away (stop children here), a line the page logged (stderr by default). |
@@ -112,7 +122,8 @@ main thread, and the reply is sent when its Promise settles.
 | Member | What it does |
 |---|---|
 | `call.<method>(…args)` | The contract as Promises: `window.__desktop(name, args)` under the hood, the webview's own binding. |
-| `on(name, fn)`, `off(name, fn)` | Event listeners. An event emitted before its first listener is queued (up to 256) and delivered when one arrives, so a listener registered at startup misses nothing. |
+| `on(name, fn)`, `once(name, fn)`, `off(name, fn)` | Listeners for the backend's events; `on` and `once` answer the function that removes the listener. An event emitted before its first listener is queued (up to 256) and delivered when one arrives, so a listener registered at startup misses nothing. |
+| `emit(name, value)` | Sends one of the page's events to the backend's `on(name, …)` listeners; resolves once it was delivered. |
 | `ready()` | Tells the backend the page is up; resolves once it answered. Register listeners before calling it. |
 | `log(level, text)` | Writes to the backend's log; the page's own console is invisible in a web view. |
 
@@ -123,10 +134,15 @@ main thread, and the reply is sent when its Promise settles.
 One bound function, `__desktop(method, args)`; the page's request is the JSON array
 `[method, [args…]]`. The backend replies through `desktop_return` with `{ "ok": true, "value": … }`
 or `{ "ok": false, "error": "…" }`, always with status 0, so errors never depend on the engine's
-rejection path. Replies may complete out of order. Two methods are reserved: `$ready` and
-`$log(level, text)`. Events go the other way as `window.__desktopEmit(name, value)` evaluated in
-the page; `init.js` installs that function, the listener table and the queue on every page load,
-so a reload keeps working.
+rejection path. Replies may complete out of order. Three methods are reserved: `$ready`,
+`$log(level, text)` and `$emit(name, value)`, the page's events, which the backend hands to its
+listeners before answering. Events the other way go as `window.__desktopEmit(name, value)`
+evaluated in the page; `init.js` installs that function, the listener table and the queue on
+every page load, so a reload keeps working.
+
+Both directions are typed from the contract, as with Tauri's `emit` and `listen`: `Desktop<Api,
+Events, PageEvents>` in the page, where the third parameter is what the page may emit. There is
+one window per process, so there are no events between windows.
 
 ### The page's files
 
@@ -142,7 +158,7 @@ its `exports`, and the prefix `@bootstrapp/light/` at them.
 
 | File | Owns |
 |---|---|
-| `host.js` | `DesktopApp`, `Route`, the narrowing helpers. |
+| `host.js` | `DesktopApp`, `Route`, `Listener`, the narrowing helpers. |
 | `server.js` | The loopback asset server. |
 | `client.js` | `connect()` for the page. |
 | `init.js` | The script installed into every page load. |

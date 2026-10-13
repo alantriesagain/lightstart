@@ -6,21 +6,24 @@ import View from "@bootstrapp/light";
 import { html } from "@bootstrapp/light/html";
 import { connect } from "@bootstrapp/light/native/desktop/client.js";
 
-/** @import { DemoApi, DemoEvents } from "../contract.ts" */
+/** @import { DemoApi, DemoEvents, DemoPageEvents } from "../contract.ts" */
 
-/** @type {import("@bootstrapp/light/native/desktop/types.ts").Desktop<DemoApi, DemoEvents>} */
+/** @type {import("@bootstrapp/light/native/desktop/types.ts").Desktop<DemoApi, DemoEvents, DemoPageEvents>} */
 const desktop = connect();
 
 View.define("demo-page", {
   props: { ticks: 0, sum: 0, pong: "" },
   async connected() {
     desktop.on("tick", (n) => {
-      const first = this.ticks === 0;
       this.ticks = n;
-      if (first) desktop.log("info", "first tick " + String(n));
     });
+    desktop.once("tick", (n) => desktop.log("info", "first tick " + String(n)));
     await desktop.ready();
     this.pong = await desktop.call.ping();
+    await desktop.emit("hello", "from the page");
+    const first = await desktop.call.add(1, 2);
+    const second = await desktop.call.add(10, 20);
+    await desktop.log("info", "adds " + String(first) + " " + String(second));
     await desktop.log("info", "page is up, ping answered " + this.pong);
   },
   async add() {

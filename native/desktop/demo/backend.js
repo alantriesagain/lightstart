@@ -1,6 +1,7 @@
 /**
  * @file The demo's backend: a window showing the page in demo/web, three methods, a tick every
- * second. With --smoke it quits on its own once the page connected, called a method, and
+ * second, a listener for the page's "hello" event. With --smoke it quits on its own once the
+ * page connected, called a method, emitted hello, called add twice with the right answers, and
  * acknowledged the first tick through the log, printing "smoke ok"; that is the gate
  * native/desktop/smoke.js runs.
  */
@@ -11,9 +12,11 @@ const app = new DesktopApp({ title: "light desktop demo", width: 640, height: 40
 let ticks = 0;
 let pinged = false;
 let ticked = false;
+let greeted = false;
+let added = false;
 
 const check = () => {
-  if (smoke && pinged && ticked) {
+  if (smoke && pinged && ticked && greeted && added) {
     console.log("smoke ok");
     app.quit();
   }
@@ -29,9 +32,17 @@ app.handle("quit", () => {
   setTimeout(() => app.quit(), 0);
   return Promise.resolve(null);
 });
+app.on("hello", (value) => {
+  if (typeof value === "string") {
+    process.stderr.write("[demo] the page says hello " + value + "\n");
+    greeted = true;
+    check();
+  }
+});
 app.onLog = (/** @type {string} */ level, /** @type {string} */ text) => {
   process.stderr.write("[page " + level + "] " + text + "\n");
   if (text.startsWith("first tick")) ticked = true;
+  if (text === "adds 3 30") added = true;
   check();
 };
 app.onConnect = () => {
@@ -48,7 +59,7 @@ app.onClose = () => {
 };
 if (smoke)
   setTimeout(() => {
-    console.log("smoke timed out: pinged=" + String(pinged) + " ticked=" + String(ticked));
+    console.log("smoke timed out: pinged=" + String(pinged) + " ticked=" + String(ticked) + " greeted=" + String(greeted) + " added=" + String(added));
     process.exit(1);
   }, 15000);
 app.start();
