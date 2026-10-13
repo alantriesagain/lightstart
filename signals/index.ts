@@ -186,7 +186,9 @@ export class Signal<T> extends Dep {
   }
 
   toString() {
-    return String(this._value);
+    const value: unknown = this._value;
+    if (typeof value === "string") return value;
+    return String(value);
   }
 
   valueOf(): T {
@@ -292,7 +294,9 @@ export class Computed<T> extends Dep {
   }
 
   toString() {
-    return String(this.peek());
+    const value: unknown = this.peek();
+    if (typeof value === "string") return value;
+    return String(value);
   }
 
   valueOf(): T {

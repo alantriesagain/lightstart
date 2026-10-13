@@ -48,7 +48,7 @@ Measured with `node native/bench.js` against the stripped binary on 2026-10-12, 
 
 The quadratic sibling scan is gone on both. Natively a single insert got dearer (10k appends: 104 ms as an array, 288 ms linked), because every link is several field writes on an object the compiler keeps in its dynamic representation, where a write is a named lookup; that is why the 1k-row create is slower linked (232 ms to 352 ms) while 10k is 2.6 times faster. On the harness's screen the change is invisible: first frame 10 to 18 ms, 3 ms per keystroke, 5.8 MB resident.
 
-Measured on 2026-10-13, medians of three, as the core moved from JavaScript to TypeScript (scriptc 0.2.10 for the first two native columns, the fork with the two fixes for the third):
+Measured on 2026-10-13, medians of three, as the core moved from JavaScript to TypeScript (scriptc 0.2.10 for the first two native columns, the fork with the two fixes, on 0.3.1, for the third):
 
 | Step | node | native, all JavaScript | native, terminal host in TypeScript | native, core in TypeScript |
 |---|---|---|---|---|
