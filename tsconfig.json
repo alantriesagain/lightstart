@@ -29,6 +29,7 @@
   "exclude": [
     "benchmarks",
     "node_modules",
+    "native/desktop/out",
     "dist",
     "website",
     "**/*.test.js",

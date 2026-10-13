@@ -6,7 +6,8 @@ import { fileURLToPath } from "node:url";
 const LIGHT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LEFT_OUT = new Set([".bootstrapp", "benchmarks", "dist", "eslint.config.js", "examples", "fixtures", "node_modules", "probes", "scripts", "skills", "website"]);
 const SIDE_FILE = /\.(test|demo)\.js$/;
-const TOOL_FILE = /^(native\/(run|coverage|bench|microbench|demo|assert)\.js|html\/conformance-hosts\.js)$/;
+const TOOL_FILE = /^(native\/(run|coverage|bench|microbench|demo|assert)\.js|native\/desktop\/((build|smoke|coverage)\.js|(demo|shim|out)\/.*)|html\/conformance-hosts\.js)$/;
+const KEPT_TS = /^native\/desktop\/ffi\.ts$/;
 
 /** Where the staged package lands. */
 export const DIST = join(LIGHT, "dist");
@@ -50,12 +51,12 @@ export const stage = () => {
   }));
   const { bootstrapp, scripts: _, devDependencies: __, ...manifest } = JSON.parse(readFileSync(join(LIGHT, "package.json"), "utf8"));
   manifest.bootstrapp = { components: bootstrapp.components };
-  const files = ["**/*.js", "**/*.d.ts", "**/*.css"];
+  const files = ["**/*.js", "**/*.d.ts", "**/*.css", "native/desktop/ffi.ts"];
   writeFileSync(join(DIST, "package.json"), `${JSON.stringify({ ...manifest, files }, null, 2)}\n`);
   execFileSync(join(LIGHT, "node_modules/.bin/tsc"), ["-p", DIST], { stdio: "inherit" });
   for (const file of walk(DIST))
     if (file.endsWith(".d.ts")) writeFileSync(file, readFileSync(file, "utf8").replace(/(["'])(\.{1,2}\/[^"']+)\.ts\1/g, "$1$2.js$1"));
-    else if (file.endsWith(".ts") || relative(DIST, file) === "tsconfig.json") rmSync(file);
+    else if ((file.endsWith(".ts") && !KEPT_TS.test(relative(DIST, file))) || relative(DIST, file) === "tsconfig.json") rmSync(file);
 
   manifest.exports = Object.fromEntries(Object.entries(manifest.exports).map(([key, target]) =>
     [key, typeof target === "string" ? target : { ...target, types: target.types.replace(/\.ts$/, ".d.ts") }]));

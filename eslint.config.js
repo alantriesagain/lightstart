@@ -2,4 +2,4 @@
 
 import recommended from "./eslint/recommended.js";
 
-export default [{ ignores: ["dist/**", "node_modules/**", "website/**", ".bootstrapp/**"] }, recommended];
+export default [{ ignores: ["dist/**", "node_modules/**", "website/**", ".bootstrapp/**", "native/desktop/out/**"] }, recommended];

@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["es2024"],
+    "types": ["node"]
+  },
+  "include": [
+    "./ffi.ts",
+    "./init.js",
+    "./server.js",
+    "./host.js",
+    "./types.ts",
+    "./demo/backend.js",
+    "./demo/contract.ts"
+  ],
+  "exclude": []
+}

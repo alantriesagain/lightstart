@@ -6,10 +6,11 @@
  * `node native/desktop/build.js <command> …` or `light desktop <command> …`.
  */
 
-import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { spawnSync } from "node:child_process";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DIST, stage } from "../../scripts/pack.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const light = join(here, "..", "..");
@@ -137,16 +138,142 @@ export const smoke = (target, wait) => {
   return r.status === 0;
 };
 
+/**
+ * The newest modification time under `dir`, for deciding whether the archive is current.
+ * @param {string} dir
+ * @returns {number}
+ */
+const newest = (dir) => {
+  let latest = 0;
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const file = join(dir, entry.name);
+    const time = entry.isDirectory() ? newest(file) : statSync(file).mtimeMs;
+    if (time > latest) latest = time;
+  }
+  return latest;
+};
+
+/**
+ * The shim archive for a target, rebuilt only when a shim source or the build script is newer.
+ * @param {string} target
+ */
+const currentShim = (target) => {
+  const dir = join(here, "out", target);
+  const archive = join(dir, "libdesktop.a");
+  if (existsSync(archive) && existsSync(join(dir, "ffi.json")) && statSync(archive).mtimeMs > Math.max(newest(shimDir), statSync(fileURLToPath(import.meta.url)).mtimeMs)) return dir;
+  return shim(target);
+};
+
+/**
+ * The import map a page gets: every entry of light's `exports` as a bare specifier under
+ * `light/`, plus the prefix for anything else in the package.
+ * @param {Record<string, string | { types: string, default: string }>} exports
+ */
+const importMap = (exports) => {
+  /** @type {Record<string, string>} */
+  const imports = {};
+  for (const [key, target] of Object.entries(exports)) {
+    const file = typeof target === "string" ? target : target.default;
+    if (key === "./*") continue;
+    imports["@bootstrapp/light" + key.slice(1)] = "light/" + file.replace(/^\.\//, "");
+  }
+  imports["@bootstrapp/light/"] = "light/";
+  return { imports };
+};
+
+/**
+ * Copy the files of the staged package that a page can load (scripts and styles) into `into`.
+ * @param {string} from
+ * @param {string} into
+ */
+const copyPage = (from, into) => {
+  for (const entry of readdirSync(from, { withFileTypes: true })) {
+    const source = join(from, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name !== "node_modules") copyPage(source, join(into, entry.name));
+    } else if (/\.(js|css)$/.test(entry.name) && !entry.name.endsWith(".d.ts")) {
+      mkdirSync(into, { recursive: true });
+      cpSync(source, join(into, entry.name));
+    }
+  }
+};
+
+/** What `build` answers: where the executable and the page landed. */
+export class Built {
+  /**
+   * @param {string} exe
+   * @param {string} web
+   */
+  constructor(exe, web) {
+    this.exe = exe;
+    this.web = web;
+  }
+}
+
+/**
+ * Compile `backend` with scriptc against the target's manifest into `<out>/<name>`, and stage
+ * its page: `<web>` copied to `<out>/web/`, light's package files under `<out>/web/light/`, and
+ * `importmap.json` beside index.html. The executable finds `web/` beside itself.
+ * @param {string} backend the backend's entry module
+ * @param {string} web the directory holding index.html
+ * @param {string} out the output directory
+ * @param {string} name the executable's name
+ * @param {string} target
+ * @param {boolean} keepLight reuse light's staged files from a previous build instead of staging again
+ */
+export const build = (backend, web, out, name, target, keepLight) => {
+  const dir = currentShim(target);
+  const exe = join(out, name);
+  mkdirSync(out, { recursive: true });
+  /** @type {string[]} */
+  const paths = JSON.parse(readFileSync(join(dir, "library-paths.json"), "utf8"));
+  const libraryPath = [...paths, ...(process.env.LIBRARY_PATH ? [process.env.LIBRARY_PATH] : [])].join(":");
+  const scriptc = join(light, "node_modules", ".bin", "scriptc");
+  const r = spawnSync(scriptc, ["build", backend, "--ffi", join(dir, "ffi.json"), "-o", exe, "--strip", "--no-keep-llvm"], {
+    encoding: "utf8",
+    env: { ...process.env, LIBRARY_PATH: libraryPath },
+    stdio: ["ignore", "pipe", "pipe"],
+    timeout: 900000,
+  });
+  if (r.status !== 0) throw new Error(`scriptc build ${backend} failed:\n${r.stdout ?? ""}${r.stderr ?? ""}`);
+  const webOut = join(out, "web");
+  const lightOut = join(webOut, "light");
+  const staged = keepLight && existsSync(join(DIST, "package.json")) ? { dir: DIST, manifest: JSON.parse(readFileSync(join(DIST, "package.json"), "utf8")) } : stage();
+  if (existsSync(webOut))
+    for (const entry of readdirSync(webOut, { withFileTypes: true }))
+      if (entry.name !== "light") rmSync(join(webOut, entry.name), { recursive: true, force: true });
+  cpSync(web, webOut, { recursive: true });
+  rmSync(lightOut, { recursive: true, force: true });
+  copyPage(staged.dir, lightOut);
+  writeFileSync(join(webOut, "importmap.json"), `${JSON.stringify(importMap(staged.manifest.exports), null, 2)}\n`);
+  return new Built(exe, webOut);
+};
+
 /** @param {string} target */
 const defaultTarget = (target) => (target === "linux" ? "linux-x64" : target === "mac" ? "mac-arm64" : target === "win" ? "win-x64" : target);
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [command, ...rest] = process.argv.slice(2);
   const target = defaultTarget(option(rest, "target", "linux") ?? "linux");
+  const dash = rest.indexOf("--");
+  const own = dash >= 0 ? rest.slice(0, dash) : rest;
+  const passthrough = dash >= 0 ? rest.slice(dash + 1) : [];
   if (command === "shim") console.log(`archive and manifest in ${shim(target)}`);
-  else if (command === "smoke") process.exitCode = smoke(target, rest.includes("--wait")) ? 0 : 1;
-  else {
+  else if (command === "smoke") process.exitCode = smoke(target, own.includes("--wait")) ? 0 : 1;
+  else if ((command === "build" || command === "run") && own.length > 0) {
+    const backend = resolve(own[0]);
+    const web = resolve(option(own, "web", join(dirname(backend), "web")) ?? "");
+    const name = option(own, "name", basename(backend).replace(/\.(js|ts)$/, "")) ?? "app";
+    const out = resolve(option(own, "out", join(here, "out", target, name)) ?? "");
+    const built = build(backend, web, out, name, target, own.includes("--keep-light"));
+    console.log(`built ${relative(process.cwd(), built.exe)} with its page in ${relative(process.cwd(), built.web)}`);
+    if (command === "run") {
+      const app = spawnSync(built.exe, passthrough, { stdio: "inherit" });
+      process.exitCode = app.status ?? 1;
+    }
+  } else {
     console.log("usage: node native/desktop/build.js shim|smoke [--target linux|mac|win] [--wait]");
+    console.log("       node native/desktop/build.js build|run <backend.js> [--web <dir>] [--out <dir>] [--name <app>] [--target …] [--keep-light] [-- <app args>]");
     process.exitCode = 1;
   }
 }
