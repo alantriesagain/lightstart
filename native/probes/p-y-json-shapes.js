@@ -99,11 +99,13 @@ d.on("THROW", () => Promise.reject(new Error("boom")));
 const unsupported = (payload, meta) => Promise.reject(new Error("unsupported: " + meta.type));
 d.fallback = unsupported;
 
+const UNKNOWN_COMMAND = "NOPE:NOPE";
+
 const run = async () => {
   console.log(await d.dispatch(JSON.stringify({ type: "ECHO", payload: { a: 1 }, eventId: "r1" }), "win-1"));
   console.log(await d.dispatch(JSON.stringify({ type: "ASYNC", payload: "s", eventId: "r2" }), "win-1"));
   console.log(await d.dispatch(JSON.stringify({ type: "THROW", payload: null, eventId: "r3" }), "win-1"));
-  console.log(await d.dispatch(JSON.stringify({ type: "NOPE:NOPE", payload: {}, eventId: "r4" }), "win-1"));
+  console.log(await d.dispatch(JSON.stringify({ type: UNKNOWN_COMMAND, payload: {}, eventId: "r4" }), "win-1"));
   console.log(await d.dispatch("[1,2]", "win-1"));
   console.log("done");
 };

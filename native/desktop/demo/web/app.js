@@ -65,7 +65,7 @@ View.define("demo-page", {
       const r = button.getBoundingClientRect();
       return `${Math.round(r.left + r.width / 2)},${Math.round(r.top + r.height / 2)}`;
     };
-    await desktop.log("info", `controls width=${String(window.innerWidth)} minimize=${at("minimize")} maximize=${at("maximize")} close=${at("close")}`);
+    await desktop.log("info", `controls width=${String(env.width)} minimize=${at("minimize")} maximize=${at("maximize")} close=${at("close")}`);
   },
   async add() {
     this.sum = await desktop.call.add(this.sum, 100);
