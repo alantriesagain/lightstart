@@ -9,7 +9,7 @@
  * anything is assigned and put back when the last unit leaves.
  */
 import { balancedEnd, topLevelPair } from "./adopt.js";
-import { ASSIGNED_ATTR, MARKER_START, UNSLOTTED_TAG } from "../html/constants.js";
+import { ASSIGNED_ATTR, MARKER_START, UNSLOTTED_TAG } from "../html/constants.ts";
 
 /** @import { PartSpec } from "../html/types.ts" */
 /** @import { ProjectHooks, SlotHost } from "./types.ts" */

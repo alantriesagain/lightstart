@@ -11,17 +11,13 @@ import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { scriptcPath } from "../scriptc.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const light = join(here, "..", "..");
 const shimDir = join(here, "shim");
 const vendor = join(shimDir, "vendor", "webview");
 const packModule = "../../scripts/pack.js";
-
-const scriptcBin = () => {
-  const local = join(light, "node_modules", ".bin", "scriptc");
-  return existsSync(local) ? local : "scriptc";
-};
 
 /** @typedef {{ dir: string, manifest: { exports: Record<string, string | { types: string, default: string }> } }} Staged */
 
@@ -268,7 +264,7 @@ export const compileBackend = (backend, exe, target, npmStatic) => {
   const paths = JSON.parse(readFileSync(join(dir, "library-paths.json"), "utf8"));
   const libraryPath = [...paths, ...(process.env.LIBRARY_PATH ? [process.env.LIBRARY_PATH] : [])].join(":");
   const flags = npmStatic.flatMap((pkg) => ["--npm-static", pkg]);
-  const r = spawnSync(scriptcBin(), ["build", backend, "--ffi", join(dir, "ffi.json"), ...flags, "-o", exe, "--strip", "--no-keep-llvm"], {
+  const r = spawnSync(scriptcPath(light), ["build", backend, "--ffi", join(dir, "ffi.json"), ...flags, "-o", exe, "--strip", "--no-keep-llvm"], {
     encoding: "utf8",
     env: { ...process.env, LIBRARY_PATH: libraryPath },
     stdio: ["ignore", "pipe", "pipe"],

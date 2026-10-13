@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { HTML_KIND, SVG_KIND } from "../html/constants.js";
-import { TplComment, TplElement, TplText, decodeEntities, tokenize } from "../html/tokenizer.js";
+import { HTML_KIND, SVG_KIND } from "../html/constants.ts";
+import { TplComment, TplElement, TplText, decodeEntities, tokenize } from "../html/tokenizer.ts";
 import { MElement, MFragment, MRoot, MText, MarkupHost, insertBefore, isConnected, markupOf, nextSiblingOf, removeNode, serialize, textContent } from "./index.js";
 
-/** @param {import("../html/tokenizer.js").TplNode[]} nodes */
+/** @param {import("../html/tokenizer.ts").TplNode[]} nodes */
 const shape = (nodes) =>
   nodes.map((n) => {
     if (n instanceof TplElement) return `${n.tag}${n.marked ? "*" : ""}${n.attrs.size ? JSON.stringify([...n.attrs]) : ""}(${shape(n.children)})`;

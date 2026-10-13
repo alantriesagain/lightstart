@@ -7,11 +7,9 @@
  * reach, each once, so a diamond never shows an effect a half-updated state.
  */
 
-/** @type {Reactive | null} */
-let current = null;
+let current: Reactive | null = null;
 let batchDepth = 0;
-/** @type {Reactive[]} */
-const pending = [];
+const pending: Reactive[] = [];
 
 const flushPending = () => {
   while (pending.length > 0) {
@@ -35,15 +33,16 @@ const flushPending = () => {
  * subscriber.
  */
 export class Dep {
+  _subscribers: Set<Reactive>;
+
   constructor() {
-    /** @type {Set<Reactive>} */
     this._subscribers = new Set();
   }
 
   _track() {
     const reactive = current;
     if (reactive === null) return;
-    const self = /** @type {Dep} */ (this);
+    const self = this as Dep;
     this._subscribers.add(reactive);
     reactive._dependencies.add(self);
   }
@@ -66,8 +65,11 @@ export class Dep {
  * invalidators and a view's render node extend it.
  */
 export class Reactive {
+  _dependencies: Set<Dep>;
+  _disposed: boolean;
+  _queued: boolean;
+
   constructor() {
-    /** @type {Set<Dep>} */
     this._dependencies = new Set();
     this._disposed = false;
     this._queued = false;
@@ -98,7 +100,7 @@ export class Reactive {
   }
 
   _cleanup() {
-    const self = /** @type {Reactive} */ (this);
+    const self = this as Reactive;
     for (const dep of this._dependencies) dep._subscribers.delete(self);
     this._dependencies.clear();
   }
@@ -110,10 +112,10 @@ export class Reactive {
 }
 
 class Effect extends Reactive {
-  /** @param {() => void} fn */
-  constructor(fn) {
+  _fn: () => void;
+
+  constructor(fn: () => void) {
     super();
-    /** @type {() => void} */
     this._fn = fn;
     this._execute();
   }
@@ -123,50 +125,38 @@ class Effect extends Reactive {
   }
 }
 
-/**
- * @template T
- * @extends {Dep}
- */
-export class Signal extends Dep {
-  /** @param {T} value */
-  constructor(value) {
+export class Signal<T> extends Dep {
+  _value: T;
+
+  constructor(value: T) {
     super();
-    /** @type {T} */
     this._value = value;
   }
 
-  /** @returns {T} */
-  get value() {
+  get value(): T {
     this._track();
     return this._value;
   }
 
-  /** @param {T} newValue */
-  set value(newValue) {
+  set value(newValue: T) {
     if (this._value === newValue) return;
     this._value = newValue;
     this._notify();
   }
 
-  /** @returns {T} */
-  peek() {
+  peek(): T {
     return this._value;
   }
 
   /**
    * Store a value without notifying: the one write path a subclass uses, so
    * the field stays declared here.
-   * @param {T} value
    */
-  _assign(value) {
+  _assign(value: T) {
     this._value = value;
   }
 
-  /**
-   * @param {(value: T) => void} callback
-   * @returns {() => void}
-   */
-  subscribe(callback) {
+  subscribe(callback: (value: T) => void): () => void {
     const effectFn = effect(() => {
       const value = this.value;
       untracked(() => callback(value));
@@ -179,10 +169,8 @@ export class Signal extends Dep {
    * target via the `$sync` duck-type the binding layer already consumes.
    * The contract is keyed (get/set/subscribe take a key) but a signal has
    * one value, so the key is ignored.
-   *
-   * @returns {{ adapter: string, get: (key: string) => T, set: (key: string, value: T) => void, subscribe: (key: string, cb: (value: T) => void) => () => void }}
    */
-  get $sync() {
+  get $sync(): { adapter: string, get: (key: string) => T, set: (key: string, value: T) => void, subscribe: (key: string, cb: (value: T) => void) => () => void } {
     return {
       adapter: "signal",
       get: (_key) => this.peek(),
@@ -193,8 +181,7 @@ export class Signal extends Dep {
     };
   }
 
-  /** @returns {T} */
-  toJSON() {
+  toJSON(): T {
     return this._value;
   }
 
@@ -202,17 +189,16 @@ export class Signal extends Dep {
     return String(this._value);
   }
 
-  /** @returns {T} */
-  valueOf() {
+  valueOf(): T {
     return this._value;
   }
 }
 
 class ComputedNode extends Reactive {
-  /** @param {() => void} onInvalidate */
-  constructor(onInvalidate) {
+  _onInvalidate: () => void;
+
+  constructor(onInvalidate: () => void) {
     super();
-    /** @type {() => void} */
     this._onInvalidate = onInvalidate;
   }
 
@@ -226,18 +212,18 @@ class ComputedNode extends Reactive {
  * changes, read-only. A sibling of Signal rather than a subclass (a native
  * build cannot specialise a generic subclass of a generic class), with the
  * same reading surface.
- *
- * @template T
- * @extends {Dep}
  */
-export class Computed extends Dep {
-  /** @param {() => T} fn */
-  constructor(fn) {
+export class Computed<T> extends Dep {
+  _fn: () => T;
+  _value: T | undefined;
+  _stale: boolean;
+  _computing: boolean;
+  _node: ComputedNode;
+
+  constructor(fn: () => T) {
     super();
-    /** @type {() => T} */
     this._fn = fn;
-    /** @type {T} */
-    this._value = /** @type {T} */ (/** @type {unknown} */ (undefined));
+    this._value = undefined;
     this._stale = true;
     this._computing = false;
     this._node = new ComputedNode(() => {
@@ -247,8 +233,7 @@ export class Computed extends Dep {
     });
   }
 
-  /** @returns {T} */
-  get value() {
+  get value(): T {
     if (this._stale && !this._computing) {
       this._computing = true;
       this._node._cleanup();
@@ -263,16 +248,15 @@ export class Computed extends Dep {
       }
     }
     this._track();
-    return this._value;
+    return this._value as T;
   }
 
-  /** @param {T} _newValue */
-  set value(_newValue) {
+  set value(_newValue: T) {
     throw new Error("Cannot set value of a computed signal; define a getter");
   }
 
-  /** @returns {T} the current value, recomputed if stale, without subscribing */
-  peek() {
+  /** @returns the current value, recomputed if stale, without subscribing */
+  peek(): T {
     return untracked(() => this.value);
   }
 
@@ -281,11 +265,7 @@ export class Computed extends Dep {
     this._stale = true;
   }
 
-  /**
-   * @param {(value: T) => void} callback
-   * @returns {() => void}
-   */
-  subscribe(callback) {
+  subscribe(callback: (value: T) => void): () => void {
     const effectFn = effect(() => {
       const value = this.value;
       untracked(() => callback(value));
@@ -295,9 +275,8 @@ export class Computed extends Dep {
 
   /**
    * The read-only sync shim: a write through it throws like the setter.
-   * @returns {{ adapter: string, get: (key: string) => T, set: (key: string, value: T) => void, subscribe: (key: string, cb: (value: T) => void) => () => void }}
    */
-  get $sync() {
+  get $sync(): { adapter: string, get: (key: string) => T, set: (key: string, value: T) => void, subscribe: (key: string, cb: (value: T) => void) => () => void } {
     return {
       adapter: "signal",
       get: (_key) => this.peek(),
@@ -308,8 +287,7 @@ export class Computed extends Dep {
     };
   }
 
-  /** @returns {T} */
-  toJSON() {
+  toJSON(): T {
     return this.peek();
   }
 
@@ -317,45 +295,28 @@ export class Computed extends Dep {
     return String(this.peek());
   }
 
-  /** @returns {T} */
-  valueOf() {
+  valueOf(): T {
     return this.peek();
   }
 }
 
-/**
- * @template T
- * @param {T} initialValue
- * @returns {Signal<T>}
- */
-export function signal(initialValue) {
+export function signal<T>(initialValue: T): Signal<T> {
   return new Signal(initialValue);
 }
 
-/**
- * @template T
- * @param {() => T} fn
- * @returns {Computed<T>}
- */
-export function computed(fn) {
+export function computed<T>(fn: () => T): Computed<T> {
   return new Computed(fn);
 }
 
-/**
- * @param {() => void} fn
- * @returns {Effect}
- */
-export function effect(fn) {
+export function effect(fn: () => void): Effect {
   return new Effect(fn);
 }
 
 /**
  * Batch multiple signal updates; subscribed effects run once at the
  * end instead of per-update.
- *
- * @param {() => void} fn
  */
-export function batch(fn) {
+export function batch(fn: () => void) {
   batchDepth++;
   try {
     fn();
@@ -367,12 +328,8 @@ export function batch(fn) {
 
 /**
  * Run `fn` without subscribing the current reactive to any signals it reads.
- *
- * @template T
- * @param {() => T} fn
- * @returns {T}
  */
-export function untracked(fn) {
+export function untracked<T>(fn: () => T): T {
   const prev = current;
   current = null;
   try {
@@ -385,13 +342,8 @@ export function untracked(fn) {
 /**
  * Run `fn` with `reactive` as the current reactive: what a view's render
  * node does to subscribe the view to the signals its render reads.
- *
- * @template T
- * @param {Reactive | null} reactive
- * @param {() => T} fn
- * @returns {T}
  */
-export function withCurrent(reactive, fn) {
+export function withCurrent<T>(reactive: Reactive | null, fn: () => T): T {
   const prev = current;
   current = reactive;
   try {
@@ -406,10 +358,8 @@ export function withCurrent(reactive, fn) {
  * reactive sources (the store's per-key reads, renderer thunk parts)
  * register with the running effect using the same dependency protocol
  * signals use.
- *
- * @returns {Reactive | null}
  */
-export const getCurrentEffect = () => current;
+export const getCurrentEffect = (): Reactive | null => current;
 
 /**
  * Keyed selection over a signal: the O(2) answer to selection fan-out.
@@ -419,18 +369,12 @@ export const getCurrentEffect = () => current;
  * signal. When the signal changes, only the effects registered under
  * the previous and the new value re-run. A thousand list items cost
  * two notifications per selection change instead of a thousand.
- *
- * @template T
- * @param {Signal<T>} source
- * @returns {(key: T) => boolean}
  */
-export function selector(source) {
-  /** @type {Map<unknown, Dep>} */
-  const buckets = new Map();
+export function selector<T>(source: Signal<T>): (key: T) => boolean {
+  const buckets: Map<unknown, Dep> = new Map();
   let currentKey = source.peek();
 
-  /** @param {unknown} key */
-  const notifyKey = (key) => {
+  const notifyKey = (key: unknown) => {
     const dep = buckets.get(key);
     if (!dep) return;
     dep._notify();

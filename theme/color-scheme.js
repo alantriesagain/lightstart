@@ -13,7 +13,7 @@
  * can read before any module loads.
  */
 
-import { signal } from "../signals/index.js";
+import { signal } from "../signals/index.ts";
 import { env } from "../env/index.js";
 
 const STORAGE_KEY = "darkmode";

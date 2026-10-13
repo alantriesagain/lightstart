@@ -10,7 +10,7 @@ import { TAnchor, TElement, TNode, TRoot, TRun, TermHost, UIEvent, childNodes, f
 /**
  * @typedef {{
  *   name: string,
- *   host: () => import("./host.js").Host & { onError: ((error: unknown) => void) | null },
+ *   host: () => import("./host.ts").Host & { onError: ((error: unknown) => void) | null },
  *   container: () => unknown,
  *   markup: (container: unknown) => string,
  *   text: (container: unknown) => string,

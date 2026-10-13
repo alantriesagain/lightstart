@@ -7,13 +7,13 @@
  * stay as written, since nothing projects into them. Installed with
  * `configure({ host: new MarkupHost(), effect })`.
  */
-import { Clone, Host, ListenerOptions, Prepared } from "../html/host.js";
-import { parseTemplate } from "../html/parser.js";
-import { TplComment, TplElement, TplNode, TplText, indexParts, tokenize } from "../html/tokenizer.js";
+import { Clone, Host, ListenerOptions, Prepared } from "../html/host.ts";
+import { parseTemplate } from "../html/parser.ts";
+import { TplComment, TplElement, TplNode, TplText, indexParts, tokenize } from "../html/tokenizer.ts";
 import { MComment, MElement, MFragment, MListener, MNode, MText, insertBefore, isConnected, nextSiblingOf, removeNode } from "./node.js";
 
-/** @import { HostNode } from "../html/host.js" */
-/** @import { EventBinding } from "../html/parts.js" */
+/** @import { HostNode } from "../html/host.ts" */
+/** @import { EventBinding } from "../html/parts.ts" */
 /** @import { PartSpec } from "../html/types.ts" */
 
 /** A prepared markup template: the part specs with the node index each binds to, and the template tree. */

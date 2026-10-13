@@ -5,4 +5,4 @@
  * dom/view.js.
  */
 export { default, defineComponent, defineMixin } from "../dom/view.js";
-export { configureView, trackWork, translate } from "./core.js";
+export { configureView, trackWork, translate } from "./core.ts";

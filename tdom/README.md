@@ -6,8 +6,8 @@ The terminal host of the renderer: a node tree in place of the DOM, a layout and
 |---|---|
 | `node.ts` | The tree: `TRoot`, `TBox` (column or row flex, padding, border, title, scroll), `TText` (wrapped inline content), `TSpan`, `TInput` (a multi-line editor), `TRun` (a text leaf), `TAnchor`, `TFragment`; children as a doubly linked list (`firstChild`, `lastChild`, `prev`, `next`, with `childNodes()` as a snapshot), so inserting, removing and stepping to a sibling cost nothing that grows with the tree; typed props with coercion; inert attributes; handler entries; the view that owns an element; the layout caches live on the node |
 | `tags.ts` | The tag table: `box`, `text`, `span`, `input` and the HTML names that map onto them with the style the name implies (`div`, `p`, `h1`, `ul`, `li`, `b`, `em`, `code`, `a`, `br`, `hr`, `textarea`, …); `createElement`, `isKnownTag`, `isKnownProp` |
-| `host.js` | `TermHost`: templates through the parser and `html/tokenizer.js` under the terminal's whitespace rules, attributes to props, listeners to handler entries, attach and detach of views as their boxes join or leave the root, frames through the scheduler |
-| `view.js` | `View`: a `ViewCore` that owns a box; `render()`, the lifecycle methods, `${this.child}` placement, `mount` and `unmount` |
+| `host.ts` | `TermHost`: templates through the parser and `html/tokenizer.js` under the terminal's whitespace rules, attributes to props, listeners to handler entries, attach and detach of views as their boxes join or leave the root, frames through the scheduler |
+| `view.ts` | `View`: a `ViewCore` that owns a box; `render()`, the lifecycle methods, `${this.child}` placement, `mount` and `unmount` |
 | `layout.ts` | Measure and arrange: one flex axis per box, fixed sizes, scroll boxes that stick to the bottom, wrapped text cached by version |
 | `paint.ts` | A laid-out tree into a `Screen` with clipping, borders, titles, rules, the editor's caret |
 | `screen.ts` | The cell grid double buffer and the diff that writes only what changed, in a synchronized update |

@@ -6,9 +6,9 @@
  */
 
 /** @import { Adapter, ListenerFn } from "../types.ts" */
-/** @import { Signal } from "../../signals/index.js" */
+/** @import { Signal } from "../../signals/index.ts" */
 
-import { effect, signal } from "../../signals/index.js";
+import { effect, signal } from "../../signals/index.ts";
 
 /**
  * @param {string} name

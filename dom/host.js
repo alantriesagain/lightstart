@@ -6,13 +6,13 @@
  * bindings registered as `EventListenerObject`s; frames are animation frames.
  */
 
-import { Clone, Host, ListenerOptions, Prepared } from "../html/host.js";
-import { MARKER_START, SVG_KIND } from "../html/constants.js";
-import { parseTemplate } from "../html/parser.js";
+import { Clone, Host, ListenerOptions, Prepared } from "../html/host.ts";
+import { MARKER_START, SVG_KIND } from "../html/constants.ts";
+import { parseTemplate } from "../html/parser.ts";
 import { SlotPart } from "./slots.js";
 
-/** @import { HostNode } from "../html/host.js" */
-/** @import { EventBinding } from "../html/parts.js" */
+/** @import { HostNode } from "../html/host.ts" */
+/** @import { EventBinding } from "../html/parts.ts" */
 /** @import { PartSpec } from "../html/types.ts" */
 
 const SHOW_ELEMENT_AND_COMMENT = 129;

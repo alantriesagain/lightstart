@@ -1,4 +1,4 @@
-import type { ChildPart } from "../html/parts.js";
+import type { ChildPart } from "../html/parts.ts";
 
 /**
  * An element whose templates project its light children into the `<slot>`

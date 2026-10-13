@@ -184,7 +184,7 @@ A component library needs a few things from the page it runs on. Light holds the
 
 ## The repository
 
-This repository is the package: `pnpm install` once, `pnpm test` runs the node tests and then `light test` over the browser ones, `pnpm verify` runs the lint, the typecheck, `light check` and the tests, and passes only at zero errors. `components/` is the component library, `locales/` the words it draws, `examples/` whole pages built on light alone, and `website/` the catalogue site (a Bootstrapp app, left out of the published package). The Bootstrapp monorepo consumes this repository in place: its `light/` is a symlink to a checkout beside it, and its `projects/light` one to `website/`.
+This repository is the package: `pnpm install` once, `pnpm test` runs the node tests and then `light test` over the browser ones, `pnpm verify` runs the lint, the typecheck, `light check` and the tests, and passes only at zero errors. `components/` is the component library, `locales/` the words it draws, `examples/` whole pages built on light alone (`npx light serve` serves the repository with the core's TypeScript stripped as it goes out; open `/examples/…`), and `website/` the catalogue site (a Bootstrapp app, left out of the published package). The Bootstrapp monorepo consumes this repository in place: its `light/` is a symlink to a checkout beside it, and its `projects/light` one to `website/`.
 
 ## Testing
 

@@ -1,4 +1,4 @@
-export type { Dep, Reactive } from "./index.js";
+export type { Dep, Reactive } from "./index.ts";
 
 /** One declared state field: a default plus optional (de)serialization. */
 export interface StateDef {
@@ -38,4 +38,4 @@ export interface Store<S = Record<string, unknown>> {
   [key: string]: unknown;
 }
 
-export * from "./index.js";
+export * from "./index.ts";

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { createDocumentAdapter } from "./document.js";
-import { createStore } from "../../signals/store.js";
+import { createStore } from "../../signals/store.ts";
 import { registerAdapter, bindStoreSync } from "../sync.js";
 
 const fakeBacking = (stored = {}) => {

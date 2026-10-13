@@ -7,19 +7,21 @@
  * lifecycle hooks are methods: `connected`, `disconnected`, `willUpdate`,
  * `firstUpdated`, `updated`.
  */
-import { disposeTree, render } from "../html/core.js";
-import { currentHost } from "../html/host.js";
-import { ViewCore } from "../view/core.js";
+import { disposeTree, render } from "../html/core.ts";
+import { currentHost } from "../html/host.ts";
+import { ViewCore } from "../view/core.ts";
 import { TBox, TElement } from "./node.ts";
 
 export class View extends ViewCore {
+  box: TBox;
+
   constructor() {
     super();
     this.box = new TBox("view");
     this.box.owner = this;
   }
 
-  get $node() {
+  get $node(): unknown {
     return this.box;
   }
 
@@ -27,13 +29,8 @@ export class View extends ViewCore {
     return this.box.tag;
   }
 
-  /**
-   * @param {string} name
-   * @param {Map<string, unknown> | null} changedProps
-   */
-  $hook(name, changedProps) {
-    /** @type {Map<string, unknown>} */
-    const changed = changedProps === null ? new Map() : changedProps;
+  $hook(name: string, changedProps: Map<string, unknown> | null) {
+    const changed: Map<string, unknown> = changedProps === null ? new Map() : changedProps;
     switch (name) {
       case "connected":
         this.connected();
@@ -56,26 +53,22 @@ export class View extends ViewCore {
 
   disconnected() {}
 
-  /** @param {Map<string, unknown>} _changed */
-  willUpdate(_changed) {}
+  willUpdate(_changed: Map<string, unknown>) {}
 
-  /** @param {Map<string, unknown>} _changed */
-  firstUpdated(_changed) {}
+  firstUpdated(_changed: Map<string, unknown>) {}
 
-  /** @param {Map<string, unknown>} _changed */
-  updated(_changed) {}
+  updated(_changed: Map<string, unknown>) {}
 
   $render() {
     return this.render();
   }
 
-  /** @returns {unknown} the template to render into the box */
-  render() {
+  /** @returns the template to render into the box */
+  render(): unknown {
     return null;
   }
 
-  /** @param {unknown} value */
-  $commit(value) {
+  $commit(value: unknown) {
     render(value, this.box, { host: this });
   }
 
@@ -87,17 +80,14 @@ export class View extends ViewCore {
 
 /**
  * Put a view's box at the end of `parent`; a connected parent attaches it.
- * @param {View} view
- * @param {TElement} parent
  */
-export const mount = (view, parent) => {
+export const mount = (view: View, parent: TElement) => {
   currentHost().insertBefore(parent, view.box, null);
 };
 
 /**
  * Take a view's box out of its parent, detaching the view.
- * @param {View} view
  */
-export const unmount = (view) => {
+export const unmount = (view: View) => {
   currentHost().remove(view.box);
 };

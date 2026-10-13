@@ -4,13 +4,13 @@
  * signals as the effect adapter; it re-exports the html core, the signals,
  * the view core and the terminal host.
  */
-import { configure } from "../html/core.js";
-import { effect } from "../signals/index.js";
-import { TermHost } from "../tdom/host.js";
+import { configure } from "../html/core.ts";
+import { effect } from "../signals/index.ts";
+import { TermHost } from "../tdom/host.ts";
 
 configure({ host: new TermHost(), effect });
 
-export * from "../html/core.js";
-export * from "../signals/index.js";
-export { ViewCore, configureView, trackWork, translate } from "../view/core.js";
+export * from "../html/core.ts";
+export * from "../signals/index.ts";
+export { ViewCore, configureView, trackWork, translate } from "../view/core.ts";
 export * from "../tdom/index.ts";

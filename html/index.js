@@ -5,10 +5,10 @@
  */
 
 import { DomHost } from "../dom/host.js";
-import { setHost } from "./host.js";
+import { setHost } from "./host.ts";
 
 setHost(new DomHost());
 
-export * from "./core.js";
+export * from "./core.ts";
 export { ASSIGNED_ATTR, SlotPart, UNSLOTTED_TAG, isMoving, projectSlots, unprojectUnits } from "../dom/slots.js";
 export { topLevelPair } from "../dom/adopt.js";

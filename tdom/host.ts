@@ -8,44 +8,39 @@
  * when the element joins the root's tree and detaches when it leaves;
  * frames are the scheduler's ticks. Installed by native/index.js.
  */
-import { Clone, Host, ListenerOptions, Prepared } from "../html/host.js";
-import { HTML_KIND } from "../html/constants.js";
-import { parseTemplate } from "../html/parser.js";
-import { TplComment, TplElement, TplNode, TplText, indexParts, tokenize } from "../html/tokenizer.js";
+import { Clone, Host, ListenerOptions, Prepared } from "../html/host.ts";
+import { HTML_KIND } from "../html/constants.ts";
+import { parseTemplate } from "../html/parser.ts";
+import { TplComment, TplElement, TplNode, TplText, indexParts, tokenize } from "../html/tokenizer.ts";
 import { setValue } from "./editor.ts";
 import { forgetLayout } from "./layout.ts";
 import { TAnchor, TElement, TFragment, TInput, TNode, TRun } from "./node.ts";
 import { FLUSH_VIEWS, frames } from "./scheduler.ts";
 import { createElement } from "./tags.ts";
-import { View } from "./view.js";
+import { View } from "./view.ts";
 
-/** @import { EventBinding } from "../html/parts.js" */
-/** @import { HostNode } from "../html/host.js" */
-/** @import { PartSpec } from "../html/types.ts" */
+import type { EventBinding } from "../html/parts.ts";
+import type { HostNode } from "../html/host.ts";
+import type { PartSpec } from "../html/types.ts";
 
 /** A prepared terminal template: the part specs with the node index each binds to, and the template tree. */
 export class TermPrepared extends Prepared {
-  /**
-   * @param {PartSpec[]} parts
-   * @param {TplNode[]} tree
-   */
-  constructor(parts, tree) {
+  tree: TplNode[];
+
+  constructor(parts: PartSpec[], tree: TplNode[]) {
     super(parts);
     this.tree = tree;
   }
 }
 
-/** @param {string} c */
-const isWS = (c) => c === " " || c === "\t" || c === "\n" || c === "\r" || c === "\f";
+const isWS = (c: string) => c === " " || c === "\t" || c === "\n" || c === "\r" || c === "\f";
 
-/** @param {string} s */
-const isBlank = (s) => {
+const isBlank = (s: string) => {
   for (let i = 0; i < s.length; i++) if (!isWS(s[i])) return false;
   return true;
 };
 
-/** @param {string} s */
-const collapse = (s) => {
+const collapse = (s: string) => {
   let out = "";
   let inWs = false;
   for (let i = 0; i < s.length; i++) {
@@ -62,17 +57,19 @@ const collapse = (s) => {
 };
 
 class CloneWalk {
-  /** @param {PartSpec[]} specs */
-  constructor(specs) {
+  specs: PartSpec[];
+  targets: HostNode[];
+  index: number;
+  partIdx: number;
+
+  constructor(specs: PartSpec[]) {
     this.specs = specs;
-    /** @type {HostNode[]} */
     this.targets = [];
     this.index = -1;
     this.partIdx = 0;
   }
 
-  /** @param {TNode} node */
-  visit(node) {
+  visit(node: TNode) {
     this.index++;
     while (this.partIdx < this.specs.length && this.specs[this.partIdx].nodeIndex === this.index) {
       this.targets.push(node);
@@ -81,21 +78,14 @@ class CloneWalk {
   }
 }
 
-/**
- * @param {TElement} parent
- * @param {TNode} node
- */
-const push = (parent, node) => {
+const push = (parent: TElement, node: TNode) => {
   parent.link(node, null);
 };
 
 /**
- * @param {TplNode[]} nodes
- * @param {TElement} parent
- * @param {boolean} inline whether text keeps its spaces, as inside a text or span
- * @param {CloneWalk | null} walk
+ * @param inline whether text keeps its spaces, as inside a text or span
  */
-const cloneInto = (nodes, parent, inline, walk) => {
+const cloneInto = (nodes: TplNode[], parent: TElement, inline: boolean, walk: CloneWalk | null) => {
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
     if (node instanceof TplElement) {
@@ -120,11 +110,7 @@ const cloneInto = (nodes, parent, inline, walk) => {
   }
 };
 
-/**
- * @param {TNode} node
- * @param {boolean} on
- */
-const setAttached = (node, on) => {
+const setAttached = (node: TNode, on: boolean) => {
   if (!(node instanceof TElement)) return;
   if (node.owner !== null && node.attached !== on) {
     node.attached = on;
@@ -135,77 +121,57 @@ const setAttached = (node, on) => {
 };
 
 export class TermHost extends Host {
+  registered: boolean;
+  onError: ((error: unknown) => void) | null;
+
   constructor() {
     super();
     this.bindsHandlerThis = false;
     this.registered = false;
-    /** @type {((error: unknown) => void) | null} */
     this.onError = null;
   }
 
-  /**
-   * @param {ReadonlyArray<string>} strings
-   * @param {number} kind
-   * @returns {TermPrepared}
-   */
-  prepare(strings, kind) {
+  prepare(strings: ReadonlyArray<string>, kind: number): TermPrepared {
     const { markup, parts } = parseTemplate(strings, kind);
     const tree = tokenize(markup, kind);
     return new TermPrepared(indexParts(tree, parts), tree);
   }
 
-  /**
-   * @param {Prepared} prepared
-   * @returns {Clone}
-   */
-  clone(prepared) {
-    const term = /** @type {TermPrepared} */ (prepared);
+  clone(prepared: Prepared): Clone {
+    const term = prepared as TermPrepared;
     const fragment = new TFragment();
     const walk = new CloneWalk(term.parts);
     cloneInto(term.tree, fragment, false, walk);
     return new Clone(fragment, walk.targets);
   }
 
-  /** @param {string} text */
-  createText(text) {
+  createText(text: string): HostNode {
     return new TRun(text);
   }
 
-  /**
-   * @param {HostNode} node
-   * @param {string} text
-   */
-  setText(node, text) {
-    /** @type {TRun} */ (node).setText(text);
+  setText(node: HostNode, text: string) {
+    (node as TRun).setText(text);
   }
 
-  /** @param {string} label */
-  createAnchor(label) {
+  createAnchor(label: string): HostNode {
     return new TAnchor(label);
   }
 
-  /** @param {string} tag */
-  createElement(tag) {
+  createElement(tag: string): HostNode {
     return createElement(tag);
   }
 
-  createFragment() {
+  createFragment(): HostNode {
     return new TFragment();
   }
 
-  /**
-   * @param {HostNode} parent
-   * @param {HostNode} node
-   * @param {HostNode | null} ref
-   */
-  insertBefore(parent, node, ref) {
-    const p = /** @type {TElement} */ (parent);
-    const n = /** @type {TNode} */ (node);
-    const r = ref === null ? null : /** @type {TNode} */ (ref);
+  insertBefore(parent: HostNode, node: HostNode, ref: HostNode | null) {
+    const p = parent as TElement;
+    const n = node as TNode;
+    const r = ref === null ? null : (ref as TNode);
     const connected = p.isConnected();
     if (n instanceof TFragment) {
-      /** @type {TNode[]} */
-      const kids = [];
+      const kids: TNode[] = [];
       for (let k = n.firstChild; k !== null; k = k.next) kids.push(k);
       n.clearChildren();
       for (const k of kids) p.insertBefore(k, r);
@@ -216,9 +182,8 @@ export class TermHost extends Host {
     if (connected) setAttached(n, true);
   }
 
-  /** @param {HostNode} node */
-  remove(node) {
-    const n = /** @type {TNode} */ (node);
+  remove(node: HostNode) {
+    const n = node as TNode;
     const parent = n.parent;
     if (parent === null) return;
     if (n.isConnected()) setAttached(n, false);
@@ -226,68 +191,44 @@ export class TermHost extends Host {
     forgetLayout(n);
   }
 
-  /** @param {HostNode} node */
-  parentOf(node) {
-    return /** @type {TNode} */ (node).parent;
+  parentOf(node: HostNode): HostNode {
+    return (node as TNode).parent;
   }
 
-  /** @param {HostNode} node */
-  nextSibling(node) {
-    return /** @type {TNode} */ (node).next;
+  nextSibling(node: HostNode): HostNode {
+    return (node as TNode).next;
   }
 
-  /** @param {HostNode} node */
-  isConnected(node) {
-    return /** @type {TNode} */ (node).isConnected();
+  isConnected(node: HostNode) {
+    return (node as TNode).isConnected();
   }
 
-  /** @param {unknown} value */
-  asNode(value) {
+  asNode(value: unknown): HostNode {
     if (value instanceof TNode) return value;
     if (value instanceof View) return value.box;
     return null;
   }
 
-  /** @param {unknown} value */
-  stringify(value) {
+  stringify(value: unknown) {
     if (typeof value !== "object" || value === null) return String(value);
-    const toString = /** @type {{ toString?: unknown }} */ (value).toString;
+    const toString = (value as { toString?: unknown }).toString;
     return typeof toString === "function" ? String(toString.call(value)) : "[object]";
   }
 
-  /**
-   * @param {HostNode} el
-   * @param {string} name
-   * @param {string} value
-   */
-  setAttribute(el, name, value) {
-    /** @type {TElement} */ (el).setProp(name, value);
+  setAttribute(el: HostNode, name: string, value: string) {
+    (el as TElement).setProp(name, value);
   }
 
-  /**
-   * @param {HostNode} el
-   * @param {string} name
-   */
-  removeAttribute(el, name) {
-    /** @type {TElement} */ (el).setProp(name, null);
+  removeAttribute(el: HostNode, name: string) {
+    (el as TElement).setProp(name, null);
   }
 
-  /**
-   * @param {HostNode} el
-   * @param {string} name
-   * @param {boolean} on
-   */
-  toggleAttribute(el, name, on) {
-    /** @type {TElement} */ (el).setProp(name, on);
+  toggleAttribute(el: HostNode, name: string, on: boolean) {
+    (el as TElement).setProp(name, on);
   }
 
-  /**
-   * @param {HostNode} el
-   * @param {string} name
-   * @param {unknown} value
-   */
-  setProperty(el, name, value) {
-    const e = /** @type {TElement} */ (el);
+  setProperty(el: HostNode, name: string, value: unknown) {
+    const e = el as TElement;
     e.props.set(name, value);
     if (e instanceof TInput && name === "value") {
       const text = typeof value === "string" ? value : value === null || value === undefined ? "" : typeof value === "number" ? String(value) : e.value();
@@ -300,12 +241,8 @@ export class TermHost extends Host {
     else if (typeof value === "boolean") e.setKnownProp(name, value);
   }
 
-  /**
-   * @param {HostNode} el
-   * @param {string} text
-   */
-  setContent(el, text) {
-    const e = /** @type {TElement} */ (el);
+  setContent(el: HostNode, text: string) {
+    const e = el as TElement;
     if (e instanceof TInput) {
       setValue(e, text);
       return;
@@ -315,51 +252,32 @@ export class TermHost extends Host {
     e.invalidate();
   }
 
-  /** @param {unknown} handler */
-  listenerOptions(handler) {
+  listenerOptions(handler: unknown) {
     if (handler === null || typeof handler !== "object") return null;
-    const o = /** @type {{ capture?: unknown, once?: unknown, passive?: unknown }} */ (handler);
+    const o = handler as { capture?: unknown, once?: unknown, passive?: unknown };
     return new ListenerOptions(o.capture === true, o.once === true, o.passive === true);
   }
 
-  /**
-   * @param {HostNode} el
-   * @param {string} name
-   * @param {EventBinding} binding
-   * @param {ListenerOptions | null} options
-   */
-  addListener(el, name, binding, options) {
-    /** @type {TElement} */ (el).addHandler(name, binding, options !== null && options.once);
+  addListener(el: HostNode, name: string, binding: EventBinding, options: ListenerOptions | null) {
+    (el as TElement).addHandler(name, binding, options !== null && options.once);
   }
 
-  /**
-   * @param {HostNode} el
-   * @param {string} name
-   * @param {EventBinding} binding
-   * @param {ListenerOptions | null} _options
-   */
-  removeListener(el, name, binding, _options) {
-    /** @type {TElement} */ (el).removeHandler(name, binding);
+  removeListener(el: HostNode, name: string, binding: EventBinding, _options: ListenerOptions | null) {
+    (el as TElement).removeHandler(name, binding);
   }
 
-  /**
-   * @param {unknown} handler
-   * @param {unknown} event
-   */
-  invokeListener(handler, event) {
-    const h = /** @type {{ handleEvent: (event: unknown) => unknown }} */ (handler);
+  invokeListener(handler: unknown, event: unknown) {
+    const h = handler as { handleEvent: (event: unknown) => unknown };
     return h.handleEvent(event);
   }
 
-  /** @param {string} markup */
-  parseMarkup(markup) {
+  parseMarkup(markup: string): HostNode {
     const fragment = new TFragment();
     cloneInto(tokenize(markup, HTML_KIND), fragment, false, null);
     return fragment;
   }
 
-  /** @param {() => void} flush */
-  scheduleFlush(flush) {
+  scheduleFlush(flush: () => void) {
     if (!this.registered) {
       this.registered = true;
       frames.onFlush(flush, FLUSH_VIEWS);
@@ -367,8 +285,7 @@ export class TermHost extends Host {
     frames.request();
   }
 
-  /** @param {unknown} error */
-  reportError(error) {
+  reportError(error: unknown) {
     if (this.onError !== null) this.onError(error);
     else console.error(error);
   }

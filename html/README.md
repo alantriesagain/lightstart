@@ -6,22 +6,25 @@ can't do: **two-stage adoption** of browser-prerendered DOM, **thunk bindings**
 (`${() => ...}`) for fine-grained updates, and the `key()` / `element()`
 primitives that replaced lit's directives. 9.1 KB min+gzip bundled with esbuild, zero dependencies.
 
+The engine is TypeScript (erasable syntax only), so scriptc compiles its classes natively without JavaScript's per-write field bookkeeping; browsers get it with the types stripped as it is served (light's test server, bootstrapp's dev server) or from the JavaScript the package ships.
+
 | File | What it owns |
 |---|---|
 | `index.js` | The whole public API: `html`, `svg`, `render`, `nothing`, `unsafeHTML`, `key`, `element`, `configure`, `disposeTree` |
-| `host.js` | The `Host` seam: what the engine asks of a renderer (prepare/clone templates, nodes, attributes, listeners, frames); `dom/host.js` is the browser host |
-| `core.js` | The DOM-free entry a native build imports; `index.js` adds the DOM host, adoption and slots |
-| `values.js` | The value classes a template holds: `TemplateResult`, `Keyed`, `ElementSpec`, `Unsafe`, and the `html`/`svg`/`key`/`element`/`unsafeHTML` factories |
-| `parser.js` | Quasi state machine → markup + parts list (binding positions, error cases) |
-| `template.js` | Template prep, WeakMap identity cache, instance cloning |
-| `parts.js` | Part classes, commit semantics, keyed reconciliation, `render()` |
-| `reactive.js` | Thunk ↔ effect-adapter seam (`configure({ effect, host })`) |
-| `tokenizer.js` | Marker markup → template tree, for hosts without an HTML parser (`markup/`, the terminal) |
+| `host.ts` | The `Host` seam: what the engine asks of a renderer (prepare/clone templates, nodes, attributes, listeners, frames); `dom/host.js` is the browser host |
+| `core.ts` | The DOM-free entry a native build imports; `index.js` adds the DOM host, adoption and slots |
+| `values.ts` | The value classes a template holds: `TemplateResult`, `Keyed`, `ElementSpec`, `Unsafe`, and the `key`/`element`/`unsafeHTML` factories |
+| `tags.js` | The `html` and `svg` tags; JavaScript, since their rest parameter of any value has no static TypeScript form in scriptc yet |
+| `parser.ts` | Quasi state machine → markup + parts list (binding positions, error cases) |
+| `template.ts` | Template prep, WeakMap identity cache, instance cloning |
+| `parts.ts` | Part classes, commit semantics, keyed reconciliation, `render()` |
+| `reactive.ts` | Thunk ↔ effect-adapter seam (`configure({ effect, host })`) |
+| `tokenizer.ts` | Marker markup → template tree, for hosts without an HTML parser (`markup/`, the terminal) |
 | `conformance.test.js`, `conformance-hosts.js` | The engine's behaviour as every host must show it, run under `node --test` against each host adapter listed |
 
 ## Hosts
 
-The engine never touches a document: every node, attribute and listener operation goes through the `Host` installed with `configure({ host, effect })`, and templates are prepared and cloned by it. Three hosts ship: `dom/host.js` for the browser (installed by `@bootstrapp/light/html` and `@bootstrapp/light`), `markup/host.js` for an in-memory tree that serializes to markup a page adopts, and `tdom/host.js` for the terminal, which `@bootstrapp/light/native` installs. A host answers `prepare`/`clone`, the node operations, `asNode` (what child values are nodes of its own), `listenerOptions`/`addListener`/`removeListener`, `bindsHandlerThis`, `parseMarkup`, `scheduleFlush` and `reportError`; `html/conformance.test.js` is what it must pass.
+The engine never touches a document: every node, attribute and listener operation goes through the `Host` installed with `configure({ host, effect })`, and templates are prepared and cloned by it. Three hosts ship: `dom/host.js` for the browser (installed by `@bootstrapp/light/html` and `@bootstrapp/light`), `markup/host.js` for an in-memory tree that serializes to markup a page adopts, and `tdom/host.ts` for the terminal, which `@bootstrapp/light/native` installs. A host answers `prepare`/`clone`, the node operations, `asNode` (what child values are nodes of its own), `listenerOptions`/`addListener`/`removeListener`, `bindsHandlerThis`, `parseMarkup`, `scheduleFlush` and `reportError`; `html/conformance.test.js` is what it must pass.
 | `../dom/adopt.js` | Two-stage adoption of browser-prerendered DOM, installed into the engine through `installAdoption` |
 | `../dom/slots.js` | Light-DOM `<slot>` projection: unit walkers, `SlotPart`, `projectSlots`, the `<unslotted>` holder |
 
@@ -102,7 +105,7 @@ of the pair in prerendered output.
 ### Async in the graph (promise thunks)
 
 Solid 2.0 made async a property of the reactive graph (async memos,
-`<Loading>`, stale-while-revalidate). Our equivalent seam is `reactive.js`: a
+`<Loading>`, stale-while-revalidate). Our equivalent seam is `reactive.ts`: a
 thunk returning a Promise could hold its last committed value while the new
 one is in flight (mini-`Loading` semantics per part, no component API). Parked
 because adoption already covers the dominant async moment (page load) and

@@ -3,7 +3,7 @@
  */
 
 import type { TypeDefinition, PropertyDeclaration, PropertyDeclarations, PropsToThis } from "../types/types.ts";
-import type { Signal } from "../signals/index.js";
+import type { Signal } from "../signals/index.ts";
 import type { StoreSync, Store } from "../signals/types.ts";
 import type { DefinitionFragment } from "../view/primitives.ts";
 

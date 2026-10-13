@@ -8,11 +8,11 @@
  * class carries on its own prototype.
  */
 import { cloneDefault, isReactive, normalizeProperties, parse } from "../types/index.js";
-import { createStore } from "../signals/store.js";
+import { createStore } from "../signals/store.ts";
 import { assertDefinitionKeys, composeDefinition, LIFECYCLE_HOOKS } from "../view/definition.js";
 import { UNSLOTTED_TAG, hasRootPart, isMoving, projectSlots, render, topLevelPair, unprojectUnits } from "../html/index.js";
-import { untracked } from "../signals/index.js";
-import { CORE_METHODS, ViewCore, config } from "../view/core.js";
+import { untracked } from "../signals/index.ts";
+import { CORE_METHODS, ViewCore, config } from "../view/core.ts";
 
 /**
  * Store field specs from a properties schema. Defaults are wrapped in a

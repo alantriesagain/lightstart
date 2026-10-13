@@ -19,5 +19,5 @@ export { InputDecoder } from "./input.ts";
 export { clearInput, editorHandleKey, insertText, setValue } from "./editor.ts";
 export { Terminal } from "./terminal.ts";
 export { Renderer } from "./renderer.ts";
-export { TermHost, TermPrepared } from "./host.js";
-export { View, mount, unmount } from "./view.js";
+export { TermHost, TermPrepared } from "./host.ts";
+export { View, mount, unmount } from "./view.ts";

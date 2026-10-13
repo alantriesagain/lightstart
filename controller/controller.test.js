@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it, beforeEach } from "node:test";
 
-import { signal } from "../signals/index.js";
-import { createStore } from "../signals/store.js";
+import { signal } from "../signals/index.ts";
+import { createStore } from "../signals/store.ts";
 import { mergeDefinitions, composeDefinition } from "../view/definition.js";
 import T from "../types/index.js";
 import { bindStoreSync, getSyncInfo, registerAdapter } from "./sync.js";

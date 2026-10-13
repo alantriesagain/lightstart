@@ -1,6 +1,6 @@
-import { HTML_KIND, MARKER_END, MARKER_START } from "./constants.js";
+import { HTML_KIND, MARKER_END, MARKER_START } from "./constants.ts";
 
-/** @import { ParsedPart, ParseResult, PartKind } from "./types.ts" */
+import type { ParsedPart, ParseResult, PartKind } from "./types.ts";
 
 const TEXT = 0;
 const TAG_OPEN = 1;
@@ -19,8 +19,7 @@ const SVG_RAW_TAGS = new Set(["script", "style"]);
 const CHILD_MARKER = `<!--${MARKER_START}--><!--${MARKER_END}-->`;
 const ELEMENT_MARKER = "data-$$";
 
-/** @param {string} c */
-const isWS = (c) => c === " " || c === "\t" || c === "\n" || c === "\r" || c === "\f";
+const isWS = (c: string) => c === " " || c === "\t" || c === "\n" || c === "\r" || c === "\f";
 
 /**
  * Parse the static quasis of an html``/svg`` template into markup with
@@ -30,21 +29,15 @@ const isWS = (c) => c === " " || c === "\t" || c === "\n" || c === "\r" || c ===
  * the markup entirely (committed via parts at instantiation). A `<slot>`
  * is marked too and listed as a `slot` part, so the instance that clones
  * the template can hand it to its host for light-DOM projection.
- *
- * @param {ReadonlyArray<string>} strings
- * @param {number} kind
- * @returns {ParseResult}
  */
-export const parseTemplate = (strings, kind) => {
+export const parseTemplate = (strings: ReadonlyArray<string>, kind: number): ParseResult => {
   const rawTags = kind === HTML_KIND ? HTML_RAW_TAGS : SVG_RAW_TAGS;
-  /** @type {ParsedPart[]} */
-  const parts = [];
+  const parts: ParsedPart[] = [];
   let out = "";
   let state = TEXT;
   let tagName = "";
   let closing = false;
-  /** @type {{ name: string, statics: string[] | null, value: string, valueIndex: number } | null} */
-  let attr = null;
+  let attr: { name: string, statics: string[] | null, value: string, valueIndex: number } | null = null;
   let marked = false;
   let markedOrd = -1;
   let markedCount = 0;
@@ -56,22 +49,16 @@ export const parseTemplate = (strings, kind) => {
   let rawContentSeen = false;
   let rawPending = false;
 
-  /**
-   * @param {string} msg
-   * @param {number} qi
-   */
-  const err = (msg, qi) => {
+  const err = (msg: string, qi: number) => {
     throw new Error(`[light/html] ${msg} (expression ${qi} of \`${strings.join("${…}").slice(0, 120)}\`)`);
   };
 
-  /** @param {string} quote */
-  const finishAttr = (quote) => {
-    const a = /** @type {NonNullable<typeof attr>} */ (attr);
+  const finishAttr = (quote: string) => {
+    const a = attr as NonNullable<typeof attr>;
     if (a.statics === null) out += ` ${a.name}=${quote}${a.value}${quote}`;
     else {
       a.statics.push(a.value);
-      /** @type {PartKind} */
-      let partKind = "attr";
+      let partKind: PartKind = "attr";
       let name = a.name;
       const prefix = name[0];
       if (prefix === ".") {
@@ -97,8 +84,7 @@ export const parseTemplate = (strings, kind) => {
     state = TAG_BODY;
   };
 
-  /** @param {boolean} selfClosing */
-  const closeOpenTag = (selfClosing) => {
+  const closeOpenTag = (selfClosing: boolean) => {
     if (tagName === "slot") {
       if (!marked) {
         marked = true;
@@ -121,8 +107,7 @@ export const parseTemplate = (strings, kind) => {
     } else state = TEXT;
   };
 
-  /** @param {number} qi */
-  const handleBoundary = (qi) => {
+  const handleBoundary = (qi: number) => {
     switch (state) {
       case TEXT:
         out += CHILD_MARKER;
@@ -141,7 +126,7 @@ export const parseTemplate = (strings, kind) => {
         return;
       }
       case ATTR_EQ: {
-        const a = /** @type {NonNullable<typeof attr>} */ (attr);
+        const a = attr as NonNullable<typeof attr>;
         a.statics = [a.value];
         a.valueIndex = qi;
         a.value = "";
@@ -151,7 +136,7 @@ export const parseTemplate = (strings, kind) => {
       case ATTR_VALUE_UNQ:
       case ATTR_VALUE_DQ:
       case ATTR_VALUE_SQ: {
-        const a = /** @type {NonNullable<typeof attr>} */ (attr);
+        const a = attr as NonNullable<typeof attr>;
         if (a.statics === null) {
           a.statics = [a.value];
           a.valueIndex = qi;
@@ -256,7 +241,7 @@ export const parseTemplate = (strings, kind) => {
           continue;
         }
         case ATTR_NAME: {
-          const a = /** @type {NonNullable<typeof attr>} */ (attr);
+          const a = attr as NonNullable<typeof attr>;
           if (c === "=") {
             state = ATTR_EQ;
             i++;
@@ -273,7 +258,7 @@ export const parseTemplate = (strings, kind) => {
           continue;
         }
         case ATTR_EQ: {
-          const a = /** @type {NonNullable<typeof attr>} */ (attr);
+          const a = attr as NonNullable<typeof attr>;
           if (isWS(c)) {
             i++;
             continue;
@@ -304,7 +289,7 @@ export const parseTemplate = (strings, kind) => {
             i++;
             continue;
           }
-          const a = /** @type {NonNullable<typeof attr>} */ (attr);
+          const a = attr as NonNullable<typeof attr>;
           a.value += c;
           i++;
           continue;
@@ -315,7 +300,7 @@ export const parseTemplate = (strings, kind) => {
             i++;
             continue;
           }
-          const a = /** @type {NonNullable<typeof attr>} */ (attr);
+          const a = attr as NonNullable<typeof attr>;
           a.value += c;
           i++;
           continue;
@@ -325,7 +310,7 @@ export const parseTemplate = (strings, kind) => {
             finishAttr('"');
             continue;
           }
-          const a = /** @type {NonNullable<typeof attr>} */ (attr);
+          const a = attr as NonNullable<typeof attr>;
           a.value += c;
           i++;
           continue;

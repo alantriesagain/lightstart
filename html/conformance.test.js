@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
-import { configure, disposeTree, element, hasRootPart, html, key, nothing, render, svg, unsafeHTML } from "./core.js";
-import { effect, signal } from "../signals/index.js";
+import { configure, disposeTree, element, hasRootPart, html, key, nothing, render, svg, unsafeHTML } from "./core.ts";
+import { effect, signal } from "../signals/index.ts";
 import { hosts } from "./conformance-hosts.js";
 
 for (const adapter of hosts)

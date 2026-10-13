@@ -1,19 +1,17 @@
-import { currentHost, setHost } from "./host.js";
+import { Part } from "./part.ts";
+import { currentHost, setHost } from "./host.ts";
 
-/** @import { EffectAdapter, EffectHandle, HostNode } from "./types.ts" */
+import type { EffectAdapter, EffectHandle, HostNode } from "./types.ts";
 
-/** @type {EffectAdapter | null} */
-let adapter = null;
+let adapter: EffectAdapter | null = null;
 
 /**
  * Inject the reactive-effect adapter used for `${() => ...}` thunk
  * bindings. The view engine passes `effect` from light/signals when it
  * loads. Without an adapter,
  * thunks are evaluated once per parent render, correct but coarse.
- *
- * @param {{ effect?: EffectAdapter, host?: import("./host.js").Host }} [options]
  */
-export const configure = (options) => {
+export const configure = (options?: { effect?: EffectAdapter, host?: import("./host.ts").Host }) => {
   const o = options ?? {};
   adapter = o.effect ?? null;
   if (o.host !== undefined) setHost(o.host);
@@ -24,24 +22,27 @@ export const configure = (options) => {
  * it, and whether that effect has seen its anchor connected. Parts that take
  * `${() => …}` bindings extend it and answer `_anchor()`.
  */
-export class ThunkHolder {
+export class ThunkHolder extends Part {
+  _thunk: (() => unknown) | undefined;
+  _effect: EffectHandle | null;
+  _thunkLive: boolean;
+
   constructor() {
-    /** @type {(() => unknown) | undefined} */
+    super();
     this._thunk = undefined;
-    /** @type {EffectHandle | null} */
     this._effect = null;
     this._thunkLive = false;
   }
 
-  /** @returns {HostNode | null} the node whose connectivity decides whether the effect stays alive */
-  _anchor() {
+  /** @returns the node whose connectivity decides whether the effect stays alive */
+  _anchor(): HostNode | null {
     return null;
   }
 }
 
-/** @param {ThunkHolder} part */
-export const disposeThunk = (part) => {
-  part._effect?.dispose();
+export const disposeThunk = (part: ThunkHolder) => {
+  const effect = part._effect;
+  if (effect !== null) effect.dispose();
   part._effect = null;
   part._thunk = undefined;
   part._thunkLive = false;
@@ -53,12 +54,8 @@ export const disposeThunk = (part) => {
  * change, no parent re-render. A parent re-render with a new closure
  * identity swaps the effect; an effect firing after its anchor left the
  * document disposes itself.
- *
- * @param {ThunkHolder} part
- * @param {() => unknown} fn
- * @param {(value: unknown) => void} commit
  */
-export const setThunk = (part, fn, commit) => {
+export const setThunk = (part: ThunkHolder, fn: () => unknown, commit: (value: unknown) => void) => {
   if (part._thunk === fn) return;
   disposeThunk(part);
   part._thunk = fn;
@@ -77,5 +74,4 @@ export const setThunk = (part, fn, commit) => {
   });
 };
 
-/** @param {unknown} value */
-export const resolveEager = (value) => (typeof value === "function" ? value() : value);
+export const resolveEager = (value: unknown): unknown => (typeof value === "function" ? value() : value);

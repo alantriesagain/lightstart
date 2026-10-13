@@ -6,12 +6,13 @@
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { scriptcPath } from "./scriptc.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(here, "..");
 const args = process.argv.slice(2);
 const at = args.indexOf("--scriptc");
-const scriptc = at >= 0 ? args[at + 1] : join(rootDir, "node_modules", ".bin", "scriptc");
+const scriptc = at >= 0 ? args[at + 1] : scriptcPath(rootDir);
 const r = spawnSync(scriptc, ["coverage", "native/index.js", "--fail-on=blockers"], { encoding: "utf8", cwd: rootDir, timeout: 600000 });
 const out = (r.stdout ?? "") + (r.stderr ?? "");
 const statically = /compile statically\s+(\d+)\s+\((\d+)%\)/.exec(out);

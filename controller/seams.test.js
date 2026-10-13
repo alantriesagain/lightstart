@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { createStore } from "../signals/store.js";
+import { createStore } from "../signals/store.ts";
 import { defineController } from "./define.js";
 import { configureControllers } from "./config.js";
 import { bindProperty, registerSyncBinder } from "./sync.js";

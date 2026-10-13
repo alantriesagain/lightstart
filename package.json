@@ -12,7 +12,7 @@
       "types": "./view/types.ts",
       "default": "./view/index.js"
     },
-    "./view/core": "./view/core.js",
+    "./view/core": "./view/core.ts",
     "./dom": {
       "types": "./dom/types.ts",
       "default": "./dom/index.js"
@@ -28,10 +28,10 @@
       "types": "./html/types.ts",
       "default": "./html/index.js"
     },
-    "./html/core": "./html/core.js",
+    "./html/core": "./html/core.ts",
     "./signals": {
       "types": "./signals/types.ts",
-      "default": "./signals/index.js"
+      "default": "./signals/index.ts"
     },
     "./types": {
       "types": "./types/types.ts",
@@ -66,6 +66,18 @@
     "./controller/document": "./controller/adapters/document.js",
     "./controller/url": "./controller/adapters/url.js",
     "./controller/view": "./controller/view.js",
+    "./html/constants.js": "./html/constants.ts",
+    "./html/parser.js": "./html/parser.ts",
+    "./html/values.js": "./html/values.ts",
+    "./html/host.js": "./html/host.ts",
+    "./html/template.js": "./html/template.ts",
+    "./html/parts.js": "./html/parts.ts",
+    "./html/reactive.js": "./html/reactive.ts",
+    "./html/core.js": "./html/core.ts",
+    "./html/tokenizer.js": "./html/tokenizer.ts",
+    "./signals/index.js": "./signals/index.ts",
+    "./signals/store.js": "./signals/store.ts",
+    "./view/core.js": "./view/core.ts",
     "./*": "./*"
   },
   "scripts": {

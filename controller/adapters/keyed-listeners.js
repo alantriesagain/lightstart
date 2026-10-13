@@ -3,10 +3,10 @@
  * Shared on/off/emit/hasListeners/signal pattern used by all adapters.
  */
 
-import { signal, effect } from "../../signals/index.js";
+import { signal, effect } from "../../signals/index.ts";
 
 /** @import { ListenerFn, AdapterCore, Adapter } from "../types.ts" */
-/** @import { Signal } from "../../signals/index.js" */
+/** @import { Signal } from "../../signals/index.ts" */
 
 /**
  * Attach on/off/emit/signal methods to `target` and return it.

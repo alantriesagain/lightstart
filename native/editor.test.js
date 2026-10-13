@@ -1,4 +1,4 @@
-import { EventBinding } from "../html/parts.js";
+import { EventBinding } from "../html/parts.ts";
 import { ChangeEvent, KeyEvent, SubmitEvent, TInput, editorHandleKey } from "./index.js";
 import { done, eq, eqn, ok } from "./assert.js";
 

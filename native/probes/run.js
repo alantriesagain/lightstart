@@ -8,11 +8,12 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { scriptcPath } from "../scriptc.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const at = args.indexOf("--scriptc");
-const scriptc = at >= 0 ? args[at + 1] : join(here, "..", "..", "node_modules", ".bin", "scriptc");
+const scriptc = at >= 0 ? args[at + 1] : scriptcPath(join(here, "..", ".."));
 const only = args.filter((a) => a.startsWith("p-"));
 mkdirSync(join(here, "out"), { recursive: true });
 

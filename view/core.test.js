@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
-import { configure, html, render } from "../html/core.js";
-import { effect, signal } from "../signals/index.js";
+import { configure, html, render } from "../html/core.ts";
+import { effect, signal } from "../signals/index.ts";
 import { MRoot, MarkupHost, markupOf } from "../markup/index.js";
-import { ViewCore, configureView } from "./core.js";
+import { ViewCore, configureView } from "./core.ts";
 
 class MarkupView extends ViewCore {
   /**

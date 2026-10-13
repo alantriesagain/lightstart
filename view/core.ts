@@ -9,21 +9,23 @@
  * render() returned is committed; the engine's configuration lives here as
  * well.
  */
-import { currentHost } from "../html/host.js";
-import { configure } from "../html/reactive.js";
-import { Reactive, effect, withCurrent } from "../signals/index.js";
+import { currentHost } from "../html/host.ts";
+import { configure } from "../html/reactive.ts";
+import { Reactive, effect, withCurrent } from "../signals/index.ts";
 
 configure({ effect });
 
 class Config {
+  track: (label: string) => ((() => void) | void);
+  wrap: (work: Promise<unknown>, label: string) => void;
+  settle: (() => Promise<unknown>) | undefined;
+  translate: (key: string, params?: Record<string, unknown>) => string | undefined;
+  dev: boolean;
+
   constructor() {
-    /** @type {(label: string) => ((() => void) | void)} */
     this.track = () => {};
-    /** @type {(work: Promise<unknown>, label: string) => void} */
     this.wrap = () => {};
-    /** @type {(() => Promise<unknown>) | undefined} */
     this.settle = undefined;
-    /** @type {(key: string, params?: Record<string, unknown>) => string | undefined} */
     this.translate = () => undefined;
     this.dev = true;
   }
@@ -39,9 +41,8 @@ export const config = new Config();
  * init and the work components pass to `trackWork`; `settle()` resolves when
  * a served region the client cannot adopt may be rendered over; `translate`
  * answers the host's text for a key; `dev` turns on diagnostics.
- * @param {Partial<Config>} options
  */
-export const configureView = (options) => {
+export const configureView = (options: Partial<Config>) => {
   if (options.track !== undefined) config.track = options.track;
   if (options.wrap !== undefined) config.wrap = options.wrap;
   if (options.settle !== undefined) config.settle = options.settle;
@@ -52,12 +53,8 @@ export const configureView = (options) => {
 /**
  * Hand async work an element waits on to the host, so a host that waits for
  * a quiet page counts it. Answers the same promise.
- * @template T
- * @param {Promise<T>} work
- * @param {string} label
- * @returns {Promise<T>}
  */
-export const trackWork = (work, label) => {
+export const trackWork = <T>(work: Promise<T>, label: string): Promise<T> => {
   config.wrap(work, label);
   return work;
 };
@@ -65,20 +62,14 @@ export const trackWork = (work, label) => {
 /**
  * The host's text for `key`, or undefined when it has none, so a component
  * falls back to its own.
- * @param {string} key
- * @param {Record<string, unknown>} [params]
- * @returns {string | undefined}
  */
-export const translate = (key, params) => config.translate(key, params);
+export const translate = (key: string, params?: Record<string, unknown>): string | undefined => config.translate(key, params);
 
-/** @type {ViewCore[]} */
-let queue = [];
-/** @type {ViewCore[] | null} */
-let flushing = null;
+let queue: ViewCore[] = [];
+let flushing: ViewCore[] | null = null;
 let flushScheduled = false;
 
-/** @param {unknown} node */
-function depthOf(node) {
+function depthOf(node: unknown) {
   const host = currentHost();
   let depth = 0;
   for (let parent = host.parentOf(node); parent !== null; parent = host.parentOf(parent)) depth++;
@@ -91,19 +82,13 @@ function flushUpdates() {
   const batch = queue;
   queue = [];
   if (batch.length > 1) {
-    /** @type {Map<ViewCore, number>} */
-    const depths = new Map();
+    const depths: Map<ViewCore, number> = new Map();
     for (const view of batch) depths.set(view, depthOf(view.$node));
     batch.sort(
-      /**
-       * @param {ViewCore} a
-       * @param {ViewCore} b
-       */
-      (a, b) => (depths.get(a) ?? 0) - (depths.get(b) ?? 0),
+      (a: ViewCore, b: ViewCore) => (depths.get(a) ?? 0) - (depths.get(b) ?? 0),
     );
   }
-  /** @type {Set<ViewCore>} */
-  const updated = new Set();
+  const updated: Set<ViewCore> = new Set();
   flushing = batch;
   try {
     for (const view of batch)
@@ -124,8 +109,7 @@ function scheduleFlush() {
   currentHost().scheduleFlush(flushUpdates);
 }
 
-/** @param {ViewCore} view */
-function enqueueUpdate(view) {
+function enqueueUpdate(view: ViewCore) {
   if (flushing !== null) flushing.push(view);
   else {
     queue.push(view);
@@ -134,8 +118,9 @@ function enqueueUpdate(view) {
 }
 
 class RenderNode extends Reactive {
-  /** @param {ViewCore} owner */
-  constructor(owner) {
+  owner: ViewCore;
+
+  constructor(owner: ViewCore) {
     super();
     this.owner = owner;
   }
@@ -161,78 +146,66 @@ export const CORE_METHODS = ["$requestUpdate", "$schedule", "$flushUpdate", "$pe
 export class ViewCore {
   $hasUpdated = false;
   $forceNextUpdate = false;
-  /** @type {Map<string, unknown>} */
-  $changedProps = new Map();
-  /** @type {Promise<void> | null} */
-  $updatePromise = null;
-  /** @type {(() => void) | null} */
-  $resolveUpdate = null;
-  /** @type {(() => void) | null} */
-  $settleDone = null;
-  /** @type {Array<() => void> | null} */
-  $teardowns = null;
-  /** @type {RenderNode | null} */
-  $renderNode = null;
+  $changedProps: Map<string, unknown> = new Map();
+  $updatePromise: Promise<void> | null = null;
+  $resolveUpdate: (() => void) | null = null;
+  $settleDone: (() => void) | null = null;
+  $teardowns: Array<() => void> | null = null;
+  $renderNode: RenderNode | null = null;
 
-  /** @returns {unknown} the host node whose depth orders this view among the ones flushed with it */
-  get $node() {
+  /** @returns the host node whose depth orders this view among the ones flushed with it */
+  get $node(): unknown {
     return null;
   }
 
-  /** @returns {boolean} whether the view is in a tree, so an update renders */
-  get $connected() {
+  /** @returns whether the view is in a tree, so an update renders */
+  get $connected(): boolean {
     return currentHost().isConnected(this.$node);
   }
 
-  /** @returns {string} what names this view's work to the host's tracker */
-  get $label() {
+  /** @returns what names this view's work to the host's tracker */
+  get $label(): string {
     return "view";
   }
 
-  /** @returns {boolean} whether render runs under a reactive, so a signal it reads re-renders the view */
-  get $tracked() {
+  /** @returns whether render runs under a reactive, so a signal it reads re-renders the view */
+  get $tracked(): boolean {
     return true;
   }
 
   /**
-   * @param {string} _key
-   * @param {unknown} _oldValue
-   * @returns {boolean} whether the property's value differs from the one recorded when it changed
+   * @returns whether the property's value differs from the one recorded when it changed
    */
-  $hasChanged(_key, _oldValue) {
+  $hasChanged(_key: string, _oldValue: unknown): boolean {
     return true;
   }
 
   /**
-   * @param {string} _name one of connected, disconnected, willUpdate, firstUpdated, updated
-   * @param {Map<string, unknown> | null} _changedProps the update's changed properties, for the update hooks
+   * @param _name one of connected, disconnected, willUpdate, firstUpdated, updated
+   * @param _changedProps the update's changed properties, for the update hooks
    */
-  $hook(_name, _changedProps) {}
+  $hook(_name: string, _changedProps: Map<string, unknown> | null) {}
 
-  /** @returns {unknown} what the component's render answers */
-  $render() {
+  /** @returns what the component's render answers */
+  $render(): unknown {
     return null;
   }
 
-  /** @param {unknown} _value what render answered, to commit into the component's container */
-  $commit(_value) {}
+  /** @param _value what render answered, to commit into the component's container */
+  $commit(_value: unknown) {}
 
   /**
    * Record a changed property (or, with no key, force the next render) and
    * schedule the view's update. Answers the promise of the pending update;
    * inside a running update, that update's own promise.
-   * @param {string} [key]
-   * @param {unknown} [oldValue]
-   * @returns {Promise<void>}
    */
-  $requestUpdate(key, oldValue) {
+  $requestUpdate(key?: string, oldValue?: unknown): Promise<void> {
     if (key) this.$changedProps.set(key, oldValue);
     else this.$forceNextUpdate = true;
     return this.$schedule();
   }
 
-  /** @returns {Promise<void>} */
-  $schedule() {
+  $schedule(): Promise<void> {
     if (this.$updatePromise !== null) return this.$updatePromise;
     this.$settleDone = config.track("view:" + this.$label) ?? null;
     this.$updatePromise = new Promise((resolve) => {
@@ -268,9 +241,8 @@ export class ViewCore {
    * Run one update now. Properties set in `willUpdate` belong to this update;
    * anything set from the render on (a child's teardown, `updated`) is
    * recorded for the next one.
-   * @param {boolean} forceUpdate
    */
-  $performUpdate(forceUpdate) {
+  $performUpdate(forceUpdate: boolean) {
     const changedProps = this.$changedProps;
     if (!this.$shouldUpdate(changedProps, forceUpdate)) return;
     this.$hook("willUpdate", changedProps);
@@ -285,21 +257,17 @@ export class ViewCore {
   /**
    * Drop the recorded keys whose value did not change; answers whether any
    * remain. A first or forced update keeps every key.
-   * @param {Map<string, unknown>} changedProps
-   * @param {boolean} forceUpdate
    */
-  $shouldUpdate(changedProps, forceUpdate) {
+  $shouldUpdate(changedProps: Map<string, unknown>, forceUpdate: boolean) {
     if (!this.$hasUpdated || forceUpdate) return true;
-    /** @type {string[]} */
-    const unchanged = [];
+    const unchanged: string[] = [];
     for (const [key, oldValue] of changedProps) if (!this.$hasChanged(key, oldValue)) unchanged.push(key);
     for (const key of unchanged) changedProps.delete(key);
     return changedProps.size > 0;
   }
 
   $update() {
-    /** @type {RenderNode | null} */
-    let node = null;
+    let node: RenderNode | null = null;
     if (this.$tracked) {
       if (this.$renderNode === null) this.$renderNode = new RenderNode(this);
       node = this.$renderNode;
@@ -313,9 +281,8 @@ export class ViewCore {
    * Hold a teardown until disconnect: any unsubscribe function, run when the
    * view leaves its tree, so subscriptions made on connect need no
    * bookkeeping.
-   * @param {() => void} teardown
    */
-  $own(teardown) {
+  $own(teardown: () => void) {
     if (this.$teardowns === null) this.$teardowns = [];
     this.$teardowns.push(teardown);
   }

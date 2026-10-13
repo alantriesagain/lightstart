@@ -15,8 +15,8 @@ import { frames } from "./scheduler.ts";
 import { UIEvent } from "./events.ts";
 import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, DEFAULT_STYLE, Style } from "./style.ts";
 
-import type { ViewCore } from "../view/core.js";
-import type { EventBinding } from "../html/parts.js";
+import type { ViewCore } from "../view/core.ts";
+import type { EventBinding } from "../html/parts.ts";
 import type { ScrollState, TextLayout } from "./layout.ts";
 
 export type PropValue = string | number | boolean | null;

@@ -6,15 +6,33 @@
  * to the shims beside this module.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import http from "node:http";
+import { stripTypeScriptTypes } from "node:module";
 import path from "node:path";
 import { runnerPage } from "./page.js";
 
 const TYPES = /** @type {Record<string, string>} */ ({
-  ".js": "text/javascript", ".mjs": "text/javascript", ".html": "text/html", ".json": "application/json",
+  ".js": "text/javascript", ".mjs": "text/javascript", ".ts": "text/javascript", ".html": "text/html", ".json": "application/json",
   ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".woff2": "font/woff2", ".txt": "text/plain",
 });
+
+/**
+ * A TypeScript module as the JavaScript a browser runs: node blanks the
+ * annotations in place, so every line and column stays where it was and
+ * stack traces need no source map. Node flags the call as experimental with
+ * a warning, which says nothing to a test run.
+ * @param {string} file
+ */
+const stripped = (file) => {
+  const warn = process.emitWarning;
+  process.emitWarning = () => {};
+  try {
+    return stripTypeScriptTypes(readFileSync(file, "utf8"));
+  } finally {
+    process.emitWarning = warn;
+  }
+};
 
 /** @param {string} dir */
 const manifestOf = (dir) => {
@@ -76,17 +94,35 @@ export const serve = (root, port = 0) =>
         res.end(runnerPage({ file: searchParams.get("file") ?? "", importmap: imports, harnessUrl, reportUrl }));
         return;
       }
-      const file = path.join(root, decodeURIComponent(pathname));
+      const asked = path.join(root, decodeURIComponent(pathname));
+      const file = existsSync(asked) && statSync(asked).isDirectory() ? path.join(asked, "index.html") : asked;
       if (!file.startsWith(root) || !existsSync(file)) {
         res.writeHead(404);
         res.end();
         return;
       }
       res.writeHead(200, { "content-type": TYPES[path.extname(file)] ?? "application/octet-stream", "cache-control": "no-store" });
-      res.end(readFileSync(file));
+      res.end(file.endsWith(".ts") && !file.endsWith(".d.ts") ? stripped(file) : readFileSync(file));
     });
     server.listen(port, "127.0.0.1", () => {
       const address = /** @type {import("node:net").AddressInfo} */ (server.address());
       resolve({ server, url: `http://127.0.0.1:${address.port}` });
     });
   });
+
+/**
+ * `light serve [dir] [--port <n>]`: serve a folder the way the test runner
+ * does, TypeScript stripped as it goes out, for light's examples and any page
+ * that loads light's sources directly. A folder answers its `index.html`.
+ * Runs until interrupted.
+ * @param {string[]} args
+ * @returns {Promise<number>}
+ */
+export const serveCommand = async (args) => {
+  const at = args.indexOf("--port");
+  const port = at >= 0 ? Number(args[at + 1]) : 8000;
+  const dir = path.resolve(args.find((arg, i) => !arg.startsWith("--") && (at < 0 || i !== at + 1)) ?? ".");
+  const { url } = await serve(dir, port);
+  console.log(`serving ${dir} at ${url}`);
+  return new Promise(() => {});
+};

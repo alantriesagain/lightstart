@@ -1,28 +1,26 @@
 /**
- * @bootstrapp/light/html/template.js: prepared templates and their instances.
+ * @bootstrapp/light/html/template: prepared templates and their instances.
  * A template is prepared once per strings identity by the installed host
  * (`host.prepare`), which keeps whatever it needs beside the part specs; an
  * instance is a host clone of it with one part per spec, in document order.
  */
 
-import { currentHost } from "./host.js";
-import { createPart } from "./parts.js";
+import type { Part } from "./part.ts";
+import { currentHost } from "./host.ts";
+import { createPart } from "./parts.ts";
 
-/** @import { Host, Prepared } from "./host.js" */
-/** @import { PartSpec } from "./types.ts" */
+import type { Host, Prepared } from "./host.ts";
+import type { PartSpec } from "./types.ts";
 
-/** @type {WeakMap<Host, WeakMap<ReadonlyArray<string>, Template>>} */
-const templateCaches = new WeakMap();
+const templateCaches: WeakMap<Host, WeakMap<object, Template>> = new WeakMap();
 
 export class Template {
-  /**
-   * @param {ReadonlyArray<string>} strings
-   * @param {number} kind
-   */
-  constructor(strings, kind) {
-    /** @type {Prepared} */
+  prepared: Prepared;
+  parts: PartSpec[];
+  kind: number;
+
+  constructor(strings: ReadonlyArray<string>, kind: number) {
     this.prepared = currentHost().prepare(strings, kind);
-    /** @type {PartSpec[]} */
     this.parts = this.prepared.parts;
     this.kind = kind;
   }
@@ -31,48 +29,45 @@ export class Template {
 /**
  * Prepared-template cache, keyed on the TemplateStringsArray identity,
  * so template literals written once in a
- * render() are prepared once and diffed thereafter.
- *
- * @param {ReadonlyArray<string>} strings
- * @param {number} kind
+ * render() are prepared once and diffed thereafter. `strings` stays
+ * `unknown` up to here so a native build keeps that identity.
  */
-export const getTemplate = (strings, kind) => {
+export const getTemplate = (strings: unknown, kind: number) => {
   const host = currentHost();
   let cache = templateCaches.get(host);
   if (cache === undefined) {
     cache = new WeakMap();
     templateCaches.set(host, cache);
   }
-  let template = cache.get(strings);
+  const key = strings as object;
+  let template = cache.get(key);
   if (template === undefined) {
-    template = new Template(strings, kind);
-    cache.set(strings, template);
+    template = new Template(strings as ReadonlyArray<string>, kind);
+    cache.set(key, template);
   }
   return template;
 };
 
 export class TemplateInstance {
-  /**
-   * @param {Template} template
-   * @param {object | undefined} owner
-   */
-  constructor(template, owner) {
+  template: Template;
+  owner: object | undefined;
+  parts: Part[];
+
+  constructor(template: Template, owner: object | undefined) {
     this.template = template;
     this.owner = owner;
-    /** @type {ReturnType<typeof createPart>[]} */
     this.parts = [];
   }
 
-  /** @returns {unknown} the clone's root, to insert where the instance renders */
-  clone() {
+  /** @returns the clone's root, to insert where the instance renders */
+  clone(): unknown {
     const clone = currentHost().clone(this.template.prepared);
     const specs = this.template.parts;
     for (let i = 0; i < specs.length; i++) this.parts.push(createPart(specs[i], clone.targets[i], this.owner));
     return clone.root;
   }
 
-  /** @param {unknown[]} values */
-  commit(values) {
+  commit(values: unknown[]) {
     for (const part of this.parts) part.setFromValues(values);
   }
 

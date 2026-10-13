@@ -8,7 +8,7 @@ BIN=native/probes/out/demo
 L="${1:-/tmp/light-demo.log}"
 rm -f "$L"
 mkdir -p native/probes/out
-npx scriptc build native/demo.js -o "$BIN" --strip --no-keep-llvm >/dev/null || { echo "build failed"; exit 1; }
+${SCRIPTC:-npx scriptc} build native/demo.js -o "$BIN" --strip --no-keep-llvm >/dev/null || { echo "build failed"; exit 1; }
 ( sleep 1.5; printf '\x1b[<0;4;4M\x1b[<0;4;4m'; sleep 0.4; printf '\x1b[<65;10;8M'; sleep 0.2; printf '\x1b[<65;10;8M'; sleep 0.4; printf '\r'; sleep 0.4; printf '\t'; sleep 0.2; printf 'hi'; sleep 0.2; printf '\r'; sleep 0.4; printf '\x03'; sleep 0.5 ) \
   | script -q -e -c "stty cols 80 rows 24; $BIN --log $L" /dev/null >/dev/null 2>&1
 status=0

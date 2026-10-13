@@ -4,7 +4,7 @@
  * so the ratio between the two shows where a native build spends its time.
  */
 import { Dep, ElementSpec, Keyed, TAnchor, TBox, TElement, TRoot, TRun, TemplateResult, Unsafe, effect, graphemes, html, nothing, render, signal, stringWidth } from "./index.js";
-import { getTemplate, TemplateInstance } from "../html/template.js";
+import { getTemplate, TemplateInstance } from "../html/template.ts";
 
 /**
  * @param {string} name

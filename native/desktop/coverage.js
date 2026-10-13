@@ -9,6 +9,7 @@ import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { shim } from "./build.js";
+import { scriptcPath } from "../scriptc.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const light = join(here, "..", "..");
@@ -19,7 +20,7 @@ if (process.platform === "linux" && !hasWebkit) {
 }
 const target = process.platform === "darwin" ? "mac-arm64" : process.platform === "win32" ? "win-x64" : "linux-x64";
 const dir = shim(target);
-const scriptc = join(light, "node_modules", ".bin", "scriptc");
+const scriptc = scriptcPath(light);
 const entry = "native/desktop/demo/backend.js";
 const r = spawnSync(scriptc, ["coverage", entry, "--ffi", join(dir, "ffi.json"), "--fail-on=blockers"], { encoding: "utf8", cwd: light, timeout: 600000 });
 const out = (r.stdout ?? "") + (r.stderr ?? "");

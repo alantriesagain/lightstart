@@ -9,7 +9,7 @@
  */
 
 import { normalizeProperties } from "../types/index.js";
-import { createStore } from "../signals/store.js";
+import { createStore } from "../signals/store.ts";
 import { assertDefinitionKeys, composeDefinition, isThenable } from "../view/definition.js";
 import { acceptsOption, bindProperty, getAdapter, registerAdapter, registerLazyAdapter, unregisterAdapter } from "./sync.js";
 import { tracked } from "./config.js";

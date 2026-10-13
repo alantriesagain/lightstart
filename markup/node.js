@@ -6,7 +6,7 @@
  * descendants count as connected.
  */
 
-/** @import { EventBinding } from "../html/parts.js" */
+/** @import { EventBinding } from "../html/parts.ts" */
 
 export class MNode {
   constructor() {

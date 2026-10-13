@@ -1,12 +1,12 @@
-import { ASSIGNED_ATTR, MARKER_END, MARKER_START, ROOT_MARKER_END, ROOT_MARKER_START, UNSLOTTED_TAG, nothing } from "../html/constants.js";
-import { AttributePart, BooleanAttributePart, ChildPart, EventPart, NOT_SET, PropertyPart, RawTextPart, createPart, installAdoption } from "../html/parts.js";
-import { setThunk } from "../html/reactive.js";
-import { ElementSpec, Keyed, TemplateResult, Unsafe } from "../html/values.js";
-import { TemplateInstance, getTemplate } from "../html/template.js";
+import { ASSIGNED_ATTR, MARKER_END, MARKER_START, ROOT_MARKER_END, ROOT_MARKER_START, UNSLOTTED_TAG, nothing } from "../html/constants.ts";
+import { AttributePart, BooleanAttributePart, ChildPart, EventPart, NOT_SET, PropertyPart, RawTextPart, createPart, installAdoption } from "../html/parts.ts";
+import { setThunk } from "../html/reactive.ts";
+import { ElementSpec, Keyed, TemplateResult, Unsafe } from "../html/values.ts";
+import { TemplateInstance, getTemplate } from "../html/template.ts";
 
 /** @import { ProjectedUnit } from "./types.ts" */
 /** @import { ElementState, RenderOptions } from "../html/types.ts" */
-/** @import { Part } from "../html/parts.js" */
+/** @import { Part } from "../html/parts.ts" */
 /** @import { SlotPart } from "./slots.js" */
 
 /** @param {Node} node */
@@ -236,7 +236,7 @@ export const normalizedEqual = (a, b) => a.replace(/\s+/g, " ").trim() === b.rep
  * which the served page lacks, gets its parts anchored on a fresh clone of
  * the template and handed to the slot part as its parked content.
  *
- * @param {import("../html/template.js").Template} template
+ * @param {import("../html/template.ts").Template} template
  * @param {Comment} start
  * @param {Comment} end
  */

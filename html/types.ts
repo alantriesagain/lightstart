@@ -1,4 +1,4 @@
-import { nothing } from "./constants.js";
+import { nothing } from "./constants.ts";
 
 export type TemplateKind = 1 | 2;
 
@@ -50,11 +50,11 @@ export type Renderable = string | number | boolean | bigint | symbol | null | un
 /** What a template value may be; only functions are narrowed, the rest is left open. */
 export type TemplateValue = Renderable | TemplateHandler;
 
-export type { TemplateResult, ElementSpec, Keyed, Unsafe } from "./values.js";
+export type { TemplateResult, ElementSpec, Keyed, Unsafe } from "./values.ts";
 /** @deprecated use Keyed */
-export type KeySpec = import("./values.js").Keyed;
+export type KeySpec = import("./values.ts").Keyed;
 /** @deprecated use Unsafe */
-export type UnsafeSpec = import("./values.js").Unsafe;
+export type UnsafeSpec = import("./values.ts").Unsafe;
 
 /** Where `render` puts its root part: an element of the installed host. */
 export type RenderContainer = unknown;
@@ -72,7 +72,7 @@ export interface EffectHandle {
 
 export type EffectAdapter = (fn: () => void) => EffectHandle;
 
-export type { ThunkHolder } from "./reactive.js";
+export type { ThunkHolder } from "./reactive.ts";
 
 export type PartKind = "child" | "attr" | "prop" | "bool" | "event" | "rawtext" | "slot";
 
@@ -105,9 +105,9 @@ export type ElementState = {
   tag: string;
   el: HostNode;
   committed: Map<string, unknown>;
-  events: Map<string, import("./parts.js").EventBinding>;
+  events: Map<string, import("./parts.ts").EventBinding>;
   ref: ((el: HostElement | null) => void) | null;
-  childPart: import("./parts.js").ChildPart | null;
+  childPart: import("./parts.ts").ChildPart | null;
 };
 
 /** What a child part currently renders; `pending` is a served range awaiting adoption. */
@@ -115,11 +115,11 @@ export type ChildState =
   | { type: "empty" }
   | { type: "pending" }
   | { type: "text"; node: HostNode; text: string }
-  | { type: "template"; instance: import("./template.js").TemplateInstance }
-  | { type: "items"; parts: import("./parts.js").ChildPart[]; keys: unknown[] | null }
-  | { type: "keyed"; k: unknown; inner: import("./parts.js").ChildPart }
+  | { type: "template"; instance: import("./template.ts").TemplateInstance }
+  | { type: "items"; parts: import("./parts.ts").ChildPart[]; keys: unknown[] | null }
+  | { type: "keyed"; k: unknown; inner: import("./parts.ts").ChildPart }
   | { type: "node"; node: HostNode }
   | { type: "unsafe"; s: string }
   | ElementState;
 
-export * from "./core.js";
+export * from "./core.ts";

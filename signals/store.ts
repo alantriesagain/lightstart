@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/signals/store.js: Store
+ * @bootstrapp/light/signals/store: Store
  * The canonical declared reactive store: per-key subscribe, optional
  * flattened accessors (off for views, controllers and extensions, whose
  * instance is the accessor surface, so a declared key may share a store
@@ -7,46 +7,32 @@
  * is a valid View `sync:` target.
  */
 
-/** @import { StateDef, Store } from "./types.ts" */
+import type { StateDef, Store } from "./types.ts";
 
-import { Dep, getCurrentEffect } from "./index.js";
+import { Dep, getCurrentEffect } from "./index.ts";
 
-/** @param {any} def @returns {StateDef} */
-const normalize = (def) =>
+const normalize = (def: any): StateDef =>
   def && typeof def === "object" && ("default" in def || "pack" in def || "unpack" in def)
     ? def
     : { default: def };
 
-/** @param {any} v */
-const clone = (v) =>
+const clone = (v: any) =>
   typeof v === "function" ? v()
     : v && typeof v === "object" ? structuredClone(v)
       : v;
 
 const RESERVED = new Set(["keys", "get", "set", "update", "reset", "resetAll", "subscribe", "observe", "snapshot", "restore", "$sync"]);
 
-/**
- * @param {Record<string, any>} [defs]
- * @param {{ name?: string, accessors?: boolean }} [options]
- * @returns {Store}
- */
-export const createStore = (defs = {}, { name = "store", accessors = true } = {}) => {
-  /** @type {Record<string, StateDef>} */
-  const spec = {};
-  /** @type {Record<string, any>} */
-  const values = {};
-  /** @type {Map<string, Set<(v: any, oldValue?: any) => void>>} */
-  const listeners = new Map();
-  /** @type {Set<(key: string, value: any, oldValue: any) => void>} */
-  const observers = new Set();
-  /** @type {Map<string, Dep>} */
-  const effectDeps = new Map();
+export const createStore = (defs: Record<string, any> = {}, { name = "store", accessors = true }: { name?: string, accessors?: boolean } = {}): Store => {
+  const spec: Record<string, StateDef> = {};
+  const values: Record<string, any> = {};
+  const listeners: Map<string, Set<(v: any, oldValue?: any) => void>> = new Map();
+  const observers: Set<(key: string, value: any, oldValue: any) => void> = new Set();
+  const effectDeps: Map<string, Dep> = new Map();
 
-  /** @param {string} key */
-  const seed = (key) => clone(spec[key].default);
+  const seed = (key: string) => clone(spec[key].default);
 
-  /** @param {string} key */
-  const trackRead = (key) => {
+  const trackRead = (key: string) => {
     if (getCurrentEffect() === null) return;
     let dep = effectDeps.get(key);
     if (!dep) {
@@ -62,11 +48,7 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
     values[key] = seed(key);
   }
 
-  /**
-   * @param {string} key
-   * @param {unknown} oldValue
-   */
-  const notify = (key, oldValue) => {
+  const notify = (key: string, oldValue: unknown) => {
     const set = listeners.get(key);
     if (set) for (const cb of set) cb(values[key], oldValue);
     for (const cb of observers) cb(key, values[key], oldValue);
@@ -77,14 +59,12 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
   const store = {
     keys: () => Object.keys(values),
 
-    /** @param {string} key */
-    get: (key) => {
+    get: (key: string) => {
       trackRead(key);
       return values[key];
     },
 
-    /** @param {string} key @param {any} value */
-    set(key, value) {
+    set(key: string, value: any) {
       if (!(key in spec)) throw new Error(`Unknown state field "${key}".`);
       const oldValue = values[key];
       if (oldValue === value) return value;
@@ -93,13 +73,11 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
       return value;
     },
 
-    /** @param {string} key @param {(current: any) => any} fn */
-    update(key, fn) {
+    update(key: string, fn: (current: any) => any) {
       return store.set(key, fn(values[key]));
     },
 
-    /** @param {string} key */
-    reset(key) {
+    reset(key: string) {
       const oldValue = values[key];
       values[key] = seed(key);
       notify(key, oldValue);
@@ -107,8 +85,7 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
     },
 
     resetAll() {
-      /** @type {Record<string, any>} */
-      const olds = {};
+      const olds: Record<string, any> = {};
       for (const key of Object.keys(spec)) {
         olds[key] = values[key];
         values[key] = seed(key);
@@ -116,15 +93,13 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
       for (const key of Object.keys(spec)) notify(key, olds[key]);
     },
 
-    /** @param {string} key @param {(v: any, oldValue?: any) => void} cb */
-    subscribe(key, cb) {
+    subscribe(key: string, cb: (v: any, oldValue?: any) => void) {
       if (!listeners.has(key)) listeners.set(key, new Set());
-      /** @type {Set<(v: any, oldValue?: any) => void>} */ (listeners.get(key)).add(cb);
+      (listeners.get(key) as Set<(v: any, oldValue?: any) => void>).add(cb);
       return () => listeners.get(key)?.delete(cb);
     },
 
-    /** @param {(key: string, value: any, oldValue: any) => void} cb */
-    observe(cb) {
+    observe(cb: (key: string, value: any, oldValue: any) => void) {
       observers.add(cb);
       return () => observers.delete(cb);
     },
@@ -132,10 +107,8 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
     snapshot: () =>
       Object.fromEntries(Object.entries(values).map(([k, v]) => [k, spec[k].pack ? spec[k].pack(v) : v])),
 
-    /** @param {Record<string, any>} [snap] */
-    restore(snap) {
-      /** @type {Record<string, any>} */
-      const olds = {};
+    restore(snap?: Record<string, any>) {
+      const olds: Record<string, any> = {};
       for (const key of Object.keys(spec)) {
         olds[key] = values[key];
         values[key] = snap && key in snap
@@ -155,6 +128,6 @@ export const createStore = (defs = {}, { name = "store", accessors = true } = {}
         configurable: true,
       });
 
-  /** @type {any} */ (store).$sync = { adapter: name, get: store.get, set: store.set, subscribe: store.subscribe };
-  return /** @type {Store} */ (/** @type {unknown} */ (store));
+  (store as any).$sync = { adapter: name, get: store.get, set: store.set, subscribe: store.subscribe };
+  return store as unknown as Store;
 };

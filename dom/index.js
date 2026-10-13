@@ -4,5 +4,5 @@
  * configuration, and the DomHost the renderer runs on.
  */
 export { default, defineComponent, defineMixin } from "./view.js";
-export { configureView, trackWork, translate } from "../view/core.js";
+export { configureView, trackWork, translate } from "../view/core.ts";
 export { DomHost } from "./host.js";

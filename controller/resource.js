@@ -8,7 +8,7 @@
  * `invalidateOn` and work tracking come from `configureControllers`.
  */
 
-import { batch, signal } from "../signals/index.js";
+import { batch, signal } from "../signals/index.ts";
 import { config } from "./config.js";
 
 /** @import { Resource, ResourceOptions } from "./types.ts" */

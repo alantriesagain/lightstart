@@ -10,17 +10,16 @@
  * are decoded. It does not reproduce the HTML parser's implied end tags or
  * table fixups: elements nest as written.
  */
-import { HTML_KIND, MARKER_START } from "./constants.js";
+import { HTML_KIND, MARKER_START } from "./constants.ts";
 
-/** @import { ParsedPart, PartSpec } from "./types.ts" */
+import type { ParsedPart, PartSpec } from "./types.ts";
 
 const ELEMENT_MARKER = "data-$$";
 const VOID_TAGS = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"]);
 const HTML_RAW_TAGS = new Set(["script", "style", "textarea", "title"]);
 const SVG_RAW_TAGS = new Set(["script", "style"]);
 const ESCAPABLE_RAW_TAGS = new Set(["textarea", "title"]);
-/** @type {Map<string, string>} */
-const ENTITIES = new Map([
+const ENTITIES: Map<string, string> = new Map([
   ["amp", "&"],
   ["lt", "<"],
   ["gt", ">"],
@@ -42,24 +41,19 @@ const ENTITIES = new Map([
   ["euro", "€"],
 ]);
 
-/** @param {string} c */
-const isWS = (c) => c === " " || c === "\t" || c === "\n" || c === "\r" || c === "\f";
+const isWS = (c: string) => c === " " || c === "\t" || c === "\n" || c === "\r" || c === "\f";
 
-/** @param {string} c */
-const isTagStart = (c) => (c >= "a" && c <= "z") || (c >= "A" && c <= "Z");
+const isTagStart = (c: string) => (c >= "a" && c <= "z") || (c >= "A" && c <= "Z");
 
-/** @param {string} c */
-const isDigit = (c) => c >= "0" && c <= "9";
+const isDigit = (c: string) => c >= "0" && c <= "9";
 
-/** @param {string} c */
-const isHexDigit = (c) => isDigit(c) || (c >= "a" && c <= "f") || (c >= "A" && c <= "F");
+const isHexDigit = (c: string) => isDigit(c) || (c >= "a" && c <= "f") || (c >= "A" && c <= "F");
 
 /**
  * The text with its character references decoded: the named ones a
  * template is likely to carry, and every numeric one.
- * @param {string} s
  */
-export const decodeEntities = (s) => {
+export const decodeEntities = (s: string) => {
   if (s.indexOf("&") < 0) return s;
   let out = "";
   let i = 0;
@@ -103,46 +97,52 @@ export const decodeEntities = (s) => {
 export class TplNode {}
 
 export class TplText extends TplNode {
-  /** @param {string} data */
-  constructor(data) {
+  data: string;
+
+  constructor(data: string) {
     super();
-    /** @type {string} */
     this.data = data;
   }
 }
 
 export class TplComment extends TplNode {
-  /** @param {string} data */
-  constructor(data) {
+  data: string;
+
+  constructor(data: string) {
     super();
     this.data = data;
   }
 }
 
 export class TplElement extends TplNode {
-  /** @param {string} tag */
-  constructor(tag) {
+  tag: string;
+  attrs: Map<string, string>;
+  children: TplNode[];
+  marked: boolean;
+
+  constructor(tag: string) {
     super();
     this.tag = tag;
-    /** @type {Map<string, string>} */
     this.attrs = new Map();
-    /** @type {TplNode[]} */
     this.children = [];
     this.marked = false;
   }
 }
 
 class Tokenizer {
-  /**
-   * @param {string} markup
-   * @param {number} kind
-   */
-  constructor(markup, kind) {
+  markup: string;
+  html: boolean;
+  rawTags: Set<string>;
+  root: TplElement;
+  stack: TplElement[];
+  i: number;
+  text: string;
+
+  constructor(markup: string, kind: number) {
     this.markup = markup;
     this.html = kind === HTML_KIND;
     this.rawTags = this.html ? HTML_RAW_TAGS : SVG_RAW_TAGS;
     this.root = new TplElement("#root");
-    /** @type {TplElement[]} */
     this.stack = [this.root];
     this.i = 0;
     this.text = "";
@@ -161,13 +161,11 @@ class Tokenizer {
     this.text = "";
   }
 
-  /** @param {string} name */
-  normalizeName(name) {
+  normalizeName(name: string) {
     return this.html ? name.toLowerCase() : name;
   }
 
-  /** @param {string} tag */
-  closeTo(tag) {
+  closeTo(tag: string) {
     for (let k = this.stack.length - 1; k > 0; k--)
       if (this.stack[k].tag === tag) {
         this.stack.length = k;
@@ -282,8 +280,7 @@ class Tokenizer {
     this.stack.push(el);
   }
 
-  /** @param {TplElement} el */
-  rawText(el) {
+  rawText(el: TplElement) {
     const markup = this.markup;
     const n = markup.length;
     const lower = this.html ? markup.toLowerCase() : markup;
@@ -310,29 +307,21 @@ class Tokenizer {
  * The template tree of `markup`: the top-level nodes, elements holding
  * their attributes (minus the `data-$$` marker, kept as `marked`), their
  * children and nothing else.
- * @param {string} markup
- * @param {number} kind HTML_KIND or SVG_KIND
- * @returns {TplNode[]}
+ * @param kind HTML_KIND or SVG_KIND
  */
-export const tokenize = (markup, kind) => new Tokenizer(markup, kind).run();
+export const tokenize = (markup: string, kind: number): TplNode[] => new Tokenizer(markup, kind).run();
 
 /**
  * The part specs of a template tree, each with the index of the node it
  * binds to: elements and comments counted in document order, the way a
  * browser's TreeWalker counts them, so a clone finds its targets by the
  * same walk.
- * @param {TplNode[]} tree
- * @param {ParsedPart[]} parts
- * @returns {PartSpec[]}
  */
-export const indexParts = (tree, parts) => {
-  /** @type {number[]} */
-  const elIndex = [];
-  /** @type {number[]} */
-  const childIndex = [];
+export const indexParts = (tree: TplNode[], parts: ParsedPart[]): PartSpec[] => {
+  const elIndex: number[] = [];
+  const childIndex: number[] = [];
   let nodeIndex = -1;
-  /** @param {TplNode[]} nodes */
-  const visit = (nodes) => {
+  const visit = (nodes: TplNode[]) => {
     for (const node of nodes)
       if (node instanceof TplElement) {
         nodeIndex++;
@@ -344,18 +333,13 @@ export const indexParts = (tree, parts) => {
       }
   };
   visit(tree);
-  /** @type {PartSpec[]} */
-  const specs = [];
+  const specs: PartSpec[] = [];
   for (const p of parts) {
     const nodeIndexOf = p.kind === "child" ? childIndex[p.childOrd ?? 0] : elIndex[p.elOrd ?? 0];
     specs.push({ kind: p.kind, valueIndex: p.valueIndex, valueCount: p.valueCount, name: p.name, statics: p.statics, elOrd: p.elOrd, childOrd: p.childOrd, nodeIndex: nodeIndexOf });
   }
   specs.sort(
-    /**
-     * @param {PartSpec} a
-     * @param {PartSpec} b
-     */
-    (a, b) => a.nodeIndex - b.nodeIndex || a.valueIndex - b.valueIndex,
+    (a: PartSpec, b: PartSpec) => a.nodeIndex - b.nodeIndex || a.valueIndex - b.valueIndex,
   );
   return specs;
 };

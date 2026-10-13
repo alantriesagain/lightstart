@@ -3,7 +3,7 @@
  * `forEach`, and the tokenizer reading static attributes of a marked element, which the terminal
  * host turns into props in that order.
  */
-import { tokenize, TplElement } from "../../html/tokenizer.js";
+import { tokenize, TplElement } from "../../html/tokenizer.ts";
 
 /** @type {Map<string, string>} */
 const attrs = new Map();

@@ -1,5 +1,6 @@
-import { Caret, Clip, DEFAULT_STYLE, KeyEvent, Screen, TBox, TElement, TRoot, TRun, View, childNodes, disposeTree, dumpTree, frames, html, key, layout, mount, paint, render, signal, textOf, unmount } from "./index.js";
+import { Caret, Clip, DEFAULT_STYLE, KeyEvent, Screen, TBox, TElement, TRoot, TRun, childNodes, disposeTree, dumpTree, frames, html, key, layout, mount, paint, render, signal, textOf, unmount } from "./index.js";
 import { done, eq, eqn, ok, throws } from "./assert.js";
+import { Parent } from "./test-views.ts";
 
 /**
  * @param {TRoot} root
@@ -171,46 +172,6 @@ const screenOf = (root, w, h) => {
   eq("handler saw the key", seen.join(","), "q");
   ok("other events pass through", !inner.dispatch(new KeyEvent("submit", "", false, false, false)) || true);
   disposeTree(root);
-}
-
-class Counter extends View {
-  constructor() {
-    super();
-    this.count = signal(0);
-    this.renders = 0;
-    /** @type {string[]} */
-    this.hooks = [];
-  }
-
-  connected() {
-    this.hooks.push("connected");
-  }
-
-  disconnected() {
-    this.hooks.push("disconnected");
-  }
-
-  /** @param {Map<string, unknown>} _changed */
-  updated(_changed) {
-    this.hooks.push("updated");
-  }
-
-  render() {
-    this.renders++;
-    return html`<text>count: ${this.count.value}</text>`;
-  }
-}
-
-class Parent extends View {
-  constructor() {
-    super();
-    this.child = new Counter();
-    this.label = signal("top");
-  }
-
-  render() {
-    return html`<box border title=${this.label.value}>${this.child}</box>`;
-  }
 }
 
 {
