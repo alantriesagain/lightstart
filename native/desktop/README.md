@@ -110,7 +110,8 @@ at document start. `DesktopApp` is light's bridge and asset server on top of a `
 
 The window's own surface, GTK on Linux (the other backends get theirs when they are verified):
 `minimize()`, `maximize(on)`, `isMaximized()`; `inspector()` shows the engine's developer tools
-when the view was created with `debug` (a right-click offers "Inspect Element" either way);
+when the view was created with `debug`, which is also what makes a right-click offer "Inspect
+Element" (without `debug` there is no inspector at all);
 `message(title, text)` is a message box; `dialog(kind, title, path, multi)` opens a file chooser
 (`kind` 0 files, 1 a folder, 2 save) and answers the chosen paths newline-joined, or "" when
 cancelled; `pendingDialogs()` and `cancelDialog(id)` withdraw one. Dialogs and the message box
