@@ -1,6 +1,6 @@
 /**
  * @file The desktop coverage gate: scriptc's coverage of the demo backend, against the shim's
- * manifest, must be fully static with nothing deferred to a runtime throw. Skipped, with a
+ * manifest, must be fully static with nothing deferred to a runtime throw and no slow path. Skipped, with a
  * notice, when WebKitGTK's development package is not installed, since the manifest needs the
  * archive. Run with `node native/desktop/coverage.js`.
  */
@@ -22,7 +22,7 @@ const target = process.platform === "darwin" ? "mac-arm64" : process.platform ==
 const dir = shim(target);
 const scriptc = scriptcPath(light);
 const entry = "native/desktop/demo/backend.js";
-const r = spawnSync(scriptc, ["coverage", entry, "--ffi", join(dir, "ffi.json"), "--fail-on=blockers"], { encoding: "utf8", cwd: light, timeout: 600000 });
+const r = spawnSync(scriptc, ["coverage", entry, "--ffi", join(dir, "ffi.json"), "--fail-on=slow-paths"], { encoding: "utf8", cwd: light, timeout: 600000 });
 const out = (r.stdout ?? "") + (r.stderr ?? "");
 const statically = /compile statically\s+(\d+)\s+\((\d+)%\)/.exec(out);
 const fully = /fully static/.test(out);
@@ -32,5 +32,5 @@ if (r.status === 0 && fully && !deferred) {
   process.exit(0);
 }
 console.log(out);
-console.log(`${entry}: ${r.status !== 0 ? "blockers" : !fully ? "a dynamic remainder" : "statements deferred to runtime"}`);
+console.log(`${entry}: ${/slower natively/.test(out) ? "slow paths (a write makes methods replaceable)" : r.status !== 0 ? "blockers" : !fully ? "a dynamic remainder" : "statements deferred to runtime"}`);
 process.exit(1);

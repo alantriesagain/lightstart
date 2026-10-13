@@ -15,13 +15,15 @@ light desktop run native/desktop/demo/backend.js   # the desktop shell's demo: a
 
 ## Which scriptc
 
-Light's core is TypeScript (`html/`, `signals/`, `view/core.ts`, `tdom/`), and its classes keep `unknown`- and `object`-typed fields, which scriptc releases up to 0.3.0 refuse in TypeScript. Until a release carries that support, the native tools compile with a scriptc built from the fork branch that adds it (`ts-unknown-fields`), named by `SCRIPTC`:
+Light's core is TypeScript (`html/`, `signals/`, `view/core.ts`, `tdom/`), and it needs three scriptc patches no release carries yet (0.3.1 included): `unknown`- and `object`-typed fields in TypeScript classes, native dispatch for generic classes, and coverage that reports slow paths. Until a release has them, the native tools compile with the fork's `light-integration` branch (0.3.1 plus the patches), named by `SCRIPTC`; the fork's `FORK.md` lists every patch and how to re-apply them on a new scriptc release:
 
 ```
 SCRIPTC=/path/to/scriptc npm run verify
 ```
 
 `native/scriptc.js` resolves the compiler for every tool: `$SCRIPTC`, else the scriptc in light's `node_modules`, else the one on `PATH`. `light desktop build` and `native/pty.sh` follow it too.
+
+The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on any write that makes methods replaceable (a computed key that can be any string, a reflective write), which would make every method call in the program dispatch dynamically and several times slower while the build still reports "fully static". The report names the write and how to avoid it.
 
 | File | What it owns |
 |---|---|
