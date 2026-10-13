@@ -53,6 +53,7 @@ export class DesktopWindow {
     this.debug = options.debug === true;
     this.pumpMs = options.pumpMs ?? 8;
     this.frameless = options.frameless !== false;
+    this.selectable = options.selectable === true;
     this.state = -1;
     /** @type {((id: string, req: string) => void) | null} */
     this.onRequest = null;
@@ -77,7 +78,7 @@ export class DesktopWindow {
     desktop_dialog_bind(w, onDialog);
     this.state = desktop_window_state(w);
     this.frameless = (this.state & STATE_FRAMELESS) !== 0;
-    desktop_init(w, windowHostScript(platformName(), this.frameless));
+    desktop_init(w, windowHostScript(platformName(), this.frameless, this.selectable));
     process.on("exit", () => {
       if (this.w === 0n) return;
       desktop_dialog_unbind(this.w, onDialog);

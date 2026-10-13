@@ -7,15 +7,25 @@
  * calls a title bar makes: minimize, toggle maximize, close, and drag. `dragFrom(event)` turns a
  * mousedown into a window move once the pointer travelled a few pixels with the button down, so
  * clicks and double-clicks stay in the page, and a double-click into maximize; the move is
- * anchored at the press, so the grabbed point stays under the pointer.
+ * anchored at the press, so the grabbed point stays under the pointer. Unless the window is
+ * `selectable`, the page's text cannot be selected, as in a native app: form fields, editable
+ * areas and elements marked `data-selectable` still can.
  */
+
+const NOT_SELECTABLE = "html{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}"
+  + "input,textarea,select,[contenteditable],[contenteditable] *,[data-selectable],[data-selectable] *{-webkit-user-select:text;user-select:text}";
 
 /**
  * @param {string} platform "linux", "macos" or "windows"
  * @param {boolean} frameless
+ * @param {boolean} selectable whether the page's text can be selected; when not, only form fields,
+ *   editable areas and elements marked `data-selectable` can
  */
-export const windowHostScript = (platform, frameless) => "(() => {\n"
+export const windowHostScript = (platform, frameless, selectable) => "(() => {\n"
   + "  if (window.__desktopWindow) return;\n"
+  + (selectable ? "" : "  const style = document.createElement(\"style\");\n"
+    + "  style.textContent = " + JSON.stringify(NOT_SELECTABLE) + ";\n"
+    + "  (document.head || document.documentElement).appendChild(style);\n")
   + "  const platform = " + JSON.stringify(platform) + ";\n"
   + "  const frameless = " + (frameless ? "true" : "false") + ";\n"
   + "  const native = platform === \"macos\" && frameless;\n"

@@ -55,6 +55,11 @@ export interface DesktopWindowOptions {
    * the system title bar.
    */
   frameless?: boolean;
+  /**
+   * Let the page's text be selected and copied anywhere. Off by default, as in a native app: form
+   * fields, editable areas and elements marked `data-selectable` stay selectable either way.
+   */
+  selectable?: boolean;
   /** Open the engine's developer tools. */
   debug?: boolean;
   /** Milliseconds between two steps of the platform loop. */

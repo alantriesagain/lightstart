@@ -140,6 +140,10 @@ under the pointer whatever the latency. The host's calls travel as `__desktop("$
 which `DesktopWindow` answers before the app's own bridge sees anything. `close()` goes through the
 platform, as its close button would, so `onClose` runs on a later pump.
 
+Text is not selectable by default, as in a native app: `selectable: true` on the window (or
+`DesktopApp`) allows it everywhere; form fields, editable areas and elements marked
+`data-selectable` stay selectable either way.
+
 `lc-title-bar` inside a frameless window drives it by itself: drag, double-click, the three
 buttons (a listener's `preventDefault()` on `minimize`, `maximize` or `close` takes the action
 over), a restore icon while maximized, dimmed while unfocused. It is transparent with no border,
