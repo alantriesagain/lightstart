@@ -6,7 +6,8 @@ import { fileURLToPath } from "node:url";
 const LIGHT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LEFT_OUT = new Set([".bootstrapp", "benchmarks", "dist", "eslint.config.js", "examples", "fixtures", "node_modules", "probes", "scripts", "skills", "website"]);
 const SIDE_FILE = /\.(test|demo)\.js$/;
-const TOOL_FILE = /^(native\/(run|coverage|bench|microbench|demo|assert)\.js|native\/desktop\/((build|smoke|coverage)\.js|(demo|shim|out)\/.*)|html\/conformance-hosts\.js)$/;
+const TOOL_FILE = /^(native\/(run|coverage|bench|microbench|demo|assert)\.js|native\/desktop\/((smoke|coverage)\.js|(demo|out)\/.*)|html\/conformance-hosts\.js)$/;
+const SHIM_FILE = /^native\/desktop\/shim\//;
 const KEPT_TS = /^native\/desktop\/ffi\.ts$/;
 
 /** Where the staged package lands. */
@@ -27,7 +28,7 @@ const walk = (dir) =>
  */
 export const stage = () => {
   rmSync(DIST, { recursive: true, force: true });
-  const sources = walk(LIGHT).map((file) => relative(LIGHT, file)).filter((file) => /\.(js|ts|css)$/.test(file) && !SIDE_FILE.test(file) && !TOOL_FILE.test(file));
+  const sources = walk(LIGHT).map((file) => relative(LIGHT, file)).filter((file) => (/\.(js|ts|css)$/.test(file) || SHIM_FILE.test(file)) && !SIDE_FILE.test(file) && !TOOL_FILE.test(file));
   const docs = ["README.md", "LICENSE"].filter((file) => existsSync(join(LIGHT, file)));
   for (const file of [...sources, ...docs]) {
     mkdirSync(dirname(join(DIST, file)), { recursive: true });
@@ -51,7 +52,7 @@ export const stage = () => {
   }));
   const { bootstrapp, scripts: _, devDependencies: __, ...manifest } = JSON.parse(readFileSync(join(LIGHT, "package.json"), "utf8"));
   manifest.bootstrapp = { components: bootstrapp.components };
-  const files = ["**/*.js", "**/*.d.ts", "**/*.css", "native/desktop/ffi.ts"];
+  const files = ["**/*.js", "**/*.d.ts", "**/*.css", "native/desktop/ffi.ts", "native/desktop/shim/**"];
   writeFileSync(join(DIST, "package.json"), `${JSON.stringify({ ...manifest, files }, null, 2)}\n`);
   execFileSync(join(LIGHT, "node_modules/.bin/tsc"), ["-p", DIST], { stdio: "inherit" });
   for (const file of walk(DIST))

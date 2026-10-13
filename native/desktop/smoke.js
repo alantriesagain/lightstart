@@ -18,7 +18,7 @@ if (process.platform === "linux" && (!hasDisplay || !hasWebkit)) {
   process.exit(0);
 }
 const target = process.platform === "darwin" ? "mac-arm64" : process.platform === "win32" ? "win-x64" : "linux-x64";
-const built = build(join(here, "demo", "backend.js"), join(here, "demo", "web"), join(here, "out", target, "demo"), "demo", target, process.argv.includes("--keep-light"));
+const built = await build(join(here, "demo", "backend.js"), join(here, "demo", "web"), join(here, "out", target, "demo"), "demo", target, process.argv.includes("--keep-light"));
 const r = spawnSync(built.exe, ["--smoke"], { encoding: "utf8", timeout: 30000 });
 const out = (r.stdout ?? "") + (r.stderr ?? "");
 if (r.status === 0 && /^smoke ok$/m.test(r.stdout ?? "")) {

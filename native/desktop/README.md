@@ -92,7 +92,21 @@ View.define("my-page", {
 `light desktop build backend.js --web web --out dist/my-app --name my-app` leaves `dist/my-app/my-app`
 (the executable) and `dist/my-app/web/` (the page, light's own files under `web/light/`, and the
 import map that maps `@bootstrapp/light…` onto them). The executable looks for `web/` beside
-itself; `--web <dir>` on its command line points it elsewhere.
+itself; `--web <dir>` on its command line points it elsewhere. `--no-web` builds only the
+executable, for a backend that serves or navigates to a page of its own; `--npm-static <pkg>`
+is passed to scriptc for a backend outside this checkout that imports `@bootstrapp/light` bare.
+`compileBackend(backend, exe, target, npmStatic)` is the same step as a function.
+
+### The window
+
+`DesktopWindow` (`window.js`) is the web view alone, for a host that brings its own bridge and
+its own server: `open()` creates the view and its window and binds `__desktop`; `init(js)`
+installs a document-start script; `navigate(url)`, `eval(js)`, `emit(name, value)`; `answer(id,
+json)` resolves one page call with `json`; `onRequest(id, req)` receives page calls (`req` is
+the JSON array of arguments); `onClose` runs when the window goes away; `quit()` closes it from
+the program. The view runs its user scripts in registration order on every page load, so the
+binding is registered in `open()` before any `init` script: a script may call `window.__desktop`
+at document start. `DesktopApp` is light's bridge and asset server on top of a `DesktopWindow`.
 
 ### The backend
 
@@ -158,6 +172,7 @@ its `exports`, and the prefix `@bootstrapp/light/` at them.
 
 | File | Owns |
 |---|---|
+| `window.js` | `DesktopWindow`: the web view, the binding, the init scripts, the pump. |
 | `host.js` | `DesktopApp`, `Route`, `Listener`, the narrowing helpers. |
 | `server.js` | The loopback asset server. |
 | `client.js` | `connect()` for the page. |
@@ -200,3 +215,13 @@ of its own:
   Promise.resolve(info)`. Natively a `Promise` of an object literal type invoked through the
   route's `Promise<unknown>` slot throws at the call (the checker admits the assignment, the
   compiler has no conversion for it); primitives and `null` convert.
+- A function assigned to a nullable function field goes through a const typed with the field's
+  function type (`/** @type {(id: string, req: string) => void} */ const onRequest = …`); an
+  arrow assigned straight to the field is inferred without its parameter types natively.
+- Anything that runs a nested native loop parks the backend for its duration: a modal
+  `gtk_dialog_run`, and on macOS and Windows the window drag and resize loops. Timers and
+  replies stall until it returns. Dialogs are the non-modal kind (`GtkFileChooserNative`,
+  pumped like everything else); the drag stall is the same quirk Electron has on Windows.
+- The pump is a fixed wakeup every `pumpMs` (8 ms) whether or not anything is pending; an app
+  that idles for long may raise it. Large synchronous reads in the asset server block the loop
+  for their duration; pages are small, downloads are not.

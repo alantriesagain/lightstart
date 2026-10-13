@@ -4,12 +4,14 @@
  * the platform's event loop from a timer (so the program's own loop, with its timers, child
  * processes and sockets, keeps running), and carries the bridge: the page calls methods the app
  * registered with `handle`, the app pushes events with `emit`, the page pushes its own to the
- * app's `on` listeners. Compiled by scriptc into the app's executable; never run under node.
+ * app's `on` listeners. The window itself is a DesktopWindow (window.js); a host with a bridge
+ * of its own builds on that instead. Compiled by scriptc into the app's executable; never run
+ * under node.
  */
 import { dirname, join } from "node:path";
-import { desktop_bind, desktop_create, desktop_destroy, desktop_eval, desktop_init, desktop_navigate, desktop_pump, desktop_return, desktop_set_size, desktop_set_title, desktop_terminate, desktop_unbind } from "./ffi.ts";
 import { initScript } from "./init.js";
 import { AssetServer, createAssetServer } from "./server.js";
+import { DesktopWindow } from "./window.js";
 
 /** @import { DesktopOptions, Handler } from "./types.ts" */
 
@@ -74,19 +76,6 @@ export const arr = (args, i) => {
   return Array.isArray(v) ? v : [];
 };
 
-/** @type {DesktopApp | null} */
-let active = null;
-
-/**
- * The one function bound into the page, passed to the shim as is: a retained callback must be
- * the exact function value the manifest describes, so it is a module constant, not a field.
- * @param {string} id
- * @param {string} req
- */
-const onCall = (id, req) => {
-  if (active !== null) active.dispatchCall(id, req);
-};
-
 /** @param {string} name */
 const argValue = (name) => {
   const at = process.argv.indexOf(name);
@@ -96,12 +85,8 @@ const argValue = (name) => {
 export class DesktopApp {
   /** @param {DesktopOptions} options */
   constructor(options) {
-    this.title = options.title ?? "light";
-    this.width = options.width ?? 960;
-    this.height = options.height ?? 640;
-    this.debug = options.debug === true;
-    this.pumpMs = options.pumpMs ?? 8;
     this.webDir = options.web ?? argValue("--web") ?? join(dirname(process.execPath), "web");
+    this.window = new DesktopWindow(options);
     /** @type {Map<string, Route>} */
     this.routes = new Map();
     /** @type {Listener[]} */
@@ -112,10 +97,8 @@ export class DesktopApp {
     this.onClose = null;
     /** @type {((level: string, text: string) => void) | null} */
     this.onLog = null;
-    this.w = 0n;
     this.running = false;
     this.ready = false;
-    this.pumping = false;
     /** @type {AssetServer | null} */
     this.server = null;
   }
@@ -155,46 +138,27 @@ export class DesktopApp {
    */
   emit(name, value) {
     if (!this.ready || !this.running) return;
-    desktop_eval(this.w, "window.__desktopEmit(" + JSON.stringify(name) + "," + JSON.stringify(value) + ")");
+    this.window.emit(name, value);
   }
 
   start() {
-    const w = desktop_create(this.debug ? 1 : 0);
-    if (w === 0n) throw new Error("[desktop] the web view could not be created; is WebKitGTK (Linux) or the WebView2 runtime (Windows) installed?");
-    this.w = w;
+    /** @type {(id: string, req: string) => void} */
+    const onRequest = (id, req) => this.dispatchCall(id, req);
+    /** @type {() => void} */
+    const onClose = () => this.close();
+    this.window.onRequest = onRequest;
+    this.window.onClose = onClose;
+    this.window.open();
+    this.window.init(initScript);
     this.running = true;
-    active = this;
-    desktop_set_title(w, this.title);
-    desktop_set_size(w, this.width, this.height, 0);
-    desktop_init(w, initScript);
-    desktop_bind(w, "__desktop", onCall);
-    process.on("exit", () => {
-      if (this.w !== 0n) desktop_unbind(this.w, "__desktop", onCall);
-    });
     this.server = createAssetServer(this.webDir, join(this.webDir, "light"), (server) => {
-      if (this.running) desktop_navigate(w, server.url("index.html"));
+      if (this.running) this.window.navigate(server.url("index.html"));
     });
-    this.tick();
-  }
-
-  tick() {
-    if (!this.running) return;
-    if (!this.pumping) {
-      this.pumping = true;
-      const alive = desktop_pump(this.w);
-      this.pumping = false;
-      if (alive === 0) {
-        this.close();
-        return;
-      }
-    }
-    setTimeout(() => this.tick(), this.pumpMs);
   }
 
   quit() {
     if (!this.running) return;
-    desktop_terminate(this.w);
-    this.close();
+    this.window.quit();
   }
 
   close() {
@@ -204,8 +168,7 @@ export class DesktopApp {
     const onClose = this.onClose;
     if (onClose !== null) onClose();
     if (this.server !== null) this.server.close();
-    desktop_destroy(this.w);
-    this.w = 0n;
+    this.window.close();
     process.exit(0);
   }
 
@@ -264,6 +227,6 @@ export class DesktopApp {
    */
   reply(id, ok, value) {
     if (!this.running) return;
-    desktop_return(this.w, id, 0, ok ? JSON.stringify({ ok: true, value }) : JSON.stringify({ ok: false, error: value }));
+    this.window.answer(id, ok ? JSON.stringify({ ok: true, value }) : JSON.stringify({ ok: false, error: value }));
   }
 }

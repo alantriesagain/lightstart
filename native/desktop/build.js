@@ -2,20 +2,42 @@
  * @file The desktop shell's build tool. `shim` compiles webview and the shim into a static
  * archive for a target and writes the FFI manifest beside it; `smoke` builds the C smoke program
  * against that archive and runs it; `build` compiles an app's backend with scriptc against the
- * manifest and stages its page; `run` builds then starts the app. Run with
- * `node native/desktop/build.js <command> …` or `light desktop <command> …`.
+ * manifest (`compileBackend`) and stages its page, or with `--no-web` only the executable;
+ * `run` builds then starts the app. Run with `node native/desktop/build.js <command> …` or
+ * `light desktop <command> …`; works from the checkout and from the installed package.
  */
 
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DIST, stage } from "../../scripts/pack.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const light = join(here, "..", "..");
 const shimDir = join(here, "shim");
 const vendor = join(shimDir, "vendor", "webview");
+const packModule = "../../scripts/pack.js";
+
+const scriptcBin = () => {
+  const local = join(light, "node_modules", ".bin", "scriptc");
+  return existsSync(local) ? local : "scriptc";
+};
+
+/** @typedef {{ dir: string, manifest: { exports: Record<string, string | { types: string, default: string }> } }} Staged */
+
+/**
+ * Light's files as a page can load them: staged through scripts/pack.js in the checkout, or the
+ * installed package itself, which is already that staging.
+ * @param {boolean} keepLight reuse the previous staging
+ * @returns {Promise<Staged>}
+ */
+const stageLight = async (keepLight) => {
+  const dist = join(light, "dist");
+  if (keepLight && existsSync(join(dist, "package.json"))) return { dir: dist, manifest: JSON.parse(readFileSync(join(dist, "package.json"), "utf8")) };
+  if (!existsSync(join(light, "scripts", "pack.js"))) return { dir: light, manifest: JSON.parse(readFileSync(join(light, "package.json"), "utf8")) };
+  const pack = /** @type {{ stage: () => Staged }} */ (await import(packModule));
+  return pack.stage();
+};
 
 /** @param {string[]} args @param {string} name @param {string | null} fallback */
 const option = (args, name, fallback) => {
@@ -211,34 +233,50 @@ export class Built {
 }
 
 /**
- * Compile `backend` with scriptc against the target's manifest into `<out>/<name>`, and stage
- * its page: `<web>` copied to `<out>/web/`, light's package files under `<out>/web/light/`, and
- * `importmap.json` beside index.html. The executable finds `web/` beside itself.
+ * Compile `backend` with scriptc against the target's shim manifest into `exe`. `npmStatic` names
+ * packages the backend imports bare (`@bootstrapp/light` for a backend outside this checkout).
  * @param {string} backend the backend's entry module
- * @param {string} web the directory holding index.html
- * @param {string} out the output directory
- * @param {string} name the executable's name
+ * @param {string} exe the executable to write
  * @param {string} target
- * @param {boolean} keepLight reuse light's staged files from a previous build instead of staging again
+ * @param {string[]} npmStatic
  */
-export const build = (backend, web, out, name, target, keepLight) => {
+export const compileBackend = (backend, exe, target, npmStatic) => {
   const dir = currentShim(target);
-  const exe = join(out, name);
-  mkdirSync(out, { recursive: true });
+  mkdirSync(dirname(exe), { recursive: true });
   /** @type {string[]} */
   const paths = JSON.parse(readFileSync(join(dir, "library-paths.json"), "utf8"));
   const libraryPath = [...paths, ...(process.env.LIBRARY_PATH ? [process.env.LIBRARY_PATH] : [])].join(":");
-  const scriptc = join(light, "node_modules", ".bin", "scriptc");
-  const r = spawnSync(scriptc, ["build", backend, "--ffi", join(dir, "ffi.json"), "-o", exe, "--strip", "--no-keep-llvm"], {
+  const flags = npmStatic.flatMap((pkg) => ["--npm-static", pkg]);
+  const r = spawnSync(scriptcBin(), ["build", backend, "--ffi", join(dir, "ffi.json"), ...flags, "-o", exe, "--strip", "--no-keep-llvm"], {
     encoding: "utf8",
     env: { ...process.env, LIBRARY_PATH: libraryPath },
     stdio: ["ignore", "pipe", "pipe"],
     timeout: 900000,
   });
   if (r.status !== 0) throw new Error(`scriptc build ${backend} failed:\n${r.stdout ?? ""}${r.stderr ?? ""}`);
+  return exe;
+};
+
+/**
+ * Compile `backend` into `<out>/<name>` and stage its page: `<web>` copied to `<out>/web/`, light's
+ * package files under `<out>/web/light/`, and `importmap.json` beside index.html. The executable
+ * finds `web/` beside itself. With `noWeb` only the executable is built: the backend serves or
+ * navigates to a page of its own.
+ * @param {string} backend the backend's entry module
+ * @param {string} web the directory holding index.html
+ * @param {string} out the output directory
+ * @param {string} name the executable's name
+ * @param {string} target
+ * @param {boolean} keepLight reuse light's staged files from a previous build instead of staging again
+ * @param {boolean} [noWeb]
+ * @param {string[]} [npmStatic]
+ */
+export const build = async (backend, web, out, name, target, keepLight, noWeb = false, npmStatic = []) => {
+  const exe = compileBackend(backend, join(out, name), target, npmStatic);
+  if (noWeb) return new Built(exe, "");
   const webOut = join(out, "web");
   const lightOut = join(webOut, "light");
-  const staged = keepLight && existsSync(join(DIST, "package.json")) ? { dir: DIST, manifest: JSON.parse(readFileSync(join(DIST, "package.json"), "utf8")) } : stage();
+  const staged = await stageLight(keepLight);
   if (existsSync(webOut))
     for (const entry of readdirSync(webOut, { withFileTypes: true }))
       if (entry.name !== "light") rmSync(join(webOut, entry.name), { recursive: true, force: true });
@@ -257,7 +295,7 @@ const defaultTarget = (target) => (target === "linux" ? "linux-x64" : target ===
  * `light desktop …` and `node native/desktop/build.js …` both land here.
  * @param {string[]} argv
  */
-export const desktop = (argv) => {
+export const desktop = async (argv) => {
   const [command, ...rest] = argv;
   const target = defaultTarget(option(rest, "target", "linux") ?? "linux");
   const dash = rest.indexOf("--");
@@ -273,15 +311,16 @@ export const desktop = (argv) => {
     const web = resolve(option(own, "web", join(dirname(backend), "web")) ?? "");
     const name = option(own, "name", basename(backend).replace(/\.(js|ts)$/, "")) ?? "app";
     const out = resolve(option(own, "out", join(here, "out", target, name)) ?? "");
-    const built = build(backend, web, out, name, target, own.includes("--keep-light"));
-    console.log(`built ${relative(process.cwd(), built.exe)} with its page in ${relative(process.cwd(), built.web)}`);
+    const npmStatic = own.flatMap((arg, i) => (arg === "--npm-static" && i + 1 < own.length ? [own[i + 1]] : []));
+    const built = await build(backend, web, out, name, target, own.includes("--keep-light"), own.includes("--no-web"), npmStatic);
+    console.log(built.web.length > 0 ? `built ${relative(process.cwd(), built.exe)} with its page in ${relative(process.cwd(), built.web)}` : `built ${relative(process.cwd(), built.exe)}`);
     if (command !== "run") return 0;
     const app = spawnSync(built.exe, passthrough, { stdio: "inherit" });
     return app.status ?? 1;
   }
   console.log("usage: light desktop shim|smoke [--target linux|mac|win] [--wait]");
-  console.log("       light desktop build|run <backend.js> [--web <dir>] [--out <dir>] [--name <app>] [--target …] [--keep-light] [-- <app args>]");
+  console.log("       light desktop build|run <backend.js> [--web <dir>] [--out <dir>] [--name <app>] [--target …] [--keep-light] [--no-web] [--npm-static <pkg>] [-- <app args>]");
   return 1;
 };
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exitCode = desktop(process.argv.slice(2));
+if (process.argv[1] === fileURLToPath(import.meta.url)) process.exitCode = await desktop(process.argv.slice(2));

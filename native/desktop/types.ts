@@ -44,17 +44,21 @@ export interface Desktop<C extends Contract, E extends Events, P extends Events 
 /** A backend handler: the page's arguments, parsed from JSON, and the value to answer. */
 export type Handler = (args: unknown[]) => Promise<unknown>;
 
-export interface DesktopOptions {
+export interface DesktopWindowOptions {
   title?: string;
   width?: number;
   height?: number;
-  /** The directory holding index.html and the page's files; by default `web` beside the executable. */
-  web?: string;
   /** Open the engine's developer tools. */
   debug?: boolean;
   /** Milliseconds between two steps of the platform loop. */
   pumpMs?: number;
 }
 
+export interface DesktopOptions extends DesktopWindowOptions {
+  /** The directory holding index.html and the page's files; by default `web` beside the executable. */
+  web?: string;
+}
+
 export { DesktopApp, Listener, Route, arr, bool, num, str } from "./host.js";
+export { DesktopWindow } from "./window.js";
 export { connect } from "./client.js";

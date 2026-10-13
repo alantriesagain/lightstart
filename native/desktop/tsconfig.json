@@ -8,6 +8,7 @@
     "./ffi.ts",
     "./init.js",
     "./server.js",
+    "./window.js",
     "./host.js",
     "./types.ts",
     "./demo/backend.js",
