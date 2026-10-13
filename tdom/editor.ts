@@ -4,25 +4,21 @@
  * paste, and submit. Every edit dispatches a change event through the
  * tree; Enter dispatches submit with the content, cleared first.
  */
-import { ChangeEvent, KeyEvent, SubmitEvent } from "./events.js";
-import { TInput } from "./node.js";
-import { graphemes } from "./width.js";
+import { ChangeEvent, KeyEvent, SubmitEvent } from "./events.ts";
+import { TInput } from "./node.ts";
+import { graphemes } from "./width.ts";
 
-/** @param {string} line */
-const gs = (line) => graphemes(line);
+const gs = (line: string) => graphemes(line);
 
-/** @param {TInput} input */
-const notifyChanged = (input) => {
+const notifyChanged = (input: TInput) => {
   input.invalidate();
   input.dispatch(new ChangeEvent(input.value()));
 };
 
 /**
  * Insert text at the caret; newlines split the line.
- * @param {TInput} input
- * @param {string} text
  */
-export const insertText = (input, text) => {
+export const insertText = (input: TInput, text: string) => {
   if (text.length === 0) return;
   const parts = text.split("\n");
   const line = gs(input.lines[input.row]);
@@ -35,8 +31,7 @@ export const insertText = (input, text) => {
     const first = before + parts[0];
     const last = parts[parts.length - 1] + after;
     const middle = parts.slice(1, parts.length - 1);
-    /** @type {string[]} */
-    const newLines = [first];
+    const newLines: string[] = [first];
     for (const m of middle) newLines.push(m);
     newLines.push(last);
     input.lines.splice(input.row, 1, ...newLines);
@@ -46,11 +41,7 @@ export const insertText = (input, text) => {
   notifyChanged(input);
 };
 
-/**
- * @param {TInput} input
- * @param {string} text
- */
-export const setValue = (input, text) => {
+export const setValue = (input: TInput, text: string) => {
   input.lines = text.split("\n");
   if (input.lines.length === 0) input.lines = [""];
   input.row = input.lines.length - 1;
@@ -58,16 +49,14 @@ export const setValue = (input, text) => {
   notifyChanged(input);
 };
 
-/** @param {TInput} input */
-export const clearInput = (input) => {
+export const clearInput = (input: TInput) => {
   input.lines = [""];
   input.row = 0;
   input.col = 0;
   notifyChanged(input);
 };
 
-/** @param {TInput} input */
-const backspace = (input) => {
+const backspace = (input: TInput) => {
   if (input.col > 0) {
     const line = gs(input.lines[input.row]);
     line.splice(input.col - 1, 1);
@@ -84,8 +73,7 @@ const backspace = (input) => {
   }
 };
 
-/** @param {TInput} input */
-const del = (input) => {
+const del = (input: TInput) => {
   const line = gs(input.lines[input.row]);
   if (input.col < line.length) {
     line.splice(input.col, 1);
@@ -98,8 +86,7 @@ const del = (input) => {
   }
 };
 
-/** @param {TInput} input */
-const moveLeft = (input) => {
+const moveLeft = (input: TInput) => {
   if (input.col > 0) input.col--;
   else if (input.row > 0) {
     input.row--;
@@ -108,8 +95,7 @@ const moveLeft = (input) => {
   input.invalidate();
 };
 
-/** @param {TInput} input */
-const moveRight = (input) => {
+const moveRight = (input: TInput) => {
   const len = gs(input.lines[input.row]).length;
   if (input.col < len) input.col++;
   else if (input.row + 1 < input.lines.length) {
@@ -119,11 +105,7 @@ const moveRight = (input) => {
   input.invalidate();
 };
 
-/**
- * @param {TInput} input
- * @param {number} delta
- */
-const moveRow = (input, delta) => {
+const moveRow = (input: TInput, delta: number) => {
   const target = input.row + delta;
   if (target < 0 || target >= input.lines.length) return false;
   input.row = target;
@@ -133,23 +115,20 @@ const moveRow = (input, delta) => {
   return true;
 };
 
-/** @param {TInput} input */
-const killToStart = (input) => {
+const killToStart = (input: TInput) => {
   const line = gs(input.lines[input.row]);
   input.lines[input.row] = line.slice(input.col).join("");
   input.col = 0;
   notifyChanged(input);
 };
 
-/** @param {TInput} input */
-const killToEnd = (input) => {
+const killToEnd = (input: TInput) => {
   const line = gs(input.lines[input.row]);
   input.lines[input.row] = line.slice(0, input.col).join("");
   notifyChanged(input);
 };
 
-/** @param {TInput} input */
-const deleteWord = (input) => {
+const deleteWord = (input: TInput) => {
   const line = gs(input.lines[input.row]);
   if (input.col === 0) {
     backspace(input);
@@ -164,8 +143,7 @@ const deleteWord = (input) => {
   notifyChanged(input);
 };
 
-/** @param {TInput} input */
-const submit = (input) => {
+const submit = (input: TInput) => {
   const v = input.value();
   clearInput(input);
   input.dispatch(new SubmitEvent(v));
@@ -173,10 +151,8 @@ const submit = (input) => {
 
 /**
  * Handle one key; answers whether the editor consumed it.
- * @param {TInput} input
- * @param {KeyEvent} e
  */
-export const editorHandleKey = (input, e) => {
+export const editorHandleKey = (input: TInput, e: KeyEvent) => {
   switch (e.key) {
     case "char": {
       if (e.ctrl)

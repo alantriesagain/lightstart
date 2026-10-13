@@ -10,7 +10,7 @@
 import { disposeTree, render } from "../html/core.js";
 import { currentHost } from "../html/host.js";
 import { ViewCore } from "../view/core.js";
-import { TBox, TElement } from "./node.js";
+import { TBox, TElement } from "./node.ts";
 
 export class View extends ViewCore {
   constructor() {

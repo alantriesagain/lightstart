@@ -6,9 +6,9 @@ import { fileURLToPath } from "node:url";
 const LIGHT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LEFT_OUT = new Set([".bootstrapp", "benchmarks", "dist", "eslint.config.js", "examples", "fixtures", "node_modules", "probes", "scripts", "skills", "website"]);
 const SIDE_FILE = /\.(test|demo)\.js$/;
-const TOOL_FILE = /^(native\/(run|coverage|bench|microbench|demo|assert)\.js|native\/desktop\/((smoke|coverage|frameless-check)\.js|(demo|out)\/.*)|html\/conformance-hosts\.js)$/;
+const TOOL_FILE = /^(native\/(run|coverage|bench|microbench|demo|assert)\.js|native\/test-terminal\.ts|native\/desktop\/((smoke|coverage|frameless-check)\.js|(demo|out)\/.*)|html\/conformance-hosts\.js)$/;
 const SHIM_FILE = /^native\/desktop\/shim\//;
-const KEPT_TS = /^native\/desktop\/ffi\.ts$/;
+const KEPT_TS = /^(native\/desktop\/ffi|tdom\/[^/]+)\.ts$/;
 
 /** Where the staged package lands. */
 export const DIST = join(LIGHT, "dist");
@@ -52,7 +52,7 @@ export const stage = () => {
   }));
   const { bootstrapp, scripts: _, devDependencies: __, ...manifest } = JSON.parse(readFileSync(join(LIGHT, "package.json"), "utf8"));
   manifest.bootstrapp = { components: bootstrapp.components };
-  const files = ["**/*.js", "**/*.d.ts", "**/*.css", "native/desktop/ffi.ts", "native/desktop/shim/**"];
+  const files = ["**/*.js", "**/*.d.ts", "**/*.css", "native/desktop/ffi.ts", "tdom/*.ts", "native/desktop/shim/**"];
   writeFileSync(join(DIST, "package.json"), `${JSON.stringify({ ...manifest, files }, null, 2)}\n`);
   execFileSync(join(LIGHT, "node_modules/.bin/tsc"), ["-p", DIST], { stdio: "inherit" });
   for (const file of walk(DIST))

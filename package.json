@@ -18,7 +18,7 @@
       "default": "./dom/index.js"
     },
     "./markup": "./markup/index.js",
-    "./tdom": "./tdom/index.js",
+    "./tdom": "./tdom/index.ts",
     "./native": "./native/index.js",
     "./native/desktop": {
       "types": "./native/desktop/types.ts",

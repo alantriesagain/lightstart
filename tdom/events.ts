@@ -5,8 +5,10 @@
  */
 
 export class UIEvent {
-  /** @param {string} type */
-  constructor(type) {
+  type: string;
+  consumed: boolean;
+
+  constructor(type: string) {
     this.type = type;
     this.consumed = false;
   }
@@ -23,14 +25,13 @@ export class UIEvent {
  * "pagedown", "insert", "f1" to "f12".
  */
 export class KeyEvent extends UIEvent {
-  /**
-   * @param {string} key
-   * @param {string} text
-   * @param {boolean} ctrl
-   * @param {boolean} alt
-   * @param {boolean} shift
-   */
-  constructor(key, text, ctrl, alt, shift) {
+  key: string;
+  text: string;
+  ctrl: boolean;
+  alt: boolean;
+  shift: boolean;
+
+  constructor(key: string, text: string, ctrl: boolean, alt: boolean, shift: boolean) {
     super("key");
     this.key = key;
     this.text = text;
@@ -40,8 +41,7 @@ export class KeyEvent extends UIEvent {
   }
 
   describe() {
-    /** @type {string[]} */
-    const mods = [];
+    const mods: string[] = [];
     if (this.ctrl) mods.push("ctrl");
     if (this.alt) mods.push("alt");
     if (this.shift) mods.push("shift");
@@ -53,8 +53,9 @@ export class KeyEvent extends UIEvent {
 
 /** The editor submitted its content (Enter). */
 export class SubmitEvent extends UIEvent {
-  /** @param {string} value */
-  constructor(value) {
+  value: string;
+
+  constructor(value: string) {
     super("submit");
     this.value = value;
   }
@@ -62,8 +63,9 @@ export class SubmitEvent extends UIEvent {
 
 /** The editor's content changed. */
 export class ChangeEvent extends UIEvent {
-  /** @param {string} value */
-  constructor(value) {
+  value: string;
+
+  constructor(value: string) {
     super("change");
     this.value = value;
   }
@@ -76,16 +78,14 @@ export class ChangeEvent extends UIEvent {
  * left; `button` is 0 for the left, 1 for the middle, 2 for the right.
  */
 export class MouseEvent extends UIEvent {
-  /**
-   * @param {string} type
-   * @param {number} x
-   * @param {number} y
-   * @param {number} button
-   * @param {boolean} ctrl
-   * @param {boolean} alt
-   * @param {boolean} shift
-   */
-  constructor(type, x, y, button, ctrl, alt, shift) {
+  x: number;
+  y: number;
+  button: number;
+  ctrl: boolean;
+  alt: boolean;
+  shift: boolean;
+
+  constructor(type: string, x: number, y: number, button: number, ctrl: boolean, alt: boolean, shift: boolean) {
     super(type);
     this.x = x;
     this.y = y;
@@ -98,15 +98,14 @@ export class MouseEvent extends UIEvent {
 
 /** The wheel turned at a cell: `delta` is 1 for down, -1 for up. */
 export class WheelEvent extends UIEvent {
-  /**
-   * @param {number} x
-   * @param {number} y
-   * @param {number} delta
-   * @param {boolean} ctrl
-   * @param {boolean} alt
-   * @param {boolean} shift
-   */
-  constructor(x, y, delta, ctrl, alt, shift) {
+  x: number;
+  y: number;
+  delta: number;
+  ctrl: boolean;
+  alt: boolean;
+  shift: boolean;
+
+  constructor(x: number, y: number, delta: number, ctrl: boolean, alt: boolean, shift: boolean) {
     super("wheel");
     this.x = x;
     this.y = y;
@@ -119,8 +118,7 @@ export class WheelEvent extends UIEvent {
 
 /** An element took the focus ("focus") or lost it ("blur"). */
 export class FocusEvent extends UIEvent {
-  /** @param {string} type */
-  constructor(type) {
+  constructor(type: string) {
     super(type);
   }
 }

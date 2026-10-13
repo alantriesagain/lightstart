@@ -2,16 +2,20 @@
  * @bootstrapp/light/tdom/terminal: raw-mode setup and teardown. Everything
  * is idempotent so every exit path restores the terminal exactly once.
  */
-import { ALT_SCREEN_OFF, ALT_SCREEN_ON, CLEAR, CURSOR_HIDE, CURSOR_SHOW, HOME, MOUSE_OFF, MOUSE_ON, PASTE_OFF, PASTE_ON, RESET } from "./ansi.js";
+import { ALT_SCREEN_OFF, ALT_SCREEN_ON, CLEAR, CURSOR_HIDE, CURSOR_SHOW, HOME, MOUSE_OFF, MOUSE_ON, PASTE_OFF, PASTE_ON, RESET } from "./ansi.ts";
 
 export class Terminal {
+  cols: number;
+  rows: number;
+  entered: boolean;
+  inputListeners: ((chunk: Uint8Array) => void)[];
+  resizeListeners: (() => void)[];
+
   constructor() {
     this.cols = 80;
     this.rows = 24;
     this.entered = false;
-    /** @type {((chunk: Uint8Array) => void)[]} */
     this.inputListeners = [];
-    /** @type {(() => void)[]} */
     this.resizeListeners = [];
   }
 
@@ -29,19 +33,16 @@ export class Terminal {
   /**
    * Hear every chunk the terminal sends; a Buffer is a Uint8Array, and the
    * narrower type keeps a listener callable from a program compiled natively.
-   * @param {(chunk: Uint8Array) => void} fn
    */
-  onInput(fn) {
+  onInput(fn: (chunk: Uint8Array) => void) {
     this.inputListeners.push(fn);
   }
 
-  /** @param {() => void} fn */
-  onResize(fn) {
+  onResize(fn: () => void) {
     this.resizeListeners.push(fn);
   }
 
-  /** @param {string} s */
-  write(s) {
+  write(s: string) {
     if (s.length > 0) process.stdout.write(s);
   }
 
@@ -52,7 +53,7 @@ export class Terminal {
     this.write(ALT_SCREEN_ON + CURSOR_HIDE + PASTE_ON + MOUSE_ON + CLEAR + HOME);
     if (process.stdin.isTTY === true) process.stdin.setRawMode(true);
     process.stdin.resume();
-    process.stdin.on("data", (/** @type {Uint8Array} */ chunk) => {
+    process.stdin.on("data", (chunk: Uint8Array) => {
       for (const fn of this.inputListeners.slice()) fn(chunk);
     });
     process.on("SIGWINCH", () => {

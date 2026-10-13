@@ -12,11 +12,11 @@ import { Clone, Host, ListenerOptions, Prepared } from "../html/host.js";
 import { HTML_KIND } from "../html/constants.js";
 import { parseTemplate } from "../html/parser.js";
 import { TplComment, TplElement, TplNode, TplText, indexParts, tokenize } from "../html/tokenizer.js";
-import { setValue } from "./editor.js";
-import { forgetLayout } from "./layout.js";
-import { TAnchor, TElement, TFragment, TInput, TNode, TRun } from "./node.js";
-import { FLUSH_VIEWS, frames } from "./scheduler.js";
-import { createElement } from "./tags.js";
+import { setValue } from "./editor.ts";
+import { forgetLayout } from "./layout.ts";
+import { TAnchor, TElement, TFragment, TInput, TNode, TRun } from "./node.ts";
+import { FLUSH_VIEWS, frames } from "./scheduler.ts";
+import { createElement } from "./tags.ts";
 import { View } from "./view.js";
 
 /** @import { EventBinding } from "../html/parts.js" */

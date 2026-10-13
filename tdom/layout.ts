@@ -4,17 +4,16 @@
  * scroll boxes that stick to the bottom. Wrapped text and scroll positions
  * are cached on the node across frames by version.
  */
-import { TAnchor, TBox, TElement, TInput, TNode, TRun, TSpan, TText } from "./node.js";
-import { Style } from "./style.js";
-import { stringWidth } from "./width.js";
-import { InlineRun, WrappedLine, wrapRuns } from "./wrap.js";
+import { TAnchor, TBox, TElement, TInput, TNode, TRun, TSpan, TText } from "./node.ts";
+import { Style } from "./style.ts";
+import { stringWidth } from "./width.ts";
+import { InlineRun, WrappedLine, wrapRuns } from "./wrap.ts";
 
 export class Size {
-  /**
-   * @param {number} w
-   * @param {number} h
-   */
-  constructor(w, h) {
+  w: number;
+  h: number;
+
+  constructor(w: number, h: number) {
     this.w = w;
     this.h = h;
   }
@@ -22,8 +21,12 @@ export class Size {
 
 /** The wrapped lines of a text-like node, kept across frames. */
 export class TextLayout {
+  lines: WrappedLine[];
+  wrappedFor: number;
+  version: number;
+  naturalWidth: number;
+
   constructor() {
-    /** @type {WrappedLine[]} */
     this.lines = [];
     this.wrappedFor = -1;
     this.version = -1;
@@ -31,33 +34,31 @@ export class TextLayout {
   }
 }
 
-/** @param {TNode} node */
-export const textLayoutOf = (node) => {
+export const textLayoutOf = (node: TNode) => {
   if (node.textLayout === null) node.textLayout = new TextLayout();
   return node.textLayout;
 };
 
 /** Scroll state kept per box across frames. */
 export class ScrollState {
+  contentH: number;
+  atBottom: boolean;
+
   constructor() {
     this.contentH = 0;
     this.atBottom = true;
   }
 }
 
-/** @param {TBox} box */
-export const scrollStateOf = (box) => {
+export const scrollStateOf = (box: TBox) => {
   if (box.scrollState === null) box.scrollState = new ScrollState();
   return box.scrollState;
 };
 
 /**
  * Collect a text's inline runs with their inherited styles.
- * @param {TElement} el
- * @param {Style} base
- * @param {InlineRun[]} out
  */
-export const inlineRuns = (el, base, out) => {
+export const inlineRuns = (el: TElement, base: Style, out: InlineRun[]) => {
   const style = el.style.inherit(base);
   for (let c = el.firstChild; c !== null; c = c.next)
     if (c instanceof TRun) out.push(new InlineRun(c.text, style));
@@ -65,13 +66,10 @@ export const inlineRuns = (el, base, out) => {
     else if (c instanceof TText) inlineRuns(c, style, out);
 };
 
-/** @param {TBox} box */
-const chrome = (box) => box.padding * 2 + (box.border ? 2 : 0);
+const chrome = (box: TBox) => box.padding * 2 + (box.border ? 2 : 0);
 
-/** @param {TElement} el */
-const visibleChildren = (el) => {
-  /** @type {TNode[]} */
-  const out = [];
+const visibleChildren = (el: TElement) => {
+  const out: TNode[] = [];
   for (let c = el.firstChild; c !== null; c = c.next) {
     if (c instanceof TAnchor) continue;
     if (c instanceof TElement && c.hidden) continue;
@@ -80,17 +78,10 @@ const visibleChildren = (el) => {
   return out;
 };
 
-/**
- * @param {TElement} node
- * @param {number} width
- * @param {string} mode
- * @param {Style} inherited
- */
-const wrapText = (node, width, mode, inherited) => {
+const wrapText = (node: TElement, width: number, mode: string, inherited: Style) => {
   const tl = textLayoutOf(node);
   if (tl.wrappedFor === width && tl.version === node.version) return tl;
-  /** @type {InlineRun[]} */
-  const runs = [];
+  const runs: InlineRun[] = [];
   inlineRuns(node, inherited, runs);
   tl.lines = wrapRuns(runs, width, mode);
   tl.wrappedFor = width;
@@ -103,10 +94,8 @@ const wrapText = (node, width, mode, inherited) => {
 
 /**
  * Visual rows an input needs at `width`; each logical line wraps by characters.
- * @param {TInput} input
- * @param {number} width
  */
-export const inputRows = (input, width) => {
+export const inputRows = (input: TInput, width: number) => {
   const w = width < 1 ? 1 : width;
   let rows = 0;
   for (const line of input.lines) {
@@ -118,12 +107,8 @@ export const inputRows = (input, width) => {
 
 /**
  * Measure a node for the available width; answers its natural size.
- * @param {TNode} node
- * @param {number} availW
- * @param {Style} inherited
- * @returns {Size}
  */
-export const measure = (node, availW, inherited) => {
+export const measure = (node: TNode, availW: number, inherited: Style): Size => {
   if (node instanceof TRun) {
     const tl = textLayoutOf(node);
     if (tl.wrappedFor !== availW || tl.version !== node.version) {
@@ -147,12 +132,7 @@ export const measure = (node, availW, inherited) => {
   return new Size(0, 0);
 };
 
-/**
- * @param {TBox} box
- * @param {number} availW
- * @param {Style} inherited
- */
-const measureBox = (box, availW, inherited) => {
+const measureBox = (box: TBox, availW: number, inherited: Style) => {
   const style = box.style.inherit(inherited);
   const outerW = box.width !== null ? box.width : availW;
   const innerW = Math.max(0, outerW - chrome(box));
@@ -163,8 +143,7 @@ const measureBox = (box, availW, inherited) => {
   if (box.direction === "row") {
     let fixed = 0;
     let flexTotal = 0;
-    /** @type {Size[]} */
-    const sizes = [];
+    const sizes: Size[] = [];
     for (const k of kids)
       if (k instanceof TBox && k.flex > 0) {
         flexTotal += k.flex;
@@ -201,14 +180,8 @@ const measureBox = (box, availW, inherited) => {
 
 /**
  * Place `node` at (x, y) with size (w, h) and lay out its children.
- * @param {TNode} node
- * @param {number} x
- * @param {number} y
- * @param {number} w
- * @param {number} h
- * @param {Style} inherited
  */
-export const arrange = (node, x, y, w, h, inherited) => {
+export const arrange = (node: TNode, x: number, y: number, w: number, h: number, inherited: Style) => {
   node.x = x;
   node.y = y;
   node.w = w;
@@ -238,8 +211,7 @@ export const arrange = (node, x, y, w, h, inherited) => {
   if (kids.length === 0) return;
 
   if (box.direction === "row") {
-    /** @type {Size[]} */
-    const sizes = [];
+    const sizes: Size[] = [];
     let fixed = 0;
     let flexTotal = 0;
     for (const k of kids)
@@ -267,8 +239,7 @@ export const arrange = (node, x, y, w, h, inherited) => {
     return;
   }
 
-  /** @type {Size[]} */
-  const sizes = [];
+  const sizes: Size[] = [];
   let fixedH = 0;
   let flexTotal = 0;
   for (const k of kids) {
@@ -319,21 +290,15 @@ export const arrange = (node, x, y, w, h, inherited) => {
 
 /**
  * Lay out the whole tree for a terminal of cols by rows.
- * @param {TBox} root
- * @param {number} cols
- * @param {number} rows
- * @param {Style} inherited
  */
-export const layout = (root, cols, rows, inherited) => {
+export const layout = (root: TBox, cols: number, rows: number, inherited: Style) => {
   arrange(root, 0, 0, cols, rows, inherited);
 };
 
 /**
  * Scroll a box by `delta` rows, positive down; the next frame clamps it.
- * @param {TBox} box
- * @param {number} delta
  */
-export const scrollBy = (box, delta) => {
+export const scrollBy = (box: TBox, delta: number) => {
   const st = scrollStateOf(box);
   box.scrollTop = Math.max(0, box.scrollTop + delta);
   st.atBottom = false;
@@ -342,9 +307,8 @@ export const scrollBy = (box, delta) => {
 
 /**
  * Forget the cached layout of a detached subtree.
- * @param {TNode} node
  */
-export const forgetLayout = (node) => {
+export const forgetLayout = (node: TNode) => {
   node.textLayout = null;
   if (node instanceof TBox) node.scrollState = null;
   if (node instanceof TElement) for (let c = node.firstChild; c !== null; c = c.next) forgetLayout(c);

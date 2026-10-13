@@ -5,7 +5,7 @@
  * way to fire an event), so one suite reads the same on every host.
  */
 import { MRoot, MarkupHost, descendants, dispatch, markupOf, textContent } from "../markup/index.js";
-import { TAnchor, TElement, TNode, TRoot, TRun, TermHost, UIEvent, childNodes, frames, textOf } from "../tdom/index.js";
+import { TAnchor, TElement, TNode, TRoot, TRun, TermHost, UIEvent, childNodes, frames, textOf } from "../tdom/index.ts";
 
 /**
  * @typedef {{

@@ -7,8 +7,8 @@
  * input. A tag outside the table is a box. `class`, `id` and `style` are
  * accepted and kept inert.
  */
-import { TBox, TElement, TInput, TRun, TSpan, TText } from "./node.js";
-import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE } from "./style.js";
+import { TBox, TElement, TInput, TRun, TSpan, TText } from "./node.ts";
+import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE } from "./style.ts";
 
 const BLOCK = new Set(["box", "div", "section", "article", "main", "header", "footer", "nav", "aside", "ul", "ol", "form", "fieldset", "button", "hr", "details", "summary", "dialog", "table", "tr", "menu"]);
 const TEXT = new Set(["text", "p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "blockquote", "label", "li", "dt", "dd", "figcaption", "legend", "td", "th", "caption"]);
@@ -23,9 +23,8 @@ export const EVENT_NAMES = ["key", "submit", "change", "click", "mousedown", "mo
 
 /**
  * The node kind a tag creates.
- * @param {string} tag
  */
-export const kindOf = (tag) => {
+export const kindOf = (tag: string) => {
   if (BLOCK.has(tag)) return "box";
   if (TEXT.has(tag)) return "text";
   if (INLINE.has(tag)) return "span";
@@ -33,15 +32,12 @@ export const kindOf = (tag) => {
   return "box";
 };
 
-/** @param {string} tag */
-export const isKnownTag = (tag) => BLOCK.has(tag) || TEXT.has(tag) || INLINE.has(tag) || INPUT.has(tag);
+export const isKnownTag = (tag: string) => BLOCK.has(tag) || TEXT.has(tag) || INLINE.has(tag) || INPUT.has(tag);
 
 /**
  * Whether an element of `tag` has a prop or attribute named `name`.
- * @param {string} tag
- * @param {string} name
  */
-export const isKnownProp = (tag, name) => {
+export const isKnownProp = (tag: string, name: string) => {
   if (COMMON_PROPS.indexOf(name) >= 0) return true;
   const kind = kindOf(tag);
   if (kind === "box") return BOX_PROPS.indexOf(name) >= 0;
@@ -50,20 +46,14 @@ export const isKnownProp = (tag, name) => {
   return false;
 };
 
-/**
- * @param {TElement} el
- * @param {number} bit
- */
-const withAttr = (el, bit) => {
+const withAttr = (el: TElement, bit: number) => {
   el.style = el.style.withAttr(bit, true);
 };
 
 /**
  * An element for `tag`, styled as the HTML name implies.
- * @param {string} tag
- * @returns {TElement}
  */
-export const createElement = (tag) => {
+export const createElement = (tag: string): TElement => {
   const kind = kindOf(tag);
   if (kind === "text") {
     const text = new TText(tag);

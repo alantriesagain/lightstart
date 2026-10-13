@@ -5,11 +5,10 @@
  */
 
 class FlushStep {
-  /**
-   * @param {number} order
-   * @param {() => void} fn
-   */
-  constructor(order, fn) {
+  order: number;
+  fn: () => void;
+
+  constructor(order: number, fn: () => void) {
     this.order = order;
     this.fn = fn;
   }
@@ -20,30 +19,28 @@ export const FLUSH_RENDER = 10;
 export const FLUSH_AFTER = 20;
 
 export class FrameScheduler {
+  requested: boolean;
+  flushing: boolean;
+  flushers: FlushStep[];
+  waiters: (() => void)[];
+  frames: number;
+
   constructor() {
     this.requested = false;
     this.flushing = false;
-    /** @type {FlushStep[]} */
     this.flushers = [];
-    /** @type {(() => void)[]} */
     this.waiters = [];
     this.frames = 0;
   }
 
   /**
    * Register a flush step at `order` (lower runs first); answers its remover.
-   * @param {() => void} fn
-   * @param {number} order
    */
-  onFlush(fn, order) {
+  onFlush(fn: () => void, order: number) {
     const step = new FlushStep(order, fn);
     this.flushers.push(step);
     this.flushers.sort(
-      /**
-       * @param {FlushStep} a
-       * @param {FlushStep} b
-       */
-      (a, b) => a.order - b.order,
+      (a: FlushStep, b: FlushStep) => a.order - b.order,
     );
     return () => {
       this.flushers = this.flushers.filter((s) => s !== step);
@@ -74,8 +71,8 @@ export class FrameScheduler {
     for (const resolve of w) resolve();
   }
 
-  /** @returns {Promise<void>} resolves after the next frame has flushed */
-  nextFrame() {
+  /** @returns resolves after the next frame has flushed */
+  nextFrame(): Promise<void> {
     this.request();
     return new Promise((resolve) => {
       this.waiters.push(resolve);

@@ -2,42 +2,31 @@
  * @bootstrapp/light/tdom/paint: a laid-out tree into a Screen, clipping
  * with a rectangle passed down the tree.
  */
-import { TAnchor, TBox, TElement, TInput, TNode, TRun, TText } from "./node.js";
-import { Screen } from "./screen.js";
-import { ATTR_INVERSE, Style } from "./style.js";
-import { graphemeWidth, graphemes } from "./width.js";
-import { WrappedLine } from "./wrap.js";
-import { textLayoutOf } from "./layout.js";
+import { TAnchor, TBox, TElement, TInput, TNode, TRun, TText } from "./node.ts";
+import { Screen } from "./screen.ts";
+import { ATTR_INVERSE, Style } from "./style.ts";
+import { graphemeWidth, graphemes } from "./width.ts";
+import { WrappedLine } from "./wrap.ts";
+import { textLayoutOf } from "./layout.ts";
 
 export class Clip {
-  /**
-   * @param {number} x0
-   * @param {number} y0
-   * @param {number} x1
-   * @param {number} y1
-   */
-  constructor(x0, y0, x1, y1) {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+
+  constructor(x0: number, y0: number, x1: number, y1: number) {
     this.x0 = x0;
     this.y0 = y0;
     this.x1 = x1;
     this.y1 = y1;
   }
 
-  /**
-   * @param {number} x
-   * @param {number} y
-   * @param {number} w
-   * @param {number} h
-   */
-  intersect(x, y, w, h) {
+  intersect(x: number, y: number, w: number, h: number) {
     return new Clip(Math.max(this.x0, x), Math.max(this.y0, y), Math.min(this.x1, x + w), Math.min(this.y1, y + h));
   }
 
-  /**
-   * @param {number} x
-   * @param {number} y
-   */
-  contains(x, y) {
+  contains(x: number, y: number) {
     return x >= this.x0 && x < this.x1 && y >= this.y0 && y < this.y1;
   }
 
@@ -48,6 +37,9 @@ export class Clip {
 
 /** Where the caret shows after painting; (-1, -1) when it does not. */
 export class Caret {
+  x: number;
+  y: number;
+
   constructor() {
     this.x = -1;
     this.y = -1;
@@ -58,16 +50,7 @@ export class Caret {
   }
 }
 
-/**
- * @param {Screen} screen
- * @param {Clip} clip
- * @param {number} x
- * @param {number} y
- * @param {string} g
- * @param {number} w
- * @param {Style} style
- */
-const putClipped = (screen, clip, x, y, g, w, style) => {
+const putClipped = (screen: Screen, clip: Clip, x: number, y: number, g: string, w: number, style: Style) => {
   if (!clip.contains(x, y)) return;
   if (w === 2 && !clip.contains(x + 1, y)) {
     screen.put(x, y, " ", 1, style);
@@ -76,16 +59,7 @@ const putClipped = (screen, clip, x, y, g, w, style) => {
   screen.put(x, y, g, w, style);
 };
 
-/**
- * @param {Screen} screen
- * @param {Clip} clip
- * @param {WrappedLine[]} lines
- * @param {number} x
- * @param {number} y
- * @param {number} w
- * @param {number} h
- */
-const paintLines = (screen, clip, lines, x, y, w, h) => {
+const paintLines = (screen: Screen, clip: Clip, lines: WrappedLine[], x: number, y: number, w: number, h: number) => {
   const rows = Math.min(lines.length, h);
   for (let r = 0; r < rows; r++) {
     let cx = x;
@@ -97,13 +71,7 @@ const paintLines = (screen, clip, lines, x, y, w, h) => {
   }
 };
 
-/**
- * @param {Screen} screen
- * @param {Clip} clip
- * @param {TBox} box
- * @param {Style} style
- */
-const drawBorder = (screen, clip, box, style) => {
+const drawBorder = (screen: Screen, clip: Clip, box: TBox, style: Style) => {
   const x = box.x;
   const y = box.y;
   const w = box.w;
@@ -135,14 +103,9 @@ const drawBorder = (screen, clip, box, style) => {
 };
 
 /**
- * @param {TNode} node
- * @param {Screen} screen
- * @param {Clip} clip
- * @param {Style} inherited
- * @param {Caret} caret
- * @param {TElement | null} focus the focused element: an input shows its caret, anything else shows inverse
+ * @param focus the focused element: an input shows its caret, anything else shows inverse
  */
-export const paint = (node, screen, clip, inherited, caret, focus) => {
+export const paint = (node: TNode, screen: Screen, clip: Clip, inherited: Style, caret: Caret, focus: TElement | null) => {
   if (node instanceof TAnchor) return;
   if (clip.empty) return;
   if (node instanceof TRun) {
@@ -181,28 +144,20 @@ export const paint = (node, screen, clip, inherited, caret, focus) => {
 
 /**
  * The focus ring: every cell of the element shown inverse, over what it painted.
- * @param {Screen} screen
- * @param {Clip} clip
- * @param {TElement} node
  */
-const invert = (screen, clip, node) => {
+const invert = (screen: Screen, clip: Clip, node: TElement) => {
   const c = clip.intersect(node.x, node.y, node.w, node.h);
   if (!c.empty) screen.addAttr(c.x0, c.y0, c.x1 - c.x0, c.y1 - c.y0, ATTR_INVERSE);
 };
 
 /**
  * The visual rows of an input at width `w`: each logical line split by character width.
- * @param {TInput} input
- * @param {number} w
- * @returns {string[][]}
  */
-export const inputVisualRows = (input, w) => {
+export const inputVisualRows = (input: TInput, w: number): string[][] => {
   const width = w < 1 ? 1 : w;
-  /** @type {string[][]} */
-  const rows = [];
+  const rows: string[][] = [];
   for (const line of input.lines) {
-    /** @type {string[]} */
-    let row = [];
+    let row: string[] = [];
     let rw = 0;
     for (const g of graphemes(line)) {
       const gw = graphemeWidth(g);
@@ -221,11 +176,8 @@ export const inputVisualRows = (input, w) => {
 
 /**
  * The visual row and column of the logical caret.
- * @param {TInput} input
- * @param {number} w
- * @returns {[number, number]}
  */
-export const inputCaretCell = (input, w) => {
+export const inputCaretCell = (input: TInput, w: number): [number, number] => {
   const width = w < 1 ? 1 : w;
   let vrow = 0;
   for (let r = 0; r < input.lines.length; r++) {
@@ -263,15 +215,7 @@ export const inputCaretCell = (input, w) => {
   return [vrow, 0];
 };
 
-/**
- * @param {TInput} input
- * @param {Screen} screen
- * @param {Clip} clip
- * @param {Style} style
- * @param {Caret} caret
- * @param {boolean} focused
- */
-const paintInput = (input, screen, clip, style, caret, focused) => {
+const paintInput = (input: TInput, screen: Screen, clip: Clip, style: Style, caret: Caret, focused: boolean) => {
   const c = clip.intersect(input.x, input.y, input.w, input.h);
   if (c.empty) return;
   const empty = input.lines.length === 1 && input.lines[0].length === 0;

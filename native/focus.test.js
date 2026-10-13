@@ -1,29 +1,6 @@
-import { ATTR_INVERSE, DEFAULT_STYLE, FocusEvent, KeyEvent, MouseEvent, Renderer, TBox, TElement, TInput, TRoot, Terminal, WheelEvent, childNodes, focusables, frames, hitTest, html, layout, nextFocusable, render, scrollBoxOf } from "./index.js";
+import { ATTR_INVERSE, DEFAULT_STYLE, FocusEvent, KeyEvent, MouseEvent, Renderer, TBox, TElement, TInput, TRoot, WheelEvent, childNodes, focusables, frames, hitTest, html, layout, nextFocusable, render, scrollBoxOf } from "./index.js";
 import { done, eq, eqn, ok } from "./assert.js";
-
-class TestTerminal extends Terminal {
-  constructor() {
-    super();
-    this.cols = 30;
-    this.rows = 10;
-    this.out = "";
-  }
-
-  get isTTY() {
-    return true;
-  }
-
-  readSize() {}
-
-  /** @param {string} s */
-  write(s) {
-    this.out += s;
-  }
-
-  enter() {}
-
-  leave() {}
-}
+import { TestTerminal } from "./test-terminal.ts";
 
 /** @type {string[]} */
 const log = [];

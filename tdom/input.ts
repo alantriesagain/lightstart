@@ -4,11 +4,10 @@
  * form, bracketed paste, SGR mouse reports, Alt as an ESC prefix, control
  * characters, and UTF-8 text split into graphemes.
  */
-import { KeyEvent, MouseEvent, WheelEvent } from "./events.js";
-import { graphemes } from "./width.js";
+import { KeyEvent, MouseEvent, WheelEvent } from "./events.ts";
+import { graphemes } from "./width.ts";
 
-/** @type {Map<number, string>} */
-const TILDE_KEYS = new Map([
+const TILDE_KEYS: Map<number, string> = new Map([
   [1, "home"],
   [2, "insert"],
   [3, "delete"],
@@ -31,8 +30,7 @@ const TILDE_KEYS = new Map([
   [24, "f12"],
 ]);
 
-/** @type {Map<string, string>} */
-const LETTER_KEYS = new Map([
+const LETTER_KEYS: Map<string, string> = new Map([
   ["A", "up"],
   ["B", "down"],
   ["C", "right"],
@@ -49,16 +47,16 @@ const PASTE_END = "\x1b[201~";
 
 /** An incremental UTF-8 decoder: a multi-byte sequence split across chunks completes with the next one. */
 export class Utf8Decoder {
+  pending: number[];
+
   constructor() {
-    /** @type {number[]} */
     this.pending = [];
   }
 
   /**
-   * @param {Uint8Array} chunk
-   * @returns {string} the text the bytes so far complete
+   * @returns the text the bytes so far complete
    */
-  write(chunk) {
+  write(chunk: Uint8Array): string {
     const bytes = this.pending;
     for (let i = 0; i < chunk.length; i++) bytes.push(chunk[i]);
     let out = "";
@@ -107,12 +105,20 @@ export class Utf8Decoder {
 }
 
 export class InputDecoder {
-  /** @param {(e: KeyEvent) => void} deliver */
-  constructor(deliver) {
+  deliver: (e: KeyEvent) => void;
+  onMouse: ((e: MouseEvent) => void) | null;
+  onWheel: ((e: WheelEvent) => void) | null;
+  dec: Utf8Decoder;
+  buf: string;
+  pasting: boolean;
+  pasteBuf: string;
+  escArmed: boolean;
+  escGeneration: number;
+  escTimeoutMs: number;
+
+  constructor(deliver: (e: KeyEvent) => void) {
     this.deliver = deliver;
-    /** @type {((e: MouseEvent) => void) | null} */
     this.onMouse = null;
-    /** @type {((e: WheelEvent) => void) | null} */
     this.onWheel = null;
     this.dec = new Utf8Decoder();
     this.buf = "";
@@ -123,17 +129,15 @@ export class InputDecoder {
     this.escTimeoutMs = 30;
   }
 
-  /** @param {Uint8Array} chunk */
-  push(chunk) {
+  push(chunk: Uint8Array) {
     this.buf += this.dec.write(chunk);
     this.drain();
   }
 
   /**
    * Feed decoded text, for tests.
-   * @param {string} text
    */
-  pushText(text) {
+  pushText(text: string) {
     this.buf += text;
     this.drain();
   }
@@ -210,11 +214,7 @@ export class InputDecoder {
     }
   }
 
-  /**
-   * @param {number} c
-   * @param {boolean} alt
-   */
-  emitControl(c, alt) {
+  emitControl(c: number, alt: boolean) {
     if (c === 0x0d) this.deliver(new KeyEvent("enter", "", false, alt, false));
     else if (c === 0x09) this.deliver(new KeyEvent("tab", "", false, alt, false));
     else if (c === 0x7f || c === 0x08) this.deliver(new KeyEvent("backspace", "", c === 0x08, alt, false));
@@ -224,8 +224,8 @@ export class InputDecoder {
     else this.deliver(new KeyEvent("char", String.fromCharCode(c + 64), true, alt, false));
   }
 
-  /** @returns {number} the characters one escape sequence at the start of the buffer took, 0 when incomplete */
-  decodeEscape() {
+  /** @returns the characters one escape sequence at the start of the buffer took, 0 when incomplete */
+  decodeEscape(): number {
     const b = this.buf;
     if (b.length < 2) return 0;
     const n = b[1];
@@ -263,11 +263,7 @@ export class InputDecoder {
     return 1 + g.length;
   }
 
-  /**
-   * @param {string} params
-   * @param {string} final
-   */
-  emitCsi(params, final) {
+  emitCsi(params: string, final: string) {
     if (final === "~" && params === "200") {
       this.pasting = true;
       this.pasteBuf = "";
@@ -310,10 +306,8 @@ export class InputDecoder {
    * An SGR mouse report: `CSI < b ; x ; y M` for a press, `m` for a release.
    * The low bits of `b` are the button, 4 shift, 8 alt, 16 ctrl, 32 motion,
    * 64 the wheel (64 up, 65 down).
-   * @param {string} params
-   * @param {boolean} pressed
    */
-  emitMouse(params, pressed) {
+  emitMouse(params: string, pressed: boolean) {
     const parts = params.split(";");
     if (parts.length < 3) return;
     const b = Number(parts[0]);

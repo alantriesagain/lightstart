@@ -3,16 +3,15 @@
  * output is a list of visual lines made of cells, each a grapheme with its
  * width and style, ready to paint.
  */
-import { Style } from "./style.js";
-import { graphemeWidth, graphemes } from "./width.js";
+import { Style } from "./style.ts";
+import { graphemeWidth, graphemes } from "./width.ts";
 
 export class Cell {
-  /**
-   * @param {string} g
-   * @param {number} w
-   * @param {Style} style
-   */
-  constructor(g, w, style) {
+  g: string;
+  w: number;
+  style: Style;
+
+  constructor(g: string, w: number, style: Style) {
     this.g = g;
     this.w = w;
     this.style = style;
@@ -20,29 +19,26 @@ export class Cell {
 }
 
 export class InlineRun {
-  /**
-   * @param {string} text
-   * @param {Style} style
-   */
-  constructor(text, style) {
+  text: string;
+  style: Style;
+
+  constructor(text: string, style: Style) {
     this.text = text;
     this.style = style;
   }
 }
 
 export class WrappedLine {
-  /**
-   * @param {Cell[]} cells
-   * @param {number} width
-   */
-  constructor(cells, width) {
+  cells: Cell[];
+  width: number;
+
+  constructor(cells: Cell[], width: number) {
     this.cells = cells;
     this.width = width;
   }
 }
 
-/** @param {Cell[]} cells */
-const lineOf = (cells) => {
+const lineOf = (cells: Cell[]) => {
   let w = 0;
   for (const c of cells) w += c.w;
   return new WrappedLine(cells, w);
@@ -53,17 +49,11 @@ const lineOf = (cells) => {
  * space) and falls back to character breaks for words longer than the
  * width; "char" breaks anywhere; "none" breaks only at newlines. Newlines
  * always break. A zero width wraps at one cell.
- * @param {InlineRun[]} runs
- * @param {number} width
- * @param {string} mode
- * @returns {WrappedLine[]}
  */
-export const wrapRuns = (runs, width, mode) => {
+export const wrapRuns = (runs: InlineRun[], width: number, mode: string): WrappedLine[] => {
   const maxW = width < 1 ? 1 : width;
-  /** @type {WrappedLine[]} */
-  const lines = [];
-  /** @type {Cell[]} */
-  let cells = [];
+  const lines: WrappedLine[] = [];
+  let cells: Cell[] = [];
   let lineW = 0;
   let lastSpace = -1;
 
@@ -108,9 +98,8 @@ export const wrapRuns = (runs, width, mode) => {
 
 /**
  * The plain text of a wrapped line, for tests and dumps.
- * @param {WrappedLine} line
  */
-export const lineText = (line) => {
+export const lineText = (line: WrappedLine) => {
   let s = "";
   for (const c of line.cells) s += c.g;
   return s;

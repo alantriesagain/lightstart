@@ -9,20 +9,16 @@
 
 const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
-/** @param {string} s */
-const isAscii = (s) => {
+const isAscii = (s: string) => {
   for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) >= 0x80) return false;
   return true;
 };
 
 /**
  * The grapheme clusters of `s`, one character each for ASCII.
- * @param {string} s
- * @returns {string[]}
  */
-export const graphemes = (s) => {
-  /** @type {string[]} */
-  const out = [];
+export const graphemes = (s: string): string[] => {
+  const out: string[] = [];
   if (isAscii(s)) {
     for (let i = 0; i < s.length; i++) out.push(s.charAt(i));
     return out;
@@ -31,8 +27,7 @@ export const graphemes = (s) => {
   return out;
 };
 
-/** @type {number[]} */
-const WIDE = [
+const WIDE: number[] = [
   0x1100, 0x115f, 0x231a, 0x231b, 0x2329, 0x232a, 0x23e9, 0x23ec, 0x23f0, 0x23f0, 0x23f3, 0x23f3, 0x25fd, 0x25fe, 0x2614, 0x2615,
   0x2648, 0x2653, 0x267f, 0x267f, 0x2693, 0x2693, 0x26a1, 0x26a1, 0x26aa, 0x26ab, 0x26bd, 0x26be, 0x26c4, 0x26c5, 0x26ce, 0x26ce,
   0x26d4, 0x26d4, 0x26ea, 0x26ea, 0x26f2, 0x26f3, 0x26f5, 0x26f5, 0x26fa, 0x26fa, 0x26fd, 0x26fd, 0x2705, 0x2705, 0x270a, 0x270b,
@@ -48,18 +43,13 @@ const WIDE = [
   0x1face, 0x1fadb, 0x1fae0, 0x1fae8, 0x1faf0, 0x1faf8, 0x20000, 0x2fffd, 0x30000, 0x3fffd,
 ];
 
-/** @type {number[]} */
-const ZERO = [
+const ZERO: number[] = [
   0x0300, 0x036f, 0x0483, 0x0489, 0x0591, 0x05bd, 0x0610, 0x061a, 0x064b, 0x065f, 0x0670, 0x0670, 0x06d6, 0x06dc, 0x0e31, 0x0e31,
   0x0e34, 0x0e3a, 0x0e47, 0x0e4e, 0x1ab0, 0x1aff, 0x1dc0, 0x1dff, 0x200b, 0x200f, 0x2028, 0x202e, 0x2060, 0x2064, 0x20d0, 0x20ff,
   0xfe00, 0xfe0f, 0xfe20, 0xfe2f, 0xfeff, 0xfeff, 0x1f3fb, 0x1f3ff, 0xe0100, 0xe01ef,
 ];
 
-/**
- * @param {number} cp
- * @param {number[]} table
- */
-const inRanges = (cp, table) => {
+const inRanges = (cp: number, table: number[]) => {
   let lo = 0;
   let hi = table.length / 2 - 1;
   while (lo <= hi) {
@@ -75,9 +65,8 @@ const inRanges = (cp, table) => {
 
 /**
  * Cells one code point takes: 0 (combining, control, joiner), 1, or 2 (wide).
- * @param {number} cp
  */
-export const codePointWidth = (cp) => {
+export const codePointWidth = (cp: number) => {
   if (cp < 0x20 || (cp >= 0x7f && cp < 0xa0)) return 0;
   if (cp < 0x300) return 1;
   if (inRanges(cp, ZERO)) return 0;
@@ -87,9 +76,8 @@ export const codePointWidth = (cp) => {
 
 /**
  * Cells one grapheme cluster takes.
- * @param {string} g
  */
-export const graphemeWidth = (g) => {
+export const graphemeWidth = (g: string) => {
   if (g.length === 1) {
     const c = g.charCodeAt(0);
     if (c < 0x300) return c < 0x20 || (c >= 0x7f && c < 0xa0) ? 0 : 1;
@@ -112,9 +100,8 @@ export const graphemeWidth = (g) => {
 
 /**
  * Cells a whole string takes.
- * @param {string} s
  */
-export const stringWidth = (s) => {
+export const stringWidth = (s: string) => {
   if (isAscii(s)) {
     let w = 0;
     for (let i = 0; i < s.length; i++) {

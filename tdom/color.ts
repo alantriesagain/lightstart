@@ -3,12 +3,11 @@
  * parameters. A template's `fg="salmon"` fails at its first render rather
  * than painting the default.
  */
-import { COLOR_DEFAULT, TRUECOLOR_FLAG } from "./style.js";
+import { COLOR_DEFAULT, TRUECOLOR_FLAG } from "./style.ts";
 
 const BASIC = ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"];
 
-/** @param {string} ch */
-const hexDigit = (ch) => {
+const hexDigit = (ch: string) => {
   const c = ch.charCodeAt(0);
   if (c >= 48 && c <= 57) return c - 48;
   if (c >= 97 && c <= 102) return c - 87;
@@ -19,9 +18,8 @@ const hexDigit = (ch) => {
 /**
  * The number for a color written as "default", a basic name, "bright" plus
  * a name, "gray", "#rrggbb" or an index "0".."255". Throws on anything else.
- * @param {string} input
  */
-export const parseColor = (input) => {
+export const parseColor = (input: string) => {
   const s = input.trim().toLowerCase();
   if (s === "" || s === "default" || s === "none") return COLOR_DEFAULT;
   if (s === "gray" || s === "grey") return 8;
@@ -57,10 +55,8 @@ export const parseColor = (input) => {
 
 /**
  * The SGR parameters selecting color `c` as the foreground (`fg` true) or background.
- * @param {number} c
- * @param {boolean} fg
  */
-export const colorSgr = (c, fg) => {
+export const colorSgr = (c: number, fg: boolean) => {
   if (c === COLOR_DEFAULT) return fg ? "39" : "49";
   if ((c & TRUECOLOR_FLAG) !== 0) {
     const rgb = c & 0xffffff;

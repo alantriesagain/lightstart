@@ -6,24 +6,15 @@
  * any element with a `tabindex` attribute or a click handler, unless
  * disabled.
  */
-import { TAnchor, TBox, TElement, TInput, TNode, TRun } from "./node.js";
+import { TAnchor, TBox, TElement, TInput, TNode, TRun } from "./node.ts";
 
-/**
- * @param {TElement} el
- * @param {number} x
- * @param {number} y
- */
-const contains = (el, x, y) => x >= el.x && x < el.x + el.w && y >= el.y && y < el.y + el.h;
+const contains = (el: TElement, x: number, y: number) => x >= el.x && x < el.x + el.w && y >= el.y && y < el.y + el.h;
 
 /**
  * The deepest visible element under the cell (x, y), or null when nothing
  * laid out covers it. A box clips its children to its inner rectangle.
- * @param {TNode} node
- * @param {number} x
- * @param {number} y
- * @returns {TElement | null}
  */
-export const hitTest = (node, x, y) => {
+export const hitTest = (node: TNode, x: number, y: number): TElement | null => {
   if (node instanceof TAnchor || node instanceof TRun) return null;
   if (!(node instanceof TElement)) return null;
   if (node.hidden || !contains(node, x, y)) return null;
@@ -39,8 +30,7 @@ export const hitTest = (node, x, y) => {
   return node;
 };
 
-/** @param {TElement} el */
-export const isFocusable = (el) => {
+export const isFocusable = (el: TElement) => {
   if (el.hidden || el.attrs.has("disabled")) return false;
   if (el instanceof TInput || el.tag === "button" || el.attrs.has("tabindex")) return true;
   for (const entry of el.handlers) if (entry.name === "click") return true;
@@ -49,10 +39,8 @@ export const isFocusable = (el) => {
 
 /**
  * The focusable elements under `node` in document order, hidden subtrees skipped.
- * @param {TNode} node
- * @param {TElement[]} out
  */
-export const focusables = (node, out) => {
+export const focusables = (node: TNode, out: TElement[]) => {
   if (!(node instanceof TElement) || node.hidden) return out;
   if (isFocusable(node)) out.push(node);
   for (let c = node.firstChild; c !== null; c = c.next) focusables(c, out);
@@ -62,12 +50,8 @@ export const focusables = (node, out) => {
 /**
  * The focusable element `delta` steps (1 or -1) after `current` in document
  * order, wrapping around; the first or last when nothing is focused.
- * @param {TElement} root
- * @param {TElement | null} current
- * @param {number} delta
- * @returns {TElement | null}
  */
-export const nextFocusable = (root, current, delta) => {
+export const nextFocusable = (root: TElement, current: TElement | null, delta: number): TElement | null => {
   const list = focusables(root, []);
   if (list.length === 0) return null;
   const at = current === null ? -1 : list.indexOf(current);
@@ -77,12 +61,9 @@ export const nextFocusable = (root, current, delta) => {
 
 /**
  * The nearest scrolling box at or above `el`, or null.
- * @param {TElement | null} el
- * @returns {TBox | null}
  */
-export const scrollBoxOf = (el) => {
-  /** @type {TElement | null} */
-  let n = el;
+export const scrollBoxOf = (el: TElement | null): TBox | null => {
+  let n: TElement | null = el;
   while (n !== null) {
     if (n instanceof TBox && n.scroll) return n;
     n = n.parent;

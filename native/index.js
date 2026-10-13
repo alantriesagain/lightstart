@@ -13,4 +13,4 @@ configure({ host: new TermHost(), effect });
 export * from "../html/core.js";
 export * from "../signals/index.js";
 export { ViewCore, configureView, trackWork, translate } from "../view/core.js";
-export * from "../tdom/index.js";
+export * from "../tdom/index.ts";

@@ -24,6 +24,7 @@
     "../view/core.js",
     "../html/tokenizer.js",
     "../tdom/*.js",
+    "../tdom/*.ts",
     "../native/index.js"
   ],
   "exclude": []

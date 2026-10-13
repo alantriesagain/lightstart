@@ -7,32 +7,40 @@
  * what it lands on, a release on the same element clicks it, the wheel
  * scrolls the nearest scrolling box under the pointer.
  */
-import { CLEAR, CURSOR_HIDE, CURSOR_SHOW, cup } from "./ansi.js";
-import { FocusEvent, KeyEvent, MouseEvent, WheelEvent } from "./events.js";
-import { editorHandleKey } from "./editor.js";
-import { hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.js";
-import { InputDecoder } from "./input.js";
-import { layout, scrollBy } from "./layout.js";
-import { TElement, TInput, TRoot } from "./node.js";
-import { Caret, Clip, paint } from "./paint.js";
-import { Screen, diffScreens } from "./screen.js";
-import { FLUSH_RENDER, frames } from "./scheduler.js";
-import { DEFAULT_STYLE } from "./style.js";
-import { Terminal } from "./terminal.js";
+import { CLEAR, CURSOR_HIDE, CURSOR_SHOW, cup } from "./ansi.ts";
+import { FocusEvent, KeyEvent, MouseEvent, WheelEvent } from "./events.ts";
+import { editorHandleKey } from "./editor.ts";
+import { hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.ts";
+import { InputDecoder } from "./input.ts";
+import { layout, scrollBy } from "./layout.ts";
+import { TElement, TInput, TRoot } from "./node.ts";
+import { Caret, Clip, paint } from "./paint.ts";
+import { Screen, diffScreens } from "./screen.ts";
+import { FLUSH_RENDER, frames } from "./scheduler.ts";
+import { DEFAULT_STYLE } from "./style.ts";
+import { Terminal } from "./terminal.ts";
 
 export class Renderer {
-  /**
-   * @param {Terminal} term
-   * @param {TRoot} root
-   */
-  constructor(term, root) {
+  term: Terminal;
+  root: TRoot;
+  front: Screen;
+  back: Screen;
+  focus: TElement | null;
+  pressed: TElement | null;
+  decoder: InputDecoder;
+  cursorShown: boolean;
+  stopped: boolean;
+  frameCount: number;
+  lastFrameMs: number;
+  lastOutBytes: number;
+  onKey: ((e: KeyEvent) => boolean) | null;
+
+  constructor(term: Terminal, root: TRoot) {
     this.term = term;
     this.root = root;
     this.front = new Screen(term.cols, term.rows);
     this.back = new Screen(term.cols, term.rows);
-    /** @type {TElement | null} */
     this.focus = null;
-    /** @type {TElement | null} */
     this.pressed = null;
     this.decoder = new InputDecoder((e) => this.dispatchKey(e));
     this.decoder.onMouse = (e) => this.dispatchMouse(e);
@@ -42,7 +50,6 @@ export class Renderer {
     this.frameCount = 0;
     this.lastFrameMs = 0;
     this.lastOutBytes = 0;
-    /** @type {((e: KeyEvent) => boolean) | null} */
     this.onKey = null;
     term.onInput((chunk) => this.decoder.push(chunk));
     term.onResize(() => this.resize());
@@ -103,9 +110,8 @@ export class Renderer {
   /**
    * Give `el` the focus: the one that had it gets a blur event, the new one
    * a focus event. Null clears it.
-   * @param {TElement | null} el
    */
-  setFocus(el) {
+  setFocus(el: TElement | null) {
     const prev = this.focus;
     if (prev === el) return;
     this.focus = el;
@@ -116,15 +122,14 @@ export class Renderer {
 
   /**
    * Move the focus one step along the focusable elements, wrapping around.
-   * @param {number} delta 1 forward, -1 back
+   * @param delta 1 forward, -1 back
    */
-  moveFocus(delta) {
+  moveFocus(delta: number) {
     const current = this.focus !== null && this.focus.isConnected() ? this.focus : null;
     this.setFocus(nextFocusable(this.root, current, delta));
   }
 
-  /** @param {KeyEvent} e */
-  dispatchKey(e) {
+  dispatchKey(e: KeyEvent) {
     if (this.onKey !== null && this.onKey(e)) {
       frames.request();
       return;
@@ -150,14 +155,12 @@ export class Renderer {
     frames.request();
   }
 
-  /** @param {MouseEvent} e */
-  dispatchMouse(e) {
+  dispatchMouse(e: MouseEvent) {
     const target = hitTest(this.root, e.x, e.y);
     if (e.type === "mousedown") {
       this.pressed = target;
       if (target !== null) {
-        /** @type {TElement | null} */
-        let candidate = target;
+        let candidate: TElement | null = target;
         while (candidate !== null && !isFocusable(candidate)) candidate = candidate.parent;
         if (candidate !== null) this.setFocus(candidate);
       }
@@ -171,8 +174,7 @@ export class Renderer {
     frames.request();
   }
 
-  /** @param {WheelEvent} e */
-  dispatchWheel(e) {
+  dispatchWheel(e: WheelEvent) {
     const target = hitTest(this.root, e.x, e.y);
     const consumed = target !== null && target.dispatch(e);
     if (!consumed) {
@@ -184,10 +186,9 @@ export class Renderer {
 
   /**
    * Dispatch an event from an element, bubbling up, and request a frame.
-   * @param {TElement} el
-   * @param {unknown} e a UIEvent
+   * @param e a UIEvent
    */
-  dispatchFrom(el, e) {
+  dispatchFrom(el: TElement, e: unknown) {
     el.dispatch(e);
     frames.request();
   }

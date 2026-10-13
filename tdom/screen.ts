@@ -2,20 +2,17 @@
  * @bootstrapp/light/tdom/screen: a cell grid double buffer and the diff
  * that turns two frames into the smallest escape stream.
  */
-import { CSI, SYNC_END, SYNC_START, cup, sgrTransition } from "./ansi.js";
-import { COLOR_DEFAULT, Style } from "./style.js";
+import { CSI, SYNC_END, SYNC_START, cup, sgrTransition } from "./ansi.ts";
+import { COLOR_DEFAULT, Style } from "./style.ts";
 
 const SPACE = 0x20;
 const CONT = 0xffffffff;
 const INTERNED = 0x80000000;
 
-/** @type {string[]} */
-const internTable = [];
-/** @type {Map<string, number>} */
-const internIndex = new Map();
+const internTable: string[] = [];
+const internIndex: Map<string, number> = new Map();
 
-/** @param {string} g */
-const internGlyph = (g) => {
+const internGlyph = (g: string) => {
   const cp = g.codePointAt(0) ?? SPACE;
   const single = cp > 0xffff ? g.length === 2 : g.length === 1;
   if (single) return cp;
@@ -28,19 +25,21 @@ const internGlyph = (g) => {
   return i | INTERNED;
 };
 
-/** @param {number} code */
-const glyphString = (code) => {
+const glyphString = (code: number) => {
   if (code === CONT) return "";
   if ((code & INTERNED) !== 0 && code !== CONT) return internTable[code & 0x7fffffff];
   return String.fromCodePoint(code);
 };
 
 export class Screen {
-  /**
-   * @param {number} w
-   * @param {number} h
-   */
-  constructor(w, h) {
+  w: number;
+  h: number;
+  glyph: Uint32Array;
+  fg: Int32Array;
+  bg: Int32Array;
+  attrs: Uint8Array;
+
+  constructor(w: number, h: number) {
     this.w = w;
     this.h = h;
     const n = w * h;
@@ -60,13 +59,8 @@ export class Screen {
 
   /**
    * Write one grapheme of `width` cells at (x, y); writes outside the grid are dropped.
-   * @param {number} x
-   * @param {number} y
-   * @param {string} g
-   * @param {number} width
-   * @param {Style} style
    */
-  put(x, y, g, width, style) {
+  put(x: number, y: number, g: string, width: number, style: Style) {
     if (x < 0 || y < 0 || y >= this.h || x >= this.w) return;
     const i = y * this.w + x;
     if (this.glyph[i] === CONT && x > 0) this.glyph[i - 1] = SPACE;
@@ -86,13 +80,8 @@ export class Screen {
 
   /**
    * Fill a rectangle with spaces in `style`, clipped to the grid.
-   * @param {number} x
-   * @param {number} y
-   * @param {number} w
-   * @param {number} h
-   * @param {Style} style
    */
-  fill(x, y, w, h, style) {
+  fill(x: number, y: number, w: number, h: number, style: Style) {
     const x0 = x < 0 ? 0 : x;
     const y0 = y < 0 ? 0 : y;
     const x1 = x + w > this.w ? this.w : x + w;
@@ -111,13 +100,8 @@ export class Screen {
 
   /**
    * Set an attribute bit on every cell of a rectangle, clipped to the grid.
-   * @param {number} x
-   * @param {number} y
-   * @param {number} w
-   * @param {number} h
-   * @param {number} bit
    */
-  addAttr(x, y, w, h, bit) {
+  addAttr(x: number, y: number, w: number, h: number, bit: number) {
     const x0 = x < 0 ? 0 : x;
     const y0 = y < 0 ? 0 : y;
     const x1 = x + w > this.w ? this.w : x + w;
@@ -125,13 +109,11 @@ export class Screen {
     for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) this.attrs[yy * this.w + xx] |= bit;
   }
 
-  /** @param {number} i */
-  styleAt(i) {
+  styleAt(i: number) {
     return new Style(this.fg[i], this.bg[i], this.attrs[i]);
   }
 
-  /** @param {number} y */
-  rowText(y) {
+  rowText(y: number) {
     let s = "";
     const row = y * this.w;
     for (let x = 0; x < this.w; x++) s += glyphString(this.glyph[row + x]);
@@ -139,8 +121,7 @@ export class Screen {
   }
 
   text() {
-    /** @type {string[]} */
-    const rows = [];
+    const rows: string[] = [];
     for (let y = 0; y < this.h; y++) {
       let row = this.rowText(y);
       let end = row.length;
@@ -152,8 +133,7 @@ export class Screen {
     return rows.join("\n");
   }
 
-  /** @param {Screen} o */
-  copyFrom(o) {
+  copyFrom(o: Screen) {
     this.glyph.set(o.glyph);
     this.fg.set(o.fg);
     this.bg.set(o.bg);
@@ -165,15 +145,12 @@ export class Screen {
  * The escape stream that updates a terminal showing `front` to show
  * `back`, wrapped in synchronized-output markers; empty when nothing
  * changed. `front` is updated to match.
- * @param {Screen} front
- * @param {Screen} back
  */
-export const diffScreens = (front, back) => {
+export const diffScreens = (front: Screen, back: Screen) => {
   let out = "";
   let curX = -1;
   let curY = -1;
-  /** @type {Style | null} */
-  let style = null;
+  let style: Style | null = null;
   const w = back.w;
   for (let y = 0; y < back.h; y++) {
     const row = y * w;

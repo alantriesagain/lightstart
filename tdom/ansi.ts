@@ -1,8 +1,8 @@
 /**
  * @bootstrapp/light/tdom/ansi: the escape sequences the renderer writes.
  */
-import { colorSgr } from "./color.js";
-import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, Style } from "./style.js";
+import { colorSgr } from "./color.ts";
+import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, Style } from "./style.ts";
 
 export const ESC = "\x1b";
 export const CSI = "\x1b[";
@@ -22,21 +22,16 @@ export const HOME = CSI + "H";
 
 /**
  * Move the cursor to column `x`, row `y`, both zero-based.
- * @param {number} x
- * @param {number} y
  */
-export const cup = (x, y) => CSI + String(y + 1) + ";" + String(x + 1) + "H";
+export const cup = (x: number, y: number) => CSI + String(y + 1) + ";" + String(x + 1) + "H";
 
 /**
  * The SGR sequence that turns `prev` into `next`, empty when nothing
  * changes; `prev` null means the terminal's state is unknown.
- * @param {Style | null} prev
- * @param {Style} next
  */
-export const sgrTransition = (prev, next) => {
+export const sgrTransition = (prev: Style | null, next: Style) => {
   if (prev !== null && prev.equals(next)) return "";
-  /** @type {string[]} */
-  const params = [];
+  const params: string[] = [];
   let full = prev === null;
   if (prev !== null && (prev.attrs & ~next.attrs) !== 0) full = true;
   if (full) {
@@ -50,7 +45,7 @@ export const sgrTransition = (prev, next) => {
     if (next.fg !== -1) params.push(colorSgr(next.fg, true));
     if (next.bg !== -1) params.push(colorSgr(next.bg, false));
   } else {
-    const p = /** @type {Style} */ (prev);
+    const p = prev as Style;
     const added = next.attrs & ~p.attrs;
     if ((added & ATTR_BOLD) !== 0) params.push("1");
     if ((added & ATTR_DIM) !== 0) params.push("2");
