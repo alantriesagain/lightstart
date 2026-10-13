@@ -4,3 +4,4 @@ dist/
 .bootstrapp/
 .bootstrapp.json
 .deployed/
+native/desktop/out/
