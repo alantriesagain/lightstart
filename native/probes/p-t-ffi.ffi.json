@@ -1,0 +1,35 @@
+{
+  "ffi_format": 7,
+  "functions": [
+    { "name": "stub_create", "symbol": "stub_create", "params": ["i32"], "returns": "pointer" },
+    { "name": "stub_set_title", "symbol": "stub_set_title", "params": ["pointer", "string"], "returns": "void" },
+    { "name": "stub_title_len", "symbol": "stub_title_len", "params": ["pointer"], "returns": "i32" },
+    {
+      "name": "stub_bind",
+      "symbol": "stub_bind",
+      "params": [
+        "pointer",
+        "string",
+        { "callback": { "id": "on_call", "params": ["cstring", "cstring", { "context": "on_call" }], "returns": "void", "lifetime": "retained" } },
+        { "context": "on_call" }
+      ],
+      "returns": "i32"
+    },
+    {
+      "name": "stub_unbind",
+      "symbol": "stub_unbind",
+      "params": ["pointer", "string", { "callback": { "release": "stub_bind:on_call" } }, { "context": "stub_bind:on_call" }],
+      "returns": "void"
+    },
+    { "name": "stub_bound", "symbol": "stub_bound", "params": ["pointer"], "returns": "i32" },
+    { "name": "stub_pump", "symbol": "stub_pump", "params": ["pointer"], "returns": "i32" },
+    { "name": "stub_fired", "symbol": "stub_fired", "params": ["pointer"], "returns": "i32" },
+    { "name": "stub_return", "symbol": "stub_return", "params": ["pointer", "string", "i32", "string"], "returns": "void" },
+    { "name": "stub_replies", "symbol": "stub_replies", "params": ["pointer"], "returns": "i32" },
+    { "name": "stub_reply_status", "symbol": "stub_reply_status", "params": ["pointer", "i32"], "returns": "i32" },
+    { "name": "stub_reply_is", "symbol": "stub_reply_is", "params": ["pointer", "i32", "string", "string"], "returns": "bool" },
+    { "name": "stub_destroy", "symbol": "stub_destroy", "params": ["pointer"], "returns": "void" }
+  ],
+  "libraries": ["./out/libp-t-ffi.a"],
+  "system_libraries": []
+}

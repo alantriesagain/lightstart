@@ -5,7 +5,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { readdirSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -29,17 +29,35 @@ const version = run(scriptc, ["--version"]).out.trim();
 const lines = ["# Probe results (" + new Date().toISOString().slice(0, 16) + "Z, scriptc " + version + ", node " + process.version + ")", ""];
 let failed = 0;
 const files = readdirSync(here).filter((f) => /^p-.*\.js$/.test(f) && (only.length === 0 || only.some((o) => f.startsWith(o)))).sort();
+/**
+ * A probe beside a `<name>.c` and a `<name>.ffi.json` links that C into a static archive under
+ * `out/` and passes the manifest to the compiler; such a probe runs natively only.
+ * @param {string} name
+ */
+const ffiArgs = (name) => {
+  const manifest = join(here, name + ".ffi.json");
+  if (!existsSync(manifest)) return [];
+  const object = join(here, "out", name + ".o");
+  const archive = join(here, "out", "lib" + name + ".a");
+  const cc = run("cc", ["-O2", "-fPIC", "-c", join(here, name + ".c"), "-o", object]);
+  if (cc.code !== 0) throw new Error("cc failed for " + name + "\n" + cc.out);
+  const ar = run("ar", ["rcs", archive, object]);
+  if (ar.code !== 0) throw new Error("ar failed for " + name + "\n" + ar.out);
+  return ["--ffi", manifest];
+};
+
 for (const file of files) {
   const name = file.replace(/\.js$/, "");
   const path = join("native", "probes", file);
-  const cov = run(scriptc, ["coverage", path, "--fail-on=blockers"]);
+  const ffi = ffiArgs(name);
+  const cov = run(scriptc, ["coverage", path, "--fail-on=blockers", ...ffi]);
   const statically = /compile statically\s+(\d+)\s+\((\d+)%\)/.exec(cov.out);
   const deferred = /deferred to runtime/.test(cov.out);
   const fully = /fully static/.test(cov.out);
-  const build = run(scriptc, ["build", path, "-o", join("native", "probes", "out", name), "--no-keep-llvm"]);
-  const nodeRun = run("node", [path]);
+  const build = run(scriptc, ["build", path, "-o", join("native", "probes", "out", name), "--no-keep-llvm", ...ffi]);
+  const nodeRun = ffi.length > 0 ? { code: 0, out: "", ms: 0 } : run("node", [path]);
   const native = build.code === 0 ? run(join(here, "out", name), []) : { code: -1, out: "(build failed)" };
-  const same = nodeRun.out === native.out;
+  const same = ffi.length > 0 ? !/^FAIL /m.test(native.out) && /^done ok/m.test(native.out) : nodeRun.out === native.out;
   const pass = cov.code === 0 && fully && !deferred && build.code === 0 && nodeRun.code === 0 && native.code === 0 && same;
   if (!pass) failed++;
   lines.push("## " + name + ": " + (pass ? "PASS" : "FAIL"));
