@@ -2,45 +2,13 @@
  * @bootstrapp/light: the view engine's public type declarations.
  */
 
-import type { PropertyDeclaration, TypeDefinition } from "../types/types.ts";
+import type { PropertyDeclaration, PropertyDeclarations, PropsToThis, TypeDefinition } from "../types/types.ts";
 import type View from "./index.js";
+
+export type { PropertyDeclarations, PropsToThis, PropertyValue } from "../types/types.ts";
 
 /** A class's merged property descriptors, every entry normalised. */
 export type PropertiesSchema = Record<string, TypeDefinition>;
-
-/** A definition's `props` block as the author writes it: descriptors, or defaults standing in for them. */
-export type PropertyDeclarations = Record<string, PropertyDeclaration>;
-
-/**
- * Map a `props: { x: T.string(), count: 0 }` block into the TS shape
- * that ends up on `this` inside `render()` / lifecycle hooks (`this.x: string`,
- * `this.count: number`); see `PropertyValue`.
- */
-export type PropsToThis<P> = {
-  [K in keyof P]: PropertyValue<P[K]>;
-};
-
-/** Whether `V` is a union of more than one member (`boolean` counts). */
-type IsUnion<V, U = V> = V extends unknown ? ([U] extends [V] ? false : true) : never;
-
-/**
- * The value type a `props` entry declares: a descriptor's phantom type; for a
- * default, its widened type (`false` is `boolean`, `0` is `number`, `""` is
- * `string`), an empty array literal as `unknown[]`, `null` as `any`. A default
- * cast to a type keeps it whole: a `null` cast to `User | null` is
- * `User | null`, and a string cast to `"a" | "b"` stays that union. A
- * declaration not yet decided (the whole `PropertyDeclaration` union, as a
- * generic signature carries it) is `any`.
- */
-export type PropertyValue<V> = [PropertyDeclaration] extends [V] ? any
-  : [V] extends [TypeDefinition<infer T>] ? T
-  : [V] extends [null | undefined] ? any
-  : [V] extends [readonly never[]] ? unknown[]
-  : true extends IsUnion<V> ? V
-  : [V] extends [boolean] ? boolean
-  : [V] extends [number] ? number
-  : [V] extends [string] ? string
-  : V;
 
 /**
  * What `this` is inside a definition's methods: the reactive properties, own

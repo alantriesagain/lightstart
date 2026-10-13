@@ -2,15 +2,14 @@
  * @bootstrapp/light/controller: type declarations.
  */
 
-import type { TypeDefinition, PropertyDeclaration } from "../types/types.ts";
+import type { TypeDefinition, PropertyDeclaration, PropertyDeclarations, PropsToThis } from "../types/types.ts";
 import type { Signal } from "../signals/index.js";
 import type { StoreSync, Store } from "../signals/types.ts";
 import type { DefinitionFragment } from "../view/primitives.ts";
-import type { PropertyDeclarations, PropsToThis } from "../view/types.ts";
 
 export type { StateDef, StoreSync, Store } from "../signals/types.ts";
 export type { DefinitionFragment, UnionToIntersection, MixinProps, MixinEvents, MixinMembers } from "../view/primitives.ts";
-export type { PropsToThis } from "../view/types.ts";
+export type { PropsToThis } from "../types/types.ts";
 
 /**
  * A controller definition: a component definition minus `render`. Same

@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
 const STATIC_IMPORT = /^\s*(?:import|export)\s+(?:[^'";]*?\sfrom\s+)?["']([^"']+)["']/gm;
+const TYPE_IMPORT = /@import\s*(?:\{[^}]*\}|\w+)\s*from\s*["']([^"']+)["']|import\(\s*["']([^"']+)["']\s*\)/g;
 
 /** @param {unknown} target */
 const exportFile = (target) =>
@@ -28,14 +29,20 @@ const resolveSpec = (spec, from) => {
 
 /**
  * Every file the static imports of `entry` reach, as paths relative to light.
+ * With `types`, type-only imports count too: `.ts` declarations, `@import`
+ * tags and `import("...")` types, which is what a typechecker loads.
  * @param {string} entry
+ * @param {{ types?: boolean }} [options]
  */
-const reach = (entry) => {
+const reach = (entry, { types = false } = {}) => {
   const seen = new Set();
   const visit = (/** @type {string} */ file) => {
-    if (seen.has(file) || !existsSync(file) || !file.endsWith(".js")) return;
+    if (seen.has(file) || !existsSync(file) || !(file.endsWith(".js") || (types && file.endsWith(".ts")))) return;
     seen.add(file);
-    for (const [, spec] of readFileSync(file, "utf8").matchAll(STATIC_IMPORT)) {
+    const source = readFileSync(file, "utf8");
+    const specs = [...source.matchAll(STATIC_IMPORT)].map(([, spec]) => spec);
+    if (types) for (const [, tag, inline] of source.matchAll(TYPE_IMPORT)) specs.push(tag ?? inline);
+    for (const spec of specs) {
       const next = resolveSpec(spec, file);
       if (next) visit(next);
     }
@@ -82,6 +89,13 @@ describe("@bootstrapp/light/controller: nothing loads what it did not ask for", 
       for (const file of files) assert.ok(reached.includes(file), `${key} loads ${file}`);
       const foreign = reached.filter((file) => entryFiles.includes(file) && file !== entry(key).replace(/^\.\//, ""));
       assert.deepEqual(foreign, [], `${key} reaches the entries ${foreign.join(", ")}`);
+    }
+  });
+
+  it("the controller's types load no DOM: a program that types a controller never takes in the browser view", () => {
+    for (const entry of ["controller/types.ts", "controller/index.js"]) {
+      const dom = reach(entry, { types: true }).filter((file) => file.startsWith("dom/") || file === "view/index.js" || file === "view/types.ts");
+      assert.deepEqual(dom, [], `${entry} reaches ${dom.join(", ")}`);
     }
   });
 });
