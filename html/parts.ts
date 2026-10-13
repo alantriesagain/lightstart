@@ -585,7 +585,7 @@ export class ChildPart extends ThunkHolder {
         } else {
           const oldIndex = oldKeyToIdx.get(newKeys[newHead]);
           const oldPart = oldIndex !== undefined ? oldParts[oldIndex] : null;
-          if (oldPart === null || oldPart === undefined) {
+          if (oldIndex === undefined || oldPart === null || oldPart === undefined) {
             const part = this._createItemPart((oldParts[oldHead] as ChildPart).start);
             part.commit(newValues[newHead]);
             newParts[newHead] = part;
@@ -593,7 +593,7 @@ export class ChildPart extends ThunkHolder {
             this._moveItemPart(oldPart, oldParts[oldHead] as ChildPart);
             oldPart.commit(newValues[newHead]);
             newParts[newHead] = oldPart;
-            oldParts[(oldIndex as number)] = null;
+            oldParts[oldIndex] = null;
           }
           newHead++;
         }

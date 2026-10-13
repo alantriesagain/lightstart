@@ -50,15 +50,15 @@ The quadratic sibling scan is gone on both. Natively a single insert got dearer 
 
 Measured on 2026-10-13, medians of three, as the core moved from JavaScript to TypeScript (scriptc 0.2.10 for the first two native columns, the fork with the two fixes, on 0.3.1, for the third):
 
-| Step | node | native, all JavaScript | native, terminal host in TypeScript | native, core in TypeScript |
-|---|---|---|---|---|
-| create 10k keyed rows | 72 ms | 3634 ms | 1459 ms | 611 ms |
-| layout 10k rows | 41 ms | 948 ms | 23 ms | 19 ms |
-| update every 10th row | 9 ms | 185 ms | 179 ms | 101 ms |
-| reverse 10k keyed rows | 21 ms | 534 ms | 403 ms | 328 ms |
-| clear | 11 ms | 384 ms | 160 ms | 66 ms |
+| Step | node | native, all JavaScript | native, terminal host in TypeScript | native, core in TypeScript | native, no method-replacing write |
+|---|---|---|---|---|---|
+| create 10k keyed rows | 72 ms | 3634 ms | 1459 ms | 611 ms | 90 ms |
+| layout 10k rows | 41 ms | 948 ms | 23 ms | 19 ms | 12 ms |
+| update every 10th row | 9 ms | 185 ms | 179 ms | 101 ms | 26 ms |
+| reverse 10k keyed rows | 21 ms | 534 ms | 403 ms | 328 ms | 44 ms |
+| clear | 11 ms | 384 ms | 160 ms | 66 ms | 21 ms |
 
-A class from a JavaScript file pays bookkeeping on every field write once its instances reach an `unknown`, which was half of this benchmark's time; a TypeScript class does not (vercel-labs/scriptc#934). The rest of the gap is the dynamic storage the engine's `unknown` values still need.
+A class from a JavaScript file pays bookkeeping on every field write once its instances reach an `unknown`, which was half of this benchmark's time; a TypeScript class does not (vercel-labs/scriptc#934). The last column removes one write, `oldParts[(oldIndex as number)] = null` in `html/parts.ts`: scriptc read its key as `number | undefined`, an unknown key, and treated every method in the program as replaceable, so each call went through a boxing wrapper. The index is narrowed now. What remains is mostly boxing: class instances wrapped to cross the engine's `unknown` boundaries (the host seam's nodes, template values) and released again, and the cycle collector.
 
 With the core in JavaScript, the binary was an order of magnitude slower than V8 on this engine. `native/microbench.js` times the operations one by one, and probes p-n to p-s pin the cause: in scriptc 0.2.10 an instance of any class whose methods are called costs 1 to 4 µs to allocate, 0.35 µs per field write and about 0.5 µs per method call, while a class used as plain data costs what C does; a `Map` keyed by objects scales linearly with its size. A terminal screen holds hundreds of nodes, not ten thousand, so a frame still takes milliseconds; the gap is the compiler's to close, and `native/microbench.js` is the yardstick for each release.
 
