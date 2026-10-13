@@ -150,6 +150,27 @@ View.use({
 | `init` | Runs once per class, when it is defined. |
 | `events` | Called on each instance's lifecycle, before the definition's own hooks. |
 
+## Controllers
+
+`@bootstrapp/light/controller` is shared app state for a page: a controller is a named piece of state and the methods that change it, one per name, built the first time anything reaches it and reset by `dispose()`. Its props are the same shorthand a component's are; its `sync` block binds them to storage, to another controller or to a store; a component binds its own props to the same targets once the page has `View.use(syncPlugin)`.
+
+```js
+import { defineController, nameControllers, registerAdapter } from "@bootstrapp/light/controller";
+import { localStorage } from "@bootstrapp/light/controller/storage";
+
+registerAdapter("local", localStorage);
+
+export const cart = defineController({
+  name: "cart",
+  props: { items: /** @type {string[]} */ ([]), currency: "EUR" },
+  sync: { currency: "local" },
+  add(/** @type {string} */ id) { this.items = [...this.items, id]; },
+});
+nameControllers([cart]);
+```
+
+Each piece is its own entry and loads only what it uses: `/controller` (definitions and the sync registry), `/controller/resource` (`resource()`), `/controller/storage`, `/controller/document` and `/controller/url` (the adapters), `/controller/view` (the component plugin). Nothing else in light imports any of them. The reference is [controller/README.md](controller/README.md).
+
 ## The host
 
 A component library needs a few things from the page it runs on. Light holds them as small modules with working defaults, and a host that has more (a router, translations, a settle tracker) hands its own in once.
@@ -201,6 +222,7 @@ One engine, three hosts. The renderer and the view core never touch a document: 
 | `native/` | Light as a native binary: the scriptc entry, the parity tests, the coverage gate, the compiler probes |
 | `native/desktop/` | The desktop shell: a native backend, a web view, a typed bridge; the shim over webview, the build tool, the demo and its gates |
 | `env/`, `navigation/` | The page's environment and the host's router, as components read them |
+| `controller/` | Controllers, the sync binding and its registries, the storage, document and hash adapters, `resource()`, the component sync plugin |
 | `theme/` | Tokens, presets, `theme.css`, the color scheme, icons |
 | `components/` | The component library, one directory per category, a `.css` and a `.demo.js` beside each component |
 | `locales/` | The words the components draw, keyed by tag, one file per language |
