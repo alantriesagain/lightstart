@@ -262,7 +262,8 @@
         "@bootstrapp/check"
       ],
       "ignore": [
-        "website/"
+        "website/",
+        "native/desktop/out/"
       ],
       "rules": {
         "view/no-raw-localstorage": "off"
