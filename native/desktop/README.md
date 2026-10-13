@@ -19,7 +19,10 @@ node native/desktop/smoke.js                                        # the same, 
 node native/desktop/coverage.js                                     # the demo backend must compile fully static
 ```
 
-`light desktop run|build|shim|smoke …` is the same tool through the CLI. The first build compiles
+`light desktop run|build|shim|smoke …` is the same tool through the CLI, and `npm run verify`
+runs the three desktop gates (`typecheck:desktop`, `coverage:desktop`, `test:desktop`); the two
+that need the shim skip themselves with a notice where WebKitGTK's development package or a
+display is missing. The first build compiles
 the vendored webview library and the shim into `out/<target>/libdesktop.a` and writes the FFI
 manifest beside it; later builds reuse the archive until a shim source changes.
 
@@ -158,8 +161,13 @@ its `exports`, and the prefix `@bootstrapp/light/` at them.
 | Target | Engine | Shim build | Status |
 |---|---|---|---|
 | `linux-x64` | WebKitGTK 4.1 on GTK 3 (or 6.0 on GTK 4, or 4.0 on GTK 3), via `pkg-config` | `g++`, `cc`, `ar` | Works end to end; the gates run here. |
-| `mac-arm64` | WKWebView | `clang++`, `clang -fobjc-arc` (Xcode command line tools) | Build branch written, unverified. |
-| `win-x64` | WebView2 (its runtime is on every Windows 10 and 11 since 2021; `WebView2.h` is fetched for the build) | `zig cc` targeting `x86_64-windows-gnu` | Build branch written, unverified. |
+| `mac-arm64` | WKWebView | `clang++`, `clang -fobjc-arc` (Xcode command line tools) | `shim/shim_mac.m` and the build branch written, unverified: not yet built on a Mac. |
+| `win-x64` | WebView2 (its runtime is on every Windows 10 and 11 since 2021) | `zig cc` targeting `x86_64-windows-gnu`, after `node native/desktop/shim/fetch-webview2.js` fetched `WebView2.h` | Build branch written, unverified; the backend itself needs scriptc's Windows runtime pack. |
+
+On macOS the shim does what `NSApplication.run` would, one step at a time: `finishLaunching`
+on the first pump, then `nextEventMatchingMask`, `sendEvent`, `updateWindows`; a
+`NSWindowWillCloseNotification` observer records the close. On Windows the pump is a
+`PeekMessageW` loop and `WM_QUIT` or the window handle going invalid records it.
 
 ## Rules
 
@@ -172,3 +180,7 @@ of its own:
   active app.
 - An argument from the page is `unknown` until narrowed; the helpers narrow one level and an
   app checks the rest with `typeof`, `Array.isArray` and `instanceof`.
+- A handler's value is `unknown` before it is wrapped: `const info: unknown = { … }; return
+  Promise.resolve(info)`. Natively a `Promise` of an object literal type invoked through the
+  route's `Promise<unknown>` slot throws at the call (the checker admits the assignment, the
+  compiler has no conversion for it); primitives and `null` convert.
