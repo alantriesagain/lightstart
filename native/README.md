@@ -10,6 +10,7 @@ npm run probes             # the compiler probes (native/probes/) that decided h
 node native/bench.js       # 10k keyed rows, update every 10th: node against the native binary
 node native/demo.js        # a counter button, a scrolling list, an editor; --log <file> records what happens
 native/pty.sh              # builds the demo natively and drives it in a pty: click, wheel, Tab, Enter, submit
+light desktop run native/desktop/demo/backend.js   # the desktop shell's demo: a light page in the system web view (native/desktop/README.md)
 ```
 
 | File | What it owns |
@@ -20,6 +21,7 @@ native/pty.sh              # builds the demo natively and drives it in a pty: cl
 | `*.test.js` | Parts and views on the terminal host, layout and paint, wrapping and widths, the editor, the input decoder, the hit test and focus ring with a renderer on a test terminal |
 | `demo.js`, `pty.sh` | The demo screen and the pty gate that clicks, scrolls, focuses and submits in it as a binary (3.3 MB stripped) |
 | `probes/` | One-file programs that pin what the compiler accepts, and the decisions they produced (`probes/README.md`) |
+| `desktop/` | The desktop shell: `DesktopApp` over the system web view, the page client, the C shim, `light desktop build|run`, the demo, the smoke and coverage gates |
 | `tsconfig.json` | The native graph: what `typecheck:native` checks against `es2024` with node types |
 
 Measured with `node native/bench.js` against the stripped binary on 2026-10-12, before and after the terminal tree's children became a linked list and its layout caches moved onto the node:

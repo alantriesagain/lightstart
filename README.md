@@ -185,7 +185,7 @@ export default [recommended];
 
 ## Hosts
 
-One engine, three hosts. The renderer and the view core never touch a document: a host (`html/host.js`) answers for nodes, attributes, listeners, template cloning and frames. `@bootstrapp/light` and `@bootstrapp/light/html` install the browser host (`dom/`); `@bootstrapp/light/markup` renders on an in-memory tree and serializes markup a page adopts, which also makes it the host the engine's conformance suite runs on under plain node; `@bootstrapp/light/native` installs the terminal host (`tdom/`), a node tree with its own layout, painter, screen diff, input decoder, editor, mouse and focus, and compiles with [scriptc](https://github.com/vercel-labs/scriptc) to a static binary with no JavaScript engine in it. A component on the terminal is a `View` with signal fields and a `render()` that returns an `html` template; the HTML tag names map onto the terminal's box, text, span and input. `native/README.md` has the gates, the benchmark and the compiler's rules.
+One engine, three hosts. The renderer and the view core never touch a document: a host (`html/host.js`) answers for nodes, attributes, listeners, template cloning and frames. `@bootstrapp/light` and `@bootstrapp/light/html` install the browser host (`dom/`); `@bootstrapp/light/markup` renders on an in-memory tree and serializes markup a page adopts, which also makes it the host the engine's conformance suite runs on under plain node; `@bootstrapp/light/native` installs the terminal host (`tdom/`), a node tree with its own layout, painter, screen diff, input decoder, editor, mouse and focus, and compiles with [scriptc](https://github.com/vercel-labs/scriptc) to a static binary with no JavaScript engine in it. A component on the terminal is a `View` with signal fields and a `render()` that returns an `html` template; the HTML tag names map onto the terminal's box, text, span and input. `native/README.md` has the gates, the benchmark and the compiler's rules. `@bootstrapp/light/native/desktop` is the desktop shell on top of that: the app's backend compiled by scriptc, its UI a light page in the operating system's web view, the two joined by a typed bridge; `native/desktop/README.md`.
 
 ## Files
 
@@ -199,6 +199,7 @@ One engine, three hosts. The renderer and the view core never touch a document: 
 | `markup/` | The renderer on an in-memory tree: server prerendering a page adopts, and the host every other host is measured against |
 | `tdom/` | The terminal host: a node tree, layout, paint, a screen diff, key input, an editor, and `View` on it |
 | `native/` | Light as a native binary: the scriptc entry, the parity tests, the coverage gate, the compiler probes |
+| `native/desktop/` | The desktop shell: a native backend, a web view, a typed bridge; the shim over webview, the build tool, the demo and its gates |
 | `env/`, `navigation/` | The page's environment and the host's router, as components read them |
 | `theme/` | Tokens, presets, `theme.css`, the color scheme, icons |
 | `components/` | The component library, one directory per category, a `.css` and a `.demo.js` beside each component |

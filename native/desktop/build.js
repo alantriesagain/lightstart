@@ -252,28 +252,36 @@ export const build = (backend, web, out, name, target, keepLight) => {
 /** @param {string} target */
 const defaultTarget = (target) => (target === "linux" ? "linux-x64" : target === "mac" ? "mac-arm64" : target === "win" ? "win-x64" : target);
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const [command, ...rest] = process.argv.slice(2);
+/**
+ * The command line: `shim`, `smoke`, `build` or `run` with their options; answers the exit code.
+ * `light desktop …` and `node native/desktop/build.js …` both land here.
+ * @param {string[]} argv
+ */
+export const desktop = (argv) => {
+  const [command, ...rest] = argv;
   const target = defaultTarget(option(rest, "target", "linux") ?? "linux");
   const dash = rest.indexOf("--");
   const own = dash >= 0 ? rest.slice(0, dash) : rest;
   const passthrough = dash >= 0 ? rest.slice(dash + 1) : [];
-  if (command === "shim") console.log(`archive and manifest in ${shim(target)}`);
-  else if (command === "smoke") process.exitCode = smoke(target, own.includes("--wait")) ? 0 : 1;
-  else if ((command === "build" || command === "run") && own.length > 0) {
+  if (command === "shim") {
+    console.log(`archive and manifest in ${shim(target)}`);
+    return 0;
+  }
+  if (command === "smoke") return smoke(target, own.includes("--wait")) ? 0 : 1;
+  if ((command === "build" || command === "run") && own.length > 0) {
     const backend = resolve(own[0]);
     const web = resolve(option(own, "web", join(dirname(backend), "web")) ?? "");
     const name = option(own, "name", basename(backend).replace(/\.(js|ts)$/, "")) ?? "app";
     const out = resolve(option(own, "out", join(here, "out", target, name)) ?? "");
     const built = build(backend, web, out, name, target, own.includes("--keep-light"));
     console.log(`built ${relative(process.cwd(), built.exe)} with its page in ${relative(process.cwd(), built.web)}`);
-    if (command === "run") {
-      const app = spawnSync(built.exe, passthrough, { stdio: "inherit" });
-      process.exitCode = app.status ?? 1;
-    }
-  } else {
-    console.log("usage: node native/desktop/build.js shim|smoke [--target linux|mac|win] [--wait]");
-    console.log("       node native/desktop/build.js build|run <backend.js> [--web <dir>] [--out <dir>] [--name <app>] [--target …] [--keep-light] [-- <app args>]");
-    process.exitCode = 1;
+    if (command !== "run") return 0;
+    const app = spawnSync(built.exe, passthrough, { stdio: "inherit" });
+    return app.status ?? 1;
   }
-}
+  console.log("usage: light desktop shim|smoke [--target linux|mac|win] [--wait]");
+  console.log("       light desktop build|run <backend.js> [--web <dir>] [--out <dir>] [--name <app>] [--target …] [--keep-light] [-- <app args>]");
+  return 1;
+};
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) process.exitCode = desktop(process.argv.slice(2));
