@@ -51,7 +51,8 @@ export interface DesktopWindowOptions {
   /**
    * Open without the system title bar, for a page that draws its own (light's `lc-title-bar`):
    * on Linux the window keeps its resize borders and shadow, on macOS the system's traffic lights
-   * stay over a transparent bar, on Windows the native caption stays.
+   * stay over a transparent bar, on Windows the native caption stays. On by default; `false` keeps
+   * the system title bar.
    */
   frameless?: boolean;
   /** Open the engine's developer tools. */

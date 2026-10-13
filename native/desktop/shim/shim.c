@@ -410,9 +410,11 @@ int32_t desktop_is_maximized(void *w) {
 }
 
 /* Start moving the window with the pointer, as a press on a title bar does. Called from a page
-   call that arrives in a later pump than the page's mousedown, so it reads the pointer from the
-   seat and does nothing once the button is up (a quick click must not start a move). */
-void desktop_begin_move(void *w) {
+   call that arrives in a later pump than the page's mousedown, so it does nothing once the button
+   is up (a quick click must not start a move). x and y are where the press happened, in screen
+   coordinates: the move is anchored there, so the point that was grabbed stays under the pointer
+   however far it travelled before the call arrived; negative means "where the pointer is now". */
+void desktop_begin_move(void *w, int32_t x, int32_t y) {
   struct desktop *d = (struct desktop *)w;
   if (d->closed) return;
 #ifdef DESKTOP_GTK
@@ -423,12 +425,14 @@ void desktop_begin_move(void *w) {
   GdkModifierType mask = 0;
   gdk_window_get_device_position(gdkwin, pointer, NULL, NULL, &mask);
   if ((mask & GDK_BUTTON1_MASK) == 0) return;
-  gint x = 0;
-  gint y = 0;
-  gdk_device_get_position(pointer, NULL, &x, &y);
-  gtk_window_begin_move_drag(window, 1, x, y, GDK_CURRENT_TIME);
+  gint px = x;
+  gint py = y;
+  if (x < 0 || y < 0) gdk_device_get_position(pointer, NULL, &px, &py);
+  gtk_window_begin_move_drag(window, 1, px, py, GDK_CURRENT_TIME);
 #endif
 #ifdef DESKTOP_COCOA
+  (void)x;
+  (void)y;
   desktop_begin_move_mac(webview_get_window(d->w));
 #endif
 }

@@ -1,10 +1,16 @@
 /**
- * @file The demo page: a light component that connects to the backend, counts its ticks, adds
- * two numbers through the bridge, and can close the app.
+ * @file The demo page: light's title bar on the frameless window, and a light component that
+ * connects to the backend, counts its ticks, adds 100 to a running total through the bridge on
+ * each click, maximizes and restores the window through its host, reports where the title bar's
+ * controls are (for frameless-check.js), and can close the app.
  */
 import View from "@bootstrapp/light";
+import titleBar from "@bootstrapp/light/components/app/title-bar.js";
+import { env } from "@bootstrapp/light/env";
 import { html } from "@bootstrapp/light/html";
 import { connect } from "@bootstrapp/light/native/desktop/client.js";
+
+View.define("lc-title-bar", titleBar);
 
 /** @import { DemoApi, DemoEvents, DemoPageEvents } from "../contract.ts" */
 
@@ -22,14 +28,16 @@ View.define("demo-page", {
     this.pong = await desktop.call.ping();
     await desktop.emit("hello", "from the page");
     await this.windowRoundTrip();
+    await this.reportControls();
     const first = await desktop.call.add(1, 2);
     const second = await desktop.call.add(10, 20);
     await desktop.log("info", "adds " + String(first) + " " + String(second));
     await desktop.log("info", "page is up, ping answered " + this.pong);
   },
   async windowRoundTrip() {
-    const host = /** @type {{ __desktopWindow?: import("@bootstrapp/light/env/types.ts").WindowHost }} */ (/** @type {unknown} */ (globalThis)).__desktopWindow;
-    if (host === undefined) return;
+    const host = env.window;
+    if (host === null) return;
+    await desktop.log("info", "window " + host.platform + " frameless=" + String(host.frameless));
     /** @param {boolean} wanted */
     const until = (wanted) => new Promise((resolve) => {
       if (host.maximized === wanted) return void resolve(true);
@@ -49,8 +57,18 @@ View.define("demo-page", {
     const restored = await until(false);
     await desktop.log("info", maximized && restored ? "window maximize round trip" : "window maximize round trip failed");
   },
+  async reportControls() {
+    /** @param {string} part */
+    const at = (part) => {
+      const button = document.querySelector(`lc-title-bar [part~=lc-title-bar-${part}]`);
+      if (button === null) return "none";
+      const r = button.getBoundingClientRect();
+      return `${Math.round(r.left + r.width / 2)},${Math.round(r.top + r.height / 2)}`;
+    };
+    await desktop.log("info", `controls width=${String(window.innerWidth)} minimize=${at("minimize")} maximize=${at("maximize")} close=${at("close")}`);
+  },
   async add() {
-    this.sum = await desktop.call.add(this.ticks, 100);
+    this.sum = await desktop.call.add(this.sum, 100);
   },
   render() {
     return html`
@@ -59,7 +77,7 @@ View.define("demo-page", {
       <p>ticks from the backend: <output>${this.ticks}</output></p>
       <p>ping: <output>${this.pong}</output></p>
       <p>
-        <button @click=${this.add}>add ticks + 100</button>
+        <button @click=${this.add}>add 100</button>
         <button @click=${() => desktop.call.quit()}>quit</button>
         <output>${this.sum}</output>
       </p>`;

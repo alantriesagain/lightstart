@@ -47,6 +47,7 @@ describe("the desktop window host", () => {
     window.dispatchEvent(mouse("mousemove", { screenX: 110, screenY: 100, buttons: 1 }));
     window.dispatchEvent(mouse("mousemove", { screenX: 130, screenY: 100, buttons: 1 }));
     assert.deepEqual(ops(), ["drag"]);
+    assert.deepEqual(calls[0].slice(2), [100, 100]);
   });
 
   it("leaves a click alone and turns a double-click into maximize", () => {

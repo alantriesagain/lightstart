@@ -18,6 +18,11 @@
     display: none;
   }
 
+  &[data-host="frameless"] [part~=lc-title-bar-titlebar] {
+    background: var(--lc-title-bar-background, transparent);
+    border-bottom: var(--lc-title-bar-border, none);
+  }
+
   &[data-native-controls] [part~=lc-title-bar-titlebar] {
     height: var(--lc-title-bar-height, 38px);
     padding-left: var(--lc-title-bar-inset, 78px);
@@ -85,7 +90,7 @@
   & [part~=lc-title-bar-controls] {
     display: flex;
     align-items: center;
-    gap: 0;
+    gap: var(--lc-title-bar-control-gap, 2px);
     margin-left: var(--spacing-xs);
   }
 
@@ -95,9 +100,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 46px;
-    height: var(--lc-title-bar-height, 32px);
+    width: var(--lc-title-bar-control-size, 28px);
+    height: var(--lc-title-bar-control-size, 28px);
+    margin: 0;
     padding: 0;
+    border-radius: var(--radius-sm, 4px);
     background: transparent;
     border: none;
     color: var(--text-color);

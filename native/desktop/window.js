@@ -52,7 +52,7 @@ export class DesktopWindow {
     this.height = options.height ?? 640;
     this.debug = options.debug === true;
     this.pumpMs = options.pumpMs ?? 8;
-    this.frameless = options.frameless === true;
+    this.frameless = options.frameless !== false;
     this.state = -1;
     /** @type {((id: string, req: string) => void) | null} */
     this.onRequest = null;
@@ -226,6 +226,8 @@ export class DesktopWindow {
     }
     const args = parsed[1];
     const op = Array.isArray(args) && typeof args[0] === "string" ? args[0] : "";
+    const x = Array.isArray(args) && typeof args[1] === "number" ? Math.round(args[1]) : -1;
+    const y = Array.isArray(args) && typeof args[2] === "number" ? Math.round(args[2]) : -1;
     if (op === "state") {
       this.answer(id, String(this.windowState()));
       return;
@@ -234,15 +236,19 @@ export class DesktopWindow {
     if (op === "minimize") this.minimize();
     else if (op === "maximize") this.toggleMaximize();
     else if (op === "close") this.requestClose();
-    else if (op === "drag") this.beginMove();
+    else if (op === "drag") this.beginMove(x, y);
   }
 
   toggleMaximize() {
     if (this.running) desktop_maximize(this.w, (this.windowState() & STATE_MAXIMIZED) !== 0 ? 0 : 1);
   }
 
-  beginMove() {
-    if (this.running) desktop_begin_move(this.w);
+  /**
+   * @param {number} x where the press happened on the screen, or -1 for where the pointer is now
+   * @param {number} y
+   */
+  beginMove(x, y) {
+    if (this.running) desktop_begin_move(this.w, x, y);
   }
 
   requestClose() {

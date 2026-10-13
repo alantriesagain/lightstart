@@ -46,8 +46,8 @@ export interface WindowHost {
   toggleMaximize(): void;
   /** Close the window as its system close button would. */
   close(): void;
-  /** Start moving the window with the pointer, while the primary button is down. */
-  startDrag(): void;
+  /** Start moving the window with the pointer, while the primary button is down; `x`, `y` (screen) anchor it at the press. */
+  startDrag(x?: number, y?: number): void;
   /** Hand a mousedown on a title bar to the window: a drag moves it, a double-click maximizes or restores it. */
   dragFrom(event: MouseEvent): void;
   /** Called with the host whenever its state changes; answers the function that stops it. */

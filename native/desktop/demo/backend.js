@@ -10,7 +10,7 @@
 import { DesktopApp, num } from "../host.js";
 
 const smoke = process.argv.includes("--smoke");
-const app = new DesktopApp({ title: "light desktop demo", width: 640, height: 400, frameless: process.argv.includes("--frameless") });
+const app = new DesktopApp({ title: "light desktop demo", width: 640, height: 400, frameless: !process.argv.includes("--framed") });
 let ticks = 0;
 let pinged = false;
 let ticked = false;

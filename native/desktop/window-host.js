@@ -6,7 +6,8 @@
  * window's state (maximized, fullscreen, focused, minimized, kept current by the window), and the
  * calls a title bar makes: minimize, toggle maximize, close, and drag. `dragFrom(event)` turns a
  * mousedown into a window move once the pointer travelled a few pixels with the button down, so
- * clicks and double-clicks stay in the page, and a double-click into maximize.
+ * clicks and double-clicks stay in the page, and a double-click into maximize; the move is
+ * anchored at the press, so the grabbed point stays under the pointer.
  */
 
 /**
@@ -19,14 +20,14 @@ export const windowHostScript = (platform, frameless) => "(() => {\n"
   + "  const frameless = " + (frameless ? "true" : "false") + ";\n"
   + "  const native = platform === \"macos\" && frameless;\n"
   + "  const listeners = new Set();\n"
-  + "  const call = (op) => (typeof window.__desktop === \"function\" ? window.__desktop(\"$window\", [op]) : Promise.resolve(null));\n"
+  + "  const call = (op, x, y) => (typeof window.__desktop === \"function\" ? window.__desktop(\"$window\", x === undefined ? [op] : [op, x, y]) : Promise.resolve(null));\n"
   + "  const host = {\n"
   + "    platform, frameless, nativeControls: native, controlsInset: native ? 78 : 0,\n"
   + "    maximized: false, fullscreen: false, focused: true, minimized: false,\n"
   + "    minimize: () => { call(\"minimize\").then(() => {}, () => {}); },\n"
   + "    toggleMaximize: () => { call(\"maximize\").then(() => {}, () => {}); },\n"
   + "    close: () => { call(\"close\").then(() => {}, () => {}); },\n"
-  + "    startDrag: () => { call(\"drag\").then(() => {}, () => {}); },\n"
+  + "    startDrag: (x, y) => { call(\"drag\", x, y).then(() => {}, () => {}); },\n"
   + "    dragFrom: (event) => {\n"
   + "      if (!frameless || event.button !== 0) return;\n"
   + "      if (event.detail === 2) { event.preventDefault(); host.toggleMaximize(); return; }\n"
@@ -43,7 +44,7 @@ export const windowHostScript = (platform, frameless) => "(() => {\n"
   + "        if ((e.buttons & 1) === 0) { stop(); return; }\n"
   + "        if (Math.abs(e.screenX - x) + Math.abs(e.screenY - y) < 4) return;\n"
   + "        stop();\n"
-  + "        host.startDrag();\n"
+  + "        host.startDrag(x, y);\n"
   + "      };\n"
   + "      window.addEventListener(\"mousemove\", move, true);\n"
   + "      window.addEventListener(\"mouseup\", stop, true);\n"

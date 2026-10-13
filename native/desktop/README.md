@@ -118,6 +118,40 @@ cancelled; `pendingDialogs()` and `cancelDialog(id)` withdraw one. Dialogs and t
 are the non-modal kind: their answers arrive inside a later pump through a bound function, so the
 program's loop never parks while one is open.
 
+### The title bar
+
+Windows open frameless by default: no system title bar, and the page draws its own with light's
+`lc-title-bar`. `frameless: false` (on `DesktopWindow` or `DesktopApp`) keeps the system's.
+
+- Linux: GTK client-side decorations with an empty titlebar, so the window keeps its shadow and
+  its resize borders; the page's bar is the only title bar.
+- macOS: the system's traffic lights stay over a transparent, full-size-content title bar
+  (Electron's `hiddenInset`); the page's bar leaves room for them. Unverified until a Mac build.
+- Windows: the native caption stays this round; `lc-title-bar` hides itself there.
+
+Every page gets `window.__desktopWindow` (`window-host.js`), which `env.window` answers in light:
+the platform, `frameless`, `nativeControls`, `controlsInset`, the window's state (`maximized`,
+`fullscreen`, `focused`, `minimized`, pushed by the window after a pump whenever it changes,
+`subscribe(fn)` to follow it), and `minimize()`, `toggleMaximize()`, `close()`,
+`startDrag(x, y)`, `dragFrom(event)`. `dragFrom` turns a mousedown into a window move once the
+pointer travelled a few pixels with the button down (clicks and double-clicks stay in the page)
+and a double-click into maximize; the move is anchored at the press, so the grabbed point stays
+under the pointer whatever the latency. The host's calls travel as `__desktop("$window", [op…])`,
+which `DesktopWindow` answers before the app's own bridge sees anything. `close()` goes through the
+platform, as its close button would, so `onClose` runs on a later pump.
+
+`lc-title-bar` inside a frameless window drives it by itself: drag, double-click, the three
+buttons (a listener's `preventDefault()` on `minimize`, `maximize` or `close` takes the action
+over), a restore icon while maximized, dimmed while unfocused. It is transparent with no border,
+so it takes the page's background; `--lc-title-bar-background` and `--lc-title-bar-border` give it
+others, `--lc-title-bar-height`, `--lc-title-bar-control-size` and `--lc-title-bar-control-gap`
+size it. In a browser it only emits, as it always did.
+
+`node native/desktop/frameless-check.js` checks all of it on a real X11 display with XTest: a drag
+moves the window by the pointer's travel, a click does not, a double-click maximizes and restores, a
+drag in the right margin widens it, the buttons act, close ends the program, `--framed` keeps the
+system frame. It moves the real pointer, so it is not part of `verify`.
+
 ### The backend
 
 `DesktopApp` (`host.js`):
@@ -183,6 +217,8 @@ its `exports`, and the prefix `@bootstrapp/light/` at them.
 | File | Owns |
 |---|---|
 | `window.js` | `DesktopWindow`: the web view, the binding, the init scripts, the pump, the window controls, the inspector, dialogs. |
+| `window-host.js` | The script behind `window.__desktopWindow`: the window's state and the calls a title bar makes. |
+| `frameless-check.js` | The interactive check of the frameless window (moves the real pointer; not in `verify`). |
 | `host.js` | `DesktopApp`, `Route`, `Listener`, the narrowing helpers. |
 | `server.js` | The loopback asset server. |
 | `client.js` | `connect()` for the page. |

@@ -93,7 +93,7 @@ const FUNCTIONS = [
   { name: "desktop_maximize", symbol: "desktop_maximize", params: ["pointer", "i32"], returns: "void" },
   { name: "desktop_is_maximized", symbol: "desktop_is_maximized", params: ["pointer"], returns: "i32" },
   { name: "desktop_inspector", symbol: "desktop_inspector", params: ["pointer"], returns: "void" },
-  { name: "desktop_begin_move", symbol: "desktop_begin_move", params: ["pointer"], returns: "void" },
+  { name: "desktop_begin_move", symbol: "desktop_begin_move", params: ["pointer", "i32", "i32"], returns: "void" },
   { name: "desktop_close", symbol: "desktop_close", params: ["pointer"], returns: "void" },
   { name: "desktop_window_state", symbol: "desktop_window_state", params: ["pointer"], returns: "i32" },
   { name: "desktop_message", symbol: "desktop_message", params: ["pointer", "string", "string"], returns: "void" },

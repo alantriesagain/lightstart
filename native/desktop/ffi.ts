@@ -22,7 +22,7 @@ export declare function desktop_minimize(w: bigint): void;
 export declare function desktop_maximize(w: bigint, on: number): void;
 export declare function desktop_is_maximized(w: bigint): number;
 export declare function desktop_inspector(w: bigint): void;
-export declare function desktop_begin_move(w: bigint): void;
+export declare function desktop_begin_move(w: bigint, x: number, y: number): void;
 export declare function desktop_close(w: bigint): void;
 export declare function desktop_window_state(w: bigint): number;
 export declare function desktop_message(w: bigint, title: string, text: string): void;

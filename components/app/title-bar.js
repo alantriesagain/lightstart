@@ -149,6 +149,11 @@ export default defineComponent({
  * `preventDefault()`, and the maximize button turns into restore. On macOS the
  * system's traffic lights stay and the bar leaves room for them; in a window
  * that keeps the system title bar it hides itself. Elsewhere it only emits.
+ * In a frameless window the bar is transparent with no border, so it takes the
+ * page's own background; `--lc-title-bar-background` and
+ * `--lc-title-bar-border`, set anywhere above it, give it others.
+ * `--lc-title-bar-control-size` and `--lc-title-bar-control-gap` size the
+ * drawn controls (28px and 2px).
  *
  * @slot left - Left side content (app icon, menu, etc.)
  * @slot center - Center content (window title, tabs, etc.)

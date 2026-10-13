@@ -4,16 +4,21 @@
     <meta charset="utf-8" />
     <title>light desktop demo</title>
     <!--importmap-->
+    <link rel="stylesheet" href="light/components/app/title-bar.css" />
     <style>
-      body { font: 16px system-ui, sans-serif; margin: 0; padding: 24px; color: #1a1a2e; background: #f7f7fb; }
+      :root { --color-surface: #ececf3; --color-surface-light: #dcdce6; --color-surface-dark: #cbcbd8; --text-color: #1a1a2e; --border-color: #d0d0da; --spacing-xs: 4px; --spacing-sm: 8px; --radius-sm: 4px; }
+      html, body { height: 100%; margin: 0; }
+      body { font: 16px system-ui, sans-serif; color: #1a1a2e; background: #f7f7fb; display: flex; flex-direction: column; }
+      demo-page { display: block; flex: 1; overflow: auto; padding: 24px; }
       h1 { margin: 0 0 8px; font-size: 22px; }
       p { margin: 4px 0; }
-      button { font: inherit; padding: 6px 14px; margin-right: 8px; }
+      demo-page button { font: inherit; padding: 6px 14px; margin-right: 8px; }
       output { font-variant-numeric: tabular-nums; }
     </style>
     <script type="module" src="app.js"></script>
   </head>
   <body>
+    <lc-title-bar title="light desktop demo"></lc-title-bar>
     <demo-page></demo-page>
   </body>
 </html>
