@@ -2,23 +2,25 @@
  * @file The demo's backend: a window showing the page in demo/web, three methods, a tick every
  * second, a listener for the page's "hello" event, a file chooser behind "pick". With --smoke it
  * quits on its own once the page connected, called a method, emitted hello, called add twice
- * with the right answers, acknowledged the first tick through the log, and a file chooser the
- * backend opened and withdrew answered as cancelled, printing "smoke ok"; that is the gate
+ * with the right answers, acknowledged the first tick through the log, maximized and restored the
+ * window through its window host, and a file chooser the backend opened and withdrew answered as
+ * cancelled, printing "smoke ok"; that is the gate
  * native/desktop/smoke.js runs.
  */
 import { DesktopApp, num } from "../host.js";
 
 const smoke = process.argv.includes("--smoke");
-const app = new DesktopApp({ title: "light desktop demo", width: 640, height: 400 });
+const app = new DesktopApp({ title: "light desktop demo", width: 640, height: 400, frameless: process.argv.includes("--frameless") });
 let ticks = 0;
 let pinged = false;
 let ticked = false;
 let greeted = false;
 let added = false;
 let dialogCancelled = false;
+let windowed = false;
 
 const check = () => {
-  if (smoke && pinged && ticked && greeted && added && dialogCancelled) {
+  if (smoke && pinged && ticked && greeted && added && dialogCancelled && windowed) {
     console.log("smoke ok");
     app.quit();
   }
@@ -50,6 +52,7 @@ app.onLog = (/** @type {string} */ level, /** @type {string} */ text) => {
   process.stderr.write("[page " + level + "] " + text + "\n");
   if (text.startsWith("first tick")) ticked = true;
   if (text === "adds 3 30") added = true;
+  if (text === "window maximize round trip") windowed = true;
   check();
 };
 app.onConnect = () => {
@@ -76,7 +79,7 @@ app.onClose = () => {
 };
 if (smoke)
   setTimeout(() => {
-    console.log("smoke timed out: pinged=" + String(pinged) + " ticked=" + String(ticked) + " greeted=" + String(greeted) + " added=" + String(added));
+    console.log("smoke timed out: pinged=" + String(pinged) + " ticked=" + String(ticked) + " greeted=" + String(greeted) + " added=" + String(added) + " windowed=" + String(windowed));
     process.exit(1);
   }, 15000);
 app.start();

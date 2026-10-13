@@ -4,13 +4,22 @@
  * `__desktop` (before any init script, since the view runs its user scripts in registration
  * order on every page load), installs init scripts, navigates, evaluates, answers calls, pumps
  * the platform's event loop from a timer so the program's own loop keeps running, and offers the
- * window's controls, the engine's inspector, a message box and non-modal file choosers. It knows
+ * window's controls, the engine's inspector, a message box and non-modal file choosers. With
+ * `frameless` the window opens without the system title bar and the page draws one; every page
+ * gets `window.__desktopWindow` (window-host.js) to drive the window and follow its state. It knows
  * nothing of pages or protocols: DesktopApp builds light's bridge on it, and a host with its own
  * bridge and its own server builds on it directly. One window per process.
  */
-import { desktop_bind, desktop_create, desktop_destroy, desktop_dialog_bind, desktop_dialog_cancel, desktop_dialog_open, desktop_dialog_unbind, desktop_eval, desktop_init, desktop_inspector, desktop_is_maximized, desktop_maximize, desktop_message, desktop_minimize, desktop_navigate, desktop_pump, desktop_return, desktop_set_size, desktop_set_title, desktop_terminate, desktop_unbind } from "./ffi.ts";
+import { desktop_begin_move, desktop_bind, desktop_close, desktop_create, desktop_destroy, desktop_dialog_bind, desktop_dialog_cancel, desktop_dialog_open, desktop_dialog_unbind, desktop_eval, desktop_init, desktop_inspector, desktop_is_maximized, desktop_maximize, desktop_message, desktop_minimize, desktop_navigate, desktop_pump, desktop_return, desktop_set_size, desktop_set_title, desktop_terminate, desktop_unbind, desktop_window_state } from "./ffi.ts";
+import { windowHostScript } from "./window-host.js";
 
 /** @import { DesktopWindowOptions } from "./types.ts" */
+
+const WINDOW_CALL = "[\"$window\",";
+const STATE_MAXIMIZED = 1;
+const STATE_FRAMELESS = 16;
+
+const platformName = () => (process.platform === "darwin" ? "macos" : process.platform === "win32" ? "windows" : "linux");
 
 /** @type {DesktopWindow | null} */
 let active = null;
@@ -43,6 +52,8 @@ export class DesktopWindow {
     this.height = options.height ?? 640;
     this.debug = options.debug === true;
     this.pumpMs = options.pumpMs ?? 8;
+    this.frameless = options.frameless === true;
+    this.state = -1;
     /** @type {((id: string, req: string) => void) | null} */
     this.onRequest = null;
     /** @type {(() => void) | null} */
@@ -55,7 +66,7 @@ export class DesktopWindow {
   }
 
   open() {
-    const w = desktop_create(this.debug ? 1 : 0, 0);
+    const w = desktop_create(this.debug ? 1 : 0, this.frameless ? 1 : 0);
     if (w === 0n) throw new Error("[desktop] the web view could not be created; is WebKitGTK (Linux) or the WebView2 runtime (Windows) installed?");
     this.w = w;
     this.running = true;
@@ -64,6 +75,9 @@ export class DesktopWindow {
     desktop_set_size(w, this.width, this.height, 0);
     desktop_bind(w, "__desktop", onCall);
     desktop_dialog_bind(w, onDialog);
+    this.state = desktop_window_state(w);
+    this.frameless = (this.state & STATE_FRAMELESS) !== 0;
+    desktop_init(w, windowHostScript(platformName(), this.frameless));
     process.on("exit", () => {
       if (this.w === 0n) return;
       desktop_dialog_unbind(this.w, onDialog);
@@ -189,8 +203,61 @@ export class DesktopWindow {
    * @param {string} req
    */
   receive(id, req) {
+    if (req.startsWith(WINDOW_CALL)) {
+      this.windowCall(id, req);
+      return;
+    }
     const fn = this.onRequest;
     if (fn !== null) fn(id, req);
+  }
+
+  /**
+   * A call from the page's window host: `["$window", [op]]`. The state is answered, the other
+   * operations are acknowledged first and carried out after.
+   * @param {string} id
+   * @param {string} req
+   */
+  windowCall(id, req) {
+    /** @type {unknown} */
+    const parsed = JSON.parse(req);
+    if (!Array.isArray(parsed) || parsed.length < 2) {
+      this.answer(id, "null");
+      return;
+    }
+    const args = parsed[1];
+    const op = Array.isArray(args) && typeof args[0] === "string" ? args[0] : "";
+    if (op === "state") {
+      this.answer(id, String(this.windowState()));
+      return;
+    }
+    this.answer(id, "null");
+    if (op === "minimize") this.minimize();
+    else if (op === "maximize") this.toggleMaximize();
+    else if (op === "close") this.requestClose();
+    else if (op === "drag") this.beginMove();
+  }
+
+  toggleMaximize() {
+    if (this.running) desktop_maximize(this.w, (this.windowState() & STATE_MAXIMIZED) !== 0 ? 0 : 1);
+  }
+
+  beginMove() {
+    if (this.running) desktop_begin_move(this.w);
+  }
+
+  requestClose() {
+    if (this.running) desktop_close(this.w);
+  }
+
+  windowState() {
+    return this.running ? desktop_window_state(this.w) : 0;
+  }
+
+  pushState() {
+    const state = this.windowState();
+    if (state === this.state) return;
+    this.state = state;
+    this.eval("window.__desktopWindowState&&window.__desktopWindowState(" + String(state) + ")");
   }
 
   tick() {
@@ -203,6 +270,7 @@ export class DesktopWindow {
         this.close();
         return;
       }
+      this.pushState();
     }
     setTimeout(() => this.tick(), this.pumpMs);
   }

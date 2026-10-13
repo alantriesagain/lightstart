@@ -21,10 +21,33 @@ View.define("demo-page", {
     await desktop.ready();
     this.pong = await desktop.call.ping();
     await desktop.emit("hello", "from the page");
+    await this.windowRoundTrip();
     const first = await desktop.call.add(1, 2);
     const second = await desktop.call.add(10, 20);
     await desktop.log("info", "adds " + String(first) + " " + String(second));
     await desktop.log("info", "page is up, ping answered " + this.pong);
+  },
+  async windowRoundTrip() {
+    const host = /** @type {{ __desktopWindow?: import("@bootstrapp/light/env/types.ts").WindowHost }} */ (/** @type {unknown} */ (globalThis)).__desktopWindow;
+    if (host === undefined) return;
+    /** @param {boolean} wanted */
+    const until = (wanted) => new Promise((resolve) => {
+      if (host.maximized === wanted) return void resolve(true);
+      const stop = host.subscribe((h) => {
+        if (h.maximized !== wanted) return;
+        stop();
+        resolve(true);
+      });
+      setTimeout(() => {
+        stop();
+        resolve(false);
+      }, 3000);
+    });
+    host.toggleMaximize();
+    const maximized = await until(true);
+    host.toggleMaximize();
+    const restored = await until(false);
+    await desktop.log("info", maximized && restored ? "window maximize round trip" : "window maximize round trip failed");
   },
   async add() {
     this.sum = await desktop.call.add(this.ticks, 100);
