@@ -1,7 +1,12 @@
 import { html } from "@bootstrapp/light/html";
 import T from "@bootstrapp/light/types";
 import { defineComponent } from "@bootstrapp/light";
+import { env } from "@bootstrapp/light/env";
 import { lcText } from "../utils/text.js";
+
+/** @import { WindowHost } from "../../env/types.ts" */
+
+const NO_DRAG = "button, a, input, select, textarea, [role=button], [data-no-drag]";
 
 export default defineComponent({
   tag: "lc-title-bar",
@@ -13,19 +18,51 @@ export default defineComponent({
     }),
     showControls: true,
     draggable: true,
+    maximized: false,
   },
   style: true,
 
+  connected() {
+    const host = env.window;
+    if (host === null) return;
+    this.syncHost(host);
+    this.$own(host.subscribe((current) => this.syncHost(current)));
+  },
+
+  /** @param {WindowHost} host */
+  syncHost(host) {
+    this.maximized = host.maximized;
+    this.dataset.host = host.frameless ? "frameless" : "native";
+    this.dataset.platform = host.platform === "macos" ? "mac" : host.platform;
+    this.toggleAttribute("data-native-controls", host.nativeControls);
+    this.toggleAttribute("data-fullscreen", host.fullscreen);
+    this.toggleAttribute("data-inactive", !host.focused);
+    if (host.controlsInset > 0) this.style.setProperty("--lc-title-bar-inset", `${host.controlsInset}px`);
+  },
+
+  /** @param {MouseEvent} e */
+  handleBarMouseDown(e) {
+    const host = env.window;
+    if (host === null || !host.frameless || !this.draggable) return;
+    if (e.target instanceof Element && e.target.closest(NO_DRAG)) return;
+    host.dragFrom(e);
+  },
+
   handleMinimize() {
-    this.$emit("minimize");
+    if (!this.$emit("minimize").defaultPrevented) env.window?.minimize();
   },
 
   handleMaximize() {
-    this.$emit("maximize");
+    if (!this.$emit("maximize").defaultPrevented) env.window?.toggleMaximize();
   },
 
   handleClose() {
-    this.$emit("close");
+    if (!this.$emit("close").defaultPrevented) env.window?.close();
+  },
+
+  drawsControls() {
+    const host = env.window;
+    return this.showControls && (host === null || (host.frameless && !host.nativeControls));
   },
 
   render() {
@@ -33,7 +70,7 @@ export default defineComponent({
       return html``;
 
     return html`
-      <div part="lc-title-bar-titlebar" class="title-bar" role="banner">
+      <div part="lc-title-bar-titlebar" class="title-bar" role="banner" @mousedown=${this.handleBarMouseDown}>
         <div part="lc-title-bar-left" class="title-bar-left">
           <slot name="left"></slot>
         </div>
@@ -46,7 +83,7 @@ export default defineComponent({
         <div part="lc-title-bar-right" class="title-bar-right">
           <slot name="right"></slot>
           ${
-            this.showControls
+            this.drawsControls()
               ? html`
                 <div part="lc-title-bar-controls" class="window-controls">
                   <button
@@ -63,19 +100,18 @@ export default defineComponent({
                     part="lc-title-bar-maximize"
                     class="control-button maximize"
                     @click=${this.handleMaximize}
-                    aria-label=${lcText("lc-title-bar", "maximize")}
+                    aria-label=${lcText("lc-title-bar", this.maximized ? "restore" : "maximize")}
                   >
-                    <svg width="12" height="12" viewBox="0 0 12 12">
-                      <rect
-                        x="2"
-                        y="2"
-                        width="8"
-                        height="8"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                      />
-                    </svg>
+                    ${
+                      this.maximized
+                        ? html`<svg width="12" height="12" viewBox="0 0 12 12">
+                            <rect x="2" y="4" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5" />
+                            <path d="M4 4V2h6v6H8" fill="none" stroke="currentColor" stroke-width="1.5" />
+                          </svg>`
+                        : html`<svg width="12" height="12" viewBox="0 0 12 12">
+                            <rect x="2" y="2" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5" />
+                          </svg>`
+                    }
                   </button>
                   <button
                     part="lc-title-bar-close"
@@ -106,7 +142,13 @@ export default defineComponent({
  * @tag lc-title-bar
  *
  * A desktop window title bar with draggable region and window controls.
- * Designed for desktop applications with native-like window chrome.
+ * Designed for desktop applications with native-like window chrome. Inside a
+ * desktop shell's frameless window (`env.window`) it drives the window: a drag
+ * on the bar moves it, a double-click maximizes or restores it, the buttons
+ * minimize, maximize and close it unless a listener of the event calls
+ * `preventDefault()`, and the maximize button turns into restore. On macOS the
+ * system's traffic lights stay and the bar leaves room for them; in a window
+ * that keeps the system title bar it hides itself. Elsewhere it only emits.
  *
  * @slot left - Left side content (app icon, menu, etc.)
  * @slot center - Center content (window title, tabs, etc.)
@@ -203,6 +245,20 @@ export default defineComponent({
  *     <button class="tab-new">+</button>
  *   </div>
  * </lc-title-bar>
+ * ```
+ *
+ * @example In a Desktop Shell's Frameless Window
+ * ```html
+ * <!-- The buttons, dragging and double-click act on the window by themselves. -->
+ * <lc-title-bar title="My App"></lc-title-bar>
+ * ```
+ *
+ * @example Taking Over Close
+ * ```html
+ * <lc-title-bar
+ *   title="Editor"
+ *   @close=${(e) => { if (this.dirty) { e.preventDefault(); this.askToSave(); } }}
+ * ></lc-title-bar>
  * ```
  *
  * @example Hidden Variant

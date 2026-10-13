@@ -114,6 +114,11 @@ export default defineComponent({
   renderMobileLayout() {
     return html`
       <div part="lc-app-container-container" class="mobile-container">
+        ${
+          env.window?.frameless
+            ? html`<div part="lc-app-container-titlebar" class="desktop-titlebar"><slot name="titlebar"></slot></div>`
+            : ""
+        }
         <div part="lc-app-container-header" class="mobile-header">
           <slot name="header"></slot>
         </div>
@@ -189,7 +194,7 @@ export default defineComponent({
  * @slot header - Mobile: header component (e.g., lc-app-header)
  * @slot bottom-nav - Mobile: bottom navigation component
  * @slot floating-action - Mobile: floating action button
- * @slot titlebar - Desktop: title bar component (e.g., lc-title-bar)
+ * @slot titlebar - Desktop: title bar component (e.g., lc-title-bar); also in the mobile layout inside a frameless desktop window, which has no other way to close
  * @slot sidebar - Desktop: sidebar component (e.g., lc-sidebar)
  * @slot toolbar - Desktop: top toolbar/breadcrumbs
  * @slot panel-secondary - Desktop: secondary panel (multi-pane mode)

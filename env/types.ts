@@ -55,6 +55,8 @@ export interface WindowHost {
 }
 
 export interface Env extends EnvSnapshot {
+  /** The window, when a desktop shell gave the page one; null in a browser. Not part of the snapshot. */
+  readonly window: WindowHost | null;
   /** A plain-object copy of the current values. */
   snapshot(): EnvSnapshot;
   /** Called with a fresh snapshot on resize (debounced), orientation, color-scheme and `dark` class changes. */

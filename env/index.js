@@ -1,12 +1,15 @@
 /**
  * @file @bootstrapp/light/env
  * What a component reads about the page it runs in: the viewport and its
- * breakpoint, the OS, touch, the color scheme. Volatile values are getters,
- * always current on read; `subscribe` reports changes. Listeners start with
- * the first subscriber, so importing the module has no side effects.
+ * breakpoint, the OS, touch, the color scheme, and the window when a desktop
+ * shell gave the page one (`env.window`, null in a browser). Volatile values
+ * are getters, always current on read; `subscribe` reports changes, and the
+ * window host has a `subscribe` of its own for the window's state. Listeners
+ * start with the first subscriber, so importing the module has no side
+ * effects.
  */
 
-/** @import { Env, EnvSnapshot } from "./types.ts" */
+/** @import { Env, EnvSnapshot, WindowHost } from "./types.ts" */
 
 export const BREAKPOINTS = { xs: 0, sm: 576, md: 768, lg: 992, xl: 1200, xxl: 1400 };
 
@@ -20,6 +23,12 @@ const detectOs = () => {
   if (/win/.test(s)) return "windows";
   if (/linux/.test(s)) return "linux";
   return "unknown";
+};
+
+/** @returns {WindowHost | null} */
+const windowHost = () => {
+  const host = /** @type {{ __desktopWindow?: unknown }} */ (globalThis).__desktopWindow;
+  return typeof host === "object" && host !== null ? /** @type {WindowHost} */ (host) : null;
 };
 
 /** @param {number} w @returns {EnvSnapshot["breakpoint"]} */
@@ -57,6 +66,7 @@ export const env = {
   get isDesktop() { return vw() >= BREAKPOINTS.md; },
   get prefersDark() { return !!media(DARK_QUERY)?.matches; },
   get dark() { return !!globalThis.document?.documentElement?.classList?.contains("dark"); },
+  get window() { return windowHost(); },
   snapshot() {
     const { os, isTouch, pixelRatio, width, height, screenWidth, screenHeight, orientation, breakpoint, isMobile, isDesktop, prefersDark, dark } = env;
     return { os, isTouch, pixelRatio, width, height, screenWidth, screenHeight, orientation, breakpoint, isMobile, isDesktop, prefersDark, dark };

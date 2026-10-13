@@ -523,13 +523,15 @@ class View extends BaseElement {
   /**
    * Dispatch a CustomEvent on this element. Emitted events don't bubble, so
    * only element-attached listeners (`@name=` in a parent template) receive
-   * one.
+   * one. They are cancelable: a listener's `preventDefault()` shows on the
+   * returned event as `defaultPrevented`, which is how a component lets its
+   * parent take over the action it would otherwise perform.
    *
    * @param {string} eventName
    * @param {unknown} [data]
    */
   $emit(eventName, data) {
-    const event = new CustomEvent(eventName, { detail: data });
+    const event = new CustomEvent(eventName, { detail: data, cancelable: true });
     this.dispatchEvent(event);
     return event;
   }

@@ -135,6 +135,7 @@ export default {
   "lc-title-bar": {
     minimize: "Minimize window",
     maximize: "Maximize window",
+    restore: "Restore window",
     close: "Close window",
   },
   "lc-navbar": {

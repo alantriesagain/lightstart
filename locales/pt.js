@@ -130,6 +130,7 @@ export default {
   "lc-title-bar": {
     minimize: "Minimizar a janela",
     maximize: "Maximizar a janela",
+    restore: "Restaurar janela",
     close: "Fechar a janela",
   },
   "lc-navbar": {
