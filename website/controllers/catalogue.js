@@ -1,10 +1,8 @@
 import $APP from "bootstrapp";
 import { defineController } from "bootstrapp/controller";
-import T from "bootstrapp/types";
 import presets, { loadPreset } from "@bootstrapp/light/theme/presets.js";
 import { componentPath } from "../lib/paths.js";
 
-/** @import { Prop } from "../types.ts" */
 /** @import { SkinOption } from "../types.ts" */
 /** @import { SearchDoc, TocItem } from "@bootstrapp/light/components/types.ts" */
 
@@ -23,13 +21,13 @@ const token = (theme, group, key) => {
 
 export default defineController({
   name: "catalogue",
-  adapter: true,
   props: {
-    skin: T.string({ defaultValue: HOST_THEME, sync: "local", key: "lc:skin" }),
+    skin: /** @type {string} */ (HOST_THEME),
     search: "",
-    toc: /** @type {Prop<TocItem[]>} */ (T.array({ defaultValue: [] })),
-    skins: /** @type {Prop<SkinOption[]>} */ (T.array({ defaultValue: [] })),
+    toc: /** @type {TocItem[]} */ ([]),
+    skins: /** @type {SkinOption[]} */ ([]),
   },
+  sync: { skin: { to: "local", key: "lc:skin" } },
 
   async connected() {
     const fromQuery = new URLSearchParams(location.search).get("skin");
