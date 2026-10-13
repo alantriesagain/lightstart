@@ -21,7 +21,7 @@ A controller is a named piece of app state and the methods that change it, share
 ## Shape
 
 ```js
-import { defineController } from "bootstrapp/controller";
+import { defineController } from "@bootstrapp/light/controller";
 import $APP from "bootstrapp";
 
 /** @import { Row, TaskRecord } from "../types.ts" */
@@ -45,9 +45,10 @@ export default defineController({
 
 - Framework members are `$`-prefixed (`$name`, `$state`, `$sync`, `$queries`, `$own`, `$attach`, `$ready`, `$dispose`); a `$`-prefixed property or member throws at define time, and so do `definition`, `has`, `dispose`, `get` and `create`. Every other name is free, `state`, `config`, `ready`, `connected` and `name` included.
 - Every controller is a `sync:` target for views by its name (`sync: "tasks"`, property names must match). `defineController` refuses `adapter:`, a `reactive: false` prop and a sync option inside a `T` descriptor, naming the form that replaced each.
-- A controller too large for one literal is composed: `mixins: [withUndo, withAutosave({ delay })]`, each a `defineMixin({ props, sync, ...members })` from `bootstrapp/controller` imported from the module that defines it. Fragments fold in first, the definition wins a collision, hooks chain mixin-first, sync entries union, and the generated `$APP.<name>` type carries every fragment's members.
-- Rows a controller mirrors are a prop bound to the model in the sync block (live, no refresh after writes; in a package the target is a thunk, `to: () => $APP.Model.task`); other async goes through `resource()`.
+- A controller too large for one literal is composed: `mixins: [withUndo, withAutosave({ delay })]`, each a `defineMixin({ props, sync, ...members })` from `@bootstrapp/light/controller` imported from the module that defines it. Fragments fold in first, the definition wins a collision, hooks chain mixin-first, sync entries union, and the generated `$APP.<name>` type carries every fragment's members.
+- Rows a controller mirrors are a prop bound to the model in the sync block (live, no refresh after writes; in a package the target is a thunk, `to: () => $APP.Model.task`); other async goes through `resource()` from `@bootstrapp/light/controller/resource`.
 - Small persisted state is a prop bound to `"local"` in the sync block; strings are stored raw, everything else as JSON.
 - Members that are arrays, plain objects, `Map` or `Set` are copied per instance; anything that has to be built per instance (a `WeakMap`, a value read from `$APP`) is declared with a cast and assigned in `connected()`.
 - A timer uses `Date.now()` as its time source and keeps the resumable handle in a prop bound to `"local"` so a reload rebuilds it; the interval id is a member stopped in `this.$own(() => ...)`.
-- Reference: `projects/bboxe/controllers/timer.js` (timer, resumable handle, wake lock), `projects/bboxe/controllers/library.js` (model-bound props), `examples/centavo/controllers/rates.js` (`resource()`), `framework/controller/README.md`.
+- The controller is light's (`light/controller/README.md`); `bootstrapp/controller` adds `registerControllers`, the model binder and `bootstrapp/controller/rows` (`framework/controller/README.md`).
+- Reference: `projects/bboxe/controllers/timer.js` (timer, resumable handle, wake lock), `projects/bboxe/controllers/library.js` (model-bound props), `examples/centavo/controllers/rates.js` (`resource()`).
