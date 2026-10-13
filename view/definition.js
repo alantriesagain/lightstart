@@ -1,7 +1,8 @@
 /**
  * @bootstrapp/light/view/definition.js: definition composition
  * The one merge primitive for definition-shaped citizens (components,
- * controllers, extensions): props union (incoming wins), lifecycle hooks
+ * controllers, extensions): props, events and a controller's sync block union
+ * (incoming wins), lifecycle hooks
  * chain (existing runs first, an async hook on either side is awaited),
  * everything else copies property descriptors
  * (NOT spread): definitions legitimately declare getters and spread would
@@ -66,6 +67,8 @@ export const mergeDefinitions = (current, incoming, hooks = LIFECYCLE_HOOKS) => 
     merged.props = { ...current.props, ...incoming.props };
   if (current.events || incoming.events)
     merged.events = { ...current.events, ...incoming.events };
+  if (current.sync || incoming.sync)
+    merged.sync = { ...current.sync, ...incoming.sync };
   for (const hook of hooks)
     if (current[hook] && incoming[hook])
       merged[hook] = /** @param {...unknown} args */ function chainedHook(...args) {

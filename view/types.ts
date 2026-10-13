@@ -20,17 +20,26 @@ export type PropsToThis<P> = {
   [K in keyof P]: PropertyValue<P[K]>;
 };
 
+/** Whether `V` is a union of more than one member (`boolean` counts). */
+type IsUnion<V, U = V> = V extends unknown ? ([U] extends [V] ? false : true) : never;
+
 /**
- * The value type a `props` entry declares: a descriptor's phantom type;
- * for a default, its widened type (`false` is `boolean`, `0` is `number`,
- * `""` is `string`), an empty array literal as `unknown[]`, `null` as `any`.
+ * The value type a `props` entry declares: a descriptor's phantom type; for a
+ * default, its widened type (`false` is `boolean`, `0` is `number`, `""` is
+ * `string`), an empty array literal as `unknown[]`, `null` as `any`. A default
+ * cast to a type keeps it whole: a `null` cast to `User | null` is
+ * `User | null`, and a string cast to `"a" | "b"` stays that union. A
+ * declaration not yet decided (the whole `PropertyDeclaration` union, as a
+ * generic signature carries it) is `any`.
  */
-export type PropertyValue<V> = V extends TypeDefinition<infer T> ? T
-  : V extends boolean ? boolean
-  : V extends number ? number
-  : V extends string ? string
-  : V extends readonly never[] ? unknown[]
-  : V extends null | undefined ? any
+export type PropertyValue<V> = [PropertyDeclaration] extends [V] ? any
+  : [V] extends [TypeDefinition<infer T>] ? T
+  : [V] extends [null | undefined] ? any
+  : [V] extends [readonly never[]] ? unknown[]
+  : true extends IsUnion<V> ? V
+  : [V] extends [boolean] ? boolean
+  : [V] extends [number] ? number
+  : [V] extends [string] ? string
   : V;
 
 /**

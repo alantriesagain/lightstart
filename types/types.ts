@@ -35,16 +35,9 @@ export type TypeDefinition<T = unknown> = TypeDefinitionFields & Record<string, 
  * `label: "x"` is `T.string("x")`, `open: false` is `T.boolean(false)`,
  * `items: []` is `T.array({ defaultValue: [] })`, an object is
  * `T.object({ defaultValue })`, `null` is `T.any({ defaultValue: null })`.
+ * Any object counts, so a default cast to an interface type is one too.
  */
-export type PropertyShorthand =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | readonly unknown[]
-  | Record<string, unknown>
-  | ((...args: unknown[]) => unknown);
+export type PropertyShorthand = string | number | boolean | null | undefined | object;
 
 /** What a `props` entry may be: a descriptor, or a default the engine reads one off. */
 export type PropertyDeclaration = TypeDefinition | PropertyShorthand;
