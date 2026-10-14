@@ -8,6 +8,8 @@ export interface DemoApi {
 /** What the backend emits. */
 export interface DemoEvents {
   tick: number;
+  /** Pushed once on connect with `emitJson`, as JSON text. */
+  records: { name: string; n: number }[];
 }
 
 /** What the page emits. */

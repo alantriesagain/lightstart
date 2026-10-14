@@ -1,8 +1,9 @@
 /**
  * @file The demo page: light's title bar on the frameless window, and a light component that
  * connects to the backend, counts its ticks, adds 100 to a running total through the bridge on
- * each click, maximizes and restores the window through its host, reports where the title bar's
- * controls are (for frameless-check.js), and can close the app.
+ * each click, reads back records the backend pushed as JSON text, maximizes and restores the
+ * window through its host, reports where the title bar's controls are (for frameless-check.js),
+ * and can close the app.
  */
 import View from "@bootstrapp/light";
 import titleBar from "@bootstrapp/light/components/app/title-bar.js";
@@ -24,6 +25,7 @@ View.define("demo-page", {
       this.ticks = n;
     });
     desktop.once("tick", (n) => desktop.log("info", "first tick " + String(n)));
+    desktop.once("records", (list) => desktop.log("info", "records " + String(list.length) + " " + list.map((r) => r.name).join(" ")));
     await desktop.ready();
     this.pong = await desktop.call.ping();
     await desktop.emit("hello", "from the page");

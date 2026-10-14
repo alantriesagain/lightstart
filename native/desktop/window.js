@@ -186,7 +186,19 @@ export class DesktopWindow {
    * @param {unknown} value
    */
   emit(name, value) {
-    this.eval("window.__desktopEmit(" + JSON.stringify(name) + "," + JSON.stringify(value) + ")");
+    this.emitJson(name, JSON.stringify(value));
+  }
+
+  /**
+   * Like `emit`, with the value already JSON text, evaluated as written: a value that is mostly
+   * JSON from elsewhere (lines another program printed) skips a second encoding here and the
+   * page's parse. `json` must be valid JSON; otherwise the page drops the event with a syntax
+   * error.
+   * @param {string} name
+   * @param {string} json
+   */
+  emitJson(name, json) {
+    this.eval("window.__desktopEmit(" + JSON.stringify(name) + "," + json + ")");
   }
 
   /**

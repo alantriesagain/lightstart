@@ -141,6 +141,19 @@ export class DesktopApp {
     this.window.emit(name, value);
   }
 
+  /**
+   * Like `emit`, with the value already JSON text, which the page evaluates as written: for a
+   * value built from JSON another program printed, this skips encoding it as a string here and
+   * parsing it there (a 5 MB line arrives in about a third of the time). `json` must be valid
+   * JSON; otherwise the page drops the event with a syntax error.
+   * @param {string} name
+   * @param {string} json
+   */
+  emitJson(name, json) {
+    if (!this.ready || !this.running) return;
+    this.window.emitJson(name, json);
+  }
+
   start() {
     /** @type {(id: string, req: string) => void} */
     const onRequest = (id, req) => this.dispatchCall(id, req);

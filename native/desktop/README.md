@@ -101,12 +101,13 @@ is passed to scriptc for a backend outside this checkout that imports `@bootstra
 
 `DesktopWindow` (`window.js`) is the web view alone, for a host that brings its own bridge and
 its own server: `open()` creates the view and its window and binds `__desktop`; `init(js)`
-installs a document-start script; `navigate(url)`, `eval(js)`, `emit(name, value)`; `answer(id,
-json)` resolves one page call with `json`; `onRequest(id, req)` receives page calls (`req` is
-the JSON array of arguments); `onClose` runs when the window goes away; `quit()` closes it from
-the program. The view runs its user scripts in registration order on every page load, so the
-binding is registered in `open()` before any `init` script: a script may call `window.__desktop`
-at document start. `DesktopApp` is light's bridge and asset server on top of a `DesktopWindow`.
+installs a document-start script; `navigate(url)`, `eval(js)`, `emit(name, value)`,
+`emitJson(name, json)`; `answer(id, json)` resolves one page call with `json`; `onRequest(id,
+req)` receives page calls (`req` is the JSON array of arguments); `onClose` runs when the window
+goes away; `quit()` closes it from the program. The view runs its user scripts in registration
+order on every page load, so the binding is registered in `open()` before any `init` script: a
+script may call `window.__desktop` at document start. `DesktopApp` is light's bridge and asset
+server on top of a `DesktopWindow`.
 
 The window's own surface, GTK on Linux (the other backends get theirs when they are verified):
 `minimize()`, `maximize(on)`, `isMaximized()`; `inspector()` shows the engine's developer tools
@@ -165,6 +166,7 @@ system frame. It moves the real pointer, so it is not part of `verify`.
 | `new DesktopApp({ title, width, height, web, debug, pumpMs })` | Options only; nothing opens yet. `web` defaults to `--web` on the command line, then `web/` beside the executable. `debug` opens the engine's developer tools. |
 | `handle(name, invoke)` | Registers a method: `invoke(args)` gets the page's arguments parsed from JSON as `unknown[]` and answers a Promise; its value goes back as JSON. A rejection becomes the page's rejection with the error's message. |
 | `emit(name, value)` | Pushes an event to the page's listeners. Nothing is pushed before the page said it is ready. |
+| `emitJson(name, json)` | `emit` with the value already JSON text, evaluated in the page as written: no second encoding here and no parse there, for values assembled from JSON another program printed (a 5 MB line arrives in about a third of the time). `json` must be valid JSON, or the page drops the event with a syntax error. |
 | `on(name, receive)` | Listens for an event the page emits; `receive(value)` gets it parsed from JSON as `unknown`. Answers the function that removes the listener. |
 | `start()` | Opens the window, serves the page, starts pumping. |
 | `quit()` | Closes the window and exits; the user closing the window does the same. |

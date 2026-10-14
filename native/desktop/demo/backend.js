@@ -3,8 +3,9 @@
  * second, a listener for the page's "hello" event, a file chooser behind "pick". With --smoke it
  * quits on its own once the page connected, called a method, emitted hello, called add twice
  * with the right answers, acknowledged the first tick through the log, maximized and restored the
- * window through its window host, and a file chooser the backend opened and withdrew answered as
- * cancelled, printing "smoke ok"; that is the gate
+ * window through its window host, a file chooser the backend opened and withdrew answered as
+ * cancelled, and the page read back records pushed as JSON text, printing "smoke ok"; that is
+ * the gate
  * native/desktop/smoke.js runs.
  */
 import { DesktopApp, num } from "../host.js";
@@ -18,9 +19,10 @@ let greeted = false;
 let added = false;
 let dialogCancelled = false;
 let windowed = false;
+let records = false;
 
 const check = () => {
-  if (smoke && pinged && ticked && greeted && added && dialogCancelled && windowed) {
+  if (smoke && pinged && ticked && greeted && added && dialogCancelled && windowed && records) {
     console.log("smoke ok");
     app.quit();
   }
@@ -53,6 +55,7 @@ app.onLog = (/** @type {string} */ level, /** @type {string} */ text) => {
   if (text.startsWith("first tick")) ticked = true;
   if (text === "adds 3 30") added = true;
   if (text === "window maximize round trip") windowed = true;
+  if (text === "records 2 first second") records = true;
   check();
 };
 app.onConnect = () => {
@@ -66,6 +69,7 @@ app.onConnect = () => {
       for (const id of app.window.pendingDialogs()) app.window.cancelDialog(id);
     }, 500);
   }
+  app.emitJson("records", '[{"name":"first","n":1},{"name":"second","n":2}]');
   const beat = () => {
     if (!app.running) return;
     ticks++;
@@ -79,7 +83,7 @@ app.onClose = () => {
 };
 if (smoke)
   setTimeout(() => {
-    console.log("smoke timed out: pinged=" + String(pinged) + " ticked=" + String(ticked) + " greeted=" + String(greeted) + " added=" + String(added) + " windowed=" + String(windowed));
+    console.log("smoke timed out: pinged=" + String(pinged) + " ticked=" + String(ticked) + " greeted=" + String(greeted) + " added=" + String(added) + " windowed=" + String(windowed) + " records=" + String(records));
     process.exit(1);
   }, 15000);
 app.start();
