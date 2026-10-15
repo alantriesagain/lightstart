@@ -122,9 +122,13 @@ const killToStart = (input: TInput) => {
   notifyChanged(input);
 };
 
+/** Kill to the end of the line; at its end, join the next line (as emacs and bash do). */
 const killToEnd = (input: TInput) => {
   const line = gs(input.lines[input.row]);
-  input.lines[input.row] = line.slice(0, input.col).join("");
+  if (input.col >= line.length && input.row + 1 < input.lines.length) {
+    input.lines[input.row] = line.join("") + input.lines[input.row + 1];
+    input.lines.splice(input.row + 1, 1);
+  } else input.lines[input.row] = line.slice(0, input.col).join("");
   notifyChanged(input);
 };
 
