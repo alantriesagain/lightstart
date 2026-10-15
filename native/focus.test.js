@@ -10,7 +10,7 @@ render(html`<box border>
   <button @click=${(/** @type {MouseEvent} */ e) => log.push("click " + e.type + " " + String(e.button))} @focus=${() => log.push("focus button")} @blur=${() => log.push("blur button")}>Press</button>
   <box scroll height=3 @wheel=${(/** @type {WheelEvent} */ e) => log.push("wheel " + String(e.delta))}>${[1, 2, 3, 4, 5, 6].map((n) => html`<text>line ${n}</text>`)}</box>
   <textarea placeholder="type" @focus=${() => log.push("focus input")}></textarea>
-  <text tabindex="0" @mousedown=${(/** @type {MouseEvent} */ e) => log.push("down " + String(e.x) + "," + String(e.y))}>focusable text</text>
+  <text tabindex="0" @mousedown=${(/** @type {MouseEvent} */ e) => log.push("down " + String(e.x) + "," + String(e.y))} @mousemove=${(/** @type {MouseEvent} */ e) => log.push("move " + String(e.x) + "," + String(e.y))} @mouseup=${(/** @type {MouseEvent} */ e) => log.push("up " + String(e.x) + "," + String(e.y))}>focusable text</text>
   <text hidden tabindex="0">hidden</text>
   <button disabled>off</button>
 </box>`, root);
@@ -86,6 +86,12 @@ log.length = 0;
 renderer.decoder.pushText("\x1b[<0;5;8M");
 eq("mousedown focuses the focusable text and reaches its handler", log.join("|"), "blur button|down 4,7");
 ok("the text is focused", renderer.focus === focusText);
+log.length = 0;
+renderer.decoder.pushText("\x1b[<32;4;2M\x1b[<0;4;2m");
+eq("while held, a drag onto the title and its release still reach the text", log.join("|"), "move 3,1|up 3,1");
+log.length = 0;
+renderer.decoder.pushText("\x1b[<32;5;8M");
+eq("once released, a move goes where it is", log.join("|"), "move 4,7");
 renderer.setFocus(null);
 ok("focus cleared", renderer.focus === null);
 ok("terminal wrote frames", term.out.length > 0);

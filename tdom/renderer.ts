@@ -156,7 +156,11 @@ export class Renderer {
   }
 
   dispatchMouse(e: MouseEvent) {
-    const target = hitTest(this.root, e.x, e.y);
+    const hit = hitTest(this.root, e.x, e.y);
+    // While a button is held, the element pressed gets the moves and the release: a drag that
+    // leaves it (a selection running past its edge) is still its drag.
+    const held = e.type !== "mousedown" && this.pressed !== null && this.attached(this.pressed) ? this.pressed : null;
+    const target = held !== null ? held : hit;
     if (e.type === "mousedown") {
       this.pressed = target;
       if (target !== null) {
@@ -169,9 +173,16 @@ export class Renderer {
     if (e.type === "mouseup") {
       const pressed = this.pressed;
       this.pressed = null;
-      if (pressed !== null && pressed === target) target.dispatch(new MouseEvent("click", e.x, e.y, e.button, e.ctrl, e.alt, e.shift));
+      if (pressed !== null && pressed === hit) pressed.dispatch(new MouseEvent("click", e.x, e.y, e.button, e.ctrl, e.alt, e.shift));
     }
     frames.request();
+  }
+
+  /** Whether `el` is still in the tree this renderer draws. */
+  private attached(el: TElement): boolean {
+    let at: TElement | null = el;
+    while (at !== null && at !== this.root) at = at.parent;
+    return at === this.root;
   }
 
   dispatchWheel(e: WheelEvent) {
