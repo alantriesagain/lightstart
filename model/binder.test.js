@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import T from "../types/index.js";
 import { MODEL_CHANGED } from "./events.js";
-import { createModel, modelBus } from "./index.js";
+import { configureModel, modelApi, modelBus } from "./index.js";
 import { bindModelQuery, modelBinder, modelQuery } from "./binder.js";
 import { createStore } from "../signals/store.ts";
 import { defineController, registerSyncBinder } from "../controller/index.js";
@@ -34,7 +34,10 @@ const change = (model, action, row) => modelBus().emit(MODEL_CHANGED, { model, a
 
 let models = {};
 let Model;
-const registry = (request) => createModel(request, { schemaOf: (name) => models[name] });
+const registry = (request) => {
+  configureModel({ request });
+  return { session: modelApi("session", () => models.session), account: modelApi("account", () => models.account) };
+};
 
 describe("modelQuery", () => {
   let backend;
@@ -155,4 +158,7 @@ describe("bindModelQuery", () => {
   });
 });
 
-afterEach(() => { Model = undefined; });
+afterEach(() => {
+  Model = undefined;
+  configureModel();
+});

@@ -1,9 +1,9 @@
 /**
- * @bootstrapp/light/model: the model registry. `Model.<name>` is a plain
- * object of the eleven methods, built once per name, sending `MODEL:*`
- * commands through the request its host supplies: a store in the same page,
- * or a port to a worker that holds one. Rows are the plain objects the store
- * answered; liveness is `onChange`.
+ * @bootstrapp/light/model: a model's api. `defineModel(name, schema)` is a
+ * plain object of the eleven methods, imported where it is used, sending
+ * `MODEL:*` commands through the request `configureModel` set: a store in
+ * the same runtime, or a port to a worker that holds one. Rows are the plain
+ * objects the store answered; liveness is `onChange`.
  */
 
 import {
@@ -16,9 +16,11 @@ export { registerQueryHook } from "./query-hooks.js";
 export { setFileStorage, getFileStorage } from "./file-storage.js";
 export { onChange } from "./changes.js";
 export { ValidationError } from "./validate.js";
-export { configureModel, modelBus } from "./config.js";
+import { modelRequest } from "./config.js";
 
-/** @import { ClientWriteOptions, ModelApi, ModelRegistry, ModelRequest, ModelSchema, QueryOptions, Row } from "./types.ts" */
+export { configureModel, modelBus, modelRequest } from "./config.js";
+
+/** @import { ClientWriteOptions, ModelApi, ModelSchema, QueryOptions, Row, RowOf } from "./types.ts" */
 
 /** Brands a per-model api so a `sync:` binder can tell it from any other object. */
 export const MODEL_API = Symbol.for("bootstrapp.model.api");
@@ -34,21 +36,23 @@ const isId = (value) => typeof value === "string" || typeof value === "number";
 const withOpts = (payload, opts) => (opts ? { ...payload, opts } : payload);
 
 /**
+ * The api of the model `name`, for a host that resolves schemas by name:
+ * `schemaOf` answers the schema when it is read (by `api.schema` and the
+ * query hooks), so a schema registered later is still found.
  * @param {string} name
- * @param {ModelRequest} request
- * @param {(name: string) => ModelSchema | undefined} schemaOf
+ * @param {() => ModelSchema | undefined} schemaOf
  * @returns {ModelApi}
  */
-const modelApi = (name, request, schemaOf) => {
+export const modelApi = (name, schemaOf) => {
   /** @param {string} action @param {Record<string, unknown>} payload */
-  const send = (action, payload) => request(action, name, payload);
+  const send = (action, payload) => modelRequest()(action, name, payload);
   /** @param {QueryOptions} opts */
-  const hooked = (opts) => applyQueryHooks({ model: name, schema: schemaOf(name), opts });
+  const hooked = (opts) => applyQueryHooks({ model: name, schema: schemaOf(), opts });
   return /** @type {ModelApi} */ ({
     [MODEL_API]: true,
     name,
     get schema() {
-      return schemaOf(name);
+      return schemaOf();
     },
     /** @param {string | number | QueryOptions} idOrOpts @param {QueryOptions} [opts] */
     get(idOrOpts, opts) {
@@ -87,45 +91,14 @@ const modelApi = (name, request, schemaOf) => {
 };
 
 /**
- * Build the registry. `Model.<name>` answers the same api object on every
- * read; `Model.ext(id)` scopes names under an extension's namespace.
- * `schemaOf` answers a model's schema, which the query hooks and an api's
- * `schema` read.
+ * A model to import where it is used: its api, typed by its schema, over the
+ * request `configureModel` set.
  *
- * @param {ModelRequest} request
- * @param {{ schemaOf?: (name: string) => ModelSchema | undefined }} [options]
- * @returns {ModelRegistry}
+ *     export default defineModel("todos", { title: T.string({ required: true }) });
+ *
+ * @template {ModelSchema} S
+ * @param {string} name
+ * @param {S} schema
+ * @returns {ModelApi<RowOf<S>, ModelSchema>}
  */
-export function createModel(request, options = {}) {
-  const schemaOf = options.schemaOf ?? (() => undefined);
-  /** @type {Map<string, ModelApi>} */
-  const apis = new Map();
-  /** @param {string} name */
-  const apiFor = (name) => {
-    let api = apis.get(name);
-    if (!api) apis.set(name, (api = modelApi(name, request, schemaOf)));
-    return api;
-  };
-
-  /** @type {Map<string, ModelRegistry>} */
-  const scoped = new Map();
-  const statics = {
-    request,
-    /** @param {string} extensionId */
-    ext(extensionId) {
-      if (!extensionId) throw new Error("Model.ext(extensionId): extensionId is required");
-      let registry = scoped.get(extensionId);
-      if (!registry) {
-        registry = /** @type {ModelRegistry} */ (new Proxy({ ...statics, extensionId }, {
-          get: (target, prop) => (prop in target ? Reflect.get(target, prop) : typeof prop === "string" ? apiFor(`${extensionId}_${prop}`) : undefined),
-        }));
-        scoped.set(extensionId, registry);
-      }
-      return registry;
-    },
-  };
-
-  return /** @type {ModelRegistry} */ (new Proxy(statics, {
-    get: (target, prop) => (prop in target ? Reflect.get(target, prop) : typeof prop === "string" ? apiFor(prop) : undefined),
-  }));
-}
+export const defineModel = (name, schema) => /** @type {ModelApi<RowOf<S>, ModelSchema>} */ (modelApi(name, () => schema));

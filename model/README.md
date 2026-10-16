@@ -1,6 +1,6 @@
 # @bootstrapp/light/model
 
-The data layer: a schema per model, a store that runs every write the same way over any storage adapter, a registry of per-model apis, and one change event that keeps every live query current. It needs no host: a page builds a store over IndexedDB and binds components to its queries. A host that keeps the store elsewhere (Bootstrapp runs it in a db-worker) hands the registry a request that crosses to it and forwards the change event back.
+The data layer: a schema per model, a store that runs every write the same way over any storage adapter, a model's api that its module declares and every user imports, and one change event that keeps every live query current. It needs no host: a page or a native program builds a store and binds components and controllers to its queries. A host that keeps the store elsewhere (Bootstrapp runs it in a db-worker) configures a request that crosses to it and forwards the change event back.
 
 ## Entries
 
@@ -8,7 +8,7 @@ Each entry loads only its own code; nothing is a barrel.
 
 | Entry | Holds |
 |---|---|
-| `@bootstrapp/light/model` | `createModel`, `isModelApi`, `onChange`, `ValidationError`, `registerQueryHook`, `setFileStorage`, `configureModel`, `modelBus` |
+| `@bootstrapp/light/model` | `defineModel`, `modelApi`, `isModelApi`, `onChange`, `ValidationError`, `registerQueryHook`, `setFileStorage`, `configureModel`, `modelRequest`, `modelBus` |
 | `@bootstrapp/light/model/store` | `createStore`, `storeRequest`, `createModelHandlers` |
 | `@bootstrapp/light/model/adapter` | the storage SPI: `registerStorageAdapter`, `createAdapter`, `registerAdapterDecorator`, `validateRow`, the query helpers |
 | `@bootstrapp/light/model/indexeddb` | the IndexedDB adapter |
@@ -22,44 +22,47 @@ Each entry loads only its own code; nothing is a barrel.
 
 ```javascript
 import T from "@bootstrapp/light/types";
-import { createModel, modelBus } from "@bootstrapp/light/model";
+import { configureModel, defineModel, modelBus } from "@bootstrapp/light/model";
 import { createStore, storeRequest } from "@bootstrapp/light/model/store";
 import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
 import IndexedDBAdapter from "@bootstrapp/light/model/indexeddb";
 
-registerStorageAdapter("indexeddb", IndexedDBAdapter);
+// models/todos.js
+export const todos = defineModel("todos", { title: T.string({ required: true }), done: T.boolean({ index: true, defaultValue: false }) });
 
-const models = { todo: { title: T.string({ required: true }), done: T.boolean({ index: true, defaultValue: false }) } };
+// the page's entry
+registerStorageAdapter("indexeddb", IndexedDBAdapter);
+const models = { todos: todos.schema };
 const db = createAdapter("indexeddb", { name: "todos", version: 1, models, isDefaultAdapter: true });
 await db.init();
 const store = createStore({ models, databases: { indexeddb: db }, defaultAdapter: "indexeddb", emit: (event, data) => modelBus().emit(event, data) });
-export const Model = createModel(storeRequest(store), { schemaOf: (name) => models[name] });
+configureModel({ request: storeRequest(store) });
 ```
 
-Importing the IndexedDB adapter registers nothing; the page names it. `emit` is how the store's writes reach `onChange` and every live query; a store built without it writes silently.
+Importing the IndexedDB adapter registers nothing; the page names it. `emit` is how the store's writes reach `onChange` and every live query; a store built without it writes silently. The store holds schemas by model name, the same names the models were defined with.
 
 ## API
 
-Every model operation goes through `Model.<name>`, a plain object of eleven methods built once per name. Rows are plain objects.
+Every model operation goes through the model's api, a plain object of eleven methods. `defineModel(name, schema)` builds it, and a module that uses the model imports it. Rows are plain objects, typed by the schema (`RowOf<S>`).
 
 ```javascript
-const row  = await Model.users.get(id, { includes });
-const row  = await Model.users.get({ where: { email } });
-const rows = await Model.users.getAll({ where, order, limit, offset, fields, includes });
-const page = await Model.users.query({ where, limit: 20, offset });   // { rows, total }
-const n    = await Model.users.count({ where });
-const yes  = await Model.users.exists({ email });
-const f    = await Model.place.facets(["city"], { where });
-const row  = await Model.users.add(data);        // resolves the stored row, rejects on failure
-const rows = await Model.users.addMany(list);
-const row  = await Model.users.edit(id, patch);  // or edit({ id, ...patch })
-await Model.users.remove(id);
-await Model.users.removeAll(where);
+const row  = await users.get(id, { includes });
+const row  = await users.get({ where: { email } });
+const rows = await users.getAll({ where, order, limit, offset, fields, includes });
+const page = await users.query({ where, limit: 20, offset });   // { rows, total }
+const n    = await users.count({ where });
+const yes  = await users.exists({ email });
+const f    = await places.facets(["city"], { where });
+const row  = await users.add(data);        // resolves the stored row, rejects on failure
+const rows = await users.addMany(list);
+const row  = await users.edit(id, patch);  // or edit({ id, ...patch })
+await users.remove(id);
+await users.removeAll(where);
 ```
 
-A write rejects on failure. A schema rejection is a `ValidationError` whose `errors` maps each failing field to its message. `Model.users.schema` is the model's schema, as `schemaOf` answers it. `Model.ext(id)` scopes the registry to an extension's namespace (`Model.ext("delivery").scripts` is `Model.delivery_scripts`).
+A write rejects on failure. A schema rejection is a `ValidationError` whose `errors` maps each failing field to its message. `users.schema` is the model's schema.
 
-`createModel(request, { schemaOf })` takes the request every method sends: `request(action, model, payload)` with `action` one of the `MODEL:*` commands. `storeRequest(store)` answers it from a store in the same page; across a worker, `createModelHandlers(getStore)` is the same map on the worker's side.
+Every method sends through the request `configureModel({ request })` set, read when the call is made: `request(action, model, payload)` with `action` one of the `MODEL:*` commands. `storeRequest(store)` answers it from a store in the same runtime; across a worker, `createModelHandlers(getStore)` is the same map on the worker's side. Until a request is configured, a call rejects. A host that resolves schemas by name builds an api with `modelApi(name, schemaOf)`, where `schemaOf()` answers the schema when it is read; Bootstrapp's `$APP.Model` is that under every name.
 
 `registerQueryHook(({ model, schema, opts }) => opts)` shapes every read before it is sent, in registration order; a hook answers the options to use, or nothing to keep them.
 
@@ -91,11 +94,11 @@ Everything above `onChange` is one implementation, `modelQuery(api, opts)` in `/
 ```javascript
 // a controller property, bound in the sync block
 props: { rows: [], one: null },
-sync: { rows: { to: Model.session, query: { where, order, fields } }, one: { to: Model.session, query: (self) => ({ id: self.currentId }) } },
+sync: { rows: { to: sessions, query: { where, order, fields } }, one: { to: sessions, query: (self) => ({ id: self.currentId }) } },
 // a component property
-rows: T.array({ defaultValue: [], sync: Model.session, query: { where, order, fields } }),
+rows: T.array({ defaultValue: [], sync: sessions, query: { where, order, fields } }),
 // imperative
-const rows = modelQuery(Model.session, { where, order, limit });
+const rows = modelQuery(sessions, { where, order, limit });
 ```
 
 An array property runs `modelQuery()`; any other keeps one row (`query.id`, or a `where`). `query` may be a function of the host; `dependsOn: ["month"]` rebuilds the query when those properties change. The resource behind a property is `this.$queries.<key>` (`pending`, `error`, `total`, `refresh()`), a controller's `$ready` waits for the first load of every model-bound property, and a component with a `query`-backed property gets `dataPending`.
@@ -156,7 +159,7 @@ registerStorageAdapter("custom", {
 
 `createAdapter(type, config)` makes an instance with `config` as its own fields. Optional methods: `insertMany(model, rows)`, `nextId(model, row)`, `exists(model, where)`, `facets(model, fields, opts)`, `truncate(model)`, `supportsOperator(op)`, `invalidate(model)` (drop what the adapter caches for a model, so the next read fetches again), `subscribe(model, cb)` (a remote adapter with push feeds `model:changed` through it). A local adapter matches and pages with `buildQueryResult`; a remote one translates `where` itself.
 
-Every write hands the adapter a third argument, the write options: `insert(model, row, opts)`, `insertMany(model, rows, opts)`, `update(model, merged, opts)`, `delete(model, id, opts)`. `opts.importing` marks an import, `opts.direct` a caller that asked to bypass whatever a decorator would do (`Model.x.add(row, { direct: true })`, `edit(id, patch, { direct: true })`, `remove(id, { direct: true })`), and on `update`, `opts.patch` is the normalised patch beside the merged row. A plain adapter ignores them.
+Every write hands the adapter a third argument, the write options: `insert(model, row, opts)`, `insertMany(model, rows, opts)`, `update(model, merged, opts)`, `delete(model, id, opts)`. `opts.importing` marks an import, `opts.direct` a caller that asked to bypass whatever a decorator would do (`users.add(row, { direct: true })`, `edit(id, patch, { direct: true })`, `remove(id, { direct: true })`), and on `update`, `opts.patch` is the normalised patch beside the merged row. A plain adapter ignores them.
 
 The IndexedDB adapter keeps one object store per model, an index per `index: true` or `unique: true` field (a `multiEntry` index for an array field, so `{ has: value }` is a lookup), booleans as 0/1 and dates as epoch milliseconds so the indexes can hold them. `query` reads one index when the `where` names an indexed field (`planIndex`) and matches the rest in memory; opening a database whose stores are missing reopens it one version up and creates them.
 

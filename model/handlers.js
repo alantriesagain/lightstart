@@ -1,6 +1,6 @@
 /**
- * The `MODEL:*` commands a store answers: what a registry's request reaches,
- * whether the store sits in the same page or behind a worker's port.
+ * The `MODEL:*` commands a store answers: what a model api's request reaches,
+ * whether the store sits in the same runtime or behind a worker's port.
  */
 
 import {
@@ -8,10 +8,7 @@ import {
   MODEL_GET, MODEL_QUERY, MODEL_REMOVE, MODEL_REMOVE_MANY,
 } from "./commands.js";
 
-/** @import { ModelRequest, Store, WriteOptions } from "./types.ts" */
-
-/** @param {WriteOptions | undefined} opts @returns {[] | [WriteOptions]} */
-const given = (opts) => (opts === undefined ? [] : [opts]);
+/** @import { ModelRequest, Store } from "./types.ts" */
 
 /**
  * One handler per command, each over the store `getStore` answers when the
@@ -25,16 +22,16 @@ export const createModelHandlers = (getStore) => ({
   [MODEL_COUNT]: ({ model, opts = {} }) => getStore().count(model, opts),
   [MODEL_EXISTS]: ({ model, where }) => getStore().exists(model, where),
   [MODEL_FACETS]: ({ model, fields, opts = {} }) => getStore().facets(model, fields, opts),
-  [MODEL_ADD]: ({ model, row, opts }) => getStore().add(model, row, ...given(opts)),
-  [MODEL_ADD_MANY]: ({ model, rows, opts }) => getStore().addMany(model, rows, ...given(opts)),
-  [MODEL_EDIT]: ({ model, id, patch, opts }) => getStore().edit(model, id, patch, ...given(opts)),
-  [MODEL_REMOVE]: ({ model, id, opts }) => getStore().remove(model, id, ...given(opts)),
+  [MODEL_ADD]: ({ model, row, opts }) => getStore().add(model, row, opts),
+  [MODEL_ADD_MANY]: ({ model, rows, opts }) => getStore().addMany(model, rows, opts),
+  [MODEL_EDIT]: ({ model, id, patch, opts }) => getStore().edit(model, id, patch, opts),
+  [MODEL_REMOVE]: ({ model, id, opts }) => getStore().remove(model, id, opts),
   [MODEL_REMOVE_MANY]: ({ model, where }) => getStore().removeAll(model, where),
 });
 
 /**
- * A registry's request over a store in the same page:
- * `createModel(storeRequest(store), { schemaOf })`.
+ * The request over a store in the same runtime:
+ * `configureModel({ request: storeRequest(store) })`.
  * @param {Store} store
  * @returns {ModelRequest}
  */

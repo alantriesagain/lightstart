@@ -44,13 +44,16 @@ T.number({ min: 18 }).validate(10);   // { valid: false, value: 10, error: "mini
 whole object against a `Record<string, TypeDefinition>` and answers the tuple
 `[errors, validatedObject]`: `errors` is `null` on success, otherwise a field → code map, and
 `validatedObject` is `null` on failure. `row` carries the pre-edit state and `operation`
-(`"add"`, `"edit"`) reaches a `customValidator` through its context argument;
+(`"add"`, `"edit"`) reaches a `customValidator` through its context argument. A
+`T.timestamp()` field is stamped by `validateType` itself: `update: true` stamps it on every
+call, and a `"create"` operation fills it when empty (`create: false` turns that off); a
+`customValidator` on the field replaces the stamping;
 `undefinedProps: false` validates only the keys the object actually carries, which is what a
 partial edit wants. The model's store calls this on every write, and a rejection is the
 `ValidationError` that carries `.errors` (`model/README.md`).
 
 ## Extending
 
-`T.registerTypes({ types: { name: (options) => TypeDefinition } })` adds a factory to the proxy.
+`T.registerTypes({ types: { name: (options) => TypeDefinition } })` adds a factory to `T`.
 This is not a side door: `timestamp`, `file` and `files` ship registered through it, so a new
 type is written the same way they are.

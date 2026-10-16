@@ -5,6 +5,7 @@
  */
 
 import { parse } from "./parse.js";
+import { timestampValidator } from "./timestamp.js";
 
 /** @import { TypeDefinition, ValidationResult, ValidationTuple } from "./types.ts" */
 
@@ -73,10 +74,12 @@ const validateField = (input, prop, context = {}) => {
   )
     return ["required", null];
 
-  if (prop.customValidator) {
-    const result = prop.customValidator(value, prop, context);
-    if (result) return /** @type {[string, unknown]} */ (result);
-  }
+  const custom = prop.customValidator
+    ? prop.customValidator(value, prop, context)
+    : prop.timestamp === true
+      ? timestampValidator(value, prop, context)
+      : null;
+  if (custom) return /** @type {[string, unknown]} */ (custom);
 
   if (prop.relationship) {
     if (prop.many)
@@ -207,7 +210,7 @@ export const validateType = (
   for (const key in props) {
     const prop = { ...schema[key], key };
     if ("virtual" in prop || prop.persist === false) continue;
-    const shouldValidate = Boolean(prop.customValidator) || object[key] !== undefined || prop.required === true;
+    const shouldValidate = Boolean(prop.customValidator) || prop.timestamp === true || object[key] !== undefined || prop.required === true;
 
     const [error, value] = shouldValidate
       ? validateField(object[key], prop, context)

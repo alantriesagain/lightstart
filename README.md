@@ -175,25 +175,27 @@ Each piece is its own entry and loads only what it uses: `/controller` (definiti
 
 ## Models
 
-`@bootstrapp/light/model` is the data layer: a schema per model, written with `T`; a store that runs every write the same way (hooks, defaults, validation, file uploads, then the adapter, then `model:changed`) over any storage adapter; a registry of per-model apis with eleven methods; relationships loaded one level deep. A page keeps its rows in IndexedDB and binds components and controllers to live queries:
+`@bootstrapp/light/model` is the data layer: a schema per model, written with `T`; a store that runs every write the same way (hooks, defaults, validation, file uploads, then the adapter, then `model:changed`) over any storage adapter; a model's api with eleven methods, declared once with `defineModel` and imported where it is used; relationships loaded one level deep. A page keeps its rows in IndexedDB and binds components and controllers to live queries:
 
 ```js
 import T from "@bootstrapp/light/types";
-import { createModel, modelBus } from "@bootstrapp/light/model";
+import { configureModel, defineModel, modelBus } from "@bootstrapp/light/model";
 import { createStore, storeRequest } from "@bootstrapp/light/model/store";
 import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
 import IndexedDBAdapter from "@bootstrapp/light/model/indexeddb";
 
+export const todos = defineModel("todos", { title: T.string({ required: true }), done: T.boolean({ index: true, defaultValue: false }) });
+
 registerStorageAdapter("indexeddb", IndexedDBAdapter);
-const models = { todo: { title: T.string({ required: true }), done: T.boolean({ index: true, defaultValue: false }) } };
+const models = { todos: todos.schema };
 const db = createAdapter("indexeddb", { name: "todos", version: 1, models, isDefaultAdapter: true });
 await db.init();
 const store = createStore({ models, databases: { indexeddb: db }, emit: (event, data) => modelBus().emit(event, data) });
-export const Model = createModel(storeRequest(store), { schemaOf: (name) => models[name] });
-// a component: todos: T.array({ defaultValue: [], sync: Model.todo, query: { where: { done: false } } })
+configureModel({ request: storeRequest(store) });
+// a component: open: T.array({ defaultValue: [], sync: todos, query: { where: { done: false } } })
 ```
 
-The registry talks to the store through a request, so a host can keep the store elsewhere (Bootstrapp runs it in a db-worker) and the page loads `/model` alone, without the store or the adapters. Binding a property to a model takes `registerSyncBinder(modelBinder)` from `/model/binder`. The reference is [model/README.md](model/README.md).
+A model's api talks to the store through the request `configureModel` sets, so a host can keep the store elsewhere (Bootstrapp runs it in a db-worker) and the page loads `/model` alone, without the store or the adapters. Binding a property to a model takes `registerSyncBinder(modelBinder)` from `/model/binder`. The reference is [model/README.md](model/README.md).
 
 ## The host
 
@@ -247,7 +249,7 @@ One engine, three hosts. The renderer and the view core never touch a document: 
 | `native/desktop/` | The desktop shell: a native backend, a web view, a typed bridge; the shim over webview, the build tool, the demo and its gates |
 | `env/`, `navigation/` | The page's environment and the host's router, as components read them |
 | `controller/` | Controllers, the sync binding and its registries, the storage, document and hash adapters, `resource()`, the component sync plugin |
-| `model/` | Models: the registry, the store and its write pipeline, the storage SPI, the IndexedDB adapter, the binding of a property to a live query |
+| `model/` | Models: `defineModel` and the api, the store and its write pipeline, the storage SPI, the IndexedDB adapter, the binding of a property to a live query |
 | `theme/` | Tokens, presets, `theme.css`, the color scheme, icons |
 | `components/` | The component library, one directory per category, a `.css` and a `.demo.js` beside each component |
 | `locales/` | The words the components draw, keyed by tag, one file per language |

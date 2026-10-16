@@ -1,7 +1,6 @@
 /**
  * @bootstrapp/light/model: type declarations. Public types are reachable via
- * `import("@bootstrapp/light/model").Foo`; a host that generates typings per
- * model narrows `ModelRegistry` by name.
+ * `import("@bootstrapp/light/model").Foo`.
  */
 
 import type { TypeDefinition } from "../types/types.ts";
@@ -163,14 +162,19 @@ export interface ModelChanged<R = Row> {
 export type ChangeCallback<R = Row> = (event: ModelChanged<R>) => void;
 
 // ---------------------------------------------------------------------
-// The per-model api and the registry
+// The per-model api
 // ---------------------------------------------------------------------
 
-/** The eleven methods of `Model.<name>`; a host's generated typings bind `R`. */
-export interface ModelApi<R extends Row = Row> {
+/** The row a schema declares: each field's value, read off its descriptor; `$` directives are not fields. */
+export type RowOf<S> = {
+  [K in keyof S as K extends `$${string}` ? never : K]?: S[K] extends TypeDefinition<infer V> ? V : unknown;
+} & Row;
+
+/** The eleven methods of a model's api; `defineModel` or a host's generated typings bind `R`; a model `defineModel` declares always has its schema. */
+export interface ModelApi<R extends Row = Row, S extends ModelSchema | undefined = ModelSchema | undefined> {
   readonly name: string;
-  /** The model's schema, as the registry's `schemaOf` answers it. */
-  readonly schema: ModelSchema | undefined;
+  /** The model's schema. */
+  readonly schema: S;
   get(id: string | number, opts?: QueryOptions<R>): Promise<R | null>;
   get(opts: QueryOptions<R>): Promise<R | null>;
   getAll(opts?: QueryOptions<R>): Promise<R[]>;
@@ -186,20 +190,8 @@ export interface ModelApi<R extends Row = Row> {
   removeAll(where?: WhereClause<R>): Promise<number>;
 }
 
-/** How a registry reaches the store: the store itself in the same page, or a port to a worker that holds one. */
+/** How a model's api reaches the store: the store itself in the same runtime, or a port to a worker that holds one. */
 export type ModelRequest = (action: string, model: string, payload?: Record<string, unknown>) => Promise<unknown>;
-
-/**
- * A per-model api under every name. A host's generated typings narrow
- * declared names to `ModelApi<XRecord>`; an undeclared name answers the
- * untyped `ModelApi`.
- */
-export interface ModelRegistry {
-  request: ModelRequest;
-  /** The same registry scoped to an extension's namespace: `Model.ext("delivery").scripts` is `Model.delivery_scripts`. */
-  ext(extensionId: string): ModelRegistry;
-  [modelName: string]: any;
-}
 
 // ---------------------------------------------------------------------
 // Storage adapters and the store
@@ -258,7 +250,7 @@ export type AdapterDecorator = (base: StorageAdapter, ctx: AdapterDecoratorConte
 
 /** A reader the relation loader needs: the store satisfies it. */
 export interface RowReader {
-  get(model: string, id: string | number): Promise<Row | null>;
+  get(model: string, idOrWhere: string | number | WhereClause | null, opts?: QueryOptions): Promise<Row | null>;
   getAll(model: string, opts?: QueryOptions): Promise<Row[]>;
 }
 

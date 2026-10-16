@@ -1,4 +1,4 @@
-/** @import { CustomValidator, TypeOptions, TypeDefinition, TypeExtension } from "./types.ts" */
+/** @import { TypeOptions, TypeDefinition, TypeExtension, ValidationTuple } from "./types.ts" */
 
 /**
  * Timestamp validator with auto-creation and auto-update semantics.
@@ -6,17 +6,20 @@
  * - Auto-updates on every operation when `update: true`.
  * - Stored as a number (milliseconds since epoch).
  *
- * @type {CustomValidator}
+ * @param {unknown} value
+ * @param {{ update?: boolean, create?: boolean, min?: number, max?: number }} prop
+ * @param {{ operation?: string }} [context]
+ * @returns {ValidationTuple}
  */
-const timestampValidator = (value, prop, context = {}) => {
-  const operation = /** @type {{ operation?: string }} */ (context).operation;
+export const timestampValidator = (value, prop, context = {}) => {
+  const { operation } = context;
   const currentTime = Date.now();
 
   if (prop.update === true) return [null, currentTime];
 
   if (
     operation === "create" &&
-    /** @type {{ create?: boolean }} */ (prop).create !== false &&
+    prop.create !== false &&
     (!value || value === "")
   )
     return [null, currentTime];
@@ -59,7 +62,6 @@ const createTimestamp = (options = {}) =>
     attribute: true,
     index: true,
     timestamp: true,
-    customValidator: timestampValidator,
     ...options,
   });
 

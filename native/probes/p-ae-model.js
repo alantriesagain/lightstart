@@ -1,14 +1,13 @@
 /**
- * @file Probe AE: light's model as a TUI would hold it. `T` schemas, the store over an in-memory
- * adapter registered through the storage SPI, the registry over `storeRequest`, a write the
- * schema rejects, reads with a `where` and an `order`, an edit, a removal and `onChange` on the
- * model's own bus. Ids are random, so the output prints only what is stable.
+ * @file Probe AE: light's model as a TUI would hold it. A model from `defineModel`, the store
+ * over an in-memory adapter registered through the storage SPI, the request configured over
+ * `storeRequest`, a write the schema rejects, reads with a `where` and an `order`, an edit, a
+ * removal and `onChange` on the model's own bus. Ids are random, so the output prints only what
+ * is stable.
  */
 
-/** @import { ModelApi, ModelSchema } from "../../model/types.ts" */
-
 import T from "../../types/index.js";
-import { createModel, modelBus, onChange } from "../../model/index.js";
+import { configureModel, defineModel, modelBus, onChange } from "../../model/index.js";
 import { createStore, storeRequest } from "../../model/store.js";
 import { buildQueryResult, createAdapter, registerStorageAdapter } from "../../model/adapter.js";
 
@@ -57,16 +56,11 @@ registerStorageAdapter("memory", {
   async close() {},
 });
 
-/** @type {Record<string, ModelSchema>} */
-const models = {
-  todo: { title: T.string({ required: true }), done: T.boolean({ defaultValue: false }), rank: T.number({ defaultValue: 0 }) },
-};
+const todos = defineModel("todo", { title: T.string({ required: true }), done: T.boolean({ defaultValue: false }), rank: T.number({ defaultValue: 0 }) });
 const db = createAdapter("memory", { name: "probe" });
 await db.init();
-const store = createStore({ models, databases: { memory: db }, defaultAdapter: "memory", emit: (event, data) => modelBus().emit(event, data) });
-const Model = createModel(storeRequest(store), { schemaOf: (name) => models[name] });
-/** @type {ModelApi} */
-const todos = Model.todo;
+const store = createStore({ models: { todo: todos.schema }, databases: { memory: db }, defaultAdapter: "memory", emit: (event, data) => modelBus().emit(event, data) });
+configureModel({ request: storeRequest(store) });
 
 /** @type {string[]} */
 const heard = [];
