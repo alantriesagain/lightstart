@@ -60,13 +60,24 @@ const modelApi = (name, request, schemaOf) => {
       return schemaOf(name);
     },
     /** @param {string | number | QueryOptions} idOrOpts @param {QueryOptions} [opts] */
-    get: (idOrOpts, opts = {}) =>
-      isId(idOrOpts) ? send(MODEL_GET, { id: idOrOpts, opts: hooked(opts) }) : send(MODEL_GET, { opts: hooked(idOrOpts ?? {}) }),
-    getAll: async (opts = {}) => /** @type {{ rows: Row[] }} */ (await send(MODEL_QUERY, { opts: hooked({ ...opts, total: false }) })).rows,
-    query: (opts = {}) => send(MODEL_QUERY, { opts: hooked(opts) }),
-    count: (opts = {}) => send(MODEL_COUNT, { opts: hooked(opts) }),
-    exists: (where = {}) => send(MODEL_EXISTS, { where }),
-    facets: (fields, opts = {}) => send(MODEL_FACETS, { fields, opts }),
+    get(idOrOpts, opts) {
+      return isId(idOrOpts) ? send(MODEL_GET, { id: idOrOpts, opts: hooked(opts ?? {}) }) : send(MODEL_GET, { opts: hooked(idOrOpts ?? {}) });
+    },
+    async getAll(opts) {
+      return /** @type {{ rows: Row[] }} */ (await send(MODEL_QUERY, { opts: hooked({ ...(opts ?? {}), total: false }) })).rows;
+    },
+    query(opts) {
+      return send(MODEL_QUERY, { opts: hooked(opts ?? {}) });
+    },
+    count(opts) {
+      return send(MODEL_COUNT, { opts: hooked(opts ?? {}) });
+    },
+    exists(where) {
+      return send(MODEL_EXISTS, { where: where ?? {} });
+    },
+    facets(fields, opts) {
+      return send(MODEL_FACETS, { fields, opts: opts ?? {} });
+    },
     add: (row, opts) => send(MODEL_ADD, withOpts({ row }, opts)),
     addMany: (rows, opts) => send(MODEL_ADD_MANY, withOpts({ rows }, opts)),
     edit,
@@ -85,7 +96,8 @@ const modelApi = (name, request, schemaOf) => {
  * @param {{ schemaOf?: (name: string) => ModelSchema | undefined }} [options]
  * @returns {ModelRegistry}
  */
-export function createModel(request, { schemaOf = () => undefined } = {}) {
+export function createModel(request, options = {}) {
+  const schemaOf = options.schemaOf ?? (() => undefined);
   /** @type {Map<string, ModelApi>} */
   const apis = new Map();
   /** @param {string} name */

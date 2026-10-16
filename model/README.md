@@ -84,7 +84,7 @@ A write rejects on failure. A schema rejection is a `ValidationError` whose `err
 
 The store emits `model:changed` (`{ model, action: "add" | "edit" | "remove", row }`) after every write, through its `emit`. A fourth action, `sync`, carries no row and means the whole collection changed. `onChange(model, where, cb)` runs `cb` for every matching change (a removal and a sync always match) and answers the unsubscribe. A `remove` carries the stored row when the model declares a remove hook, `{ id }` otherwise: the store reads nothing it does not need.
 
-`onChange` listens on the model's bus. With no host the model keeps its own; `configureModel({ events })` hands it the host's (anything with `on(key, cb)` answering the unsubscribe and `emit(key, data)`), which is where a host forwards changes made elsewhere. `modelBus()` is the bus in use.
+`onChange` listens on the model's bus. With no host the model keeps its own; `configureModel({ events })` hands it the host's (anything with `on(key, cb)` answering the unsubscribe and `emit(key, data)`), which is where a host forwards changes made elsewhere. `modelBus()` is the bus in use. `configureModel({ makeId })` is where a new row's id comes from: light's default draws from `Math.random`, which every runtime it compiles to has, and a host that wants ids from the platform's crypto source passes one.
 
 Everything above `onChange` is one implementation, `modelQuery(api, opts)` in `/model/binder`: a `query()` inside a light `resource()` that refetches, coalesced per tick, when its model or an included relation's model changes. `limit`, `offset` and `total` are live-safe. `modelBinder` teaches light's sync binding the model; a page registers it with `registerSyncBinder(modelBinder)`, and then a property binds to a model's api:
 
@@ -121,7 +121,7 @@ Define lifecycle hooks in schema's `$hooks`. Each receives the store, so a hook 
 
 ## The write pipeline
 
-The store runs every write the same way for every adapter, in this order: `beforeAdd`/`beforeEdit`, the id (the adapter's `nextId` when it has one, else a random 15-character id, else the adapter's own key for a `T.number()` id), relation stripping (a `many`/`one` value is dropped, a loaded `belongs` row goes back to its id), schema defaults (add only), `validateRow`, file uploads through the registered `setFileStorage` provider, the adapter's `insert`/`update`/`delete`, the `model:changed` event, then `afterAdd`/`afterEdit`/`afterRemove`. `edit` strips `immutable: true` fields from the patch and merges it over the stored row.
+The store runs every write the same way for every adapter, in this order: `beforeAdd`/`beforeEdit`, the id (the adapter's `nextId` when it has one, else a 15-character id from the configured source, else the adapter's own key for a `T.number()` id), relation stripping (a `many`/`one` value is dropped, a loaded `belongs` row goes back to its id), schema defaults (add only), `validateRow`, file uploads through the registered `setFileStorage` provider, the adapter's `insert`/`update`/`delete`, the `model:changed` event, then `afterAdd`/`afterEdit`/`afterRemove`. `edit` strips `immutable: true` fields from the patch and merges it over the stored row.
 
 ## Relationships
 

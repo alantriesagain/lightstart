@@ -94,6 +94,7 @@ export const parsers = {
  * @returns {unknown}
  */
 export const parse = (value, prop) => {
-  const parser = prop && parsers[prop.$type];
+  if (!prop) return value;
+  const parser = parsers[prop.$type];
   return parser ? parser(value, prop) : value;
 };

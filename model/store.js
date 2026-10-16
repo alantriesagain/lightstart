@@ -10,6 +10,7 @@
  */
 
 import { MODEL_CHANGED } from "./events.js";
+import { newId } from "./config.js";
 import { decoratorsFor } from "./factory.js";
 import { ValidationError, validateRow } from "./validate.js";
 import { uploadFiles } from "./file-storage.js";
@@ -20,12 +21,6 @@ import { applyFields, validateQueryOptions } from "./query-builder.js";
 export { createModelHandlers, storeRequest } from "./handlers.js";
 
 /** @import { HookContext, ModelHooks, ModelSchema, QueryOptions, Row, StorageAdapter, Store, StoreConfig, WhereClause, WriteOptions } from "./types.ts" */
-
-const ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
-
-/** A 15-character base36 id from the platform's random source. */
-export const generateId = () =>
-  Array.from(crypto.getRandomValues(new Uint8Array(15)), (b) => ALPHABET[b % 36]).join("");
 
 /** @param {unknown} value @returns {value is string | number} */
 const isId = (value) => typeof value === "string" || typeof value === "number";
@@ -48,7 +43,10 @@ const forStorage = (schema, row) => {
   const out = { ...row };
   eachField(schema, (field, def) => {
     if (!def.relationship) return;
-    if (!def.belongs) return void delete out[field];
+    if (!def.belongs) {
+      delete out[field];
+      return;
+    }
     if (out[field] === undefined) return;
     out[field] = def.relationship === "belongs_many" && Array.isArray(out[field])
       ? /** @type {unknown[]} */ (out[field]).map(relationValueToId)
@@ -203,7 +201,7 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
     if (row.id == null) {
       const adapter = adapterFor(model);
       if (adapter.nextId) row.id = adapter.nextId(model, row);
-      else if (/** @type {{ $type?: string } | undefined} */ (schema?.id)?.$type !== "number") row.id = generateId();
+      else if (/** @type {{ $type?: string } | undefined} */ (schema?.id)?.$type !== "number") row.id = newId();
     }
     row = withDefaults(schema, forStorage(schema, row));
     const { valid, errors } = validateRow(models, model, row, { operation: "add" });

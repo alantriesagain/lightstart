@@ -54,7 +54,7 @@ export const uploadFiles = async (schema, model, row) => {
   if (!storage || !schema) return row;
   const provider = storage;
   /** @type {Row} */
-  const out = { ...row };
+  const out = Object.fromEntries(Object.entries(row));
   for (const [field, fieldDef] of Object.entries(schema)) {
     if (field.startsWith("$")) continue;
     const kind = /** @type {{ fieldType?: string }} */ (fieldDef).fieldType;

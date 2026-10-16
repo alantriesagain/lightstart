@@ -32,7 +32,7 @@ export async function loadRelationships(reader, models, modelName, record, inclu
   }
 
   /** @type {Row} */
-  const enriched = { ...record };
+  const enriched = Object.fromEntries(Object.entries(record));
 
   for (const relationName of includes) {
     const relationDef = /** @type {RelationshipDefinition | undefined} */ (modelSchema[relationName]);
@@ -102,7 +102,11 @@ export async function loadRelationshipsForMany(reader, models, modelName, record
       const contentId = relationValueToId(record[relationName]);
       record[relationName] = null;
       if (!contentType || !contentId || !models[contentType]) continue;
-      const holders = (byType[contentType] ??= new Map());
+      let holders = byType[contentType];
+      if (!holders) {
+        holders = new Map();
+        byType[contentType] = holders;
+      }
       const key = String(contentId);
       holders.set(key, [...(holders.get(key) ?? []), record]);
     }

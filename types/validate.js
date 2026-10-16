@@ -207,8 +207,7 @@ export const validateType = (
   for (const key in props) {
     const prop = { ...schema[key], key };
     if ("virtual" in prop || prop.persist === false) continue;
-    const shouldValidate =
-      prop.customValidator || object[key] !== undefined || prop.required;
+    const shouldValidate = Boolean(prop.customValidator) || object[key] !== undefined || prop.required === true;
 
     const [error, value] = shouldValidate
       ? validateField(object[key], prop, context)
