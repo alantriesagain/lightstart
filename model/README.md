@@ -12,6 +12,7 @@ Each entry loads only its own code; nothing is a barrel.
 | `@bootstrapp/light/model/store` | `createStore`, `storeRequest`, `createModelHandlers` |
 | `@bootstrapp/light/model/adapter` | the storage SPI: `registerStorageAdapter`, `createAdapter`, `registerAdapterDecorator`, `validateRow`, the query helpers |
 | `@bootstrapp/light/model/indexeddb` | the IndexedDB adapter |
+| `@bootstrapp/light/model/jsonl` | the JSON Lines adapter: a file per model, through the IO its host hands it |
 | `@bootstrapp/light/model/binder` | `modelQuery`, `bindModelQuery`, `modelBinder` |
 | `@bootstrapp/light/model/slug` | `slugify`, `slugHooks` |
 | `@bootstrapp/light/model/events` | the event names the model emits |
@@ -162,6 +163,25 @@ registerStorageAdapter("custom", {
 Every write hands the adapter a third argument, the write options: `insert(model, row, opts)`, `insertMany(model, rows, opts)`, `update(model, merged, opts)`, `delete(model, id, opts)`. `opts.importing` marks an import, `opts.direct` a caller that asked to bypass whatever a decorator would do (`users.add(row, { direct: true })`, `edit(id, patch, { direct: true })`, `remove(id, { direct: true })`), and on `update`, `opts.patch` is the normalised patch beside the merged row. A plain adapter ignores them.
 
 The IndexedDB adapter keeps one object store per model, an index per `index: true` or `unique: true` field (a `multiEntry` index for an array field, so `{ has: value }` is a lookup), booleans as 0/1 and dates as epoch milliseconds so the indexes can hold them. `query` reads one index when the `where` names an indexed field (`planIndex`) and matches the rest in memory; opening a database whose stores are missing reopens it one version up and creates them.
+
+The JSON Lines adapter keeps a file per model, `<dir>/<model>.jsonl`, written as a log: every insert and update appends the row as one line, a later line for an id replaces an earlier one, and a removal appends `{"id":…,"$removed":true}`. A model's file is read into memory the first time the model is reached, so reads, filters and counts answer from memory through `buildQueryResult`, and a line an interrupted append cut short is skipped (the file is then rewritten whole). Once the lines a file no longer needs outnumber its rows (past 32), the file is rewritten with its rows alone. It reaches its files only through the `io` its host hands it, so it runs wherever the host can read, append and replace a file; one process owns a directory. An insert refuses a row without an id or with an id already stored.
+
+```javascript
+import { appendFileSync, existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
+import JsonlAdapter from "@bootstrapp/light/model/jsonl";
+
+registerStorageAdapter("jsonl", JsonlAdapter);
+const io = {
+  read: (path) => (existsSync(path) ? readFileSync(path, "utf8") : null),
+  append: (path, text) => appendFileSync(path, text),
+  write: (path, text) => { writeFileSync(`${path}.tmp`, text); renameSync(`${path}.tmp`, path); },
+};
+const db = createAdapter("jsonl", { name: "tasks", dir: "data", io });
+await db.init();
+```
+
+`examples/tasks/` is a terminal app over it.
 
 ### Decorators and the shadow
 

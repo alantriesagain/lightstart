@@ -248,6 +248,31 @@ export interface AdapterDecoratorContext {
  */
 export type AdapterDecorator = (base: StorageAdapter, ctx: AdapterDecoratorContext) => StorageAdapter;
 
+/** How the JSONL adapter reaches its files: whole texts, synchronously. */
+export interface JsonlIO {
+  /** The file's text, or null when there is no file. */
+  read(path: string): string | null;
+  /** Add text at the end of the file, creating it when there is none. */
+  append(path: string, text: string): void;
+  /** Replace the file's text in one step (written beside it, then renamed over it). */
+  write(path: string, text: string): void;
+}
+
+/** One model's file as the JSONL adapter holds it: its rows, and how many of its lines no longer hold one. */
+export interface JsonlTable {
+  path: string;
+  rows: Map<string, Row>;
+  stale: number;
+}
+
+/** The JSONL adapter as `createAdapter("jsonl", { name, dir, io })` makes it. */
+export type JsonlStorage = StorageAdapter & {
+  /** The directory that holds a `<model>.jsonl` file per model. */
+  dir: string;
+  io: JsonlIO;
+  tables: Map<string, JsonlTable>;
+};
+
 /** A reader the relation loader needs: the store satisfies it. */
 export interface RowReader {
   get(model: string, idOrWhere: string | number | WhereClause | null, opts?: QueryOptions): Promise<Row | null>;

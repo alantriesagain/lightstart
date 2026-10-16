@@ -73,6 +73,7 @@
     "./model/store": "./model/store.js",
     "./model/adapter": "./model/adapter.js",
     "./model/indexeddb": "./model/indexeddb.js",
+    "./model/jsonl": "./model/jsonl.js",
     "./model/binder": "./model/binder.js",
     "./model/slug": "./model/slug.js",
     "./model/events": "./model/events.js",
