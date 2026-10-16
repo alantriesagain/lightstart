@@ -90,7 +90,10 @@ export interface TypeDefinitionFields {
 /**
  * The phantom `T` never exists at runtime: it carries the type a property
  * declared with this descriptor holds, so `defineComponent` can type `this`
- * from a `props: { x: T.string() }` block.
+ * from a `props: { x: T.string() }` block. A factory answers
+ * `TypeDefinition<never>`, which fits every slot, and the slot that holds it
+ * names the type: `TypesAPI.string` reads `TypeDefinition<string>`, so `T` is
+ * declared with its type instead of cast to it.
  */
 export type TypeDefinition<T = unknown> = TypeDefinitionFields & Record<string, unknown> & {
   readonly __tsType?: T;

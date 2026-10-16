@@ -27,13 +27,13 @@ const REQUIRED_METHODS = ["init", "get", "query", "insert", "update", "delete", 
  * @param {string} type
  * @param {StorageAdapter} definition
  */
-export function registerStorageAdapter(type, definition) {
+export const registerStorageAdapter = (type, definition) => {
   const missing = REQUIRED_METHODS.filter((method) => typeof definition[method] !== "function");
   if (missing.length) throw new Error(`Adapter "${type}" is missing required methods: ${missing.join(", ")}`);
   if (ADAPTER_REGISTRY.has(type)) modelBus().emit(MODEL_WARN, { type: "adapter_overwrite", adapterType: type });
   ADAPTER_REGISTRY.set(type, definition);
   modelBus().emit(ADAPTER_REGISTERED, { type });
-}
+};
 
 /**
  * Instantiate a registered adapter with `config` as its own fields
@@ -43,24 +43,20 @@ export function registerStorageAdapter(type, definition) {
  * @param {Record<string, unknown> & { name?: string, version?: number | string }} config
  * @returns {StorageAdapter}
  */
-export function createAdapter(type, config) {
+export const createAdapter = (type, config) => {
   const definition = ADAPTER_REGISTRY.get(type);
   if (!definition)
     throw new Error(`Unknown adapter type "${type}". Available types: ${getAvailableAdapters().join(", ")}. Use registerStorageAdapter() to register adapters.`);
   const instance = Object.assign(Object.create(definition), config);
   modelBus().emit(DATABASE_CREATED, { type, name: config.name, version: config.version });
   return instance;
-}
+};
 
 /** @returns {string[]} */
-export function getAvailableAdapters() {
-  return Array.from(ADAPTER_REGISTRY.keys());
-}
+export const getAvailableAdapters = () => Array.from(ADAPTER_REGISTRY.keys());
 
 /** @param {string} type */
-export function hasAdapter(type) {
-  return ADAPTER_REGISTRY.has(type);
-}
+export const hasAdapter = (type) => ADAPTER_REGISTRY.has(type);
 
 /**
  * Register a decorator for the models whose schema declares `directive`
@@ -71,10 +67,10 @@ export function hasAdapter(type) {
  * @param {string} directive
  * @param {AdapterDecorator} factory
  */
-export function registerAdapterDecorator(directive, factory) {
+export const registerAdapterDecorator = (directive, factory) => {
   if (DECORATOR_REGISTRY.has(directive)) modelBus().emit(MODEL_WARN, { type: "decorator_overwrite", directive });
   DECORATOR_REGISTRY.set(directive, factory);
-}
+};
 
 /**
  * The decorators a schema's directives call for, in registration order.
@@ -82,9 +78,9 @@ export function registerAdapterDecorator(directive, factory) {
  * @param {ModelSchema | undefined} schema
  * @returns {AdapterDecorator[]}
  */
-export function decoratorsFor(schema) {
+export const decoratorsFor = (schema) => {
   /** @type {AdapterDecorator[]} */
   const out = [];
   for (const [directive, factory] of DECORATOR_REGISTRY) if (schema?.[directive]) out.push(factory);
   return out;
-}
+};

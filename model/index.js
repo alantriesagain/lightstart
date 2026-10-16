@@ -44,15 +44,6 @@ const modelApi = (name, request, schemaOf) => {
   const send = (action, payload) => request(action, name, payload);
   /** @param {QueryOptions} opts */
   const hooked = (opts) => applyQueryHooks({ model: name, schema: schemaOf(name), opts });
-  /**
-   * @param {string | number | (Row & { id: string | number })} idOrRow
-   * @param {Record<string, unknown>} [patchOrOpts] the patch after an id, the write options after a row
-   * @param {ClientWriteOptions} [opts]
-   */
-  const edit = (idOrRow, patchOrOpts, opts) =>
-    isId(idOrRow)
-      ? send(MODEL_EDIT, withOpts({ id: idOrRow, patch: patchOrOpts ?? {} }, opts))
-      : send(MODEL_EDIT, withOpts({ id: idOrRow.id, patch: idOrRow }, /** @type {ClientWriteOptions | undefined} */ (patchOrOpts)));
   return /** @type {ModelApi} */ ({
     [MODEL_API]: true,
     name,
@@ -80,7 +71,16 @@ const modelApi = (name, request, schemaOf) => {
     },
     add: (row, opts) => send(MODEL_ADD, withOpts({ row }, opts)),
     addMany: (rows, opts) => send(MODEL_ADD_MANY, withOpts({ rows }, opts)),
-    edit,
+    /**
+     * @param {string | number | (Row & { id: string | number })} idOrRow
+     * @param {Record<string, unknown>} [patchOrOpts] the patch after an id, the write options after a row
+     * @param {ClientWriteOptions} [opts]
+     */
+    edit(idOrRow, patchOrOpts, opts) {
+      return isId(idOrRow)
+        ? send(MODEL_EDIT, withOpts({ id: idOrRow, patch: patchOrOpts ?? {} }, opts))
+        : send(MODEL_EDIT, withOpts({ id: idOrRow.id, patch: idOrRow }, /** @type {ClientWriteOptions | undefined} */ (patchOrOpts)));
+    },
     remove: (id, opts) => send(MODEL_REMOVE, withOpts({ id }, opts)),
     removeAll: (where = {}) => send(MODEL_REMOVE_MANY, { where }),
   });

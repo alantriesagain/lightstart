@@ -28,7 +28,7 @@ const MANY_RELATIONSHIPS = new Set(["many", "belongs_many"]);
  * carries `validate`.
  * @param {string} type
  * @param {TypeOptions | unknown} [options]
- * @returns {TypeDefinition}
+ * @returns {TypeDefinition<never>}
  */
 export const createType = (type, options) => {
   const typeDef = /** @type {TypeDefinition} */ ({
@@ -108,7 +108,7 @@ export const cloneDefault = (prop) => {
  * A relationship factory for one of `"one" | "many" | "belongs" | "belongs_many"`.
  *
  * @param {"one" | "many" | "belongs" | "belongs_many"} relationship
- * @returns {(targetModel: string | string[], targetForeignKeyOrOptions?: string | TypeOptions, options?: TypeOptions) => TypeDefinition}
+ * @returns {(targetModel: string | string[], targetForeignKeyOrOptions?: string | TypeOptions, options?: TypeOptions) => TypeDefinition<never>}
  */
 const createRelationType = (relationship) => (targetModel, targetForeignKeyOrOptions, options) => {
   /** @type {string | undefined} */
@@ -144,14 +144,14 @@ const createRelationType = (relationship) => (targetModel, targetForeignKeyOrOpt
 
 /**
  * @param {TypeOptions & { types?: TypeDefinition[] }} [options]
- * @returns {TypeDefinition}
+ * @returns {TypeDefinition<never>}
  */
 const createUnion = (options = {}) =>
   attachValidate({ $type: "union", persist: true, attribute: false, ...options, types: options.types ?? [] });
 
 /**
  * @param {TypeOptions & { args?: TypeDefinition[], returns?: TypeDefinition | null }} [options]
- * @returns {TypeDefinition}
+ * @returns {TypeDefinition<never>}
  */
 const createFunction = (options = {}) =>
   attachValidate({ $type: "function", persist: false, attribute: false, ...options, args: options.args ?? [], returns: options.returns ?? null });
@@ -160,7 +160,7 @@ const createFunction = (options = {}) =>
  * An extension factory whose output carries `validate`, as `createType`'s does.
  *
  * @param {(options?: TypeOptions) => object} factory
- * @returns {(options?: TypeOptions) => TypeDefinition}
+ * @returns {(options?: TypeOptions) => TypeDefinition<never>}
  */
 const wrapExtensionFactory = (factory) => (options) => attachValidate(factory(options));
 
@@ -173,15 +173,17 @@ const wrapExtensionFactory = (factory) => (options) => attachValidate(factory(op
  * @param {TypeExtension} extension
  */
 const registerTypes = (extension) => {
-  if (!extension.types) return;
-  for (const [name, factory] of Object.entries(extension.types))
-    /** @type {Record<string, unknown>} */ (/** @type {unknown} */ (T))[name] = wrapExtensionFactory(factory);
+  const { types } = extension;
+  if (!types) return;
+  for (const name of Object.keys(types))
+    /** @type {Record<string, unknown>} */ (/** @type {unknown} */ (T))[name] = wrapExtensionFactory(types[name]);
 };
 
 /** @param {string} type */
 const primitive = (type) => (/** @type {unknown} */ options) => createType(type, options);
 
-const T = /** @type {TypesAPI} */ ({
+/** @type {TypesAPI} */
+const T = {
   any: primitive("any"),
   string: primitive("string"),
   number: primitive("number"),
@@ -203,6 +205,6 @@ const T = /** @type {TypesAPI} */ ({
   parse,
   validateType,
   registerTypes,
-});
+};
 
 export default T;

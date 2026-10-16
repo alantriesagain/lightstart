@@ -152,7 +152,7 @@ function typeDefValidate(value, context = {}) {
  * `Object.keys`, spreads and `for...in`.
  *
  * @param {object} typeDef
- * @returns {TypeDefinition}
+ * @returns {TypeDefinition<never>}
  */
 export const attachValidate = (typeDef) => {
   Object.defineProperty(typeDef, "validate", {
@@ -161,7 +161,7 @@ export const attachValidate = (typeDef) => {
     writable: false,
     configurable: false,
   });
-  return /** @type {TypeDefinition} */ (typeDef);
+  return /** @type {TypeDefinition<never>} */ (typeDef);
 };
 
 /**
