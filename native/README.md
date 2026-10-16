@@ -15,7 +15,7 @@ light desktop run native/desktop/demo/backend.js   # the desktop shell's demo: a
 
 ## Which scriptc
 
-Light's core is TypeScript (`html/`, `signals/`, `view/core.ts`, `tdom/`), and it needs three scriptc patches no release carries yet (0.3.1 included): `unknown`- and `object`-typed fields in TypeScript classes, native dispatch for generic classes, and coverage that reports slow paths. Until a release has them, the native tools compile with the fork's `light-integration` branch (0.3.1 plus the patches), named by `SCRIPTC`; the fork's `FORK.md` lists every patch and how to re-apply them on a new scriptc release:
+Light's core is TypeScript (`html/`, `signals/`, `view/core.ts`, `tdom/`), and it needs four scriptc patches no release carries yet (0.3.4 included): `unknown`- and `object`-typed fields in TypeScript classes, methods of generic classes that a write can replace by name, keys asserted to be numbers (`slots[i as number]`) that leave method calls direct, and coverage that reports slow paths. Until a release has them, the native tools compile with the fork's `light-integration` branch (0.3.4 plus the patches), named by `SCRIPTC`; the fork's `FORK.md` lists every patch and how to re-apply them on a new scriptc release:
 
 ```
 SCRIPTC=/path/to/scriptc npm run verify
