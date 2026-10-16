@@ -391,7 +391,8 @@ describe("@bootstrapp/light/controller/define.js", () => {
       const ctrl = defineController(definition());
       assert.equal(ctrl.definition.name, "demo");
       assert.equal(ctrl.has(), false);
-      assert.equal("count" in ctrl, false, "an `in` check is not a reach");
+      assert.equal("count" in ctrl, true, "a declared key is on the handle");
+      assert.equal(ctrl.has(), false, "an `in` check is not a reach");
       assert.equal(ctrl.count, 0, "a read is the reach that builds it");
       assert.equal(ctrl.has(), true);
     });
@@ -435,6 +436,35 @@ describe("@bootstrapp/light/controller/define.js", () => {
       assert.equal(ctrl.double(), 18, "the forwarded write lands on the instance");
       assert.equal("n" in ctrl, true);
       assert.equal("double" in ctrl, true);
+    });
+
+    it("carries the declared keys and the instance's $ members alone, and refuses a write to any other", () => {
+      const ctrl = defineController({
+        name: "demo3",
+        props: { n: 1 },
+        remember() {
+          /** @type {any} */ (this).scratch = "kept on the instance";
+        },
+      });
+      ctrl.remember();
+      assert.equal(/** @type {any} */ (ctrl).scratch, undefined, "an undeclared field is not on the handle");
+      assert.throws(() => {
+        /** @type {any} */ (ctrl).other = 1;
+      }, TypeError);
+      let built = /** @type {Record<string, unknown> | null} */ (null);
+      const probe = defineController({
+        name: "demo4",
+        props: { n: 1 },
+        connected() {
+          built = /** @type {Record<string, unknown>} */ (/** @type {unknown} */ (this));
+        },
+      });
+      assert.equal(probe.n, 1);
+      const dollars = Object.keys(/** @type {Record<string, unknown>} */ (built)).filter((key) => key.startsWith("$") && key !== "$dispose");
+      for (const key of dollars) assert.equal(key in probe, true, `${key} reaches the handle`);
+      assert.equal(probe.$state, /** @type {Record<string, unknown>} */ (built).$state);
+      ctrl.dispose();
+      probe.dispose();
     });
 
     it("never looks thenable, and answers its own keys without building", () => {

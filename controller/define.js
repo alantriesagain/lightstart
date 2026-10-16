@@ -5,7 +5,8 @@
  * definition time is a mixin). There is one per name, made the first time
  * anything reaches it; `dispose()` retires it and the next reach makes a fresh
  * one. `defineController` answers that controller itself, a handle that builds
- * the instance on first reach and forwards every read, write and call to it.
+ * the instance on first reach and forwards every declared prop and member,
+ * and the instance's `$` members, to it.
  */
 
 import { normalizeProperties } from "../types/index.js";
@@ -21,7 +22,7 @@ const SYNC_OPTIONS = new Set(["to", "key", "scope", "query", "dependsOn"]);
 
 const HANDLE_KEYS = new Set(["definition", "has", "dispose"]);
 const RESERVED = new Set([...HANDLE_KEYS, "create", "get"]);
-const PASSTHROUGH = new Set(["then", "constructor"]);
+const INSTANCE_KEYS = ["$name", "$state", "$sync", "$queries", "$own", "$attach"];
 /** @type {Record<string, string>} */
 const RETIRED = {
   create: "the controller is made on first reach, and dispose() resets it",
@@ -109,8 +110,10 @@ export const defineMixin = (definition) => definition;
  * (`composeDefinition`), the definition's own keys win a collision, and
  * lifecycle hooks chain mixin-first.
  *
- * The answer is the controller's handle. Every read, write and call reaches the
- * instance, building it on first reach; `definition`, `has()` (whether one is
+ * The answer is the controller's handle, a frozen object that forwards every
+ * declared prop and member, and the instance's `$` members, to the instance,
+ * building it on first reach; a key the definition does not declare is not on
+ * the handle, and writing one throws. `definition`, `has()` (whether one is
  * built, without building it), `dispose()` and `$ready` answer from the handle.
  * `dispose()` runs `disconnected()` while the subscriptions the instance owns
  * are still live, then drains every owned teardown; the retiring instance
@@ -278,20 +281,22 @@ export const defineController = (rawDefinition) => {
     },
   };
 
-  const handle = new Proxy(own, {
-    get(target, key) {
-      if (typeof key === "symbol" || PASSTHROUGH.has(key) || HANDLE_KEYS.has(key)) return Reflect.get(target, key);
-      if (Object.hasOwn(RETIRED, key)) throw new Error(`Controller "${name}": .${key} is gone; ${RETIRED[key]}`);
-      if (key === "$ready") return Promise.resolve(teardown).then(() => instance().$ready);
-      return /** @type {Record<string, unknown>} */ (/** @type {unknown} */ (instance()))[key];
-    },
-    set(target, key, value) {
-      if (typeof key === "symbol" || HANDLE_KEYS.has(key)) return false;
-      /** @type {Record<string, unknown>} */ (/** @type {unknown} */ (instance()))[key] = value;
-      return true;
-    },
-    has: (target, key) => HANDLE_KEYS.has(/** @type {string} */ (key)) || key in /** @type {object} */ (current ?? retiring ?? {}),
-  });
+  const handle = /** @type {Record<string, unknown>} */ (own);
+  for (const key of [...Object.keys(properties), ...Object.keys(memberDescs), ...INSTANCE_KEYS])
+    Object.defineProperty(handle, key, {
+      get: () => /** @type {Record<string, unknown>} */ (/** @type {unknown} */ (instance()))[key],
+      set: (value) => {
+        /** @type {Record<string, unknown>} */ (/** @type {unknown} */ (instance()))[key] = value;
+      },
+    });
+  Object.defineProperty(handle, "$ready", { get: () => Promise.resolve(teardown).then(() => instance().$ready) });
+  for (const [key, why] of Object.entries(RETIRED))
+    Object.defineProperty(handle, key, {
+      get: () => {
+        throw new Error(`Controller "${name}": .${key} is gone; ${why}`);
+      },
+    });
+  Object.freeze(handle);
 
   handles.set(handle, {
     get named() {

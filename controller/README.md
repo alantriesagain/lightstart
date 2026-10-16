@@ -38,7 +38,7 @@ export const ledger = defineController({
 });
 ```
 
-`defineController(def)` returns the controller: a handle that builds the instance on the first read, write or call, then forwards everything to it. The handle keeps three keys of its own: `definition` (the composed definition), `has()` (whether an instance is built, without building one) and `dispose()`. An `in` check answers without building.
+`defineController(def)` returns the controller: a handle that builds the instance on the first read, write or call of a key it carries, then forwards to it. It carries every declared prop and member (the definition's and its mixins') and the instance's `$` members; it is frozen, so a key the definition does not declare is not on it and writing one throws, which is why a field a method assigns must be declared (`controller-declare-instance-surface`). The handle keeps three keys of its own: `definition` (the composed definition), `has()` (whether an instance is built, without building one) and `dispose()`. An `in` check answers without building, and a declared key is on the handle before the first reach.
 
 **`props` is the reactive state.** Each entry is a default in light's shorthand: `count: 0` is a number, `label: ""` a string, `items: []` an array, `summary: null` anything. A JSDoc cast says what the literal cannot: `/** @type {Summary | null} */ (null)`, `/** @type {"day" | "week"} */ ("day")`. The props live in a `createStore` (per-key `subscribe`, `===` dedupe, `snapshot()` and `restore()`), reached as `$state`. A `T` descriptor works for a prop too, as long as it carries no sync option.
 
