@@ -1,9 +1,35 @@
 /**
- * @bootstrapp/light/types: the property descriptor `T` builds, and the
- * shorthand a `props` block may use in its place.
+ * @bootstrapp/light/types: the property descriptor `T` builds, the shorthand
+ * a `props` block may use in its place, and what validation answers.
  */
 
-/** The fields the view engine reads from a descriptor. A host adds its own (`sync`, `required`, ...) through the index signature. */
+/** Result of validating a single value against a descriptor. */
+export interface ValidationResult {
+  valid: boolean;
+  /** Coerced value (or original on failure). */
+  value: unknown;
+  /** Error code (`"required"`, `"invalid"`, ...) or `null`. */
+  error: string | null;
+  /** Optional error details. */
+  details: unknown;
+}
+
+/** What the validators answer: `[errorCode, valueOrDetails]`, or nothing when valid. */
+export type ValidationTuple = [string, unknown] | [null, unknown] | null | undefined;
+
+/** A check that runs before the built-in validation; a truthy answer fails with it. */
+export type CustomValidator = (
+  value: unknown,
+  prop: TypeDefinition,
+  context?: object,
+) => ValidationTuple;
+
+/**
+ * The fields of a descriptor. The view engine reads `$type` through
+ * `hasChanged`; a model reads the rest. Different factories fill different
+ * subsets; an extension registered with `T.registerTypes` adds its own
+ * through the index signature of `TypeDefinition`.
+ */
 export interface TypeDefinitionFields {
   /** The declared type, and what marks an object as a descriptor rather than an object default. */
   $type: string;
@@ -19,6 +45,46 @@ export interface TypeDefinitionFields {
   getter?: () => unknown;
   setter?: (value: unknown) => void;
   hasChanged?: (newValue: unknown, oldValue: unknown) => boolean;
+  /** Whether a model stores the field; off for a `reactive: false` field, a function and a relationship a row does not own. */
+  persist: boolean;
+  required?: boolean;
+  index?: boolean;
+  /** Declares the backing index unique, honored by the IndexedDB adapter when it creates the store's indexes. */
+  unique?: boolean;
+  immutable?: boolean;
+  virtual?: string | undefined;
+  enum?: readonly string[];
+  format?: string | RegExp | ((value: unknown) => boolean);
+  min?: number;
+  max?: number;
+  types?: TypeDefinition[];
+  args?: TypeDefinition[];
+  returns?: TypeDefinition | null;
+  relationship?: "one" | "many" | "belongs" | "belongs_many";
+  targetModel?: string | string[];
+  targetForeignKey?: string;
+  many?: boolean;
+  belongs?: boolean;
+  polymorphic?: boolean;
+  mixed?: boolean;
+  fieldType?: string;
+  customValidator?: CustomValidator;
+  sync?: unknown;
+  /** Adapter key for a `sync:` property; defaults to the property name, which every view and controller declaring that name shares. */
+  key?: string;
+  /** Name of a sibling property (or `"a.b"`) whose value prefixes the adapter key as `${value}:${key}`; a null value skips the bind. */
+  scope?: string;
+  query?: object;
+  timestamp?: boolean;
+  update?: boolean;
+  create?: boolean;
+  accept?: string;
+  maxSize?: number;
+  maxWidth?: number | null;
+  maxHeight?: number | null;
+  quality?: number | null;
+  maxItems?: number | null;
+  validate(value: unknown, context?: object): ValidationResult;
 }
 
 /**
@@ -76,25 +142,57 @@ export type PropertyValue<V> = [PropertyDeclaration] extends [V] ? any
   : [V] extends [string] ? string
   : V;
 
-export type TypeOptions = Partial<Omit<TypeDefinitionFields, "$type">> & Record<string, unknown>;
+export type TypeOptions = Partial<Omit<TypeDefinitionFields, "$type" | "validate">> & Record<string, unknown>;
 
 /** An options object, or a bare default: `T.string("hi")` is `T.string({ defaultValue: "hi" })`, `T.array([])` a default too. */
 export type TypeOptionsOrDefault = TypeOptions | readonly unknown[] | string | number | boolean | null | undefined;
 
 export type Parser = (value: unknown, prop?: TypeDefinition) => unknown;
 
+/** An extension for `T.registerTypes`: a custom name mapped to the factory of its descriptor's fields. */
+export interface TypeExtension {
+  types: Record<string, (options?: TypeOptions) => object>;
+}
+
 type Factory<T> = (options?: TypeOptionsOrDefault) => TypeDefinition<T>;
+type RelationFactory<T> = (
+  targetModel: string | string[],
+  targetForeignKeyOrOptions?: string | TypeOptions,
+  options?: TypeOptions,
+) => TypeDefinition<T>;
 
 export interface TypesAPI {
   any: Factory<unknown>;
   string: Factory<string>;
   number: Factory<number>;
   boolean: Factory<boolean>;
+  date: Factory<string>;
+  datetime: Factory<string>;
   array: Factory<unknown[]>;
   object: Factory<Record<string, unknown>>;
-  function: Factory<(...args: unknown[]) => unknown>;
+  union(options?: TypeOptions & { types?: TypeDefinition[] }): TypeDefinition<unknown>;
+  function(options?: TypeOptions & { args?: TypeDefinition[]; returns?: TypeDefinition | null }): TypeDefinition<(...args: unknown[]) => unknown>;
+  one: RelationFactory<string>;
+  many: RelationFactory<string[]>;
+  belongs: RelationFactory<string>;
+  belongs_many: RelationFactory<string[]>;
+  timestamp(options?: TypeOptions): TypeDefinition<number | string>;
+  file(options?: TypeOptions): TypeDefinition<File | string>;
+  files(options?: TypeOptions): TypeDefinition<(File | string)[]>;
   createType(type: string, options?: TypeOptions | unknown): TypeDefinition;
   parse(value: unknown, prop?: TypeDefinition): unknown;
+  validateType(
+    object: Record<string, unknown>,
+    options: {
+      schema: Record<string, TypeDefinition>;
+      row?: Record<string, unknown>;
+      undefinedProps?: boolean;
+      validateVirtual?: boolean;
+      operation?: string | null;
+    },
+  ): [Record<string, string> | null, Record<string, unknown> | null];
+  registerTypes(extension: TypeExtension): void;
+  [key: string]: unknown;
 }
 
 export * from "./index.js";

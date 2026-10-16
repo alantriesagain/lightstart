@@ -9,8 +9,8 @@ describe("light/types: descriptors", () => {
   });
 
   it("takes an options object or a bare default", () => {
-    assert.deepEqual(T.string("hi"), { $type: "string", attribute: true, defaultValue: "hi" });
-    assert.deepEqual(T.array([1]), { $type: "array", attribute: false, defaultValue: [1] });
+    assert.deepEqual(T.string("hi"), { $type: "string", persist: true, attribute: true, defaultValue: "hi" });
+    assert.deepEqual(T.array([1]), { $type: "array", persist: true, attribute: false, defaultValue: [1] });
     assert.equal(T.number({ defaultValue: 3, sync: "local" }).sync, "local");
   });
 

@@ -41,11 +41,11 @@ export default defineComponent({
     _history: /** @type {Prop<SwipeDeckHistory[]>} */ (T.object({ reactive: false, defaultValue: null })),
   },
   events: {
-    swipe: T.object({ direction: T.string(), index: T.number(), item: T.object() }),
-    select: T.object({ index: T.number(), item: T.object() }),
-    "index-change": T.object({ index: T.number() }),
+    swipe: T.object({ props: { direction: T.string(), index: T.number(), item: T.object() } }),
+    select: T.object({ props: { index: T.number(), item: T.object() } }),
+    "index-change": T.object({ props: { index: T.number() } }),
     end: T.object({}),
-    undo: T.object({ index: T.number(), item: T.object() }),
+    undo: T.object({ props: { index: T.number(), item: T.object() } }),
   },
   connected() {
     this._history = [];
