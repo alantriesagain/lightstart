@@ -1,6 +1,6 @@
 import { html, nothing } from "@bootstrapp/light/html";
 import $APP from "bootstrapp";
-import T from "bootstrapp/types";
+import T from "@bootstrapp/light/types";
 import { defineComponent } from "@bootstrapp/light";
 import { browsableCategories, categoryById } from "@bootstrapp/showcase/lib/categories.js";
 import { categoryPath, COMPONENTS_PATH, neighbourCategories } from "../lib/paths.js";

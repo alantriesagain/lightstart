@@ -1,6 +1,6 @@
 import { html } from "@bootstrapp/light/html";
 import $APP from "bootstrapp";
-import T from "bootstrapp/types";
+import T from "@bootstrapp/light/types";
 import { defineComponent } from "@bootstrapp/light";
 
 export default defineComponent({

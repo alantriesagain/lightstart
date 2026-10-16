@@ -30,7 +30,7 @@ Views are thin: they render controller state and dispatch to controller methods.
 ```js
 import { html } from "@bootstrapp/light/html";
 import $APP from "bootstrapp";
-import T from "bootstrapp/types";
+import T from "@bootstrapp/light/types";
 
 export default {
   tag: "docs-task-list",

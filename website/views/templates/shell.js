@@ -5,7 +5,7 @@
  */
 import { html, nothing } from "@bootstrapp/light/html";
 import $APP from "bootstrapp";
-import T from "bootstrapp/types";
+import T from "@bootstrapp/light/types";
 import { defineComponent } from "@bootstrapp/light";
 import { ROUTER_CHANGED } from "bootstrapp/router/events.js";
 import presets from "@bootstrapp/light/theme/presets.js";

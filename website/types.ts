@@ -4,7 +4,7 @@
  * demo), so only the shapes the app computes are declared here.
  */
 
-import type { TypeDefinition } from "bootstrapp/types";
+import type { TypeDefinition } from "@bootstrapp/light/types";
 
 /**
  * The declared type of a reactive property. `T.array()`/`T.object()` alone

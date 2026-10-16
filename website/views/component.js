@@ -4,7 +4,7 @@
  */
 import { html } from "@bootstrapp/light/html";
 import $APP from "bootstrapp";
-import T from "bootstrapp/types";
+import T from "@bootstrapp/light/types";
 import { defineComponent } from "@bootstrapp/light";
 import { browsableCategories, categoryById, humanize } from "@bootstrapp/showcase/lib/categories.js";
 import { categoryPath, componentPath, COMPONENTS_PATH, neighbours } from "../lib/paths.js";

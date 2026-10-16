@@ -5,7 +5,7 @@
  * the total, the form validates, the second sign-in card wears a skin.
  */
 import { html, key, nothing } from "@bootstrapp/light/html";
-import T from "bootstrapp/types";
+import T from "@bootstrapp/light/types";
 import { defineComponent } from "@bootstrapp/light";
 import { env } from "@bootstrapp/light/env";
 import { matchesBreakpoint } from "@bootstrapp/light/components/utils/breakpoints.js";
