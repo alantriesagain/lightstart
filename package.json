@@ -66,6 +66,16 @@
     "./controller/document": "./controller/adapters/document.js",
     "./controller/url": "./controller/adapters/url.js",
     "./controller/view": "./controller/view.js",
+    "./model": {
+      "types": "./model/types.ts",
+      "default": "./model/index.js"
+    },
+    "./model/store": "./model/store.js",
+    "./model/adapter": "./model/adapter.js",
+    "./model/indexeddb": "./model/indexeddb.js",
+    "./model/binder": "./model/binder.js",
+    "./model/slug": "./model/slug.js",
+    "./model/events": "./model/events.js",
     "./html/constants.js": "./html/constants.ts",
     "./html/parser.js": "./html/parser.ts",
     "./html/values.js": "./html/values.ts",
@@ -92,7 +102,7 @@
     "test:native": "node native/run.js",
     "test:desktop": "node native/desktop/smoke.js",
     "check": "node bin/light.js check",
-    "test": "node --test check/*.test.js check/parse/*.test.js check/rules/*.test.js eslint/*.test.js eslint/rules/*.test.js view/definition.test.js $(find controller -name \"*.test.js\" -not -name \"*.browser.test.js\") navigation/*.test.js signals/*.test.js theme/variant-rules.test.js types/*.test.js test/*.test.js html/conformance.test.js markup/markup.test.js view/core.test.js $(find components -name \"*.test.js\" -not -name \"*.browser.test.js\") && node bin/light.js test env/*.browser.test.js html/*.browser.test.js markup/*.browser.test.js theme/*.browser.test.js view/*.browser.test.js controller/*.browser.test.js components/*/*.browser.test.js",
+    "test": "node --test check/*.test.js check/parse/*.test.js check/rules/*.test.js eslint/*.test.js eslint/rules/*.test.js view/definition.test.js $(find controller -name \"*.test.js\" -not -name \"*.browser.test.js\") $(find model -name \"*.test.js\" -not -name \"*.browser.test.js\") navigation/*.test.js signals/*.test.js theme/variant-rules.test.js types/*.test.js test/*.test.js html/conformance.test.js markup/markup.test.js view/core.test.js $(find components -name \"*.test.js\" -not -name \"*.browser.test.js\") && node bin/light.js test env/*.browser.test.js html/*.browser.test.js markup/*.browser.test.js theme/*.browser.test.js view/*.browser.test.js controller/*.browser.test.js model/*.browser.test.js components/*/*.browser.test.js",
     "probes": "node native/probes/run.js",
     "verify": "npm run lint && npm run typecheck && npm run typecheck:native && npm run typecheck:desktop && npm run coverage:native && npm run coverage:desktop && npm run check && npm test && npm run test:native && npm run test:desktop"
   },

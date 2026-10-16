@@ -7,7 +7,9 @@ Web components for the light DOM, written as plain objects. A component is a def
 | `@bootstrapp/light` | The view engine: `View`, `defineComponent`, `defineMixin`, `configureView` |
 | `@bootstrapp/light/html` | The tagged-template renderer: `html`, `svg`, `render`, `key`, `element`, `nothing`, `unsafeHTML` ([README](html/README.md)) |
 | `@bootstrapp/light/signals` | `signal`, `computed`, `effect`, `batch`, `untracked`, `selector` ([README](signals/README.md)) |
-| `@bootstrapp/light/types` | `T`, the property descriptors |
+| `@bootstrapp/light/types` | `T`, the descriptors of a component's props, a controller's state and a model's fields |
+| `@bootstrapp/light/controller` | Controllers: shared state, the `sync` binding, `resource()` ([README](controller/README.md)) |
+| `@bootstrapp/light/model` | Models: schemas, a store over IndexedDB or any adapter, live queries ([README](model/README.md)) |
 | `@bootstrapp/light/env` | The page's environment: viewport, breakpoint, OS, color scheme, `subscribe` |
 | `@bootstrapp/light/navigation` | The host's router as components see it; plain anchors until one is configured |
 | `@bootstrapp/light/theme` | Design tokens from a theme object, presets, `theme.css`, the color scheme, icons ([README](theme/README.md)) |
@@ -171,6 +173,28 @@ nameControllers([cart]);
 
 Each piece is its own entry and loads only what it uses: `/controller` (definitions and the sync registry), `/controller/resource` (`resource()`), `/controller/storage`, `/controller/document` and `/controller/url` (the adapters), `/controller/view` (the component plugin). Nothing else in light imports any of them. The reference is [controller/README.md](controller/README.md).
 
+## Models
+
+`@bootstrapp/light/model` is the data layer: a schema per model, written with `T`; a store that runs every write the same way (hooks, defaults, validation, file uploads, then the adapter, then `model:changed`) over any storage adapter; a registry of per-model apis with eleven methods; relationships loaded one level deep. A page keeps its rows in IndexedDB and binds components and controllers to live queries:
+
+```js
+import T from "@bootstrapp/light/types";
+import { createModel, modelBus } from "@bootstrapp/light/model";
+import { createStore, storeRequest } from "@bootstrapp/light/model/store";
+import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
+import IndexedDBAdapter from "@bootstrapp/light/model/indexeddb";
+
+registerStorageAdapter("indexeddb", IndexedDBAdapter);
+const models = { todo: { title: T.string({ required: true }), done: T.boolean({ index: true, defaultValue: false }) } };
+const db = createAdapter("indexeddb", { name: "todos", version: 1, models, isDefaultAdapter: true });
+await db.init();
+const store = createStore({ models, databases: { indexeddb: db }, emit: (event, data) => modelBus().emit(event, data) });
+export const Model = createModel(storeRequest(store), { schemaOf: (name) => models[name] });
+// a component: todos: T.array({ defaultValue: [], sync: Model.todo, query: { where: { done: false } } })
+```
+
+The registry talks to the store through a request, so a host can keep the store elsewhere (Bootstrapp runs it in a db-worker) and the page loads `/model` alone, without the store or the adapters. Binding a property to a model takes `registerSyncBinder(modelBinder)` from `/model/binder`. The reference is [model/README.md](model/README.md).
+
 ## The host
 
 A component library needs a few things from the page it runs on. Light holds them as small modules with working defaults, and a host that has more (a router, translations, a settle tracker) hands its own in once.
@@ -223,6 +247,7 @@ One engine, three hosts. The renderer and the view core never touch a document: 
 | `native/desktop/` | The desktop shell: a native backend, a web view, a typed bridge; the shim over webview, the build tool, the demo and its gates |
 | `env/`, `navigation/` | The page's environment and the host's router, as components read them |
 | `controller/` | Controllers, the sync binding and its registries, the storage, document and hash adapters, `resource()`, the component sync plugin |
+| `model/` | Models: the registry, the store and its write pipeline, the storage SPI, the IndexedDB adapter, the binding of a property to a live query |
 | `theme/` | Tokens, presets, `theme.css`, the color scheme, icons |
 | `components/` | The component library, one directory per category, a `.css` and a `.demo.js` beside each component |
 | `locales/` | The words the components draw, keyed by tag, one file per language |
@@ -232,7 +257,7 @@ One engine, three hosts. The renderer and the view core never touch a document: 
 | `html/` | The renderer; `html/core.js` is the engine without a host, `html/host.js` the seam a host implements |
 | `signals/index.js` | The signals |
 | `signals/store.js` | The keyed reactive store behind `$state` |
-| `types/index.js` | `T` and attribute parsing |
+| `types/` | `T`: descriptors, attribute and row parsing, validation, relationships, timestamps and files |
 
 ## License
 

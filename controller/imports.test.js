@@ -62,9 +62,9 @@ const jsFiles = (dir) =>
 const inController = (/** @type {string} */ file) => file.startsWith("controller/");
 
 describe("@bootstrapp/light/controller: nothing loads what it did not ask for", () => {
-  it("no entry outside the controller, and no component, reaches controller/", () => {
+  it("no entry outside the controller but the model's binding, and no component, reaches controller/", () => {
     const entries = Object.entries(pkg.exports)
-      .filter(([key]) => !key.startsWith("./controller") && !key.includes("*"))
+      .filter(([key]) => !key.startsWith("./controller") && key !== "./model/binder" && !key.includes("*"))
       .map(([, target]) => exportFile(target))
       .filter((file) => typeof file === "string");
     for (const entry of [...entries, ...jsFiles("components")]) {
