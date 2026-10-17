@@ -245,10 +245,12 @@ export class TElement extends TNode {
   }
 
   /**
-   * Set a prop by its template name: a style prop, one of the element's
-   * own, or an attribute kept inert.
+   * Set a prop by its template name: one the owning view declared, a style
+   * prop, one of the element's own, or an attribute kept inert. A removal
+   * (null) never reaches the view: it keeps its value.
    */
   setProp(name: string, v: PropValue) {
+    if (this.owner !== null && v !== null && this.owner.$setProp(name, v)) return;
     if (this.setKnownProp(name, v)) return;
     if (v === null || v === false) {
       if (this.attrs.delete(name)) this.invalidate();

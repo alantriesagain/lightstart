@@ -134,13 +134,13 @@ class RenderNode extends Reactive {
  * The methods of the cycle itself, the ones a host takes from ViewCore as
  * they are; everything else on it is the host's to answer.
  */
-export const CORE_METHODS = ["$requestUpdate", "$schedule", "$flushUpdate", "$performUpdate", "$shouldUpdate", "$update", "$own", "$attach", "$detach"];
+export const CORE_METHODS = ["$requestUpdate", "$schedule", "$flushUpdate", "$performUpdate", "$shouldUpdate", "$update", "$own", "$attach", "$detach", "$setProp"];
 
 /**
  * One component's update cycle. A host answers `$node`, `$connected`,
- * `$label`, `$tracked`, `$hasChanged`, `$hook`, `$render` and `$commit`;
- * the cycle itself (`$requestUpdate` through `$flushUpdate`, the hooks'
- * order, teardowns) is the same on every host, and
+ * `$label`, `$tracked`, `$hasChanged`, `$setProp`, `$hook`, `$render` and
+ * `$commit`; the cycle itself (`$requestUpdate` through `$flushUpdate`, the
+ * hooks' order, teardowns) is the same on every host, and
  * `await view.$requestUpdate()` resolves once the update ran.
  */
 export class ViewCore {
@@ -178,6 +178,13 @@ export class ViewCore {
    */
   $hasChanged(_key: string, _oldValue: unknown): boolean {
     return true;
+  }
+
+  /**
+   * @returns whether the view took a prop handed to it by name: a host routes an attribute or property binding on the element a view owns to the view
+   */
+  $setProp(_name: string, _value: unknown): boolean {
+    return false;
   }
 
   /**

@@ -3,11 +3,11 @@
  */
 export { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, COLOR_DEFAULT, DEFAULT_STYLE, Style, TRUECOLOR_FLAG, colorName } from "./style.ts";
 export { colorSgr, parseColor } from "./color.ts";
-export { ChangeEvent, FocusEvent, KeyEvent, MouseEvent, SubmitEvent, UIEvent, WheelEvent } from "./events.ts";
+export { ChangeEvent, CustomEvent, FocusEvent, KeyEvent, MouseEvent, SubmitEvent, UIEvent, WheelEvent } from "./events.ts";
 export { focusables, hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.ts";
 export { FLUSH_AFTER, FLUSH_RENDER, FLUSH_VIEWS, FrameScheduler, frames } from "./scheduler.ts";
 export { HandlerEntry, TAnchor, TBox, TElement, TFragment, TInput, TNode, TRoot, TRun, TSpan, TText, asBool, asEnum, asNumber, asNumberOrNull, asString, childNodes } from "./node.ts";
-export { EVENT_NAMES, createElement, isKnownProp, isKnownTag, kindOf } from "./tags.ts";
+export { EVENT_NAMES, TagDefinition, createElement, isDefinedTag, isKnownProp, isKnownTag, kindOf, registerTag } from "./tags.ts";
 export { dumpTree, textOf } from "./dump.ts";
 export { codePointWidth, graphemeWidth, graphemes, stringWidth } from "./width.ts";
 export { Cell, InlineRun, WrappedLine, lineText, wrapRuns } from "./wrap.ts";
@@ -20,4 +20,4 @@ export { backspace, clearInput, del, deleteWord, editorHandleKey, insertText, ki
 export { Terminal } from "./terminal.ts";
 export { Renderer } from "./renderer.ts";
 export { TermHost, TermPrepared } from "./host.ts";
-export { View, mount, unmount } from "./view.ts";
+export { Prop, View, define, mount, unmount } from "./view.ts";

@@ -791,6 +791,15 @@ class View extends BaseElement {
   }
 
   /**
+   * @param {string} name
+   * @param {unknown} value
+   * @returns {boolean}
+   */
+  $setProp(name, value) {
+    return core.$setProp.call(this, name, value);
+  }
+
+  /**
    * @param {this} [_el] the element itself, for a render written as an arrow
    * @returns {unknown}
    */

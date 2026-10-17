@@ -122,3 +122,13 @@ export class FocusEvent extends UIEvent {
     super(type);
   }
 }
+
+/** What a view emits with `$emit(type, detail)`: a parent's `@type=` handler receives it, and it bubbles like every terminal event. */
+export class CustomEvent extends UIEvent {
+  detail: unknown;
+
+  constructor(type: string, detail: unknown) {
+    super(type);
+    this.detail = detail;
+  }
+}

@@ -4,11 +4,45 @@
  * HTML names map onto them, with the style the HTML name implies, so a
  * template reads like HTML: `div`, `section`, `ul` are boxes; `p`, `h1`,
  * `li`, `pre` are text; `b`, `em`, `code`, `a` are spans; `textarea` is an
- * input. A tag outside the table is a box. `class`, `id` and `style` are
- * accepted and kept inert.
+ * input. A tag the app `define`d makes its view's box; any other tag
+ * outside the table is a box. `class`, `id` and `style` are accepted and
+ * kept inert.
  */
 import { TBox, TElement, TInput, TRun, TSpan, TText } from "./node.ts";
 import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE } from "./style.ts";
+
+/**
+ * A tag the app defined: the function making its element, a view's box. A
+ * class, since a Map's values are class instances natively, never bare
+ * functions.
+ */
+export class TagDefinition {
+  tag: string;
+  makeElement: () => TElement;
+
+  constructor(tag: string, makeElement: () => TElement) {
+    this.tag = tag;
+    this.makeElement = makeElement;
+  }
+}
+
+const definitions = new Map<string, TagDefinition>();
+let definedCount = 0;
+
+/**
+ * Register a definition. The tag is lowercase with a hyphen, as a custom
+ * element's name is, and defined once.
+ */
+export const registerTag = (def: TagDefinition) => {
+  const tag = def.tag;
+  if (tag.indexOf("-") < 0) throw new Error("[tdom] define: \"" + tag + "\" needs a hyphen, as a custom element's name does");
+  if (tag !== tag.toLowerCase()) throw new Error("[tdom] define: \"" + tag + "\" must be lowercase, as a template's tag names are");
+  if (definitions.has(tag)) throw new Error("[tdom] define: \"" + tag + "\" is already defined");
+  definitions.set(tag, def);
+  definedCount++;
+};
+
+export const isDefinedTag = (tag: string) => definitions.has(tag);
 
 const BLOCK = new Set(["box", "div", "section", "article", "main", "header", "footer", "nav", "aside", "ul", "ol", "form", "fieldset", "button", "hr", "details", "summary", "dialog", "table", "tr", "menu"]);
 const TEXT = new Set(["text", "p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "blockquote", "label", "li", "dt", "dd", "figcaption", "legend", "td", "th", "caption"]);
@@ -51,9 +85,14 @@ const withAttr = (el: TElement, bit: number) => {
 };
 
 /**
- * An element for `tag`, styled as the HTML name implies.
+ * An element for `tag`: a defined tag's view box, else an element styled as
+ * the HTML name implies.
  */
 export const createElement = (tag: string): TElement => {
+  if (definedCount > 0) {
+    const def = definitions.get(tag);
+    if (def !== undefined) return def.makeElement();
+  }
   const kind = kindOf(tag);
   if (kind === "text") {
     const text = new TText(tag);

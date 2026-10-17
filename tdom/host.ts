@@ -10,6 +10,7 @@
  */
 import { Clone, Host, ListenerOptions, Prepared } from "../html/host.ts";
 import { HTML_KIND } from "../html/constants.ts";
+import { disposeTree } from "../html/core.ts";
 import { parseTemplate } from "../html/parser.ts";
 import { TplComment, TplElement, TplNode, TplText, indexParts, tokenize } from "../html/tokenizer.ts";
 import { setValue } from "./editor.ts";
@@ -120,6 +121,25 @@ const setAttached = (node: TNode, on: boolean) => {
   for (let c = node.firstChild; c !== null; c = c.next) setAttached(c, on);
 };
 
+/**
+ * Drop what the views a template made by tag rendered inside `node`,
+ * children first: their root parts and the effects of their thunks, and
+ * their content, so that an element put back in a tree renders afresh. A
+ * view the app constructed keeps its content, as `unmount` leaves it.
+ */
+const disposeDefined = (node: TNode) => {
+  if (!(node instanceof TElement)) return;
+  for (let c = node.firstChild; c !== null;) {
+    const next = c.next;
+    disposeDefined(c);
+    c = next;
+  }
+  if (node.owner instanceof View && node.owner.$defined) {
+    disposeTree(node);
+    node.clearChildren();
+  }
+};
+
 export class TermHost extends Host {
   registered: boolean;
   onError: ((error: unknown) => void) | null;
@@ -189,6 +209,7 @@ export class TermHost extends Host {
     if (n.isConnected()) setAttached(n, false);
     parent.remove(n);
     forgetLayout(n);
+    disposeDefined(n);
   }
 
   parentOf(node: HostNode): HostNode {
@@ -229,6 +250,7 @@ export class TermHost extends Host {
 
   setProperty(el: HostNode, name: string, value: unknown) {
     const e = el as TElement;
+    if (e.owner !== null && e.owner.$setProp(name, value)) return;
     e.props.set(name, value);
     if (e instanceof TInput && name === "value") {
       const text = typeof value === "string" ? value : value === null || value === undefined ? "" : typeof value === "number" ? String(value) : e.value();
