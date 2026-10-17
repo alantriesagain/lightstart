@@ -41,7 +41,6 @@
     "@bootstrapp/showcase": "workspace:*",
     "bootstrapp": "workspace:*",
     "@bootstrapp/theme": "workspace:*",
-    "@bootstrapp/tw": "workspace:*",
     "@bootstrapp/editor": "workspace:*",
     "@bootstrapp/anim": "workspace:*",
     "@bootstrapp/qr": "workspace:*"
