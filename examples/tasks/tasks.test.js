@@ -13,7 +13,7 @@ import { done, eq, eqn, ok } from "../../native/assert.js";
 import { TestTerminal } from "../../native/test-terminal.ts";
 import tasks from "./models/tasks.js";
 import board from "./controllers/board.js";
-import { TaskApp, appKey } from "./views/task-app.js";
+import { TaskApp, appKey } from "./views/task-app.ts";
 
 /** @type {Map<string, string>} */
 const files = new Map();

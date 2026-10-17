@@ -1,6 +1,6 @@
 # Tasks: a terminal app on light
 
-A task list on the terminal, built from light's three parts and nothing else: a model (`models/tasks.js`, `defineModel` over `T`), a controller (`controllers/board.js`, `defineController` with its rows bound to a live query of the model), and views (`views/task-app.js`, a `View` from `@bootstrapp/light/native` rendering into the terminal host). The rows live in a JSON Lines file through light's JSONL adapter, one line per write, so the file is readable and appendable by any other program.
+A task list on the terminal, built from light's three parts and nothing else: a model (`models/tasks.js`, `defineModel` over `T`), a controller (`controllers/board.js`, `defineController` with its rows bound to a live query of the model), and views (`views/task-app.ts`, a `View` from `@bootstrapp/light/native` rendering into the terminal host). The rows live in a JSON Lines file through light's JSONL adapter, one line per write, so the file is readable and appendable by any other program.
 
 ```
 node examples/tasks/main.js                 # rows in ./tasks.jsonl
@@ -21,10 +21,14 @@ The editor has the focus at start: type a task and press Enter to add it. Tab mo
 | File | What it holds |
 |---|---|
 | `models/tasks.js` | The model: a title, whether it is done, when it was added |
+| `models/types.ts` | The `Task` row type the TypeScript views read |
 | `controllers/board.js` | The filter, the rows the filter selects (a `sync:` binding to the model, rebuilt when the filter changes), the open and done counts it recounts on every change, and the writes |
-| `views/task-app.js` | The screen: the list keyed by task, the editor, the footer, and `appKey`, the keys that work wherever the focus is outside the editor |
-| `lib/file-io.js` | The JSONL adapter's files through `node:fs` |
+| `views/task-row.ts` | `<task-row .task=${task}>`: one task as a focusable line, asking for its toggle or removal with an event |
+| `views/task-app.ts` | The screen: the list of `<task-row>`s keyed by task, the editor, the footer, and `appKey`, the keys that work wherever the focus is outside the editor |
+| `lib/file-io.ts` | The JSONL adapter's files through `node:fs` |
 | `main.js` | The entry: the adapter, the store, the request every model call goes through, the terminal |
 | `tasks.test.js` | The app on `native/test-terminal.ts`, with its files in memory |
+
+The views and the file IO are TypeScript, as the code scriptc compiles is; the model, the controller, the entry and the test are JavaScript with JSDoc, because `defineModel` and `defineController` do not compile from TypeScript yet (their return types and the `this` of a definition's methods have no native shape, and `T`'s descriptors do not lower), while JSDoc-typed JavaScript falls back to checked-dynamic values that do. A TypeScript view may still read the controller it imports.
 
 The store runs in the same process as the views, so `configureModel({ request: storeRequest(store) })` is the whole transport. The same model and controller would run in a browser page over IndexedDB by changing the adapter and the views.

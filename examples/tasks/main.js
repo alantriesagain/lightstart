@@ -14,8 +14,8 @@ import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/a
 import JsonlAdapter from "@bootstrapp/light/model/jsonl";
 import tasks from "./models/tasks.js";
 import board from "./controllers/board.js";
-import { fileIO } from "./lib/file-io.js";
-import { TaskApp, appKey } from "./views/task-app.js";
+import { fileIO } from "./lib/file-io.ts";
+import { TaskApp, appKey } from "./views/task-app.ts";
 
 const at = process.argv.indexOf("--data");
 const dir = at >= 0 && at + 1 < process.argv.length ? process.argv[at + 1] : ".";
