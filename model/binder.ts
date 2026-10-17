@@ -14,6 +14,7 @@
  */
 
 import { resource } from "../controller/resource.ts";
+import { writableRecord, writerOf } from "../controller/writers.ts";
 import { isModelApi } from "./index.ts";
 import { onChange } from "./changes.ts";
 import type { Binding, Resource, ResourceOptions, StoreCore, SyncBinder, SyncHost, SyncProp } from "../controller/types.ts";
@@ -57,9 +58,9 @@ const liveQuery = <T extends Record<string, unknown>>(api: ModelApi, query: Quer
     return page.rows as T[];
   }, { name: `query:${name}`, eager, ready });
 
-  const offs = [onChange(api.name, undefined, refresh)];
+  res.own(onChange(api.name, undefined, refresh));
   for (const include of query.includes ?? [])
-    for (const target of includeTargets(api, include)) offs.push(onChange(target, undefined, refresh));
+    for (const target of includeTargets(api, include)) res.own(onChange(target, undefined, refresh));
 
   return {
     name: res.name,
@@ -72,10 +73,8 @@ const liveQuery = <T extends Record<string, unknown>>(api: ModelApi, query: Quer
     mutate: (updater) => res.mutate(updater),
     peek: () => res.peek(),
     subscribe: (cb) => res.subscribe(cb),
-    dispose: () => {
-      for (const off of offs.splice(0)) off();
-      res.dispose();
-    },
+    own: (teardown) => res.own(teardown),
+    dispose: () => res.dispose(),
     get total() {
       return total;
     },
@@ -104,12 +103,7 @@ const singleRow = (api: ModelApi, query: QueryOptions & { id?: unknown }, name: 
     (): Promise<unknown> => (id != null ? api.get(id as string, rest) : rest.where ? api.get(rest) : Promise.resolve(null)),
     { name: `get:${name}`, eager: true, ready },
   );
-  const off = onChange(api.name, undefined, () => res.invalidate());
-  const dispose = res.dispose;
-  res.dispose = () => {
-    off();
-    dispose();
-  };
+  res.own(onChange(api.name, undefined, () => res.invalidate()));
   return res;
 };
 
@@ -124,12 +118,12 @@ interface Following {
 }
 
 const follow = <V>(current: Resource<V>, at: Following): Resource<V> => {
-  let queries = at.host.$queries as Record<string, unknown> | undefined;
-  if (!queries) {
-    queries = {};
-    at.host.$queries = queries;
+  let writer = writerOf(at.host.$queries);
+  if (writer === undefined) {
+    writer = writableRecord();
+    at.host.$queries = writer.record;
   }
-  queries[at.key] = current;
+  writer.writeKey(at.key, current);
   at.offs.push(current.value.subscribe((value) => {
     if (value === undefined) return;
     at.store.set(at.key, value);
@@ -184,8 +178,8 @@ export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }
       for (const off of at.offs.splice(0)) off();
       res?.dispose();
       res = null;
-      const queries = host.$queries as Record<string, unknown> | undefined;
-      if (queries) delete queries[key];
+      const writer = writerOf(host.$queries);
+      if (writer) writer.dropKey(key);
     },
   };
 };

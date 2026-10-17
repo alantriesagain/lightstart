@@ -92,6 +92,7 @@ declare module "@bootstrapp/light/controller" {
 - `refresh()`: stale-while-revalidate refetch.
 - `invalidate()`: mark stale.
 - `mutate(updater)`: local write; must return a new reference.
+- `own(teardown)`: a teardown `dispose()` runs, for what was subscribed on the resource's behalf.
 - `peek()`, `subscribe(cb)`, `dispose()`.
 
 `invalidateOn` takes one event or a list on the host's bus (or `events`), heard from the first fetch on; `filter(payload, eventKey)` decides per event. `dependsOn` lists resources whose change refetches this one; a change that lands while the first load is in flight refetches once it lands. `ready` is what the first fetch waits for (the host's `ready` by default, `false` for nothing). `keyedResource(fetcherForKey)` memoizes one resource per key; `invalidate(key)` drops the entry.

@@ -258,6 +258,8 @@ export interface Resource<T> {
   mutate(updater: (current: T | undefined) => T): T;
   peek(): T | undefined;
   subscribe(cb: (value: T | undefined) => void): () => void;
+  /** A teardown the resource runs when it is disposed. */
+  own(teardown: () => void): void;
   dispose(): void;
 }
 

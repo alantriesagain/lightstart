@@ -17,6 +17,7 @@ import { createStore } from "../signals/store.ts";
 import { assertDefinitionKeys, composeDefinition, isThenable } from "../view/definition.js";
 import { acceptsOption, bindProperty, getAdapter, registerAdapter, registerLazyAdapter, unregisterAdapter } from "./sync.ts";
 import { tracked } from "./config.ts";
+import { RecordWriter, registerWriter, writableRecord, writerOf } from "./writers.ts";
 
 import type { PropertyDeclaration, PropertyShorthand } from "../types/types.ts";
 import type { ControllerDefinitionKey, ControllerHandle, ControllerInstance, MixinMembers, MixinProps, PropsToThis, SyncBlock, StoreCore } from "./types.ts";
@@ -156,11 +157,22 @@ const createController = (definition: Record<string, unknown>): Record<string, u
       $name: name,
       $state: store,
       $sync: store.$sync,
-      $queries: {},
+      $queries: writableRecord().record,
       $own: own,
       $attach: attach,
       $dispose: dispose,
     };
+    registerWriter(
+      new RecordWriter(
+        instance,
+        (key, value) => {
+          instance[key] = value;
+        },
+        (key) => {
+          delete instance[key];
+        },
+      ),
+    );
 
     for (const key of Object.keys(properties))
       Object.defineProperty(instance, key, {
@@ -251,7 +263,8 @@ const createController = (definition: Record<string, unknown>): Record<string, u
     Object.defineProperty(handle, key, {
       get: () => instance()[key],
       set: (value) => {
-        instance()[key] = value;
+        const writer = writerOf(instance());
+        if (writer) writer.writeKey(key, value);
       },
     });
   Object.defineProperty(handle, "$ready", { get: () => (teardown ?? Promise.resolve()).then(() => instance().$ready) });

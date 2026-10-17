@@ -145,6 +145,10 @@ const createResource = (fetcher: () => unknown, options: LoadOptions): Resource<
       return value.subscribe(cb);
     },
 
+    own(teardown) {
+      offs.push(teardown);
+    },
+
     dispose() {
       disposed = true;
       generation++;

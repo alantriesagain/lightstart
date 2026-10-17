@@ -127,17 +127,7 @@ export const createStore = (defs: Record<string, unknown> = {}, { name = "store"
     for (const key of Object.keys(spec)) notify(key, olds[key]);
   };
 
-  const store: Record<string, unknown> = {};
-  store.keys = keys;
-  store.get = get;
-  store.set = set;
-  store.update = update;
-  store.reset = reset;
-  store.resetAll = resetAll;
-  store.subscribe = subscribe;
-  store.observe = observe;
-  store.snapshot = snapshot;
-  store.restore = restore;
+  const store: Record<string, unknown> = { keys, get, set, update, reset, resetAll, subscribe, observe, snapshot, restore };
 
   if (accessors)
     for (const key of Object.keys(spec))

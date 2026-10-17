@@ -438,6 +438,16 @@ describe("@bootstrapp/light/controller/define.ts", () => {
       assert.equal("double" in ctrl, true);
     });
 
+    it("a write through the handle after dispose() lands on the instance built next", () => {
+      const ctrl = defineController({ name: "demo2b", props: { n: 1 }, double() { return this.n * 2; } });
+      ctrl.n = 5;
+      assert.equal(ctrl.n, 5);
+      ctrl.dispose();
+      ctrl.n = 8;
+      assert.equal(ctrl.n, 8, "the write reached the new instance");
+      assert.equal(ctrl.double(), 16);
+    });
+
     it("carries the declared keys and the instance's $ members alone, and refuses a write to any other", () => {
       const ctrl = defineController({
         name: "demo3",

@@ -126,6 +126,22 @@ describe("bindModelQuery", () => {
     assert.equal(store.get("rows").length, 3);
   });
 
+  it("two bindings on one host share one $queries, whose identity survives an unbind of the other", async () => {
+    const store = createStore({ rows: { default: [] }, accounts: { default: [] } }, { accessors: false });
+    const host = {};
+    const first = bindModelQuery({ store, key: "rows", prop: { $type: "array", query: {} }, host, api: Model.session });
+    const queries = host.$queries;
+    const second = bindModelQuery({ store, key: "accounts", prop: { $type: "array", query: {} }, host, api: Model.account });
+    await Promise.all([first.loaded, second.loaded]);
+    assert.equal(host.$queries, queries);
+    assert.deepEqual(Object.keys(queries), ["rows", "accounts"]);
+    first.unbind();
+    assert.equal(host.$queries, queries);
+    assert.deepEqual(Object.keys(queries), ["accounts"]);
+    second.unbind();
+    assert.deepEqual(Object.keys(queries), []);
+  });
+
   it("an object property keeps one row live by id and rebuilds on dependsOn", async () => {
     const store = createStore({ current: { default: null }, currentId: { default: "a" } }, { accessors: false });
     const host = {};
