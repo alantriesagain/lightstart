@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { modelBus } from "./config.js";
-import { MODEL_CHANGED, MODEL_ERROR } from "./events.js";
-import { onChange } from "./changes.js";
+import { modelBus } from "./config.ts";
+import { MODEL_CHANGED, MODEL_ERROR } from "./events.ts";
+import { onChange } from "./changes.ts";
 
 const events = modelBus();
 

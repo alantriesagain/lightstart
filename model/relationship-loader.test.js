@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { modelBus } from "./config.js";
-import { compileMatcher } from "./query-builder.js";
-import { loadRelationships, loadRelationshipsForMany } from "./relationship-loader.js";
+import { modelBus } from "./config.ts";
+import { compileMatcher } from "./query-builder.ts";
+import { loadRelationships, loadRelationshipsForMany } from "./relationship-loader.ts";
 
 const events = modelBus();
 

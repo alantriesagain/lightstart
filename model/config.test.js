@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import T from "../types/index.js";
-import { configureModel, modelBus, newId } from "./config.js";
-import { createStore } from "./store.js";
+import { configureModel, modelBus, newId } from "./config.ts";
+import { createStore } from "./store.ts";
 
 const memory = () => {
   /** @type {Map<string, Record<string, unknown>>} */

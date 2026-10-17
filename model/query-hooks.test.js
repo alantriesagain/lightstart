@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
-import { applyQueryHooks, clearQueryHooks, registerQueryHook } from "./query-hooks.js";
+import { applyQueryHooks, clearQueryHooks, registerQueryHook } from "./query-hooks.ts";
 
 const ctx = (opts) => ({ model: "posts", schema: { $i18n: true }, opts, $APP: /** @type {any} */ ({}) });
 

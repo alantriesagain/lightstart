@@ -9,19 +9,18 @@
  * light compiles to has.
  */
 
-/** @import { ModelBus, ModelRequest } from "./types.ts" */
+import type { ModelBus, ModelRequest } from "./types.ts";
 
-/** @type {Map<string, Set<(data: unknown) => unknown>>} */
-const listeners = new Map();
+const listeners: Map<string, Array<(data: unknown) => unknown>> = new Map();
 
-/** @type {ModelBus} */
-const local = {
+const local: ModelBus = {
   on(key, cb) {
-    let set = listeners.get(key);
-    if (!set) listeners.set(key, (set = new Set()));
-    set.add(cb);
+    let list = listeners.get(key);
+    if (!list) listeners.set(key, (list = []));
+    if (!list.includes(cb)) list.push(cb);
     return () => {
-      set.delete(cb);
+      const at = list.indexOf(cb);
+      if (at >= 0) list.splice(at, 1);
     };
   },
   emit(key, data) {
@@ -31,38 +30,36 @@ const local = {
 
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 
-const randomId = () => {
+const randomId = (): string => {
   let id = "";
   for (let i = 0; i < 15; i++) id += ALPHABET[Math.floor(Math.random() * 36)];
   return id;
 };
 
-/** @type {ModelRequest} */
-const unconfigured = async (action, model) => {
+const unconfigured: ModelRequest = async (action, model) => {
   throw new Error(`Model "${model}": ${action} has no request to go through; call configureModel({ request })`);
 };
 
-let request = unconfigured;
-let bus = local;
-let makeId = randomId;
+let request: ModelRequest = unconfigured;
+let bus: ModelBus = local;
+let makeId: () => string = randomId;
 
 /**
  * Hand the model its host's request, bus and id source; without a bus or an
  * id source it keeps its own. `makeId` answers a new row's id when the caller
  * sent none.
- * @param {{ request?: ModelRequest | null, events?: ModelBus | null, makeId?: (() => string) | null }} [options]
  */
-export const configureModel = (options = {}) => {
+export const configureModel = (options: { request?: ModelRequest | null, events?: ModelBus | null, makeId?: (() => string) | null } = {}): void => {
   request = options.request ?? unconfigured;
   bus = options.events ?? local;
   makeId = options.makeId ?? randomId;
 };
 
 /** The request a model api sends through, read when the call is made. */
-export const modelRequest = () => request;
+export const modelRequest = (): ModelRequest => request;
 
 /** A new row's id, from the configured source. */
-export const newId = () => makeId();
+export const newId = (): string => makeId();
 
 /** The bus the model emits on and listens to. */
-export const modelBus = () => bus;
+export const modelBus = (): ModelBus => bus;

@@ -3,7 +3,8 @@
  * `import("@bootstrapp/light/model").Foo`.
  */
 
-import type { TypeDefinition } from "../types/types.ts";
+import type { TypeDefinition, TypeDefinitionFields } from "../types/types.ts";
+import type { MODEL_API } from "./index.ts";
 
 // ---------------------------------------------------------------------
 // Schema
@@ -24,15 +25,30 @@ import type { TypeDefinition } from "../types/types.ts";
  * its own adapter or hooks read.
  */
 export interface ModelSchemaDirectives {
-  $hooks?: ModelHooks;
+  $hooks?: ModelHookSlots;
   $adapter?: string;
   $shadow?: string;
   $extension?: string;
   $heavy?: string[];
 }
 
+/**
+ * A field of a schema as the model reads it: a `T.*` descriptor's data. The
+ * descriptor's functions (`validate`, `getter`, `customValidator`, a
+ * function `format`, ...) and nested descriptors (`props`, `itemType`,
+ * `types`, `args`, `returns`) are in the index signature, so a schema built
+ * in JavaScript, which reaches a native build as a checked value, converts
+ * into this shape. Every descriptor `T` builds is one.
+ */
+export interface ModelField extends Omit<
+  TypeDefinitionFields,
+  "props" | "itemType" | "types" | "args" | "returns" | "getter" | "setter" | "hasChanged" | "customValidator" | "validate" | "format" | "query"
+> {
+  [key: string]: unknown;
+}
+
 /** Model field definitions plus the directives above. */
-export type ModelSchema = Record<string, TypeDefinition> & ModelSchemaDirectives;
+export type ModelSchema = Record<string, ModelField> & ModelSchemaDirectives;
 
 export interface ModelHooks {
   beforeAdd?: HookFn;
@@ -44,6 +60,13 @@ export interface ModelHooks {
 }
 
 export type HookFn = (data: Row, ctx: HookContext) => unknown | Promise<unknown>;
+
+/**
+ * A schema's `$hooks`: each hook by name, a `HookFn` (`ModelHooks` spells
+ * their signatures). Held as values, so a schema built in JavaScript converts
+ * into it; the store calls a hook that is a function.
+ */
+export type ModelHookSlots = { [K in keyof ModelHooks]?: unknown };
 
 /** What a hook sees: the model, the store to read and write through, and the operation. */
 export interface HookContext {
@@ -161,6 +184,12 @@ export interface ModelChanged<R = Row> {
 
 export type ChangeCallback<R = Row> = (event: ModelChanged<R>) => void;
 
+/** One `onChange` follower: the matcher its `where` compiled to, and its callback. */
+export interface ChangeSubscriber {
+  match: (row: Record<string, unknown>) => boolean;
+  cb: ChangeCallback;
+}
+
 // ---------------------------------------------------------------------
 // The per-model api
 // ---------------------------------------------------------------------
@@ -172,11 +201,13 @@ export type RowOf<S> = {
 
 /** The eleven methods of a model's api; `defineModel` or a host's generated typings bind `R`; a model `defineModel` declares always has its schema. */
 export interface ModelApi<R extends Row = Row, S extends ModelSchema | undefined = ModelSchema | undefined> {
+  /** The brand `isModelApi` reads. */
+  readonly [MODEL_API]?: true;
   readonly name: string;
   /** The model's schema. */
   readonly schema: S;
-  get(id: string | number, opts?: QueryOptions<R>): Promise<R | null>;
-  get(opts: QueryOptions<R>): Promise<R | null>;
+  /** The row with this id, or the first the options select. */
+  get(idOrOpts: string | number | QueryOptions<R>, opts?: QueryOptions<R>): Promise<R | null>;
   getAll(opts?: QueryOptions<R>): Promise<R[]>;
   query(opts?: QueryOptions<R>): Promise<QueryPage<R>>;
   count(opts?: QueryOptions<R>): Promise<number>;
@@ -184,14 +215,39 @@ export interface ModelApi<R extends Row = Row, S extends ModelSchema | undefined
   facets(fields?: string[], opts?: QueryOptions<R>): Promise<FacetResult>;
   add(row: Partial<R> & Record<string, unknown>, opts?: ClientWriteOptions): Promise<R>;
   addMany(rows: Array<Partial<R> & Record<string, unknown>>, opts?: ClientWriteOptions): Promise<R[]>;
-  edit(id: string | number, patch: Partial<R> & Record<string, unknown>, opts?: ClientWriteOptions): Promise<R>;
-  edit(row: Partial<R> & { id: string | number } & Record<string, unknown>, opts?: ClientWriteOptions): Promise<R>;
+  /** `edit(id, patch, opts?)`, or `edit(row, opts?)` with the row carrying its id. */
+  edit(idOrRow: string | number | (Partial<R> & { id: string | number } & Record<string, unknown>), patchOrOpts?: (Partial<R> & Record<string, unknown>) | ClientWriteOptions, opts?: ClientWriteOptions): Promise<R>;
   remove(id: string | number, opts?: ClientWriteOptions): Promise<boolean>;
   removeAll(where?: WhereClause<R>): Promise<number>;
 }
 
+/**
+ * What a `MODEL:*` command carries beside the model's name: each command
+ * reads its own fields (`id` and `opts` for a get, `row` for an add, `id`
+ * and `patch` for an edit, `where` for an exists or a removeAll). `opts` is
+ * the query's options (`QueryOptions`) on a read and the write options
+ * (`ClientWriteOptions`) on a write; each handler reads it as its own kind.
+ */
+export interface ModelPayload {
+  id?: string | number;
+  opts?: unknown;
+  where?: WhereClause;
+  fields?: string[];
+  row?: Row;
+  rows?: Row[];
+  patch?: Row;
+}
+
+/** A `MODEL:*` command as a store's handler receives it. */
+export interface ModelCommand extends ModelPayload {
+  model: string;
+}
+
+/** What `createModelHandlers` holds under each `MODEL:*` command. */
+export type ModelHandler = (command: ModelCommand) => Promise<unknown>;
+
 /** How a model's api reaches the store: the store itself in the same runtime, or a port to a worker that holds one. */
-export type ModelRequest = (action: string, model: string, payload?: Record<string, unknown>) => Promise<unknown>;
+export type ModelRequest = (action: string, model: string, payload?: ModelPayload) => Promise<unknown>;
 
 // ---------------------------------------------------------------------
 // Storage adapters and the store
@@ -227,7 +283,7 @@ export interface StorageAdapter {
   truncate?(model: string): Promise<unknown>;
   supportsOperator?(operator: string): boolean;
   /** A remote adapter with push feeds `model:changed` through this; the store never calls it. */
-  subscribe?(model: string, cb: ChangeCallback): Promise<() => void> | (() => void);
+  subscribe?(model: string, cb: ChangeCallback): () => void;
   [extra: string]: unknown;
 }
 
@@ -301,7 +357,6 @@ export interface Store extends RowReader {
   addDatabase(name: string, adapter: StorageAdapter): void;
   addModels(models: Record<string, ModelSchema>): void;
   supportsOperator(model: string, operator: string): boolean;
-  get(model: string, idOrWhere: string | number | WhereClause | null, opts?: QueryOptions): Promise<Row | null>;
   query(model: string, opts?: QueryOptions): Promise<QueryPage>;
   count(model: string, opts?: QueryOptions): Promise<number>;
   exists(model: string, where?: WhereClause): Promise<boolean>;
@@ -322,7 +377,7 @@ export interface Store extends RowReader {
 // Relationships
 // ---------------------------------------------------------------------
 
-export interface RelationshipDefinition extends TypeDefinition {
+export interface RelationshipDefinition extends ModelField {
   relationship: "one" | "many" | "belongs" | "belongs_many";
   targetModel: string | string[];
   targetForeignKey?: string;
@@ -351,4 +406,4 @@ declare module "../controller/types.ts" {
   }
 }
 
-export * from "./index.js";
+export * from "./index.ts";

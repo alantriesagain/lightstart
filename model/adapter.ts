@@ -7,7 +7,7 @@
  * change events) lives in the store, not in adapters.
  */
 
-export { createAdapter, getAvailableAdapters, hasAdapter, registerAdapterDecorator, registerStorageAdapter } from "./factory.js";
-export { validateRow, ValidationError } from "./validate.js";
-export { applyFields, buildQueryResult, compileMatcher, matchesWhere, parseOrder, validateQueryOptions } from "./query-builder.js";
-export { foreignKeyFor, relationWhere, relationValueToId, relationTarget } from "./relationships.js";
+export { createAdapter, getAvailableAdapters, hasAdapter, registerAdapterDecorator, registerStorageAdapter } from "./factory.ts";
+export { validateRow, ValidationError } from "./validate.ts";
+export { applyFields, buildQueryResult, compileMatcher, matchesWhere, parseOrder, validateQueryOptions } from "./query-builder.ts";
+export { foreignKeyFor, relationWhere, relationValueToId, relationTarget } from "./relationships.ts";

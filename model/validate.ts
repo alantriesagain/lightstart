@@ -1,20 +1,19 @@
-/** @import { ModelSchema, Row } from "./types.ts" */
+import { entryOf, schemaField } from "./fields.ts";
+
+import type { ModelField, ModelSchema, Row } from "./types.ts";
 
 /** A write the schema rejects; `errors` maps each failing field to its message. */
 export class ValidationError extends Error {
-  /**
-   * @param {string} model
-   * @param {Record<string, string>} errors
-   */
-  constructor(model, errors) {
+  declare errors: Record<string, string>;
+
+  constructor(model: string, errors: Record<string, string>) {
     super(`Validation failed for "${model}": ${Object.values(errors).join("; ")}`);
     this.name = "ValidationError";
     this.errors = errors;
   }
 }
 
-/** @type {Record<string, string[]>} */
-const VALID_TYPES = {
+const VALID_TYPES: Record<string, string[] | undefined> = {
   string: ["string", "number"],
   number: ["number", "string"],
   boolean: ["boolean", "number", "string"],
@@ -24,8 +23,7 @@ const VALID_TYPES = {
   datetime: ["object", "number", "string"],
 };
 
-/** @type {Record<string, RegExp>} */
-const FORMATS = {
+const FORMATS: Record<string, RegExp | undefined> = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   url: /^https?:\/\/.+/,
 };
@@ -34,23 +32,16 @@ const FORMATS = {
  * Validate a row against its schema: required fields (on add), value types,
  * the field's own `validator`, and `format`. Relation fields are validated as
  * the ids they are stored as.
- *
- * @param {Record<string, ModelSchema>} models
- * @param {string} modelName
- * @param {Row} row
- * @param {{ operation?: "add" | "edit" }} [options]
- * @returns {{ valid: boolean, errors: Record<string, string> }}
  */
-export function validateRow(models, modelName, row, options = {}) {
-  const modelSchema = models[modelName];
+export function validateRow(models: Record<string, ModelSchema>, modelName: string, row: Row, options: { operation?: "add" | "edit" } = {}): { valid: boolean, errors: Record<string, string> } {
+  const modelSchema = entryOf(models, modelName);
   if (!modelSchema) return { valid: false, errors: { _model: `Model "${modelName}" not found` } };
 
-  /** @type {Record<string, string>} */
-  const errors = {};
+  const errors: Record<string, string> = {};
 
-  for (const [field, fieldDef] of Object.entries(modelSchema)) {
+  for (const field of Object.keys(modelSchema)) {
     if (field.startsWith("$")) continue;
-    const def = /** @type {{ required?: boolean, $type?: string, fieldType?: string, validator?: Function, format?: string, relationship?: string, belongs?: boolean }} */ (fieldDef);
+    const def = schemaField(modelSchema, field) as ModelField;
     if (def.relationship && !def.belongs) continue;
     const value = row[field];
     const missing = value === undefined || value === null || value === "";
@@ -63,19 +54,23 @@ export function validateRow(models, modelName, row, options = {}) {
     if (value !== undefined && value !== null && def.$type) {
       const isFileBlob = def.fieldType === "file" && value instanceof Blob;
       const actualType = Array.isArray(value) ? "array" : typeof value;
-      if (!isFileBlob && VALID_TYPES[def.$type] && !VALID_TYPES[def.$type].includes(actualType))
+      const accepted = VALID_TYPES[def.$type];
+      if (!isFileBlob && accepted && !accepted.includes(actualType))
         errors[field] = `${field} must be of type ${def.$type}`;
     }
 
-    if (def.validator && value !== undefined)
+    const { validator, format } = def;
+    if (validator && value !== undefined)
       try {
-        if (!def.validator(value, row)) errors[field] = `${field} failed custom validation`;
+        if (typeof validator !== "function") throw new TypeError(`${field}.validator is not a function`);
+        if (!validator(value, row)) errors[field] = `${field} failed custom validation`;
       } catch (e) {
-        errors[field] = /** @type {Error} */ (e).message || `${field} validation error`;
+        errors[field] = (e as Error).message || `${field} validation error`;
       }
 
-    if (def.format && value && FORMATS[def.format] && !FORMATS[def.format].test(/** @type {string} */ (value)))
-      errors[field] = `${field} must be a valid ${def.format}`;
+    const pattern = typeof format === "string" ? FORMATS[format] : undefined;
+    if (pattern && value && !pattern.test(value as string))
+      errors[field] = `${field} must be a valid ${format}`;
   }
 
   return { valid: Object.keys(errors).length === 0, errors };

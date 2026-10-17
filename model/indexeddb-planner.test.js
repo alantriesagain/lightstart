@@ -8,7 +8,7 @@ globalThis.IDBKeyRange ??= {
   upperBound: (value, open) => ({ kind: "upperBound", value, open }),
 };
 
-const { planIndex } = await import("./indexeddb.js");
+const { planIndex } = await import("./indexeddb.ts");
 
 const SCHEMA = {
   id: { $type: "string" },

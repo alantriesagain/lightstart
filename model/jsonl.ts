@@ -13,29 +13,21 @@
  * built, then `createAdapter("jsonl", { name, dir, io })`.
  */
 
-import { buildQueryResult, validateQueryOptions } from "./query-builder.js";
+import { buildQueryResult, validateQueryOptions } from "./query-builder.ts";
 
-/** @import { JsonlStorage, JsonlTable, Row, StorageAdapter } from "./types.ts" */
+import type { JsonlStorage, JsonlTable, QueryOptions, QueryPage, Row, StorageAdapter, WhereClause } from "./types.ts";
 
 const COMPACT_AFTER = 32;
 
-/**
- * A file's text as rows, with how many of its lines no longer hold one and
- * whether every line read whole.
- * @param {string} text
- * @returns {{ rows: Map<string, Row>, stale: number, clean: boolean }}
- */
-const readLines = (text) => {
-  /** @type {Map<string, Row>} */
-  const rows = new Map();
+const readLines = (text: string): { rows: Map<string, Row>, stale: number, clean: boolean } => {
+  const rows: Map<string, Row> = new Map();
   let lines = 0;
   let clean = text === "" || text.endsWith("\n");
   for (const line of text.split("\n")) {
     if (line.trim() === "") continue;
-    /** @type {Row | null} */
-    let entry = null;
+    let entry: Row | null = null;
     try {
-      entry = /** @type {Row | null} */ (JSON.parse(line));
+      entry = JSON.parse(line);
     } catch {
       clean = false;
       continue;
@@ -52,26 +44,18 @@ const readLines = (text) => {
   return { rows, stale: lines - rows.size, clean };
 };
 
-/** @param {Map<string, Row>} rows */
-const linesOf = (rows) => [...rows.values()].map((row) => `${JSON.stringify(row)}\n`).join("");
+const linesOf = (rows: Map<string, Row>): string => [...rows.values()].map((row) => `${JSON.stringify(row)}\n`).join("");
 
-/** @param {JsonlStorage} adapter @param {JsonlTable} table */
-const compact = (adapter, table) => {
+const compact = (adapter: JsonlStorage, table: JsonlTable): void => {
   adapter.io.write(table.path, linesOf(table.rows));
   table.stale = 0;
 };
 
-/** @param {JsonlStorage} adapter @param {JsonlTable} table */
-const settle = (adapter, table) => {
+const settle = (adapter: JsonlStorage, table: JsonlTable): void => {
   if (table.stale > COMPACT_AFTER && table.stale > table.rows.size) compact(adapter, table);
 };
 
-/**
- * @param {JsonlStorage} adapter
- * @param {string} model
- * @returns {JsonlTable}
- */
-const tableOf = (adapter, model) => {
+const tableOf = (adapter: JsonlStorage, model: string): JsonlTable => {
   let table = adapter.tables.get(model);
   if (!table) {
     const path = `${adapter.dir}/${model}.jsonl`;
@@ -84,19 +68,11 @@ const tableOf = (adapter, model) => {
   return table;
 };
 
-/** @param {Row} row @returns {Row} */
-const copy = (row) => Object.fromEntries(Object.entries(row));
+const copy = (row: Row): Row => Object.fromEntries(Object.entries(row));
 
-/**
- * Append one row and hold it as a reload would read it back.
- * @param {JsonlStorage} adapter
- * @param {JsonlTable} table
- * @param {Row} row
- * @returns {Row}
- */
-const record = (adapter, table, row) => {
+const record = (adapter: JsonlStorage, table: JsonlTable, row: Row): Row => {
   const line = JSON.stringify(row);
-  const stored = /** @type {Row} */ (JSON.parse(line));
+  const stored: Row = JSON.parse(line);
   const key = String(stored.id);
   if (table.rows.has(key)) table.stale++;
   table.rows.set(key, stored);
@@ -104,54 +80,49 @@ const record = (adapter, table, row) => {
   return stored;
 };
 
-/**
- * @param {JsonlTable} table
- * @param {string} model
- * @param {Row} row
- */
-const assertNew = (table, model, row) => {
+const assertNew = (table: JsonlTable, model: string, row: Row): void => {
   if (row.id === undefined || row.id === null) throw new Error(`Model "${model}": a row needs an id to be stored in a JSONL file`);
   if (table.rows.has(String(row.id))) throw new Error(`Model "${model}": a row with id "${String(row.id)}" exists`);
 };
 
-/** @type {StorageAdapter & ThisType<JsonlStorage>} */
-const JsonlAdapter = {
-  async init() {
+const JsonlAdapter: StorageAdapter = {
+  async init(this: JsonlStorage): Promise<void> {
     this.tables = new Map();
   },
 
-  async get(model, id) {
+  async get(this: JsonlStorage, model: string, id: string | number): Promise<Row | null> {
     const row = tableOf(this, model).rows.get(String(id));
     return row ? copy(row) : null;
   },
 
-  async query(model, options = {}) {
+  async query(this: JsonlStorage, model: string, given: QueryOptions | undefined): Promise<QueryPage> {
+    const options: QueryOptions = given === undefined ? {} : given;
     validateQueryOptions(options);
     const result = buildQueryResult([...tableOf(this, model).rows.values()], options);
     return { rows: result.items.map(copy), total: result.total };
   },
 
-  async insert(model, row) {
+  async insert(this: JsonlStorage, model: string, row: Row): Promise<Row> {
     const table = tableOf(this, model);
     assertNew(table, model, row);
     const stored = record(this, table, row);
     return copy(stored);
   },
 
-  async insertMany(model, rows) {
+  async insertMany(this: JsonlStorage, model: string, rows: Row[]): Promise<Row[]> {
     const table = tableOf(this, model);
     for (const row of rows) assertNew(table, model, row);
     return rows.map((row) => copy(record(this, table, row)));
   },
 
-  async update(model, row) {
+  async update(this: JsonlStorage, model: string, row: Row): Promise<Row> {
     const table = tableOf(this, model);
     const stored = record(this, table, row);
     settle(this, table);
     return copy(stored);
   },
 
-  async delete(model, id) {
+  async delete(this: JsonlStorage, model: string, id: string | number): Promise<unknown> {
     const table = tableOf(this, model);
     const key = String(id);
     if (!table.rows.has(key)) return false;
@@ -162,23 +133,23 @@ const JsonlAdapter = {
     return true;
   },
 
-  async count(model, where) {
+  async count(this: JsonlStorage, model: string, where: WhereClause | undefined): Promise<number> {
     const { rows } = tableOf(this, model);
     if (!where || Object.keys(where).length === 0) return rows.size;
     return buildQueryResult([...rows.values()], { where }).total;
   },
 
-  async exists(model, where) {
+  async exists(this: JsonlStorage, model: string, where: WhereClause | undefined): Promise<boolean> {
     return (await this.count(model, where)) > 0;
   },
 
-  async truncate(model) {
+  async truncate(this: JsonlStorage, model: string): Promise<void> {
     const table = tableOf(this, model);
     table.rows.clear();
     compact(this, table);
   },
 
-  async close() {
+  async close(this: JsonlStorage): Promise<void> {
     this.tables = new Map();
   },
 };

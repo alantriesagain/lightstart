@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it, mock } from "node:test";
-import { slugify, generateUniqueSlug, slugHooks } from "./slug.js";
+import { slugify, generateUniqueSlug, slugHooks } from "./slug.ts";
 
 const queuedResults = (...results) => {
   const fn = mock.fn(async () => results[results.length - 1]);
