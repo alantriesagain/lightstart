@@ -9,8 +9,8 @@ The terminal host of the renderer: a node tree in place of the DOM, a layout and
 | `host.ts` | `TermHost`: templates through the parser and `html/tokenizer.js` under the terminal's whitespace rules, attributes to props, listeners to handler entries, attach and detach of views as their boxes join or leave the root, frames through the scheduler |
 | `view.ts` | `View`: a `ViewCore` that owns a box; `render()`, the lifecycle methods, `${this.child}` placement, `mount` and `unmount`; `define(tag, make)`, the declared `prop`s and `$emit` of an element made by tag |
 | `slots.ts` | `TSlotPart` and the projection of a defined element's light children into the `<slot>`s of its template |
-| `classes.ts` | The `class` attribute: `ClassStyler`, `configureClasses`, and the books that keep a template's own props above its classes |
-| `layout.ts` | Measure and arrange: one flex axis per box, fixed sizes, scroll boxes that stick to the bottom, wrapped text cached by version |
+| `classes.ts` | The `class` attribute: `ClassStyler`, `configureClasses`, the element states a prop may need (`STATE_FOCUS`, `STATE_FOCUS_WITHIN`) and the books that keep a template's own props above its classes |
+| `layout.ts` | Measure and arrange: one flex axis per box, fixed sizes, scroll boxes that stick to the bottom, wrapped text cached by width, version and the style it inherits |
 | `paint.ts` | A laid-out tree into a `Screen` with clipping, borders, titles, rules, the editor's caret |
 | `screen.ts` | The cell grid double buffer and the diff that writes only what changed, in a synchronized update |
 | `wrap.ts`, `width.ts` | Word and character wrapping over styled runs; grapheme clusters and cell widths |

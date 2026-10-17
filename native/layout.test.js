@@ -1,4 +1,4 @@
-import { Caret, Clip, DEFAULT_STYLE, Screen, Style, TBox, TInput, TRoot, TRun, TText, createElement, diffScreens, layout, paint, scrollStateOf, sgrTransition } from "./index.js";
+import { Caret, Clip, DEFAULT_STYLE, Screen, Style, TBox, TInput, TRoot, TRun, TRUECOLOR_FLAG, TText, createElement, diffScreens, layout, paint, scrollStateOf, sgrTransition } from "./index.js";
 import { done, eq, eqn, ok } from "./assert.js";
 
 /** @param {string} s */
@@ -170,6 +170,20 @@ const screenOf = (root, w, h, focus) => {
   eq("remove attr resets", sgrTransition(boldRed, plain), "\x1b[0m");
   eq("same style", sgrTransition(bold, bold), "");
   eq("truecolor", sgrTransition(plain, new Style(0x1000000 | 0x1a2b3c, 2, 0)), "\x1b[38;2;26;43;60;42m");
+}
+
+{
+  const root = new TRoot();
+  const outer = box();
+  const inner = text("hi");
+  outer.append(inner);
+  root.append(outer);
+  const before = screenOf(root, 4, 1, null);
+  outer.setKnownProp("bg", "#ffffff");
+  const after = screenOf(root, 4, 1, null);
+  eq("a text's lines, laid out once, follow the style its box takes later", String(before.bg[0]) + "|" + String(after.bg[0]), "-1|" + String(TRUECOLOR_FLAG | 0xffffff));
+  outer.setKnownProp("bg", null);
+  eq("and come back when the box drops it", String(screenOf(root, 4, 1, null).bg[0]), "-1");
 }
 
 done();

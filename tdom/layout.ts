@@ -19,17 +19,19 @@ export class Size {
   }
 }
 
-/** The wrapped lines of a text-like node, kept across frames. */
+/** The wrapped lines of a text-like node, kept across frames while its width, its version and the style it inherits hold. */
 export class TextLayout {
   lines: WrappedLine[];
   wrappedFor: number;
   version: number;
+  under: Style | null;
   naturalWidth: number;
 
   constructor() {
     this.lines = [];
     this.wrappedFor = -1;
     this.version = -1;
+    this.under = null;
     this.naturalWidth = 0;
   }
 }
@@ -80,12 +82,13 @@ const visibleChildren = (el: TElement) => {
 
 const wrapText = (node: TElement, width: number, mode: string, inherited: Style) => {
   const tl = textLayoutOf(node);
-  if (tl.wrappedFor === width && tl.version === node.version) return tl;
+  if (tl.wrappedFor === width && tl.version === node.version && tl.under !== null && tl.under.equals(inherited)) return tl;
   const runs: InlineRun[] = [];
   inlineRuns(node, inherited, runs);
   tl.lines = wrapRuns(runs, width, mode);
   tl.wrappedFor = width;
   tl.version = node.version;
+  tl.under = inherited;
   let natural = 0;
   for (const l of tl.lines) if (l.width > natural) natural = l.width;
   tl.naturalWidth = natural;
