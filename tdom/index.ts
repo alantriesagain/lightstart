@@ -20,5 +20,6 @@ export { backspace, clearInput, del, deleteWord, editorHandleKey, insertText, ki
 export { Terminal } from "./terminal.ts";
 export { Renderer } from "./renderer.ts";
 export { TermHost, TermPrepared } from "./host.ts";
+export { ClassProp, ClassStyler, applyClassProps, classStyler, configureClasses, propBit } from "./classes.ts";
 export { TSlotPart, projectSlots, rootStart } from "./slots.ts";
 export { Prop, View, define, mount, unmount } from "./view.ts";

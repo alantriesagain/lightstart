@@ -262,10 +262,10 @@ export class TermHost extends Host {
       if (text !== e.value()) setValue(e, text);
       return;
     }
-    if (value === null || value === undefined) e.setKnownProp(name, null);
-    else if (typeof value === "string") e.setKnownProp(name, value);
-    else if (typeof value === "number") e.setKnownProp(name, value);
-    else if (typeof value === "boolean") e.setKnownProp(name, value);
+    if (value === null || value === undefined) e.setKnownExplicit(name, null);
+    else if (typeof value === "string") e.setKnownExplicit(name, value);
+    else if (typeof value === "number") e.setKnownExplicit(name, value);
+    else if (typeof value === "boolean") e.setKnownExplicit(name, value);
   }
 
   setContent(el: HostNode, text: string) {

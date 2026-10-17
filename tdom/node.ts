@@ -15,6 +15,8 @@ import { frames } from "./scheduler.ts";
 import { UIEvent } from "./events.ts";
 import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, DEFAULT_STYLE, Style } from "./style.ts";
 
+import { applyClasses, classStyler, markExplicit } from "./classes.ts";
+
 import type { ViewCore } from "../view/core.ts";
 import type { EventBinding } from "../html/parts.ts";
 import type { ScrollState, TextLayout } from "./layout.ts";
@@ -168,6 +170,8 @@ export class TElement extends TNode {
   handlers: HandlerEntry[];
   owner: ViewCore | null;
   attached: boolean;
+  explicitProps: number;
+  classProps: number;
 
   /**
    * @param kind box, text, span, input or fragment
@@ -175,6 +179,8 @@ export class TElement extends TNode {
    */
   constructor(kind: string, tag: string) {
     super();
+    this.explicitProps = 0;
+    this.classProps = 0;
     this.kind = kind;
     this.tag = tag;
     this.firstChild = null;
@@ -245,13 +251,15 @@ export class TElement extends TNode {
   }
 
   /**
-   * Set a prop by its template name: one the owning view declared, a style
-   * prop, one of the element's own, or an attribute kept inert. A removal
-   * (null) never reaches the view: it keeps its value.
+   * Set a prop by its template name: one the owning view declared, the
+   * element's classes, a style prop, one of the element's own, or an
+   * attribute kept inert. A removal (null) never reaches the view: it keeps
+   * its value.
    */
   setProp(name: string, v: PropValue) {
     if (this.owner !== null && v !== null && this.owner.$setProp(name, v)) return;
-    if (this.setKnownProp(name, v)) return;
+    if (name === "class") applyClasses(this, v);
+    else if (this.setKnownExplicit(name, v)) return;
     if (v === null || v === false) {
       if (this.attrs.delete(name)) this.invalidate();
     } else {
@@ -268,6 +276,17 @@ export class TElement extends TNode {
    */
   setKnownProp(name: string, v: PropValue) {
     return this.setStyleProp(name, v) || this.setOwnProp(name, v);
+  }
+
+  /**
+   * A known prop the template writes: set it and, while a styler is
+   * configured, record that it is the template's (or, on a removal, that
+   * the classes may have it again).
+   */
+  setKnownExplicit(name: string, v: PropValue) {
+    const known = this.setKnownProp(name, v);
+    if (known && classStyler() !== null) markExplicit(this, name, v !== null);
+    return known;
   }
 
   /**
