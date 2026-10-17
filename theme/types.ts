@@ -14,12 +14,6 @@ export interface ThemeFont {
   [key: string]: unknown;
 }
 
-export interface HSL {
-  h: number;
-  s: number;
-  l: number;
-}
-
 /** How one shade derives from a base color: a lightness step, or a mix with white or black. */
 export interface ShadeOption {
   lightness?: number;
