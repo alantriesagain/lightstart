@@ -1,10 +1,10 @@
 # Tasks: a terminal app on light
 
-A task list on the terminal, built from light's three parts and nothing else: a model (`models/tasks.js`, `defineModel` over `T`), a controller (`controllers/board.js`, `defineController` with its rows bound to a live query of the model), and views (`views/task-app.ts`, a `View` from `@bootstrapp/light/native` rendering into the terminal host). The rows live in a JSON Lines file through light's JSONL adapter, one line per write, so the file is readable and appendable by any other program.
+Boards of tasks on the terminal, built from light's three parts and nothing else: two models (`models/tasks.js` and `models/boards.js`, `defineModel` over `T`), a controller (`controllers/board.js`, `defineController` with its rows and boards bound to live queries of the models), and views (`views/`, `View`s from `@bootstrapp/light/native` rendering into the terminal host, two of them elements a template names by tag). The rows live in JSON Lines files through light's JSONL adapter, one line per write, so the files are readable and appendable by any other program.
 
 ```
-node examples/tasks/main.js                 # rows in ./tasks.jsonl
-node examples/tasks/main.js --data ~/tasks  # rows in ~/tasks/tasks.jsonl
+node examples/tasks/main.js                 # rows in ./tasks.jsonl and ./boards.jsonl
+node examples/tasks/main.js --data ~/tasks  # rows in ~/tasks/
 node examples/tasks/tasks.test.js           # drives the app on a test terminal
 ```
 
@@ -16,18 +16,31 @@ $SCRIPTC build examples/tasks/main.js -o tasks --strip     # about 7 MB
 $SCRIPTC build examples/tasks/tasks.test.js -o tasks-test && ./tasks-test
 ```
 
-The editor has the focus at start: type a task and press Enter to add it. Tab moves the focus between the tasks and the editor, and the arrows move it among the tasks. On a focused task, Space (or a click) toggles it and `d` deletes it; outside the editor `f` cycles the filter (all, open, done) and `c` clears the done tasks. Ctrl+C quits.
+Every board is a column; the focused one, bold, is where a typed task goes. The editor has the focus at start: type a task and press Enter to add it. A line starting with `/` is a command: `/board Name` adds a board after the focused one, `/rename Name` renames it, `/delete` removes it while it is empty. Tab moves the focus between the tasks and the editor, Esc brings it back to the editor, ↑ and ↓ move it along a board's tasks and ← and → across boards. On a focused task, Space (or a click) toggles it, `d` deletes it, Shift+← and Shift+→ move it to the neighbour board; `[` and `]` move the focused board left or right. Outside the editor `f` cycles the filter (all, open, done) and `c` clears the done tasks. Ctrl+C quits. A `tasks.jsonl` from before boards opens as it is: its tasks join the first board, which the app makes when there is none.
+
+| Key | Does |
+|---|---|
+| typing + Enter | adds a task to the focused board |
+| `/board Name`, `/rename Name`, `/delete` | adds a board after the focused one, renames it, removes it while empty |
+| Tab, Esc | moves the focus along the tasks and the editor; back to the editor |
+| ↑ ↓, ← → | focus along a board's tasks; across boards |
+| Space, `d` | toggles the focused task; deletes it |
+| Shift+← Shift+→ | move the focused task to the neighbour board |
+| `[` `]` | move the focused board left or right |
+| `f`, `c`, Ctrl+C | cycles the filter; clears the done tasks; quits |
 
 | File | What it holds |
 |---|---|
-| `models/tasks.js` | The model: a title, whether it is done, when it was added |
-| `models/types.ts` | The `Task` row type the TypeScript views read |
-| `controllers/board.js` | The filter, the rows the filter selects (a `sync:` binding to the model, rebuilt when the filter changes), the open and done counts it recounts on every change, and the writes |
-| `views/task-row.ts` | `<task-row .task=${task}>`: one task as a focusable line, asking for its toggle or removal with an event |
-| `views/task-app.ts` | The screen: the list of `<task-row>`s keyed by task, the editor, the footer, and `appKey`, the keys that work wherever the focus is outside the editor |
+| `models/tasks.js` | The tasks: a title, whether it is done, when it was added, the board it belongs to |
+| `models/boards.js` | The boards: a title and a position |
+| `models/types.ts` | The `Task` and `Board` row types the TypeScript views read |
+| `controllers/board.js` | The boards in order and the focused one, the filter, the rows the filter selects (`sync:` bindings to the models, rebuilt when the filter changes), the open and done counts it recounts on every change, the writes, and the editor's commands; on start it makes a first board when there is none and gives tasks from before boards to the first one |
+| `views/task-row.ts` | `<task-row .task=${task}>`: one task as a focusable line, asking for its toggle, removal or move with an event |
+| `views/tasks-board.ts` | `<tasks-board .board=${board} .tasks=${tasks}>`: one board as a bordered column, its rows in a scroll box and a `<slot>` for the footer line the app puts under them |
+| `views/task-app.ts` | The screen: the boards side by side, each a `<tasks-board>` keyed by board with its footer slotted in, the editor, the footer, and `appKey`, the keys that work wherever the focus is outside the editor |
 | `lib/file-io.ts` | The JSONL adapter's files through `node:fs` |
 | `main.js` | The entry: the adapter, the store, the request every model call goes through, the terminal |
-| `tasks.test.js` | The app on `native/test-terminal.ts`, with its files in memory |
+| `tasks.test.js` | The app on `native/test-terminal.ts`, with its files in memory, starting from a task from before boards |
 
 The views and the file IO are TypeScript, as the code scriptc compiles is; the model, the controller, the entry and the test are JavaScript with JSDoc, because `defineModel` and `defineController` do not compile from TypeScript yet (their return types and the `this` of a definition's methods have no native shape, and `T`'s descriptors do not lower), while JSDoc-typed JavaScript falls back to checked-dynamic values that do. A TypeScript view may still read the controller it imports.
 

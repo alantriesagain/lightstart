@@ -1,7 +1,8 @@
 /**
  * @file `<task-row .task=${task}>`: one task as a focusable line. Space or a
- * click asks to toggle it and `d` to remove it, as `toggle` and `remove`
- * events carrying the task, which the app handles.
+ * click asks to toggle it, `d` to remove it, Shift+Left and Shift+Right to
+ * move it to the neighbour board, as `toggle`, `remove`, `move-left` and
+ * `move-right` events carrying the task, which the app handles.
  */
 import { KeyEvent, View, define, html } from "@bootstrapp/light/native";
 
@@ -18,6 +19,11 @@ export class TaskRow extends View {
     return html`<p
       @click=${() => this.$emit("toggle", task)}
       @key=${(e: KeyEvent) => {
+        if (e.shift && (e.key === "left" || e.key === "right")) {
+          e.consume();
+          this.$emit(e.key === "left" ? "move-left" : "move-right", task);
+          return;
+        }
         if (!typed(e, "d")) return;
         e.consume();
         this.$emit("remove", task);
