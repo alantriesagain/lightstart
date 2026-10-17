@@ -5,6 +5,7 @@ Light compiled to a native binary with [scriptc](https://github.com/vercel-labs/
 ```
 npm run typecheck:native   # tsc-ts over the native graph against es2024, no dom lib
 npm run coverage:native    # scriptc coverage native/index.js: fully static, nothing deferred
+npm run coverage:tasks     # the same over examples/tasks/main.js: no blocker, no slow path (its JSDoc JavaScript is not held to fully static)
 npm run test:native        # every native/*.test.js under node and under scriptc run; outputs must match
 npm run probes             # the compiler probes (native/probes/) that decided how the core is written
 node native/bench.js       # 10k keyed rows, update every 10th: node against the native binary
@@ -29,7 +30,7 @@ The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on an
 |---|---|
 | `index.js` | The entry: configures the terminal host and re-exports the html core, the signals, the view core and `tdom/` |
 | `assert.js` | `ok`, `eq`, `eqn`, `throws`, `done`: the checks a native test uses, since node:test does not run under scriptc |
-| `run.js`, `coverage.js` | The parity runner and the coverage gate `npm run verify` runs |
+| `run.js`, `coverage.js` | The parity runner and the coverage gate `npm run verify` runs, over `native/index.js` and, with `--allow-dynamic`, the tasks app's entry |
 | `scriptc.js` | Which scriptc the native tools run (`$SCRIPTC` first) |
 | `test-terminal.ts` | The test terminal the focus test renders on |
 | `elements-bench.js` | 1k rows as plain templates, as elements made by tag and as slotted rows: create, layout, update, reverse, clear, under node and natively |
