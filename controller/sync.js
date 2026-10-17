@@ -97,9 +97,9 @@ const triggerLazyAdapter = (name) => {
  * @param {SyncCheck} check
  * @param {SyncHandler} handler
  */
-export function registerSyncType(check, handler) {
+export const registerSyncType = (check, handler) => {
   syncTypes.set(check, handler);
-}
+};
 
 /**
  * The name and `$sync` object a target binds through, or null when nothing
@@ -107,7 +107,7 @@ export function registerSyncType(check, handler) {
  * @param {unknown} adapter
  * @returns {SyncInfo | null}
  */
-export function getSyncInfo(adapter) {
+export const getSyncInfo = (adapter) => {
   if (typeof adapter === "string") return { adapter, syncObj: null };
 
   for (const [check, handler] of syncTypes)
@@ -119,7 +119,7 @@ export function getSyncInfo(adapter) {
     return { adapter: $sync.adapter, syncObj: $sync };
 
   return null;
-}
+};
 
 /**
  * The adapter key of a sync binding: `prop.key`, or the property name;
@@ -131,7 +131,7 @@ export function getSyncInfo(adapter) {
  * @param {Record<string, unknown>} inst
  * @returns {string | null}
  */
-export function getScopedKey(base, prop, inst) {
+export const getScopedKey = (base, prop, inst) => {
   const key = prop.key ?? base;
   const { scope } = prop;
   if (!scope) return key;
@@ -140,7 +140,7 @@ export function getScopedKey(base, prop, inst) {
     ? /** @type {Record<string, unknown> | undefined} */ (inst[obj])?.[field]
     : inst[obj];
   return value ? `${value}:${key}` : null;
-}
+};
 
 /**
  * Bind one store key to its declared sync target. Two subscriptions and an
@@ -156,7 +156,7 @@ export function getScopedKey(base, prop, inst) {
  * @param {Record<string, unknown> | null} [args.host] scope resolution only
  * @returns {() => void}
  */
-export function bindStoreSync({ store, key, prop, host = null }) {
+export const bindStoreSync = ({ store, key, prop, host = null }) => {
   const info = getSyncInfo(prop.sync);
   if (!info) return () => {};
 
@@ -229,7 +229,7 @@ export function bindStoreSync({ store, key, prop, host = null }) {
     pendingBinds.get(name)?.delete(late);
     unbind?.();
   };
-}
+};
 
 /**
  * A target as declared, opened: a thunk is called, so a module evaluated

@@ -15,9 +15,10 @@ export interface StoreSync {
 }
 
 /**
- * The canonical declared store. Every declared key is also a reactive
- * accessor on the store itself (`store.foo = x` notifies): the index
- * signature captures that flattened access.
+ * The canonical declared store: the declared keys read and written through
+ * `get` and `set`. A store made with `accessors` (the default) also carries
+ * each declared key as a reactive accessor; a caller that reads them declares
+ * the keys on its own type (`Store & { count: number }`).
  */
 export interface Store<S = Record<string, unknown>> {
   keys(): string[];
@@ -35,7 +36,6 @@ export interface Store<S = Record<string, unknown>> {
   snapshot(): Record<string, unknown>;
   restore(snap?: Record<string, unknown>): void;
   $sync: StoreSync;
-  [key: string]: unknown;
 }
 
 export * from "./index.ts";
