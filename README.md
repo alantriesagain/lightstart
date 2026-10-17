@@ -13,6 +13,7 @@ Web components for the light DOM, written as plain objects. A component is a def
 | `@bootstrapp/light/env` | The page's environment: viewport, breakpoint, OS, color scheme, `subscribe` |
 | `@bootstrapp/light/navigation` | The host's router as components see it; plain anchors until one is configured |
 | `@bootstrapp/light/theme` | Design tokens from a theme object, presets, `theme.css`, the color scheme, icons ([README](theme/README.md)) |
+| `@bootstrapp/light/theme/classes` | The utility classes a theme gives: `createEngine`, `buildTheme`, the rule table; the browser runtime at `/theme/runtime`, the opt-in palette at `/theme/palette`, the host-neutral tokens at `/theme/tokens` ([README](theme/README.md#classes)) |
 | `@bootstrapp/light/components/<category>/<name>.js` | The component library: `lc-*` tags in nine categories, their stylesheets, mixins, libs and stores ([README](components/README.md)) |
 
 ## A component
@@ -250,7 +251,7 @@ One engine, three hosts. The renderer and the view core never touch a document: 
 | `env/`, `navigation/` | The page's environment and the host's router, as components read them |
 | `controller/` | Controllers, the sync binding and its registries, the storage, document and hash adapters, `resource()`, the component sync plugin |
 | `model/` | Models: `defineModel` and the api, the store and its write pipeline, the storage SPI, the IndexedDB adapter, the binding of a property to a live query |
-| `theme/` | Tokens, presets, `theme.css`, the color scheme, icons |
+| `theme/` | Tokens (`tokens.ts`, host-neutral), presets, `theme.css`, the color scheme, icons; `classes/`, the utility-class engine, and `runtime.js`, its browser host |
 | `components/` | The component library, one directory per category, a `.css` and a `.demo.js` beside each component |
 | `locales/` | The words the components draw, keyed by tag, one file per language |
 | `test/` | `node:test` and `node:assert` for the browser, the runner page, the loop and `light test` |

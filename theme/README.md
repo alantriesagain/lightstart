@@ -15,6 +15,16 @@ applyTheme({ color: { primary: "#fabd2f" }, radius: { field: "0.75rem" } });
 selection, scrollbars); link it once. `presets.js` lists the themes in
 `themes/`, in the order a picker offers them.
 
+## Entries
+
+| Import | Holds |
+|---|---|
+| `@bootstrapp/light/theme` | the API below: a theme applied to a document, a region or a stylesheet string, the color math, the presets |
+| `@bootstrapp/light/theme/tokens` | the host-neutral half: the color math, `generateThemeVariables`, `variablesFor(theme, scheme)`, `cssColorToHex`; nothing of a document, so a terminal reads the same tokens |
+| `@bootstrapp/light/theme/classes` | the utility classes a theme gives: `createEngine`, `buildTheme`, the rule table (see Classes) |
+| `@bootstrapp/light/theme/palette` | the opt-in Tailwind palette, reached by a dynamic import |
+| `@bootstrapp/light/theme/runtime` | the browser host of the classes: `createRuntime(engine, { doc, raf, preflight })` |
+
 ## API Reference
 
 | Function | What it does |
@@ -104,6 +114,23 @@ control: { weight: "900", transform: "uppercase", tracking: "0.05em" },
 ```
 
 That is most of what separates `themes/neobrutalist.js` from `themes/daisy.js`.
+
+## Classes
+
+Every token is also a utility class. `theme/classes/` is an atomic-CSS engine with Tailwind's grammar: a class such as `flex`, `p-4`, `text-primary` or `hover:bg-muted` compiles to a rule whose declarations point at the theme's variables (`color: var(--color-primary)`), never at the values, so a `:root.dark` reassignment flows through untouched. One implementation serves a page's dev runtime and a build, so the two cannot drift.
+
+```js
+import { createEngine, buildTheme } from "@bootstrapp/light/theme/classes";
+import theme from "@bootstrapp/light/theme/themes/default.js";
+
+const engine = createEngine({ theme: buildTheme(theme) });
+const { css, matched, unknown } = engine.generate(["flex", "bg-surface", "hover:text-primary"]);
+engine.compile("p-4"); // { cls, selector, medias, weight, decls: ["padding:1rem"], order, important }
+```
+
+`buildTheme(theme, { palette })` turns the theme's groups into the utility scales: `color.*` and `text.*` become color utilities (`color.ink` gives `text-ink`, `bg-ink`, `border-ink`), `shadow.*` `shadow-<k>`, `radius.*` `rounded-<k>`, `spacing.*` named spacing, `leading.*` and `font.*` likewise; a declared color earns an `on-<k>` companion (`text-on-hero` reads `--color-on-hero`, the readable contrast color the tokens derive). The raw Tailwind palette (`text-gray-400`) is opt-in through `palette`, loaded from `@bootstrapp/light/theme/palette`. `createEngine({ theme, safelist })` compiles the safelist with whatever classes it is given, for class names composed at run time that a build cannot see. `engine.generate(classes)` answers the stylesheet and the classes it did not know; the browser runtime (`@bootstrapp/light/theme/runtime`) compiles classes as a `MutationObserver` sees them appear and rewrites one `<style data-tw-runtime>` once per frame. A Bootstrapp app gets both from `@bootstrapp/theme`, which boots the runtime in development and compiles `style.css` in a build.
+
+Deliberate divergences from Tailwind's preset: `dark:` targets `:root.dark`, the class `colorScheme` flips, so the variables and the variant can never disagree; breakpoints are px; transforms are individual properties (`translate:`, `rotate:`, `scale:`); filters do not compose; shadows and rings are plain `box-shadow`, last wins; `space-*` and `divide-*` use the child combinator; font weights read the theme (`font-bold` is `font-weight: var(--font-bold, 700)`); the palette is Tailwind v3 hex; opacity is fractional and a `/modifier` alpha compiles to `color-mix(in srgb, …)`, the one alpha form that works on `var()` tokens; the no-hyphen shorthands (`p1`, `w2`) are rejected. Left unbuilt until a project needs them: shadow colors, `ring-offset-*`, keyframes beyond the four stock animations, container queries, `before:`/`after:` content injection, `theme()` inside arbitrary values. Anything parked shows up in `generate`'s `unknown` list instead of silently missing.
 
 ## Presets
 
