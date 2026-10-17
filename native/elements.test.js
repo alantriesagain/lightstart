@@ -143,7 +143,7 @@ const boardsIn = (box) => {
   eq("element() builds a defined tag too", textOf(root), "all/4: e tick 2");
   render(html`<test-board .rows=${["f"]}><text>child </text></test-board>`, root);
   frames.flush();
-  eq("light children render above the content, unprojected until slots", textOf(root), "childall/10: f tick 2");
+  eq("a view whose template has no slot leaves light children above its content", textOf(root), "childall/10: f tick 2");
   throws("defining a tag twice", () => define("test-board", () => new Board()), "already defined");
   throws("a tag without a hyphen", () => define("plain", () => new Board()), "needs a hyphen");
   throws("an uppercase tag", () => define("test-Upper", () => new Board()), "lowercase");

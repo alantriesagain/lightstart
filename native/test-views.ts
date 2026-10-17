@@ -133,3 +133,112 @@ export class Owner extends View {
 
 define("test-board", () => new Board());
 define("test-emitter", () => new Emitter());
+
+/** `<test-card>`: a default slot with a fallback, inside a bordered box. */
+export class Card extends View {
+  override render(): unknown {
+    return html`<box border title="card"><slot><text>fallback</text></slot></box>`;
+  }
+}
+
+/** `<test-layout>`: a named slot, then the default one. */
+export class Layout extends View {
+  override render(): unknown {
+    return html`<box><text>header:</text><slot name="head"><text>no head</text></slot><text>body:</text><slot></slot></box>`;
+  }
+}
+
+/** `<test-nested>`: a default slot whose fallback holds another default slot. */
+export class Nested extends View {
+  override render(): unknown {
+    return html`<box><slot><box><slot><text>inner fallback</text></slot></box></slot></box>`;
+  }
+}
+
+/** `<test-swap>`: one of two templates, each with a default slot. */
+export class Swap extends View {
+  mode: Signal<string>;
+
+  constructor() {
+    super();
+    this.mode = signal("a");
+  }
+
+  override render(): unknown {
+    return this.mode.value === "a" ? html`<box><text>A:</text><slot></slot></box>` : html`<box><text>B:</text><slot></slot></box>`;
+  }
+}
+
+/** `<test-later>`: a slot a thunk renders once `show` is on. */
+export class Later extends View {
+  show: Signal<boolean>;
+
+  constructor() {
+    super();
+    this.show = signal(false);
+  }
+
+  override render(): unknown {
+    return html`<box><text>content</text>${() => (this.show.value ? html`<slot></slot>` : null)}</box>`;
+  }
+}
+
+/** `<test-grower>`: a default slot, and a named `side` slot once `more` is on. */
+export class Grower extends View {
+  more: Signal<boolean>;
+
+  constructor() {
+    super();
+    this.more = signal(false);
+  }
+
+  override render(): unknown {
+    return html`<box><slot></slot>${() => (this.more.value ? html`<slot name="side"></slot>` : null)}</box>`;
+  }
+}
+
+/** `<test-watch>`: counts the slotchange events of its slot. */
+export class Watch extends View {
+  changes: number;
+
+  constructor() {
+    super();
+    this.changes = 0;
+  }
+
+  override render(): unknown {
+    return html`<box><slot @slotchange=${() => {
+      this.changes++;
+    }}></slot></box>`;
+  }
+}
+
+/** `<test-forward>`: forwards its default slot through a card. */
+export class Forward extends View {
+  override render(): unknown {
+    return html`<box><test-card><slot></slot></test-card></box>`;
+  }
+}
+
+/** A view placing a counter inside a card's tag, so the counter is slotted. */
+export class Slotter extends View {
+  child: Counter;
+
+  constructor() {
+    super();
+    this.child = new Counter();
+  }
+
+  override render(): unknown {
+    return html`<test-card>${this.child}</test-card>`;
+  }
+}
+
+define("test-card", () => new Card());
+define("test-layout", () => new Layout());
+define("test-nested", () => new Nested());
+define("test-swap", () => new Swap());
+define("test-later", () => new Later());
+define("test-grower", () => new Grower());
+define("test-watch", () => new Watch());
+define("test-forward", () => new Forward());

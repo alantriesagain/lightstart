@@ -15,8 +15,9 @@ import { parseTemplate } from "../html/parser.ts";
 import { TplComment, TplElement, TplNode, TplText, indexParts, tokenize } from "../html/tokenizer.ts";
 import { setValue } from "./editor.ts";
 import { forgetLayout } from "./layout.ts";
-import { TAnchor, TElement, TFragment, TInput, TNode, TRun } from "./node.ts";
+import { TAnchor, TBox, TElement, TFragment, TInput, TNode, TRun } from "./node.ts";
 import { FLUSH_VIEWS, frames } from "./scheduler.ts";
+import { TSlotPart } from "./slots.ts";
 import { createElement } from "./tags.ts";
 import { View } from "./view.ts";
 
@@ -179,6 +180,10 @@ export class TermHost extends Host {
 
   createElement(tag: string): HostNode {
     return createElement(tag);
+  }
+
+  createSlotPart(_spec: PartSpec, el: HostNode, owner: object | undefined): TSlotPart {
+    return new TSlotPart(el as TBox, owner instanceof View ? owner : null);
   }
 
   createFragment(): HostNode {

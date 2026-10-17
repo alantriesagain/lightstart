@@ -8,7 +8,9 @@
  * `firstUpdated`, `updated`. A subclass `define`d under a tag is made by
  * the host wherever a template writes that tag: its `prop`s receive the
  * tag's attributes and `.prop=` bindings, `$emit` sends an event a parent
- * handles with `@type=`, and the host disposes it with its element.
+ * handles with `@type=`, the children the parent wrote inside the tag
+ * project into the `<slot>`s of its template, and the host disposes it
+ * with its element.
  */
 import { disposeTree, render } from "../html/core.ts";
 import { currentHost } from "../html/host.ts";
@@ -16,6 +18,7 @@ import { Signal, signal } from "../signals/index.ts";
 import { ViewCore } from "../view/core.ts";
 import { CustomEvent } from "./events.ts";
 import { TBox, TElement, asBool, asNumber } from "./node.ts";
+import { TSlotPart, projectSlots } from "./slots.ts";
 import { TagDefinition, registerTag } from "./tags.ts";
 
 /**
@@ -49,6 +52,8 @@ export class View extends ViewCore {
   box: TBox;
   $props: Map<string, Signal<unknown>> | null;
   $defined: boolean;
+  $slots: TSlotPart[];
+  $projectQueued: boolean;
 
   constructor() {
     super();
@@ -56,6 +61,8 @@ export class View extends ViewCore {
     this.box.owner = this;
     this.$props = null;
     this.$defined = false;
+    this.$slots = [];
+    this.$projectQueued = false;
   }
 
   get $node(): unknown {
@@ -151,6 +158,22 @@ export class View extends ViewCore {
 
   $commit(value: unknown) {
     render(value, this.box, { host: this });
+    this.$project();
+  }
+
+  /** Project the box's light units into the slots of what rendered. */
+  $project() {
+    this.$projectQueued = false;
+    if (this.$slots.length > 0) projectSlots(this.box, this.$slots);
+  }
+
+  /** Project on the next microtask: for a slot that appears outside a commit, as one a thunk renders later. */
+  $queueProject() {
+    if (this.$projectQueued) return;
+    this.$projectQueued = true;
+    Promise.resolve().then(() => {
+      if (this.$projectQueued) this.$project();
+    });
   }
 
   dispose() {
