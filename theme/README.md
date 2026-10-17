@@ -171,6 +171,8 @@ configureClasses(new TerminalClasses(theme, "dark"));
 
 `border-color` is ignored because a border paints in the box's own style, so it would recolor the box's text too.
 
+An app that ships natively bakes its classes instead of carrying the engine (about two megabytes of a binary): `light classes:bake <entry> -o <file> --scheme dark,light` walks the entry's runtime imports, finds every `class=` value the `html` templates write (a literal, a ternary or an alternation of literals), compiles each through `TerminalClasses` per scheme and writes a module with one `BakedEntry[]` export per scheme; `new BakedClasses(dark)` (`@bootstrapp/light/theme/baked`) answers them by lookup, and a string the table lacks lands in its `ignored` set, so a test asserting the set empty catches a stale table (`--check` fails on drift without writing). A class string composed at run time, and a class the terminal ignores, fail the bake naming the site. An app that wants run-time classes keeps `TerminalClasses` and the engine.
+
 ## Presets
 
 | Preset | Look |
