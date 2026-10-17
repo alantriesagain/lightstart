@@ -242,3 +242,34 @@ define("test-later", () => new Later());
 define("test-grower", () => new Grower());
 define("test-watch", () => new Watch());
 define("test-forward", () => new Forward());
+
+/** A benchmark row. */
+export class BenchRecord {
+  id: number;
+  label: string;
+
+  constructor(id: number, label: string) {
+    this.id = id;
+    this.label = label;
+  }
+}
+
+/** `<bench-row>`: one row as a defined element. */
+export class BenchRow extends View {
+  row = this.prop<BenchRecord | null>("row", null);
+
+  override render(): unknown {
+    const r = this.row.value;
+    return html`<text>${r === null ? "" : String(r.id) + " " + r.label}</text>`;
+  }
+}
+
+/** `<bench-card>`: a default slot for the rows a parent writes inside it. */
+export class BenchCard extends View {
+  override render(): unknown {
+    return html`<box><slot></slot></box>`;
+  }
+}
+
+define("bench-row", () => new BenchRow());
+define("bench-card", () => new BenchCard());

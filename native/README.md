@@ -32,6 +32,7 @@ The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on an
 | `run.js`, `coverage.js` | The parity runner and the coverage gate `npm run verify` runs |
 | `scriptc.js` | Which scriptc the native tools run (`$SCRIPTC` first) |
 | `test-terminal.ts` | The test terminal the focus test renders on |
+| `elements-bench.js` | 1k rows as plain templates, as elements made by tag and as slotted rows: create, layout, update, reverse, clear, under node and natively |
 | `*.test.js` | Parts and views on the terminal host, layout and paint, wrapping and widths, the editor, the input decoder, the hit test and focus ring with a renderer on a test terminal |
 | `demo.js`, `pty.sh` | The demo screen and the pty gate that clicks, scrolls, focuses and submits in it as a binary (3.3 MB stripped) |
 | `probes/` | One-file programs that pin what the compiler accepts, and the decisions they produced (`probes/README.md`) |
@@ -59,6 +60,18 @@ Measured on 2026-10-13, medians of three, as the core moved from JavaScript to T
 | update every 10th row | 9 ms | 185 ms | 179 ms | 101 ms | 26 ms |
 | reverse 10k keyed rows | 21 ms | 534 ms | 403 ms | 328 ms | 44 ms |
 | clear | 11 ms | 384 ms | 160 ms | 66 ms | 21 ms |
+
+Measured on 2026-10-17 with `node native/elements-bench.js` and its stripped binary (the fork's `light-integration` on 0.3.5), medians of three after a silent warm-up pass, 1k rows each way: plain keyed `<text>` rows, `<bench-row .row=${r}>` elements made by tag (`define`), and keyed rows slotted into a `<bench-card>`; the frame is flushed inside each timed step:
+
+| Step (1k rows) | plain, node | plain, native | elements, node | elements, native | slotted, node | slotted, native |
+|---|---|---|---|---|---|---|
+| create | 5.1 ms | 4.6 ms | 8.6 ms | 19.8 ms | 6.9 ms | 5.2 ms |
+| layout | 2.4 ms | 1.0 ms | 2.3 ms | 1.3 ms | 1.3 ms | 1.1 ms |
+| update every 10th | 0.8 ms | 1.5 ms | 0.7 ms | 1.6 ms | 0.4 ms | 1.6 ms |
+| reverse | 1.9 ms | 2.6 ms | 0.8 ms | 2.4 ms | 1.1 ms | 2.7 ms |
+| clear | 1.3 ms | 1.4 ms | 1.5 ms | 2.5 ms | 1.0 ms | 1.6 ms |
+
+An element made by tag costs about 20 µs to create natively, 4 times a plain row (a view, its box, a render into it), about 1 µs more than a plain row to re-render on a prop change (the 100 re-rendered elements add 0.1 ms) and 1 µs more to dispose; a slot costs nothing a row would not. A screen of 200 such elements builds in 4 ms, inside the first frame's budget, and a keystroke that changes one row costs the microseconds of that row.
 
 A class from a JavaScript file pays bookkeeping on every field write once its instances reach an `unknown`, which was half of this benchmark's time; a TypeScript class does not (vercel-labs/scriptc#934). The last column removes one write, `oldParts[(oldIndex as number)] = null` in `html/parts.ts`: scriptc read its key as `number | undefined`, an unknown key, and treated every method in the program as replaceable, so each call went through a boxing wrapper. The index is narrowed now. What remains is mostly boxing: class instances wrapped to cross the engine's `unknown` boundaries (the host seam's nodes, template values) and released again, and the cycle collector.
 
