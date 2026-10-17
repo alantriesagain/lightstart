@@ -59,13 +59,13 @@
     },
     "./controller": {
       "types": "./controller/types.ts",
-      "default": "./controller/index.js"
+      "default": "./controller/index.ts"
     },
-    "./controller/resource": "./controller/resource.js",
-    "./controller/storage": "./controller/adapters/storage.js",
-    "./controller/document": "./controller/adapters/document.js",
-    "./controller/url": "./controller/adapters/url.js",
-    "./controller/view": "./controller/view.js",
+    "./controller/resource": "./controller/resource.ts",
+    "./controller/storage": "./controller/adapters/storage.ts",
+    "./controller/document": "./controller/adapters/document.ts",
+    "./controller/url": "./controller/adapters/url.ts",
+    "./controller/view": "./controller/view.ts",
     "./model": {
       "types": "./model/types.ts",
       "default": "./model/index.js"

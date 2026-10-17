@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { createDocumentAdapter } from "./document.js";
+import { createDocumentAdapter } from "./document.ts";
 import { createStore } from "../../signals/store.ts";
-import { registerAdapter, bindStoreSync } from "../sync.js";
+import { registerAdapter, bindStoreSync } from "../sync.ts";
 
 const fakeBacking = (stored = {}) => {
   /** @type {Array<Record<string, unknown>>} */

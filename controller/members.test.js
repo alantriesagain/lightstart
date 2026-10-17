@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import T from "../types/index.js";
-import { defineController } from "./define.js";
+import { defineController } from "./define.ts";
 
 const makeCtl = () =>
   defineController({

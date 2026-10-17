@@ -5,23 +5,15 @@
 
 import { signal, effect } from "../../signals/index.ts";
 
-/** @import { ListenerFn, AdapterCore, Adapter } from "../types.ts" */
-/** @import { Signal } from "../../signals/index.ts" */
+import type { ListenerFn, AdapterCore, Adapter } from "../types.ts";
+import type { Signal } from "../../signals/index.ts";
 
-/**
- * Attach on/off/emit/signal methods to `target` and return it.
- *
- * @template {AdapterCore} T
- * @param {T} target
- * @returns {T & Adapter}
- */
-export const withKeyedListeners = (target) => {
-  /** @type {Map<string, Set<ListenerFn>>} */
-  const listeners = new Map();
-  /** @type {Map<string, Signal<unknown>>} */
-  const signals = new Map();
+/** Attach on/off/emit/signal methods to `target` and return it. */
+export const withKeyedListeners = <T extends AdapterCore>(target: T): T & Adapter => {
+  const listeners: Map<string, Set<ListenerFn>> = new Map();
+  const signals: Map<string, Signal<unknown>> = new Map();
 
-  const augmented = /** @type {T & Adapter} */ (target);
+  const augmented = target as T & Adapter;
 
   augmented.on = (key, callback) => {
     if (!listeners.has(key)) listeners.set(key, new Set());
@@ -71,21 +63,15 @@ export const withKeyedListeners = (target) => {
 /**
  * Lazy proxy that resolves the real adapter on each call (used for
  * `localStorage`/`sessionStorage` where `window` may not exist yet).
- *
- * @param {string} name
- * @param {() => Adapter} getAdapter
- * @returns {Adapter}
  */
-export const createLazyAdapter = (name, getAdapter) => {
-  /** @type {Array<string>} */
-  const methods = ["get", "set", "remove", "has", "keys", "entries", "on", "off", "emit", "hasListeners", "signal"];
-  /** @type {Record<string, unknown>} */
-  const proxy = { get name() { return name; } };
+export const createLazyAdapter = (name: string, getAdapter: () => Adapter): Adapter => {
+  const methods: string[] = ["get", "set", "remove", "has", "keys", "entries", "on", "off", "emit", "hasListeners", "signal"];
+  const proxy: Record<string, unknown> = { get name() { return name; } };
   for (const method of methods)
-    proxy[method] = (/** @type {unknown[]} */ ...args) => {
-      const target = /** @type {Record<string, (...a: unknown[]) => unknown>} */ (/** @type {unknown} */ (getAdapter()));
+    proxy[method] = (...args: unknown[]) => {
+      const target = getAdapter() as unknown as Record<string, (...a: unknown[]) => unknown>;
       return target[method](...args);
     };
 
-  return /** @type {Adapter} */ (/** @type {unknown} */ (proxy));
+  return proxy as unknown as Adapter;
 };

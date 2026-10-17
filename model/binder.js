@@ -13,7 +13,7 @@
  * `registerSyncBinder(modelBinder)` in the page that binds models.
  */
 
-import { resource } from "../controller/resource.js";
+import { resource } from "../controller/resource.ts";
 import { isModelApi } from "./index.js";
 import { onChange } from "./changes.js";
 

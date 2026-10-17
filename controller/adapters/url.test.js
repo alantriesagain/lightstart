@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { hash } from "./url.js";
+import { hash } from "./url.ts";
 
 const fakeWindow = () => {
   /** @type {Array<[string, () => void]>} */

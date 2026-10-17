@@ -75,7 +75,7 @@ describe("@bootstrapp/light/model: nothing loads what it did not ask for", () =>
       "./model/store": ["model/store.js", "model/factory.js"],
       "./model/adapter": ["model/adapter.js", "model/factory.js"],
       "./model/indexeddb": ["model/indexeddb.js", "model/config.js"],
-      "./model/binder": ["model/binder.js", "controller/resource.js"],
+      "./model/binder": ["model/binder.js", "controller/resource.ts"],
       "./model/slug": ["model/slug.js"],
     };
     const entries = Object.keys(owned).map(entry);

@@ -2,7 +2,7 @@
  * @bootstrapp/light/controller: type declarations.
  */
 
-import type { TypeDefinition, PropertyDeclaration, PropertyDeclarations, PropsToThis } from "../types/types.ts";
+import type { PropertyDeclaration, PropertyDeclarations, PropsToThis } from "../types/types.ts";
 import type { Signal } from "../signals/index.ts";
 import type { StoreSync, Store } from "../signals/types.ts";
 import type { DefinitionFragment } from "../view/primitives.ts";
@@ -105,8 +105,15 @@ type ControllerSurface = {
   [K in keyof ControllerInstance as string extends K ? never : K]: ControllerInstance[K];
 };
 
-/** A property's descriptor as the binding reads it: the sync options folded in from the block. */
-export type SyncProp = TypeDefinition & {
+/**
+ * A property's descriptor as the binding reads it: the sync options folded in
+ * from the block, the default and the (de)serialization a controller's store
+ * takes, and every other key the descriptor carries.
+ */
+export interface SyncProp {
+  $type?: string;
+  defaultValue?: unknown;
+  reactive?: boolean;
   sync?: unknown;
   key?: string;
   scope?: string;
@@ -114,7 +121,27 @@ export type SyncProp = TypeDefinition & {
   dependsOn?: string[];
   pack?: (value: unknown) => unknown;
   unpack?: (packed: unknown) => unknown;
-};
+  [option: string]: unknown;
+}
+
+/**
+ * The store a binding reads and writes, member for member the default
+ * `Store`, with one signature per member: a store made by `createStore` is
+ * one, and one passes wherever a `Store` is asked for.
+ */
+export interface SyncStore {
+  keys(): string[];
+  get(key: string): unknown;
+  set(key: string, value: unknown): unknown;
+  update(key: string, fn: (current: unknown) => unknown): unknown;
+  reset(key: string): unknown;
+  resetAll(): void;
+  subscribe(key: string, callback: (value: unknown, oldValue?: unknown) => void): () => void;
+  observe(callback: (key: string, value: unknown, oldValue: unknown) => void): () => void;
+  snapshot(): Record<string, unknown>;
+  restore(snap?: Record<string, unknown>): void;
+  $sync: StoreSync;
+}
 
 /** What binding one property answers: the unbind, and the first value's arrival when it comes later. */
 export interface Binding {
@@ -122,12 +149,15 @@ export interface Binding {
   loaded?: Promise<void>;
 }
 
+/** What a binding reads its scope from and a binder keeps its queries on: the controller instance or the element. */
+export type SyncHost = Record<string, unknown>;
+
 /** A data source the binding cannot follow as an adapter, a store or a signal; see `registerSyncBinder`. */
 export interface SyncBinder {
   /** Whether this binder binds an opened target. */
   test(target: unknown): boolean;
   /** Keep `host`'s property `key` current from `target`. */
-  bind(args: { store: Store; key: string; prop: SyncProp; host: Record<string, any>; target: unknown }): Binding;
+  bind(args: { store: SyncStore; key: string; prop: SyncProp; host: SyncHost; target: unknown }): Binding;
   /** The long-form options it reads beyond `to`, `key` and `scope`. */
   options?: readonly string[];
 }
@@ -172,6 +202,13 @@ export interface Adapter extends AdapterCore {
   _signals: Map<string, Signal<unknown>>;
 }
 
+/** What a storage adapter reads and writes: the browser's `localStorage` and `sessionStorage` are two. */
+export interface StorageArea {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
 /** What a document adapter persists to: one JSON object, read once on attach, written whole on every change. */
 export interface DocumentBacking {
   read(): Promise<Record<string, unknown> | null | undefined>;
@@ -189,6 +226,17 @@ export interface SyncObj {
   get(key: string): unknown;
   set(key: string, value: unknown): void;
   subscribe(key: string, callback: (value: unknown) => void): () => void;
+}
+
+/** What `adapterFor` wraps: a controller instance or a store through its `$sync`, or a `$sync` object itself. */
+export interface StoreShaped {
+  adapter?: string;
+  get?(key: string): unknown;
+  set?(key: string, value: unknown): void;
+  subscribe?(key: string, callback: (value: unknown) => void): () => void;
+  $sync?: SyncObj;
+  $state?: { keys?: () => string[] };
+  keys?: () => string[];
 }
 
 export interface SyncInfo {
@@ -231,6 +279,11 @@ export interface Resource<T> {
   dispose(): void;
 }
 
+/** `keyedResource()` options: a resource's, with a `filter` that also hears the entry's key. */
+export interface KeyedResourceOptions extends Omit<ResourceOptions, "filter"> {
+  filter?: (payload: unknown, key: string) => boolean;
+}
+
 /** One lazily-created `Resource<T>` per key. `invalidate(key)` drops the entry. */
 export interface KeyedResource<T> {
   get(key: string): Resource<T>;
@@ -240,4 +293,4 @@ export interface KeyedResource<T> {
   dispose(): void;
 }
 
-export * from "./index.js";
+export * from "./index.ts";

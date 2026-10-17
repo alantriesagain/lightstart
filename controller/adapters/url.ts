@@ -6,32 +6,31 @@
  * has no side effect. Query parameters are the router's.
  */
 
-import { withKeyedListeners } from "./keyed-listeners.js";
+import { withKeyedListeners } from "./keyed-listeners.ts";
 
-/** @import { Adapter } from "../types.ts" */
+import type { Adapter } from "../types.ts";
+
+declare const window: { location: { hash: string }, addEventListener(type: "popstate", listener: () => void): void } | undefined;
 
 const getHashParams = () => {
   if (typeof window === "undefined") return new URLSearchParams();
   return new URLSearchParams(window.location.hash.substring(1));
 };
 
-/** @param {URLSearchParams} params */
-const setHashParams = (params) => {
+const setHashParams = (params: URLSearchParams) => {
   if (typeof window === "undefined") return;
   window.location.hash = params.toString();
 };
 
-/** @type {Adapter} */
-export const hash = withKeyedListeners({
+/** The URL hash as a sync adapter: one `#key=value` parameter per key. */
+export const hash: Adapter = withKeyedListeners({
   name: "hash",
 
-  /** @param {string} key */
-  get(key) {
+  get(key: string) {
     return getHashParams().get(key);
   },
 
-  /** @param {string} key @param {unknown} value */
-  set(key, value) {
+  set(key: string, value: unknown) {
     const params = getHashParams();
     if (value === null || value === undefined) params.delete(key);
     else params.set(key, String(value));
@@ -40,13 +39,11 @@ export const hash = withKeyedListeners({
     return { key };
   },
 
-  /** @param {string} key */
-  remove(key) {
+  remove(key: string) {
     return hash.set(key, null);
   },
 
-  /** @param {string} key */
-  has(key) {
+  has(key: string) {
     return getHashParams().has(key);
   },
 
@@ -54,8 +51,7 @@ export const hash = withKeyedListeners({
     return [...getHashParams().keys()];
   },
 
-  /** @returns {Array<[string, unknown]>} */
-  entries() {
+  entries(): Array<[string, unknown]> {
     return [...getHashParams().entries()];
   },
 });

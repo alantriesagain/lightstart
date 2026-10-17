@@ -5,11 +5,11 @@ import { signal } from "../signals/index.ts";
 import { createStore } from "../signals/store.ts";
 import { mergeDefinitions, composeDefinition } from "../view/definition.js";
 import T from "../types/index.js";
-import { bindStoreSync, getSyncInfo, registerAdapter } from "./sync.js";
-import { defineController, defineMixin, nameControllers } from "./define.js";
-import { configureControllers } from "./config.js";
-import { syncPlugin } from "./view.js";
-import { memoryStorage, localStorage, sessionStorage } from "./adapters/storage.js";
+import { bindStoreSync, getSyncInfo, registerAdapter } from "./sync.ts";
+import { defineController, defineMixin, nameControllers } from "./define.ts";
+import { configureControllers } from "./config.ts";
+import { syncPlugin } from "./view.ts";
+import { memoryStorage, localStorage, sessionStorage } from "./adapters/storage.ts";
 
 registerAdapter("local", localStorage);
 registerAdapter("session", sessionStorage);
@@ -229,7 +229,7 @@ describe("@bootstrapp/light/controller/definition.js: lifecycle chaining", () =>
   });
 });
 
-describe("@bootstrapp/light/controller/define.js", () => {
+describe("@bootstrapp/light/controller/define.ts", () => {
   const definition = () => ({
     name: "demo",
     props: {
@@ -564,7 +564,7 @@ describe("@bootstrapp/light/controller/define.js", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.js: mixins", () => {
+describe("@bootstrapp/light/controller/define.ts: mixins", () => {
   const store = () => defineMixin({
     props: { slug: "draft" },
     _timer: null,
@@ -634,7 +634,7 @@ describe("@bootstrapp/light/controller/define.js: mixins", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.js: per-instance members", () => {
+describe("@bootstrapp/light/controller/define.ts: per-instance members", () => {
   const withMembers = () => defineController({
     name: "members",
     props: {},
@@ -688,7 +688,7 @@ describe("@bootstrapp/light/controller/define.js: per-instance members", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.js: own()", () => {
+describe("@bootstrapp/light/controller/define.ts: own()", () => {
   const record = () => {
     const log = [];
     const make = defineController({
@@ -780,7 +780,7 @@ describe("@bootstrapp/light/controller/define.js: own()", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.js: ready", () => {
+describe("@bootstrapp/light/controller/define.ts: ready", () => {
   const deferred = () => {
     let resolve;
     let reject;
@@ -846,7 +846,7 @@ describe("@bootstrapp/light/controller/define.js: ready", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/adapters/storage.js", () => {
+describe("@bootstrapp/light/controller/adapters/storage.ts", () => {
   beforeEach(() => {
     memoryStorage.clear();
   });
@@ -1169,7 +1169,7 @@ describe("@bootstrapp/light/controller/adapters/storage.js", () => {
     });
 
     it("a bind against an unregistered name queues and completes on registration", async () => {
-      const { registerAdapter, pendingAdapterNames } = await import("./sync.js");
+      const { registerAdapter, pendingAdapterNames } = await import("./sync.ts");
       const factory = defineController({
         name: "ctl-sync-late",
         props: { late: "waiting" },
@@ -1186,8 +1186,27 @@ describe("@bootstrapp/light/controller/adapters/storage.js", () => {
       assert.equal(owner.get("late"), "back", "two-way after the flush");
     });
 
+    it("a queued bind unbound before its name registers never binds", async () => {
+      const { registerAdapter, pendingAdapterNames } = await import("./sync.ts");
+      const store = createStore({ early: { default: "mine" } }, { accessors: false });
+      const unbind = bindStoreSync({ store, key: "early", prop: { sync: "early-adapter" } });
+      unbind();
+      assert.equal(pendingAdapterNames().includes("early-adapter"), true, "the name stays waited on");
+      registerAdapter("early-adapter", createStore({ early: "theirs" }));
+      assert.equal(store.get("early"), "mine", "the unbound key took nothing from the late adapter");
+    });
+
+    it("registering a sync type's check again replaces its handler", async () => {
+      const { registerSyncType } = await import("./sync.ts");
+      const tagged = { kind: "retyped" };
+      const check = (/** @type {unknown} */ target) => target === tagged;
+      registerSyncType(check, () => ({ adapter: "first", syncObj: null }));
+      registerSyncType(check, () => ({ adapter: "second", syncObj: null }));
+      assert.equal(getSyncInfo(tagged)?.adapter, "second");
+    });
+
     it("a named controller is a sync target by its name, and mirrors follow it both ways", async () => {
-      const { getAdapter, pendingAdapterNames } = await import("./sync.js");
+      const { getAdapter, pendingAdapterNames } = await import("./sync.ts");
       const owner = defineController({ name: "ownerCtl", props: { level: "hard" } });
       nameControllers([owner]);
       assert.equal(owner.has(), false, "naming does not build it");
@@ -1209,7 +1228,7 @@ describe("@bootstrapp/light/controller/adapters/storage.js", () => {
     });
 
     it("a disposed controller's name binds a later view to the next instance", async () => {
-      const { getAdapter } = await import("./sync.js");
+      const { getAdapter } = await import("./sync.ts");
       const owner = defineController({ name: "rearmCtl", props: { level: "hard" } });
       nameControllers([owner]);
       owner.level = "medium";
@@ -1269,7 +1288,7 @@ describe("@bootstrapp/light/controller/adapters/storage.js", () => {
   });
 });
 
-import { resource, keyedResource } from "./resource.js";
+import { resource, keyedResource } from "./resource.ts";
 
 const deferred = () => {
   let resolve;
@@ -1297,7 +1316,7 @@ const fakeBus = () => {
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
-describe("@bootstrapp/light/controller/resource.js", () => {
+describe("@bootstrapp/light/controller/resource.ts", () => {
   describe("ensure()", () => {
     it("fetches once and dedupes concurrent calls", async () => {
       let calls = 0;
@@ -1592,7 +1611,7 @@ describe("@bootstrapp/light/controller: the view sync plugin", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.js: the sync block", () => {
+describe("@bootstrapp/light/controller/define.ts: the sync block", () => {
   it("binds a plain default to a named adapter, as the descriptor option does", () => {
     memoryStorage.set("blockMode", "stored");
     const ctrl = defineController({ name: "blockShort", props: { blockMode: "unset" }, sync: { blockMode: "memory" } });
@@ -1658,7 +1677,7 @@ describe("@bootstrapp/light/controller/define.js: the sync block", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.js: what a definition refuses", () => {
+describe("@bootstrapp/light/controller/define.ts: what a definition refuses", () => {
   it("refuses adapter:, since every registered controller is a sync target", () => {
     assert.throws(() => defineController({ name: "oldAdapter", adapter: true, props: {} }), /adapter: is gone/);
   });

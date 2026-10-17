@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { keyedResource } from "./resource.js";
+import { keyedResource } from "./resource.ts";
 
 const emitter = () => {
   const handlers = new Map();

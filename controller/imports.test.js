@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
 const STATIC_IMPORT = /^\s*(?:import|export)\s+(?:[^'";]*?\sfrom\s+)?["']([^"']+)["']/gm;
+const RUNTIME_IMPORT = /^\s*(?:import|export)\s+(?!type\s)(?:[^'";]*?\sfrom\s+)?["']([^"']+)["']/gm;
 const TYPE_IMPORT = /@import\s*(?:\{[^}]*\}|\w+)\s*from\s*["']([^"']+)["']|import\(\s*["']([^"']+)["']\s*\)/g;
 
 /** @param {unknown} target */
@@ -28,19 +29,19 @@ const resolveSpec = (spec, from) => {
 };
 
 /**
- * Every file the static imports of `entry` reach, as paths relative to light.
- * With `types`, type-only imports count too: `.ts` declarations, `@import`
- * tags and `import("...")` types, which is what a typechecker loads.
+ * Every file the runtime imports of `entry` reach, as paths relative to light.
+ * With `types`, type-only imports count too: `import type`, `@import` tags and
+ * `import("...")` types, which is what a typechecker loads.
  * @param {string} entry
  * @param {{ types?: boolean }} [options]
  */
 const reach = (entry, { types = false } = {}) => {
   const seen = new Set();
   const visit = (/** @type {string} */ file) => {
-    if (seen.has(file) || !existsSync(file) || !(file.endsWith(".js") || (types && file.endsWith(".ts")))) return;
+    if (seen.has(file) || !existsSync(file) || !/\.(js|ts)$/.test(file)) return;
     seen.add(file);
     const source = readFileSync(file, "utf8");
-    const specs = [...source.matchAll(STATIC_IMPORT)].map(([, spec]) => spec);
+    const specs = [...source.matchAll(types ? STATIC_IMPORT : RUNTIME_IMPORT)].map(([, spec]) => spec);
     if (types) for (const [, tag, inline] of source.matchAll(TYPE_IMPORT)) specs.push(tag ?? inline);
     for (const spec of specs) {
       const next = resolveSpec(spec, file);
@@ -52,11 +53,11 @@ const reach = (entry, { types = false } = {}) => {
 };
 
 /** @param {string} dir @returns {string[]} */
-const jsFiles = (dir) =>
+const sourceFiles = (dir) =>
   readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
-    if (entry.isDirectory()) return jsFiles(path);
-    return entry.name.endsWith(".js") && !entry.name.endsWith(".test.js") ? [path] : [];
+    if (entry.isDirectory()) return sourceFiles(path);
+    return /\.(js|ts)$/.test(entry.name) && !entry.name.endsWith(".test.js") && entry.name !== "types.ts" ? [path] : [];
   });
 
 const inController = (/** @type {string} */ file) => file.startsWith("controller/");
@@ -67,7 +68,7 @@ describe("@bootstrapp/light/controller: nothing loads what it did not ask for", 
       .filter(([key]) => !key.startsWith("./controller") && key !== "./model/binder" && !key.includes("*"))
       .map(([, target]) => exportFile(target))
       .filter((file) => typeof file === "string");
-    for (const entry of [...entries, ...jsFiles("components")]) {
+    for (const entry of [...entries, ...sourceFiles("components")]) {
       const leaked = reach(entry).filter(inController);
       assert.deepEqual(leaked, [], `${entry} reaches ${leaked.join(", ")}`);
     }
@@ -76,12 +77,12 @@ describe("@bootstrapp/light/controller: nothing loads what it did not ask for", 
   it("each controller entry loads its own code and no sibling entry's", () => {
     const entry = (/** @type {string} */ key) => /** @type {string} */ (exportFile(pkg.exports[key]));
     const owned = {
-      "./controller": ["controller/define.js", "controller/sync.js", "controller/config.js"],
-      "./controller/resource": ["controller/resource.js", "controller/config.js"],
-      "./controller/storage": ["controller/adapters/storage.js"],
-      "./controller/document": ["controller/adapters/document.js"],
-      "./controller/url": ["controller/adapters/url.js"],
-      "./controller/view": ["controller/view.js", "controller/sync.js"],
+      "./controller": ["controller/define.ts", "controller/sync.ts", "controller/config.ts"],
+      "./controller/resource": ["controller/resource.ts", "controller/config.ts"],
+      "./controller/storage": ["controller/adapters/storage.ts"],
+      "./controller/document": ["controller/adapters/document.ts"],
+      "./controller/url": ["controller/adapters/url.ts"],
+      "./controller/view": ["controller/view.ts", "controller/sync.ts"],
     };
     const entryFiles = Object.keys(owned).map((key) => entry(key).replace(/^\.\//, ""));
     for (const [key, files] of Object.entries(owned)) {
@@ -93,7 +94,7 @@ describe("@bootstrapp/light/controller: nothing loads what it did not ask for", 
   });
 
   it("the controller's types load no DOM: a program that types a controller never takes in the browser view", () => {
-    for (const entry of ["controller/types.ts", "controller/index.js"]) {
+    for (const entry of ["controller/types.ts", "controller/index.ts"]) {
       const dom = reach(entry, { types: true }).filter((file) => file.startsWith("dom/") || file === "view/index.js" || file === "view/types.ts");
       assert.deepEqual(dom, [], `${entry} reaches ${dom.join(", ")}`);
     }

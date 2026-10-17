@@ -10,7 +10,7 @@ import { configureModel, defineModel, modelBus } from "../../model/index.js";
 import { createStore, storeRequest } from "../../model/store.js";
 import { buildQueryResult, createAdapter, registerStorageAdapter } from "../../model/adapter.js";
 import { modelBinder } from "../../model/binder.js";
-import { defineController, registerSyncBinder } from "../../controller/index.js";
+import { defineController, registerSyncBinder } from "../../controller/index.ts";
 
 /** @type {Map<string, Record<string, unknown>>} */
 const rows = new Map();

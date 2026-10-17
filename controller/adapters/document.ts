@@ -8,45 +8,37 @@
  * `detach` flushes the backing and stops writing.
  */
 
-import { withKeyedListeners } from "./keyed-listeners.js";
+import { withKeyedListeners } from "./keyed-listeners.ts";
 
-/** @import { DocumentAdapter, DocumentBacking } from "../types.ts" */
+import type { DocumentAdapter, DocumentBacking } from "../types.ts";
 
-/** @param {unknown} value */
-const isThenable = (value) => Boolean(value) && typeof (/** @type {{ then?: unknown }} */ (value)).then === "function";
+const isThenable = (value: unknown): value is Promise<unknown> =>
+  Boolean(value) && typeof (value as { then?: unknown }).then === "function";
 
-/**
- * @param {string} name
- * @returns {DocumentAdapter}
- */
-export const createDocumentAdapter = (name) => {
-  /** @type {Record<string, unknown>} */
-  let doc = {};
-  /** @type {DocumentBacking | null} */
-  let backing = null;
+/** A document adapter named `name`, holding an empty document until a backing is attached. */
+export const createDocumentAdapter = (name: string): DocumentAdapter => {
+  let doc: Record<string, unknown> = {};
+  let backing: DocumentBacking | null = null;
 
   const persist = () => {
     const result = backing?.write(doc);
     if (isThenable(result))
-      /** @type {Promise<void>} */ (result).catch((error) => console.error(`[sync:${name}] write failed:`, error));
+      result.catch((error) => console.error(`[sync:${name}] write failed:`, error));
   };
 
   const adapter = withKeyedListeners({
     name,
 
-    /** @param {string} key */
-    get: (key) => doc[key],
+    get: (key: string) => doc[key],
 
-    /** @param {string} key @param {unknown} value */
-    set(key, value) {
+    set(key: string, value: unknown) {
       doc = { ...doc, [key]: value };
       persist();
       adapter.emit(key, value);
       return { key };
     },
 
-    /** @param {string} key */
-    remove(key) {
+    remove(key: string) {
       const { [key]: _removed, ...rest } = doc;
       doc = rest;
       persist();
@@ -54,16 +46,13 @@ export const createDocumentAdapter = (name) => {
       return { key };
     },
 
-    /** @param {string} key */
-    has: (key) => Object.hasOwn(doc, key),
+    has: (key: string) => Object.hasOwn(doc, key),
 
     keys: () => Object.keys(doc),
 
-    /** @returns {Array<[string, unknown]>} */
-    entries: () => Object.entries(doc),
+    entries: (): Array<[string, unknown]> => Object.entries(doc),
 
-    /** @param {DocumentBacking} next */
-    async attach(next) {
+    async attach(next: DocumentBacking) {
       const stored = (await next.read()) ?? {};
       backing = next;
       doc = { ...stored };

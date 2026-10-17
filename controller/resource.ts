@@ -9,19 +9,25 @@
  */
 
 import { batch, signal } from "../signals/index.ts";
-import { config } from "./config.js";
+import { config } from "./config.ts";
 
-/** @import { Resource, ResourceOptions } from "./types.ts" */
+import type { EventBus, KeyedResource, KeyedResourceOptions, Resource, ResourceOptions } from "./types.ts";
+
+type Dependency = { readonly value: { peek(): unknown, subscribe(callback: (value: unknown) => void): () => void } };
+
+type LoadOptions = {
+  name?: string;
+  eager?: boolean;
+  ready?: false | (() => Promise<unknown> | undefined);
+  events?: EventBus | null;
+  invalidateOn?: string | string[];
+  filter?: (payload: unknown, eventKey: string) => boolean;
+  dependsOn?: readonly Dependency[];
+};
 
 const swallow = () => {};
 
-/**
- * @template T
- * @param {() => Promise<T> | T} fetcher
- * @param {ResourceOptions} [options]
- * @returns {Resource<T>}
- */
-export function resource(fetcher, options = {}) {
+const createResource = (fetcher: () => unknown, options: LoadOptions): Resource<unknown> => {
   const {
     name = "resource",
     eager = false,
@@ -32,22 +38,20 @@ export function resource(fetcher, options = {}) {
     dependsOn,
   } = options;
 
-  const value = signal(/** @type {T | undefined} */ (undefined));
+  const value = signal<unknown>(undefined);
   const pending = signal(false);
-  const error = signal(/** @type {unknown} */ (null));
+  const error = signal<unknown>(null);
 
-  /** @type {Promise<unknown> | null} */
-  let loading = null;
+  let loading: Promise<unknown> | null = null;
   let resolvedOnce = false;
   let stale = false;
   let generation = 0;
-  /** @type {Array<() => void>} */
-  const offs = [];
+  const offs: Array<() => void> = [];
 
-  const readyGate = () => {
-    if (ready === false) return undefined;
-    if (typeof ready === "function") return ready();
-    return config.ready();
+  const readyGate = (): Promise<unknown> => {
+    if (ready === false) return Promise.resolve();
+    const gate = typeof ready === "function" ? ready() : config.ready();
+    return gate ?? Promise.resolve();
   };
 
   let listening = false;
@@ -57,9 +61,9 @@ export function resource(fetcher, options = {}) {
     listening = true;
     const bus = events !== undefined ? events : config.events;
     if (!bus) return;
-    for (const eventKey of [invalidateOn].flat())
+    for (const eventKey of Array.isArray(invalidateOn) ? invalidateOn : [invalidateOn])
       offs.push(
-        bus.on(eventKey, (/** @type {unknown} */ payload) => {
+        bus.on(eventKey, (payload) => {
           if (filter && !filter(payload, eventKey)) return undefined;
           if (!resolvedOnce) return undefined;
           return self.refresh().catch(swallow);
@@ -67,14 +71,14 @@ export function resource(fetcher, options = {}) {
       );
   };
 
-  const runFetch = async () => {
+  const runFetch = async (): Promise<unknown> => {
     const gen = ++generation;
     pending.value = true;
     listen();
     const done = config.track(`resource:${name}`);
     try {
       const next = await fetcher();
-      if (gen !== generation) return /** @type {T} */ (value.peek());
+      if (gen !== generation) return value.peek();
       batch(() => {
         value.value = next;
         pending.value = false;
@@ -103,7 +107,7 @@ export function resource(fetcher, options = {}) {
     return runFetch();
   };
 
-  const self = {
+  const self: Resource<unknown> = {
     name,
     value,
     pending,
@@ -115,7 +119,7 @@ export function resource(fetcher, options = {}) {
           loading = null;
           throw err;
         });
-      return loading.then(() => /** @type {T} */ (value.peek()));
+      return loading.then(() => value.peek());
     },
 
     refresh() {
@@ -127,18 +131,16 @@ export function resource(fetcher, options = {}) {
       if (resolvedOnce) self.refresh().catch(swallow);
     },
 
-    /** @param {(current: T | undefined) => T} updater Must return a NEW reference; the signal's === dedupe makes in-place mutation invisible. */
     mutate(updater) {
-      const next = updater(/** @type {T | undefined} */ (value.peek()));
+      const next = updater(value.peek());
       value.value = next;
       return next;
     },
 
     peek() {
-      return /** @type {T | undefined} */ (value.peek());
+      return value.peek();
     },
 
-    /** @param {(v: T | undefined) => void} cb Fires immediately with the current value, then on every change. */
     subscribe(cb) {
       return value.subscribe(cb);
     },
@@ -162,7 +164,10 @@ export function resource(fetcher, options = {}) {
           }
           const moved = held;
           held = v !== undefined;
-          if (resolvedOnce) return void self.refresh().catch(swallow);
+          if (resolvedOnce) {
+            self.refresh().catch(swallow);
+            return;
+          }
           if (moved && loading) stale = true;
         }),
       );
@@ -170,7 +175,17 @@ export function resource(fetcher, options = {}) {
 
   if (eager) queueMicrotask(() => self.ensure().catch(swallow));
 
-  return /** @type {Resource<T>} */ (self);
+  return self;
+};
+
+/**
+ * A resource over `fetcher`. `mutate(updater)` must return a NEW reference:
+ * the signal's === dedupe makes in-place mutation invisible. `subscribe(cb)`
+ * fires immediately with the current value, then on every change.
+ */
+export function resource<T>(fetcher: () => Promise<T> | T, options?: ResourceOptions): Resource<T>;
+export function resource(fetcher: () => unknown, options: LoadOptions = {}): Resource<unknown> {
+  return createResource(fetcher, options);
 }
 
 /**
@@ -178,23 +193,17 @@ export function resource(fetcher, options = {}) {
  * per-slug fetches). `invalidate(key)` has DROP semantics: the entry is
  * disposed and deleted, so the next get(key) starts fresh, unlike a
  * singular Resource.invalidate, which refreshes in place.
- *
- * @template T
- * @param {(key: string) => Promise<T> | T} fetcherForKey
- * @param {Omit<ResourceOptions, "filter"> & { filter?: (payload: unknown, key: string) => boolean }} [options]
- * @returns {import("./types.ts").KeyedResource<T>}
  */
-export function keyedResource(fetcherForKey, options = {}) {
-  /** @type {Map<string, Resource<T>>} */
-  const entries = new Map();
+export function keyedResource<T>(fetcherForKey: (key: string) => Promise<T> | T, options?: KeyedResourceOptions): KeyedResource<T>;
+export function keyedResource(fetcherForKey: (key: string) => unknown, options: LoadOptions = {}): KeyedResource<unknown> {
+  const entries: Map<string, Resource<unknown>> = new Map();
 
   return {
-    /** @param {string} key */
     get(key) {
       let entry = entries.get(key);
       if (!entry) {
         const { filter, ...rest } = options;
-        entry = resource(() => fetcherForKey(key), {
+        entry = createResource(() => fetcherForKey(key), {
           ...rest,
           name: `${options.name ?? "keyed"}:${key}`,
           filter: filter ? (payload) => filter(payload, key) : undefined,
@@ -204,7 +213,6 @@ export function keyedResource(fetcherForKey, options = {}) {
       return entry;
     },
 
-    /** @param {string} key */
     invalidate(key) {
       entries.get(key)?.dispose();
       entries.delete(key);

@@ -5,7 +5,7 @@ import { MODEL_CHANGED } from "./events.js";
 import { configureModel, modelApi, modelBus } from "./index.js";
 import { bindModelQuery, modelBinder, modelQuery } from "./binder.js";
 import { createStore } from "../signals/store.ts";
-import { defineController, registerSyncBinder } from "../controller/index.js";
+import { defineController, registerSyncBinder } from "../controller/index.ts";
 
 registerSyncBinder(modelBinder);
 

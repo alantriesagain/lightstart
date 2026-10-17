@@ -7,6 +7,6 @@
  * `/url`, `/resource`, `/view`), loaded only by what imports them.
  */
 
-export { defineController, defineMixin, nameControllers } from "./define.js";
-export { registerAdapter, registerSyncType, registerSyncBinder, getAdapter, pendingAdapterNames } from "./sync.js";
-export { configureControllers } from "./config.js";
+export { defineController, defineMixin, nameControllers } from "./define.ts";
+export { registerAdapter, registerSyncType, registerSyncBinder, getAdapter, pendingAdapterNames } from "./sync.ts";
+export { configureControllers } from "./config.ts";

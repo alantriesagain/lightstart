@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { createStorageAdapter } from "./storage.js";
+import { createStorageAdapter } from "./storage.ts";
 
 const fakeStorage = (backing = new Map()) => ({
   getItem: (k) => (backing.has(k) ? backing.get(k) : null),

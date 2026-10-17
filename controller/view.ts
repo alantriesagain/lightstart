@@ -11,16 +11,11 @@
  */
 
 import T from "../types/index.js";
-import { bindProperty } from "./sync.js";
+import { bindProperty } from "./sync.ts";
 
-/** @import { PropertiesSchema, ViewPlugin } from "../view/types.ts" */
-/** @import { SyncProp } from "./types.ts" */
+import type { PropertiesSchema, ViewPlugin } from "../view/types.ts";
 
-/**
- * @param {PropertiesSchema} properties
- * @returns {PropertiesSchema}
- */
-const syncedProperties = (properties) => {
+const syncedProperties = (properties: PropertiesSchema): PropertiesSchema => {
   const entries = Object.entries(properties);
   if (!entries.some(([, prop]) => prop.sync)) return properties;
   const next = Object.fromEntries(entries.map(([key, prop]) => [key, prop.sync ? { ...prop, attribute: false } : prop]));
@@ -28,17 +23,17 @@ const syncedProperties = (properties) => {
   return next;
 };
 
-/** @type {ViewPlugin} */
-export const syncPlugin = {
+/** The component plugin that binds every property declared with `sync:` while the element is connected. */
+export const syncPlugin: ViewPlugin = {
   name: "syncProps",
   props: syncedProperties,
   test: ({ component }) => Object.values(component.properties || {}).some((prop) => prop.sync),
   events: {
     connected: ({ instance, component }) => {
-      const host = /** @type {Record<string, any>} */ (/** @type {unknown} */ (instance));
+      const host = instance as unknown as Record<string, unknown>;
       instance.$own(Object.entries(component.properties || {})
         .filter(([, prop]) => prop.sync)
-        .map(([key, prop]) => bindProperty({ store: instance.$state, key, prop: /** @type {SyncProp} */ (prop), host }).unbind));
+        .map(([key, prop]) => bindProperty({ store: instance.$state, key, prop, host }).unbind));
     },
   },
 };

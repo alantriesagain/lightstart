@@ -3,20 +3,20 @@
  * localStorage, sessionStorage, and memory storage with signal integration.
  */
 
-import { withKeyedListeners, createLazyAdapter } from "./keyed-listeners.js";
+import { withKeyedListeners, createLazyAdapter } from "./keyed-listeners.ts";
 
-/** @import { Adapter } from "../types.ts" */
+import type { Adapter, StorageArea } from "../types.ts";
 
-/** @param {unknown} value */
-const serialize = (value) => {
+declare const window: { localStorage: StorageArea, sessionStorage: StorageArea } | undefined;
+
+const serialize = (value: unknown) => {
   if ((typeof value === "object" && value !== null) || Array.isArray(value))
     return JSON.stringify(value);
 
-  return /** @type {string} */ (value);
+  return value as string;
 };
 
-/** @param {string | null} value */
-const deserialize = (value) => {
+const deserialize = (value: string | null): unknown => {
   if (value === null) return null;
   try {
     return JSON.parse(value);
@@ -29,17 +29,12 @@ const deserialize = (value) => {
  * Every browser-Storage touch is guarded: private mode, quota, and disabled
  * storage throw where the hand-rolled try/catch wrappers this adapter
  * replaces returned a default. `get` takes that default as its second arg.
- *
- * @param {Storage} storage
- * @param {string} name
- * @returns {Adapter}
  */
-export const createStorageAdapter = (storage, name) => {
+export const createStorageAdapter = (storage: StorageArea, name: string): Adapter => {
   const adapter = withKeyedListeners({
     name,
 
-    /** @param {string} key @param {unknown} [defaultValue] */
-    get(key, defaultValue = null) {
+    get(key: string, defaultValue: unknown = null) {
       try {
         const value = storage.getItem(key);
         return value !== null ? deserialize(value) : defaultValue;
@@ -48,8 +43,7 @@ export const createStorageAdapter = (storage, name) => {
       }
     },
 
-    /** @param {string} key @param {unknown} value */
-    set(key, value) {
+    set(key: string, value: unknown) {
       try {
         storage.setItem(key, serialize(value));
         adapter.emit(key, value);
@@ -57,8 +51,7 @@ export const createStorageAdapter = (storage, name) => {
       return { key };
     },
 
-    /** @param {string} key */
-    remove(key) {
+    remove(key: string) {
       try {
         storage.removeItem(key);
       } catch { }
@@ -66,8 +59,7 @@ export const createStorageAdapter = (storage, name) => {
       return { key };
     },
 
-    /** @param {string} key */
-    has(key) {
+    has(key: string) {
       try {
         return storage.getItem(key) !== null;
       } catch {
@@ -83,8 +75,7 @@ export const createStorageAdapter = (storage, name) => {
       }
     },
 
-    /** @returns {Array<[string, unknown]>} */
-    entries() {
+    entries(): Array<[string, unknown]> {
       return adapter.keys().map((key) => [key, adapter.get(key)]);
     },
   });
@@ -92,33 +83,29 @@ export const createStorageAdapter = (storage, name) => {
   return adapter;
 };
 
-/** @type {Map<string, unknown>} */
-const memoryStore = new Map();
+const memoryStore: Map<string, unknown> = new Map();
 
+/** A sync adapter over one in-memory map, shared by every binding that names it. */
 export const memoryStorage = withKeyedListeners({
   name: "memory",
 
-  /** @param {string} key */
-  get(key) {
+  get(key: string) {
     return memoryStore.get(key);
   },
 
-  /** @param {string} key @param {unknown} value */
-  set(key, value) {
+  set(key: string, value: unknown) {
     memoryStore.set(key, value);
     memoryStorage.emit(key, value);
     return { key };
   },
 
-  /** @param {string} key */
-  remove(key) {
+  remove(key: string) {
     memoryStore.delete(key);
     memoryStorage.emit(key, undefined);
     return { key };
   },
 
-  /** @param {string} key */
-  has(key) {
+  has(key: string) {
     return memoryStore.has(key);
   },
 
@@ -126,8 +113,7 @@ export const memoryStorage = withKeyedListeners({
     return [...memoryStore.keys()];
   },
 
-  /** @returns {Array<[string, unknown]>} */
-  entries() {
+  entries(): Array<[string, unknown]> {
     return [...memoryStore.entries()];
   },
 
@@ -138,24 +124,24 @@ export const memoryStorage = withKeyedListeners({
   },
 });
 
-/** @type {Adapter | null} */
-let localStorageAdapter = null;
-/** @type {Adapter | null} */
-let sessionStorageAdapter = null;
+let localStorageAdapter: Adapter | null = null;
+let sessionStorageAdapter: Adapter | null = null;
 
-function getLocalStorage() {
+const getLocalStorage = () => {
   if (!localStorageAdapter && typeof window !== "undefined")
     localStorageAdapter = createStorageAdapter(window.localStorage, "local");
 
   return localStorageAdapter || memoryStorage;
-}
+};
 
-function getSessionStorage() {
+const getSessionStorage = () => {
   if (!sessionStorageAdapter && typeof window !== "undefined")
     sessionStorageAdapter = createStorageAdapter(window.sessionStorage, "session");
 
   return sessionStorageAdapter || memoryStorage;
-}
+};
 
+/** The browser's `localStorage` as a sync adapter, resolved on use; memory where there is no window. */
 export const localStorage = createLazyAdapter("local", getLocalStorage);
+/** The browser's `sessionStorage` as a sync adapter, resolved on use; memory where there is no window. */
 export const sessionStorage = createLazyAdapter("session", getSessionStorage);
