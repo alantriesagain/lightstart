@@ -1,8 +1,8 @@
 /**
- * The raw Tailwind colour palette: opt-in prototyping colours, enabled per
- * project via `bootstrapp.tw.palette: true`. This module is only ever
- * dynamically imported when that flag is set; theme tokens stay the default
- * vocabulary and win on any name collision.
+ * The raw Tailwind colour palette: opt-in prototyping colours a host passes
+ * to `buildTheme(theme, { palette })`, loading this module only when it wants
+ * them. Theme tokens stay the default vocabulary and win on any name
+ * collision.
  */
 
 export const PALETTE = {
