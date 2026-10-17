@@ -35,13 +35,14 @@ const rule = {
     fixable: "code",
     schema: [],
     messages: {
-      forbidden: "Only JSDoc (/** */) comments are allowed.",
+      forbidden:
+        "Code carries no comments. Delete this one and let names and structure say what it said; do not rewrite it as /* */ or /** */, which is the same comment in another form. JSDoc types (@param/@returns/@type/@import) anywhere and describes only a module header or an exported symbol. Knowledge worth keeping goes in a README or AGENTS.md.",
       history:
         "JSDoc must describe what the code IS, not narrate what changed. Remove the history/changelog clause (previously / no longer / renamed / legacy / back-compat / \"existing importers unchanged\").",
       placeholder:
         "A /** */ comment is the only thing in this block: a statement-comment smuggled as JSDoc, not documentation. Handle the case in code or delete the comment.",
       internalProse:
-        "Prose JSDoc belongs on module headers and exported symbols only. On internals the code must speak for itself; delete it, or move knowledge worth keeping to AGENTS.md. JSDoc that types (@param/@returns/@type/@import) stays legal anywhere.",
+        "Prose JSDoc describes only a module header or an exported symbol. Delete this one and let names say what it said; do not move it into // or /* */. JSDoc that types (@param/@returns/@type/@import) stays legal anywhere. Knowledge worth keeping goes in a README or AGENTS.md.",
       templateComment:
         "HTML comments in an html`` template ship to the DOM as comment nodes. The template must speak for itself; delete it.",
     },
