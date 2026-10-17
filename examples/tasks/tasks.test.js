@@ -2,10 +2,14 @@
  * @file The task app driven on a test terminal: keys go in through the
  * renderer's decoder, the rows land in JSONL files held in memory, and the
  * checks read the painted screen. The files start with a task from before
- * boards, which the first board adopts. A second store over the same files
- * reads the tasks and the boards back. Runs with `node examples/tasks/tasks.test.js`.
+ * boards, which the first board adopts. The theme's classes style the screen
+ * on the dark scheme, and two of them are read off the painted cells. A
+ * second store over the same files reads the tasks and the boards back. Runs
+ * with `node examples/tasks/tasks.test.js`.
  */
-import { Renderer, TInput, TRoot, frames, mount } from "@bootstrapp/light/native";
+import { ATTR_BOLD, ATTR_STRIKE, Renderer, TInput, TRoot, TRUECOLOR_FLAG, configureClasses, frames, mount } from "@bootstrapp/light/native";
+import { TerminalClasses } from "@bootstrapp/light/theme/terminal";
+import theme from "@bootstrapp/light/theme/themes/default.js";
 import { configureModel, modelBus } from "@bootstrapp/light/model";
 import { createStore, storeRequest } from "@bootstrapp/light/model/store";
 import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
@@ -48,6 +52,7 @@ await board.$ready;
 const term = new TestTerminal();
 term.cols = 72;
 term.rows = 14;
+configureClasses(new TerminalClasses(theme, "dark"));
 const root = new TRoot();
 const renderer = new Renderer(term, root);
 const app = new TaskApp();
@@ -85,6 +90,19 @@ const keys = async (text) => {
 /** @param {string} path */
 const lineCount = (path) => (files.get(path) ?? "").split("\n").filter(Boolean).length;
 
+/** @param {string} text the painted cell where a text starts, -1 when it is not on screen */
+const cellOf = (text) => {
+  const lines = screen().split("\n");
+  for (let y = 0; y < lines.length; y++) {
+    const x = lines[y].indexOf(text);
+    if (x >= 0) return y * renderer.back.w + x;
+  }
+  return -1;
+};
+
+/** @param {number} cell @returns {string} the foreground, the background and the bold and strike bits of a painted cell */
+const paintOf = (cell) => `fg=${renderer.back.fg[cell] === (TRUECOLOR_FLAG | 0xe9ebe8) ? "primary" : renderer.back.fg[cell] === (TRUECOLOR_FLAG | 0x7f857e) ? "muted" : String(renderer.back.fg[cell])} bold=${(renderer.back.attrs[cell] & ATTR_BOLD) !== 0} strike=${(renderer.back.attrs[cell] & ATTR_STRIKE) !== 0}`;
+
 /** @param {string} text the half of the screen a text is on: the left or the right column */
 const side = (text) => {
   for (const line of screen().split("\n")) {
@@ -100,6 +118,8 @@ eqn("its adoption is one edit in the file", lineCount("data/tasks.jsonl"), 2);
 eqn("the first board is one line in its file", lineCount("data/boards.jsonl"), 1);
 ok("the footer names the filter", screen().includes("tasks: all"));
 ok("the editor has the focus from the start", renderer.focus instanceof TInput);
+eq("the focused board's title is bold in the primary token", paintOf(cellOf("Tasks")), "fg=primary bold=true strike=false");
+eq("an open task is painted plain", paintOf(cellOf("[ ] old task")), "fg=-1 bold=false strike=false");
 
 await keys("write the adapter\r");
 await keys("drive the app\r");
@@ -111,6 +131,7 @@ await keys("\t");
 await keys(" ");
 ok("Space on the focused task toggles it", screen().includes("[x] old task"));
 ok("the counts follow", screen().includes("2 open, 1 done"));
+eq("a done task is muted and struck through", paintOf(cellOf("[x] old task")), "fg=muted bold=false strike=true");
 
 await keys("f");
 ok("f filters to the open tasks", screen().includes("tasks: open") && !screen().includes("old task") && screen().includes("drive the app"));

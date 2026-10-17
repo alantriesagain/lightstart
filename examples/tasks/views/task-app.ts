@@ -1,6 +1,7 @@
 /**
  * @file The task app on the terminal: the boards side by side, each a
- * `<tasks-board>` with its tasks and a footer line slotted under them; the
+ * `<tasks-board>` with its tasks and a footer line slotted under them, all
+ * styled by the theme's utility classes on the terminal; the
  * editor, whose line is a task for the focused board or a command
  * (`/board`, `/rename`, `/delete`); and the footer with the filter, the
  * counts and the keys. Rows and boards ask for their changes with events
@@ -85,10 +86,10 @@ export class TaskApp extends View {
     const empty = filter === "all" ? "No tasks yet: type one below and press Enter." : `No ${filter} tasks.`;
     const rowsOf = (b: Board) => rows.filter((task) => String(task.boardId) === String(b.id));
     const count = (n: number) => (filter === "all" ? String(n) + (n === 1 ? " task" : " tasks") : String(n) + " " + filter);
-    return html`<div flex=1>
-      <div flex=1 direction="row" id="boards">${boards.map((b) => {
+    return html`<div class="flex-1">
+      <div class="flex-1 flex-row" id="boards">${boards.map((b) => {
         const own = rowsOf(b);
-        return key(String(b.id), html`<tasks-board flex=1 .board=${b} .tasks=${own} empty=${empty} ?active=${String(b.id) === current}
+        return key(String(b.id), html`<tasks-board class="flex-1" .board=${b} .tasks=${own} empty=${empty} ?active=${String(b.id) === current}
           @focus-board=${(e: CustomEvent) => {
             const focused = boardOf(e);
             if (focused !== null) board.focusBoard(String(focused.id));
@@ -96,10 +97,10 @@ export class TaskApp extends View {
           @toggle=${(e: CustomEvent) => board.toggle(taskOf(e).id, taskOf(e).done)}
           @remove=${(e: CustomEvent) => board.remove(taskOf(e).id)}
           @move-left=${(e: CustomEvent) => board.moveTask(taskOf(e).id, -1)}
-          @move-right=${(e: CustomEvent) => board.moveTask(taskOf(e).id, 1)}><p dim>${count(own.length)}</p></tasks-board>`);
+          @move-right=${(e: CustomEvent) => board.moveTask(taskOf(e).id, 1)}><p class="text-muted bg-surface">${count(own.length)}</p></tasks-board>`);
       })}</div>
       <textarea autofocus placeholder="a task for the focused board, Enter adds it; /board Name adds a board" @submit=${(e: SubmitEvent) => board.command(e.value)}></textarea>
-      <p dim>tasks: ${filter}. ${open} open, ${done} done. Tab moves, arrows move across, Esc returns to the editor, Space toggles, d deletes, Shift+arrows move a task, [ ] move a board, f filters, c clears done, Ctrl+C quits.</p>
+      <p class="text-muted">tasks: ${filter}. ${open} open, ${done} done. Tab moves, arrows move across, Esc returns to the editor, Space toggles, d deletes, Shift+arrows move a task, [ ] move a board, f filters, c clears done, Ctrl+C quits.</p>
     </div>`;
   }
 }

@@ -1,8 +1,9 @@
 /**
- * @file `<task-row .task=${task}>`: one task as a focusable line. Space or a
- * click asks to toggle it, `d` to remove it, Shift+Left and Shift+Right to
- * move it to the neighbour board, as `toggle`, `remove`, `move-left` and
- * `move-right` events carrying the task, which the app handles.
+ * @file `<task-row .task=${task}>`: one task as a focusable line, a done one
+ * muted and struck through by its classes. Space or a click asks to toggle
+ * it, `d` to remove it, Shift+Left and Shift+Right to move it to the
+ * neighbour board, as `toggle`, `remove`, `move-left` and `move-right`
+ * events carrying the task, which the app handles.
  */
 import { KeyEvent, View, define, html } from "@bootstrapp/light/native";
 
@@ -28,7 +29,7 @@ export class TaskRow extends View {
         e.consume();
         this.$emit("remove", task);
       }}
-      dim=${Boolean(task.done)}
+      class=${task.done ? "text-muted line-through" : ""}
     >${task.done ? "[x]" : "[ ]"} ${task.title}</p>`;
   }
 }
