@@ -74,6 +74,10 @@ describe("@bootstrapp/light/theme/classes: the engine stands alone", () => {
     assert.ok(!reach(entry("./theme/classes")).includes("theme/classes/palette.js"), "./theme/classes reaches the palette");
   });
 
+  it("the baked styler reaches the terminal's class hook alone, no engine and no tokens", () => {
+    assert.deepEqual(reach("theme/baked.ts"), ["theme/baked.ts", "tdom/classes.ts"]);
+  });
+
   it("the browser runtime reaches the engine and nothing of the view or the hosts", () => {
     for (const file of reach(entry("./theme/runtime"))) assert.ok(file.startsWith("theme/"), `./theme/runtime reaches ${file}`);
   });

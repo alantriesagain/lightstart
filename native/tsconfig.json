@@ -26,6 +26,7 @@
     "../view/core.ts",
     "../html/tokenizer.ts",
     "../tdom/*.ts",
+    "../theme/baked.ts",
     "../native/index.js"
   ],
   "exclude": []

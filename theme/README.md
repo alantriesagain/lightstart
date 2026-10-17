@@ -25,6 +25,7 @@ selection, scrollbars); link it once. `presets.js` lists the themes in
 | `@bootstrapp/light/theme/palette` | the opt-in Tailwind palette, reached by a dynamic import |
 | `@bootstrapp/light/theme/runtime` | the browser host of the classes: `createRuntime(engine, { doc, raf, preflight })` |
 | `@bootstrapp/light/theme/terminal` | the terminal host of the classes: `TerminalClasses(theme, scheme)`, a `ClassStyler` for `tdom`'s `configureClasses` |
+| `@bootstrapp/light/theme/baked` | `BakedClasses`, the terminal's classes from a table `light classes:bake` compiled ahead of time, with no engine in the binary |
 
 ## API Reference
 
