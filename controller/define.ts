@@ -19,7 +19,7 @@ import { acceptsOption, bindProperty, getAdapter, registerAdapter, registerLazyA
 import { tracked } from "./config.ts";
 
 import type { PropertyDeclaration, PropertyShorthand } from "../types/types.ts";
-import type { ControllerDefinitionKey, ControllerHandle, ControllerInstance, MixinMembers, MixinProps, PropsToThis, SyncBlock, SyncStore } from "./types.ts";
+import type { ControllerDefinitionKey, ControllerHandle, ControllerInstance, MixinMembers, MixinProps, PropsToThis, SyncBlock, StoreCore } from "./types.ts";
 
 type Teardown = (() => void) | Array<(() => void) | null | undefined | false> | null | undefined;
 
@@ -119,7 +119,7 @@ const createController = (definition: Record<string, unknown>): Record<string, u
   const make = (adopt: (instance: Record<string, unknown>) => void, after: Promise<void> | undefined): Record<string, unknown> => {
     const defs = Object.fromEntries(Object.entries(properties)
       .map(([key, prop]) => [key, { default: prop.defaultValue, pack: prop.pack, unpack: prop.unpack }]));
-    const store: SyncStore = createStore(defs, { name, accessors: false });
+    const store: StoreCore = createStore(defs, { name, accessors: false });
 
     const teardowns: Array<() => void> = [];
     const own = (teardown: Teardown): Teardown => {

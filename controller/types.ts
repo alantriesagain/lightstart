@@ -4,10 +4,10 @@
 
 import type { PropertyDeclaration, PropertyDeclarations, PropsToThis } from "../types/types.ts";
 import type { Signal } from "../signals/index.ts";
-import type { StoreSync, Store } from "../signals/types.ts";
+import type { StoreCore, StoreSync, Store } from "../signals/types.ts";
 import type { DefinitionFragment } from "../view/primitives.ts";
 
-export type { StateDef, StoreSync, Store } from "../signals/types.ts";
+export type { StateDef, StoreCore, StoreSync, Store } from "../signals/types.ts";
 export type { DefinitionFragment, UnionToIntersection, MixinProps, MixinEvents, MixinMembers } from "../view/primitives.ts";
 export type { PropsToThis } from "../types/types.ts";
 
@@ -124,25 +124,6 @@ export interface SyncProp {
   [option: string]: unknown;
 }
 
-/**
- * The store a binding reads and writes, member for member the default
- * `Store`, with one signature per member: a store made by `createStore` is
- * one, and one passes wherever a `Store` is asked for.
- */
-export interface SyncStore {
-  keys(): string[];
-  get(key: string): unknown;
-  set(key: string, value: unknown): unknown;
-  update(key: string, fn: (current: unknown) => unknown): unknown;
-  reset(key: string): unknown;
-  resetAll(): void;
-  subscribe(key: string, callback: (value: unknown, oldValue?: unknown) => void): () => void;
-  observe(callback: (key: string, value: unknown, oldValue: unknown) => void): () => void;
-  snapshot(): Record<string, unknown>;
-  restore(snap?: Record<string, unknown>): void;
-  $sync: StoreSync;
-}
-
 /** What binding one property answers: the unbind, and the first value's arrival when it comes later. */
 export interface Binding {
   unbind: () => void;
@@ -157,7 +138,7 @@ export interface SyncBinder {
   /** Whether this binder binds an opened target. */
   test(target: unknown): boolean;
   /** Keep `host`'s property `key` current from `target`. */
-  bind(args: { store: SyncStore; key: string; prop: SyncProp; host: SyncHost; target: unknown }): Binding;
+  bind(args: { store: StoreCore; key: string; prop: SyncProp; host: SyncHost; target: unknown }): Binding;
   /** The long-form options it reads beyond `to`, `key` and `scope`. */
   options?: readonly string[];
 }

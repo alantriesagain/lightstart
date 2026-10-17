@@ -66,7 +66,7 @@ describe("@bootstrapp/light/model: nothing loads what it did not ask for", () =>
 
   it("the registry a page talks to a worker through loads no store, no adapter and no binding", () => {
     const reached = reach(entry("./model"));
-    for (const file of ["model/store.ts", "model/indexeddb.ts", "model/binder.js", "model/factory.ts"]) assert.ok(!reached.includes(file), `./model reaches ${file}`);
+    for (const file of ["model/store.ts", "model/indexeddb.ts", "model/binder.ts", "model/factory.ts"]) assert.ok(!reached.includes(file), `./model reaches ${file}`);
   });
 
   it("each model entry loads its own code and no sibling entry", () => {
@@ -75,7 +75,7 @@ describe("@bootstrapp/light/model: nothing loads what it did not ask for", () =>
       "./model/store": ["model/store.ts", "model/factory.ts"],
       "./model/adapter": ["model/adapter.ts", "model/factory.ts"],
       "./model/indexeddb": ["model/indexeddb.ts", "model/config.ts"],
-      "./model/binder": ["model/binder.js", "controller/resource.ts"],
+      "./model/binder": ["model/binder.ts", "controller/resource.ts"],
       "./model/slug": ["model/slug.ts"],
     };
     const entries = Object.keys(owned).map(entry);

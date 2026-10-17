@@ -13,7 +13,7 @@
 import { cloneDefault } from "../types/index.js";
 import { adapterFor } from "./adapters/store-adapter.ts";
 
-import type { Adapter, SyncInfo, SyncCheck, SyncHandler, SyncStore, SyncBinder, SyncHost, SyncProp, Binding, StoreShaped, StoreSync } from "./types.ts";
+import type { Adapter, SyncInfo, SyncCheck, SyncHandler, StoreCore, SyncBinder, SyncHost, SyncProp, Binding, StoreShaped, StoreSync } from "./types.ts";
 
 const syncTypes: Array<{ check: SyncCheck, handler: SyncHandler }> = [];
 
@@ -132,7 +132,7 @@ export const getScopedKey = (base: string, prop: SyncProp, inst: SyncHost): stri
  * bind; the property behaves as a plain store prop until the name arrives.
  * `host` is read for scope resolution only.
  */
-export const bindStoreSync = ({ store, key, prop, host = null }: { store: SyncStore, key: string, prop: SyncProp, host?: SyncHost | null }): (() => void) => {
+export const bindStoreSync = ({ store, key, prop, host = null }: { store: StoreCore, key: string, prop: SyncProp, host?: SyncHost | null }): (() => void) => {
   const info = getSyncInfo(prop.sync);
   if (!info) return () => {};
 
@@ -240,7 +240,7 @@ export const acceptsOption = (sync: unknown, option: string): boolean =>
  * opened target binds it, anything else goes through `bindStoreSync`. `prop`
  * is the property's descriptor, its sync options folded in.
  */
-export const bindProperty = ({ store, key, prop, host }: { store: SyncStore, key: string, prop: Record<string, unknown>, host: SyncHost }): Binding => {
+export const bindProperty = ({ store, key, prop, host }: { store: StoreCore, key: string, prop: Record<string, unknown>, host: SyncHost }): Binding => {
   const target = resolveSync(prop.sync);
   const binder = binderFor(target);
   if (binder) return binder.bind({ store, key, prop: prop as SyncProp, host, target });

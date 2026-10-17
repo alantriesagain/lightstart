@@ -5,6 +5,7 @@
 
 import type { TypeDefinition, TypeDefinitionFields } from "../types/types.ts";
 import type { MODEL_API } from "./index.ts";
+import type { Resource } from "../controller/types.ts";
 
 // ---------------------------------------------------------------------
 // Schema
@@ -391,6 +392,11 @@ export interface RelationshipDefinition extends ModelField {
 export interface ModelBus {
   on(key: string, cb: (data: unknown) => unknown): () => void;
   emit(key: string, data?: unknown): unknown;
+}
+
+/** `modelQuery()`'s answer: the resource, and the size of the whole match. */
+export interface ModelQueryResource<T> extends Resource<T[]> {
+  readonly total: number;
 }
 
 /** `modelQuery()` options: a model query plus the resource knobs. */

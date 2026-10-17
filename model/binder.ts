@@ -16,32 +16,19 @@
 import { resource } from "../controller/resource.ts";
 import { isModelApi } from "./index.ts";
 import { onChange } from "./changes.ts";
-
-/** @import { Resource, ResourceOptions, Store, SyncBinder, SyncProp } from "../controller/types.ts" */
-/** @import { ModelApi, ModelQueryOptions, QueryOptions } from "./types.ts" */
+import type { Resource, ResourceOptions, StoreCore, SyncBinder, SyncHost, SyncProp } from "../controller/types.ts";
+import type { ModelApi, ModelQueryOptions, ModelQueryResource, QueryOptions } from "./types.ts";
 
 const swallow = () => {};
 
-/**
- * The models an include can point at: the declared target, every target of
- * a polymorphic relation, nothing for a wildcard.
- * @param {ModelApi} api
- * @param {string} include
- * @returns {string[]}
- */
-const includeTargets = (api, include) => {
-  const target = /** @type {{ targetModel?: string | string[] } | undefined} */ (api.schema?.[include])?.targetModel;
+const includeTargets = (api: ModelApi, include: string): string[] => {
+  const target = (api.schema?.[include] as { targetModel?: string | string[] } | undefined)?.targetModel;
   if (Array.isArray(target)) return target;
   return typeof target === "string" && target !== "*" ? [target] : [];
 };
 
-/**
- * @template {Record<string, unknown>} T
- * @param {ModelApi} api
- * @param {ModelQueryOptions} [opts]
- * @returns {Resource<T[]> & { readonly total: number }}
- */
-export const modelQuery = (api, opts = {}) => {
+/** A live query of `api`: a `resource()` over `api.query()` that refetches, coalesced per tick, when its model or an included model changes. */
+export const modelQuery = <T extends Record<string, unknown>>(api: ModelApi, opts: ModelQueryOptions = {}): ModelQueryResource<T> => {
   const { name = api.name, eager = true, ready, ...query } = opts;
   let total = 0;
   let settled = false;
@@ -59,13 +46,13 @@ export const modelQuery = (api, opts = {}) => {
       res.refresh().catch(swallow);
     });
   };
-  const res = resource(async () => {
+  const res = resource(async (): Promise<T[]> => {
     stale = false;
     const page = await api.query(query);
     total = page.total;
     settled = true;
     if (stale) queueMicrotask(refresh);
-    return /** @type {T[]} */ (page.rows);
+    return page.rows as T[];
   }, { name: `query:${name}`, eager, ready });
 
   const offs = [onChange(api.name, undefined, refresh)];
@@ -73,39 +60,26 @@ export const modelQuery = (api, opts = {}) => {
     for (const target of includeTargets(api, include)) offs.push(onChange(target, undefined, refresh));
 
   const disposeResource = res.dispose;
-  const live = Object.defineProperty(res, "total", { get: () => total, enumerable: true });
+  const live = Object.defineProperty(res, "total", { get: () => total, enumerable: true }) as ModelQueryResource<T>;
   live.dispose = () => {
     for (const off of offs.splice(0)) off();
     disposeResource();
   };
-  return /** @type {Resource<T[]> & { readonly total: number }} */ (live);
+  return live;
 };
 
-/** @type {WeakMap<object, number>} */
-const loadsInFlight = new WeakMap();
+const loadsInFlight: WeakMap<object, number> = new WeakMap();
 
-/**
- * Count the loads bound to a store, so its `dataPending` (when it declares
- * one) stays true while any overlapping load is in flight.
- * @param {Store} store
- * @param {1 | -1} step
- */
-const countLoad = (store, step) => {
+const countLoad = (store: StoreCore, step: 1 | -1) => {
   const count = Math.max(0, (loadsInFlight.get(store) ?? 0) + step);
   loadsInFlight.set(store, count);
   if (store.keys().includes("dataPending")) store.set("dataPending", count > 0);
 };
 
-/**
- * @param {ModelApi} api
- * @param {QueryOptions & { id?: unknown }} query
- * @param {string} name
- * @param {ResourceOptions["ready"]} ready
- */
-const singleRow = (api, query, name, ready) => {
+const singleRow = (api: ModelApi, query: QueryOptions & { id?: unknown }, name: string, ready: ResourceOptions["ready"]) => {
   const { id, ...rest } = query;
   const res = resource(
-    () => (id != null ? api.get(/** @type {string} */ (id), rest) : rest.where ? api.get(rest) : Promise.resolve(null)),
+    () => (id != null ? api.get(id as string, rest) : rest.where ? api.get(rest) : Promise.resolve(null)),
     { name: `get:${name}`, eager: true, ready },
   );
   const off = onChange(api.name, undefined, () => res.invalidate());
@@ -117,49 +91,54 @@ const singleRow = (api, query, name, ready) => {
   return res;
 };
 
-/**
- * @param {{
- *   store: Store,
- *   key: string,
- *   prop: SyncProp & { ready?: unknown },
- *   host: Record<string, any>,
- *   api: ModelApi,
- *   onValue?: (value: unknown, res: Resource<any>) => void,
- *   onError?: (error: unknown) => void,
- * }} args
- * @returns {{ unbind: () => void, loaded: Promise<void> }}
- */
-export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }) => {
+/** Keep `store`'s `key` mirroring `api`'s live query (an array property) or one row (any other), rebuilt when a `dependsOn` key changes. */
+export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }: {
+  store: StoreCore;
+  key: string;
+  prop: SyncProp & { ready?: unknown };
+  host: SyncHost;
+  api: ModelApi;
+  onValue?: (value: unknown, res: unknown) => void;
+  onError?: (error: unknown) => void;
+}): { unbind: () => void; loaded: Promise<void> } => {
   const name = `${api.name}:${key}`;
-  /** @type {Resource<any> | null} */
-  let res = null;
-  /** @type {Array<() => void>} */
-  const offs = [];
-  /** @type {() => void} */
+  let res: { dispose(): void } | null = null;
+  const offs: Array<() => void> = [];
   let settle = () => {};
-  const loaded = new Promise((resolve) => { settle = () => resolve(undefined); });
+  const loaded = new Promise<void>((resolve) => {
+    settle = () => resolve(undefined);
+  });
 
-  const build = () => {
-    for (const off of offs.splice(0)) off();
-    res?.dispose();
-    const query = /** @type {QueryOptions & { id?: unknown }} */ (typeof prop.query === "function" ? prop.query(host) : (prop.query ?? {}));
-    const ready = /** @type {ResourceOptions["ready"]} */ (prop.ready);
-    res = prop.$type === "array"
-      ? modelQuery(api, { ...query, name, ready })
-      : singleRow(api, query, name, ready);
-    const current = res;
-    (host.$queries ??= {})[key] = current;
+  const follow = <V>(current: Resource<V>) => {
+    res = current;
+    let queries = host.$queries as Record<string, unknown> | undefined;
+    if (!queries) {
+      queries = {};
+      host.$queries = queries;
+    }
+    queries[key] = current;
     offs.push(current.value.subscribe((value) => {
       if (value === undefined) return;
       store.set(key, value);
       if (onValue) onValue(value, current);
     }));
-    if (onError) offs.push(current.error.subscribe((error) => { if (error) onError(error); }));
+    if (onError) offs.push(current.error.subscribe((error) => {
+      if (error) onError(error);
+    }));
     countLoad(store, 1);
     current.ensure().catch(swallow).finally(() => {
       countLoad(store, -1);
       settle();
     });
+  };
+
+  const build = () => {
+    for (const off of offs.splice(0)) off();
+    res?.dispose();
+    const query = (typeof prop.query === "function" ? prop.query(host) : (prop.query ?? {})) as QueryOptions & { id?: unknown };
+    const ready = prop.ready as ResourceOptions["ready"];
+    if (prop.$type === "array") follow(modelQuery(api, { ...query, name, ready }));
+    else follow(singleRow(api, query, name, ready));
   };
 
   build();
@@ -172,7 +151,8 @@ export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }
       for (const off of offs.splice(0)) off();
       res?.dispose();
       res = null;
-      if (host.$queries) delete host.$queries[key];
+      const queries = host.$queries as Record<string, unknown> | undefined;
+      if (queries) delete queries[key];
     },
   };
 };
@@ -181,10 +161,11 @@ export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }
  * The model as a sync target: light's binding hands a property bound to a
  * model api (or a thunk answering one) to `bindModelQuery`, with its `query`
  * and `dependsOn`.
- * @type {SyncBinder}
  */
-export const modelBinder = {
+export const modelBinder: SyncBinder = {
   test: isModelApi,
   options: ["query", "dependsOn"],
-  bind: ({ store, key, prop, host, target }) => bindModelQuery({ store, key, prop, host, api: /** @type {ModelApi} */ (target) }),
+  bind({ store, key, prop, host, target }) {
+    return bindModelQuery({ store, key, prop, host, api: target as ModelApi });
+  },
 };

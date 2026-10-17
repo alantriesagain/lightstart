@@ -7,7 +7,7 @@
  * is a valid View `sync:` target.
  */
 
-import type { StateDef, Store } from "./types.ts";
+import type { StateDef, StoreCore } from "./types.ts";
 
 import { Dep, getCurrentEffect } from "./index.ts";
 
@@ -23,7 +23,7 @@ const clone = (v: unknown): unknown =>
 
 const RESERVED = new Set(["keys", "get", "set", "update", "reset", "resetAll", "subscribe", "observe", "snapshot", "restore", "$sync"]);
 
-export const createStore = (defs: Record<string, unknown> = {}, { name = "store", accessors = true }: { name?: string, accessors?: boolean } = {}): Store => {
+export const createStore = (defs: Record<string, unknown> = {}, { name = "store", accessors = true }: { name?: string, accessors?: boolean } = {}): StoreCore => {
   const spec: Record<string, StateDef> = {};
   const values: Record<string, unknown> = {};
   const listeners: Map<string, Set<(v: unknown, oldValue?: unknown) => void>> = new Map();
@@ -128,7 +128,7 @@ export const createStore = (defs: Record<string, unknown> = {}, { name = "store"
         configurable: true,
       });
 
-  const typed = store as unknown as Store;
+  const typed = store as unknown as StoreCore;
   typed.$sync = { adapter: name, get: store.get, set: store.set, subscribe: store.subscribe };
   return typed;
 };

@@ -9,7 +9,7 @@ import T from "../../types/index.js";
 import { configureModel, defineModel, modelBus } from "../../model/index.ts";
 import { createStore, storeRequest } from "../../model/store.ts";
 import { buildQueryResult, createAdapter, registerStorageAdapter } from "../../model/adapter.ts";
-import { modelBinder } from "../../model/binder.js";
+import { modelBinder } from "../../model/binder.ts";
 import { defineController, registerSyncBinder } from "../../controller/index.ts";
 
 /** @type {Map<string, Record<string, unknown>>} */

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, it } from "node:test";
 import T from "../types/index.js";
 import { MODEL_CHANGED } from "./events.ts";
 import { configureModel, modelApi, modelBus } from "./index.ts";
-import { bindModelQuery, modelBinder, modelQuery } from "./binder.js";
+import { bindModelQuery, modelBinder, modelQuery } from "./binder.ts";
 import { createStore } from "../signals/store.ts";
 import { defineController, registerSyncBinder } from "../controller/index.ts";
 

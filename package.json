@@ -74,7 +74,7 @@
     "./model/adapter": "./model/adapter.ts",
     "./model/indexeddb": "./model/indexeddb.ts",
     "./model/jsonl": "./model/jsonl.ts",
-    "./model/binder": "./model/binder.js",
+    "./model/binder": "./model/binder.ts",
     "./model/slug": "./model/slug.ts",
     "./model/events": "./model/events.ts",
     "./html/constants.js": "./html/constants.ts",

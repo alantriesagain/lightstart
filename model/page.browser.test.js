@@ -17,6 +17,17 @@ registerStorageAdapter("indexeddb", IndexedDBAdapter);
 
 const settled = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+/** @param {any} el @param {string[]} expected */
+const listed = async (el, expected) => {
+  const items = () => [...el.querySelectorAll("li")].map((li) => li.textContent);
+  for (let tries = 0; tries < 100 && JSON.stringify(items()) !== JSON.stringify(expected); tries++) {
+    await settled();
+    await el.$queries.todos.ensure();
+    await el.$requestUpdate();
+  }
+  return items();
+};
+
 describe("@bootstrapp/light/model: a page with no framework", () => {
   it("keeps rows in IndexedDB and binds a component to a live query", async () => {
     const todo = defineModel("todo", { title: T.string({ required: true }), done: T.boolean({ index: true, defaultValue: false }) });
@@ -44,16 +55,10 @@ describe("@bootstrapp/light/model: a page with no framework", () => {
     assert.deepEqual([...el.querySelectorAll("li")].map((li) => li.textContent), ["write the test"]);
 
     await todo.add({ title: "bind it" });
-    await settled();
-    await el.$queries.todos.ensure();
-    await el.$requestUpdate();
-    assert.deepEqual([...el.querySelectorAll("li")].map((li) => li.textContent), ["bind it", "write the test"], "a write reaches the bound query");
+    assert.deepEqual(await listed(el, ["bind it", "write the test"]), ["bind it", "write the test"], "a write reaches the bound query");
 
     await todo.edit(first.id, { done: true });
-    await settled();
-    await el.$queries.todos.ensure();
-    await el.$requestUpdate();
-    assert.deepEqual([...el.querySelectorAll("li")].map((li) => li.textContent), ["bind it"], "the query's where follows the edit");
+    assert.deepEqual(await listed(el, ["bind it"]), ["bind it"], "the query's where follows the edit");
     assert.equal(await todo.count({ where: { done: true } }), 1, "an indexed where answers from IndexedDB");
 
     el.remove();
