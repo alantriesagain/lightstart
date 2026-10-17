@@ -14,7 +14,7 @@ import {
   resolveSpacing,
 } from "./resolve.js";
 import { parseArbitrary } from "./parse.js";
-/** @import { ColorScale, DynamicRule, ParsedClass, RuleInput, RuleResult, SpacingOptions } from "./types.ts" */
+/** @import { ColorScale, DynamicRuleFn, MatchedRule, ParsedClass, RuleInput, RuleResult, SpacingOptions } from "./types.ts" */
 
 /** @param {string} value */
 const negate = (value) =>
@@ -397,11 +397,17 @@ const CURSOR_VALUES = new Set([
   "nesw-resize", "nwse-resize", "zoom-in", "zoom-out",
 ]);
 
+/** @param {string | string[]} value */
+const asText = (value) => (Array.isArray(value) ? value.join(",") : value);
+
 /**
  * @param {string[]} props
  * @param {string | string[]} value
  */
-const decls = (props, value) => props.map((prop) => `${prop}:${value}`);
+const decls = (props, value) => {
+  const text = asText(value);
+  return props.map((prop) => `${prop}:${text}`);
+};
 
 const CHILDREN = " > :not([hidden]) ~ :not([hidden])";
 
@@ -422,16 +428,35 @@ const TRANSITION_PROPERTIES = /** @type {Record<string, string>} */ ({
   transform: "transform, translate, rotate, scale",
 });
 
+/** One dynamic rule of the table: its class prefix, the function that compiles a match, and its place in the table once built. */
+export class DynamicRule {
+  /**
+   * @param {string} prefix
+   * @param {DynamicRuleFn} fn
+   */
+  constructor(prefix, fn) {
+    this.prefix = prefix;
+    this.fn = fn;
+    this.order = 0;
+  }
+}
+
+/**
+ * @param {string} prefix
+ * @param {DynamicRuleFn} fn
+ */
+const rule = (prefix, fn) => new DynamicRule(prefix, fn);
+
 /**
  * @param {import("./types.ts").Theme} theme
- * @returns {{match: (parsed: import("./types.ts").ParsedClass) => {decls: string[], order: number, childSelector?: string, keyframes?: string}|null}}
+ * @returns {{match: (parsed: import("./types.ts").ParsedClass) => MatchedRule | null}}
  */
 export const createRules = (theme) => {
   /**
    * @param {string[]} props
-   * @param {SpacingOptions} [options]
+   * @param {SpacingOptions} options
    */
-  const spacingRule = (props, options = {}) => (/** @type {RuleInput} */ r) => {
+  const spacingRule = (props, options) => (/** @type {RuleInput} */ r) => {
     if (r.negative && !options.negative) return null;
     const value = resolveSpacing(r.restBase, theme.spacing, options);
     if (value === null) return null;
@@ -440,9 +465,9 @@ export const createRules = (theme) => {
 
   /**
    * @param {string[]} props
-   * @param {ColorScale} [extras]
+   * @param {ColorScale} extras
    */
-  const colorRule = (props, extras = {}) => (/** @type {RuleInput} */ r) => {
+  const colorRule = (props, extras) => (/** @type {RuleInput} */ r) => {
     if (r.negative) return null;
     const value = resolveColor(r.restStem, r.modifier, theme.colors, extras);
     if (value === null) return null;
@@ -451,13 +476,14 @@ export const createRules = (theme) => {
 
   /**
    * @param {string[]} props
-   * @param {Record<string, string | string[]>} scale
-   * @param {{ negative?: boolean, arbitrary?: (value: string, type: string | null) => string | null }} [options]
+   * @param {Record<string, string | string[]> | undefined} scale
+   * @param {{ negative?: boolean }} options
+   * @param {((value: string, type: string | null) => string | null) | null} arbitrary what an arbitrary value becomes, null to take it as written
    */
-  const lookupRule = (props, scale, options = {}) => (/** @type {RuleInput} */ r) => {
+  const lookupRule = (props, scale, options, arbitrary) => (/** @type {RuleInput} */ r) => {
     if (r.negative && !options.negative) return null;
     const key = r.restBase === "" ? "DEFAULT" : r.restBase;
-    const value = resolveLookup(key, scale, options);
+    const value = resolveLookup(key, scale, arbitrary);
     if (value === null) return null;
     if (!r.negative) return decls(props, value);
     return typeof value === "string" ? decls(props, negate(value)) : null;
@@ -466,17 +492,17 @@ export const createRules = (theme) => {
   /**
    * @param {string} prefix
    * @param {string} prop
-   * @param {SpacingOptions} [options]
-   * @returns {Array<[string, (r: RuleInput) => string[] | null]>}
+   * @param {SpacingOptions} options
+   * @returns {DynamicRule[]}
    */
   const sides = (prefix, prop, options) => [
-    [prefix, spacingRule([prop], options)],
-    [`${prefix}x`, spacingRule([`${prop}-left`, `${prop}-right`], options)],
-    [`${prefix}y`, spacingRule([`${prop}-top`, `${prop}-bottom`], options)],
-    [`${prefix}t`, spacingRule([`${prop}-top`], options)],
-    [`${prefix}r`, spacingRule([`${prop}-right`], options)],
-    [`${prefix}b`, spacingRule([`${prop}-bottom`], options)],
-    [`${prefix}l`, spacingRule([`${prop}-left`], options)],
+    rule(prefix, spacingRule([prop], options)),
+    rule(`${prefix}x`, spacingRule([`${prop}-left`, `${prop}-right`], options)),
+    rule(`${prefix}y`, spacingRule([`${prop}-top`, `${prop}-bottom`], options)),
+    rule(`${prefix}t`, spacingRule([`${prop}-top`], options)),
+    rule(`${prefix}r`, spacingRule([`${prop}-right`], options)),
+    rule(`${prefix}b`, spacingRule([`${prop}-bottom`], options)),
+    rule(`${prefix}l`, spacingRule([`${prop}-left`], options)),
   ];
 
   /** @param {string[]} props */
@@ -493,9 +519,9 @@ export const createRules = (theme) => {
   /**
    * @param {string} property
    * @param {string} fn
-   * @param {{ percent?: boolean }} [options]
+   * @param {boolean} percent whether a bare number is a 0-100 fraction
    */
-  const filterFn = (property, fn, { percent = true } = {}) => (/** @type {RuleInput} */ r) => {
+  const filterFn = (property, fn, percent) => (/** @type {RuleInput} */ r) => {
     if (r.negative) return null;
     const value = percent ? resolvePercentNumber(r.restBase) : resolveInteger(r.restBase);
     if (value === null) return null;
@@ -504,9 +530,9 @@ export const createRules = (theme) => {
 
   /**
    * @param {string} property
-   * @param {string | null} [fn]
+   * @param {string | null} fn
    */
-  const angleRule = (property, fn = null) => (/** @type {RuleInput} */ r) => {
+  const angleRule = (property, fn) => (/** @type {RuleInput} */ r) => {
     let value = null;
     if (/^\d+(?:\.\d+)?$/.test(r.restBase)) value = `${r.restBase}deg`;
     else {
@@ -551,147 +577,151 @@ export const createRules = (theme) => {
   };
 
   /** @type {DynamicRule[]} */
-  const DYNAMIC = [
-    ["inset", spacingRule(["inset"], { negative: true, keywords: { auto: "auto", full: "100%" } })],
-    ["inset-x", spacingRule(["left", "right"], { negative: true, keywords: { auto: "auto", full: "100%" } })],
-    ["inset-y", spacingRule(["top", "bottom"], { negative: true, keywords: { auto: "auto", full: "100%" } })],
-    ["top", spacingRule(["top"], { negative: true, keywords: { auto: "auto", full: "100%" } })],
-    ["right", spacingRule(["right"], { negative: true, keywords: { auto: "auto", full: "100%" } })],
-    ["bottom", spacingRule(["bottom"], { negative: true, keywords: { auto: "auto", full: "100%" } })],
-    ["left", spacingRule(["left"], { negative: true, keywords: { auto: "auto", full: "100%" } })],
-    ["z", (/** @type {RuleInput} */ r) => {
+  const DYNAMIC_HEAD = [
+    rule("inset", spacingRule(["inset"], { negative: true, keywords: { auto: "auto", full: "100%" } })),
+    rule("inset-x", spacingRule(["left", "right"], { negative: true, keywords: { auto: "auto", full: "100%" } })),
+    rule("inset-y", spacingRule(["top", "bottom"], { negative: true, keywords: { auto: "auto", full: "100%" } })),
+    rule("top", spacingRule(["top"], { negative: true, keywords: { auto: "auto", full: "100%" } })),
+    rule("right", spacingRule(["right"], { negative: true, keywords: { auto: "auto", full: "100%" } })),
+    rule("bottom", spacingRule(["bottom"], { negative: true, keywords: { auto: "auto", full: "100%" } })),
+    rule("left", spacingRule(["left"], { negative: true, keywords: { auto: "auto", full: "100%" } })),
+    rule("z", (/** @type {RuleInput} */ r) => {
       const value = resolveInteger(r.restBase, { keywords: { auto: "auto", ...theme.zIndex } });
       if (value === null) return null;
       return [`z-index:${r.negative ? negate(value) : value}`];
-    }],
-    ["order", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("order", (/** @type {RuleInput} */ r) => {
       const value = resolveInteger(r.restBase, { keywords: { first: "-9999", last: "9999", none: "0" } });
       if (value === null) return null;
       return [`order:${r.negative ? negate(value) : value}`];
-    }],
+    }),
 
-    ["basis", spacingRule(["flex-basis"], { keywords: { auto: "auto", full: "100%" } })],
-    ["flex", (/** @type {RuleInput} */ r) => {
+    rule("basis", spacingRule(["flex-basis"], { keywords: { auto: "auto", full: "100%" } })),
+    rule("flex", (/** @type {RuleInput} */ r) => {
       const arb = parseArbitrary(r.restBase);
       return arb ? [`flex:${arb.value}`] : null;
-    }],
-    ["grow", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("grow", (/** @type {RuleInput} */ r) => {
       const value = resolveInteger(r.restBase);
       return value === null ? null : [`flex-grow:${value}`];
-    }],
-    ["shrink", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("shrink", (/** @type {RuleInput} */ r) => {
       const value = resolveInteger(r.restBase);
       return value === null ? null : [`flex-shrink:${value}`];
-    }],
-    ["grid-cols", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("grid-cols", (/** @type {RuleInput} */ r) => {
       if (r.restBase === "none") return ["grid-template-columns:none"];
       if (/^\d+$/.test(r.restBase)) return [`grid-template-columns:repeat(${r.restBase}, minmax(0, 1fr))`];
       const arb = parseArbitrary(r.restBase);
       return arb ? [`grid-template-columns:${arb.value}`] : null;
-    }],
-    ["grid-rows", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("grid-rows", (/** @type {RuleInput} */ r) => {
       if (r.restBase === "none") return ["grid-template-rows:none"];
       if (/^\d+$/.test(r.restBase)) return [`grid-template-rows:repeat(${r.restBase}, minmax(0, 1fr))`];
       const arb = parseArbitrary(r.restBase);
       return arb ? [`grid-template-rows:${arb.value}`] : null;
-    }],
-    ["col-span", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("col-span", (/** @type {RuleInput} */ r) => {
       if (r.restBase === "full") return ["grid-column:1 / -1"];
       if (/^\d+$/.test(r.restBase)) return [`grid-column:span ${r.restBase} / span ${r.restBase}`];
       return null;
-    }],
-    ["col-start", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("col-start", (/** @type {RuleInput} */ r) => {
       const value = resolveInteger(r.restBase, { keywords: { auto: "auto" } });
       return value === null ? null : [`grid-column-start:${value}`];
-    }],
-    ["col-end", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("col-end", (/** @type {RuleInput} */ r) => {
       const value = resolveInteger(r.restBase, { keywords: { auto: "auto" } });
       return value === null ? null : [`grid-column-end:${value}`];
-    }],
-    ["col", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("col", (/** @type {RuleInput} */ r) => {
       if (r.restBase === "auto") return ["grid-column:auto"];
       const arb = parseArbitrary(r.restBase);
       return arb ? [`grid-column:${arb.value}`] : null;
-    }],
-    ["row-span", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("row-span", (/** @type {RuleInput} */ r) => {
       if (r.restBase === "full") return ["grid-row:1 / -1"];
       if (/^\d+$/.test(r.restBase)) return [`grid-row:span ${r.restBase} / span ${r.restBase}`];
       return null;
-    }],
-    ["row-start", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("row-start", (/** @type {RuleInput} */ r) => {
       const value = resolveInteger(r.restBase, { keywords: { auto: "auto" } });
       return value === null ? null : [`grid-row-start:${value}`];
-    }],
-    ["row-end", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("row-end", (/** @type {RuleInput} */ r) => {
       const value = resolveInteger(r.restBase, { keywords: { auto: "auto" } });
       return value === null ? null : [`grid-row-end:${value}`];
-    }],
-    ["row", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("row", (/** @type {RuleInput} */ r) => {
       if (r.restBase === "auto") return ["grid-row:auto"];
       const arb = parseArbitrary(r.restBase);
       return arb ? [`grid-row:${arb.value}`] : null;
-    }],
-    ["gap", spacingRule(["gap"])],
-    ["gap-x", spacingRule(["column-gap"])],
-    ["gap-y", spacingRule(["row-gap"])],
-    ["space-x", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("gap", spacingRule(["gap"], {})),
+    rule("gap-x", spacingRule(["column-gap"], {})),
+    rule("gap-y", spacingRule(["row-gap"], {})),
+    rule("space-x", (/** @type {RuleInput} */ r) => {
       const value = resolveSpacing(r.restBase, theme.spacing);
       if (value === null) return null;
-      return { decls: [`margin-left:${r.negative ? negate(value) : value}`], childSelector: CHILDREN };
-    }],
-    ["space-y", (/** @type {RuleInput} */ r) => {
+      return { decls: [`margin-left:${r.negative ? negate(value) : value}`], childSelector: CHILDREN, keyframes: null };
+    }),
+    rule("space-y", (/** @type {RuleInput} */ r) => {
       const value = resolveSpacing(r.restBase, theme.spacing);
       if (value === null) return null;
-      return { decls: [`margin-top:${r.negative ? negate(value) : value}`], childSelector: CHILDREN };
-    }],
-    ["divide-x", (/** @type {RuleInput} */ r) => {
-      if (r.restBase === "") return { decls: ["border-left-width:1px"], childSelector: CHILDREN };
-      if (/^\d+$/.test(r.restBase)) return { decls: [`border-left-width:${r.restBase}px`], childSelector: CHILDREN };
+      return { decls: [`margin-top:${r.negative ? negate(value) : value}`], childSelector: CHILDREN, keyframes: null };
+    }),
+    rule("divide-x", (/** @type {RuleInput} */ r) => {
+      if (r.restBase === "") return { decls: ["border-left-width:1px"], childSelector: CHILDREN, keyframes: null };
+      if (/^\d+$/.test(r.restBase)) return { decls: [`border-left-width:${r.restBase}px`], childSelector: CHILDREN, keyframes: null };
       return null;
-    }],
-    ["divide-y", (/** @type {RuleInput} */ r) => {
-      if (r.restBase === "") return { decls: ["border-top-width:1px"], childSelector: CHILDREN };
-      if (/^\d+$/.test(r.restBase)) return { decls: [`border-top-width:${r.restBase}px`], childSelector: CHILDREN };
+    }),
+    rule("divide-y", (/** @type {RuleInput} */ r) => {
+      if (r.restBase === "") return { decls: ["border-top-width:1px"], childSelector: CHILDREN, keyframes: null };
+      if (/^\d+$/.test(r.restBase)) return { decls: [`border-top-width:${r.restBase}px`], childSelector: CHILDREN, keyframes: null };
       return null;
-    }],
-    ["divide", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("divide", (/** @type {RuleInput} */ r) => {
       const value = resolveColor(r.restStem, r.modifier, theme.colors, theme.borderColor);
       if (value === null) return null;
-      return { decls: [`border-color:${value}`], childSelector: CHILDREN };
-    }],
-    ["columns", (/** @type {RuleInput} */ r) => {
+      return { decls: [`border-color:${value}`], childSelector: CHILDREN, keyframes: null };
+    }),
+    rule("columns", (/** @type {RuleInput} */ r) => {
       const value = resolveInteger(r.restBase, { keywords: { auto: "auto" } });
       return value === null ? null : [`columns:${value}`];
-    }],
+    }),
+  ];
 
-    ...sides("p", "padding"),
-    ...sides("m", "margin", { negative: true, keywords: { auto: "auto" } }),
-
-    ["w", spacingRule(["width"], {
+  /** @type {DynamicRule[]} */
+  const DYNAMIC = [];
+  for (const entry of DYNAMIC_HEAD) DYNAMIC.push(entry);
+  for (const entry of sides("p", "padding", {})) DYNAMIC.push(entry);
+  for (const entry of sides("m", "margin", { negative: true, keywords: { auto: "auto" } })) DYNAMIC.push(entry);
+  const DYNAMIC_TAIL = [
+    rule("w", spacingRule(["width"], {
       keywords: {
         auto: "auto", full: "100%", screen: "100vw", svw: "100svw", lvw: "100lvw",
         dvw: "100dvw", min: "min-content", max: "max-content", fit: "fit-content",
       },
-    })],
-    ["h", spacingRule(["height"], {
+    })),
+    rule("h", spacingRule(["height"], {
       keywords: {
         auto: "auto", full: "100%", screen: "100vh", svh: "100svh", lvh: "100lvh",
         dvh: "100dvh", min: "min-content", max: "max-content", fit: "fit-content",
       },
-    })],
-    ["size", spacingRule(["width", "height"], {
+    })),
+    rule("size", spacingRule(["width", "height"], {
       keywords: { auto: "auto", full: "100%", min: "min-content", max: "max-content", fit: "fit-content" },
-    })],
-    ["min-w", spacingRule(["min-width"], {
+    })),
+    rule("min-w", spacingRule(["min-width"], {
       keywords: { full: "100%", min: "min-content", max: "max-content", fit: "fit-content" },
-    })],
-    ["min-h", spacingRule(["min-height"], {
+    })),
+    rule("min-h", spacingRule(["min-height"], {
       keywords: {
         full: "100%", screen: "100vh", svh: "100svh", lvh: "100lvh", dvh: "100dvh",
         min: "min-content", max: "max-content", fit: "fit-content",
       },
-    })],
-    ["max-w", (/** @type {RuleInput} */ r) => {
+    })),
+    rule("max-w", (/** @type {RuleInput} */ r) => {
       if (r.negative) return null;
       const screen = /^screen-(.+)$/.exec(r.restBase);
       if (screen && theme.screens[screen[1]]) return [`max-width:${theme.screens[screen[1]]}`];
@@ -699,32 +729,28 @@ export const createRules = (theme) => {
       if (named !== undefined) return [`max-width:${named}`];
       const value = resolveSpacing(r.restBase, theme.spacing, { keywords: { full: "100%", min: "min-content", max: "max-content", fit: "fit-content" } });
       return value === null ? null : [`max-width:${value}`];
-    }],
-    ["max-h", spacingRule(["max-height"], {
+    }),
+    rule("max-h", spacingRule(["max-height"], {
       keywords: {
         none: "none", full: "100%", screen: "100vh", svh: "100svh", lvh: "100lvh",
         dvh: "100dvh", min: "min-content", max: "max-content", fit: "fit-content",
       },
-    })],
+    })),
 
-    ["text", fontSize],
-    ["text", colorRule(["color"], theme.textColor)],
-    ["font", lookupRule(["font-weight"], theme.fontWeight, {
-      arbitrary: (value, type) =>
-        type === "number" || (type === null && /^\d+$/.test(value)) ? value : null,
-    })],
-    ["font", lookupRule(["font-family"], theme.fontFamily, {
-      arbitrary: (value, type) =>
-        type === "family-name" || type === "generic-name" || type === null ? value : null,
-    })],
-    ["leading", (/** @type {RuleInput} */ r) => {
+    rule("text", fontSize),
+    rule("text", colorRule(["color"], theme.textColor)),
+    rule("font", lookupRule(["font-weight"], theme.fontWeight, {}, (value, type) =>
+      type === "number" || (type === null && /^\d+$/.test(value)) ? value : null)),
+    rule("font", lookupRule(["font-family"], theme.fontFamily, {}, (value, type) =>
+      type === "family-name" || type === "generic-name" || type === null ? value : null)),
+    rule("leading", (/** @type {RuleInput} */ r) => {
       const named = theme.lineHeight[r.restBase];
       if (named !== undefined) return [`line-height:${named}`];
       const value = resolveSpacing(r.restBase, theme.spacing, { fractions: false });
       return value === null ? null : [`line-height:${value}`];
-    }],
-    ["tracking", lookupRule(["letter-spacing"], theme.letterSpacing, { negative: true })],
-    ["line-clamp", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("tracking", lookupRule(["letter-spacing"], theme.letterSpacing, { negative: true }, null)),
+    rule("line-clamp", (/** @type {RuleInput} */ r) => {
       const value = resolveInteger(r.restBase);
       if (value === null) return null;
       return [
@@ -733,10 +759,10 @@ export const createRules = (theme) => {
         "-webkit-box-orient:vertical",
         `-webkit-line-clamp:${value}`,
       ];
-    }],
-    ["indent", spacingRule(["text-indent"], { negative: true })],
-    ["decoration", colorRule(["text-decoration-color"])],
-    ["decoration", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("indent", spacingRule(["text-indent"], { negative: true })),
+    rule("decoration", colorRule(["text-decoration-color"], {})),
+    rule("decoration", (/** @type {RuleInput} */ r) => {
       if (r.restBase === "auto") return ["text-decoration-thickness:auto"];
       if (r.restBase === "from-font") return ["text-decoration-thickness:from-font"];
       if (/^\d+$/.test(r.restBase)) return [`text-decoration-thickness:${r.restBase}px`];
@@ -744,15 +770,15 @@ export const createRules = (theme) => {
       if (arb && (arb.type === "length" || (arb.type === null && looksLikeLength(arb.value))))
         return [`text-decoration-thickness:${arb.value}`];
       return null;
-    }],
-    ["underline-offset", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("underline-offset", (/** @type {RuleInput} */ r) => {
       if (/^\d+$/.test(r.restBase)) return [`text-underline-offset:${r.restBase}px`];
       const arb = parseArbitrary(r.restBase);
       return arb ? [`text-underline-offset:${arb.value}`] : null;
-    }],
+    }),
 
-    ["bg", colorRule(["background-color"], theme.backgroundColor)],
-    ["bg", (/** @type {RuleInput} */ r) => {
+    rule("bg", colorRule(["background-color"], theme.backgroundColor)),
+    rule("bg", (/** @type {RuleInput} */ r) => {
       const arb = parseArbitrary(r.restBase);
       if (!arb) return null;
       if (arb.type === "url" || arb.type === "image" || /^url\(/.test(arb.value))
@@ -760,46 +786,46 @@ export const createRules = (theme) => {
       if (arb.type === "length" || arb.type === "size") return [`background-size:${arb.value}`];
       if (arb.type === "position") return [`background-position:${arb.value}`];
       return null;
-    }],
-    ["from", gradientStop("from")],
-    ["via", gradientStop("via")],
-    ["to", gradientStop("to")],
+    }),
+    rule("from", gradientStop("from")),
+    rule("via", gradientStop("via")),
+    rule("to", gradientStop("to")),
 
-    ["border", borderWidth(["border-width"])],
-    ["border", colorRule(["border-color"], theme.borderColor)],
-    ["border-x", borderWidth(["border-left-width", "border-right-width"])],
-    ["border-x", colorRule(["border-left-color", "border-right-color"], theme.borderColor)],
-    ["border-y", borderWidth(["border-top-width", "border-bottom-width"])],
-    ["border-y", colorRule(["border-top-color", "border-bottom-color"], theme.borderColor)],
-    ["border-t", borderWidth(["border-top-width"])],
-    ["border-t", colorRule(["border-top-color"], theme.borderColor)],
-    ["border-r", borderWidth(["border-right-width"])],
-    ["border-r", colorRule(["border-right-color"], theme.borderColor)],
-    ["border-b", borderWidth(["border-bottom-width"])],
-    ["border-b", colorRule(["border-bottom-color"], theme.borderColor)],
-    ["border-l", borderWidth(["border-left-width"])],
-    ["border-l", colorRule(["border-left-color"], theme.borderColor)],
-    ["border-spacing", spacingRule(["border-spacing"])],
+    rule("border", borderWidth(["border-width"])),
+    rule("border", colorRule(["border-color"], theme.borderColor)),
+    rule("border-x", borderWidth(["border-left-width", "border-right-width"])),
+    rule("border-x", colorRule(["border-left-color", "border-right-color"], theme.borderColor)),
+    rule("border-y", borderWidth(["border-top-width", "border-bottom-width"])),
+    rule("border-y", colorRule(["border-top-color", "border-bottom-color"], theme.borderColor)),
+    rule("border-t", borderWidth(["border-top-width"])),
+    rule("border-t", colorRule(["border-top-color"], theme.borderColor)),
+    rule("border-r", borderWidth(["border-right-width"])),
+    rule("border-r", colorRule(["border-right-color"], theme.borderColor)),
+    rule("border-b", borderWidth(["border-bottom-width"])),
+    rule("border-b", colorRule(["border-bottom-color"], theme.borderColor)),
+    rule("border-l", borderWidth(["border-left-width"])),
+    rule("border-l", colorRule(["border-left-color"], theme.borderColor)),
+    rule("border-spacing", spacingRule(["border-spacing"], {})),
 
-    ["rounded", lookupRule(["border-radius"], theme.borderRadius)],
-    ["rounded-t", lookupRule(["border-top-left-radius", "border-top-right-radius"], theme.borderRadius)],
-    ["rounded-r", lookupRule(["border-top-right-radius", "border-bottom-right-radius"], theme.borderRadius)],
-    ["rounded-b", lookupRule(["border-bottom-right-radius", "border-bottom-left-radius"], theme.borderRadius)],
-    ["rounded-l", lookupRule(["border-top-left-radius", "border-bottom-left-radius"], theme.borderRadius)],
-    ["rounded-tl", lookupRule(["border-top-left-radius"], theme.borderRadius)],
-    ["rounded-tr", lookupRule(["border-top-right-radius"], theme.borderRadius)],
-    ["rounded-br", lookupRule(["border-bottom-right-radius"], theme.borderRadius)],
-    ["rounded-bl", lookupRule(["border-bottom-left-radius"], theme.borderRadius)],
+    rule("rounded", lookupRule(["border-radius"], theme.borderRadius, {}, null)),
+    rule("rounded-t", lookupRule(["border-top-left-radius", "border-top-right-radius"], theme.borderRadius, {}, null)),
+    rule("rounded-r", lookupRule(["border-top-right-radius", "border-bottom-right-radius"], theme.borderRadius, {}, null)),
+    rule("rounded-b", lookupRule(["border-bottom-right-radius", "border-bottom-left-radius"], theme.borderRadius, {}, null)),
+    rule("rounded-l", lookupRule(["border-top-left-radius", "border-bottom-left-radius"], theme.borderRadius, {}, null)),
+    rule("rounded-tl", lookupRule(["border-top-left-radius"], theme.borderRadius, {}, null)),
+    rule("rounded-tr", lookupRule(["border-top-right-radius"], theme.borderRadius, {}, null)),
+    rule("rounded-br", lookupRule(["border-bottom-right-radius"], theme.borderRadius, {}, null)),
+    rule("rounded-bl", lookupRule(["border-bottom-left-radius"], theme.borderRadius, {}, null)),
 
-    ["outline", (/** @type {RuleInput} */ r) => {
+    rule("outline", (/** @type {RuleInput} */ r) => {
       if (/^\d+$/.test(r.restBase)) return [`outline-width:${r.restBase}px`];
       const arb = parseArbitrary(r.restBase);
       if (arb && (arb.type === "length" || (arb.type === null && looksLikeLength(arb.value))))
         return [`outline-width:${arb.value}`];
       return null;
-    }],
-    ["outline", colorRule(["outline-color"])],
-    ["outline-offset", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("outline", colorRule(["outline-color"], {})),
+    rule("outline-offset", (/** @type {RuleInput} */ r) => {
       let value = null;
       if (/^\d+$/.test(r.restBase)) value = `${r.restBase}px`;
       else {
@@ -808,47 +834,45 @@ export const createRules = (theme) => {
       }
       if (value === null) return null;
       return [`outline-offset:${r.negative ? negate(value) : value}`];
-    }],
+    }),
 
-    ["shadow", lookupRule(["box-shadow"], theme.boxShadow, {
-      arbitrary: (value, type) =>
-        type === null || type === "shadow" ? value : null,
-    })],
-    ["ring", (/** @type {RuleInput} */ r) => {
+    rule("shadow", lookupRule(["box-shadow"], theme.boxShadow, {}, (value, type) =>
+      type === null || type === "shadow" ? value : null)),
+    rule("ring", (/** @type {RuleInput} */ r) => {
       let width = null;
       if (r.restBase === "") width = "3px";
       else if (/^\d+$/.test(r.restBase)) width = `${r.restBase}px`;
       if (width === null) return null;
       return [`box-shadow:0 0 0 ${width} var(--tw-ring-color, rgb(59 130 246 / 0.5))`];
-    }],
-    ["ring", colorRule(["--tw-ring-color"])],
-    ["opacity", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("ring", colorRule(["--tw-ring-color"], {})),
+    rule("opacity", (/** @type {RuleInput} */ r) => {
       const value = resolvePercentNumber(r.restBase);
       return value === null ? null : [`opacity:${value}`];
-    }],
+    }),
 
-    ["blur", (/** @type {RuleInput} */ r) => {
-      const value = resolveLookup(r.restBase === "" ? "DEFAULT" : r.restBase, theme.blur);
-      return value === null ? null : [`filter:blur(${value})`];
-    }],
-    ["brightness", filterFn("filter", "brightness")],
-    ["contrast", filterFn("filter", "contrast")],
-    ["saturate", filterFn("filter", "saturate")],
-    ["hue-rotate", angleRule("filter", "hue-rotate")],
-    ["drop-shadow", (/** @type {RuleInput} */ r) => {
-      const value = resolveLookup(r.restBase === "" ? "DEFAULT" : r.restBase, theme.dropShadow);
-      return value === null ? null : [`filter:drop-shadow(${value})`];
-    }],
-    ["backdrop-blur", (/** @type {RuleInput} */ r) => {
-      const value = resolveLookup(r.restBase === "" ? "DEFAULT" : r.restBase, theme.blur);
-      return value === null ? null : [`backdrop-filter:blur(${value})`];
-    }],
-    ["backdrop-brightness", filterFn("backdrop-filter", "brightness")],
-    ["backdrop-contrast", filterFn("backdrop-filter", "contrast")],
-    ["backdrop-saturate", filterFn("backdrop-filter", "saturate")],
-    ["backdrop-opacity", filterFn("backdrop-filter", "opacity")],
+    rule("blur", (/** @type {RuleInput} */ r) => {
+      const value = resolveLookup(r.restBase === "" ? "DEFAULT" : r.restBase, theme.blur, null);
+      return value === null ? null : [`filter:blur(${asText(value)})`];
+    }),
+    rule("brightness", filterFn("filter", "brightness", true)),
+    rule("contrast", filterFn("filter", "contrast", true)),
+    rule("saturate", filterFn("filter", "saturate", true)),
+    rule("hue-rotate", angleRule("filter", "hue-rotate")),
+    rule("drop-shadow", (/** @type {RuleInput} */ r) => {
+      const value = resolveLookup(r.restBase === "" ? "DEFAULT" : r.restBase, theme.dropShadow, null);
+      return value === null ? null : [`filter:drop-shadow(${asText(value)})`];
+    }),
+    rule("backdrop-blur", (/** @type {RuleInput} */ r) => {
+      const value = resolveLookup(r.restBase === "" ? "DEFAULT" : r.restBase, theme.blur, null);
+      return value === null ? null : [`backdrop-filter:blur(${asText(value)})`];
+    }),
+    rule("backdrop-brightness", filterFn("backdrop-filter", "brightness", true)),
+    rule("backdrop-contrast", filterFn("backdrop-filter", "contrast", true)),
+    rule("backdrop-saturate", filterFn("backdrop-filter", "saturate", true)),
+    rule("backdrop-opacity", filterFn("backdrop-filter", "opacity", true)),
 
-    ["transition", (/** @type {RuleInput} */ r) => {
+    rule("transition", (/** @type {RuleInput} */ r) => {
       const property = TRANSITION_PROPERTIES[r.restBase === "" ? "DEFAULT" : r.restBase];
       if (property === undefined) {
         const arb = parseArbitrary(r.restBase);
@@ -864,114 +888,115 @@ export const createRules = (theme) => {
         `transition-timing-function:${theme.transitionTimingFunction.DEFAULT}`,
         "transition-duration:150ms",
       ];
-    }],
-    ["duration", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("duration", (/** @type {RuleInput} */ r) => {
       if (/^\d+$/.test(r.restBase)) return [`transition-duration:${r.restBase}ms`];
       const arb = parseArbitrary(r.restBase);
       return arb ? [`transition-duration:${arb.value}`] : null;
-    }],
-    ["delay", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("delay", (/** @type {RuleInput} */ r) => {
       if (/^\d+$/.test(r.restBase)) return [`transition-delay:${r.restBase}ms`];
       const arb = parseArbitrary(r.restBase);
       return arb ? [`transition-delay:${arb.value}`] : null;
-    }],
-    ["ease", lookupRule(["transition-timing-function"], theme.transitionTimingFunction)],
-    ["animate", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("ease", lookupRule(["transition-timing-function"], theme.transitionTimingFunction, {}, null)),
+    rule("animate", (/** @type {RuleInput} */ r) => {
       if (r.restBase === "none") return ["animation:none"];
       const animation = ANIMATIONS[r.restBase];
-      if (animation) return { decls: [`animation:${animation[0]}`], keyframes: animation[1] };
+      if (animation) return { decls: [`animation:${animation[0]}`], childSelector: null, keyframes: animation[1] };
       const arb = parseArbitrary(r.restBase);
       return arb ? [`animation:${arb.value}`] : null;
-    }],
+    }),
 
-    ["translate-x", (/** @type {RuleInput} */ r) => {
+    rule("translate-x", (/** @type {RuleInput} */ r) => {
       const value = resolveSpacing(r.restBase, theme.spacing, { keywords: { full: "100%" } });
       if (value === null) return null;
       return [
         `--tw-translate-x:${r.negative ? negate(value) : value}`,
         "translate:var(--tw-translate-x, 0) var(--tw-translate-y, 0)",
       ];
-    }],
-    ["translate-y", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("translate-y", (/** @type {RuleInput} */ r) => {
       const value = resolveSpacing(r.restBase, theme.spacing, { keywords: { full: "100%" } });
       if (value === null) return null;
       return [
         `--tw-translate-y:${r.negative ? negate(value) : value}`,
         "translate:var(--tw-translate-x, 0) var(--tw-translate-y, 0)",
       ];
-    }],
-    ["rotate", angleRule("rotate")],
-    ["scale", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("rotate", angleRule("rotate", null)),
+    rule("scale", (/** @type {RuleInput} */ r) => {
       const value = resolvePercentNumber(r.restBase);
       return value === null ? null : [`scale:${value}`];
-    }],
-    ["scale-x", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("scale-x", (/** @type {RuleInput} */ r) => {
       const value = resolvePercentNumber(r.restBase);
       return value === null ? null : [`scale:${value} 1`];
-    }],
-    ["scale-y", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("scale-y", (/** @type {RuleInput} */ r) => {
       const value = resolvePercentNumber(r.restBase);
       return value === null ? null : [`scale:1 ${value}`];
-    }],
-    ["skew-x", angleRule("transform", "skewX")],
-    ["skew-y", angleRule("transform", "skewY")],
+    }),
+    rule("skew-x", angleRule("transform", "skewX")),
+    rule("skew-y", angleRule("transform", "skewY")),
 
-    ["cursor", (/** @type {RuleInput} */ r) => {
+    rule("cursor", (/** @type {RuleInput} */ r) => {
       if (CURSOR_VALUES.has(r.restBase)) return [`cursor:${r.restBase}`];
       const arb = parseArbitrary(r.restBase);
       return arb ? [`cursor:${arb.value}`] : null;
-    }],
-    ["will-change", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("will-change", (/** @type {RuleInput} */ r) => {
       const arb = parseArbitrary(r.restBase);
       return arb ? [`will-change:${arb.value}`] : null;
-    }],
-    ["caret", colorRule(["caret-color"])],
-    ["accent", colorRule(["accent-color"])],
-    ["placeholder", colorRule(["color"])],
-    ["fill", colorRule(["fill"])],
-    ["stroke", colorRule(["stroke"])],
-    ["stroke", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("caret", colorRule(["caret-color"], {})),
+    rule("accent", colorRule(["accent-color"], {})),
+    rule("placeholder", colorRule(["color"], {})),
+    rule("fill", colorRule(["fill"], {})),
+    rule("stroke", colorRule(["stroke"], {})),
+    rule("stroke", (/** @type {RuleInput} */ r) => {
       if (/^\d+$/.test(r.restBase)) return [`stroke-width:${r.restBase}`];
       const arb = parseArbitrary(r.restBase);
       if (arb && (arb.type === "length" || arb.type === "number" || (arb.type === null && looksLikeLength(arb.value))))
         return [`stroke-width:${arb.value}`];
       return null;
-    }],
+    }),
 
-    ["aspect", (/** @type {RuleInput} */ r) => {
+    rule("aspect", (/** @type {RuleInput} */ r) => {
       const arb = parseArbitrary(r.restBase);
       return arb ? [`aspect-ratio:${arb.value}`] : null;
-    }],
-    ["object", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("object", (/** @type {RuleInput} */ r) => {
       const arb = parseArbitrary(r.restBase);
       return arb ? [`object-position:${arb.value}`] : null;
-    }],
-    ["content", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("content", (/** @type {RuleInput} */ r) => {
       const arb = parseArbitrary(r.restBase);
       return arb ? [`content:${arb.value}`] : null;
-    }],
-    ["align", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("align", (/** @type {RuleInput} */ r) => {
       const arb = parseArbitrary(r.restBase);
       return arb ? [`vertical-align:${arb.value}`] : null;
-    }],
-    ["list", (/** @type {RuleInput} */ r) => {
+    }),
+    rule("list", (/** @type {RuleInput} */ r) => {
       const arb = parseArbitrary(r.restBase);
       return arb ? [`list-style-type:${arb.value}`] : null;
-    }],
+    }),
   ];
+  for (const entry of DYNAMIC_TAIL) DYNAMIC.push(entry);
 
+  /** @type {Map<string, MatchedRule>} */
   const statics = new Map();
   let order = 0;
   for (const [name, body] of Object.entries(STATIC_SPECS))
-    statics.set(name, { decls: body.split(";"), order: order++ });
-
-  const dynamics = DYNAMIC.map(([prefix, fn]) => ({ prefix, fn, order: order++ }));
+    statics.set(name, { decls: body.split(";"), childSelector: null, keyframes: null, order: order++ });
+  for (const entry of DYNAMIC) entry.order = order++;
 
   /** @param {string} base */
   const arbitraryProperty = (base) => {
     const match = /^\[(--[\w-]+|[a-z-]+):(.+)\]$/.exec(base);
     if (!match) return null;
-    return { decls: [`${match[1]}:${match[2].replace(/_/g, " ")}`], order };
+    return { decls: [`${match[1]}:${match[2].replace(/_/g, " ")}`], childSelector: null, keyframes: null, order };
   };
 
   /** @param {ParsedClass} parsed */
@@ -980,17 +1005,17 @@ export const createRules = (theme) => {
       const hit = statics.get(parsed.base);
       if (hit) return hit;
     }
-    for (const rule of dynamics) {
+    for (const entry of DYNAMIC) {
       let restBase = null;
-      let restStem = null;
-      if (parsed.base === rule.prefix) restBase = "";
-      else if (parsed.base.startsWith(`${rule.prefix}-`)) restBase = parsed.base.slice(rule.prefix.length + 1);
+      if (parsed.base === entry.prefix) restBase = "";
+      else if (parsed.base.startsWith(`${entry.prefix}-`)) restBase = parsed.base.slice(entry.prefix.length + 1);
       if (restBase === null) continue;
-      restStem = parsed.stem === rule.prefix ? "" :
-        parsed.stem.startsWith(`${rule.prefix}-`) ? parsed.stem.slice(rule.prefix.length + 1) : restBase;
-      const result = rule.fn({ ...parsed, restBase, restStem });
-      if (Array.isArray(result)) return { decls: result, order: rule.order };
-      if (result) return { ...result, order: rule.order };
+      const restStem = parsed.stem === entry.prefix ? "" :
+        parsed.stem.startsWith(`${entry.prefix}-`) ? parsed.stem.slice(entry.prefix.length + 1) : restBase;
+      const result = entry.fn({ raw: parsed.raw, variants: parsed.variants, important: parsed.important, negative: parsed.negative, base: parsed.base, stem: parsed.stem, modifier: parsed.modifier, restBase, restStem });
+      if (result === null) continue;
+      if (Array.isArray(result)) return { decls: result, childSelector: null, keyframes: null, order: entry.order };
+      return { decls: result.decls, childSelector: result.childSelector, keyframes: result.keyframes, order: entry.order };
     }
     if (parsed.base.startsWith("[")) return arbitraryProperty(parsed.base);
     return null;

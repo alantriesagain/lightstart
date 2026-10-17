@@ -62,14 +62,15 @@ export const resolveSpacing = (rest, themeSpacing = {}, options = {}) => {
 
 /**
  * @param {string} rest
- * @param {Record<string, string|string[]>} scale
- * @param {{arbitrary?: (value: string, type: string|null) => string|null}} [options]
+ * @param {Record<string, string|string[]> | undefined} scale
+ * @param {((value: string, type: string | null) => string | null) | null} arbitrary what an arbitrary value becomes, null to take it as written
  */
-export const resolveLookup = (rest, scale = {}, options = {}) => {
-  if (scale[rest] !== undefined) return scale[rest];
+export const resolveLookup = (rest, scale, arbitrary) => {
+  const table = scale === undefined ? {} : scale;
+  if (table[rest] !== undefined) return table[rest];
   const arb = parseArbitrary(rest);
   if (arb) {
-    if (options.arbitrary) return options.arbitrary(arb.value, arb.type);
+    if (arbitrary !== null) return arbitrary(arb.value, arb.type);
     return arb.value;
   }
   return null;
@@ -138,7 +139,8 @@ export const resolveColor = (stem, modifier, colors, extras = {}) => {
  * @param {string} rest
  * @param {{ max?: number }} [options]
  */
-export const resolvePercentNumber = (rest, { max = 100 } = {}) => {
+export const resolvePercentNumber = (rest, options = {}) => {
+  const max = options.max === undefined ? 100 : options.max;
   if (/^\d+(?:\.\d+)?$/.test(rest)) {
     const n = Number(rest);
     if (n <= max * 2) return String(n / 100);
@@ -152,7 +154,8 @@ export const resolvePercentNumber = (rest, { max = 100 } = {}) => {
  * @param {string} rest
  * @param {{ keywords?: Record<string, string> }} [options]
  */
-export const resolveInteger = (rest, { keywords = {} } = {}) => {
+export const resolveInteger = (rest, options = {}) => {
+  const keywords = options.keywords === undefined ? {} : options.keywords;
   if (keywords[rest] !== undefined) return keywords[rest];
   if (/^\d+$/.test(rest)) return rest;
   const arb = parseArbitrary(rest);

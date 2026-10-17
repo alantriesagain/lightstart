@@ -16,7 +16,9 @@ import { buildTheme } from "./scales.js";
  * @param {EngineOptions} [options]
  * @returns {Engine}
  */
-export const createEngine = ({ theme = buildTheme(), safelist = [] } = {}) => {
+export const createEngine = (options = {}) => {
+  const theme = options.theme === undefined ? buildTheme() : options.theme;
+  const safelist = options.safelist === undefined ? [] : options.safelist;
   const rules = createRules(theme);
   const applyVariants = createVariantApplier(theme.screens);
   const memo = new Map();
@@ -39,13 +41,13 @@ export const createEngine = ({ theme = buildTheme(), safelist = [] } = {}) => {
     if (!applied) return null;
     return {
       cls,
-      selector: matched.childSelector ? applied.selector + matched.childSelector : applied.selector,
+      selector: matched.childSelector !== null ? applied.selector + matched.childSelector : applied.selector,
       medias: applied.medias,
       weight: applied.weight,
       decls: matched.decls,
       order: matched.order,
       important: parsed.important,
-      keyframes: matched.keyframes,
+      keyframes: matched.keyframes === null ? undefined : matched.keyframes,
     };
   };
 

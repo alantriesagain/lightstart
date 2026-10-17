@@ -247,7 +247,8 @@ const onColors = (colors) => {
  * @param {Record<string, Record<string, unknown>>} [projectTheme] the project's theme.js default export
  * @param {{palette?: Record<string, unknown>|null}} [options] pass the palette.js data to enable raw Tailwind colours
  */
-export const buildTheme = (projectTheme = {}, { palette = null } = {}) => {
+export const buildTheme = (projectTheme = {}, options = {}) => {
+  const palette = options.palette === undefined ? null : options.palette;
   const projectColors = themeColorVariables(projectTheme);
   const declaredColors = themeColorVariables({ color: projectTheme?.color });
   const colors = /** @type {Record<string, unknown>} */ ({ ...(palette ?? {}), ...DEFAULT_THEME.colors });

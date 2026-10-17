@@ -50,10 +50,19 @@ export type ColorScale = { [key: string]: string | ColorScale };
 
 export type RuleInput = ParsedClass & { restBase: string; restStem: string };
 
-export type RuleResult = string[] | { decls: string[]; keyframes?: string } | null;
+/** What a rule answers for a match: the declarations alone, or with the child selector a `space-*`/`divide-*` rule adds and the keyframes an animation needs. */
+export type RuleResult = string[] | { decls: string[]; childSelector: string | null; keyframes: string | null } | null;
 
-/** One dynamic rule of the table: its class prefix and the function that compiles a match. */
-export type DynamicRule = [prefix: string, fn: (r: RuleInput) => RuleResult];
+/** A rule matched to a class: its declarations, the child selector and keyframes when it has them, and its place in the table. */
+export interface MatchedRule {
+  decls: string[];
+  childSelector: string | null;
+  keyframes: string | null;
+  order: number;
+}
+
+/** The function of a dynamic rule: what a match compiles to. */
+export type DynamicRuleFn = (r: RuleInput) => RuleResult;
 
 export type SpacingOptions = {
   negative?: boolean;
