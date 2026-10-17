@@ -19,9 +19,9 @@ export default defineComponent({
   },
   firstUpdated() {
     const root = this;
-    this._track = root.querySelector(".track");
-    this._prev = root.querySelector(".prev");
-    this._next = root.querySelector(".next");
+    this._track = /** @type {HTMLElement | null} */ (root.querySelector(".track"));
+    this._prev = /** @type {HTMLElement | null} */ (root.querySelector(".prev"));
+    this._next = /** @type {HTMLElement | null} */ (root.querySelector(".next"));
     if (!this._track) return;
 
     const track = this._track;

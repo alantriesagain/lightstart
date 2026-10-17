@@ -11,6 +11,9 @@ const WRAP = Symbol.for("light.html.wrap");
 const nothing = Symbol.for("light.nothing");
 
 class TemplateResult {
+  /** @type {ReadonlyArray<string>} */
+  [TPL];
+
   /**
    * @param {ReadonlyArray<string>} strings
    * @param {number} kind
@@ -25,6 +28,9 @@ class TemplateResult {
 }
 
 class Keyed {
+  /** @type {string} */
+  [WRAP];
+
   /**
    * @param {unknown} k
    * @param {unknown} v
@@ -37,6 +43,9 @@ class Keyed {
 }
 
 class Unsafe {
+  /** @type {string} */
+  [WRAP];
+
   /** @param {string} s */
   constructor(s) {
     this.s = s;

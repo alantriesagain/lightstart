@@ -19,7 +19,6 @@
     "exactOptionalPropertyTypes": false,
     "isolatedModules": false,
     "verbatimModuleSyntax": false,
-    "baseUrl": ".",
     "paths": {
       "/controllers/*": ["./controllers/*"],
       "/views/*": ["./views/*"],

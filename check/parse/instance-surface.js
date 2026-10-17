@@ -29,7 +29,7 @@ const ASSIGN_OPS = new Set([
 export const findUndeclaredInstanceFields = ({ literal, sf, declared, skip = () => false }) => {
   /** @type {Map<string, number>} */
   const accessed = new Map();
-  /** @type {(node: ts.Node) => node is ts.PropertyAccessExpression} */
+  /** @param {ts.Node} node @returns {node is ts.PropertyAccessExpression} */
   const isThisField = (node) => ts.isPropertyAccessExpression(node) && node.expression.kind === ts.SyntaxKind.ThisKeyword;
   /** @param {ts.PropertyAccessExpression} fieldAccess */
   const record = (fieldAccess) => {

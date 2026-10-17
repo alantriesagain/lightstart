@@ -12,7 +12,8 @@ const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /**
  * Whether a value is a time of day as `HH:MM`.
- * @type {(value: unknown) => value is string}
+ * @param {unknown} value
+ * @returns {value is string}
  */
 export const isClock = (value) => typeof value === "string" && CLOCK.test(value);
 

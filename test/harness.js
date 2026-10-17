@@ -296,7 +296,7 @@ let assertModule = null;
 
 /** @param {TestResult} result @returns {Record<string, LooseFn>} */
 const countingAssert = (result) => {
-  if (!assertModule) NOT_SUPPORTED("t.assert", "the assert module was not attached", "Call attachAssert() from the node:test shim.");
+  if (!assertModule) return NOT_SUPPORTED("t.assert", "the assert module was not attached", "Call attachAssert() from the node:test shim.");
   /** @type {Record<string, LooseFn>} */
   const bound = {};
   for (const [key, value] of Object.entries(assertModule))

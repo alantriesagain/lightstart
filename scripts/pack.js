@@ -72,6 +72,7 @@ export const stage = () => {
       module: "esnext",
       moduleResolution: "bundler",
       lib: ["es2024", "dom", "dom.iterable"],
+      types: ["node"],
       strict: true,
       skipLibCheck: true,
     },
