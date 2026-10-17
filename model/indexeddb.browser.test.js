@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 import T from "../types/index.js";
-import { createStore } from "./store.js";
-import IndexedDBAdapter from "./indexeddb.js";
+import { createStore } from "./store.ts";
+import IndexedDBAdapter from "./indexeddb.ts";
 
 if (typeof indexedDB === "undefined")
   throw new Error("indexedDB is not defined; browser-only suite, run with --browser");

@@ -10,59 +10,43 @@
  * built.
  */
 
-import { IDB_ERROR, IDB_LOG, IDB_WARN } from "./events.js";
-import { buildQueryResult, validateQueryOptions } from "./query-builder.js";
-import { modelBus } from "./config.js";
+import { IDB_ERROR, IDB_LOG, IDB_WARN } from "./events.ts";
+import { buildQueryResult, validateQueryOptions } from "./query-builder.ts";
+import { modelBus } from "./config.ts";
 
-/** @import { ModelSchema, QueryOptions, Row, StorageAdapter, WhereClause } from "./types.ts" */
-/** @import { TypeDefinition } from "../types/types.ts" */
+import type { ModelField, ModelSchema, QueryOptions, Row, StorageAdapter, WhereClause } from "./types.ts";
 
-/**
- * @typedef {StorageAdapter & {
- *   db: IDBDatabase | null,
- *   connectionPromise: Promise<IDBDatabase> | null,
- *   models: Record<string, ModelSchema>,
- *   name: string,
- *   version: number | "auto",
- *   storePrefix?: string,
- *   isDefaultAdapter?: boolean,
- *   _storeName(model: string): string,
- *   _modelBelongs(modelName: string, schema: ModelSchema | undefined): boolean,
- *   _expectedStores(): string[],
- *   _createObjectStore(db: IDBDatabase, storeName: string, schema: ModelSchema): void,
- *   _updateObjectStore(store: IDBObjectStore, schema: ModelSchema): void,
- *   encode(model: string, row: Row): Row,
- *   decode(model: string, row: Row): Row,
- * }} IdbAdapter
- */
+type IdbAdapter = StorageAdapter & {
+  db: IDBDatabase | null,
+  connectionPromise: Promise<IDBDatabase> | null,
+  models: Record<string, ModelSchema>,
+  name: string,
+  version: number | "auto",
+  storePrefix?: string,
+  isDefaultAdapter?: boolean,
+  _storeName(model: string): string,
+  _modelBelongs(modelName: string, schema: ModelSchema | undefined): boolean,
+  _expectedStores(): string[],
+  _createObjectStore(db: IDBDatabase, storeName: string, schema: ModelSchema): void,
+  _updateObjectStore(store: IDBObjectStore, schema: ModelSchema): void,
+  encode(model: string, row: Row): Row,
+  decode(model: string, row: Row): Row,
+};
 
-/**
- * IndexedDB keys cannot be booleans, nulls or plain objects.
- * @param {unknown} value
- * @returns {value is IDBValidKey}
- */
-const isValidKey = (value) =>
+const isValidKey = (value: unknown): value is IDBValidKey =>
   typeof value === "string" ||
   (typeof value === "number" && Number.isFinite(value)) ||
   value instanceof Date;
 
-/** @type {Record<string, "lower" | "upper" | undefined>} */
-const RANGE_OPS = { ">": "lower", ">=": "lower", "<": "upper", "<=": "upper" };
+const RANGE_OPS: Record<string, "lower" | "upper" | undefined> = { ">": "lower", ">=": "lower", "<": "upper", "<=": "upper" };
 
-/** @type {Record<string, 0 | 1>} */
-const BOOLEAN_TO_STORAGE = { true: 1, false: 0 };
-/** @type {Record<string | number, boolean>} */
-const STORAGE_TO_BOOLEAN = { 1: true, 0: false, true: true, false: false };
+const BOOLEAN_TO_STORAGE: Record<string, 0 | 1> = { true: 1, false: 0 };
+const STORAGE_TO_BOOLEAN: Record<string | number, boolean> = { 1: true, 0: false, true: true, false: false };
 
-/**
- * The declared fields of a schema, without its `$` directives.
- * @param {ModelSchema | undefined} schema
- * @returns {Array<[string, TypeDefinition]>}
- */
-const fieldsOf = (schema) =>
+const fieldsOf = (schema: ModelSchema | undefined): Array<[string, ModelField]> =>
   Object.entries(schema ?? {})
     .filter(([field]) => !field.startsWith("$"))
-    .map(([field, def]) => [field, /** @type {TypeDefinition} */ (def)]);
+    .map(([field, def]): [string, ModelField] => [field, def as ModelField]);
 
 /**
  * Pick one index that can narrow this query.
@@ -72,18 +56,14 @@ const fieldsOf = (schema) =>
  * JS afterwards, so a poor plan costs speed and never correctness.
  *
  * An array field gets a `multiEntry` index, so "contains" is a plain lookup.
- *
- * @param {ModelSchema | undefined} schema
- * @param {WhereClause | undefined} where
  */
-export const planIndex = (schema, where) => {
+export const planIndex = (schema: ModelSchema | undefined, where: WhereClause | undefined): { field: string, range: IDBKeyRange, multiEntry: boolean } | null => {
   if (!schema || !where) return null;
   for (const [field, condition] of Object.entries(where)) {
-    const def = /** @type {TypeDefinition | undefined} */ (schema[field]);
+    const def: ModelField | undefined = schema[field];
     if (!def || (def.index !== true && def.unique !== true)) continue;
     const multiEntry = def.$type === "array";
-    /** @param {unknown} v */
-    const encoded = (v) => (def.$type === "boolean" && typeof v === "boolean" ? BOOLEAN_TO_STORAGE[String(v)] : v);
+    const encoded = (v: unknown): unknown => (def.$type === "boolean" && typeof v === "boolean" ? BOOLEAN_TO_STORAGE[String(v)] : v);
 
     if (typeof condition !== "object" || condition === null) {
       const value = encoded(condition);
@@ -91,14 +71,12 @@ export const planIndex = (schema, where) => {
       return { field, range: IDBKeyRange.only(value), multiEntry };
     }
 
-    const entries = Object.entries(condition).map(([op, value]) => /** @type {[string, unknown]} */ ([op, encoded(value)]));
+    const entries = Object.entries(condition).map(([op, value]: [string, unknown]): [string, unknown] => [op, encoded(value)]);
     const equality = entries.find(([op, value]) => (op === "has" || op === "=") && isValidKey(value));
-    if (equality) return { field, range: IDBKeyRange.only(/** @type {IDBValidKey} */ (equality[1])), multiEntry };
+    if (equality) return { field, range: IDBKeyRange.only(equality[1] as IDBValidKey), multiEntry };
 
-    /** @type {{ value: IDBValidKey, open: boolean } | undefined} */
-    let lower;
-    /** @type {{ value: IDBValidKey, open: boolean } | undefined} */
-    let upper;
+    let lower: { value: IDBValidKey, open: boolean } | undefined;
+    let upper: { value: IDBValidKey, open: boolean } | undefined;
     for (const [op, value] of entries) {
       if (!RANGE_OPS[op] || !isValidKey(value)) continue;
       if (RANGE_OPS[op] === "lower") lower = { value, open: op === ">" };
@@ -112,29 +90,13 @@ export const planIndex = (schema, where) => {
   return null;
 };
 
-/**
- * @template T
- * @param {IDBRequest<T>} request
- * @returns {Promise<T>}
- */
-const done = (request) => new Promise((resolve, reject) => {
+const done = <T>(request: IDBRequest<T>): Promise<T> => new Promise((resolve, reject) => {
   request.onsuccess = () => resolve(request.result);
   request.onerror = () => reject(request.error);
 });
 
-/**
- * Run `work` against one store in a transaction; resolves with what `work`
- * resolved once the transaction completed.
- *
- * @template T
- * @param {IdbAdapter} adapter
- * @param {string} model
- * @param {IDBTransactionMode} mode
- * @param {(store: IDBObjectStore) => Promise<T>} work
- * @returns {Promise<T>}
- */
-const tx = async (adapter, model, mode, work) => {
-  const db = /** @type {IDBDatabase} */ (await adapter.init());
+const tx = async <T>(adapter: IdbAdapter, model: string, mode: IDBTransactionMode, work: (store: IDBObjectStore) => Promise<T>): Promise<T> => {
+  const db = (await adapter.init()) as IDBDatabase;
   const transaction = db.transaction(adapter._storeName(model), mode);
   const pending = work(transaction.objectStore(adapter._storeName(model)));
   pending.catch(() => {});
@@ -146,13 +108,13 @@ const tx = async (adapter, model, mode, work) => {
   return pending;
 };
 
-const IndexedDBAdapter = /** @type {IdbAdapter} */ ({
+const IndexedDBAdapter: StorageAdapter = {
   type: "indexeddb",
 
   db: null,
   connectionPromise: null,
 
-  async init() {
+  async init(this: IdbAdapter) {
     if (this.version !== "auto") this.version = Number(this.version) || 1;
     if (this.connectionPromise) return this.connectionPromise;
 
@@ -163,7 +125,7 @@ const IndexedDBAdapter = /** @type {IdbAdapter} */ ({
         this.connectionPromise = null;
         if (request.error?.name === "VersionError" && this.version !== "auto") {
           this.version = "auto";
-          this.init().then((db) => resolve(/** @type {IDBDatabase} */ (db)), reject);
+          this.init().then((db) => resolve(db as IDBDatabase), reject);
           return;
         }
         modelBus().emit(IDB_ERROR, { type: "open_failed", error: request.error });
@@ -179,7 +141,7 @@ const IndexedDBAdapter = /** @type {IdbAdapter} */ ({
           db.close();
           this.connectionPromise = null;
           this.version = nextVersion;
-          this.init().then((reopened) => resolve(/** @type {IDBDatabase} */ (reopened)), reject);
+          this.init().then((reopened) => resolve(reopened as IDBDatabase), reject);
           return;
         }
         this.db = db;
@@ -207,12 +169,12 @@ const IndexedDBAdapter = /** @type {IdbAdapter} */ ({
     return this.connectionPromise;
   },
 
-  _storeName(model) {
+  _storeName(this: IdbAdapter, model: string) {
     if (this.storePrefix && model.startsWith(this.storePrefix)) return model.slice(this.storePrefix.length);
     return model;
   },
 
-  _modelBelongs(modelName, schema) {
+  _modelBelongs(this: IdbAdapter, modelName: string, schema: ModelSchema | undefined) {
     if (!schema || modelName.startsWith("$")) return false;
     const adapterPreference = schema.$adapter;
     if (this.storePrefix) return modelName.startsWith(this.storePrefix);
@@ -222,22 +184,21 @@ const IndexedDBAdapter = /** @type {IdbAdapter} */ ({
     return adapterPreference === "indexeddb";
   },
 
-  _expectedStores() {
-    /** @type {string[]} */
-    const stores = [];
+  _expectedStores(this: IdbAdapter) {
+    const stores: string[] = [];
     for (const [modelName, schema] of Object.entries(this.models || {}))
       if (this._modelBelongs(modelName, schema)) stores.push(this._storeName(modelName));
     return stores;
   },
 
-  _createObjectStore(db, storeName, schema) {
-    const idField = /** @type {TypeDefinition | undefined} */ (schema.id);
+  _createObjectStore(this: IdbAdapter, db: IDBDatabase, storeName: string, schema: ModelSchema) {
+    const idField: ModelField | undefined = schema.id;
     const store = db.createObjectStore(storeName, { keyPath: "id", autoIncrement: !idField || idField.$type === "number" });
     this._updateObjectStore(store, schema);
     modelBus().emit(IDB_LOG, { type: "store_created", store: storeName, fields: Object.keys(schema).length });
   },
 
-  _updateObjectStore(store, schema) {
+  _updateObjectStore(store: IDBObjectStore, schema: ModelSchema) {
     for (const [field, def] of fieldsOf(schema)) {
       if ((def.index !== true && def.unique !== true) || store.indexNames.contains(field)) continue;
       store.createIndex(field, field, { unique: def.unique === true, multiEntry: def.$type === "array" });
@@ -245,7 +206,7 @@ const IndexedDBAdapter = /** @type {IdbAdapter} */ ({
     }
   },
 
-  encode(model, row) {
+  encode(this: IdbAdapter, model: string, row: Row) {
     const out = { ...row };
     for (const [field, def] of fieldsOf(this.models[model])) {
       const value = out[field];
@@ -256,59 +217,59 @@ const IndexedDBAdapter = /** @type {IdbAdapter} */ ({
     return out;
   },
 
-  decode(model, row) {
+  decode(this: IdbAdapter, model: string, row: Row) {
     const out = { ...row };
     for (const [field, def] of fieldsOf(this.models[model])) {
       const value = out[field];
       if (value === undefined || value === null) continue;
-      if (def.$type === "boolean") out[field] = STORAGE_TO_BOOLEAN[/** @type {string | number} */ (value)] ?? value;
+      if (def.$type === "boolean") out[field] = STORAGE_TO_BOOLEAN[value as string | number] ?? value;
       else if ((def.$type === "date" || def.$type === "datetime") && typeof value === "number") out[field] = new Date(value);
     }
     return out;
   },
 
-  async get(model, id) {
-    const row = await tx(this, model, "readonly", (store) => done(store.get(id)));
+  async get(this: IdbAdapter, model: string, id: string | number) {
+    const row: Row | undefined = await tx(this, model, "readonly", (store) => done(store.get(id)));
     return row ? this.decode(model, row) : null;
   },
 
-  async query(model, options = {}) {
+  async query(this: IdbAdapter, model: string, options: QueryOptions = {}) {
     validateQueryOptions(options);
     const plan = planIndex(this.models[model], options.where);
-    const rows = await tx(this, model, "readonly", async (store) => {
-      const found = /** @type {Row[]} */ (await done(plan ? store.index(plan.field).getAll(plan.range) : store.getAll()));
+    const rows = await tx(this, model, "readonly", async (store): Promise<Row[]> => {
+      const found: Row[] = await done(plan ? store.index(plan.field).getAll(plan.range) : store.getAll());
       if (!plan?.multiEntry || found.length < 2) return found;
-      const seen = new Set();
+      const seen: Set<unknown> = new Set();
       return found.filter((row) => !seen.has(row.id) && seen.add(row.id));
     });
     const result = buildQueryResult(rows.map((row) => this.decode(model, row)), options);
     return { rows: result.items, total: result.total };
   },
 
-  async insert(model, row) {
+  async insert(this: IdbAdapter, model: string, row: Row) {
     const encoded = this.encode(model, row);
     const key = await tx(this, model, "readwrite", (store) => done(store.add(encoded)));
-    return this.decode(model, { ...encoded, id: encoded.id ?? /** @type {string | number} */ (key) });
+    return this.decode(model, { ...encoded, id: encoded.id ?? (key as string | number) });
   },
 
-  async insertMany(model, rows) {
+  async insertMany(this: IdbAdapter, model: string, rows: Row[]) {
     const encoded = rows.map((row) => this.encode(model, row));
     const keys = await tx(this, model, "readwrite", (store) => Promise.all(encoded.map((row) => done(store.add(row)))));
-    return encoded.map((row, index) => this.decode(model, { ...row, id: row.id ?? /** @type {string | number} */ (keys[index]) }));
+    return encoded.map((row, index) => this.decode(model, { ...row, id: row.id ?? (keys[index] as string | number) }));
   },
 
-  async update(model, row) {
+  async update(this: IdbAdapter, model: string, row: Row) {
     const encoded = this.encode(model, row);
     await tx(this, model, "readwrite", (store) => done(store.put(encoded)));
     return this.decode(model, encoded);
   },
 
-  async delete(model, id) {
+  async delete(this: IdbAdapter, model: string, id: string | number) {
     await tx(this, model, "readwrite", (store) => done(store.delete(id)));
     modelBus().emit(IDB_LOG, { type: "record_deleted", model, id });
   },
 
-  async count(model, where) {
+  async count(this: IdbAdapter, model: string, where?: WhereClause) {
     const plan = planIndex(this.models[model], where);
     const sole = where && Object.keys(where).length === 1;
     if (!where || Object.keys(where).length === 0)
@@ -318,19 +279,19 @@ const IndexedDBAdapter = /** @type {IdbAdapter} */ ({
     return (await this.query(model, { where })).total;
   },
 
-  async truncate(model) {
+  async truncate(this: IdbAdapter, model: string) {
     await tx(this, model, "readwrite", (store) => done(store.clear()));
     modelBus().emit(IDB_LOG, { type: "store_truncated", model });
   },
 
-  async close() {
+  async close(this: IdbAdapter) {
     if (!this.db) return;
     this.db.close();
     this.db = null;
     this.connectionPromise = null;
     modelBus().emit(IDB_LOG, { type: "connection_closed", name: this.name });
   },
-});
+};
 
 export default IndexedDBAdapter;
 export { IndexedDBAdapter };

@@ -68,15 +68,15 @@
     "./controller/view": "./controller/view.js",
     "./model": {
       "types": "./model/types.ts",
-      "default": "./model/index.js"
+      "default": "./model/index.ts"
     },
-    "./model/store": "./model/store.js",
-    "./model/adapter": "./model/adapter.js",
-    "./model/indexeddb": "./model/indexeddb.js",
-    "./model/jsonl": "./model/jsonl.js",
+    "./model/store": "./model/store.ts",
+    "./model/adapter": "./model/adapter.ts",
+    "./model/indexeddb": "./model/indexeddb.ts",
+    "./model/jsonl": "./model/jsonl.ts",
     "./model/binder": "./model/binder.js",
-    "./model/slug": "./model/slug.js",
-    "./model/events": "./model/events.js",
+    "./model/slug": "./model/slug.ts",
+    "./model/events": "./model/events.ts",
     "./html/constants.js": "./html/constants.ts",
     "./html/parser.js": "./html/parser.ts",
     "./html/values.js": "./html/values.ts",

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
-import { getFileStorage, setFileStorage, uploadFiles } from "./file-storage.js";
+import { getFileStorage, setFileStorage, uploadFiles } from "./file-storage.ts";
 
 const schema = { title: { fieldType: "string" }, attachment: { fieldType: "file" }, gallery: { fieldType: "files" } };
 

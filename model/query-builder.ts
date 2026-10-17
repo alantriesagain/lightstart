@@ -1,42 +1,33 @@
-/** @import { WhereClause, QueryOptions, QueryResult, OrderSpec } from "./types.ts" */
+import type { WhereClause, QueryOptions, QueryResult, OrderSpec } from "./types.ts";
 
 /**
  * `"-field"` / `"field"` (comma-separated), `"field DESC"`, or a ready
  * `OrderSpec[]`.
- * @param {string | OrderSpec[] | undefined} order
- * @returns {OrderSpec[]}
  */
-export function parseOrder(order) {
+export function parseOrder(order: string | OrderSpec[] | undefined): OrderSpec[] {
   if (!order) return [];
   if (Array.isArray(order)) return order;
 
-  return order.split(",").map(part => {
+  return order.split(",").map((part): OrderSpec => {
     const trimmed = part.trim();
     if (trimmed.startsWith("-")) {
       const [field = ""] = trimmed.slice(1).split(/\s+/);
-      return { field, direction: /** @type {"DESC"} */ ("DESC") };
+      return { field, direction: "DESC" };
     }
     const [field = "", direction = "ASC"] = trimmed.split(/\s+/);
-    return { field, direction: /** @type {"ASC" | "DESC"} */ (direction.toUpperCase()) };
+    return { field, direction: direction.toUpperCase() as "ASC" | "DESC" };
   });
 }
 
-const ALWAYS_TRUE = () => true;
+const ALWAYS_TRUE = (): boolean => true;
 
-/**
- * @param {string} operator
- * @param {unknown} expected
- * @param {boolean} [asKey] compare as strings (the `id` field: adapters disagree on its type)
- * @returns {(value: unknown) => boolean}
- */
-const compileOperator = (operator, expected, asKey = false) => {
-  /** @param {unknown} v */
-  const key = (v) => (asKey ? String(v) : v);
+const compileOperator = (operator: string, expected: unknown, asKey = false): ((value: unknown) => boolean) => {
+  const key = (v: unknown): unknown => (asKey ? String(v) : v);
   switch (operator) {
-    case ">":  return (v) => /** @type {any} */ (v) > /** @type {any} */ (expected);
-    case ">=": return (v) => /** @type {any} */ (v) >= /** @type {any} */ (expected);
-    case "<":  return (v) => /** @type {any} */ (v) < /** @type {any} */ (expected);
-    case "<=": return (v) => /** @type {any} */ (v) <= /** @type {any} */ (expected);
+    case ">":  return (v) => (v as {}) > (expected as {});
+    case ">=": return (v) => (v as {}) >= (expected as {});
+    case "<":  return (v) => (v as {}) < (expected as {});
+    case "<=": return (v) => (v as {}) <= (expected as {});
     case "!=":
     case "<>": return (v) => key(v) !== key(expected);
     case "has": {
@@ -58,7 +49,7 @@ const compileOperator = (operator, expected, asKey = false) => {
       return (v) => (Array.isArray(v) ? !v.some((entry) => set.has(key(entry))) : !set.has(key(v)));
     }
     case "like":
-      return (v) => typeof v === "string" && v.includes(/** @type {string} */ (expected));
+      return (v) => typeof v === "string" && v.includes(expected as string);
     case "ilike": {
       const needle = String(expected).toLowerCase();
       return (v) => typeof v === "string" && v.toLowerCase().includes(needle);
@@ -72,12 +63,7 @@ const compileOperator = (operator, expected, asKey = false) => {
   }
 };
 
-/**
- * @param {string} field
- * @param {unknown} condition
- * @returns {(record: Record<string, unknown>) => boolean}
- */
-const compileField = (field, condition) => {
+const compileField = (field: string, condition: unknown): ((record: Record<string, unknown>) => boolean) => {
   const asKey = field === "id";
   if (typeof condition !== "object" || condition === null) {
     if (asKey) {
@@ -87,9 +73,8 @@ const compileField = (field, condition) => {
     return (record) => record[field] === condition;
   }
 
-  const operatorChecks = Object.entries(condition).map(([operator, expected]) =>
-    compileOperator(operator, expected, asKey),
-  );
+  const operatorChecks: Array<(value: unknown) => boolean> = [];
+  for (const [operator, expected] of Object.entries(condition)) operatorChecks.push(compileOperator(operator, expected, asKey));
 
   return (record) => {
     const value = record[field];
@@ -97,26 +82,18 @@ const compileField = (field, condition) => {
   };
 };
 
-/**
- * Single-shot match: `compileMatcher(where)(record)` in one call.
- *
- * @param {Record<string, unknown>} record
- * @param {WhereClause | undefined} where
- * @returns {boolean}
- */
-export function matchesWhere(record, where) {
+/** Single-shot match: `compileMatcher(where)(record)` in one call. */
+export function matchesWhere(record: Record<string, unknown>, where: WhereClause | undefined): boolean {
   return compileMatcher(where)(record);
 }
 
 /**
  * Throw if `options` has structurally invalid `limit`/`offset`/`where`/
  * `fields`. Used by adapters that accept user-supplied query options.
- *
- * @param {QueryOptions} [options]
- * @returns {true}
  */
-export function validateQueryOptions(options = {}) {
+export function validateQueryOptions(options: QueryOptions = {}): true {
   const { limit, offset, where } = options;
+  const fields: unknown = options.fields;
 
   if (limit !== undefined)
     if (typeof limit !== "number" || limit < 0)
@@ -129,8 +106,8 @@ export function validateQueryOptions(options = {}) {
   if (where !== undefined && (typeof where !== "object" || where === null))
     throw new Error("where must be an object");
 
-  if (options.fields !== undefined)
-    if (!Array.isArray(options.fields))
+  if (fields !== undefined)
+    if (!Array.isArray(fields))
       throw new Error("fields must be an array of strings");
 
   return true;
@@ -139,30 +116,18 @@ export function validateQueryOptions(options = {}) {
 /**
  * Compile a where clause into a fast matcher function. Used by both
  * the in-memory query path and the subscription manager.
- *
- * @param {WhereClause | undefined} where
- * @returns {(record: Record<string, unknown>) => boolean}
  */
-export function compileMatcher(where) {
+export function compileMatcher(where: WhereClause | undefined): (record: Record<string, unknown>) => boolean {
   if (!where || Object.keys(where).length === 0) return ALWAYS_TRUE;
 
-  const fieldChecks = Object.entries(where).map(([field, condition]) =>
-    compileField(field, condition),
-  );
+  const fieldChecks: Array<(record: Record<string, unknown>) => boolean> = [];
+  for (const [field, condition] of Object.entries(where)) fieldChecks.push(compileField(field, condition));
 
   return (record) => fieldChecks.every((check) => check(record));
 }
 
-/**
- * Slice records by `limit`/`offset`.
- *
- * @template T
- * @param {T[] | null | undefined} records
- * @param {number | undefined} limit
- * @param {number} [offset]
- * @returns {T[]}
- */
-export function applyPagination(records, limit, offset = 0) {
+/** Slice records by `limit`/`offset`. */
+export function applyPagination<T>(records: T[] | null | undefined, limit: number | undefined, offset = 0): T[] {
   if (!records) return [];
   if (!limit && !offset) return records;
 
@@ -175,19 +140,12 @@ export function applyPagination(records, limit, offset = 0) {
 /**
  * Deduplicate records by `groupField`: first record wins for each
  * value. Records missing the field pass through.
- *
- * @template {Record<string, unknown>} T
- * @param {T[]} records
- * @param {string | undefined} groupField
- * @returns {T[]}
  */
-export function applyGroupBy(records, groupField) {
+export function applyGroupBy<T extends Record<string, unknown>>(records: T[], groupField: string | undefined): T[] {
   if (!groupField || !records?.length) return records;
 
-  /** @type {Set<unknown>} */
-  const seen = new Set();
-  /** @type {T[]} */
-  const result = [];
+  const seen: Set<unknown> = new Set();
+  const result: T[] = [];
 
   for (const record of records) {
     const groupKey = record[groupField];
@@ -208,13 +166,8 @@ export function applyGroupBy(records, groupField) {
 /**
  * Sort records by an order spec (string `"field asc, other desc"` or
  * pre-parsed `OrderSpec[]`).
- *
- * @template {Record<string, unknown>} T
- * @param {T[]} records
- * @param {string | OrderSpec[]} order
- * @returns {T[]}
  */
-export function applyOrder(records, order) {
+export function applyOrder<T extends Record<string, unknown>>(records: T[], order: string | OrderSpec[]): T[] {
   if (!order || !records || records.length === 0) return records;
 
   const orderArray = parseOrder(order);
@@ -222,33 +175,25 @@ export function applyOrder(records, order) {
 
   return [...records].sort((a, b) => {
     for (const { field, direction } of orderArray) {
-      const aVal = /** @type {any} */ (a[field]);
-      const bVal = /** @type {any} */ (b[field]);
+      const aVal = a[field] as {};
+      const bVal = b[field] as {};
 
       if (aVal === bVal) continue;
 
       const comparison = aVal < bVal ? -1 : 1;
-      return /** @type {string} */ (direction).toUpperCase() === "DESC" ? -comparison : comparison;
+      return direction.toUpperCase() === "DESC" ? -comparison : comparison;
     }
     return 0;
   });
 }
 
-/**
- * Project records to only the listed fields (plus `id`).
- *
- * @template {Record<string, unknown>} T
- * @param {T[]} records
- * @param {string[]} fields
- * @returns {Record<string, unknown>[]}
- */
-export function applyFields(records, fields) {
+/** Project records to only the listed fields (plus `id`). */
+export function applyFields<T extends Record<string, unknown>>(records: T[], fields: string[]): Record<string, unknown>[] {
   if (!fields || fields.length === 0) return records;
   const fieldSet = new Set(fields);
   fieldSet.add("id");
   return records.map((record) => {
-    /** @type {Record<string, unknown>} */
-    const projected = {};
+    const projected: Record<string, unknown> = {};
     for (const key of fieldSet)
       if (key in record) projected[key] = record[key];
 
@@ -260,12 +205,8 @@ export function applyFields(records, fields) {
  * Compose the standard query pipeline: where → order → groupBy →
  * pagination → fields projection. Returns the shape adapters use as
  * their query result.
- *
- * @param {Record<string, unknown>[]} allRecords
- * @param {QueryOptions} [options]
- * @returns {QueryResult}
  */
-export function buildQueryResult(allRecords, options = {}) {
+export function buildQueryResult(allRecords: Record<string, unknown>[], options: QueryOptions = {}): QueryResult {
   const { where, order, limit, offset, groupBy } = options;
 
   let filtered = allRecords;

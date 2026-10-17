@@ -66,17 +66,17 @@ describe("@bootstrapp/light/model: nothing loads what it did not ask for", () =>
 
   it("the registry a page talks to a worker through loads no store, no adapter and no binding", () => {
     const reached = reach(entry("./model"));
-    for (const file of ["model/store.js", "model/indexeddb.js", "model/binder.js", "model/factory.js"]) assert.ok(!reached.includes(file), `./model reaches ${file}`);
+    for (const file of ["model/store.ts", "model/indexeddb.ts", "model/binder.js", "model/factory.ts"]) assert.ok(!reached.includes(file), `./model reaches ${file}`);
   });
 
   it("each model entry loads its own code and no sibling entry", () => {
     const owned = {
-      "./model": ["model/index.js", "model/changes.js", "model/config.js"],
-      "./model/store": ["model/store.js", "model/factory.js"],
-      "./model/adapter": ["model/adapter.js", "model/factory.js"],
-      "./model/indexeddb": ["model/indexeddb.js", "model/config.js"],
+      "./model": ["model/index.ts", "model/changes.ts", "model/config.ts"],
+      "./model/store": ["model/store.ts", "model/factory.ts"],
+      "./model/adapter": ["model/adapter.ts", "model/factory.ts"],
+      "./model/indexeddb": ["model/indexeddb.ts", "model/config.ts"],
       "./model/binder": ["model/binder.js", "controller/resource.js"],
-      "./model/slug": ["model/slug.js"],
+      "./model/slug": ["model/slug.ts"],
     };
     const entries = Object.keys(owned).map(entry);
     for (const [key, files] of Object.entries(owned)) {

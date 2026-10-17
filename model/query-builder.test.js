@@ -6,7 +6,7 @@ import {
   applyPagination,
   buildQueryResult,
   validateQueryOptions,
-} from "./query-builder.js";
+} from "./query-builder.ts";
 
 describe("Query Builder", () => {
   describe("matchesWhere", () => {

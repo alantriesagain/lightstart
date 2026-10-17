@@ -4,9 +4,9 @@ import T from "../types/index.js";
 import {
   MODEL_ADD, MODEL_ADD_MANY, MODEL_COUNT, MODEL_EDIT, MODEL_EXISTS, MODEL_FACETS,
   MODEL_GET, MODEL_QUERY, MODEL_REMOVE, MODEL_REMOVE_MANY,
-} from "./commands.js";
-import { configureModel, defineModel, isModelApi, modelApi, registerQueryHook } from "./index.js";
-import { clearQueryHooks } from "./query-hooks.js";
+} from "./commands.ts";
+import { configureModel, defineModel, isModelApi, modelApi, registerQueryHook } from "./index.ts";
+import { clearQueryHooks } from "./query-hooks.ts";
 
 const setup = () => {
   const calls = [];

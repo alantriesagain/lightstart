@@ -8,25 +8,21 @@
  * its `model:changed` onto that bus.
  */
 
-import { modelBus } from "./config.js";
-import { MODEL_CHANGED, MODEL_ERROR } from "./events.js";
-import { compileMatcher } from "./query-builder.js";
+import { modelBus } from "./config.ts";
+import { MODEL_CHANGED, MODEL_ERROR } from "./events.ts";
+import { compileMatcher } from "./query-builder.ts";
 
-/** @import { ChangeCallback, ModelBus, ModelChanged, Row, WhereClause } from "./types.ts" */
+import type { ChangeCallback, ChangeSubscriber, ModelBus, ModelChanged, Row, WhereClause } from "./types.ts";
 
-/** @type {Map<string, Set<{ match: (row: Record<string, unknown>) => boolean, cb: ChangeCallback }>>} */
-const subscribers = new Map();
-/** @type {ModelBus | null} */
-let listening = null;
-/** @type {(() => void) | null} */
-let stop = null;
+const subscribers: Map<string, Set<ChangeSubscriber>> = new Map();
+let listening: ModelBus | null = null;
+let stop: (() => void) | null = null;
 
-/** @param {ModelChanged} event */
-const dispatch = (event) => {
+const dispatch = (event: ModelChanged): void => {
   const set = subscribers.get(event.model);
   if (!set) return;
   for (const { match, cb } of [...set])
-    if (event.action === "remove" || event.action === "sync" || match(/** @type {Row} */ (event.row)))
+    if (event.action === "remove" || event.action === "sync" || match(event.row as Row))
       try {
         cb(event);
       } catch (error) {
@@ -34,23 +30,18 @@ const dispatch = (event) => {
       }
 };
 
-const install = () => {
+const install = (): void => {
   const bus = modelBus();
   if (listening === bus) return;
   stop?.();
   listening = bus;
-  stop = bus.on(MODEL_CHANGED, (data) => dispatch(/** @type {ModelChanged} */ (data)));
+  stop = bus.on(MODEL_CHANGED, (data) => dispatch(data as ModelChanged));
 };
 
-/**
- * @param {string} model
- * @param {WhereClause | undefined} where
- * @param {ChangeCallback} cb
- * @returns {() => void}
- */
-export const onChange = (model, where, cb) => {
+/** Run `cb` for every change on `model` whose row matches `where`; the answer stops it. */
+export const onChange = (model: string, where: WhereClause | undefined, cb: ChangeCallback): (() => void) => {
   install();
-  const entry = { match: compileMatcher(where), cb };
+  const entry: ChangeSubscriber = { match: compileMatcher(where), cb };
   let set = subscribers.get(model);
   if (!set) subscribers.set(model, (set = new Set()));
   set.add(entry);

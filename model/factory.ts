@@ -6,28 +6,23 @@
  * that directive.
  */
 
-import { modelBus } from "./config.js";
-import { ADAPTER_REGISTERED, DATABASE_CREATED, MODEL_WARN } from "./events.js";
+import { modelBus } from "./config.ts";
+import { ADAPTER_REGISTERED, DATABASE_CREATED, MODEL_WARN } from "./events.ts";
+import { schemaEntry } from "./fields.ts";
 
-/** @import { AdapterDecorator, ModelSchema, StorageAdapter } from "./types.ts" */
+import type { AdapterDecorator, ModelSchema, StorageAdapter } from "./types.ts";
 
-/** @type {Map<string, StorageAdapter>} */
-const ADAPTER_REGISTRY = new Map();
-/** @type {Map<string, AdapterDecorator>} */
-const DECORATOR_REGISTRY = new Map();
-/** @type {Array<keyof StorageAdapter>} */
-const REQUIRED_METHODS = ["init", "get", "query", "insert", "update", "delete", "count", "close"];
+const ADAPTER_REGISTRY: Map<string, StorageAdapter> = new Map();
+const DECORATOR_REGISTRY: Map<string, { decorate: AdapterDecorator }> = new Map();
+const REQUIRED_METHODS: string[] = ["init", "get", "query", "insert", "update", "delete", "count", "close"];
 
 /**
  * Register a storage adapter under a `type` name. The eight required methods
  * are checked here; the optional ones (`insertMany`, `exists`, `facets`,
  * `truncate`, `subscribe`, `supportsOperator`) are feature-detected by the
  * store.
- *
- * @param {string} type
- * @param {StorageAdapter} definition
  */
-export const registerStorageAdapter = (type, definition) => {
+export const registerStorageAdapter = (type: string, definition: StorageAdapter): void => {
   const missing = REQUIRED_METHODS.filter((method) => typeof definition[method] !== "function");
   if (missing.length) throw new Error(`Adapter "${type}" is missing required methods: ${missing.join(", ")}`);
   if (ADAPTER_REGISTRY.has(type)) modelBus().emit(MODEL_WARN, { type: "adapter_overwrite", adapterType: type });
@@ -38,49 +33,36 @@ export const registerStorageAdapter = (type, definition) => {
 /**
  * Instantiate a registered adapter with `config` as its own fields
  * (`name`, `version`, `models`, `emit`, `getAuthToken`, the adapter's keys).
- *
- * @param {string} type
- * @param {Record<string, unknown> & { name?: string, version?: number | string }} config
- * @returns {StorageAdapter}
  */
-export const createAdapter = (type, config) => {
+export const createAdapter = (type: string, config: Record<string, unknown> & { name?: string, version?: number | string }): StorageAdapter => {
   const definition = ADAPTER_REGISTRY.get(type);
   if (!definition)
     throw new Error(`Unknown adapter type "${type}". Available types: ${getAvailableAdapters().join(", ")}. Use registerStorageAdapter() to register adapters.`);
-  const instance = Object.assign(Object.create(definition), config);
+  const instance: StorageAdapter = Object.create(definition);
+  for (const [key, value] of Object.entries(config)) instance[key] = value;
   modelBus().emit(DATABASE_CREATED, { type, name: config.name, version: config.version });
   return instance;
 };
 
-/** @returns {string[]} */
-export const getAvailableAdapters = () => Array.from(ADAPTER_REGISTRY.keys());
+export const getAvailableAdapters = (): string[] => Array.from(ADAPTER_REGISTRY.keys());
 
-/** @param {string} type */
-export const hasAdapter = (type) => ADAPTER_REGISTRY.has(type);
+export const hasAdapter = (type: string): boolean => ADAPTER_REGISTRY.has(type);
 
 /**
  * Register a decorator for the models whose schema declares `directive`
  * (`$moderated`, ...): the store wraps their routed adapter with
  * `factory(base, context)` once per model, so every read and write of such
  * a model passes through it.
- *
- * @param {string} directive
- * @param {AdapterDecorator} factory
  */
-export const registerAdapterDecorator = (directive, factory) => {
+export const registerAdapterDecorator = (directive: string, factory: AdapterDecorator): void => {
   if (DECORATOR_REGISTRY.has(directive)) modelBus().emit(MODEL_WARN, { type: "decorator_overwrite", directive });
-  DECORATOR_REGISTRY.set(directive, factory);
+  DECORATOR_REGISTRY.set(directive, { decorate: factory });
 };
 
-/**
- * The decorators a schema's directives call for, in registration order.
- *
- * @param {ModelSchema | undefined} schema
- * @returns {AdapterDecorator[]}
- */
-export const decoratorsFor = (schema) => {
-  /** @type {AdapterDecorator[]} */
-  const out = [];
-  for (const [directive, factory] of DECORATOR_REGISTRY) if (schema?.[directive]) out.push(factory);
+/** The decorators a schema's directives call for, in registration order. */
+export const decoratorsFor = (schema: ModelSchema | undefined): AdapterDecorator[] => {
+  const out: AdapterDecorator[] = [];
+  if (!schema) return out;
+  for (const [directive, { decorate }] of DECORATOR_REGISTRY) if (schemaEntry(schema, directive)) out.push(decorate);
   return out;
 };

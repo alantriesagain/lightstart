@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
-import { modelBus } from "./config.js";
+import { modelBus } from "./config.ts";
 import T from "../types/index.js";
-import { createStore } from "./store.js";
-import { registerAdapterDecorator } from "./factory.js";
-import { setFileStorage } from "./file-storage.js";
-import { buildQueryResult } from "./query-builder.js";
+import { createStore } from "./store.ts";
+import { registerAdapterDecorator } from "./factory.ts";
+import { setFileStorage } from "./file-storage.ts";
+import { buildQueryResult } from "./query-builder.ts";
 
 const events = modelBus();
 

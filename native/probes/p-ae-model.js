@@ -7,9 +7,9 @@
  */
 
 import T from "../../types/index.js";
-import { configureModel, defineModel, modelBus, onChange } from "../../model/index.js";
-import { createStore, storeRequest } from "../../model/store.js";
-import { buildQueryResult, createAdapter, registerStorageAdapter } from "../../model/adapter.js";
+import { configureModel, defineModel, modelBus, onChange } from "../../model/index.ts";
+import { createStore, storeRequest } from "../../model/store.ts";
+import { buildQueryResult, createAdapter, registerStorageAdapter } from "../../model/adapter.ts";
 
 /** @type {Map<string, Map<string, Record<string, unknown>>>} */
 const tables = new Map();

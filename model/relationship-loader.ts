@@ -4,38 +4,31 @@
  * the loaded rows are plain objects.
  */
 
-import { modelBus } from "./config.js";
-import { MODEL_ERROR, MODEL_WARN } from "./events.js";
-import { relationValueToId, relationWhere } from "./relationships.js";
+import { modelBus } from "./config.ts";
+import { MODEL_ERROR, MODEL_WARN } from "./events.ts";
+import { relationValueToId, relationWhere } from "./relationships.ts";
+import { entryOf, schemaEntry } from "./fields.ts";
 
-/** @import { ModelSchema, Row, RelationshipDefinition, RowReader } from "./types.ts" */
+import type { ModelSchema, Row, RelationshipDefinition, RowReader } from "./types.ts";
 
 /**
  * Enrich `record` with the relations listed in `includes`. An unknown name
  * warns and is skipped; a failed load emits `MODEL_ERROR` and leaves `[]` or
  * `null` per the relation's cardinality.
- *
- * @param {RowReader} reader
- * @param {Record<string, ModelSchema>} models
- * @param {string} modelName
- * @param {Row} record
- * @param {string[]} includes
- * @returns {Promise<Row>}
  */
-export async function loadRelationships(reader, models, modelName, record, includes) {
+export async function loadRelationships(reader: RowReader, models: Record<string, ModelSchema>, modelName: string, record: Row, includes: string[]): Promise<Row> {
   if (!includes || includes.length === 0 || !record) return record;
 
-  const modelSchema = models[modelName];
+  const modelSchema = entryOf(models, modelName);
   if (!modelSchema) {
     modelBus().emit(MODEL_WARN, { type: "model_not_found", model: modelName });
     return record;
   }
 
-  /** @type {Row} */
-  const enriched = Object.fromEntries(Object.entries(record));
+  const enriched: Row = Object.fromEntries(Object.entries(record));
 
   for (const relationName of includes) {
-    const relationDef = /** @type {RelationshipDefinition | undefined} */ (modelSchema[relationName]);
+    const relationDef = schemaEntry(modelSchema, relationName) as RelationshipDefinition | undefined;
 
     if (!relationDef) {
       modelBus().emit(MODEL_WARN, { type: "relationship_not_found", model: modelName, relationship: relationName });
@@ -61,33 +54,23 @@ export async function loadRelationships(reader, models, modelName, record, inclu
 /**
  * Batch version of `loadRelationships`: a polymorphic `belongs` is resolved
  * with one query per target type instead of one per row.
- *
- * @param {RowReader} reader
- * @param {Record<string, ModelSchema>} models
- * @param {string} modelName
- * @param {Row[]} records
- * @param {string[]} includes
- * @returns {Promise<Row[]>}
  */
-export async function loadRelationshipsForMany(reader, models, modelName, records, includes) {
+export async function loadRelationshipsForMany(reader: RowReader, models: Record<string, ModelSchema>, modelName: string, records: Row[], includes: string[]): Promise<Row[]> {
   if (!includes || includes.length === 0 || !records || records.length === 0) return records;
 
-  const modelSchema = models[modelName];
+  const modelSchema = entryOf(models, modelName);
   if (!modelSchema) return records;
 
-  /** @type {string[]} */
-  const polymorphicIncludes = [];
-  /** @type {string[]} */
-  const regularIncludes = [];
+  const polymorphicIncludes: string[] = [];
+  const regularIncludes: string[] = [];
 
   for (const relationName of includes) {
-    const relationDef = /** @type {RelationshipDefinition | undefined} */ (modelSchema[relationName]);
+    const relationDef = schemaEntry(modelSchema, relationName) as RelationshipDefinition | undefined;
     if (relationDef?.polymorphic && relationDef?.relationship === "belongs") polymorphicIncludes.push(relationName);
     else regularIncludes.push(relationName);
   }
 
-  /** @type {Row[]} */
-  let enriched = records.map((r) => ({ ...r }));
+  let enriched: Row[] = records.map((r): Row => Object.fromEntries(Object.entries(r)));
 
   if (regularIncludes.length > 0)
     enriched = await Promise.all(enriched.map((record) => loadRelationships(reader, models, modelName, record, regularIncludes)));
@@ -95,13 +78,12 @@ export async function loadRelationshipsForMany(reader, models, modelName, record
   for (const relationName of polymorphicIncludes) {
     const typeFieldName = `${relationName}Type`;
 
-    /** @type {Record<string, Map<string, Row[]>>} */
-    const byType = {};
+    const byType: Record<string, Map<string, Row[]>> = {};
     for (const record of enriched) {
-      const contentType = /** @type {string | undefined} */ (record[typeFieldName]);
+      const contentType = record[typeFieldName] as string | undefined;
       const contentId = relationValueToId(record[relationName]);
       record[relationName] = null;
-      if (!contentType || !contentId || !models[contentType]) continue;
+      if (!contentType || !contentId || !entryOf(models, contentType)) continue;
       let holders = byType[contentType];
       if (!holders) {
         holders = new Map();
@@ -123,16 +105,7 @@ export async function loadRelationshipsForMany(reader, models, modelName, record
   return enriched;
 }
 
-/**
- * @param {RowReader} reader
- * @param {Record<string, ModelSchema>} models
- * @param {string} modelName
- * @param {Row} record
- * @param {string} relationName
- * @param {RelationshipDefinition} relationDef
- * @returns {Promise<Row | Row[] | null>}
- */
-async function loadRelationship(reader, models, modelName, record, relationName, relationDef) {
+async function loadRelationship(reader: RowReader, models: Record<string, ModelSchema>, modelName: string, record: Row, relationName: string, relationDef: RelationshipDefinition): Promise<Row | Row[] | null> {
   const { relationship, targetModel, many, polymorphic } = relationDef;
 
   if (relationship === "belongs" && polymorphic) {
@@ -140,27 +113,27 @@ async function loadRelationship(reader, models, modelName, record, relationName,
     if (!foreignKeyValue) return null;
 
     const typeFieldName = `${relationName}Type`;
-    const contentType = /** @type {string | undefined} */ (record[typeFieldName]);
+    const contentType = record[typeFieldName] as string | undefined;
 
     if (!contentType) {
       modelBus().emit(MODEL_WARN, { type: "polymorphic_type_missing", model: modelName, field: relationName, typeField: typeFieldName });
       return null;
     }
 
-    if (!models[contentType]) {
+    if (!entryOf(models, contentType)) {
       modelBus().emit(MODEL_WARN, { type: "polymorphic_model_not_found", model: modelName, field: relationName, targetModel: contentType });
       return null;
     }
 
-    return reader.get(contentType, /** @type {string | number} */ (foreignKeyValue));
+    return reader.get(contentType, foreignKeyValue as string | number);
   }
 
-  const target = /** @type {string} */ (targetModel);
+  const target = targetModel as string;
 
   if (relationship === "belongs") {
     const foreignKeyValue = relationValueToId(record[relationName]);
     if (!foreignKeyValue) return null;
-    return reader.get(target, /** @type {string | number} */ (foreignKeyValue));
+    return reader.get(target, foreignKeyValue as string | number);
   }
 
   if (relationship === "belongs_many") {
@@ -177,6 +150,7 @@ async function loadRelationship(reader, models, modelName, record, relationName,
     return related[0] ?? null;
   }
 
-  modelBus().emit(MODEL_WARN, { type: "unknown_relationship_type", relationship });
-  return many ? [] : null;
+  modelBus().emit(MODEL_WARN, { type: "unknown_relationship_type", relationship: relationDef.relationship });
+  const none: Row[] = [];
+  return many ? none : null;
 }

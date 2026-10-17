@@ -14,8 +14,8 @@
  */
 
 import { resource } from "../controller/resource.js";
-import { isModelApi } from "./index.js";
-import { onChange } from "./changes.js";
+import { isModelApi } from "./index.ts";
+import { onChange } from "./changes.ts";
 
 /** @import { Resource, ResourceOptions, Store, SyncBinder, SyncProp } from "../controller/types.ts" */
 /** @import { ModelApi, ModelQueryOptions, QueryOptions } from "./types.ts" */

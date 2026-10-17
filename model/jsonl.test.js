@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import T from "../types/index.js";
-import JsonlAdapter from "./jsonl.js";
-import { createAdapter, registerStorageAdapter } from "./adapter.js";
-import { createStore, storeRequest } from "./store.js";
-import { configureModel, defineModel, modelBus, onChange } from "./index.js";
+import JsonlAdapter from "./jsonl.ts";
+import { createAdapter, registerStorageAdapter } from "./adapter.ts";
+import { createStore, storeRequest } from "./store.ts";
+import { configureModel, defineModel, modelBus, onChange } from "./index.ts";
 
 registerStorageAdapter("jsonl", JsonlAdapter);
 
