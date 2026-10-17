@@ -1,4 +1,4 @@
-# Probe results (2026-10-17T15:06Z, scriptc 0.3.5, node v25.3.0)
+# Probe results (2026-10-17T17:49Z, scriptc 0.3.5, node v25.3.0)
 
 ## p-a-dispatch: PASS
 - coverage rc=0 static=64 (100%) fully=true deferred=false
@@ -62,6 +62,14 @@ done write the probe
 
 ## p-ag-prop-signal: PASS
 - coverage rc=0 static=204 (100%) fully=true deferred=false
+- build rc=0 node rc=0 native rc=0 same output=true
+
+## p-ah-classes-engine: PASS
+- coverage rc=0 static=951 (100%) fully=true deferred=false
+- build rc=0 node rc=0 native rc=0 same output=true
+
+## p-ai-theme-tokens: PASS
+- coverage rc=0 static=239 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-b-host: PASS
@@ -183,23 +191,23 @@ scriptc coverage /home/alanleal/Projects/wt-probe/native/probes/p-n-alloc.js
 --- build
 /home/alanleal/Projects/wt-probe/native/probes/out/p-n-alloc
 --- node
-one-field class: 42.7 ms
-seven-field class: 95.3 ms
-three-level subclass with an array field: 61.5 ms
-two-level subclass with an array field: 27.6 ms
-object literal: 8.0 ms
-small array: 36.1 ms
-one-field class, dropped: 4.1 ms
-empty array field only: 5.5 ms
+one-field class: 15.4 ms
+seven-field class: 25.1 ms
+three-level subclass with an array field: 37.3 ms
+two-level subclass with an array field: 14.2 ms
+object literal: 7.4 ms
+small array: 9.8 ms
+one-field class, dropped: 6.9 ms
+empty array field only: 26.1 ms
 --- native
-one-field class: 126.4 ms
-seven-field class: 54.2 ms
-three-level subclass with an array field: 703.1 ms
-two-level subclass with an array field: 73.0 ms
-object literal: 6.8 ms
-small array: 36.7 ms
-one-field class, dropped: 38.1 ms
-empty array field only: 12.6 ms
+one-field class: 35.6 ms
+seven-field class: 9.6 ms
+three-level subclass with an array field: 40.1 ms
+two-level subclass with an array field: 14.2 ms
+object literal: 2.0 ms
+small array: 10.1 ms
+one-field class, dropped: 9.9 ms
+empty array field only: 4.0 ms
 ```
 
 ## p-o-subclass-field: PASS
