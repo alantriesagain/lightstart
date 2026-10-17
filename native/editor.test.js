@@ -1,5 +1,5 @@
 import { EventBinding } from "../html/parts.ts";
-import { ChangeEvent, KeyEvent, SubmitEvent, TInput, editorHandleKey } from "./index.js";
+import { ChangeEvent, KeyEvent, SubmitEvent, TInput, deleteWord, editorHandleKey, killToEnd, killToStart, lineEnd, lineStart, moveRow, newline, setValue, wordLeft } from "./index.js";
 import { done, eq, eqn, ok } from "./assert.js";
 
 /**
@@ -121,5 +121,17 @@ eq("ctrl+d deletes forward", input.lines[0], "git commit-m fix_bug");
 input.col = 20;
 editorHandleKey(input, key("char", "d", true, false, false));
 eq("at a line's end it joins the next", JSON.stringify(input.lines), '["git commit-m fix_bugnext"]');
+
+// The operations as an app binds its own keys to them: what a kill answers, the moves.
+setValue(input, "one two three");
+lineStart(input);
+wordLeft(input);
+eq("lineStart, wordLeft at the start stays", state(input), '["one two three"] @0:0');
+lineEnd(input);
+eq("killToEnd at the end of the last line kills nothing", killToEnd(input), "");
+eq("deleteWord answers the word", deleteWord(input), "three");
+eq("killToStart answers what it killed", killToStart(input) + " | " + state(input), 'one two  | [""] @0:0');
+newline(input);
+ok("newline, and moveRow is false past the edge", state(input) === '["",""] @1:0' && moveRow(input, -1) && !moveRow(input, -1));
 
 done();

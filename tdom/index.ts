@@ -16,7 +16,7 @@ export { Caret, Clip, inputCaretCell, inputVisualRows, paint } from "./paint.ts"
 export { Screen, diffScreens } from "./screen.ts";
 export { ALT_SCREEN_OFF, ALT_SCREEN_ON, CLEAR, CSI, CURSOR_HIDE, CURSOR_SHOW, ESC, HOME, MOUSE_OFF, MOUSE_ON, PASTE_OFF, PASTE_ON, RESET, SYNC_END, SYNC_START, cup, sgrTransition } from "./ansi.ts";
 export { InputDecoder } from "./input.ts";
-export { clearInput, editorHandleKey, insertText, setValue } from "./editor.ts";
+export { backspace, clearInput, del, deleteWord, editorHandleKey, insertText, killToEnd, killToStart, lineEnd, lineStart, moveLeft, moveRight, moveRow, newline, setValue, submit, wordLeft, wordRight } from "./editor.ts";
 export { Terminal } from "./terminal.ts";
 export { Renderer } from "./renderer.ts";
 export { TermHost, TermPrepared } from "./host.ts";

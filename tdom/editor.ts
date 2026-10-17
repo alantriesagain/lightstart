@@ -3,7 +3,9 @@
  * grapheme-aware: caret movement (by grapheme, and by word with Alt or Ctrl
  * and ←/→, or Alt+b and Alt+f), insertion, deletion (Ctrl+D forward), the
  * kill keys, paste, and submit. Every edit dispatches a change event through the
- * tree; Enter dispatches submit with the content, cleared first.
+ * tree; Enter dispatches submit with the content, cleared first. The operations
+ * are exported, so an app can bind its own keys to them; `editorHandleKey` is
+ * the default table.
  */
 import { ChangeEvent, KeyEvent, SubmitEvent } from "./events.ts";
 import { TInput } from "./node.ts";
@@ -57,7 +59,8 @@ export const clearInput = (input: TInput) => {
   notifyChanged(input);
 };
 
-const backspace = (input: TInput) => {
+/** Delete the grapheme before the caret; at a line's start, join the line before. */
+export const backspace = (input: TInput) => {
   if (input.col > 0) {
     const line = gs(input.lines[input.row]);
     line.splice(input.col - 1, 1);
@@ -74,7 +77,8 @@ const backspace = (input: TInput) => {
   }
 };
 
-const del = (input: TInput) => {
+/** Delete the grapheme after the caret; at a line's end, join the next line. */
+export const del = (input: TInput) => {
   const line = gs(input.lines[input.row]);
   if (input.col < line.length) {
     line.splice(input.col, 1);
@@ -87,7 +91,7 @@ const del = (input: TInput) => {
   }
 };
 
-const moveLeft = (input: TInput) => {
+export const moveLeft = (input: TInput) => {
   if (input.col > 0) input.col--;
   else if (input.row > 0) {
     input.row--;
@@ -96,7 +100,7 @@ const moveLeft = (input: TInput) => {
   input.invalidate();
 };
 
-const moveRight = (input: TInput) => {
+export const moveRight = (input: TInput) => {
   const len = gs(input.lines[input.row]).length;
   if (input.col < len) input.col++;
   else if (input.row + 1 < input.lines.length) {
@@ -115,7 +119,7 @@ const inWord = (g: string) => {
 };
 
 /** To the start of the word before the caret; at a line's start, to the end of the line before. */
-const wordLeft = (input: TInput) => {
+export const wordLeft = (input: TInput) => {
   if (input.col === 0) return moveLeft(input);
   const line = gs(input.lines[input.row]);
   let i = input.col;
@@ -126,7 +130,7 @@ const wordLeft = (input: TInput) => {
 };
 
 /** To the end of the word after the caret; at a line's end, to the start of the line after. */
-const wordRight = (input: TInput) => {
+export const wordRight = (input: TInput) => {
   const line = gs(input.lines[input.row]);
   if (input.col >= line.length) return moveRight(input);
   let i = input.col;
@@ -136,7 +140,8 @@ const wordRight = (input: TInput) => {
   input.invalidate();
 };
 
-const moveRow = (input: TInput, delta: number) => {
+/** Move the caret `delta` lines; false at the first or last line. */
+export const moveRow = (input: TInput, delta: number) => {
   const target = input.row + delta;
   if (target < 0 || target >= input.lines.length) return false;
   input.row = target;
@@ -146,39 +151,66 @@ const moveRow = (input: TInput, delta: number) => {
   return true;
 };
 
-const killToStart = (input: TInput) => {
+/** The caret to the line's start. */
+export const lineStart = (input: TInput) => {
+  input.col = 0;
+  input.invalidate();
+};
+
+/** The caret to the line's end. */
+export const lineEnd = (input: TInput) => {
+  input.col = gs(input.lines[input.row]).length;
+  input.invalidate();
+};
+
+/** A new line at the caret. */
+export const newline = (input: TInput) => insertText(input, "\n");
+
+/** Kill to the line's start; answers what was killed. */
+export const killToStart = (input: TInput) => {
   const line = gs(input.lines[input.row]);
+  const killed = line.slice(0, input.col).join("");
   input.lines[input.row] = line.slice(input.col).join("");
   input.col = 0;
   notifyChanged(input);
+  return killed;
 };
 
-/** Kill to the end of the line; at its end, join the next line (as emacs and bash do). */
-const killToEnd = (input: TInput) => {
+/** Kill to the end of the line; at its end, join the next line (as emacs and bash do). Answers what was killed ("" for a join). */
+export const killToEnd = (input: TInput) => {
   const line = gs(input.lines[input.row]);
+  let killed = "";
   if (input.col >= line.length && input.row + 1 < input.lines.length) {
     input.lines[input.row] = line.join("") + input.lines[input.row + 1];
     input.lines.splice(input.row + 1, 1);
-  } else input.lines[input.row] = line.slice(0, input.col).join("");
+  } else {
+    killed = line.slice(input.col).join("");
+    input.lines[input.row] = line.slice(0, input.col).join("");
+  }
   notifyChanged(input);
+  return killed;
 };
 
-const deleteWord = (input: TInput) => {
+/** Delete the word before the caret (spaces separate words); at a line's start, a backspace. Answers what was deleted. */
+export const deleteWord = (input: TInput) => {
   const line = gs(input.lines[input.row]);
   if (input.col === 0) {
     backspace(input);
-    return;
+    return "";
   }
   let i = input.col;
   while (i > 0 && line[i - 1] === " ") i--;
   while (i > 0 && line[i - 1] !== " ") i--;
+  const deleted = line.slice(i, input.col).join("");
   line.splice(i, input.col - i);
   input.lines[input.row] = line.join("");
   input.col = i;
   notifyChanged(input);
+  return deleted;
 };
 
-const submit = (input: TInput) => {
+/** Submit the content: the input cleared, then a submit event with it. */
+export const submit = (input: TInput) => {
   const v = input.value();
   clearInput(input);
   input.dispatch(new SubmitEvent(v));
@@ -193,12 +225,10 @@ export const editorHandleKey = (input: TInput, e: KeyEvent) => {
       if (e.ctrl)
         switch (e.text) {
           case "a":
-            input.col = 0;
-            input.invalidate();
+            lineStart(input);
             return true;
           case "e":
-            input.col = gs(input.lines[input.row]).length;
-            input.invalidate();
+            lineEnd(input);
             return true;
           case "u":
             killToStart(input);
@@ -216,7 +246,7 @@ export const editorHandleKey = (input: TInput, e: KeyEvent) => {
             del(input);
             return true;
           case "j":
-            insertText(input, "\n");
+            newline(input);
             return true;
           default:
             return false;
@@ -236,7 +266,7 @@ export const editorHandleKey = (input: TInput, e: KeyEvent) => {
       return true;
     case "enter":
       if (e.alt || e.shift) {
-        insertText(input, "\n");
+        newline(input);
         return true;
       }
       submit(input);
@@ -260,12 +290,10 @@ export const editorHandleKey = (input: TInput, e: KeyEvent) => {
     case "down":
       return moveRow(input, 1);
     case "home":
-      input.col = 0;
-      input.invalidate();
+      lineStart(input);
       return true;
     case "end":
-      input.col = gs(input.lines[input.row]).length;
-      input.invalidate();
+      lineEnd(input);
       return true;
     default:
       return false;
