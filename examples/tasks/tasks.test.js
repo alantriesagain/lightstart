@@ -3,14 +3,13 @@
  * renderer's decoder, the rows land in JSONL files held in memory, and the
  * checks read the painted screen. The files start with a task from before
  * boards, which the first board adopts. The theme's classes style the screen
- * on the dark scheme, three of them are read off the painted cells, the
- * focus states among them, and every class the screens used must mean
- * something on the terminal. A second store over the same files reads the
+ * on the dark scheme from the baked table, three of them are read off the
+ * painted cells, the focus states among them, and every class the screens
+ * used must be in the table. A second store over the same files reads the
  * tasks and the boards back. Runs with `node examples/tasks/tasks.test.js`.
  */
 import { ATTR_BOLD, ATTR_STRIKE, Renderer, TInput, TRoot, TRUECOLOR_FLAG, configureClasses, frames, mount } from "@bootstrapp/light/native";
-import { TerminalClasses } from "@bootstrapp/light/theme/terminal";
-import theme from "@bootstrapp/light/theme/themes/default.js";
+import { BakedClasses } from "@bootstrapp/light/theme/baked";
 import { configureModel, modelBus } from "@bootstrapp/light/model";
 import { createStore, storeRequest } from "@bootstrapp/light/model/store";
 import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
@@ -21,6 +20,7 @@ import boards from "./models/boards.js";
 import tasks from "./models/tasks.js";
 import board from "./controllers/board.js";
 import { TaskApp, appKey } from "./views/task-app.ts";
+import { dark } from "./classes.baked.js";
 
 /** @type {Map<string, string>} */
 const files = new Map();
@@ -53,7 +53,7 @@ await board.$ready;
 const term = new TestTerminal();
 term.cols = 72;
 term.rows = 14;
-const styler = new TerminalClasses(theme, "dark");
+const styler = new BakedClasses(dark);
 configureClasses(styler);
 const root = new TRoot();
 const renderer = new Renderer(term, root);
@@ -177,7 +177,7 @@ ok("/rename renames the focused board", side("Done") === "right" && !screen().in
 
 let ignored = "";
 for (const cls of styler.ignored) ignored += cls + " ";
-eq("every class the screens used means something on the terminal", ignored, "");
+eq("every class the screens used is in the baked table", ignored, "");
 
 renderer.stop();
 await open();
