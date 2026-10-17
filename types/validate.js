@@ -177,7 +177,8 @@ const interpolate = (str, data) =>
 
 /**
  * Validate an object against a schema of descriptors. Answers
- * `[errors, validatedObject]`, errors `null` on success.
+ * `[errors, validatedObject]`, errors `null` on success; the validated
+ * object is a new one, the input is left as it was.
  *
  * @param {Record<string, unknown>} object
  * @param {{
@@ -202,6 +203,8 @@ export const validateType = (
   if (!schema) return [null, object];
   /** @type {Record<string, string>} */
   const errors = {};
+  /** @type {Record<string, unknown>} */
+  const out = {};
   let hasError = false;
 
   const context = { operation, row };
@@ -219,7 +222,7 @@ export const validateType = (
     if (error) {
       hasError = true;
       errors[key] = error;
-    } else if (value !== undefined) object[key] = value;
+    } else if (value !== undefined) out[key] = value;
   }
 
   const virtual = Object.fromEntries(
@@ -228,17 +231,17 @@ export const validateType = (
   for (const prop in virtual)
     if (validateVirtual) {
       const [error, value] = validateField(
-        interpolate(/** @type {string} */ (virtual[prop].virtual), { ...row, ...object }),
+        interpolate(/** @type {string} */ (virtual[prop].virtual), { ...row, ...object, ...out }),
         virtual[prop],
         context,
       );
       if (error) {
         hasError = true;
         errors[prop] = error;
-      } else if (value !== undefined) object[prop] = value;
+      } else if (value !== undefined) out[prop] = value;
     } else
-      object[prop] = interpolate(/** @type {string} */ (virtual[prop].virtual), { ...row, ...object });
+      out[prop] = interpolate(/** @type {string} */ (virtual[prop].virtual), { ...row, ...object, ...out });
 
   if (hasError) return [errors, null];
-  return [null, object];
+  return [null, { ...object, ...out }];
 };

@@ -80,7 +80,8 @@ export const parsers = {
       const target = /** @type {Record<string, unknown>} */ (value);
       for (const [key, def] of Object.entries(prop.props)) {
         const defaultValue = defaultOf(def);
-        if (defaultValue !== undefined && target[key] === undefined) target[key] = defaultValue;
+        if (defaultValue === undefined) continue;
+        if (!(key in target)) target[key] = defaultValue;
       }
     }
     return value;

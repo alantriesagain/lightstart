@@ -78,6 +78,16 @@ describe("light/types: parse", () => {
     assert.deepEqual(parse('{"a":1}', T.object({ props: { b: T.number(2) } })), { a: 1, b: 2 });
   });
 
+  it("fills an object input's missing nested defaults on the object itself, a key it has staying as it is", () => {
+    const prop = T.object({ props: { b: T.number(2), c: T.string("x") } });
+    const input = { a: 1, c: undefined };
+    const parsed = parse(input, prop);
+    assert.equal(parsed, input);
+    assert.deepEqual(Object.keys(input), ["a", "c", "b"]);
+    assert.equal(input.b, 2);
+    assert.equal(input.c, undefined);
+  });
+
   it("coerces an array's object items by their declared keys", () => {
     const prop = normalizeProperty(T.array({ itemType: { n: T.number(), s: T.string() } }));
     assert.deepEqual(parse('[{"n":"4","s":"x"}]', prop), [{ n: 4, s: "x" }]);

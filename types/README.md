@@ -43,7 +43,7 @@ T.number({ min: 18 }).validate(10);   // { valid: false, value: 10, error: "mini
 `T.validateType(object, { schema, row, operation, undefinedProps, validateVirtual })` checks a
 whole object against a `Record<string, TypeDefinition>` and answers the tuple
 `[errors, validatedObject]`: `errors` is `null` on success, otherwise a field → code map, and
-`validatedObject` is `null` on failure. `row` carries the pre-edit state and `operation`
+`validatedObject` is `null` on failure and otherwise a new object (the input is never written to). `row` carries the pre-edit state and `operation`
 (`"add"`, `"edit"`) reaches a `customValidator` through its context argument. A
 `T.timestamp()` field is stamped by `validateType` itself: `update: true` stamps it on every
 call, and a `"create"` operation fills it when empty (`create: false` turns that off); a
