@@ -24,6 +24,7 @@ selection, scrollbars); link it once. `presets.js` lists the themes in
 | `@bootstrapp/light/theme/classes` | the utility classes a theme gives: `createEngine`, `buildTheme`, the rule table (see Classes) |
 | `@bootstrapp/light/theme/palette` | the opt-in Tailwind palette, reached by a dynamic import |
 | `@bootstrapp/light/theme/runtime` | the browser host of the classes: `createRuntime(engine, { doc, raf, preflight })` |
+| `@bootstrapp/light/theme/terminal` | the terminal host of the classes: `TerminalClasses(theme, scheme)`, a `ClassStyler` for `tdom`'s `configureClasses` |
 
 ## API Reference
 
@@ -131,6 +132,42 @@ engine.compile("p-4"); // { cls, selector, medias, weight, decls: ["padding:1rem
 `buildTheme(theme, { palette })` turns the theme's groups into the utility scales: `color.*` and `text.*` become color utilities (`color.ink` gives `text-ink`, `bg-ink`, `border-ink`), `shadow.*` `shadow-<k>`, `radius.*` `rounded-<k>`, `spacing.*` named spacing, `leading.*` and `font.*` likewise; a declared color earns an `on-<k>` companion (`text-on-hero` reads `--color-on-hero`, the readable contrast color the tokens derive). The raw Tailwind palette (`text-gray-400`) is opt-in through `palette`, loaded from `@bootstrapp/light/theme/palette`. `createEngine({ theme, safelist })` compiles the safelist with whatever classes it is given, for class names composed at run time that a build cannot see. `engine.generate(classes)` answers the stylesheet and the classes it did not know; the browser runtime (`@bootstrapp/light/theme/runtime`) compiles classes as a `MutationObserver` sees them appear and rewrites one `<style data-tw-runtime>` once per frame. A Bootstrapp app gets both from `@bootstrapp/theme`, which boots the runtime in development and compiles `style.css` in a build.
 
 Deliberate divergences from Tailwind's preset: `dark:` targets `:root.dark`, the class `colorScheme` flips, so the variables and the variant can never disagree; breakpoints are px; transforms are individual properties (`translate:`, `rotate:`, `scale:`); filters do not compose; shadows and rings are plain `box-shadow`, last wins; `space-*` and `divide-*` use the child combinator; font weights read the theme (`font-bold` is `font-weight: var(--font-bold, 700)`); the palette is Tailwind v3 hex; opacity is fractional and a `/modifier` alpha compiles to `color-mix(in srgb, …)`, the one alpha form that works on `var()` tokens; the no-hyphen shorthands (`p1`, `w2`) are rejected. Left unbuilt until a project needs them: shadow colors, `ring-offset-*`, keyframes beyond the four stock animations, container queries, `before:`/`after:` content injection, `theme()` inside arbitrary values. Anything parked shows up in `generate`'s `unknown` list instead of silently missing.
+
+## Hosts
+
+The engine answers CSS, and the browser is the host that needs nothing more: the runtime writes the rules into a `<style>` and the page does the rest. Any other host reads the same compiled declarations and maps the subset it can show onto its own elements, so a class means one thing everywhere and a host documents what it leaves out. The terminal is the first (`theme/terminal.ts`); a host for a native toolkit would be another `ClassStyler` over the same `createRules`.
+
+```js
+import { configureClasses } from "@bootstrapp/light/native";
+import { TerminalClasses } from "@bootstrapp/light/theme/terminal";
+import theme from "@bootstrapp/light/theme/themes/default.js";
+
+configureClasses(new TerminalClasses(theme, "dark"));
+```
+
+`TerminalClasses(theme, scheme)` resolves colors through the variables of one side of the theme (`"light"` or `"dark"`; terminals are mostly dark) and applies the `dark:` variant on the dark scheme; every other variant (`hover:`, `md:`) is ignored. Lengths round to cells, half a rem or eight pixels each and at least one when positive (`p-1`, `p-2` → 1, `p-4` → 2, `gap-2` → 1, `w-10` → 5); `tdom` has one `padding`, so `px-2` and `py-1` set it too. Colors are truecolor (`#rrggbb` from the tokens; a 16-color fallback is a later option). Later rules win as in a stylesheet: between two classes of one prop, the one later in the rule table (`items-end items-stretch` → stretch), and between two of the same rule, the later class (`p-4 p-1` → 1). What a class compiled to nothing a terminal shows, or to nothing at all, lands in the styler's `ignored` set.
+
+| Declaration | tdom prop | Examples |
+|---|---|---|
+| `display:none`, `visibility:hidden` | `hidden` | `hidden`, `invisible` |
+| `flex-direction` | `direction` (`row`, `column`) | `flex-row`, `flex-col` |
+| `flex`, `flex-grow` | `flex` | `flex-1` → 1, `flex-none` → 0, `grow` → 1 |
+| `padding`, `padding-<side>` | `padding` | `p-1` → 1, `p-4` → 2, `p-md` → 2, `px-2` → 1 |
+| `gap`, `column-gap`, `row-gap` | `gap` | `gap-2` → 1, `gap-4` → 2 |
+| `width`, `height` as a length | cells | `w-10` → 5, `h-3` → 2; `w-full` nothing |
+| `color` | `fg` | `text-primary`, `text-muted`, `text-primary/50` (alpha dropped) |
+| `background-color` | `bg` | `bg-surface`, `bg-canvas`, `bg-transparent` → default |
+| `font-weight` | `bold` (≥ 600) | `font-bold`, `font-normal` |
+| `font-style` | `italic` | `italic`, `not-italic` |
+| `text-decoration-line` | `underline`, `strike` | `underline`, `line-through`, `no-underline` |
+| `opacity` | `dim` (< 1) | `opacity-50` |
+| `border-width` | `border` (> 0) | `border`, `border-0` |
+| `overflow`, `overflow-y` | `scroll` (`auto`, `scroll`) | `overflow-y-auto`, `overflow-hidden` |
+| `align-items` | `align`: `start`, `end`, `stretch` (`center` → `start`) | `items-center`, `items-end` |
+| `white-space` | `wrap` on a text: `nowrap` → `none` | `truncate` |
+| sizes, radii, margins, shadows, `border-color`, `text-align`, states, breakpoints | ignored | `text-sm`, `rounded`, `m-2`, `border-dim`, `hover:underline`, `md:flex-1` |
+
+`border-color` is ignored because a border paints in the box's own style, so it would recolor the box's text too.
 
 ## Presets
 

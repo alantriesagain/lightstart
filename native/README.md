@@ -33,7 +33,7 @@ The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on an
 | `scriptc.js` | Which scriptc the native tools run (`$SCRIPTC` first) |
 | `test-terminal.ts` | The test terminal the focus test renders on |
 | `elements-bench.js` | 1k rows as plain templates, as elements made by tag and as slotted rows: create, layout, update, reverse, clear, under node and natively |
-| `*.test.js` | Parts and views on the terminal host, elements made by tag and slot projection, layout and paint, wrapping and widths, the editor, the input decoder, the hit test and focus ring with a renderer on a test terminal |
+| `*.test.js` | Parts and views on the terminal host, elements made by tag, slot projection, the theme's classes on elements and on the painted screen, layout and paint, wrapping and widths, the editor, the input decoder, the hit test and focus ring with a renderer on a test terminal |
 | `demo.js`, `pty.sh` | The demo screen and the pty gate that clicks, scrolls, focuses and submits in it as a binary (3.3 MB stripped) |
 | `probes/` | One-file programs that pin what the compiler accepts, and the decisions they produced (`probes/README.md`) |
 | `desktop/` | The desktop shell: `DesktopApp` over the system web view, the page client, the C shim, `light desktop build|run`, the demo, the smoke and coverage gates |
