@@ -1,4 +1,4 @@
-# Probe results (2026-10-17T21:16Z, scriptc 0.3.6, node v25.3.0)
+# Probe results (2026-10-17T21:27Z, scriptc 0.3.6, node v25.3.0)
 
 ## p-a-dispatch: PASS
 - coverage rc=0 static=64 (100%) fully=true deferred=false
@@ -180,23 +180,23 @@ scriptc coverage /home/alanleal/Projects/light/native/probes/p-n-alloc.js
 --- build
 /home/alanleal/Projects/light/native/probes/out/p-n-alloc
 --- node
-one-field class: 19.8 ms
-seven-field class: 27.2 ms
-three-level subclass with an array field: 44.4 ms
-two-level subclass with an array field: 37.7 ms
-object literal: 7.6 ms
-small array: 43.2 ms
-one-field class, dropped: 8.4 ms
-empty array field only: 6.4 ms
+one-field class: 15.4 ms
+seven-field class: 24.0 ms
+three-level subclass with an array field: 33.0 ms
+two-level subclass with an array field: 11.8 ms
+object literal: 7.1 ms
+small array: 7.2 ms
+one-field class, dropped: 13.6 ms
+empty array field only: 5.1 ms
 --- native
-one-field class: 43.5 ms
-seven-field class: 17.1 ms
-three-level subclass with an array field: 206.1 ms
-two-level subclass with an array field: 15.3 ms
-object literal: 2.1 ms
-small array: 12.6 ms
-one-field class, dropped: 9.7 ms
-empty array field only: 4.2 ms
+one-field class: 52.0 ms
+seven-field class: 14.2 ms
+three-level subclass with an array field: 55.7 ms
+two-level subclass with an array field: 17.1 ms
+object literal: 1.4 ms
+small array: 9.4 ms
+one-field class, dropped: 10.5 ms
+empty array field only: 3.7 ms
 ```
 
 ## p-o-subclass-field: PASS
