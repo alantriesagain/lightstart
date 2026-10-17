@@ -172,6 +172,7 @@ export class TElement extends TNode {
   attached: boolean;
   explicitProps: number;
   classProps: number;
+  states: number;
 
   /**
    * @param kind box, text, span, input or fragment
@@ -181,6 +182,7 @@ export class TElement extends TNode {
     super();
     this.explicitProps = 0;
     this.classProps = 0;
+    this.states = 0;
     this.kind = kind;
     this.tag = tag;
     this.firstChild = null;

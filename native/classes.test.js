@@ -4,8 +4,9 @@
  * the element and off the painted screen; a prop the template writes wins
  * over its classes whatever the attribute order and comes back to them when
  * removed; a class list that drops a prop resets it; the dark scheme and the
- * `dark:` variant; unknown classes are ignored; a defined element takes its
- * classes too; without a styler `class` is inert again.
+ * `dark:` variant; `focus:` and `focus-within:` follow the renderer's focus;
+ * unknown classes are ignored; a defined element takes its classes too;
+ * without a styler `class` is inert again.
  */
 import { ATTR_BOLD, ATTR_DIM, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, Renderer, TBox, TRoot, TRUECOLOR_FLAG, TText, childNodes, configureClasses, frames, html, nothing, render, signal } from "./index.js";
 import { done, eq, ok } from "./assert.js";
@@ -82,6 +83,34 @@ configureClasses(new TerminalClasses(defaultTheme, "light"));
   color.value = nothing;
   render(view(), root);
   eq("removed, the color comes back from the class", String(inner.style.fg), String(hex(0x6b716b)));
+}
+
+{
+  const root = new TRoot();
+  render(html`<box class="focus-within:bg-surface"><text tabindex="0" class="text-muted focus:text-primary focus:font-bold focus:dark:underline">a</text><text tabindex="0" bold=${false} class="focus:font-bold">b</text></box>`, root);
+  const renderer = new Renderer(new TestTerminal(), root);
+  renderer.start();
+  const outer = box(second(root));
+  const a = outer.firstChild;
+  if (!(a instanceof TText) || !(a.next instanceof TText)) throw new Error("no texts");
+  const b = a.next;
+  const seen = () => String(a.style.fg) + "|" + String(a.style.has(ATTR_BOLD)) + "|" + String(b.style.has(ATTR_BOLD)) + "|" + String(outer.style.bg);
+  eq("before the focus, the base layer alone", seen(), String(hex(0x6b716b)) + "|false|false|-1");
+  renderer.renderFrame();
+  renderer.setFocus(a);
+  eq("the focused element takes its focus: layer, its ancestor its focus-within: layer", seen(), String(hex(0x101210)) + "|true|false|" + String(hex(0xffffff)));
+  ok("dark: inside focus: stays off on the light scheme", !a.style.has(ATTR_UNDERLINE));
+  renderer.renderFrame();
+  eq("the painted texts take the box's new background, their lines laid out again under it", String(renderer.back.bg[0]) + "|" + String(renderer.back.bg[renderer.back.w]), String(hex(0xffffff)) + "|" + String(hex(0xffffff)));
+  renderer.setFocus(b);
+  eq("the focus moved: a is back to its base layer, b's explicit prop beats its focus: layer, the box keeps focus-within", seen(), String(hex(0x6b716b)) + "|false|false|" + String(hex(0xffffff)));
+  renderer.setFocus(null);
+  eq("no focus: the box loses its focus-within: layer", seen(), String(hex(0x6b716b)) + "|false|false|-1");
+  renderer.setFocus(a);
+  outer.remove(a);
+  renderer.renderFrame();
+  eq("a focused element that left the tree loses the focus at the next frame, and the box its focus-within", String(renderer.focus === null) + "|" + String(outer.style.bg), "true|-1");
+  renderer.stop();
 }
 
 {

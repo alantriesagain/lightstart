@@ -4,8 +4,10 @@
  * element under a cell, clipped by every box on the way; the focus order
  * is the document order of the focusable elements: inputs, buttons, and
  * any element with a `tabindex` attribute or a click handler, unless
- * disabled.
+ * disabled. When the focus moves, the elements that lose and take it, and
+ * their ancestors, change the states their classes may depend on.
  */
+import { STATE_FOCUS, STATE_FOCUS_WITHIN, reapplyClasses } from "./classes.ts";
 import { TAnchor, TBox, TElement, TInput, TNode, TRun } from "./node.ts";
 
 const contains = (el: TElement, x: number, y: number) => x >= el.x && x < el.x + el.w && y >= el.y && y < el.y + el.h;
@@ -57,6 +59,31 @@ export const nextFocusable = (root: TElement, current: TElement | null, delta: n
   const at = current === null ? -1 : list.indexOf(current);
   if (at < 0) return delta > 0 ? list[0] : list[list.length - 1];
   return list[(at + delta + list.length) % list.length];
+};
+
+/** Clear the `focus` and `focus-within` states down the one path under `el` that has them. */
+const dropFocusStates = (el: TElement, touched: TElement[]) => {
+  el.states &= ~(STATE_FOCUS | STATE_FOCUS_WITHIN);
+  touched.push(el);
+  for (let c = el.firstChild; c !== null; c = c.next) if (c instanceof TElement && (c.states & STATE_FOCUS_WITHIN) !== 0) dropFocusStates(c, touched);
+};
+
+/**
+ * The focus moved from `prev` to `next` under `root`: the path that held the
+ * `focus-within` state loses it with the `focus` state at its end (walked
+ * down from the root, and up from `prev` when it has left the tree), `next`
+ * takes `focus` and, with its ancestors, `focus-within`; every element
+ * touched applies its classes again.
+ */
+export const focusStates = (root: TElement, prev: TElement | null, next: TElement | null) => {
+  const touched: TElement[] = [];
+  if ((root.states & STATE_FOCUS_WITHIN) !== 0) dropFocusStates(root, touched);
+  for (let n: TElement | null = prev; n !== null; n = n.parent) if (touched.indexOf(n) < 0) dropFocusStates(n, touched);
+  for (let n: TElement | null = next; n !== null; n = n.parent) {
+    n.states |= n === next ? STATE_FOCUS | STATE_FOCUS_WITHIN : STATE_FOCUS_WITHIN;
+    if (touched.indexOf(n) < 0) touched.push(n);
+  }
+  for (const el of touched) reapplyClasses(el);
 };
 
 /**

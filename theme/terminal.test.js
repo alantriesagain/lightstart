@@ -1,13 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { STATE_FOCUS, STATE_FOCUS_WITHIN } from "../tdom/classes.ts";
 import { TerminalClasses } from "./terminal.ts";
 import defaultTheme from "./themes/default.js";
 
 const light = new TerminalClasses(defaultTheme, "light");
 const dark = new TerminalClasses(defaultTheme, "dark");
 
-/** @param {TerminalClasses} styler @param {string} classes */
-const propsOf = (styler, classes) => Object.fromEntries(styler.propsFor(classes).map((p) => [p.name, p.value]));
+/** @param {number} state */
+const layer = (state) => (state === 0 ? "" : state === STATE_FOCUS ? "focus:" : state === STATE_FOCUS_WITHIN ? "focus-within:" : String(state) + ":");
+
+/** @param {TerminalClasses} styler @param {string} classes the props by name, a state layer's prefixed with its variant, in the order they apply */
+const propsOf = (styler, classes) => Object.fromEntries(styler.propsFor(classes).map((p) => [layer(p.state) + p.name, p.value]));
 
 test("lengths round to cells, half a rem or eight pixels each, at least one when positive", () => {
   assert.equal(light.cellsOf("0"), 0);
@@ -57,12 +61,23 @@ test("later classes win, as in a stylesheet, and the last class of the same prop
   assert.deepEqual(propsOf(light, "font-bold font-normal"), { bold: false });
 });
 
-test("variants: only dark: in the dark scheme; media queries and states never", () => {
+test("variants: dark: in the dark scheme alone; media queries and the states a terminal lacks never", () => {
   assert.deepEqual(propsOf(light, "dark:text-primary"), {});
   assert.deepEqual(propsOf(dark, "dark:text-primary"), { fg: "#e9ebe8" });
   assert.deepEqual(propsOf(dark, "text-muted dark:text-primary"), { fg: "#e9ebe8" });
-  assert.deepEqual(propsOf(light, "md:flex-1 hover:underline sm:p-4"), {});
-  assert.ok(light.ignored.has("md:flex-1") && light.ignored.has("hover:underline") && light.ignored.has("dark:text-primary"));
+  assert.deepEqual(propsOf(light, "md:flex-1 hover:underline sm:p-4 group-focus:font-bold active:underline"), {});
+  assert.ok(light.ignored.has("md:flex-1") && light.ignored.has("hover:underline") && light.ignored.has("dark:text-primary") && light.ignored.has("group-focus:font-bold"));
+});
+
+test("focus: and focus-within: are state layers over the base, the base first", () => {
+  assert.deepEqual(propsOf(light, "focus:font-bold text-muted focus:text-primary"), { fg: "#6b716b", "focus:bold": true, "focus:fg": "#101210" });
+  assert.deepEqual(Object.keys(propsOf(light, "focus:font-bold text-muted focus:text-primary")), ["fg", "focus:fg", "focus:bold"]);
+  assert.deepEqual(propsOf(light, "focus-within:bg-surface focus-visible:underline"), { "focus-within:bg": "#ffffff", "focus:underline": true, "focus:strike": false });
+  assert.deepEqual(propsOf(light, "focus:p-4 focus:p-1"), { "focus:padding": 1 });
+  assert.deepEqual(propsOf(dark, "dark:focus:text-primary focus:dark:text-muted"), { "focus:fg": "#7f857e" });
+  assert.deepEqual(propsOf(light, "dark:focus:text-primary"), {});
+  assert.deepEqual(propsOf(light, "focus:focus-within:underline"), { [String(STATE_FOCUS | STATE_FOCUS_WITHIN) + ":underline"]: true, [String(STATE_FOCUS | STATE_FOCUS_WITHIN) + ":strike"]: false });
+  assert.ok(!light.ignored.has("focus:font-bold") && !light.ignored.has("focus-within:bg-surface"));
 });
 
 test("unknown and unshowable classes are ignored, listed, and never throw", () => {

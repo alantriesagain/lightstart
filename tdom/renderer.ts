@@ -12,7 +12,7 @@
 import { CLEAR, CURSOR_HIDE, CURSOR_SHOW, cup } from "./ansi.ts";
 import { FocusEvent, KeyEvent, MouseEvent, WheelEvent } from "./events.ts";
 import { editorHandleKey } from "./editor.ts";
-import { focusables, hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.ts";
+import { focusStates, focusables, hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.ts";
 import { InputDecoder } from "./input.ts";
 import { layout, scrollBy } from "./layout.ts";
 import { TElement, TInput, TRoot } from "./node.ts";
@@ -90,6 +90,7 @@ export class Renderer {
   }
 
   renderFrame() {
+    if (this.focus !== null && !this.focus.isConnected()) this.setFocus(null);
     if (this.autofocusPending) this.autofocus();
     const t0 = performance.now();
     layout(this.root, this.back.w, this.back.h, DEFAULT_STYLE);
@@ -125,12 +126,14 @@ export class Renderer {
 
   /**
    * Give `el` the focus: the one that had it gets a blur event, the new one
-   * a focus event. Null clears it.
+   * a focus event, and the states their classes depend on follow. Null
+   * clears it, as a frame does for a focused element that left the tree.
    */
   setFocus(el: TElement | null) {
     const prev = this.focus;
     if (prev === el) return;
     this.focus = el;
+    focusStates(this.root, prev, el);
     if (prev !== null) prev.dispatch(new FocusEvent("blur"));
     if (el !== null) el.dispatch(new FocusEvent("focus"));
     frames.request();

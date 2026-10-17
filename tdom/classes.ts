@@ -7,18 +7,31 @@
  * value is the template's, whatever the attribute order, and classes never
  * touch it; a removal hands it back to the classes; a class list that stops
  * implying a prop resets it to its default. Two bitmasks on the element keep
- * the books, one bit per prop name.
+ * the books, one bit per prop name. A prop may be conditioned on the
+ * element's state (`focus:`, `focus-within:`): it applies while the element
+ * has every state bit it names, and the element's classes are applied again
+ * whenever its state changes.
  */
 import type { PropValue, TElement } from "./node.ts";
 
-/** One prop a class string means: the prop's template name and its value. */
+/** The element has the focus. */
+export const STATE_FOCUS = 1;
+/** The element or one of its descendants has the focus. */
+export const STATE_FOCUS_WITHIN = 2;
+
+/**
+ * One prop a class string means: the prop's template name, its value and the
+ * state bits the element must have for it to apply (0 for always).
+ */
 export class ClassProp {
   name: string;
   value: PropValue;
+  state: number;
 
-  constructor(name: string, value: PropValue) {
+  constructor(name: string, value: PropValue, state: number) {
     this.name = name;
     this.value = value;
+    this.state = state;
   }
 }
 
@@ -88,14 +101,15 @@ const defaultOf = (name: string): PropValue => {
 };
 
 /**
- * Give an element the props its classes mean, skipping the ones the template
- * wrote, and reset the props its previous classes meant and these do not.
+ * Give an element the props its classes mean in its current state, later
+ * ones over earlier ones, skipping the ones the template wrote, and reset
+ * the props its previous classes meant and these do not.
  */
 export const applyClassProps = (el: TElement, props: ClassProp[]) => {
   let bits = 0;
   for (const prop of props) {
     const bit = propBit(prop.name);
-    if (bit === 0 || (el.explicitProps & bit) !== 0) continue;
+    if (bit === 0 || (el.explicitProps & bit) !== 0 || (prop.state & el.states) !== prop.state) continue;
     if (el.setKnownProp(prop.name, prop.value)) bits |= bit;
   }
   const stale = el.classProps & ~bits & ~el.explicitProps;
@@ -107,6 +121,20 @@ export const applyClassProps = (el: TElement, props: ClassProp[]) => {
 export const applyClasses = (el: TElement, v: PropValue) => {
   if (styler === null) return;
   styler.apply(el, typeof v === "string" ? v : "");
+};
+
+/** Apply an element's classes again, after something they depend on changed. */
+export const reapplyClasses = (el: TElement) => {
+  if (styler === null) return;
+  const classes = el.attrs.get("class");
+  if (classes !== undefined) styler.apply(el, classes);
+};
+
+/** Give an element its state bits; its classes follow when they changed. */
+export const setStates = (el: TElement, states: number) => {
+  if (el.states === states) return;
+  el.states = states;
+  reapplyClasses(el);
 };
 
 /**
@@ -121,7 +149,5 @@ export const markExplicit = (el: TElement, name: string, on: boolean) => {
     return;
   }
   el.explicitProps &= ~bit;
-  if (styler === null) return;
-  const classes = el.attrs.get("class");
-  if (classes !== undefined) applyClasses(el, classes);
+  reapplyClasses(el);
 };

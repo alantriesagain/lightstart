@@ -145,7 +145,7 @@ import theme from "@bootstrapp/light/theme/themes/default.js";
 configureClasses(new TerminalClasses(theme, "dark"));
 ```
 
-`TerminalClasses(theme, scheme)` resolves colors through the variables of one side of the theme (`"light"` or `"dark"`; terminals are mostly dark) and applies the `dark:` variant on the dark scheme; every other variant (`hover:`, `md:`) is ignored. Lengths round to cells, half a rem or eight pixels each and at least one when positive (`p-1`, `p-2` → 1, `p-4` → 2, `gap-2` → 1, `w-10` → 5); `tdom` has one `padding`, so `px-2` and `py-1` set it too. Colors are truecolor (`#rrggbb` from the tokens; a 16-color fallback is a later option). Later rules win as in a stylesheet: between two classes of one prop, the one later in the rule table (`items-end items-stretch` → stretch), and between two of the same rule, the later class (`p-4 p-1` → 1). What a class compiled to nothing a terminal shows, or to nothing at all, lands in the styler's `ignored` set.
+`TerminalClasses(theme, scheme)` resolves colors through the variables of one side of the theme (`"light"` or `"dark"`; terminals are mostly dark) and applies the `dark:` variant on the dark scheme. `focus:` (and `focus-visible:`) applies while the element has the renderer's focus, `focus-within:` while it or a descendant has it: the styler answers those props with the state they need, the element applies the layers its state selects, base first, and applies its classes again when the focus moves (`tdom/focus.ts`). Every other variant (`hover:`, `active:`, `group-*:`, `md:`) is ignored. Lengths round to cells, half a rem or eight pixels each and at least one when positive (`p-1`, `p-2` → 1, `p-4` → 2, `gap-2` → 1, `w-10` → 5); `tdom` has one `padding`, so `px-2` and `py-1` set it too. Colors are truecolor (`#rrggbb` from the tokens; a 16-color fallback is a later option). Later rules win as in a stylesheet: between two classes of one prop, the one later in the rule table (`items-end items-stretch` → stretch), and between two of the same rule, the later class (`p-4 p-1` → 1). What a class compiled to nothing a terminal shows, or to nothing at all, lands in the styler's `ignored` set.
 
 | Declaration | tdom prop | Examples |
 |---|---|---|
@@ -165,7 +165,8 @@ configureClasses(new TerminalClasses(theme, "dark"));
 | `overflow`, `overflow-y` | `scroll` (`auto`, `scroll`) | `overflow-y-auto`, `overflow-hidden` |
 | `align-items` | `align`: `start`, `end`, `stretch` (`center` → `start`) | `items-center`, `items-end` |
 | `white-space` | `wrap` on a text: `nowrap` → `none` | `truncate` |
-| sizes, radii, margins, shadows, `border-color`, `text-align`, states, breakpoints | ignored | `text-sm`, `rounded`, `m-2`, `border-dim`, `hover:underline`, `md:flex-1` |
+| `focus:`, `focus-visible:`, `focus-within:` | the same props, in the element's `focus` or `focus-within` state | `focus:font-bold`, `focus-within:bg-surface` |
+| sizes, radii, margins, shadows, `border-color`, `text-align`, other states, breakpoints | ignored | `text-sm`, `rounded`, `m-2`, `border-dim`, `hover:underline`, `md:flex-1` |
 
 `border-color` is ignored because a border paints in the box's own style, so it would recolor the box's text too.
 

@@ -3,11 +3,12 @@
  * host. `TerminalClasses` is a `ClassStyler` over the classes engine: a
  * class compiles as it does for a page, and the declarations a terminal can
  * show become tdom props, colors resolved through the theme's tokens on one
- * side of the theme (`scheme`), lengths rounded to cells. What a terminal
- * cannot show (sizes, radii, margins, variants other than `dark:`) is
- * ignored and listed in `ignored`, the dev aid.
+ * side of the theme (`scheme`), lengths rounded to cells. `dark:` applies on
+ * the dark scheme, `focus:` and `focus-within:` as the element's states say;
+ * what a terminal cannot show (sizes, radii, margins, every other variant)
+ * is ignored and listed in `ignored`, the dev aid.
  */
-import { ClassProp, ClassStyler } from "../tdom/classes.ts";
+import { ClassProp, ClassStyler, STATE_FOCUS, STATE_FOCUS_WITHIN } from "../tdom/classes.ts";
 import { parseClass } from "./classes/parse.js";
 import { createRules } from "./classes/rules.js";
 import { buildTheme } from "./classes/scales.js";
@@ -21,18 +22,27 @@ const MIX = /^color-mix\(in srgb, (.+?) \d+(?:\.\d+)?%, transparent\)$/;
 const LENGTH = /^(-?\d*\.?\d+)(rem|em|px|ch)$/;
 const NUMBER = /^(\d+(?:\.\d+)?)/;
 
-const prop = (name: string, value: string | number | boolean | null) => new ClassProp(name, value);
+const prop = (name: string, value: string | number | boolean | null, state: number) => new ClassProp(name, value, state);
 
-/** A class the styler kept: its declarations and the order they apply in, as a stylesheet would order them. */
+/** The number of state bits a class names: its layer, a state layer applying over the base as a pseudo-class does over a plain selector. */
+const layerOf = (state: number) => {
+  let n = 0;
+  for (let bits = state; bits !== 0; bits >>= 1) n += bits & 1;
+  return n;
+};
+
+/** A class the styler kept: its declarations, the states it applies in and the order it applies in, as a stylesheet would order it. */
 class Kept {
   cls: string;
   decls: string[];
+  state: number;
   order: number;
   important: boolean;
 
-  constructor(cls: string, decls: string[], order: number, important: boolean) {
+  constructor(cls: string, decls: string[], state: number, order: number, important: boolean) {
     this.cls = cls;
     this.decls = decls;
+    this.state = state;
     this.order = order;
     this.important = important;
   }
@@ -72,24 +82,30 @@ export class TerminalClasses extends ClassStyler {
         this.ignored.add(token);
         continue;
       }
-      const variants = parsed.variants;
-      const wanted = variants.length === 0 || (this.dark && variants.length === 1 && variants[0] === "dark");
+      let state = 0;
+      let wanted = true;
+      for (const variant of parsed.variants) {
+        if (variant === "dark") wanted = wanted && this.dark;
+        else if (variant === "focus" || variant === "focus-visible") state |= STATE_FOCUS;
+        else if (variant === "focus-within") state |= STATE_FOCUS_WITHIN;
+        else wanted = false;
+      }
       const matched = wanted ? this.rules.match(parsed) : null;
       if (matched === null) {
         this.ignored.add(token);
         continue;
       }
-      rules.push(new Kept(token, matched.decls, matched.order, parsed.important));
+      rules.push(new Kept(token, matched.decls, state, matched.order, parsed.important));
     }
-    rules.sort((a: Kept, b: Kept) => (a.important === b.important ? a.order - b.order : a.important ? 1 : -1));
+    rules.sort((a: Kept, b: Kept) => (a.important !== b.important ? (a.important ? 1 : -1) : layerOf(a.state) !== layerOf(b.state) ? layerOf(a.state) - layerOf(b.state) : a.order - b.order));
     const byName = new Map<string, ClassProp>();
     for (const rule of rules) {
       let took = false;
       for (const decl of rule.decls) {
         const at = decl.indexOf(":");
         if (at < 0) continue;
-        for (const mapped of this.mapDecl(decl.slice(0, at), decl.slice(at + 1))) {
-          byName.set(mapped.name, mapped);
+        for (const mapped of this.mapDecl(decl.slice(0, at), decl.slice(at + 1), rule.state)) {
+          byName.set(String(rule.state) + ":" + mapped.name, mapped);
           took = true;
         }
       }
@@ -135,21 +151,21 @@ export class TerminalClasses extends ClassStyler {
     return Math.max(1, Math.round(cells));
   }
 
-  /** The tdom props one CSS declaration means on the terminal; none for what it cannot show. */
-  mapDecl(name: string, raw: string): ClassProp[] {
+  /** The tdom props one CSS declaration means on the terminal, in the states `state` names; none for what it cannot show. */
+  mapDecl(name: string, raw: string, state: number): ClassProp[] {
     const value = raw.trim();
     switch (name) {
       case "display":
-        return value === "none" ? [prop("hidden", true)] : [];
+        return value === "none" ? [prop("hidden", true, state)] : [];
       case "visibility":
-        return value === "hidden" ? [prop("hidden", true)] : value === "visible" ? [prop("hidden", false)] : [];
+        return value === "hidden" ? [prop("hidden", true, state)] : value === "visible" ? [prop("hidden", false, state)] : [];
       case "flex-direction":
-        return value === "row" || value === "column" ? [prop("direction", value)] : [];
+        return value === "row" || value === "column" ? [prop("direction", value, state)] : [];
       case "flex":
       case "flex-grow": {
-        if (value === "none") return [prop("flex", 0)];
+        if (value === "none") return [prop("flex", 0, state)];
         const m = NUMBER.exec(value);
-        return m === null ? [] : [prop("flex", Number(m[1]))];
+        return m === null ? [] : [prop("flex", Number(m[1]), state)];
       }
       case "padding":
       case "padding-left":
@@ -157,50 +173,50 @@ export class TerminalClasses extends ClassStyler {
       case "padding-top":
       case "padding-bottom": {
         const cells = this.cellsOf(value);
-        return cells === null ? [] : [prop("padding", cells)];
+        return cells === null ? [] : [prop("padding", cells, state)];
       }
       case "gap":
       case "column-gap":
       case "row-gap": {
         const cells = this.cellsOf(value);
-        return cells === null ? [] : [prop("gap", cells)];
+        return cells === null ? [] : [prop("gap", cells, state)];
       }
       case "width":
       case "height": {
         const cells = this.cellsOf(value);
-        return cells === null ? [] : [prop(name, cells)];
+        return cells === null ? [] : [prop(name, cells, state)];
       }
       case "color": {
         const color = this.colorOf(value);
-        return color === null ? [] : [prop("fg", color)];
+        return color === null ? [] : [prop("fg", color, state)];
       }
       case "background-color": {
         const color = this.colorOf(value);
-        return color === null ? [] : [prop("bg", color)];
+        return color === null ? [] : [prop("bg", color, state)];
       }
       case "font-weight": {
         const weight = Number(this.resolveValue(value, 0));
-        return Number.isNaN(weight) ? [] : [prop("bold", weight >= 600)];
+        return Number.isNaN(weight) ? [] : [prop("bold", weight >= 600, state)];
       }
       case "font-style":
-        return value === "italic" ? [prop("italic", true)] : value === "normal" ? [prop("italic", false)] : [];
+        return value === "italic" ? [prop("italic", true, state)] : value === "normal" ? [prop("italic", false, state)] : [];
       case "text-decoration-line":
-        return [prop("underline", value.includes("underline")), prop("strike", value.includes("line-through"))];
+        return [prop("underline", value.includes("underline"), state), prop("strike", value.includes("line-through"), state)];
       case "opacity": {
         const n = Number(value);
-        return Number.isNaN(n) ? [] : [prop("dim", n < 1)];
+        return Number.isNaN(n) ? [] : [prop("dim", n < 1, state)];
       }
       case "border-width": {
         const n = Number.parseFloat(value);
-        return Number.isNaN(n) ? [] : [prop("border", n > 0)];
+        return Number.isNaN(n) ? [] : [prop("border", n > 0, state)];
       }
       case "overflow":
       case "overflow-y":
-        return [prop("scroll", value === "auto" || value === "scroll")];
+        return [prop("scroll", value === "auto" || value === "scroll", state)];
       case "align-items":
-        return value === "stretch" ? [prop("align", "stretch")] : value === "flex-end" || value === "end" ? [prop("align", "end")] : [prop("align", "start")];
+        return value === "stretch" ? [prop("align", "stretch", state)] : value === "flex-end" || value === "end" ? [prop("align", "end", state)] : [prop("align", "start", state)];
       case "white-space":
-        return value === "nowrap" ? [prop("wrap", "none")] : value === "normal" ? [prop("wrap", "word")] : [];
+        return value === "nowrap" ? [prop("wrap", "none", state)] : value === "normal" ? [prop("wrap", "word", state)] : [];
       default:
         return [];
     }
