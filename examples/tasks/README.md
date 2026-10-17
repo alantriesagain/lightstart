@@ -12,7 +12,7 @@ node examples/tasks/tasks.test.js           # drives the app on a test terminal
 It compiles to one native binary with scriptc (the fork's `light-integration`, named by `SCRIPTC`; see `native/README.md`), with no JavaScript engine inside: the model, the controller, the views, the JSONL files and the terminal host. The test builds the same way and prints what it prints under node.
 
 ```
-$SCRIPTC build examples/tasks/main.js -o tasks --strip     # about 7 MB
+$SCRIPTC build examples/tasks/main.js -o tasks --strip     # about 9.5 MB, 2.5 of them the classes engine
 ./tasks --data ~/tasks
 $SCRIPTC build examples/tasks/tasks.test.js -o tasks-test && ./tasks-test
 ```
