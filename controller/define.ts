@@ -175,7 +175,7 @@ const createController = (definition: Record<string, unknown>): Record<string, u
       else instance[key] = typeof value === "function" ? value.bind(instance) : freshCopy(value);
     }
 
-    const pending: Promise<unknown>[] = [];
+    const pending: Promise<void>[] = [];
     for (const [key, prop] of Object.entries(properties)) {
       if (!prop.sync) continue;
       const { unbind, loaded } = bindProperty({ store, key, prop, host: instance });
@@ -186,7 +186,7 @@ const createController = (definition: Record<string, unknown>): Record<string, u
     adopt(instance);
     const start = (): unknown => (typeof connected === "function" ? connected.call(instance) : undefined);
     const started: unknown = after ? after.then(start) : start();
-    if (isThenable(started)) pending.push(started as Promise<unknown>);
+    if (isThenable(started)) pending.push((started as Promise<unknown>).then(() => undefined));
     instance.$ready = pending.length
       ? tracked(Promise.all(pending).then(() => undefined), `controller:${name}`)
       : Promise.resolve();

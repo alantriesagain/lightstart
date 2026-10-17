@@ -12,13 +12,14 @@ import type { Adapter, ListenerFn, StoreShaped, SyncObj } from "../types.ts";
 import type { Signal } from "../../signals/index.ts";
 
 import { effect, signal } from "../../signals/index.ts";
+import { Listeners } from "../../signals/listeners.ts";
 
 /** The adapter over `target`'s `$sync` (or `target` itself, when it is the surface), registered as `name`. */
 export const adapterFor = (name: string, target: StoreShaped): Adapter => {
   const surface = (target.$sync ?? target) as SyncObj;
   const keysOf = () => target.$state?.keys?.() ?? target.keys?.() ?? [];
   const unsubs: Array<{ callback: ListenerFn, off: () => void }> = [];
-  const listeners: Map<string, Set<ListenerFn>> = new Map();
+  const listeners: Map<string, Listeners<ListenerFn>> = new Map();
   const signals: Map<string, Signal<unknown>> = new Map();
 
   const adapter: Adapter = {
@@ -30,11 +31,11 @@ export const adapterFor = (name: string, target: StoreShaped): Adapter => {
     keys: keysOf,
     entries: () => keysOf().map((key): [string, unknown] => [key, surface.get(key)]),
     on(key, callback) {
-      const off = surface.subscribe(key, callback);
+      const off = surface.subscribe(key, (value) => callback(value));
       const known = unsubs.find((entry) => entry.callback === callback);
       if (known) known.off = off;
       else unsubs.push({ callback, off });
-      if (!listeners.has(key)) listeners.set(key, new Set());
+      if (!listeners.has(key)) listeners.set(key, new Listeners());
       listeners.get(key)?.add(callback);
       return () => this.off(key, callback);
     },

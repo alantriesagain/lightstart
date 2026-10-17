@@ -4,6 +4,7 @@
 
 import type { PropertyDeclaration, PropertyDeclarations, PropsToThis } from "../types/types.ts";
 import type { Signal } from "../signals/index.ts";
+import type { Listeners } from "../signals/listeners.ts";
 import type { StoreCore, StoreSync, Store } from "../signals/types.ts";
 import type { DefinitionFragment } from "../view/primitives.ts";
 
@@ -179,7 +180,7 @@ export interface Adapter extends AdapterCore {
   emit(key: string, value: unknown, opts?: Record<string, unknown>): void;
   hasListeners(key: string): boolean;
   signal(key: string, defaultValue?: unknown): Signal<unknown>;
-  _listeners: Map<string, Set<ListenerFn>>;
+  _listeners: Map<string, Listeners<ListenerFn>>;
   _signals: Map<string, Signal<unknown>>;
 }
 
@@ -205,16 +206,16 @@ export interface DocumentAdapter extends Adapter {
 export interface SyncObj {
   adapter?: string;
   get(key: string): unknown;
-  set(key: string, value: unknown): void;
-  subscribe(key: string, callback: (value: unknown) => void): () => void;
+  set(key: string, value: unknown): unknown;
+  subscribe(key: string, callback: (value: unknown, oldValue: unknown) => void): () => void;
 }
 
 /** What `adapterFor` wraps: a controller instance or a store through its `$sync`, or a `$sync` object itself. */
 export interface StoreShaped {
   adapter?: string;
   get?(key: string): unknown;
-  set?(key: string, value: unknown): void;
-  subscribe?(key: string, callback: (value: unknown) => void): () => void;
+  set?(key: string, value: unknown): unknown;
+  subscribe?(key: string, callback: (value: unknown, oldValue: unknown) => void): () => void;
   $sync?: SyncObj;
   $state?: { keys?: () => string[] };
   keys?: () => string[];

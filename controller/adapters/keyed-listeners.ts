@@ -4,19 +4,20 @@
  */
 
 import { signal, effect } from "../../signals/index.ts";
+import { Listeners } from "../../signals/listeners.ts";
 
 import type { ListenerFn, AdapterCore, Adapter } from "../types.ts";
 import type { Signal } from "../../signals/index.ts";
 
 /** Attach on/off/emit/signal methods to `target` and return it. */
 export const withKeyedListeners = <T extends AdapterCore>(target: T): T & Adapter => {
-  const listeners: Map<string, Set<ListenerFn>> = new Map();
+  const listeners: Map<string, Listeners<ListenerFn>> = new Map();
   const signals: Map<string, Signal<unknown>> = new Map();
 
   const augmented = target as T & Adapter;
 
   augmented.on = (key, callback) => {
-    if (!listeners.has(key)) listeners.set(key, new Set());
+    if (!listeners.has(key)) listeners.set(key, new Listeners());
     listeners.get(key)?.add(callback);
     return () => { listeners.get(key)?.delete(callback); };
   };

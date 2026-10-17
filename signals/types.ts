@@ -11,7 +11,7 @@ export interface StoreSync {
   adapter: string;
   get(key: string): unknown;
   set(key: string, value: unknown): unknown;
-  subscribe(key: string, callback: (value: unknown) => void): () => void;
+  subscribe(key: string, callback: (value: unknown, oldValue: unknown) => void): () => void;
 }
 
 /**
@@ -28,7 +28,7 @@ export interface StoreCore {
   update(key: string, fn: (current: unknown) => unknown): unknown;
   reset(key: string): unknown;
   resetAll(): void;
-  subscribe(key: string, callback: (value: unknown, oldValue?: unknown) => void): () => void;
+  subscribe(key: string, callback: (value: unknown, oldValue: unknown) => void): () => void;
   observe(callback: (key: string, value: unknown, oldValue: unknown) => void): () => void;
   snapshot(): Record<string, unknown>;
   restore(snap?: Record<string, unknown>): void;
@@ -43,8 +43,8 @@ export interface Store<S = Record<string, unknown>> extends StoreCore {
   set(key: string, value: unknown): unknown;
   update<K extends keyof S & string>(key: K, fn: (current: S[K]) => S[K]): unknown;
   update(key: string, fn: (current: unknown) => unknown): unknown;
-  subscribe<K extends keyof S & string>(key: K, callback: (value: S[K], oldValue?: S[K]) => void): () => void;
-  subscribe(key: string, callback: (value: unknown, oldValue?: unknown) => void): () => void;
+  subscribe<K extends keyof S & string>(key: K, callback: (value: S[K], oldValue: S[K]) => void): () => void;
+  subscribe(key: string, callback: (value: unknown, oldValue: unknown) => void): () => void;
 }
 
 export * from "./index.ts";

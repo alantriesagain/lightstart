@@ -396,7 +396,7 @@ export interface ModelBus {
 
 /** `modelQuery()`'s answer: the resource, and the size of the whole match. */
 export interface ModelQueryResource<T> extends Resource<T[]> {
-  readonly total: number;
+  get total(): number;
 }
 
 /** `modelQuery()` options: a model query plus the resource knobs. */

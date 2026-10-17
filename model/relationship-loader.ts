@@ -17,7 +17,7 @@ import type { ModelSchema, Row, RelationshipDefinition, RowReader } from "./type
  * `null` per the relation's cardinality.
  */
 export async function loadRelationships(reader: RowReader, models: Record<string, ModelSchema>, modelName: string, record: Row, includes: string[]): Promise<Row> {
-  if (!includes || includes.length === 0 || !record) return record;
+  if (includes.length === 0) return record;
 
   const modelSchema = entryOf(models, modelName);
   if (!modelSchema) {

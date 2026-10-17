@@ -19,17 +19,19 @@ import { onChange } from "./changes.ts";
 import type { Resource, ResourceOptions, StoreCore, SyncBinder, SyncHost, SyncProp } from "../controller/types.ts";
 import type { ModelApi, ModelQueryOptions, ModelQueryResource, QueryOptions } from "./types.ts";
 
-const swallow = () => {};
-
 const includeTargets = (api: ModelApi, include: string): string[] => {
   const target = (api.schema?.[include] as { targetModel?: string | string[] } | undefined)?.targetModel;
   if (Array.isArray(target)) return target;
   return typeof target === "string" && target !== "*" ? [target] : [];
 };
 
-/** A live query of `api`: a `resource()` over `api.query()` that refetches, coalesced per tick, when its model or an included model changes. */
-export const modelQuery = <T extends Record<string, unknown>>(api: ModelApi, opts: ModelQueryOptions = {}): ModelQueryResource<T> => {
-  const { name = api.name, eager = true, ready, ...query } = opts;
+interface QueryKnobs {
+  name: string;
+  eager: boolean;
+  ready: ResourceOptions["ready"];
+}
+
+const liveQuery = <T extends Record<string, unknown>>(api: ModelApi, query: QueryOptions, { name, eager, ready }: QueryKnobs): ModelQueryResource<T> => {
   let total = 0;
   let settled = false;
   let stale = false;
@@ -43,7 +45,7 @@ export const modelQuery = <T extends Record<string, unknown>>(api: ModelApi, opt
     scheduled = true;
     queueMicrotask(() => {
       scheduled = false;
-      res.refresh().catch(swallow);
+      res.refresh().catch(() => {});
     });
   };
   const res = resource(async (): Promise<T[]> => {
@@ -59,13 +61,31 @@ export const modelQuery = <T extends Record<string, unknown>>(api: ModelApi, opt
   for (const include of query.includes ?? [])
     for (const target of includeTargets(api, include)) offs.push(onChange(target, undefined, refresh));
 
-  const disposeResource = res.dispose;
-  const live = Object.defineProperty(res, "total", { get: () => total, enumerable: true }) as ModelQueryResource<T>;
-  live.dispose = () => {
-    for (const off of offs.splice(0)) off();
-    disposeResource();
+  return {
+    name: res.name,
+    value: res.value,
+    pending: res.pending,
+    error: res.error,
+    ensure: () => res.ensure(),
+    refresh: () => res.refresh(),
+    invalidate: () => res.invalidate(),
+    mutate: (updater) => res.mutate(updater),
+    peek: () => res.peek(),
+    subscribe: (cb) => res.subscribe(cb),
+    dispose: () => {
+      for (const off of offs.splice(0)) off();
+      res.dispose();
+    },
+    get total() {
+      return total;
+    },
   };
-  return live;
+};
+
+/** A live query of `api`: a `resource()` over `api.query()` that refetches, coalesced per tick, when its model or an included model changes. */
+export const modelQuery = <T extends Record<string, unknown>>(api: ModelApi, opts: ModelQueryOptions = {}): ModelQueryResource<T> => {
+  const { name = api.name, eager = true, ready, ...query } = opts;
+  return liveQuery<T>(api, query, { name, eager, ready });
 };
 
 const loadsInFlight: WeakMap<object, number> = new WeakMap();
@@ -77,9 +97,11 @@ const countLoad = (store: StoreCore, step: 1 | -1) => {
 };
 
 const singleRow = (api: ModelApi, query: QueryOptions & { id?: unknown }, name: string, ready: ResourceOptions["ready"]) => {
-  const { id, ...rest } = query;
+  const { id } = query;
+  const rest: QueryOptions = {};
+  for (const [field, value] of Object.entries(query)) if (field !== "id") rest[field] = value;
   const res = resource(
-    () => (id != null ? api.get(id as string, rest) : rest.where ? api.get(rest) : Promise.resolve(null)),
+    (): Promise<unknown> => (id != null ? api.get(id as string, rest) : rest.where ? api.get(rest) : Promise.resolve(null)),
     { name: `get:${name}`, eager: true, ready },
   );
   const off = onChange(api.name, undefined, () => res.invalidate());
@@ -91,11 +113,44 @@ const singleRow = (api: ModelApi, query: QueryOptions & { id?: unknown }, name: 
   return res;
 };
 
+interface Following {
+  offs: Array<() => void>;
+  host: SyncHost;
+  key: string;
+  store: StoreCore;
+  onValue: (value: unknown, res: unknown) => void;
+  onError: (error: unknown) => void;
+  settle: () => void;
+}
+
+const follow = <V>(current: Resource<V>, at: Following): Resource<V> => {
+  let queries = at.host.$queries as Record<string, unknown> | undefined;
+  if (!queries) {
+    queries = {};
+    at.host.$queries = queries;
+  }
+  queries[at.key] = current;
+  at.offs.push(current.value.subscribe((value) => {
+    if (value === undefined) return;
+    at.store.set(at.key, value);
+    at.onValue(value, current);
+  }));
+  at.offs.push(current.error.subscribe((error) => {
+    if (error) at.onError(error);
+  }));
+  countLoad(at.store, 1);
+  current.ensure().catch(() => {}).finally(() => {
+    countLoad(at.store, -1);
+    at.settle();
+  });
+  return current;
+};
+
 /** Keep `store`'s `key` mirroring `api`'s live query (an array property) or one row (any other), rebuilt when a `dependsOn` key changes. */
 export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }: {
   store: StoreCore;
   key: string;
-  prop: SyncProp & { ready?: unknown };
+  prop: SyncProp;
   host: SyncHost;
   api: ModelApi;
   onValue?: (value: unknown, res: unknown) => void;
@@ -103,52 +158,30 @@ export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }
 }): { unbind: () => void; loaded: Promise<void> } => {
   const name = `${api.name}:${key}`;
   let res: { dispose(): void } | null = null;
-  const offs: Array<() => void> = [];
-  let settle = () => {};
+  const at: Following = { offs: [], host, key, store, onValue: onValue ?? (() => {}), onError: onError ?? (() => {}), settle: () => {} };
   const loaded = new Promise<void>((resolve) => {
-    settle = () => resolve(undefined);
+    at.settle = () => resolve();
   });
 
-  const follow = <V>(current: Resource<V>) => {
-    res = current;
-    let queries = host.$queries as Record<string, unknown> | undefined;
-    if (!queries) {
-      queries = {};
-      host.$queries = queries;
-    }
-    queries[key] = current;
-    offs.push(current.value.subscribe((value) => {
-      if (value === undefined) return;
-      store.set(key, value);
-      if (onValue) onValue(value, current);
-    }));
-    if (onError) offs.push(current.error.subscribe((error) => {
-      if (error) onError(error);
-    }));
-    countLoad(store, 1);
-    current.ensure().catch(swallow).finally(() => {
-      countLoad(store, -1);
-      settle();
-    });
-  };
-
   const build = () => {
-    for (const off of offs.splice(0)) off();
+    for (const off of at.offs.splice(0)) off();
     res?.dispose();
-    const query = (typeof prop.query === "function" ? prop.query(host) : (prop.query ?? {})) as QueryOptions & { id?: unknown };
+    const given = prop.query;
+    const query = (typeof given === "function" ? (given as (host: SyncHost) => unknown)(host) : (given ?? {})) as QueryOptions & { id?: unknown };
     const ready = prop.ready as ResourceOptions["ready"];
-    if (prop.$type === "array") follow(modelQuery(api, { ...query, name, ready }));
-    else follow(singleRow(api, query, name, ready));
+    if (prop.$type === "array") res = follow(liveQuery(api, query, { name, eager: true, ready }), at);
+    else res = follow(singleRow(api, query, name, ready), at);
   };
 
   build();
-  const depOffs = (prop.dependsOn ?? []).map((dep) => store.subscribe(dep, build));
+  const depOffs: Array<() => void> = [];
+  for (const dep of prop.dependsOn ?? []) depOffs.push(store.subscribe(dep, build));
 
   return {
     loaded,
     unbind: () => {
       for (const off of depOffs) off();
-      for (const off of offs.splice(0)) off();
+      for (const off of at.offs.splice(0)) off();
       res?.dispose();
       res = null;
       const queries = host.$queries as Record<string, unknown> | undefined;
