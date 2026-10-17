@@ -95,4 +95,31 @@ ok("unhandled key returns false", !editorHandleKey(input, key("f5", "", false, f
 editorHandleKey(input, key("char", "x", false, true, false));
 eq("alt+char ignored", state(input), '[""] @0:0');
 
+// Word moves: Alt or Ctrl with an arrow, Alt+b and Alt+f; punctuation lies between words, _ is a word's.
+editorHandleKey(input, key("paste", "git commit -m fix_bug\nnext", false, false, false));
+input.row = 0;
+input.col = 21;
+/** @type {string[]} */
+const at = [];
+for (const name of ["left", "left", "left", "right", "right"]) {
+  editorHandleKey(input, key(name, "", false, true, false));
+  at.push(String(input.row) + ":" + String(input.col));
+}
+eq("alt+left and alt+right move by a word", at.join(" "), "0:14 0:12 0:4 0:10 0:13");
+editorHandleKey(input, key("char", "b", false, true, false));
+editorHandleKey(input, key("char", "b", false, true, false));
+editorHandleKey(input, key("char", "f", false, true, false));
+eq("alt+b and alt+f too", String(input.row) + ":" + String(input.col), "0:10");
+input.col = 21;
+editorHandleKey(input, key("right", "", true, false, false));
+eq("ctrl+right at a line's end goes to the next line", String(input.row) + ":" + String(input.col), "1:0");
+editorHandleKey(input, key("left", "", true, false, false));
+eq("ctrl+left at a line's start goes to the end of the line before", String(input.row) + ":" + String(input.col), "0:21");
+input.col = 10;
+editorHandleKey(input, key("char", "d", true, false, false));
+eq("ctrl+d deletes forward", input.lines[0], "git commit-m fix_bug");
+input.col = 20;
+editorHandleKey(input, key("char", "d", true, false, false));
+eq("at a line's end it joins the next", JSON.stringify(input.lines), '["git commit-m fix_bugnext"]');
+
 done();

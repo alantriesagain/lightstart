@@ -1,7 +1,8 @@
 /**
  * @bootstrapp/light/tdom/editor: multi-line editing for an input node,
- * grapheme-aware: caret movement, insertion, deletion, the kill keys,
- * paste, and submit. Every edit dispatches a change event through the
+ * grapheme-aware: caret movement (by grapheme, and by word with Alt or Ctrl
+ * and ←/→, or Alt+b and Alt+f), insertion, deletion (Ctrl+D forward), the
+ * kill keys, paste, and submit. Every edit dispatches a change event through the
  * tree; Enter dispatches submit with the content, cleared first.
  */
 import { ChangeEvent, KeyEvent, SubmitEvent } from "./events.ts";
@@ -105,6 +106,36 @@ const moveRight = (input: TInput) => {
   input.invalidate();
 };
 
+/** Whether grapheme `g` is part of a word: anything but whitespace and ASCII punctuation (`_` is a word's). */
+const inWord = (g: string) => {
+  if (g.trim().length === 0) return false;
+  const c = g.codePointAt(0) ?? 0;
+  if (c === 95) return true;
+  return !((c >= 33 && c <= 47) || (c >= 58 && c <= 64) || (c >= 91 && c <= 96) || (c >= 123 && c <= 126));
+};
+
+/** To the start of the word before the caret; at a line's start, to the end of the line before. */
+const wordLeft = (input: TInput) => {
+  if (input.col === 0) return moveLeft(input);
+  const line = gs(input.lines[input.row]);
+  let i = input.col;
+  while (i > 0 && !inWord(line[i - 1])) i--;
+  while (i > 0 && inWord(line[i - 1])) i--;
+  input.col = i;
+  input.invalidate();
+};
+
+/** To the end of the word after the caret; at a line's end, to the start of the line after. */
+const wordRight = (input: TInput) => {
+  const line = gs(input.lines[input.row]);
+  if (input.col >= line.length) return moveRight(input);
+  let i = input.col;
+  while (i < line.length && !inWord(line[i])) i++;
+  while (i < line.length && inWord(line[i])) i++;
+  input.col = i;
+  input.invalidate();
+};
+
 const moveRow = (input: TInput, delta: number) => {
   const target = input.row + delta;
   if (target < 0 || target >= input.lines.length) return false;
@@ -181,6 +212,9 @@ export const editorHandleKey = (input: TInput, e: KeyEvent) => {
           case "h":
             backspace(input);
             return true;
+          case "d":
+            del(input);
+            return true;
           case "j":
             insertText(input, "\n");
             return true;
@@ -188,7 +222,12 @@ export const editorHandleKey = (input: TInput, e: KeyEvent) => {
             return false;
         }
 
-      if (e.alt) return false;
+      if (e.alt) {
+        if (e.text === "b") wordLeft(input);
+        else if (e.text === "f") wordRight(input);
+        else return false;
+        return true;
+      }
       insertText(input, e.text);
       return true;
     }
@@ -209,10 +248,12 @@ export const editorHandleKey = (input: TInput, e: KeyEvent) => {
       del(input);
       return true;
     case "left":
-      moveLeft(input);
+      if (e.alt || e.ctrl) wordLeft(input);
+      else moveLeft(input);
       return true;
     case "right":
-      moveRight(input);
+      if (e.alt || e.ctrl) wordRight(input);
+      else moveRight(input);
       return true;
     case "up":
       return moveRow(input, -1);
