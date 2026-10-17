@@ -3,9 +3,10 @@
  * renderer's decoder, the rows land in JSONL files held in memory, and the
  * checks read the painted screen. The files start with a task from before
  * boards, which the first board adopts. The theme's classes style the screen
- * on the dark scheme, and two of them are read off the painted cells. A
- * second store over the same files reads the tasks and the boards back. Runs
- * with `node examples/tasks/tasks.test.js`.
+ * on the dark scheme, three of them are read off the painted cells, the
+ * focus states among them, and every class the screens used must mean
+ * something on the terminal. A second store over the same files reads the
+ * tasks and the boards back. Runs with `node examples/tasks/tasks.test.js`.
  */
 import { ATTR_BOLD, ATTR_STRIKE, Renderer, TInput, TRoot, TRUECOLOR_FLAG, configureClasses, frames, mount } from "@bootstrapp/light/native";
 import { TerminalClasses } from "@bootstrapp/light/theme/terminal";
@@ -52,7 +53,8 @@ await board.$ready;
 const term = new TestTerminal();
 term.cols = 72;
 term.rows = 14;
-configureClasses(new TerminalClasses(theme, "dark"));
+const styler = new TerminalClasses(theme, "dark");
+configureClasses(styler);
 const root = new TRoot();
 const renderer = new Renderer(term, root);
 const app = new TaskApp();
@@ -100,8 +102,8 @@ const cellOf = (text) => {
   return -1;
 };
 
-/** @param {number} cell @returns {string} the foreground, the background and the bold and strike bits of a painted cell */
-const paintOf = (cell) => `fg=${renderer.back.fg[cell] === (TRUECOLOR_FLAG | 0xe9ebe8) ? "primary" : renderer.back.fg[cell] === (TRUECOLOR_FLAG | 0x7f857e) ? "muted" : String(renderer.back.fg[cell])} bold=${(renderer.back.attrs[cell] & ATTR_BOLD) !== 0} strike=${(renderer.back.attrs[cell] & ATTR_STRIKE) !== 0}`;
+/** @param {number} cell @returns {string} the foreground, the bold and strike bits and the background of a painted cell */
+const paintOf = (cell) => `fg=${renderer.back.fg[cell] === (TRUECOLOR_FLAG | 0xe9ebe8) ? "primary" : renderer.back.fg[cell] === (TRUECOLOR_FLAG | 0x7f857e) ? "muted" : String(renderer.back.fg[cell])} bold=${(renderer.back.attrs[cell] & ATTR_BOLD) !== 0} strike=${(renderer.back.attrs[cell] & ATTR_STRIKE) !== 0} bg=${renderer.back.bg[cell] === (TRUECOLOR_FLAG | 0x171a17) ? "surface" : String(renderer.back.bg[cell])}`;
 
 /** @param {string} text the half of the screen a text is on: the left or the right column */
 const side = (text) => {
@@ -118,8 +120,8 @@ eqn("its adoption is one edit in the file", lineCount("data/tasks.jsonl"), 2);
 eqn("the first board is one line in its file", lineCount("data/boards.jsonl"), 1);
 ok("the footer names the filter", screen().includes("tasks: all"));
 ok("the editor has the focus from the start", renderer.focus instanceof TInput);
-eq("the focused board's title is bold in the primary token", paintOf(cellOf("Tasks")), "fg=primary bold=true strike=false");
-eq("an open task is painted plain", paintOf(cellOf("[ ] old task")), "fg=-1 bold=false strike=false");
+eq("the active board's title is bold in the primary token, the board untinted while the editor has the focus", paintOf(cellOf("Tasks")), "fg=primary bold=true strike=false bg=-1");
+eq("an open task is painted plain", paintOf(cellOf("[ ] old task")), "fg=-1 bold=false strike=false bg=-1");
 
 await keys("write the adapter\r");
 await keys("drive the app\r");
@@ -128,15 +130,19 @@ ok("the footer counts them", screen().includes("3 open, 0 done"));
 eqn("each add is one line in the file", lineCount("data/tasks.jsonl"), 4);
 
 await keys("\t");
+eq("the focused task is bold, on the surface tint of the board holding the focus", paintOf(cellOf("[ ] old task")), "fg=-1 bold=true strike=false bg=surface");
+eq("the title shares the tint", paintOf(cellOf("Tasks")), "fg=primary bold=true strike=false bg=surface");
 await keys(" ");
 ok("Space on the focused task toggles it", screen().includes("[x] old task"));
 ok("the counts follow", screen().includes("2 open, 1 done"));
-eq("a done task is muted and struck through", paintOf(cellOf("[x] old task")), "fg=muted bold=false strike=true");
+eq("a done task is muted and struck through, bold while it keeps the focus", paintOf(cellOf("[x] old task")), "fg=muted bold=true strike=true bg=surface");
 
 await keys("f");
 ok("f filters to the open tasks", screen().includes("tasks: open") && !screen().includes("old task") && screen().includes("drive the app"));
+ok("the focused task left the screen, so nothing has the focus and the board loses its tint", renderer.focus === null && paintOf(cellOf("Tasks")).endsWith("bg=-1"));
 await keys("f");
 ok("then to the done ones", screen().includes("tasks: done") && screen().includes("[x] old task") && !screen().includes("drive the app"));
+eq("a done task out of focus is muted and struck through, plain", paintOf(cellOf("[x] old task")), "fg=muted bold=false strike=true bg=-1");
 await keys("f");
 
 await keys("\t");
@@ -168,6 +174,10 @@ await keys("/delete\r");
 ok("/delete refuses a board with tasks", screen().includes("Tasks") && screen().includes("Later"));
 await keys("/rename Done\r");
 ok("/rename renames the focused board", side("Done") === "right" && !screen().includes("Tasks"));
+
+let ignored = "";
+for (const cls of styler.ignored) ignored += cls + " ";
+eq("every class the screens used means something on the terminal", ignored, "");
 
 renderer.stop();
 await open();

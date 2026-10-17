@@ -1,6 +1,6 @@
 /**
  * @file `<task-row .task=${task}>`: one task as a focusable line, a done one
- * muted and struck through by its classes. Space or a click asks to toggle
+ * muted and struck through by its classes, bold while it has the focus. Space or a click asks to toggle
  * it, `d` to remove it, Shift+Left and Shift+Right to move it to the
  * neighbour board, as `toggle`, `remove`, `move-left` and `move-right`
  * events carrying the task, which the app handles.
@@ -29,7 +29,7 @@ export class TaskRow extends View {
         e.consume();
         this.$emit("remove", task);
       }}
-      class=${task.done ? "text-muted line-through" : ""}
+      class=${task.done ? "text-muted line-through focus:font-bold" : "focus:font-bold"}
     >${task.done ? "[x]" : "[ ]"} ${task.title}</p>`;
   }
 }
