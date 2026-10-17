@@ -95,7 +95,6 @@ ok("unhandled key returns false", !editorHandleKey(input, key("f5", "", false, f
 editorHandleKey(input, key("char", "x", false, true, false));
 eq("alt+char ignored", state(input), '[""] @0:0');
 
-// Word moves: Alt or Ctrl with an arrow, Alt+b and Alt+f; punctuation lies between words, _ is a word's.
 editorHandleKey(input, key("paste", "git commit -m fix_bug\nnext", false, false, false));
 input.row = 0;
 input.col = 21;
@@ -122,7 +121,6 @@ input.col = 20;
 editorHandleKey(input, key("char", "d", true, false, false));
 eq("at a line's end it joins the next", JSON.stringify(input.lines), '["git commit-m fix_bugnext"]');
 
-// The operations as an app binds its own keys to them: what a kill answers, the moves.
 setValue(input, "one two three");
 lineStart(input);
 wordLeft(input);
