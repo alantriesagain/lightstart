@@ -16,7 +16,7 @@ $SCRIPTC build examples/tasks/main.js -o tasks --strip     # about 7 MB
 $SCRIPTC build examples/tasks/tasks.test.js -o tasks-test && ./tasks-test
 ```
 
-Type a task and press Enter to add it. Tab moves the focus between the tasks and the editor, and the arrows move it among the tasks. On a focused task, Space (or a click) toggles it and `d` deletes it; outside the editor `f` cycles the filter (all, open, done) and `c` clears the done tasks. Ctrl+C quits.
+The editor has the focus at start: type a task and press Enter to add it. Tab moves the focus between the tasks and the editor, and the arrows move it among the tasks. On a focused task, Space (or a click) toggles it and `d` deletes it; outside the editor `f` cycles the filter (all, open, done) and `c` clears the done tasks. Ctrl+C quits.
 
 | File | What it holds |
 |---|---|

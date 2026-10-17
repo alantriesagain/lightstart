@@ -3,14 +3,16 @@
  * one per scheduler tick after the views flushed. A key goes to the
  * focused editor first, then bubbles from it (or the root) through the
  * element handlers; Tab and Shift+Tab move the focus along the focusable
- * elements, Enter and Space click the focused one. A mouse press focuses
- * what it lands on, a release on the same element clicks it, the wheel
- * scrolls the nearest scrolling box under the pointer.
+ * elements, Enter and Space click the focused one. Until something holds
+ * the focus, each frame hands it to the first focusable element marked
+ * `autofocus`, once. A mouse press focuses what it lands on, a release on
+ * the same element clicks it, the wheel scrolls the nearest scrolling box
+ * under the pointer.
  */
 import { CLEAR, CURSOR_HIDE, CURSOR_SHOW, cup } from "./ansi.ts";
 import { FocusEvent, KeyEvent, MouseEvent, WheelEvent } from "./events.ts";
 import { editorHandleKey } from "./editor.ts";
-import { hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.ts";
+import { focusables, hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.ts";
 import { InputDecoder } from "./input.ts";
 import { layout, scrollBy } from "./layout.ts";
 import { TElement, TInput, TRoot } from "./node.ts";
@@ -26,6 +28,7 @@ export class Renderer {
   front: Screen;
   back: Screen;
   focus: TElement | null;
+  autofocusPending: boolean;
   pressed: TElement | null;
   decoder: InputDecoder;
   cursorShown: boolean;
@@ -41,6 +44,7 @@ export class Renderer {
     this.front = new Screen(term.cols, term.rows);
     this.back = new Screen(term.cols, term.rows);
     this.focus = null;
+    this.autofocusPending = true;
     this.pressed = null;
     this.decoder = new InputDecoder((e) => this.dispatchKey(e));
     this.decoder.onMouse = (e) => this.dispatchMouse(e);
@@ -74,7 +78,19 @@ export class Renderer {
     frames.request();
   }
 
+  autofocus() {
+    if (this.focus !== null) {
+      this.autofocusPending = false;
+      return;
+    }
+    const marked = focusables(this.root, []).find((el) => el.attrs.has("autofocus"));
+    if (marked === undefined) return;
+    this.autofocusPending = false;
+    this.setFocus(marked);
+  }
+
   renderFrame() {
+    if (this.autofocusPending) this.autofocus();
     const t0 = performance.now();
     layout(this.root, this.back.w, this.back.h, DEFAULT_STYLE);
     this.back.clear();

@@ -4,7 +4,7 @@
  * checks read the painted screen. A second store over the same files reads
  * the tasks back. Runs with `node examples/tasks/tasks.test.js`.
  */
-import { Renderer, TRoot, frames, mount } from "@bootstrapp/light/native";
+import { Renderer, TInput, TRoot, frames, mount } from "@bootstrapp/light/native";
 import { configureModel, modelBus } from "@bootstrapp/light/model";
 import { createStore, storeRequest } from "@bootstrapp/light/model/store";
 import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
@@ -80,8 +80,8 @@ const keys = async (text) => {
 await settle();
 ok("an empty board says how to start", screen().includes("No tasks yet"));
 eq("the title names the filter", screen().includes("tasks: all") ? "yes" : "no", "yes");
+ok("the editor has the focus from the start", renderer.focus instanceof TInput);
 
-await keys("\t");
 await keys("write the adapter\r");
 await keys("drive the app\r");
 ok("both tasks are listed", screen().includes("[ ] write the adapter") && screen().includes("[ ] drive the app"));

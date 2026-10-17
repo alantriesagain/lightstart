@@ -52,7 +52,7 @@ export class TaskApp extends View {
     const empty = filter === "all" ? "No tasks yet: type one below and press Enter." : `No ${filter} tasks.`;
     return html`<div flex=1 border title=${`tasks: ${filter}`}>
       <div flex=1 scroll>${rows.length > 0 ? rows.map((task) => key(String(task.id), taskRow(task))) : html`<p dim>${empty}</p>`}</div>
-      <textarea placeholder="a new task, Enter adds it" @submit=${(/** @type {SubmitEvent} */ e) => board.add(e.value)}></textarea>
+      <textarea autofocus placeholder="a new task, Enter adds it" @submit=${(/** @type {SubmitEvent} */ e) => board.add(e.value)}></textarea>
       <p dim>${open} open, ${done} done. Tab moves, Space toggles, d deletes, f filters, c clears done, Ctrl+C quits.</p>
     </div>`;
   }

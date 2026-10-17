@@ -100,4 +100,35 @@ ok("key event still decoded", new KeyEvent("enter", "", false, false, false).des
 frames.flush();
 renderer.stop();
 
+const autoRoot = new TRoot();
+render(html`<box><button>first</button><textarea autofocus></textarea></box>`, autoRoot);
+const auto = new Renderer(new TestTerminal(), autoRoot);
+auto.start();
+auto.renderFrame();
+ok("autofocus: the marked input takes the focus on the first frame", auto.focus instanceof TInput);
+auto.setFocus(null);
+auto.renderFrame();
+ok("autofocus: only once", auto.focus === null);
+auto.stop();
+
+const takenRoot = new TRoot();
+render(html`<box><button>first</button><textarea autofocus></textarea></box>`, takenRoot);
+const taken = new Renderer(new TestTerminal(), takenRoot);
+const first = focusables(takenRoot, [])[0];
+taken.setFocus(first);
+taken.start();
+taken.renderFrame();
+ok("autofocus: skipped when something already has the focus", taken.focus === first);
+taken.stop();
+
+const lateRoot = new TRoot();
+const late = new Renderer(new TestTerminal(), lateRoot);
+late.start();
+late.renderFrame();
+render(html`<box><textarea autofocus></textarea></box>`, lateRoot);
+late.renderFrame();
+ok("autofocus: an input that appears after the first frame still takes it", late.focus instanceof TInput);
+late.stop();
+frames.flush();
+
 done();
