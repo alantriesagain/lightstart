@@ -8,6 +8,14 @@ node examples/tasks/main.js --data ~/tasks  # rows in ~/tasks/tasks.jsonl
 node examples/tasks/tasks.test.js           # drives the app on a test terminal
 ```
 
+It compiles to one native binary with scriptc (the fork's `light-integration`, named by `SCRIPTC`; see `native/README.md`), with no JavaScript engine inside: the model, the controller, the views, the JSONL files and the terminal host. The test builds the same way and prints what it prints under node.
+
+```
+$SCRIPTC build examples/tasks/main.js -o tasks --strip     # about 7 MB
+./tasks --data ~/tasks
+$SCRIPTC build examples/tasks/tasks.test.js -o tasks-test && ./tasks-test
+```
+
 Type a task and press Enter to add it. Tab moves the focus between the tasks and the editor, and the arrows move it among the tasks. On a focused task, Space (or a click) toggles it and `d` deletes it; outside the editor `f` cycles the filter (all, open, done) and `c` clears the done tasks. Ctrl+C quits.
 
 | File | What it holds |

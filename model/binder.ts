@@ -16,7 +16,7 @@
 import { resource } from "../controller/resource.ts";
 import { isModelApi } from "./index.ts";
 import { onChange } from "./changes.ts";
-import type { Resource, ResourceOptions, StoreCore, SyncBinder, SyncHost, SyncProp } from "../controller/types.ts";
+import type { Binding, Resource, ResourceOptions, StoreCore, SyncBinder, SyncHost, SyncProp } from "../controller/types.ts";
 import type { ModelApi, ModelQueryOptions, ModelQueryResource, QueryOptions } from "./types.ts";
 
 const includeTargets = (api: ModelApi, include: string): string[] => {
@@ -198,7 +198,7 @@ export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }
 export const modelBinder: SyncBinder = {
   test: isModelApi,
   options: ["query", "dependsOn"],
-  bind({ store, key, prop, host, target }) {
+  bind({ store, key, prop, host, target }): Binding {
     return bindModelQuery({ store, key, prop, host, api: target as ModelApi });
   },
 };

@@ -38,7 +38,7 @@ export const isFrameworkKey = (key) => key.startsWith("$");
  */
 export const assertDefinitionKeys = (definition, label, definitionKeys) => {
   if ("properties" in definition) throw new Error(`${label}: "properties" is not a definition key; declare reactive properties under "props"`);
-  const consumed = new Set(definitionKeys);
+  const consumed = new Set([...definitionKeys]);
   const props = definition.props ?? {};
   for (const key of Object.keys(props)) {
     if (isFrameworkKey(key)) throw new Error(`${label}: property "${key}" uses the framework's $ prefix; rename it`);

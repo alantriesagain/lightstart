@@ -9,7 +9,7 @@ import { configureModel, modelBus } from "@bootstrapp/light/model";
 import { createStore, storeRequest } from "@bootstrapp/light/model/store";
 import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
 import JsonlAdapter from "@bootstrapp/light/model/jsonl";
-import { done, eq, ok } from "../../native/assert.js";
+import { done, eq, eqn, ok } from "../../native/assert.js";
 import { TestTerminal } from "../../native/test-terminal.ts";
 import tasks from "./models/tasks.js";
 import board from "./controllers/board.js";
@@ -86,7 +86,7 @@ await keys("write the adapter\r");
 await keys("drive the app\r");
 ok("both tasks are listed", screen().includes("[ ] write the adapter") && screen().includes("[ ] drive the app"));
 ok("the footer counts them", screen().includes("2 open, 0 done"));
-eq("each add is one line in the file", (files.get("data/tasks.jsonl") ?? "").split("\n").filter(Boolean).length, 2);
+eqn("each add is one line in the file", (files.get("data/tasks.jsonl") ?? "").split("\n").filter(Boolean).length, 2);
 
 await keys("\t");
 await keys(" ");
