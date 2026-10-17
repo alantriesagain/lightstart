@@ -21,7 +21,7 @@ import { eachField, entryOf, schemaField } from "./fields.ts";
 
 export { createModelHandlers, storeRequest } from "./handlers.ts";
 
-import type { FacetResult, HookContext, ModelHooks, ModelSchema, QueryOptions, QueryPage, Row, StorageAdapter, Store, StoreConfig, WriteOptions } from "./types.ts";
+import type { FacetResult, HookContext, ModelField, ModelHooks, ModelSchema, QueryOptions, QueryPage, Row, StorageAdapter, Store, StoreConfig, WriteOptions } from "./types.ts";
 
 const isId = (value: unknown): value is string | number => typeof value === "string" || typeof value === "number";
 
@@ -33,38 +33,36 @@ const callHook = (name: keyof ModelHooks, fn: unknown, row: Row | null, ctx: Hoo
 };
 
 const forStorage = (schema: ModelSchema | undefined, row: Row): Row => {
-  const out = copy(row);
+  const relations = new Map<string, ModelField>();
   eachField(schema, (field, def) => {
-    if (!def.relationship) return;
-    if (!def.belongs) {
-      delete out[field];
-      return;
-    }
-    if (out[field] === undefined) return;
-    const value = out[field];
-    out[field] = def.relationship === "belongs_many" && Array.isArray(value)
-      ? value.map(relationValueToId)
-      : relationValueToId(value);
+    if (def.relationship) relations.set(field, def);
   });
-  return out;
+  return Object.fromEntries(Object.entries(row).flatMap(([field, value]): [string, unknown][] => {
+    const def = relations.get(field);
+    if (def === undefined) return [[field, value]];
+    if (!def.belongs) return [];
+    if (value === undefined) return [[field, value]];
+    return [[field, def.relationship === "belongs_many" && Array.isArray(value) ? value.map(relationValueToId) : relationValueToId(value)]];
+  }));
 };
 
 const withDefaults = (schema: ModelSchema | undefined, row: Row): Row => {
+  const filled: [string, unknown][] = [];
   eachField(schema, (field, def) => {
     if (row[field] !== undefined || def.defaultValue === undefined) return;
     if (def.relationship && !def.belongs) return;
     const value = def.defaultValue;
-    row[field] = typeof value === "function" ? (value as () => unknown)() : value && typeof value === "object" ? structuredClone(value) : value;
+    filled.push([field, typeof value === "function" ? (value as () => unknown)() : value && typeof value === "object" ? structuredClone(value) : value]);
   });
-  return row;
+  return filled.length === 0 ? row : Object.fromEntries([...Object.entries(row), ...filled]);
 };
 
 const withoutImmutable = (schema: ModelSchema | undefined, patch: Row): Row => {
-  const out = copy(patch);
+  const immutable = new Set<string>();
   eachField(schema, (field, def) => {
-    if (def.immutable && field !== "id") delete out[field];
+    if (def.immutable && field !== "id") immutable.add(field);
   });
-  return out;
+  return Object.fromEntries(Object.entries(patch).filter(([field]) => !immutable.has(field)));
 };
 
 const at = (error: unknown, index: number): Error => {
@@ -177,7 +175,7 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
     },
 
     addModels(more): void {
-      Object.assign(models, more);
+      for (const name of Object.keys(more)) if (!(name in models)) models[name] = more[name];
       route();
     },
 

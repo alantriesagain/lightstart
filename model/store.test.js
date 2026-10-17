@@ -355,6 +355,15 @@ describe("store: decorators and the shadow", () => {
     assert.notEqual(store.adapterFor("draft"), wrapped, "re-routing rebuilds the wrap");
   });
 
+  it("addModels keeps the models object, adds the names it lacks and leaves a registered name as it is", () => {
+    const { store, schemas } = setup();
+    store.addModels({ draft });
+    store.addModels({ draft: { title: T.number() }, other: { n: T.number() } });
+    assert.equal(store.models, schemas);
+    assert.equal(schemas.draft, draft);
+    assert.ok("other" in schemas);
+  });
+
   it("write options reach insert, insertMany, update (with the normalised patch) and delete", async () => {
     const { store } = setup();
     store.addModels({ draft });

@@ -198,7 +198,7 @@ registerAdapterDecorator("$moderated", (base, { model, schema, store, shadow, em
 }));
 ```
 
-The store calls the factory once per such model with the routed adapter and answers the wrapper from `adapterFor(model)` from then on (`baseAdapterFor(model)` is the routed adapter alone; `exportData` reads through it). A decorator delegates method by method and defines an optional method only when the base has it: adapters keep their state as own properties on `this`, so a prototype chain over the base would split it. `store.addModels` and `addDatabase` rebuild the wrappers.
+The store calls the factory once per such model with the routed adapter and answers the wrapper from `adapterFor(model)` from then on (`baseAdapterFor(model)` is the routed adapter alone; `exportData` reads through it). A decorator delegates method by method and defines an optional method only when the base has it: adapters keep their state as own properties on `this`, so a prototype chain over the base would split it. `store.addModels` adds the names the store does not hold yet (a registered name keeps its schema), and it and `addDatabase` rebuild the wrappers.
 
 `$shadow: "indexeddb"` on a schema gives the model a second, device-local store under its own name and indexes in that adapter, beside the models that live there. The store never routes to a shadow: `shadowFor(model)` hands it to a decorator, which decides what lives there (pending rows an author alone sees, a draft, an offline copy).
 
