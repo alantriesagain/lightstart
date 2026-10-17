@@ -54,13 +54,13 @@ const uploadAll = (provider: FileStorage, items: unknown[], where: { field: stri
 export const uploadFiles = async (schema: ModelSchema | undefined, model: string, row: Row): Promise<Row> => {
   if (!storage || !schema) return row;
   const provider = storage;
-  const out: Row = Object.fromEntries(Object.entries(row));
+  const uploaded: [string, unknown][] = [];
   for (const field of Object.keys(schema)) {
     if (field.startsWith("$")) continue;
     const kind = (schemaField(schema, field) as ModelField).fieldType;
-    const value = out[field];
-    if (kind === "file") out[field] = await uploadOne(provider, value, { field, model });
-    else if (kind === "files" && Array.isArray(value)) out[field] = await uploadAll(provider, value, { field, model });
+    const value = row[field];
+    if (kind === "file") uploaded.push([field, await uploadOne(provider, value, { field, model })]);
+    else if (kind === "files" && Array.isArray(value)) uploaded.push([field, await uploadAll(provider, value, { field, model })]);
   }
-  return out;
+  return Object.fromEntries([...Object.entries(row), ...uploaded]);
 };

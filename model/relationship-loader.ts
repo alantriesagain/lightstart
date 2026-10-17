@@ -25,7 +25,7 @@ export async function loadRelationships(reader: RowReader, models: Record<string
     return record;
   }
 
-  const enriched: Row = Object.fromEntries(Object.entries(record));
+  const loaded: [string, unknown][] = [];
 
   for (const relationName of includes) {
     const relationDef = schemaEntry(modelSchema, relationName) as RelationshipDefinition | undefined;
@@ -41,14 +41,14 @@ export async function loadRelationships(reader: RowReader, models: Record<string
     }
 
     try {
-      enriched[relationName] = await loadRelationship(reader, models, modelName, record, relationName, relationDef);
+      loaded.push([relationName, await loadRelationship(reader, models, modelName, record, relationName, relationDef)]);
     } catch (error) {
       modelBus().emit(MODEL_ERROR, { type: "relationship_load_failed", model: modelName, relationship: relationName, error });
-      enriched[relationName] = relationDef.many ? [] : null;
+      loaded.push([relationName, relationDef.many ? [] : null]);
     }
   }
 
-  return enriched;
+  return Object.fromEntries([...Object.entries(record), ...loaded]);
 }
 
 /**
@@ -77,29 +77,35 @@ export async function loadRelationshipsForMany(reader: RowReader, models: Record
 
   for (const relationName of polymorphicIncludes) {
     const typeFieldName = `${relationName}Type`;
-
-    const byType: Record<string, Map<string, Row[]>> = {};
-    for (const record of enriched) {
+    const found: (Row | null)[] = enriched.map(() => null);
+    const byType = new Map<string, Map<string, number[]>>();
+    for (let i = 0; i < enriched.length; i++) {
+      const record = enriched[i];
       const contentType = record[typeFieldName] as string | undefined;
       const contentId = relationValueToId(record[relationName]);
-      record[relationName] = null;
       if (!contentType || !contentId || !entryOf(models, contentType)) continue;
-      let holders = byType[contentType];
-      if (!holders) {
-        holders = new Map();
-        byType[contentType] = holders;
+      let holders = byType.get(contentType);
+      if (holders === undefined) {
+        holders = new Map<string, number[]>();
+        byType.set(contentType, holders);
       }
       const key = String(contentId);
-      holders.set(key, [...(holders.get(key) ?? []), record]);
+      const at = holders.get(key);
+      if (at === undefined) holders.set(key, [i]);
+      else at.push(i);
     }
 
     await Promise.all(
-      Object.entries(byType).map(async ([type, holders]) => {
+      [...byType.entries()].map(async ([type, holders]) => {
         const related = await reader.getAll(type, { where: { id: { in: [...holders.keys()] } } });
-        for (const row of related)
-          for (const record of holders.get(String(row.id)) ?? []) record[relationName] = row;
+        for (const row of related) for (const i of holders.get(String(row.id)) ?? []) found[i] = row;
       }),
     );
+
+    enriched = enriched.map((record, i): Row => {
+      const hit: [string, unknown] = [relationName, found[i]];
+      return Object.fromEntries([...Object.entries(record), hit]);
+    });
   }
 
   return enriched;

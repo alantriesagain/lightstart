@@ -13,8 +13,10 @@ export const foreignKeyFor = (modelName: string, rel: RelationshipDefinition): s
  * The `where` that selects the rows a `many`/`one` relation points at,
  * including the polymorphic `as` form (`{ [as]: id, [asType]: model }`).
  */
-export const relationWhere = (modelName: string, row: Row, rel: RelationshipDefinition): Record<string, unknown> =>
-  rel.as ? { [rel.as]: row.id, [`${rel.as}Type`]: modelName } : { [foreignKeyFor(modelName, rel)]: row.id };
+export const relationWhere = (modelName: string, row: Row, rel: RelationshipDefinition): Record<string, unknown> => {
+  const entries: [string, unknown][] = rel.as ? [[rel.as, row.id], [`${rel.as}Type`, modelName]] : [[foreignKeyFor(modelName, rel), row.id]];
+  return Object.fromEntries(entries);
+};
 
 /**
  * A `belongs` field holds an id, or the loaded row once included; either

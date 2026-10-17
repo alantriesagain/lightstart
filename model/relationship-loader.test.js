@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { modelBus } from "./config.ts";
+import { MODEL_ERROR } from "./events.ts";
 import { compileMatcher } from "./query-builder.ts";
 import { loadRelationships, loadRelationshipsForMany } from "./relationship-loader.ts";
 
@@ -144,6 +145,16 @@ describe("Relationship Loader", () => {
     it("a dotted include is not a relation and leaves the record untouched", async () => {
       const user = await loadRelationships(adapter, models, "user", { id: "u1" }, ["posts.comments"]);
       assert.equal("posts.comments" in user, false);
+    });
+
+    it("a load that throws reports a model error and leaves [] for a many, null for a one", async () => {
+      const failing = { ...adapter, getAll: async () => { throw new Error("offline"); } };
+      const errors = [];
+      const off = events.on(MODEL_ERROR, (payload) => errors.push(payload));
+      const user = await loadRelationships(failing, models, "user", { id: "u1", name: "n" }, ["posts", "profile"]);
+      off();
+      assert.deepEqual(user, { id: "u1", name: "n", posts: [], profile: null });
+      assert.deepEqual(errors.map((e) => [e.type, e.model, e.relationship, e.error.message]), [["relationship_load_failed", "user", "posts", "offline"], ["relationship_load_failed", "user", "profile", "offline"]]);
     });
   });
 });
