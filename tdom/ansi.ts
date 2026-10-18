@@ -19,6 +19,10 @@ export const SYNC_END = CSI + "?2026l";
 export const CLEAR = CSI + "2J";
 export const RESET = CSI + "0m";
 export const HOME = CSI + "H";
+export const TITLE_PUSH = CSI + "22;0t";
+export const TITLE_POP = CSI + "23;0t";
+/** The sequence that names the terminal's window and tab `text`, its control characters as spaces. */
+export const windowTitle = (text: string) => ESC + "]0;" + text.replace(/[\x00-\x1f\x7f]/g, " ") + "\x07";
 
 /**
  * Move the cursor to column `x`, row `y`, both zero-based.

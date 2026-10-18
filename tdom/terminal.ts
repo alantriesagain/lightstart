@@ -2,7 +2,7 @@
  * @bootstrapp/light/tdom/terminal: raw-mode setup and teardown. Everything
  * is idempotent so every exit path restores the terminal exactly once.
  */
-import { ALT_SCREEN_OFF, ALT_SCREEN_ON, CLEAR, CURSOR_HIDE, CURSOR_SHOW, HOME, MOUSE_OFF, MOUSE_ON, PASTE_OFF, PASTE_ON, RESET } from "./ansi.ts";
+import { ALT_SCREEN_OFF, ALT_SCREEN_ON, CLEAR, CURSOR_HIDE, CURSOR_SHOW, HOME, MOUSE_OFF, MOUSE_ON, PASTE_OFF, PASTE_ON, RESET, TITLE_POP, TITLE_PUSH, windowTitle } from "./ansi.ts";
 
 export class Terminal {
   cols: number;
@@ -46,11 +46,19 @@ export class Terminal {
     if (s.length > 0) process.stdout.write(s);
   }
 
+  /**
+   * Name the terminal's window and tab `text` while the program runs; the
+   * title the terminal had comes back when the program leaves.
+   */
+  title(text: string) {
+    if (this.entered) this.write(windowTitle(text));
+  }
+
   enter() {
     if (this.entered) return;
     this.entered = true;
     this.readSize();
-    this.write(ALT_SCREEN_ON + CURSOR_HIDE + PASTE_ON + MOUSE_ON + CLEAR + HOME);
+    this.write(TITLE_PUSH + ALT_SCREEN_ON + CURSOR_HIDE + PASTE_ON + MOUSE_ON + CLEAR + HOME);
     if (process.stdin.isTTY === true) process.stdin.setRawMode(true);
     process.stdin.resume();
     process.stdin.on("data", (chunk: Uint8Array) => {
@@ -76,7 +84,7 @@ export class Terminal {
   leave() {
     if (!this.entered) return;
     this.entered = false;
-    this.write(RESET + MOUSE_OFF + PASTE_OFF + CURSOR_SHOW + ALT_SCREEN_OFF);
+    this.write(RESET + MOUSE_OFF + PASTE_OFF + CURSOR_SHOW + ALT_SCREEN_OFF + TITLE_POP);
     if (process.stdin.isTTY === true) process.stdin.setRawMode(false);
     process.stdin.pause();
   }
