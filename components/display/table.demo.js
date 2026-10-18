@@ -1,9 +1,9 @@
 import { html } from "@bootstrapp/light/html";
 
 const columns = [
-  { key: "name", label: "Name" },
-  { key: "city", label: "City" },
-  { key: "going", label: "Going" },
+  { name: "name", label: "Name" },
+  { name: "city", label: "City" },
+  { name: "going", label: "Going" },
 ];
 const rows = [
   { name: "Meetup Rio", city: "Rio de Janeiro", going: 132 },

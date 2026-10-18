@@ -1,0 +1,85 @@
+:where(docs-native-topic) {
+  display: block;
+
+  .topic-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    scroll-margin-top: var(--docs-header);
+
+    & > h2 {
+      margin: var(--spacing-lg) 0 0;
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+      letter-spacing: -0.02em;
+    }
+
+    & > p,
+    & > .topic-list {
+      margin: 0;
+      max-width: 72ch;
+      line-height: var(--leading-normal);
+    }
+
+    & code {
+      font-family: var(--font-mono, ui-monospace, monospace);
+      font-size: 0.92em;
+    }
+  }
+
+  .topic-cell-code {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.92em;
+    white-space: nowrap;
+  }
+
+  .topic-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding-left: var(--spacing-lg);
+  }
+
+  .topic-compare {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+    gap: var(--spacing-md);
+    align-items: start;
+  }
+
+  .topic-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .topic-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin: 0;
+    max-width: 48rem;
+
+    & lc-bar-chart {
+      --lc-bar-chart-label-size: var(--text-xs);
+      --lc-bar-chart-label-width: 9rem;
+    }
+
+    & figcaption {
+      color: var(--text-muted);
+      font-size: var(--text-sm);
+      font-weight: var(--font-semibold, 600);
+    }
+  }
+
+  .native-link {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+
+    &:hover {
+      text-decoration-thickness: 2px;
+    }
+  }
+}

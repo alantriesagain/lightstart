@@ -35,6 +35,18 @@ describe("@bootstrapp/light - lc-table", () => {
     assert.deepEqual(picked, ["a"]);
   });
 
+  it("heads a column with its label and fills it from the field it names", async () => {
+    const el = /** @type {HTMLElement & Record<string, unknown> & { $requestUpdate: () => Promise<unknown> }} */ (document.createElement("lc-table"));
+    el.columns = [{ name: "ip", label: "IP Address" }, { name: "hits" }];
+    el.rows = [{ ip: "10.0.0.1", hits: 3 }];
+    document.body.append(el);
+    mounted.push(el);
+    await tick();
+    await el.$requestUpdate();
+    assert.deepEqual([...el.querySelectorAll("thead th")].map((th) => th.textContent?.trim()), ["IP Address", "hits"]);
+    assert.deepEqual([...el.querySelectorAll("tbody td")].map((td) => td.textContent?.trim()), ["10.0.0.1", "3"]);
+  });
+
   it("leaves the header of a column with no name empty", async () => {
     const el = /** @type {HTMLElement & Record<string, unknown> & { $requestUpdate: () => Promise<unknown> }} */ (document.createElement("lc-table"));
     el.columns = [{ name: "Name" }, { name: "", render: () => "Active" }];

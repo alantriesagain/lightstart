@@ -1,0 +1,56 @@
+:where(docs-native) {
+  display: block;
+
+  .native-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    scroll-margin-top: var(--docs-header);
+
+    & > h2 {
+      margin: 0;
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+      letter-spacing: -0.02em;
+    }
+
+    & > p {
+      margin: 0;
+      max-width: 68ch;
+      color: var(--text-secondary);
+      line-height: var(--leading-normal);
+    }
+  }
+
+  .native-index {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    & li {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border: var(--border-width, 1px) solid var(--border-color);
+      border-radius: var(--radius-box);
+      background: var(--color-surface);
+    }
+
+    & span {
+      color: var(--text-muted);
+      font-size: var(--text-sm);
+    }
+  }
+
+  .native-link {
+    color: var(--color-primary);
+    font-weight: var(--font-semibold, 600);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+}

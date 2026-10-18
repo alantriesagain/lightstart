@@ -3,6 +3,7 @@
  * every skin, as the documents `<lc-search>` ranks.
  */
 import { componentPath } from "./paths.js";
+import { NATIVE_PAGES } from "./native/pages.js";
 
 /** @import { SearchDoc } from "@bootstrapp/light/components/types.ts" */
 /** @import { ShowcaseCategoryListing } from "@bootstrapp/showcase/types.ts" */
@@ -15,6 +16,7 @@ export const PAGES = [
   { title: "Components", href: "/components", hint: "Every component, by category" },
   { title: "Theming", href: "/theming", hint: "Edit the tokens and export a theme" },
   { title: "Skins", href: "/skins", hint: "Each preset on the same controls" },
+  ...NATIVE_PAGES.map((page) => ({ title: page.topic ? `Native: ${page.label}` : "Native", href: page.href, hint: page.hint })),
 ];
 
 /** @param {string} name */

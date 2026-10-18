@@ -206,6 +206,7 @@
         "flex": "components/layout/flex.js",
         "float-card": "components/page/float-card.js",
         "float-panel": "components/overlay/float-panel.js",
+        "flow": "components/display/flow.js",
         "footer": "components/page/footer.js",
         "form": "components/form/form.js",
         "grid": "components/layout/grid.js",

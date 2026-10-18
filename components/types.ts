@@ -712,6 +712,27 @@ export interface BarChartDatum {
   label?: string;
 }
 
+/** display/flow.js: one step of a lane. */
+export interface FlowStep {
+  /** Unique across every lane of the flow: `selected` and `flow-select` name it. */
+  id: string;
+  label: string;
+  /** A line under the label. */
+  detail?: string;
+  /** The index of its phase in the flow's `phases`; 0 when the flow has none. */
+  phase?: number;
+  tone?: "accent" | "muted";
+}
+
+/** display/flow.js: one entry in the `lanes` array property. */
+export interface FlowLane {
+  id: string;
+  label: string;
+  /** A line under the lane's label. */
+  detail?: string;
+  steps: FlowStep[];
+}
+
 /** `<lc-site-header>`'s `brand` property. */
 export interface SiteHeaderBrand {
   name?: string;

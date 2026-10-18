@@ -71,6 +71,20 @@ describe("@bootstrapp/light - lc-bar-chart", () => {
     assert.deepEqual([...el.querySelectorAll(".bar-tick")].map((node) => node.textContent.trim()), ["$0", "$1000", "$2000", "$3000", "$4000"]);
   });
 
+  it("lays a horizontal chart out as label, bar and value, each bar a share of the same track", async () => {
+    const el = await mount({ horizontal: true, showValues: true });
+    const groups = [...el.querySelectorAll(".bar-group")];
+    const first = groups[0];
+    const [label, track, value] = [first.querySelector(".bar-label"), first.querySelector(".bar-track"), first.querySelector(".bar-value")].map((node) => node.getBoundingClientRect());
+    assert.ok(label.right <= track.left + 1 && track.right <= value.left + 1, "label, then the bar's track, then the value");
+    assert.ok(Math.abs(label.left - el.getBoundingClientRect().left) <= 1, "the row starts at the chart's left edge");
+    for (const node of el.querySelectorAll(".bar-label")) assert.ok(node.scrollWidth <= node.clientWidth, `"${node.textContent}" is not cut off`);
+    const widths = groups.map((group) => group.querySelector(".bar").getBoundingClientRect().width);
+    const tracks = groups.map((group) => group.querySelector(".bar-track").getBoundingClientRect().width);
+    assert.ok(Math.abs(widths[1] - tracks[1]) <= 1, "the largest value fills its track");
+    assert.ok(Math.abs(widths[0] - tracks[0] * (1200 / 3100)) <= 1, "a bar is its value's share of the track");
+  });
+
   it("draws the callout as a bubble over the current bar in the primary colour", async () => {
     document.documentElement.style.setProperty("--color-primary", "rgb(10, 20, 30)");
     const el = await mount({ currentIndex: 1, callout: "3.1K" });

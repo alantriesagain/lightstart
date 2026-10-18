@@ -42,6 +42,13 @@ export default defineComponent({
       const state = current ? "current" : value ? "filled" : "empty";
       const extent = `${(value / max) * 100}%`;
       const callout = current && this.callout && !this.horizontal;
+      if (this.horizontal)
+        return html`
+          <div class="bar-group" data-state=${state}>
+            ${withLabels ? html`<span class="bar-label" title=${item.label}>${item.label}</span>` : ""}
+            <div class="bar-track"><div class="bar" style=${`width:${extent}`} title="${item.label}: ${value}"></div></div>
+            ${this.showValues || current ? html`<span class="bar-value">${value}</span>` : ""}
+          </div>`;
       return html`
         <div class="bar-group" data-state=${state}>
           ${(this.showValues || current) && !callout
@@ -49,7 +56,7 @@ export default defineComponent({
             : ""}
           <div
             class="bar"
-            style=${this.horizontal ? `width:${extent}` : `height:${extent}`}
+            style=${`height:${extent}`}
             title="${item.label}: ${value}"
           >${callout ? html`<span class="bar-callout">${this.callout}</span>` : ""}</div>
           ${withLabels ? html`<span class="bar-label" title=${item.label}>${item.label}</span>` : ""}

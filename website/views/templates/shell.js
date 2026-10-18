@@ -1,7 +1,8 @@
 /**
  * The site around every page: a header with the site's links, the palette, the
  * skin picker and the dark toggle; the component tree in the left column (a
- * drawer on a phone); the page; and the page's outline on the right.
+ * drawer on a phone), or the section's pages inside /native; the page; and
+ * the page's outline on the right.
  */
 import { html, nothing } from "@bootstrapp/light/html";
 import $APP from "bootstrapp";
@@ -13,6 +14,7 @@ import { browsableCategories, humanize } from "@bootstrapp/showcase/lib/categori
 import { matchesBreakpoint } from "@bootstrapp/light/components/utils/breakpoints.js";
 import { componentPath, GITHUB_URL } from "../../lib/paths.js";
 import { GROUPS, searchIndex } from "../../lib/search-index.js";
+import { inNative, NATIVE_GROUPS, NATIVE_PAGES } from "../../lib/native/pages.js";
 
 /** @import { Prop, SkinOption } from "../../types.ts" */
 /** @import { NavTreeGroup, TocItem } from "@bootstrapp/light/components/types.ts" */
@@ -24,6 +26,7 @@ const LINKS = [
   { label: "Components", href: "/components" },
   { label: "Theming", href: "/theming" },
   { label: "Skins", href: "/skins" },
+  { label: "Native", href: "/native" },
 ];
 
 /** @param {string} path */
@@ -39,6 +42,7 @@ export default defineComponent({
     toc: /** @type {Prop<TocItem[]>} */ (T.array({ sync: "catalogue", defaultValue: [] })),
     phone: false,
     landing: false,
+    native: false,
     openGroups: /** @type {Prop<string[]>} */ (T.array({ defaultValue: [] })),
   },
 
@@ -53,6 +57,7 @@ export default defineComponent({
 
   _follow() {
     this.landing = $APP.Router.path === "/";
+    this.native = inNative($APP.Router.path);
     const category = categoryOf($APP.Router.path);
     if (category && !this.openGroups.includes(category)) this.openGroups = [...this.openGroups, category];
     if (!this.openGroups.length) this.openGroups = [browsableCategories()[0]?.id ?? ""];
@@ -60,6 +65,11 @@ export default defineComponent({
 
   /** @returns {NavTreeGroup[]} */
   _groups() {
+    if (this.native)
+      return NATIVE_GROUPS.map((group) => {
+        const items = NATIVE_PAGES.filter((page) => page.group === group.id).map(({ topic, label, nav, href }) => ({ label: nav ?? label, href, exact: !topic }));
+        return { id: `native-${group.id}`, label: group.label, icon: group.id === "native" ? "cpu" : "book-open", count: items.length, items };
+      });
     return browsableCategories().map((category) => ({
       id: category.id,
       label: category.label,
@@ -133,7 +143,7 @@ export default defineComponent({
           : html`
               <div slot="nav" class="shell-nav">
                 ${this.phone ? html`<div class="shell-nav-skin">${this._renderSkinTrigger()}</div>` : nothing}
-                <lc-nav-tree .groups=${this._groups()} .open=${this.openGroups} collapse-at=${COLLAPSE_AT} @nav-tree-toggle=${(/** @type {CustomEvent} */ e) => { this.openGroups = e.detail.open ? [...this.openGroups, e.detail.id] : this.openGroups.filter((id) => id !== e.detail.id); }}></lc-nav-tree>
+                <lc-nav-tree .groups=${this._groups()} .open=${this.native ? NATIVE_GROUPS.map((group) => `native-${group.id}`) : this.openGroups} collapse-at=${COLLAPSE_AT} @nav-tree-toggle=${(/** @type {CustomEvent} */ e) => { this.openGroups = e.detail.open ? [...this.openGroups, e.detail.id] : this.openGroups.filter((id) => id !== e.detail.id); }}></lc-nav-tree>
               </div>
             `}
         <div class=${this.landing ? "shell-main shell-main-landing" : "shell-main"}>${this.component}</div>

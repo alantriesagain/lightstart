@@ -33,10 +33,30 @@
     height: 100%;
   }
 
+  /*
+   * Horizontal: the label in a column of its own, the bar in a track that takes
+   * the rest of the row (so its width is a share of the track, not of the
+   * row), and the value after it.
+   */
   & .is-horizontal .bar-group {
     flex-direction: row;
     align-items: center;
+    justify-content: flex-start;
     height: auto;
+  }
+
+  & .is-horizontal .bar-label {
+    flex: 0 0 var(--lc-bar-chart-label-width, 7rem);
+    text-align: right;
+  }
+
+  & .bar-track {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  & .is-horizontal .bar-value {
+    min-width: 3ch;
   }
 
   /*

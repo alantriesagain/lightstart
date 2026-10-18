@@ -67,7 +67,7 @@ export default defineComponent({
   /** @param {string | TableColumn} column */
   renderHead(column) {
     const name = colName(column);
-    const label = typeof column === "string" ? column : column.name || column.label || "";
+    const label = typeof column === "string" ? column : column.label || column.name || "";
     const sortable = this.sortable && (typeof column === "object" ? column.sortable !== false : true);
     const ariaSort = !sortable
       ? null
