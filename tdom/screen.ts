@@ -113,10 +113,10 @@ export class Screen {
     return new Style(this.fg[i], this.bg[i], this.attrs[i]);
   }
 
-  rowText(y: number) {
+  rowText(y: number, from = 0, to = this.w) {
     let s = "";
     const row = y * this.w;
-    for (let x = 0; x < this.w; x++) s += glyphString(this.glyph[row + x]);
+    for (let x = Math.max(0, from); x < Math.min(to, this.w); x++) s += glyphString(this.glyph[row + x]);
     return s;
   }
 
