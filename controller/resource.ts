@@ -201,6 +201,10 @@ export function resource(fetcher: () => unknown, options: LoadOptions = {}): Res
 export function keyedResource<T>(fetcherForKey: (key: string) => Promise<T> | T, options?: KeyedResourceOptions): KeyedResource<T>;
 export function keyedResource(fetcherForKey: (key: string) => unknown, options: LoadOptions = {}): KeyedResource<unknown> {
   const entries: Map<string, Resource<unknown>> = new Map();
+  const invalidateAll = (): void => {
+    for (const entry of entries.values()) entry.dispose();
+    entries.clear();
+  };
 
   return {
     get(key) {
@@ -222,17 +226,14 @@ export function keyedResource(fetcherForKey: (key: string) => unknown, options: 
       entries.delete(key);
     },
 
-    invalidateAll() {
-      for (const entry of entries.values()) entry.dispose();
-      entries.clear();
-    },
+    invalidateAll,
 
     keys() {
       return [...entries.keys()];
     },
 
     dispose() {
-      this.invalidateAll();
+      invalidateAll();
     },
   };
 }

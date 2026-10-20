@@ -1,4 +1,4 @@
-# Probe results (2026-10-17T21:27Z, scriptc 0.3.6, node v25.3.0)
+# Probe results (2026-10-20T15:42Z, scriptc 0.3.6, node v25.3.0)
 
 ## p-a-dispatch: PASS
 - coverage rc=0 static=64 (100%) fully=true deferred=false
@@ -24,30 +24,9 @@
 - coverage rc=0 static=986 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
-## p-af-controller: FAIL
-- coverage rc=0 static=1897 (99%) fully=false deferred=false
+## p-af-controller: PASS
+- coverage rc=0 static=1914 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
-```
-scriptc coverage /home/alanleal/Projects/light/native/probes/p-af-controller.js
-
-  statements analyzed   1898
-  compile statically    1897  (99%)
-
-  in unreached code   (never lowered — cannot fail a build)
-      ×1  SC1090  references to 'this' in object literal methods
-          at controller/resource.ts:235:7
-          hint: this form is valid TypeScript but does not compile yet — rewrite it with a supported equivalent of the construct the message names (https://scriptc.dev/limitations lists the boundary)
---- build
-/home/alanleal/Projects/light/native/probes/out/p-af-controller
---- node
-all write the probe | run it
-open run it
-done write the probe
---- native
-all write the probe | run it
-open run it
-done write the probe
-```
 
 ## p-ag-prop-signal: PASS
 - coverage rc=0 static=204 (100%) fully=true deferred=false
@@ -59,6 +38,14 @@ done write the probe
 
 ## p-ai-theme-tokens: PASS
 - coverage rc=0 static=239 (100%) fully=true deferred=false
+- build rc=0 node rc=0 native rc=0 same output=true
+
+## p-aj-ts-controller: PASS
+- coverage rc=0 static=1472 (100%) fully=true deferred=false
+- build rc=0 node rc=0 native rc=0 same output=true
+
+## p-ak-ts-model: PASS
+- coverage rc=0 static=943 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-b-host: PASS
@@ -180,23 +167,23 @@ scriptc coverage /home/alanleal/Projects/light/native/probes/p-n-alloc.js
 --- build
 /home/alanleal/Projects/light/native/probes/out/p-n-alloc
 --- node
-one-field class: 15.4 ms
-seven-field class: 24.0 ms
-three-level subclass with an array field: 33.0 ms
-two-level subclass with an array field: 11.8 ms
-object literal: 7.1 ms
-small array: 7.2 ms
-one-field class, dropped: 13.6 ms
-empty array field only: 5.1 ms
+one-field class: 7.4 ms
+seven-field class: 12.3 ms
+three-level subclass with an array field: 11.9 ms
+two-level subclass with an array field: 6.0 ms
+object literal: 3.2 ms
+small array: 4.3 ms
+one-field class, dropped: 8.8 ms
+empty array field only: 2.0 ms
 --- native
-one-field class: 52.0 ms
-seven-field class: 14.2 ms
-three-level subclass with an array field: 55.7 ms
-two-level subclass with an array field: 17.1 ms
-object literal: 1.4 ms
-small array: 9.4 ms
-one-field class, dropped: 10.5 ms
-empty array field only: 3.7 ms
+one-field class: 15.7 ms
+seven-field class: 3.9 ms
+three-level subclass with an array field: 12.7 ms
+two-level subclass with an array field: 6.0 ms
+object literal: 0.7 ms
+small array: 4.2 ms
+one-field class, dropped: 3.6 ms
+empty array field only: 1.5 ms
 ```
 
 ## p-o-subclass-field: PASS

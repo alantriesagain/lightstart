@@ -10,13 +10,17 @@
  * on an included relation's model; every option a query takes is live-safe,
  * `limit` and `offset` included, and `total` follows the whole match.
  * `modelBinder` hands all of this to light's sync binding:
- * `registerSyncBinder(modelBinder)` in the page that binds models.
+ * `registerSyncBinder(modelBinder)` in the page that binds models. For a
+ * controller written as a class, `liveRows(this, model, build)` is the same
+ * query as a `sync:` entry, its rows read through `LiveRows`.
  */
 
 import { resource } from "../controller/resource.ts";
 import { writableRecord, writerOf } from "../controller/writers.ts";
+import { effect, signal, untracked } from "../signals/index.ts";
 import { isModelApi } from "./index.ts";
 import { onChange } from "./changes.ts";
+import type { Controller } from "../controller/class.ts";
 import type { Binding, Resource, ResourceOptions, StoreCore, SyncBinder, SyncHost, SyncProp } from "../controller/types.ts";
 import type { ModelApi, ModelQueryOptions, ModelQueryResource, QueryOptions } from "./types.ts";
 
@@ -195,4 +199,97 @@ export const modelBinder: SyncBinder = {
   bind({ store, key, prop, host, target }): Binding {
     return bindModelQuery({ store, key, prop, host, api: target as ModelApi });
   },
+};
+
+/**
+ * The rows of a live query as a `Controller` subclass reads them. A query's
+ * resource keeps its rows in a signal typed over `unknown`, which no
+ * `Signal<T>` is natively, so the rows are read through this wrapper: its one
+ * field is the unknown-typed signal the resource feeds, and `value` reads it
+ * as `T[]`, the one cast, the way a view's `Prop<T>` reads its signal. `use`
+ * points it at a resource (the next query when the options change), disposing
+ * the one before.
+ */
+export class LiveRows<T> {
+  private res: ModelQueryResource<Record<string, unknown>> | null = null;
+  private following: (() => void) | null = null;
+  private readonly sig = signal<unknown>([]);
+
+  /** The rows now; a render or an effect reading them follows the query. */
+  get value(): T[] {
+    return this.sig.value as T[];
+  }
+
+  /** The rows now, without tracking. */
+  peek(): T[] {
+    return this.sig.peek() as T[];
+  }
+
+  /** Whether a load is in flight. */
+  get pending(): boolean {
+    const res = this.res;
+    return res !== null && res.pending.value;
+  }
+
+  /** The size of the whole match, past `limit`. */
+  get total(): number {
+    const res = this.res;
+    return res !== null ? res.total : 0;
+  }
+
+  /** Follow `res` from now on, its rows replacing these as they land; the resource before is disposed. */
+  use(res: ModelQueryResource<Record<string, unknown>>): void {
+    this.drop();
+    this.res = res;
+    this.following = res.value.subscribe((rows) => {
+      if (rows !== undefined) this.sig.value = rows;
+    });
+  }
+
+  /** The first load of the resource followed, settled either way; at once when there is none. */
+  loaded(): Promise<void> {
+    const res = this.res;
+    return res === null ? Promise.resolve() : res.ensure().then(() => undefined, () => undefined);
+  }
+
+  /** Run the query again. */
+  refresh(): Promise<void> {
+    const res = this.res;
+    return res === null ? Promise.resolve() : res.refresh().then(() => undefined);
+  }
+
+  /** Stop following; the rows stay as they were. */
+  dispose(): void {
+    this.drop();
+  }
+
+  private drop(): void {
+    const following = this.following;
+    if (following !== null) following();
+    this.following = null;
+    const res = this.res;
+    if (res !== null) res.dispose();
+    this.res = null;
+  }
+}
+
+/**
+ * The rows of a live query of `model` for `controller`: its options built by
+ * `build` and built again whenever a signal `build` read changes, followed
+ * until the controller is disposed. Made before `start()`, its first load
+ * counts in `$ready`. The signals `build` reads are declared above the field
+ * that holds the rows.
+ */
+export const liveRows = <T>(controller: Controller, model: ModelApi, build: () => ModelQueryOptions): LiveRows<T> => {
+  const rows = new LiveRows<T>();
+  const run = effect(() => {
+    const options = build();
+    untracked(() => rows.use(modelQuery<Record<string, unknown>>(model, options)));
+  });
+  controller.$own(() => {
+    run.dispose();
+    rows.dispose();
+  });
+  controller.$wait(rows.loaded());
+  return rows;
 };

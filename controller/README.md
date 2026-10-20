@@ -54,6 +54,41 @@ export const ledger = defineController({
 
 **Teardowns go through `this.$own(teardown)`.** Pass any unsubscribe function, a `dispose`, a `clearInterval` closure, or an array of them; `$own` returns its argument, so it wraps a call inline. `dispose()` runs `disconnected()` and then drains the owned teardowns; an async hook keeps its subscriptions until it settles, and `dispose()` returns its promise. The retiring instance stays reachable until that promise settles, so code that reaches the controller during its own teardown finds the one it is leaving. `$ready` read meanwhile waits for the teardown and then for the instance built after it.
 
+## In TypeScript
+
+A controller in TypeScript is a `Controller` subclass (`@bootstrapp/light/controller/class`), the form that compiles natively: `defineController`'s literal does not lower from TypeScript (scriptc refuses `this` in an object literal's methods), a class does. The words mean what they mean above: signal fields are the props, `liveRows(this, model, build)` from `@bootstrapp/light/model/binder` is the `sync:` block (the options `build` answers, built again whenever a signal it read changes; the rows a `LiveRows<T>` read as `.value`, with `pending`, `total` and `refresh()` from the resource; the model layer stays out of `controller/`, as it does for the definition form), `$own`, `$wait` (work `$ready` waits for), `connected()`, `disconnected()`, `dispose()` and `$ready`. The hooks are plain methods answering the promise of the work they start (an async method's) or null, since natively an async method cannot be overridden. The one addition is `start()`: a base constructor runs before the subclass's fields exist, so the entry (or the subclass's constructor, last) calls `start()`, which runs `connected()` and settles `$ready` with it and the first load of every query made before it. A signal a `build` reads is declared above the query that reads it. The rows cross as dynamic data, so `T` is an interface whose fields are `unknown`, read through `String(row.title)` and the like.
+
+```ts
+import { Controller } from "@bootstrapp/light/controller/class";
+import { liveRows } from "@bootstrapp/light/model/binder";
+import { signal } from "@bootstrapp/light/signals";
+import tasks from "../models/tasks.js";
+
+interface TaskRow { id: unknown; title: unknown; done: unknown }
+
+export class Board extends Controller {
+  readonly filter = signal("all");
+  readonly rows = liveRows<TaskRow>(this, tasks, () => (this.filter.value === "all" ? { order: "at" } : { where: { done: this.filter.value === "done" }, order: "at" }));
+
+  constructor() {
+    super("board");
+  }
+
+  override connected(): Promise<void> | null {
+    return this.warm();
+  }
+
+  async warm(): Promise<void> {}
+
+  async toggle(task: TaskRow): Promise<void> {
+    await tasks.edit(String(task.id), { done: task.done !== true });
+  }
+}
+
+export const board = new Board();
+await board.start();
+```
+
 ## Mixins
 
 A controller composed from fragments lists them under `mixins: [...]`; each fragment is a `defineMixin({ props, sync, connected, ...members })`, or a function returning one when it takes options. Fragments fold in first, in order, then the definition's own keys: props, sync entries and members union, the definition wins a collision, lifecycle hooks chain mixin-first. `ctrl.definition` is the composed definition, so a variant (a test's, with a fake member) is `defineController({ name, mixins: [ctrl.definition], fetchImpl: () => fake })`.

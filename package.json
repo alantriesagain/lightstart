@@ -78,6 +78,7 @@
     "./controller/document": "./controller/adapters/document.ts",
     "./controller/url": "./controller/adapters/url.ts",
     "./controller/view": "./controller/view.ts",
+    "./controller/class": "./controller/class.ts",
     "./model": {
       "types": "./model/types.ts",
       "default": "./model/index.ts"

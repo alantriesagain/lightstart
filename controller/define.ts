@@ -17,6 +17,7 @@ import { createStore } from "../signals/store.ts";
 import { assertDefinitionKeys, composeDefinition, isThenable } from "../view/definition.js";
 import { acceptsOption, bindProperty, getAdapter, registerAdapter, registerLazyAdapter, unregisterAdapter } from "./sync.ts";
 import { tracked } from "./config.ts";
+import { Teardowns } from "./teardowns.ts";
 import { RecordWriter, registerWriter, writableRecord, writerOf } from "./writers.ts";
 
 import type { PropertyDeclaration, PropertyShorthand } from "../types/types.ts";
@@ -122,10 +123,10 @@ const createController = (definition: Record<string, unknown>): Record<string, u
       .map(([key, prop]) => [key, { default: prop.defaultValue, pack: prop.pack, unpack: prop.unpack }]));
     const store: StoreCore = createStore(defs, { name, accessors: false });
 
-    const teardowns: Array<() => void> = [];
+    const teardowns = new Teardowns();
     const own = (teardown: Teardown): Teardown => {
       for (const one of Array.isArray(teardown) ? teardown : [teardown])
-        if (one) teardowns.push(one);
+        if (one) teardowns.own(one);
       return teardown;
     };
     const attach = (host: { $requestUpdate(): unknown }) => {
@@ -134,14 +135,7 @@ const createController = (definition: Record<string, unknown>): Record<string, u
       return () => offs.forEach((off) => off());
     };
     const dispose = (): Promise<void> | undefined => {
-      const drain = () => {
-        for (const teardown of teardowns.splice(0))
-          try {
-            teardown();
-          } catch (error) {
-            console.error(`[controller] teardown failed in "${name}":`, error);
-          }
-      };
+      const drain = () => teardowns.drain(name);
       const result: unknown = typeof disconnected === "function" ? disconnected.call(instance) : undefined;
       if (!isThenable(result)) {
         drain();
