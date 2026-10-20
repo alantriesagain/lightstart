@@ -6,7 +6,7 @@
  * text, `fit` draws every line and no bar, and a live run is drawn as the
  * spinner's frame.
  */
-import { Caret, Clip, DEFAULT_STYLE, Line, MouseEvent, SPINNER, Screen, TElement, TRoot, Thumb, WheelEvent, barCell, copyRows, frames, hitTest, layout, mount, paint, selectRuns, sliceCells, thumbOf, topAt } from "./index.js";
+import { Caret, Clip, DEFAULT_STYLE, Line, MouseEvent, SPINNER, Screen, TElement, TRoot, Thumb, WheelEvent, barCell, copyRows, frames, hitTest, layout, mount, paint, selectRuns, sliceCells, thumbOf, topAt } from "./index.ts";
 import { done, eq, ok } from "./assert.js";
 import { Holder, Numbers, Rows } from "./test-lines.ts";
 

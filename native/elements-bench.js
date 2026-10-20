@@ -7,7 +7,7 @@
  * (`node native/elements-bench.js`) and as a binary (`$SCRIPTC build native/elements-bench.js -o
  * native/out/elements-bench --strip && native/out/elements-bench`); each prints the same lines.
  */
-import { DEFAULT_STYLE, TRoot, frames, html, key, layout, render } from "./index.js";
+import { DEFAULT_STYLE, TRoot, frames, html, key, layout, render } from "./index.ts";
 import { BenchRecord } from "./test-views.ts";
 
 const N = 1000;

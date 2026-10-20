@@ -1,4 +1,4 @@
-import { InputDecoder, KeyEvent } from "./index.js";
+import { InputDecoder, KeyEvent } from "./index.ts";
 import { done, eq } from "./assert.js";
 
 /** @type {string[]} */

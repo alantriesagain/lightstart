@@ -1,4 +1,4 @@
-import { Caret, Clip, DEFAULT_STYLE, Screen, Style, TBox, TInput, TRoot, TRun, TRUECOLOR_FLAG, TText, createElement, diffScreens, layout, paint, scrollStateOf, sgrTransition } from "./index.js";
+import { Caret, Clip, DEFAULT_STYLE, Screen, Style, TBox, TInput, TRoot, TRun, TRUECOLOR_FLAG, TText, createElement, diffScreens, layout, paint, scrollStateOf, sgrTransition } from "./index.ts";
 import { done, eq, eqn, ok } from "./assert.js";
 
 /** @param {string} s */

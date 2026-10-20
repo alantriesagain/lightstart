@@ -11,6 +11,7 @@
     "./window-host.js",
     "./window.js",
     "./host.js",
+    "./index.ts",
     "./types.ts",
     "./demo/backend.js",
     "./demo/contract.ts"

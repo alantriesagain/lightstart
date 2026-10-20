@@ -11,7 +11,7 @@
  * renders later projects on its own; disposeTree returns the content; a slot
  * forwards through a nested host; slotchange fires once per change.
  */
-import { Caret, Clip, DEFAULT_STYLE, Screen, TBox, TElement, TRoot, TText, childNodes, disposeTree, frames, html, key, layout, mount, paint, render, textOf } from "./index.js";
+import { Caret, Clip, DEFAULT_STYLE, Screen, TBox, TElement, TRoot, TText, childNodes, disposeTree, frames, html, key, layout, mount, paint, render, textOf } from "./index.ts";
 import { done, eq, eqn, ok } from "./assert.js";
 import { Grower, Later, Slotter, Swap, Watch } from "./test-views.ts";
 

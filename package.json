@@ -19,10 +19,10 @@
     },
     "./markup": "./markup/index.js",
     "./tdom": "./tdom/index.ts",
-    "./native": "./native/index.js",
+    "./native": "./native/index.ts",
     "./native/desktop": {
       "types": "./native/desktop/types.ts",
-      "default": "./native/desktop/host.js"
+      "default": "./native/desktop/index.ts"
     },
     "./html": {
       "types": "./html/types.ts",

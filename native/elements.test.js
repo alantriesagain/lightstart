@@ -8,7 +8,7 @@
  * them; `element()` builds a defined tag; the tag and prop names are
  * validated; a view the app constructs keeps today's contract.
  */
-import { CustomEvent, TBox, TElement, TRoot, TRun, childNodes, define, element, frames, html, isDefinedTag, key, mount, render, textOf, unmount } from "./index.js";
+import { CustomEvent, TBox, TElement, TRoot, TRun, childNodes, define, element, frames, html, isDefinedTag, key, mount, render, textOf, unmount } from "./index.ts";
 import { done, eq, eqn, ok, throws } from "./assert.js";
 import { Board, Emitter, Owner, Shell, tick } from "./test-views.ts";
 

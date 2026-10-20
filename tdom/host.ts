@@ -6,7 +6,7 @@
  * its spaces); attributes become the element's props; listeners are
  * handler entries on the element; a view that owns an element attaches
  * when the element joins the root's tree and detaches when it leaves;
- * frames are the scheduler's ticks. Installed by native/index.js.
+ * frames are the scheduler's ticks. Installed by native/index.ts.
  */
 import { Clone, Host, ListenerOptions, Prepared } from "../html/host.ts";
 import { HTML_KIND } from "../html/constants.ts";

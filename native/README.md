@@ -1,10 +1,10 @@
 # @bootstrapp/light/native
 
-Light compiled to a native binary with [scriptc](https://github.com/vercel-labs/scriptc), with no JavaScript engine inside: the signals, the html engine, the view core and the terminal host (`tdom/`). `native/index.js` is the entry; importing it installs the terminal host and light's signals as the effect adapter.
+Light compiled to a native binary with [scriptc](https://github.com/vercel-labs/scriptc), with no JavaScript engine inside: the signals, the html engine, the view core and the terminal host (`tdom/`). `native/index.ts` is the entry; importing it installs the terminal host and light's signals as the effect adapter.
 
 ```
 npm run typecheck:native   # tsc-ts over the native graph against es2024, no dom lib
-npm run coverage:native    # scriptc coverage native/index.js: fully static, nothing deferred
+npm run coverage:native    # scriptc coverage native/index.ts: fully static, nothing deferred
 npm run coverage:tasks     # the same over examples/tasks/main.js: no blocker, no slow path (its JSDoc JavaScript is not held to fully static)
 npm run test:native        # every native/*.test.js under node and under scriptc run; outputs must match
 npm run probes             # the compiler probes (native/probes/) that decided how the core is written
@@ -42,7 +42,7 @@ The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on an
 | `index.js` | The entry: configures the terminal host and re-exports the html core, the signals, the view core and `tdom/` |
 | `app.ts` | `runApp`: a renderer over a terminal, the classes styler, the app's view mounted, its keys first, Ctrl+C quitting |
 | `assert.js` | `ok`, `eq`, `eqn`, `throws`, `done`: the checks a native test uses, since node:test does not run under scriptc |
-| `run.js`, `coverage.js` | The parity runner and the coverage gate `npm run verify` runs, over `native/index.js` and, with `--allow-dynamic`, the tasks app's entry |
+| `run.js`, `coverage.js` | The parity runner and the coverage gate `npm run verify` runs, over `native/index.ts` and, with `--allow-dynamic`, the tasks app's entry |
 | `scriptc.js` | Which scriptc the native tools run (`$SCRIPTC` first) |
 | `test-terminal.ts`, `test-views.ts`, `test-lines.ts` | The test terminal the focus test renders on; the views the parts and elements tests mount; the sources and the holder the line view test drives |
 | `elements-bench.js` | 1k rows as plain templates, as elements made by tag and as slotted rows: create, layout, update, reverse, clear, under node and natively |

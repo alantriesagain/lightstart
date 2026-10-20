@@ -4,7 +4,7 @@
  * binary (`npx scriptc build native/bench.js -o native/out/bench --strip && native/out/bench`);
  * each prints the same lines, so the two compare directly.
  */
-import { TRoot, frames, html, key, layout, render, DEFAULT_STYLE } from "./index.js";
+import { TRoot, frames, html, key, layout, render, DEFAULT_STYLE } from "./index.ts";
 
 class Row {
   /**

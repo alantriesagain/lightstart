@@ -1,4 +1,4 @@
-import { Caret, Clip, DEFAULT_STYLE, KeyEvent, Screen, TBox, TElement, TRoot, TRun, childNodes, disposeTree, dumpTree, frames, html, key, layout, mount, paint, render, signal, textOf, unmount } from "./index.js";
+import { Caret, Clip, DEFAULT_STYLE, KeyEvent, Screen, TBox, TElement, TRoot, TRun, childNodes, disposeTree, dumpTree, frames, html, key, layout, mount, paint, render, signal, textOf, unmount } from "./index.ts";
 import { done, eq, eqn, ok, throws } from "./assert.js";
 import { Parent } from "./test-views.ts";
 

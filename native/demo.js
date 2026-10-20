@@ -5,7 +5,7 @@
  * submits and frames. Ctrl+C quits.
  */
 import { appendFileSync } from "node:fs";
-import { FLUSH_AFTER, Renderer, TBox, TElement, TNode, TRoot, Terminal, View, frames, html, mount, signal } from "./index.js";
+import { FLUSH_AFTER, Renderer, TBox, TElement, TNode, TRoot, Terminal, View, frames, html, mount, signal } from "./index.ts";
 
 /** @param {string} name */
 const argValue = (name) => {

@@ -6,7 +6,7 @@
  * compiles a subclass of a TypeScript class reliably only when the subclass
  * is TypeScript too.
  */
-import { View, define, html, signal } from "./index.js";
+import { View, define, html, signal } from "./index.ts";
 import type { Signal } from "../signals/index.ts";
 
 /** A signal the board's template reads through a thunk, so a disposed thunk can be told from a live one. */

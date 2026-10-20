@@ -1,6 +1,6 @@
 # @bootstrapp/light/tdom
 
-The terminal host of the renderer: a node tree in place of the DOM, a layout and a painter in place of the browser, and the same engine, templates and views on top. Everything here compiles with scriptc to a static binary with no JavaScript engine; `native/index.js` is the entry that installs it.
+The terminal host of the renderer: a node tree in place of the DOM, a layout and a painter in place of the browser, and the same engine, templates and views on top. Everything here compiles with scriptc to a static binary with no JavaScript engine; `native/index.ts` is the entry that installs it.
 
 | File | What it owns |
 |---|---|
@@ -26,7 +26,7 @@ The terminal host of the renderer: a node tree in place of the DOM, a layout and
 A component:
 
 ```js
-import { View, html, signal } from "@bootstrapp/light/native/index.js";
+import { View, html, signal } from "@bootstrapp/light/native";
 
 class Counter extends View {
   count = signal(0);
@@ -41,7 +41,7 @@ class Counter extends View {
 A component a template names by tag, as a page names a custom element:
 
 ```ts
-import { View, define, html } from "@bootstrapp/light/native/index.js";
+import { View, define, html } from "@bootstrapp/light/native";
 
 class TaskRow extends View {
   task = this.prop<Task | null>("task", null);

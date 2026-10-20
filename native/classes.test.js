@@ -8,7 +8,7 @@
  * unknown classes are ignored; a defined element takes its classes too;
  * without a styler `class` is inert again.
  */
-import { ATTR_BOLD, ATTR_DIM, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, Renderer, TBox, TRoot, TRUECOLOR_FLAG, TText, childNodes, configureClasses, frames, html, nothing, render, signal } from "./index.js";
+import { ATTR_BOLD, ATTR_DIM, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, Renderer, TBox, TRoot, TRUECOLOR_FLAG, TText, childNodes, configureClasses, frames, html, nothing, render, signal } from "./index.ts";
 import { done, eq, ok } from "./assert.js";
 import { TestTerminal } from "./test-terminal.ts";
 import { TerminalClasses } from "../theme/terminal.ts";

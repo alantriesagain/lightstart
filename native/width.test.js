@@ -1,4 +1,4 @@
-import { DEFAULT_STYLE, InlineRun, graphemeWidth, graphemes, lineText, stringWidth, wrapRuns } from "./index.js";
+import { DEFAULT_STYLE, InlineRun, graphemeWidth, graphemes, lineText, stringWidth, wrapRuns } from "./index.ts";
 import { done, eq, eqn } from "./assert.js";
 
 eq("ascii graphemes", graphemes("ab c").join("|"), "a|b| |c");

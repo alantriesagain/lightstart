@@ -5,7 +5,7 @@
  * events. TypeScript because scriptc compiles a subclass of a TypeScript
  * class reliably only when the subclass is TypeScript too.
  */
-import { CustomEvent, Line, LineCopy, LinePress, LineSource, LineView, View, html } from "./index.js";
+import { CustomEvent, Line, LineCopy, LinePress, LineSource, LineView, View, html } from "./index.ts";
 
 export class Numbers extends LineSource {
   n = 0;
