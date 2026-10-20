@@ -23,3 +23,8 @@ export { TermHost, TermPrepared } from "./host.ts";
 export { ClassProp, ClassStyler, STATE_FOCUS, STATE_FOCUS_WITHIN, applyClassProps, classStyler, configureClasses, propBit, reapplyClasses, setStates } from "./classes.ts";
 export { TSlotPart, projectSlots, rootStart } from "./slots.ts";
 export { Prop, View, define, mount, unmount } from "./view.ts";
+export { Line, LineSource, Run } from "./lines.ts";
+export { LineCopy, LinePress, LineView, lineTemplate } from "./line-view.ts";
+export { copyRows, rowText, selectRuns, sliceCells } from "./selection.ts";
+export { Thumb, barCell, thumbOf, topAt } from "./scrollbar.ts";
+export { SPINNER, TICK_MS, onTick, spinnerAt } from "./ticks.ts";

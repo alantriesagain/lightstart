@@ -45,6 +45,11 @@ export class KeyEvent extends UIEvent {
     return this.key === "char" && this.text === text && !this.ctrl && !this.alt;
   }
 
+  /** The text this key types on its own: a printable character or a paste, without Ctrl or Alt; "" otherwise. */
+  typedText(): string {
+    return (this.key === "char" || this.key === "paste") && !this.ctrl && !this.alt ? this.text : "";
+  }
+
   describe() {
     const mods: string[] = [];
     if (this.ctrl) mods.push("ctrl");

@@ -44,7 +44,7 @@ The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on an
 | `assert.js` | `ok`, `eq`, `eqn`, `throws`, `done`: the checks a native test uses, since node:test does not run under scriptc |
 | `run.js`, `coverage.js` | The parity runner and the coverage gate `npm run verify` runs, over `native/index.js` and, with `--allow-dynamic`, the tasks app's entry |
 | `scriptc.js` | Which scriptc the native tools run (`$SCRIPTC` first) |
-| `test-terminal.ts` | The test terminal the focus test renders on |
+| `test-terminal.ts`, `test-views.ts`, `test-lines.ts` | The test terminal the focus test renders on; the views the parts and elements tests mount; the sources and the holder the line view test drives |
 | `elements-bench.js` | 1k rows as plain templates, as elements made by tag and as slotted rows: create, layout, update, reverse, clear, under node and natively |
 | `*.test.js` | Parts and views on the terminal host, elements made by tag, slot projection, the theme's classes on elements and on the painted screen and through the focus states, layout and paint, wrapping and widths, the editor, the input decoder, the hit test and focus ring with a renderer on a test terminal |
 | `demo.js`, `pty.sh` | The demo screen and the pty gate that clicks, scrolls, focuses and submits in it as a binary (3.3 MB stripped) |
