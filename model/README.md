@@ -44,7 +44,7 @@ Importing the IndexedDB adapter registers nothing; the page names it. `emit` is 
 
 ## API
 
-Every model operation goes through the model's api, a plain object of eleven methods. `defineModel(name, schema)` builds it, and a module that uses the model imports it. Rows are plain objects, typed by the schema (`RowOf<S>`).
+Every model operation goes through the model's api, a plain object of eleven methods. `defineModel(name, schema)` builds it, and a module that uses the model imports it. Rows are plain objects, typed by the schema: `RowOf<S>` makes a field declared `required: true` or given a default (`T.boolean({ defaultValue: false })`, `T.number(0)`) present on every row, since the store fills defaults on every add, leaves the other fields optional, adds `null` to a field whose default is `null`, and types `id` as the declared `id` descriptor's value (`id: T.number()`) or else the string the store assigns. `type Todo = ModelRow<typeof todos>` names the row a model answers. The type describes rows written under the current schema: `edit` does not check `required` again, and a field made required later is not filled into the rows written before it.
 
 ```javascript
 const row  = await users.get(id, { includes });

@@ -28,7 +28,7 @@ Options every type takes: `defaultValue` (used when the input is `undefined`, `n
 success or `[errorCode, details]` on failure. Per type: `format` on a string (`"email"` is the
 one built-in name; a RegExp or a predicate function also works), `min`/`max` on a number, date
 or datetime, `props` on an object (a schema for its own fields), and `itemType` on an
-array (a schema each entry is coerced through).
+array (a schema each entry is coerced through). A primitive factory's type keeps the `required` and `defaultValue` it was given, which a model's row type reads.
 
 ## Validating
 

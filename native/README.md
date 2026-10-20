@@ -14,6 +14,17 @@ native/pty.sh              # builds the demo natively and drives it in a pty: cl
 light desktop run native/desktop/demo/backend.js   # the desktop shell's demo: a light page in the system web view (native/desktop/README.md)
 ```
 
+## Writing a native app
+
+`examples/tasks` is the reference: light's three parts and two calls from the kit. Widecode is the next app to take this shape.
+
+- **Models** (`models/*.js`): `defineModel(name, { field: T.type(options) })` over `T` from `@bootstrapp/light/types`. The row type is read off the model, `type Task = ModelRow<typeof tasks>` (`@bootstrapp/light/model`): a field declared `required: true` or given a default is on every stored row, the others are optional, and `id` is a string.
+- **A controller** (`controllers/*.js`): `defineController({ name, props, sync, ...methods })` from `@bootstrapp/light/controller`, its rows bound to live queries of the models with `sync: { rows: { to: tasks, query, dependsOn } }`. The module registers the model binder first, `registerSyncBinder(modelBinder)` from `@bootstrapp/light/model/binder`, because `defineController` checks its `sync:` targets as the module loads; registering it again changes nothing. The logic lives here.
+- **Views** (`views/*.ts`): `View` subclasses from `@bootstrapp/light/native`, in TypeScript because scriptc compiles a subclass of a TypeScript class reliably only when the subclass is TypeScript too. A view a template names by tag is `define("task-row", TaskRow)`, its attributes and `.prop=` bindings the `prop<T>(name, initial)` fields. An app's view calls the controller for the change it wants (`board.toggle(task.id, task.done)`); `$emit` is how a reusable component talks to a parent. An editor the app owns is a field, `readonly input = new TInput("textarea")`, placed with `${this.input}`; `find(node, test)` reaches any other element; `e.typed("d")` on a `KeyEvent` is a plain key.
+- **The entry** (`main.js`): `openJsonl({ name, dir, io, models })` from `@bootstrapp/light/model/jsonl` opens the store over the models' JSONL files in `dir` through an `io` (the example's `lib/file-io.ts`, over `node:fs`) and makes it what every model call goes through; `await controller.$ready` waits for the first load; `runApp({ app, term, classes, onKey })` from `@bootstrapp/light/native` mounts the app's view on a renderer over the terminal, installs the baked classes, and hands every key to `onKey` first, Ctrl+C quitting when `onKey` did not take it.
+- **The test** (`tasks.test.js`): the same `openJsonl` over an in-memory `io` and the same `runApp` over `native/test-terminal.ts`, keys pushed through the renderer's decoder and the checks reading the painted screen. It builds natively the same way and must print what it prints under node.
+- **The classes**: the utility classes the views write are baked ahead of time into a table (`light classes:bake`), so the binary carries the table and not the classes engine; `verify` checks the table is current.
+
 ## Which scriptc
 
 Light's core is TypeScript (`html/`, `signals/`, `view/core.ts`, `tdom/`, `controller/`, `model/`), and it needs eight scriptc patches no release carries yet (0.3.6 included): `unknown`- and `object`-typed fields in TypeScript classes, also through a generic instantiation (`Signal<unknown>`); methods of generic classes that a write can replace by name; keys asserted to be numbers (`slots[i as number]`) that leave method calls direct; coverage that reports slow paths; a JavaScript generic call whose return type does not map; `Promise.all` and array facts that widened every array; and an async function that returns a dynamic promise. Until a release has them, the native tools compile with the fork's `light-integration` branch (0.3.5 plus the patches), named by `SCRIPTC`; the fork's `FORK.md` lists every patch and how to re-apply them on a new scriptc release, and its `JSDOC.md` the issues JSDoc-typed JavaScript meets natively:
@@ -29,6 +40,7 @@ The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on an
 | File | What it owns |
 |---|---|
 | `index.js` | The entry: configures the terminal host and re-exports the html core, the signals, the view core and `tdom/` |
+| `app.ts` | `runApp`: a renderer over a terminal, the classes styler, the app's view mounted, its keys first, Ctrl+C quitting |
 | `assert.js` | `ok`, `eq`, `eqn`, `throws`, `done`: the checks a native test uses, since node:test does not run under scriptc |
 | `run.js`, `coverage.js` | The parity runner and the coverage gate `npm run verify` runs, over `native/index.js` and, with `--allow-dynamic`, the tasks app's entry |
 | `scriptc.js` | Which scriptc the native tools run (`$SCRIPTC` first) |

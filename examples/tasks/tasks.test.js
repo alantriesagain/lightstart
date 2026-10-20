@@ -8,12 +8,9 @@
  * used must be in the table. A second store over the same files reads the
  * tasks and the boards back. Runs with `node examples/tasks/tasks.test.js`.
  */
-import { ATTR_BOLD, ATTR_STRIKE, Renderer, TInput, TRoot, TRUECOLOR_FLAG, configureClasses, frames, mount } from "@bootstrapp/light/native";
+import { ATTR_BOLD, ATTR_STRIKE, TInput, TRUECOLOR_FLAG, frames, runApp } from "@bootstrapp/light/native";
 import { BakedClasses } from "@bootstrapp/light/theme/baked";
-import { configureModel, modelBus } from "@bootstrapp/light/model";
-import { createStore, storeRequest } from "@bootstrapp/light/model/store";
-import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
-import JsonlAdapter from "@bootstrapp/light/model/jsonl";
+import { openJsonl } from "@bootstrapp/light/model/jsonl";
 import { done, eq, eqn, ok } from "../../native/assert.js";
 import { TestTerminal } from "../../native/test-terminal.ts";
 import boards from "./models/boards.js";
@@ -38,14 +35,7 @@ const io = {
   },
 };
 
-registerStorageAdapter("jsonl", JsonlAdapter);
-
-const open = async () => {
-  const db = createAdapter("jsonl", { name: "tasks", dir: "data", io });
-  await db.init();
-  const store = createStore({ models: { boards: boards.schema, tasks: tasks.schema }, databases: { jsonl: db }, defaultAdapter: "jsonl", emit: (event, data) => modelBus().emit(event, data) });
-  configureModel({ request: storeRequest(store) });
-};
+const open = () => openJsonl({ name: "tasks", dir: "data", io, models: [boards, tasks] });
 
 await open();
 await board.$ready;
@@ -54,13 +44,8 @@ const term = new TestTerminal();
 term.cols = 72;
 term.rows = 14;
 const styler = new BakedClasses(dark);
-configureClasses(styler);
-const root = new TRoot();
-const renderer = new Renderer(term, root);
 const app = new TaskApp();
-mount(app, root);
-renderer.onKey = (e) => appKey(renderer, app, e);
-renderer.start();
+const renderer = runApp({ app, term, classes: styler, onKey: (r, e) => appKey(r, app, e) });
 
 const settle = async () => {
   for (let i = 0; i < 6; i++) {

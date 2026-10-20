@@ -1,16 +1,10 @@
 /**
- * @file The example's types: a task and a board as the store answers them.
+ * @file The example's row types, read off its two models: a task and a board
+ * as the store answers them.
  */
-export interface Task {
-  id?: string | number;
-  title?: string;
-  done?: boolean;
-  addedAt?: number;
-  boardId?: string;
-}
+import type { ModelRow } from "@bootstrapp/light/model";
+import type boards from "./boards.js";
+import type tasks from "./tasks.js";
 
-export interface Board {
-  id?: string | number;
-  title?: string;
-  position?: number;
-}
+export type Task = ModelRow<typeof tasks>;
+export type Board = ModelRow<typeof boards>;

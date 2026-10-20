@@ -144,9 +144,9 @@ const boardsIn = (box) => {
   render(html`<test-board .rows=${["f"]}><text>child </text></test-board>`, root);
   frames.flush();
   eq("a view whose template has no slot leaves light children above its content", textOf(root), "childall/10: f tick 2");
-  throws("defining a tag twice", () => define("test-board", () => new Board()), "already defined");
-  throws("a tag without a hyphen", () => define("plain", () => new Board()), "needs a hyphen");
-  throws("an uppercase tag", () => define("test-Upper", () => new Board()), "lowercase");
+  throws("defining a tag twice", () => define("test-board", Board), "already defined");
+  throws("a tag without a hyphen", () => define("plain", Board), "needs a hyphen");
+  throws("an uppercase tag", () => define("test-Upper", Board), "lowercase");
   throws("a prop declared twice", () => new Board().prop("rows", []), "declared twice");
   throws("an uppercase prop name", () => new Board().prop("maxItems", 1), "lowercase");
 }

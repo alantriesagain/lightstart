@@ -131,8 +131,8 @@ export class Owner extends View {
   }
 }
 
-define("test-board", () => new Board());
-define("test-emitter", () => new Emitter());
+define("test-board", Board);
+define("test-emitter", Emitter);
 
 /** `<test-card>`: a default slot with a fallback, inside a bordered box. */
 export class Card extends View {
@@ -234,14 +234,14 @@ export class Slotter extends View {
   }
 }
 
-define("test-card", () => new Card());
-define("test-layout", () => new Layout());
-define("test-nested", () => new Nested());
-define("test-swap", () => new Swap());
-define("test-later", () => new Later());
-define("test-grower", () => new Grower());
-define("test-watch", () => new Watch());
-define("test-forward", () => new Forward());
+define("test-card", Card);
+define("test-layout", Layout);
+define("test-nested", Nested);
+define("test-swap", Swap);
+define("test-later", Later);
+define("test-grower", Grower);
+define("test-watch", Watch);
+define("test-forward", Forward);
 
 /** A benchmark row. */
 export class BenchRecord {
@@ -271,5 +271,5 @@ export class BenchCard extends View {
   }
 }
 
-define("bench-row", () => new BenchRow());
-define("bench-card", () => new BenchCard());
+define("bench-row", BenchRow);
+define("bench-card", BenchCard);

@@ -40,6 +40,11 @@ export class KeyEvent extends UIEvent {
     this.shift = shift;
   }
 
+  /** Whether this is the printable `text` typed on its own, without Ctrl or Alt. */
+  typed(text: string): boolean {
+    return this.key === "char" && this.text === text && !this.ctrl && !this.alt;
+  }
+
   describe() {
     const mods: string[] = [];
     if (this.ctrl) mods.push("ctrl");

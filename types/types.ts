@@ -92,8 +92,10 @@ export interface TypeDefinitionFields {
  * declared with this descriptor holds, so `defineComponent` can type `this`
  * from a `props: { x: T.string() }` block. A factory answers
  * `TypeDefinition<never>`, which fits every slot, and the slot that holds it
- * names the type: `TypesAPI.string` reads `TypeDefinition<string>`, so `T` is
- * declared with its type instead of cast to it.
+ * names the type: `TypesAPI.string` reads `TypeDefinition<string>` with the
+ * `required` and `defaultValue` it was given in a second phantom
+ * (`DeclaredTypeDefinition`), so `T` is declared with its type instead of
+ * cast to it.
  */
 export type TypeDefinition<T = unknown> = TypeDefinitionFields & Record<string, unknown> & {
   readonly __tsType?: T;
@@ -157,7 +159,21 @@ export interface TypeExtension {
   types: Record<string, (options?: TypeOptions) => object>;
 }
 
-type Factory<T> = (options?: TypeOptionsOrDefault) => TypeDefinition<T>;
+/** A bare default as the `defaultValue` it stands for, or the `required` and `defaultValue` of an options object. */
+type Declared<O> = [O] extends [never] ? unknown
+  : [O] extends [readonly unknown[] | string | number | boolean | null] ? { readonly defaultValue: O }
+  : Pick<O, Extract<keyof O, "required" | "defaultValue">>;
+
+/** What a primitive factory's descriptor carries from its options, in its type: the `required` and `defaultValue` written there, which a model's `RowOf` reads. */
+export type DeclaredOptions<O> = Declared<Exclude<O, undefined>>;
+
+/**
+ * A primitive factory's descriptor: the value's type and, in the phantom
+ * `__tsHeld` that never exists at runtime, the options it was declared with.
+ */
+export type DeclaredTypeDefinition<T, O> = TypeDefinition<T> & { readonly __tsHeld?: DeclaredOptions<O> };
+
+type Factory<T> = <const O extends TypeOptionsOrDefault = TypeOptionsOrDefault>(options?: O) => DeclaredTypeDefinition<T, O>;
 type RelationFactory<T> = (
   targetModel: string | string[],
   targetForeignKeyOrOptions?: string | TypeOptions,

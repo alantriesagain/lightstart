@@ -45,8 +45,8 @@ export default defineController({
   async adopt() {
     if ((await boards.count()) === 0) await boards.add({ title: "Tasks", position: 0 });
     const first = (await boards.getAll({ order: "position" }))[0];
-    const id = String(first.id);
-    for (const task of await tasks.getAll({ where: { boardId: { "is null": true } } })) await tasks.edit(String(task.id), { boardId: id });
+    const id = first.id;
+    for (const task of await tasks.getAll({ where: { boardId: { "is null": true } } })) await tasks.edit(task.id, { boardId: id });
     if (this.current === "") this.current = id;
   },
   async recount() {
@@ -55,7 +55,7 @@ export default defineController({
   },
   /** @returns {number} the focused board's index among the boards, -1 when none */
   index() {
-    for (let i = 0; i < this.boards.length; i++) if (String(this.boards[i].id) === this.current) return i;
+    for (let i = 0; i < this.boards.length; i++) if (this.boards[i].id === this.current) return i;
     return -1;
   },
   /** @param {string} title */
@@ -64,15 +64,15 @@ export default defineController({
     if (text && this.current !== "") await tasks.add({ title: text, addedAt: Date.now(), boardId: this.current });
   },
   /**
-   * @param {string | number | undefined} id
-   * @param {boolean | undefined} done
+   * @param {string} id
+   * @param {boolean} done
    */
   async toggle(id, done) {
-    if (id !== undefined) await tasks.edit(String(id), { done: !done });
+    await tasks.edit(id, { done: !done });
   },
-  /** @param {string | number | undefined} id */
+  /** @param {string} id */
   async remove(id) {
-    if (id !== undefined) await tasks.remove(String(id));
+    await tasks.remove(id);
   },
   async clearDone() {
     await tasks.removeAll({ done: true });
@@ -88,7 +88,7 @@ export default defineController({
   async reposition(ordered) {
     for (let i = 0; i < ordered.length; i++) {
       const b = ordered[i];
-      if (b.position !== i) await boards.edit(String(b.id), { position: i });
+      if (b.position !== i) await boards.edit(b.id, { position: i });
     }
   },
   /** @param {string} title */
@@ -97,10 +97,10 @@ export default defineController({
     if (!text) return;
     const list = this.boards.slice();
     const at = this.index();
-    const row = /** @type {Board} */ (await boards.add({ title: text, position: at + 1 }));
+    const row = await boards.add({ title: text, position: at + 1 });
     list.splice(at + 1, 0, row);
     await this.reposition(list);
-    this.current = String(row.id);
+    this.current = row.id;
   },
   /** @param {string} title */
   async renameBoard(title) {
@@ -115,23 +115,22 @@ export default defineController({
     const at = this.index();
     await boards.remove(this.current);
     list.splice(at, 1);
-    this.current = String(list[Math.max(0, at - 1)].id);
+    this.current = list[Math.max(0, at - 1)].id;
     await this.reposition(list);
     return true;
   },
   /**
-   * @param {string | number | undefined} id
+   * @param {string} id
    * @param {number} delta -1 to the previous board, 1 to the next
    */
   async moveTask(id, delta) {
-    if (id === undefined) return;
     let boardId = "";
-    for (const task of this.rows) if (String(task.id) === String(id)) boardId = String(task.boardId);
+    for (const task of this.rows) if (task.id === id) boardId = task.boardId;
     let from = -1;
-    for (let i = 0; i < this.boards.length; i++) if (String(this.boards[i].id) === boardId) from = i;
+    for (let i = 0; i < this.boards.length; i++) if (this.boards[i].id === boardId) from = i;
     const to = from + delta;
     if (from < 0 || to < 0 || to >= this.boards.length) return;
-    await tasks.edit(String(id), { boardId: String(this.boards[to].id) });
+    await tasks.edit(id, { boardId: this.boards[to].id });
   },
   /** @param {number} delta -1 left, 1 right */
   async moveBoard(delta) {

@@ -688,3 +688,17 @@ export class TInput extends TElement {
     return p;
   }
 }
+
+/**
+ * The first element at or under `node` in document order that passes
+ * `test`, or null.
+ */
+export const find = (node: TNode, test: (el: TElement) => boolean): TElement | null => {
+  if (!(node instanceof TElement)) return null;
+  if (test(node)) return node;
+  for (let c = node.firstChild; c !== null; c = c.next) {
+    const found = find(c, test);
+    if (found !== null) return found;
+  }
+  return null;
+};

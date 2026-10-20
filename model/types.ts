@@ -195,10 +195,36 @@ export interface ChangeSubscriber {
 // The per-model api
 // ---------------------------------------------------------------------
 
-/** The row a schema declares: each field's value, read off its descriptor; `$` directives are not fields. */
+/** A schema key that is a field: not `id`, which every row has, and not a `$` directive. */
+type FieldKey<K> = K extends "id" | `$${string}` ? never : K;
+
+/** The options a field's descriptor was declared with, as its factory's type kept them. */
+type Held<F> = F extends { readonly __tsHeld?: infer H } ? Exclude<H, undefined> : never;
+
+/** Whether every stored row holds the field: declared `required`, or given a default the store fills on add. */
+type Holds<F> = Held<F> extends { readonly required: true } ? true
+  : Held<F> extends { readonly defaultValue: infer D } ? ([D] extends [undefined] ? false : true) : false;
+
+/** The value a field holds, read off its descriptor, with `null` when its default is `null`. */
+type FieldValue<F> = (F extends TypeDefinition<infer V> ? V : unknown) | (Held<F> extends { readonly defaultValue: null } ? null : never);
+
+/**
+ * The row a schema declares. A field declared `required: true` or given a
+ * default (`T.boolean({ defaultValue: false })`, `T.number(0)`) is on every
+ * stored row, since the store fills defaults on every add whatever the
+ * adapter; any other field may be absent; a `null` default adds `null` to
+ * the value. `id` is the declared `id` descriptor's type (`id: T.number()`
+ * for an auto-incremented key), else the string the store assigns. `$`
+ * directives are not fields.
+ */
 export type RowOf<S> = {
-  [K in keyof S as K extends `$${string}` ? never : K]?: S[K] extends TypeDefinition<infer V> ? V : unknown;
-} & Row;
+  [K in keyof S as Holds<S[K]> extends true ? FieldKey<K> : never]: FieldValue<S[K]>;
+} & {
+  [K in keyof S as Holds<S[K]> extends true ? never : FieldKey<K>]?: FieldValue<S[K]>;
+} & { id: S extends { readonly id: TypeDefinition<infer I> } ? I : string } & Row;
+
+/** The row a model's api answers, as `defineModel` or a host's typings bound it: `type Todo = ModelRow<typeof todos>`. */
+export type ModelRow<M> = M extends ModelApi<infer R, ModelSchema | undefined> ? R : never;
 
 /** The eleven methods of a model's api; `defineModel` or a host's generated typings bind `R`; a model `defineModel` declares always has its schema. */
 export interface ModelApi<R extends Row = Row, S extends ModelSchema | undefined = ModelSchema | undefined> {

@@ -183,15 +183,15 @@ export class View extends ViewCore {
 }
 
 /**
- * Register a tag: a template writing `<tag>` gets a view from `make`, its
- * box the element, disposed by the host when the element leaves the tree.
- * The tag is lowercase with a hyphen, and defined once. A view the app
- * constructs and places with `${view}` is the app's to dispose, whether or
- * not its class is defined.
+ * Register a tag: a template writing `<tag>` gets a new instance of the
+ * class, its box the element, disposed by the host when the element leaves
+ * the tree. The tag is lowercase with a hyphen, and defined once. A view
+ * the app constructs and places with `${view}` is the app's to dispose,
+ * whether or not its class is defined.
  */
-export const define = (tag: string, make: () => View) => {
+export const define = (tag: string, cls: new () => View) => {
   registerTag(new TagDefinition(tag, () => {
-    const view = make();
+    const view = new cls();
     view.box.tag = tag;
     view.$defined = true;
     return view.box;

@@ -10,12 +10,16 @@
  * `io` (`read`, `append`, `write`), so it runs wherever its host can read and
  * append a file; one process owns a directory. Importing it registers
  * nothing: `registerStorageAdapter("jsonl", JsonlAdapter)` where the store is
- * built, then `createAdapter("jsonl", { name, dir, io })`.
+ * built, then `createAdapter("jsonl", { name, dir, io })`; `openJsonl` does
+ * both for a process that holds its own models and store.
  */
 
+import { configureModel, modelBus } from "./config.ts";
+import { createAdapter, hasAdapter, registerStorageAdapter } from "./factory.ts";
 import { buildQueryResult, validateQueryOptions } from "./query-builder.ts";
+import { createStore, storeRequest } from "./store.ts";
 
-import type { JsonlStorage, JsonlTable, QueryOptions, QueryPage, Row, StorageAdapter, WhereClause } from "./types.ts";
+import type { JsonlIO, JsonlStorage, JsonlTable, ModelApi, ModelSchema, QueryOptions, QueryPage, Row, StorageAdapter, Store, WhereClause } from "./types.ts";
 
 const COMPACT_AFTER = 32;
 
@@ -155,3 +159,31 @@ const JsonlAdapter: StorageAdapter = {
 };
 
 export default JsonlAdapter;
+
+/** What `openJsonl` takes: the database's name, the directory of its files, how to reach them, and the models it holds. */
+export interface JsonlOpen {
+  name: string;
+  dir: string;
+  io: JsonlIO;
+  models: ModelApi<Row, ModelSchema>[];
+}
+
+/**
+ * The store of a process that holds its own models, over JSONL files: the
+ * adapter registered once, opened on `dir` through `io`, a store over the
+ * models' schemas with the model bus as its emitter, and the store's request
+ * as what every model call goes through from here on. Answers the store.
+ */
+export const openJsonl = async ({ name, dir, io, models }: JsonlOpen): Promise<Store> => {
+  if (!hasAdapter("jsonl")) registerStorageAdapter("jsonl", JsonlAdapter);
+  const db = createAdapter("jsonl", { name, dir, io });
+  await db.init();
+  const store = createStore({
+    models: Object.fromEntries(models.map((model): [string, ModelSchema] => [model.name, model.schema])),
+    databases: { jsonl: db },
+    defaultAdapter: "jsonl",
+    emit: (event, data) => modelBus().emit(event, data),
+  });
+  configureModel({ request: storeRequest(store) });
+  return store;
+};
