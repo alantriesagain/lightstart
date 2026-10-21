@@ -8,8 +8,8 @@
 
 import { isDescriptor, parse } from "./parse.js";
 import { attachValidate, validateType } from "./validate.js";
-import timestampExt from "./timestamp.js";
-import fileExt from "./file.js";
+import { createTimestamp } from "./timestamp.js";
+import { createFileType, createFilesType } from "./file.js";
 
 export { isDescriptor, parse, parsers } from "./parse.js";
 export { validateType } from "./validate.js";
@@ -198,9 +198,9 @@ const T = {
   many: createRelationType("many"),
   belongs: createRelationType("belongs"),
   belongs_many: createRelationType("belongs_many"),
-  timestamp: wrapExtensionFactory(timestampExt.types.timestamp),
-  file: wrapExtensionFactory(fileExt.types.file),
-  files: wrapExtensionFactory(fileExt.types.files),
+  timestamp: wrapExtensionFactory(createTimestamp),
+  file: wrapExtensionFactory(createFileType),
+  files: wrapExtensionFactory(createFilesType),
   createType,
   parse,
   validateType,

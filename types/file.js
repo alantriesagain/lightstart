@@ -1,4 +1,4 @@
-/** @import { TypeOptions, TypeDefinition, TypeExtension } from "./types.ts" */
+/** @import { TypeOptions, TypeDefinition } from "./types.ts" */
 
 /**
  * `T.file()` extension: a string field with metadata for auto-uploading
@@ -13,7 +13,7 @@
  * }} [options]
  * @returns {TypeDefinition}
  */
-const createFileType = (options = {}) =>
+export const createFileType = (options = {}) =>
   /** @type {TypeDefinition} */ ({
     $type: "string",
     persist: true,
@@ -40,7 +40,7 @@ const createFileType = (options = {}) =>
  * }} [options]
  * @returns {TypeDefinition}
  */
-const createFilesType = (options = {}) =>
+export const createFilesType = (options = {}) =>
   /** @type {TypeDefinition} */ ({
     $type: "array",
     persist: true,
@@ -55,11 +55,3 @@ const createFilesType = (options = {}) =>
     defaultValue: [],
     ...options,
   });
-
-/** @type {TypeExtension} */
-export default {
-  types: {
-    file: createFileType,
-    files: createFilesType,
-  },
-};

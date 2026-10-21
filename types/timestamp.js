@@ -1,4 +1,4 @@
-/** @import { TypeOptions, TypeDefinition, TypeExtension, ValidationTuple } from "./types.ts" */
+/** @import { TypeOptions, TypeDefinition, ValidationTuple } from "./types.ts" */
 
 /**
  * Timestamp validator with auto-creation and auto-update semantics.
@@ -55,7 +55,7 @@ export const timestampValidator = (value, prop, context = {}) => {
  * @param {TypeOptions & { update?: boolean, create?: boolean }} [options]
  * @returns {TypeDefinition}
  */
-const createTimestamp = (options = {}) =>
+export const createTimestamp = (options = {}) =>
   /** @type {TypeDefinition} */ ({
     $type: "number",
     persist: true,
@@ -64,10 +64,3 @@ const createTimestamp = (options = {}) =>
     timestamp: true,
     ...options,
   });
-
-/** @type {TypeExtension} */
-export default {
-  types: {
-    timestamp: createTimestamp,
-  },
-};

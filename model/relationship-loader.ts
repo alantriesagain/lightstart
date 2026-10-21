@@ -72,8 +72,11 @@ export async function loadRelationshipsForMany(reader: RowReader, models: Record
 
   let enriched: Row[] = records.map((r): Row => Object.fromEntries(Object.entries(r)));
 
-  if (regularIncludes.length > 0)
-    enriched = await Promise.all(enriched.map((record) => loadRelationships(reader, models, modelName, record, regularIncludes)));
+  if (regularIncludes.length > 0) {
+    const loads: Promise<Row>[] = [];
+    for (const record of enriched) loads.push(loadRelationships(reader, models, modelName, record, regularIncludes));
+    enriched = await Promise.all(loads);
+  }
 
   for (const relationName of polymorphicIncludes) {
     const typeFieldName = `${relationName}Type`;

@@ -30,10 +30,7 @@
       "types": "./signals/types.ts",
       "default": "./signals/index.ts"
     },
-    "./types": {
-      "types": "./types/types.ts",
-      "default": "./types/index.js"
-    },
+    "./types": "./types/types.ts",
     "./env": {
       "types": "./env/types.ts",
       "default": "./env/index.js"
