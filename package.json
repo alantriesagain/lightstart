@@ -105,6 +105,7 @@
     "typecheck": "tsc-ts --noEmit",
     "typecheck:native": "tsc-ts -p native",
     "typecheck:desktop": "tsc-ts -p native/desktop",
+    "typecheck:any": "node scripts/any-report.js",
     "coverage:native": "node native/coverage.js",
     "coverage:tasks": "node native/coverage.js examples/tasks/main.js --allow-dynamic",
     "bake:tasks": "node bin/light.js classes:bake examples/tasks/main.js -o examples/tasks/classes.baked.js --scheme dark,light",
@@ -114,7 +115,7 @@
     "check": "node bin/light.js check",
     "test": "node --test check/*.test.js check/parse/*.test.js check/rules/*.test.js eslint/*.test.js eslint/rules/*.test.js view/definition.test.js $(find controller -name \"*.test.js\" -not -name \"*.browser.test.js\") $(find model -name \"*.test.js\" -not -name \"*.browser.test.js\") navigation/*.test.js signals/*.test.js theme/variant-rules.test.js theme/tokens.test.js theme/classes/*.test.js theme/runtime.test.js theme/imports.test.js theme/terminal.test.js theme/baked.test.js theme/bake.test.js types/*.test.js test/*.test.js html/conformance.test.js markup/markup.test.js view/core.test.js $(find components -name \"*.test.js\" -not -name \"*.browser.test.js\") && node bin/light.js test env/*.browser.test.js html/*.browser.test.js markup/*.browser.test.js theme/*.browser.test.js view/*.browser.test.js controller/*.browser.test.js model/*.browser.test.js components/*/*.browser.test.js",
     "probes": "node native/probes/run.js",
-    "verify": "npm run lint && npm run typecheck && npm run typecheck:native && npm run typecheck:desktop && npm run coverage:native && npm run coverage:tasks && npm run coverage:desktop && npm run check && npm test && npm run test:native && npm run test:desktop && npm run bake:tasks -- --check"
+    "verify": "npm run lint && npm run typecheck && npm run typecheck:native && npm run typecheck:desktop && npm run typecheck:any && npm run coverage:native && npm run coverage:tasks && npm run coverage:desktop && npm run check && npm test && npm run test:native && npm run test:desktop && npm run bake:tasks -- --check"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^2.13.0",
@@ -124,8 +125,8 @@
     "globals": "^15.14.0",
     "marked": "^18.1.0",
     "playwright": "^1.58.2",
-    "scriptc": "0.3.6",
-    "tsc-ts": "0.0.2",
+    "scriptc": "0.4.1",
+    "tsc-ts": "0.0.5",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
@@ -309,7 +310,80 @@
         "native/desktop/out/"
       ],
       "rules": {
-        "view/no-raw-localstorage": "off"
+        "view/no-raw-localstorage": "off",
+        "light/no-any": "error",
+        "light/declare-instance-surface": "error"
+      },
+      "noAny": {},
+      "perf": {
+        "scope": [
+          "html/",
+          "signals/",
+          "view/",
+          "tdom/",
+          "controller/",
+          "model/",
+          "dom/"
+        ],
+        "native": [
+          "html/",
+          "signals/",
+          "view/core.ts",
+          "tdom/",
+          "controller/",
+          "model/"
+        ],
+        "hot": [
+          "signals/index.ts#Dep._track",
+          "signals/index.ts#Dep._notify",
+          "signals/index.ts#Reactive._execute",
+          "html/template.ts#TemplateInstance.commit",
+          "html/parts.ts#AttributePart.setFromValues",
+          "html/parts.ts#AttributePart.commit",
+          "html/parts.ts#BooleanAttributePart.commit",
+          "html/parts.ts#RawTextPart.commit",
+          "html/parts.ts#ChildPart.setFromValues",
+          "html/parts.ts#ChildPart.commit",
+          "html/parts.ts#ChildPart._commitResolved",
+          "html/parts.ts#ChildPart._commitItems",
+          "html/parts.ts#ChildPart._reconcileKeyed",
+          "view/core.ts#enqueueUpdate",
+          "view/core.ts#flushUpdates",
+          "view/core.ts#ViewCore.$requestUpdate",
+          "view/core.ts#ViewCore.$schedule",
+          "view/core.ts#ViewCore.$flushUpdate",
+          "view/core.ts#ViewCore.$performUpdate",
+          "view/core.ts#ViewCore.$update",
+          "tdom/node.ts#TElement.setProp",
+          "tdom/node.ts#TElement.handle",
+          "tdom/node.ts#TBox.setOwnProp",
+          "tdom/layout.ts#measure",
+          "tdom/layout.ts#measureBox",
+          "tdom/layout.ts#arrange",
+          "tdom/paint.ts#paint",
+          "tdom/paint.ts#putClipped",
+          "tdom/renderer.ts#Renderer.autofocus",
+          "tdom/renderer.ts#Renderer.renderFrame",
+          "tdom/screen.ts#Screen.put",
+          "tdom/screen.ts#Screen.fill"
+        ]
+      },
+      "allow": {
+        "light/perf-no-delete": {
+          "dom/view.js#View.$initProps": "a property set on the element before it upgraded is an own data property that shadows the accessor; only delete removes it",
+          "controller/writers.ts#writableRecord": "the record is handed to callers as a plain object, so removing a key must remove the property"
+        },
+        "light/no-any": {
+          "components/display/marked-vendor.js": "the vendored marked build, copied as published; light does not edit or type it"
+        },
+        "light/perf-exception-flow": {
+          "controller/adapters/storage.ts#deserialize": "a stored value is parsed only when it starts like JSON, so the catch meets malformed JSON only",
+          "model/jsonl.ts#readLines": "every line of a JSONL file is JSON unless the file is corrupt; the catch marks it for compaction"
+        },
+        "light/perf-hot-allocation": {
+          "html/parts.ts#ChildPart._commitItems": "measured (native/probes/pairs keyed-map): .map sizes its result once, and a loop pushing into two arrays ran 1.9x slower natively; the slice keeps the part list whole for _clear when a commit throws mid-reconcile",
+          "view/core.ts#flushUpdates": "the comparator is made once per flush that orders more than one view, not once per view"
+        }
       }
     }
   },

@@ -5,3 +5,4 @@ dist/
 .bootstrapp.json
 .deployed/
 native/desktop/out/
+benchmarks/noise.local.json

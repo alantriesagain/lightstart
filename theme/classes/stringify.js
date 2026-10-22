@@ -13,13 +13,15 @@
  * @returns {string}
  */
 export const stringify = (rules) => {
+  /** @type {Map<string, { weight: number, rules: CompiledRule[] }>} */
   const groups = new Map();
+  /** @type {Set<string>} */
   const keyframes = new Set();
   for (const rule of rules) {
     if (rule.keyframes) keyframes.add(rule.keyframes);
     const key = rule.medias.join(" and ");
-    if (!groups.has(key)) groups.set(key, { weight: rule.weight, rules: [] });
-    const group = groups.get(key);
+    let group = groups.get(key);
+    if (!group) groups.set(key, (group = { weight: rule.weight, rules: [] }));
     group.weight = Math.max(group.weight, rule.weight);
     group.rules.push(rule);
   }

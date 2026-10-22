@@ -12,7 +12,7 @@
 
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { toRel, walkFiles } from "./walk.js";
+import { asPackageJson, toRel, walkFiles } from "./walk.js";
 import { stripComments } from "./strip-comments.js";
 import { parseImports } from "./parse/imports.js";
 import { parseComponentSources } from "./parse/component.js";
@@ -101,13 +101,13 @@ export function createContext({ projectDir, fileMap = null, pkg: givenPkg = null
   const pkg = givenPkg ?? (() => {
     const raw = read("package.json");
     try {
-      return raw ? JSON.parse(raw) : {};
+      return (raw ? asPackageJson(JSON.parse(raw)) : null) ?? {};
     } catch {
       return {};
     }
   })();
-  const config = /** @type {Record<string, any>} */ (pkg.bootstrapp || {});
-  const check = /** @type {{ ignore?: string[], from?: string[] }} */ (config.check ?? {});
+  const config = pkg.bootstrapp ?? {};
+  const check = config.check ?? {};
   const ignoredDirs = new Set([...DEFAULT_IGNORED_DIRS, ...(host.ignore?.dirs ?? [])]);
   const ignoredPrefixes = [...(host.ignore?.prefixes ?? []), ...(check.ignore ?? [])];
   const extensions = host.extensions ?? TEXT_EXTENSIONS;

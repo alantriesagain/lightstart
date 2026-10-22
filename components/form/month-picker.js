@@ -55,8 +55,8 @@ export const monthDays = ({ month, locale = "", today = "", dots = [], min = "",
   const lo = from && to && to < from ? to : from;
   const hi = from && to && to < from ? from : to;
   return {
-    weekdays: Array.from({ length: 7 }, (_, i) => weekday.format(new Date(start + i * DAY_MS))),
-    days: Array.from({ length: total }, (_, i) => {
+    weekdays: Array.from({ length: 7 }, (/** @type {unknown} */ _, i) => weekday.format(new Date(start + i * DAY_MS))),
+    days: Array.from({ length: total }, (/** @type {unknown} */ _, i) => {
       const date = isoOf(start + i * DAY_MS);
       return {
         date,

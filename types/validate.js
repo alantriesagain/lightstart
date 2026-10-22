@@ -7,6 +7,12 @@
 import { parse } from "./parse.js";
 import { timestampValidator } from "./timestamp.js";
 
+/**
+ * A related record's id, or the value itself when it is not a record with one.
+ * @param {unknown} value
+ */
+const idOrSelf = (value) => (value !== null && typeof value === "object" && "id" in value && value.id != null ? value.id : value);
+
 /** @import { TypeDefinition, ValidationResult, ValidationTuple } from "./types.ts" */
 
 /** @type {Record<string, RegExp>} */
@@ -86,10 +92,10 @@ const validateField = (input, prop, context = {}) => {
       return [
         null,
         Array.isArray(value)
-          ? value.map((i) => (prop.mixed ? i : (i?.id ?? i)))
+          ? value.map((i) => (prop.mixed ? i : idOrSelf(i)))
           : [],
       ];
-    return [null, /** @type {{ id?: unknown } | null | undefined} */ (value)?.id ?? value];
+    return [null, idOrSelf(value)];
   }
 
   let typedValue = parse(value, prop);
@@ -173,7 +179,7 @@ export const attachValidate = (typeDef) => {
  * @returns {string}
  */
 const interpolate = (str, data) =>
-  str.replace(/\${(.*?)}/g, (_, key) => String(data[key.trim()] ?? ""));
+  str.replace(/\${(.*?)}/g, (_, /** @type {string} */ key) => String(data[key.trim()] ?? ""));
 
 /**
  * Validate an object against a schema of descriptors. Answers

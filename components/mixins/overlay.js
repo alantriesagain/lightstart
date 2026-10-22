@@ -2,7 +2,7 @@ import T from "@bootstrapp/light/types";
 import { defineMixin } from "@bootstrapp/light";
 import { overlays } from "../overlay/stack.js";
 
-/** @import { Prop } from "../types.ts" */
+/** @import { OverlayHost, Prop } from "../types.ts" */
 
 /**
  * @bootstrapp/light/components/mixins/overlay
@@ -41,12 +41,13 @@ export const withOverlay = ({ prop = "open", lockScroll = false, restoreFocus = 
     /** @param {{ changedProps: Map<string, unknown> }} arg */
     updated({ changedProps }) {
       if (!changedProps.has(prop)) return;
+      const host = /** @type {OverlayHost} */ (this);
       if (this[prop] && !this._overlayId)
         this._overlayId = overlays.open(this, {
           lockScroll,
           restoreFocus,
-          dismissible: dismissible ?? typeof this.onEscape === "function",
-          dismiss: () => this.onEscape?.(),
+          dismissible: dismissible ?? typeof host.onEscape === "function",
+          dismiss: () => host.onEscape?.(),
         });
       else if (!this[prop] && this._overlayId) {
         overlays.close(this._overlayId);

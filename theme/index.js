@@ -174,6 +174,7 @@ const VARIANT_STATES = ["hover", "active", "focus", "disabled"];
  * @returns {string} CSS, one rule per declared variant
  */
 const generateVariantRules = (variables, components = ["button"]) => {
+  /** @type {Map<string, { component: string, variant: string }>} */
   const found = new Map();
   for (const component of components)
     for (const key of Object.keys(variables)) {

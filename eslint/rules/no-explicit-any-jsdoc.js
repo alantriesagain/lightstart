@@ -2,7 +2,15 @@
  * `light/no-explicit-any-jsdoc`: no `any` in a JSDoc type. Light is typed
  * through JSDoc; an `any` there switches the checker off for whatever flows
  * through it, so a boundary that truly needs one says why in a disable line.
+ *
+ * The types are found by TypeScript's parser (the scanner `light check`'s
+ * `light/no-any` uses), so nested braces, `@this {any}` and `{*}` count and
+ * prose never does. `light/no-any` supersedes this rule; it stays for one
+ * release.
  */
+
+import * as ts from "typescript";
+import { anyOffsets } from "../../check/parse/any.js";
 
 /** @type {import("eslint").Rule.RuleModule} */
 const rule = {
@@ -16,14 +24,14 @@ const rule = {
   },
   create(context) {
     const { sourceCode } = context;
-    const ANY_PATTERN = /@(?:type|param|returns?|property|prop|arg|argument|template|typedef)\b[^*\n]*\{[^}]*\bany\b/;
     return {
       Program() {
-        for (const comment of sourceCode.getAllComments()) {
-          if (comment.type !== "Block") continue;
-          if (!comment.value.startsWith("*")) continue;
-          if (!ANY_PATTERN.test(comment.value)) continue;
-          if (comment.loc) context.report({ loc: comment.loc, messageId: "forbidden" });
+        const docs = sourceCode.getAllComments().filter((comment) => comment.type === "Block" && comment.value.startsWith("*") && comment.range && comment.loc);
+        const sf = ts.createSourceFile(context.filename, sourceCode.text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+        const offsets = anyOffsets(sf);
+        for (const comment of docs) {
+          const [start, end] = /** @type {[number, number]} */ (comment.range);
+          if (comment.loc && offsets.some((offset) => offset >= start && offset < end)) context.report({ loc: comment.loc, messageId: "forbidden" });
         }
       },
     };

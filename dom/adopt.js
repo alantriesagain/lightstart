@@ -3,9 +3,10 @@ import { AttributePart, BooleanAttributePart, ChildPart, EventPart, NOT_SET, Pro
 import { setThunk } from "../html/reactive.ts";
 import { ElementSpec, Keyed, TemplateResult, Unsafe } from "../html/values.ts";
 import { TemplateInstance, getTemplate } from "../html/template.ts";
+import { ElementState, ItemsState, KeyedState, PENDING, TemplateState, TextState } from "../html/states.ts";
 
 /** @import { ProjectedUnit } from "./types.ts" */
-/** @import { ElementState, RenderOptions } from "../html/types.ts" */
+/** @import { RenderOptions } from "../html/types.ts" */
 /** @import { Part } from "../html/parts.ts" */
 /** @import { SlotPart } from "./slots.js" */
 
@@ -197,6 +198,8 @@ export const singleTextIn = (start, end) => {
   return text;
 };
 
+/** @typedef {{ start: Node, end: Node }} MarkerRange */
+
 /**
  * The single Element of a range, when the range holds exactly one element
  * and no other significant node.
@@ -205,17 +208,18 @@ export const singleTextIn = (start, end) => {
  * @param {Comment} end
  */
 export const singleElementIn = (start, end) => {
+  /** @type {Element | null} */
   let el = null;
   let node = start.nextSibling;
   while (node && node !== end) {
     if (node.nodeType === 8) return null;
     if (node.nodeType === 1) {
       if (el) return null;
-      el = node;
+      el = /** @type {Element} */ (node);
     }
     node = node.nextSibling;
   }
-  return /** @type {Element | null} */ (el);
+  return el;
 };
 
 /**
@@ -242,6 +246,7 @@ export const normalizedEqual = (a, b) => a.replace(/\s+/g, " ").trim() === b.rep
  */
 const matchTemplate = (template, start, end) => {
   const specs = template.parts;
+  /** @type {unknown[]} the node each part binds to, or a child part's `{ start, end }` markers */
   const targets = new Array(specs.length);
   /** @type {Set<number>} */
   const fresh = new Set();
@@ -414,24 +419,26 @@ export const adoptTemplateResult = (part, result, bind) => {
   for (let i = 0; i < specs.length; i++) {
     const spec = specs[i];
     if (fresh.has(i)) {
-      const p = createPart(spec, spec.kind === "child" ? targets[i].start : targets[i], part.owner);
+      const p = createPart(spec, spec.kind === "child" ? /** @type {MarkerRange} */ (targets[i]).start : targets[i], part.owner);
       p.setFromValues(result.values);
       instance.parts.push(p);
       continue;
     }
     if (spec.kind === "child") {
-      const child = part._child(targets[i].start, targets[i].end);
+      const range = /** @type {MarkerRange} */ (targets[i]);
+      const child = part._child(range.start, range.end);
       child.valueIndex = spec.valueIndex;
-      child.state = { type: "pending" };
+      child.state = PENDING;
       instance.parts.push(child);
       continue;
     }
     const p = createPart(spec, targets[i], part.owner);
-    if (spec.kind === "slot" && parked.has(targets[i])) /** @type {SlotPart} */ (p).parked = parked.get(targets[i]) ?? null;
+    const el = /** @type {Element} */ (targets[i]);
+    if (spec.kind === "slot" && parked.has(el)) /** @type {SlotPart} */ (p).parked = parked.get(el) ?? null;
     instance.parts.push(p);
   }
   for (let i = 0; i < specs.length; i++) if (!fresh.has(i)) adoptPart(instance.parts[i], result.values, bind);
-  part.state = { type: "template", instance };
+  part.state = new TemplateState(instance);
   return true;
 };
 
@@ -482,7 +489,7 @@ export const deferValue = (part, value) => {
     part._settleWaiting = true;
     part._settle().then(() => {
       part._settled = true;
-      if (part.state.type !== "pending" || part._deferred === NOT_SET) return;
+      if (part.state !== PENDING || part._deferred === NOT_SET) return;
       const held = part._deferred;
       part._deferred = NOT_SET;
       resolvePending(part, held, false);
@@ -525,7 +532,7 @@ export const resolvePending = (part, value, bind) => {
   const end = /** @type {Comment} */ (part.end);
   if (typeof value === "function") {
     part._bindNext = bind;
-    return setThunk(part, /** @type {() => unknown} */ (value), (v) => part._commitResolved(v));
+    return setThunk(part, /** @type {() => unknown} */ (value));
   }
   if (value === nothing || value == null) {
     if (bind || deferValue(part, value)) return;
@@ -537,12 +544,12 @@ export const resolvePending = (part, value, bind) => {
     const text = String(value);
     const node = singleTextIn(start, end);
     if (bind) {
-      if (node) part.state = { type: "text", node, text: normalizedEqual(node.data, text) ? text : node.data };
+      if (node) part.state = new TextState(node, normalizedEqual(node.data, text) ? text : node.data);
       return;
     }
     if (node) {
       if (!normalizedEqual(node.data, text)) node.data = text;
-      part.state = { type: "text", node, text };
+      part.state = new TextState(node, text);
       return;
     }
     if (deferValue(part, value)) return;
@@ -567,8 +574,8 @@ export const resolvePending = (part, value, bind) => {
   }
   if (value instanceof Keyed) {
     const inner = part._child(start, end);
-    inner.state = { type: "pending" };
-    part.state = { type: "keyed", k: value.k, inner };
+    inner.state = PENDING;
+    part.state = new KeyedState(value.k, inner);
     resolvePending(inner, value.v, bind);
     return;
   }
@@ -581,35 +588,32 @@ export const resolvePending = (part, value, bind) => {
     part._commitResolved(value);
     return;
   }
-  if (value instanceof Unsafe || (t === "object" && /** @type {any} */ (value).nodeType)) {
+  if (value instanceof Unsafe || (value !== null && typeof value === "object" && "nodeType" in value && value.nodeType)) {
     if (bind || deferValue(part, value)) return;
     part._clearPending();
     part._commitResolved(value);
     return;
   }
-  if (t === "object") {
-    const v = /** @type {any} */ (value);
-    if (typeof v[Symbol.iterator] === "function") {
-      const raw = Array.isArray(v) ? v : [...v];
-      const ranges = itemRanges(start, end);
-      if (!ranges || ranges.length !== raw.length) {
-        if (bind || deferValue(part, raw)) return;
-        part._clearPending();
-        part._commitResolved(raw);
-        return;
-      }
-      let keyed = raw.length > 0;
-      for (const item of raw) if (!(item instanceof Keyed)) keyed = false;
-      const values = raw.map((item) => (item instanceof Keyed ? item.v : item));
-      const parts = ranges.map((r) => {
-        const p = part._child(r.start, r.end);
-        p.state = { type: "pending" };
-        return p;
-      });
-      part.state = { type: "items", parts, keys: keyed ? raw.map((item) => (item instanceof Keyed ? item.k : undefined)) : null };
-      for (let i = 0; i < parts.length; i++) resolvePending(parts[i], values[i], bind);
+  if (value !== null && typeof value === "object" && Symbol.iterator in value && typeof value[Symbol.iterator] === "function") {
+    const raw = Array.isArray(value) ? value : [.../** @type {Iterable<unknown>} */ (value)];
+    const ranges = itemRanges(start, end);
+    if (!ranges || ranges.length !== raw.length) {
+      if (bind || deferValue(part, raw)) return;
+      part._clearPending();
+      part._commitResolved(raw);
       return;
     }
+    let keyed = raw.length > 0;
+    for (const item of raw) if (!(item instanceof Keyed)) keyed = false;
+    const values = raw.map((item) => (item instanceof Keyed ? item.v : item));
+    const parts = ranges.map((r) => {
+      const p = part._child(r.start, r.end);
+      p.state = PENDING;
+      return p;
+    });
+    part.state = new ItemsState(parts, keyed ? raw.map((item) => (item instanceof Keyed ? item.k : undefined)) : [], keyed);
+    for (let i = 0; i < parts.length; i++) resolvePending(parts[i], values[i], bind);
+    return;
   }
   if (bind || deferValue(part, value)) return;
   part._clearPending();
@@ -623,15 +627,7 @@ export const resolvePending = (part, value, bind) => {
  * @param {boolean} bind
  */
 const adoptElement = (part, el, spec, bind) => {
-  const st = /** @type {ElementState} */ ({
-    type: "element",
-    tag: spec.tag,
-    el,
-    committed: new Map(),
-    events: new Map(),
-    ref: null,
-    childPart: null,
-  });
+  const st = new ElementState(spec.tag, el);
   const bindings = spec.bindings ?? {};
   for (const [rawKey, value] of Object.entries(bindings)) {
     if (rawKey === "ref") continue;
@@ -646,7 +642,7 @@ const adoptElement = (part, el, spec, bind) => {
   const pair = elementChildPair(el);
   if (pair) {
     st.childPart = part._child(pair.start, pair.end);
-    st.childPart.state = { type: "pending" };
+    st.childPart.state = PENDING;
     resolvePending(st.childPart, spec.children === undefined ? nothing : spec.children, bind);
   } else if (spec.children !== undefined)
     part._ensureElementChildPart(st).commit(spec.children);
@@ -668,7 +664,7 @@ export const rootPart = (container, options) => {
     return null;
   }
   const part = new ChildPart(pair.start, pair.end, options.host);
-  part.state = { type: "pending" };
+  part.state = PENDING;
   part._bindNext = options.adopt === "bind";
   part._settle = options.settle ?? null;
   return part;

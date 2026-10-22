@@ -1,4 +1,4 @@
-import { Caret, Clip, DEFAULT_STYLE, Screen, Style, TBox, TInput, TRoot, TRun, TRUECOLOR_FLAG, TText, createElement, diffScreens, layout, paint, scrollStateOf, sgrTransition } from "./index.ts";
+import { Caret, Clip, DEFAULT_STYLE, Screen, Style, TBox, TInput, TRoot, TRun, TRUECOLOR_FLAG, TText, createElement, diffScreens, forgetLayout, layout, measure, paint, scrollStateOf, sgrTransition } from "./index.ts";
 import { done, eq, eqn, ok } from "./assert.js";
 
 /** @param {string} s */
@@ -184,6 +184,31 @@ const screenOf = (root, w, h, focus) => {
   eq("a text's lines, laid out once, follow the style its box takes later", String(before.bg[0]) + "|" + String(after.bg[0]), "-1|" + String(TRUECOLOR_FLAG | 0xffffff));
   outer.setKnownProp("bg", null);
   eq("and come back when the box drops it", String(screenOf(root, 4, 1, null).bg[0]), "-1");
+}
+
+{
+  const root = new TRoot();
+  const outer = box();
+  const row = box();
+  row.setOwnProp("direction", "row");
+  const label = text("alpha beta");
+  row.append(label);
+  row.append(text("gamma"));
+  outer.append(row);
+  outer.append(text("delta epsilon zeta"));
+  root.append(outer);
+  const first = measure(outer, 30, DEFAULT_STYLE);
+  ok("a box measured again at the same width answers its cached size", measure(outer, 30, DEFAULT_STYLE) === first);
+  ok("and measured at another width, a new one", measure(outer, 8, DEFAULT_STYLE) !== first);
+  const wide = measure(outer, 30, DEFAULT_STYLE);
+  /** @type {TRun} */ (label.firstChild).setText("alpha beta and more words");
+  const grown = measure(outer, 30, DEFAULT_STYLE);
+  ok("a text changed beneath it measures it afresh", grown !== wide && grown.w > wide.w);
+  layout(root, 30, 10, DEFAULT_STYLE);
+  const cached = [outer, row, label].map(rect).join(" ");
+  forgetLayout(root);
+  layout(root, 30, 10, DEFAULT_STYLE);
+  eq("a layout from the caches is the layout made afresh", [outer, row, label].map(rect).join(" "), cached);
 }
 
 done();

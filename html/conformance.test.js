@@ -250,6 +250,16 @@ for (const adapter of hosts)
         assert.equal(text(), "54321");
       });
 
+      it("keeps every item of a keyed list when a commit throws partway through a reorder", () => {
+        const boom = { toString() { throw new Error("boom"); } };
+        const view = (/** @type {string[]} */ ks, /** @type {string | null} */ bad) => html`${ks.map((k) => key(k, html`<i>${k === bad ? boom : k}</i>`))}`;
+        render(view(["a", "b", "c", "d"], null), container);
+        assert.throws(() => render(view(["d", "c", "b", "a"], "b"), container), /boom/);
+        render(view(["a", "b", "c", "d"], null), container);
+        assert.equal(adapter.elements(container).length, 4);
+        assert.equal(text(), "abcd");
+      });
+
       it("recreates a single keyed child on key change", () => {
         const view = (/** @type {string} */ k, /** @type {string} */ label) => html`${key(k, html`<i>${label}</i>`)}`;
         render(view("a", "a"), container);
@@ -349,6 +359,17 @@ for (const adapter of hosts)
         assert.equal(text(), "n:5");
         assert.equal(adapter.attribute(first(), "class"), "b");
         assert.equal(adapter.attribute(first(), "disabled"), "");
+        assert.equal(renders, 1);
+      });
+
+      it("updates a raw-text part fine-grained", { skip: !adapter.rawText }, () => {
+        const body = signal("a");
+        let renders = 0;
+        const view = () => (renders++, html`<textarea>${() => body.value}</textarea>`);
+        render(view(), container);
+        assert.equal(text(), "a");
+        body.value = "b";
+        assert.equal(text(), "b");
         assert.equal(renders, 1);
       });
 

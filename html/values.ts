@@ -3,11 +3,10 @@
  * text, nodes and lists. `html` and `svg` (in `tags.js`) answer a `TemplateResult`; `key`,
  * `element` and `unsafeHTML` wrap a value in a `Keyed`, `ElementSpec` or
  * `Unsafe`. They are classes so the parts engine recognises them with
- * `instanceof`, which a native build dispatches on; the wrappers' `WRAP`
- * symbol field stays for anything that still duck-types one.
+ * `instanceof`, which a native build dispatches on.
  */
 
-import { WRAP, nothing } from "./constants.ts";
+import { nothing } from "./constants.ts";
 
 import type { ElementBindings, TemplateKind } from "./types.ts";
 
@@ -33,7 +32,6 @@ export class TemplateResult {
 export class Keyed {
   k: unknown;
   v: unknown;
-  [WRAP] = "key";
 
   constructor(k: unknown, v: unknown) {
     this.k = k;
@@ -46,7 +44,6 @@ export class ElementSpec {
   tag: string;
   bindings: ElementBindings | undefined;
   children: unknown;
-  [WRAP] = "el";
 
   constructor(tag: string, bindings: ElementBindings | undefined, children: unknown) {
     this.tag = tag;
@@ -58,7 +55,6 @@ export class ElementSpec {
 /** Raw markup to parse at commit time, from `unsafeHTML(value)`. */
 export class Unsafe {
   s: string;
-  [WRAP] = "unsafe";
 
   constructor(s: string) {
     this.s = s;

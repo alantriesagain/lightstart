@@ -229,7 +229,7 @@ export class DesktopApp {
     }
     route.invoke(args).then(
       (value) => this.reply(id, true, value),
-      (error) => this.reply(id, false, error instanceof Error ? error.message : "error"),
+      (/** @type {unknown} */ error) => this.reply(id, false, error instanceof Error ? error.message : "error"),
     );
   }
 

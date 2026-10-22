@@ -58,6 +58,7 @@ export class DomHost extends Host {
     /** @type {number[]} */
     const childIndex = [];
     let nodeIndex = -1;
+    /** @type {Node | null} */
     let node;
     while ((node = walker.nextNode())) {
       nodeIndex++;
@@ -89,6 +90,7 @@ export class DomHost extends Host {
       const walker = document.createTreeWalker(fragment, SHOW_ELEMENT_AND_COMMENT);
       let nodeIndex = -1;
       let partIdx = 0;
+      /** @type {Node | null} */
       let node;
       while (partIdx < specs.length && (node = walker.nextNode())) {
         nodeIndex++;

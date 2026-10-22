@@ -21,7 +21,7 @@ export const isClock = (value) => typeof value === "string" && CLOCK.test(value)
  * The week in the order a reader lists it, starting on `firstDay`.
  * @type {(firstDay?: number) => number[]}
  */
-export const weekOrder = (firstDay = 1) => Array.from({ length: 7 }, (_, i) => (((firstDay % 7) + 7 + i) % 7));
+export const weekOrder = (firstDay = 1) => Array.from({ length: 7 }, (/** @type {unknown} */ _, i) => (((firstDay % 7) + 7 + i) % 7));
 
 const MONDAY_FIRST = weekOrder(1);
 
@@ -35,9 +35,11 @@ export const expandWeek = (value) => {
   const week = Array(7).fill(null);
   if (!Array.isArray(value)) return week;
   for (const entry of value) {
-    if (!entry || typeof entry !== "object" || !isClock(entry.open) || !isClock(entry.close) || !Array.isArray(entry.days)) continue;
-    for (const day of entry.days)
-      if (Number.isInteger(day) && day >= 0 && day <= 6) week[day] = { open: entry.open, close: entry.close };
+    if (!entry || typeof entry !== "object") continue;
+    const { open, close, days } = /** @type {Record<string, unknown>} */ (entry);
+    if (!isClock(open) || !isClock(close) || !Array.isArray(days)) continue;
+    for (const day of days)
+      if (typeof day === "number" && Number.isInteger(day) && day >= 0 && day <= 6) week[day] = { open, close };
   }
   return week;
 };

@@ -1,4 +1,5 @@
 import { html } from "@bootstrapp/light/html";
+/** @import { CommandPaletteElement } from "../types.ts" */
 
 const DOCS = [
   { id: "button", group: "Components", title: "Button", hint: "Display", href: "/components/display/button" },
@@ -33,6 +34,6 @@ export default {
 };
 
 const OPEN_PALETTE = () => {
-  const palette = /** @type {any} */ (document.getElementById("palette-demo"));
+  const palette = /** @type {CommandPaletteElement | null} */ (document.getElementById("palette-demo"));
   if (palette) palette.open = true;
 };

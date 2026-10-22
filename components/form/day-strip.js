@@ -41,7 +41,7 @@ export const stripDays = ({ from, days, locale = "", today = "", dots = [] }) =>
   if (Number.isNaN(start)) return [];
   const weekday = new Intl.DateTimeFormat(locale || undefined, { weekday: "short", timeZone: "UTC" });
   const marked = new Set(dots);
-  return Array.from({ length: Math.max(0, days) }, (_, i) => {
+  return Array.from({ length: Math.max(0, days) }, (/** @type {unknown} */ _, i) => {
     const ms = start + i * DAY_MS;
     const date = isoOf(ms);
     return { date, weekday: weekday.format(new Date(ms)).replace(/\.$/, ""), day: String(Number(date.slice(8, 10))), today: date === today, dot: marked.has(date) };

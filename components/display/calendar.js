@@ -122,7 +122,7 @@ export const eventDateKey = (event) => localDateKey(eventDay(event.date));
  */
 export const weekDaysOf = (date) => {
   const start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
-  return Array.from({ length: 7 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
+  return Array.from({ length: 7 }, (/** @type {unknown} */ _, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
 };
 
 /** @param {Date} date */

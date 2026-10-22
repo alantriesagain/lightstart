@@ -30,6 +30,18 @@ describe("controller/adapters/storage createStorageAdapter", () => {
     assert.equal(adapter.get("obj"), null);
   });
 
+  it("reads a stored string as JSON only when it is JSON, and as written otherwise", () => {
+    const backing = new Map([["plain", "hello"], ["story", "true story"], ["spaced", "  [1, 2]"], ["number", "42"], ["broken", "{oops"], ["quoted", '"a"'], ["empty", ""]]);
+    const adapter = createStorageAdapter(/** @type {any} */ (fakeStorage(backing)), "t");
+    assert.equal(adapter.get("plain"), "hello");
+    assert.equal(adapter.get("story"), "true story");
+    assert.deepEqual(adapter.get("spaced"), [1, 2]);
+    assert.equal(adapter.get("number"), 42);
+    assert.equal(adapter.get("broken"), "{oops");
+    assert.equal(adapter.get("quoted"), "a");
+    assert.equal(adapter.get("empty"), "");
+  });
+
   it("get answers the defaultValue for absent keys", () => {
     const adapter = createStorageAdapter(/** @type {any} */ (fakeStorage()), "t");
     assert.equal(adapter.get("missing"), null);

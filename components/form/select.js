@@ -102,6 +102,7 @@ export default defineComponent({
     this.search = "";
   },
 
+  /** @returns {string} */
   get selectId() {
     return this.getInputId();
   },

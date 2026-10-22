@@ -12,7 +12,8 @@ const STORAGE_KEY = "todos-light";
 /** @returns {Todo[]} */
 const loadTodos = () => {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null") || [];
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
+    return Array.isArray(stored) ? /** @type {Todo[]} */ (stored) : [];
   } catch {
     return [];
   }

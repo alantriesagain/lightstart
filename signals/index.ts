@@ -51,7 +51,7 @@ export class Dep {
     if (this._subscribers.size === 0) return;
     batchDepth++;
     try {
-      for (const reactive of Array.from(this._subscribers)) reactive._schedule();
+      for (const reactive of this._subscribers) reactive._schedule();
     } finally {
       batchDepth--;
       if (batchDepth === 0) flushPending();
@@ -341,6 +341,17 @@ export function untracked<T>(fn: () => T): T {
   } finally {
     current = prev;
   }
+}
+
+/**
+ * Make `reactive` the current reactive and answer the one it replaced, for
+ * the caller to put back with another `swapCurrent` in a `finally`: what
+ * `withCurrent` does, without a closure for the work.
+ */
+export function swapCurrent(reactive: Reactive | null): Reactive | null {
+  const prev = current;
+  current = reactive;
+  return prev;
 }
 
 /**

@@ -3,7 +3,7 @@ import T from "@bootstrapp/light/types";
 import { defineComponent } from "@bootstrapp/light";
 import { env } from "@bootstrapp/light/env";
 
-/** @import { Prop } from "../types.ts" */
+/** @import { AppRouteState, Prop } from "../types.ts" */
 
 export default defineComponent({
   tag: "lc-app-container",
@@ -48,13 +48,14 @@ export default defineComponent({
 
     /** @type {(e: PopStateEvent) => void} */
     const onPopState = (e) => {
-      if (e.state?.path) {
+      const { state } = /** @type {{ state: AppRouteState | null }} */ (e);
+      if (state?.path) {
         const oldRoute = this.currentRoute;
-        this.currentRoute = e.state.path;
+        this.currentRoute = state.path;
         this.$emit("route-change", {
           from: oldRoute,
-          to: e.state.path,
-          params: e.state.params || {},
+          to: state.path,
+          params: state.params || {},
         });
       }
     };
@@ -69,7 +70,10 @@ export default defineComponent({
 
   },
 
-  /** @param {string} path */
+  /**
+   * @param {string} path
+   * @param {Record<string, string>} [params]
+   */
   navigate(path, params = {}) {
     const oldRoute = this.currentRoute;
     this.currentRoute = path;

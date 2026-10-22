@@ -11,12 +11,13 @@
  */
 import { currentHost } from "../html/host.ts";
 import { configure } from "../html/reactive.ts";
-import { Reactive, effect, withCurrent } from "../signals/index.ts";
+import { Reactive, effect, swapCurrent } from "../signals/index.ts";
 
 configure({ effect });
 
 class Config {
   track: (label: string) => ((() => void) | void);
+  tracked: boolean;
   wrap: (work: Promise<unknown>, label: string) => void;
   settle: (() => Promise<unknown>) | undefined;
   translate: (key: string, params?: Record<string, unknown>) => string | undefined;
@@ -24,6 +25,7 @@ class Config {
 
   constructor() {
     this.track = () => {};
+    this.tracked = false;
     this.wrap = () => {};
     this.settle = undefined;
     this.translate = () => undefined;
@@ -42,8 +44,11 @@ export const config = new Config();
  * a served region the client cannot adopt may be rendered over; `translate`
  * answers the host's text for a key; `dev` turns on diagnostics.
  */
-export const configureView = (options: Partial<Config>) => {
-  if (options.track !== undefined) config.track = options.track;
+export const configureView = (options: Partial<Omit<Config, "tracked">>) => {
+  if (options.track !== undefined) {
+    config.track = options.track;
+    config.tracked = true;
+  }
   if (options.wrap !== undefined) config.wrap = options.wrap;
   if (options.settle !== undefined) config.settle = options.settle;
   if (options.translate !== undefined) config.translate = options.translate;
@@ -126,7 +131,7 @@ class RenderNode extends Reactive {
   }
 
   _run() {
-    this.owner.$requestUpdate();
+    this.owner.$enqueueUpdate();
   }
 }
 
@@ -134,7 +139,7 @@ class RenderNode extends Reactive {
  * The methods of the cycle itself, the ones a host takes from ViewCore as
  * they are; everything else on it is the host's to answer.
  */
-export const CORE_METHODS = ["$requestUpdate", "$schedule", "$flushUpdate", "$performUpdate", "$shouldUpdate", "$update", "$own", "$attach", "$detach", "$setProp"];
+export const CORE_METHODS = ["$requestUpdate", "$enqueueUpdate", "$whenUpdated", "$schedule", "$flushUpdate", "$performUpdate", "$shouldUpdate", "$update", "$own", "$attach", "$detach", "$setProp"];
 
 /**
  * One component's update cycle. A host answers `$node`, `$connected`,
@@ -147,6 +152,7 @@ export class ViewCore {
   $hasUpdated = false;
   $forceNextUpdate = false;
   $changedProps: Map<string, unknown> = new Map();
+  $updatePending = false;
   $updatePromise: Promise<void> | null = null;
   $resolveUpdate: (() => void) | null = null;
   $settleDone: (() => void) | null = null;
@@ -207,19 +213,35 @@ export class ViewCore {
    * inside a running update, that update's own promise.
    */
   $requestUpdate(key?: string, oldValue?: unknown): Promise<void> {
-    if (key) this.$changedProps.set(key, oldValue);
-    else this.$forceNextUpdate = true;
-    return this.$schedule();
+    this.$enqueueUpdate(key, oldValue);
+    return this.$whenUpdated();
   }
 
-  $schedule(): Promise<void> {
-    if (this.$updatePromise !== null) return this.$updatePromise;
-    this.$settleDone = config.track("view:" + this.$label) ?? null;
-    this.$updatePromise = new Promise((resolve) => {
-      this.$resolveUpdate = resolve;
-    });
-    enqueueUpdate(this);
+  /**
+   * `$requestUpdate` without the promise: what the engine's own writes call,
+   * so an update nobody waits for makes none.
+   */
+  $enqueueUpdate(key?: string, oldValue?: unknown) {
+    if (key) this.$changedProps.set(key, oldValue);
+    else this.$forceNextUpdate = true;
+    this.$schedule();
+  }
+
+  /** Answers the promise of the pending update, made on the first ask; resolved already when none is pending. */
+  $whenUpdated(): Promise<void> {
+    if (!this.$updatePending) return Promise.resolve();
+    if (this.$updatePromise === null)
+      this.$updatePromise = new Promise((resolve) => {
+        this.$resolveUpdate = resolve;
+      });
     return this.$updatePromise;
+  }
+
+  $schedule() {
+    if (this.$updatePending) return;
+    this.$updatePending = true;
+    this.$settleDone = config.tracked ? config.track("view:" + this.$label) ?? null : null;
+    enqueueUpdate(this);
   }
 
   $flushUpdate() {
@@ -236,6 +258,7 @@ export class ViewCore {
     }
     const resolve = this.$resolveUpdate;
     const done = this.$settleDone;
+    this.$updatePending = false;
     this.$updatePromise = null;
     this.$resolveUpdate = null;
     this.$settleDone = null;
@@ -274,13 +297,20 @@ export class ViewCore {
   }
 
   $update() {
-    let node: RenderNode | null = null;
-    if (this.$tracked) {
-      if (this.$renderNode === null) this.$renderNode = new RenderNode(this);
-      node = this.$renderNode;
-      node._cleanup();
+    if (!this.$tracked) {
+      this.$commit(this.$render());
+      return;
     }
-    const value = node === null ? this.$render() : withCurrent(node, () => this.$render());
+    if (this.$renderNode === null) this.$renderNode = new RenderNode(this);
+    const node = this.$renderNode;
+    node._cleanup();
+    const prev = swapCurrent(node);
+    let value: unknown;
+    try {
+      value = this.$render();
+    } finally {
+      swapCurrent(prev);
+    }
     this.$commit(value);
   }
 
@@ -296,7 +326,7 @@ export class ViewCore {
 
   $attach() {
     this.$hook("connected", null);
-    this.$requestUpdate();
+    this.$enqueueUpdate();
   }
 
   $detach() {

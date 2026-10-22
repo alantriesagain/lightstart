@@ -26,7 +26,7 @@ import type { ClientWriteOptions, FacetResult, ModelApi, ModelPayload, ModelSche
 export const MODEL_API = Symbol.for("bootstrapp.model.api");
 
 export const isModelApi = (value: unknown): value is ModelApi =>
-  (typeof value === "object" || typeof value === "function") && value !== null && Reflect.get(value, MODEL_API) === true;
+  (typeof value === "object" || typeof value === "function") && value !== null && Reflect.get(value as { [MODEL_API]?: unknown }, MODEL_API) === true;
 
 const isId = (value: unknown): value is string | number => typeof value === "string" || typeof value === "number";
 

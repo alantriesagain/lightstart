@@ -62,6 +62,12 @@ export interface SwipeDeckHistory {
   direction: "left" | "right";
 }
 
+/** app/app-container.js: the history state `navigate` pushes, read back on `popstate`. */
+export interface AppRouteState {
+  path?: string;
+  params?: Record<string, string>;
+}
+
 /** display/calendar.js: an event on the calendar grid/list. */
 export interface CalendarEvent {
   id: string | number;
@@ -318,9 +324,30 @@ export interface FaqItem {
   answer: string;
 }
 
+/** navigation/tree-item.js: an `<lc-tree-item>` as `<lc-tree>` moves through it. */
+export interface TreeItemElement extends HTMLElement {
+  expanded: boolean;
+  _hasChildren(): boolean;
+}
+
+/** form/search.js: an `<lc-search>` as a host focuses its input. */
+export interface SearchElement extends HTMLElement {
+  focusInput(): void;
+}
+
+/** overlay/command-palette.js: an `<lc-command-palette>` as a page opens it. */
+export interface CommandPaletteElement extends HTMLElement {
+  open: boolean;
+}
+
 /** form/radio.js: a sibling `<lc-radio>` in the same radio group. */
 export interface RadioElement extends Element {
   checked?: boolean;
+  disabled?: boolean;
+  name?: string;
+  value?: string;
+  size?: string;
+  variant?: string;
 }
 
 /** overlay/alert-dialog.js: the dialog's visual variant. */
@@ -396,6 +423,34 @@ export interface DragEnd {
   x: number;
   y: number;
   cancelled: boolean;
+}
+
+/** mixins/pointer-drag.js: the hooks a host may answer, all optional. */
+export interface PointerDragHost {
+  onDragStart?(start: DragStart): void;
+  onDragMove?(move: DragMove): void;
+  onDragEnd?(end: DragEnd): void | Promise<void>;
+  dragYields?(delta: { dx: number; dy: number }): boolean;
+}
+
+/** mixins/swipe-threshold.js: the hook a host answers, with -1 for a swipe toward the start of the axis and 1 toward its end. */
+export interface SwipeHost {
+  onSwipe?(direction: -1 | 1): void;
+}
+
+/** mixins/overlay.js: the hook a host that answers Escape declares. */
+export interface OverlayHost {
+  onEscape?(): void;
+}
+
+/** mixins/escape-key.js: the hook a host answers, handed the Escape keydown. */
+export interface EscapeKeyHost {
+  onEscape?(e: KeyboardEvent): void;
+}
+
+/** mixins/pull-to-refresh.js: the hook a host refreshes in; the indicator holds until it settles. */
+export interface PullToRefreshHost {
+  onRefresh?(): unknown;
 }
 
 /** overlay/drag-panel.js, overlay/bottom-sheet.js: a named stop of a draggable sheet. */

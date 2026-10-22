@@ -7,13 +7,13 @@
  * (`this.$queries.rows`).
  */
 
-/** A record and the closures that write and drop a key of it. */
+/** A record and the closures that write a key of it and, for a record whose keys come and go, drop one. */
 export class RecordWriter {
   record: object;
   writeKey: (key: string, value: unknown) => void;
-  dropKey: (key: string) => void;
+  dropKey: ((key: string) => void) | null;
 
-  constructor(record: object, writeKey: (key: string, value: unknown) => void, dropKey: (key: string) => void) {
+  constructor(record: object, writeKey: (key: string, value: unknown) => void, dropKey: ((key: string) => void) | null) {
     this.record = record;
     this.writeKey = writeKey;
     this.dropKey = dropKey;

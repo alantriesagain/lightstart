@@ -29,6 +29,7 @@ export class Renderer {
   back: Screen;
   focus: TElement | null;
   autofocusPending: boolean;
+  autofocusVersion: number;
   pressed: TElement | null;
   decoder: InputDecoder;
   cursorShown: boolean;
@@ -45,6 +46,7 @@ export class Renderer {
     this.back = new Screen(term.cols, term.rows);
     this.focus = null;
     this.autofocusPending = true;
+    this.autofocusVersion = -1;
     this.pressed = null;
     this.decoder = new InputDecoder((e) => this.dispatchKey(e));
     this.decoder.onMouse = (e) => this.dispatchMouse(e);
@@ -83,8 +85,15 @@ export class Renderer {
       this.autofocusPending = false;
       return;
     }
-    const marked = focusables(this.root, []).find((el) => el.attrs.has("autofocus"));
-    if (marked === undefined) return;
+    if (this.root.version === this.autofocusVersion) return;
+    this.autofocusVersion = this.root.version;
+    let marked: TElement | null = null;
+    for (const el of focusables(this.root, []))
+      if (el.attrs.has("autofocus")) {
+        marked = el;
+        break;
+      }
+    if (marked === null) return;
     this.autofocusPending = false;
     this.setFocus(marked);
   }

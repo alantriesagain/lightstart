@@ -27,14 +27,25 @@ const clone = (v: unknown): unknown =>
 
 const RESERVED = new Set(["keys", "get", "set", "update", "reset", "resetAll", "subscribe", "observe", "snapshot", "restore", "$sync"]);
 
+class Slot {
+  initial: unknown;
+  pack: ((value: unknown) => unknown) | null;
+  unpack: ((packed: unknown) => unknown) | null;
+  value: unknown;
+
+  constructor(def: StateDef) {
+    this.initial = def.default;
+    this.pack = def.pack ?? null;
+    this.unpack = def.unpack ?? null;
+    this.value = clone(def.default);
+  }
+}
+
 export const createStore = (defs: Record<string, unknown> = {}, { name = "store", accessors = true }: { name?: string, accessors?: boolean } = {}): StoreCore => {
-  const spec: Record<string, StateDef> = {};
-  const values: Record<string, unknown> = {};
+  const slots: Map<string, Slot> = new Map();
   const listeners: Map<string, Listeners<KeyListener>> = new Map();
   const observers: Listeners<Observer> = new Listeners();
   const effectDeps: Map<string, Dep> = new Map();
-
-  const seed = (key: string) => clone(spec[key].default);
 
   const trackRead = (key: string) => {
     if (getCurrentEffect() === null) return;
@@ -48,50 +59,62 @@ export const createStore = (defs: Record<string, unknown> = {}, { name = "store"
 
   for (const [key, def] of Object.entries(defs)) {
     if (accessors && RESERVED.has(key)) throw new Error(`State field "${key}" collides with a store method.`);
-    spec[key] = normalize(def);
-    values[key] = seed(key);
+    slots.set(key, new Slot(normalize(def)));
   }
+  const keyList = [...slots.keys()];
 
-  const notify = (key: string, oldValue: unknown) => {
+  const slotOf = (key: string): Slot => {
+    const slot = slots.get(key);
+    if (slot === undefined) throw new Error(`Unknown state field "${key}".`);
+    return slot;
+  };
+
+  const notify = (key: string, slot: Slot, oldValue: unknown) => {
     const keyed = listeners.get(key);
-    if (keyed) keyed.forEach((cb) => cb(values[key], oldValue));
-    observers.forEach((cb) => cb(key, values[key], oldValue));
+    if (keyed) keyed.forEach((cb) => cb(slot.value, oldValue));
+    observers.forEach((cb) => cb(key, slot.value, oldValue));
     const dep = effectDeps.get(key);
     if (dep) dep._notify();
   };
 
-  const keys = () => Object.keys(values);
+  const keys = () => keyList.slice();
 
   const get = (key: string) => {
     trackRead(key);
-    return values[key];
+    const slot = slots.get(key);
+    return slot === undefined ? undefined : slot.value;
   };
 
   const set = (key: string, value: unknown) => {
-    if (!(key in spec)) throw new Error(`Unknown state field "${key}".`);
-    const oldValue = values[key];
+    const slot = slotOf(key);
+    const oldValue = slot.value;
     if (oldValue === value) return value;
-    values[key] = value;
-    notify(key, oldValue);
+    slot.value = value;
+    notify(key, slot, oldValue);
     return value;
   };
 
-  const update = (key: string, fn: (current: unknown) => unknown) => set(key, fn(values[key]));
+  const update = (key: string, fn: (current: unknown) => unknown) => {
+    const slot = slots.get(key);
+    return set(key, fn(slot === undefined ? undefined : slot.value));
+  };
 
   const reset = (key: string) => {
-    const oldValue = values[key];
-    values[key] = seed(key);
-    notify(key, oldValue);
-    return values[key];
+    const slot = slotOf(key);
+    const oldValue = slot.value;
+    slot.value = clone(slot.initial);
+    notify(key, slot, oldValue);
+    return slot.value;
   };
 
   const resetAll = () => {
-    const olds: Record<string, unknown> = {};
-    for (const key of Object.keys(spec)) {
-      olds[key] = values[key];
-      values[key] = seed(key);
+    const olds: unknown[] = [];
+    for (const slot of slots.values()) {
+      olds.push(slot.value);
+      slot.value = clone(slot.initial);
     }
-    for (const key of Object.keys(spec)) notify(key, olds[key]);
+    let i = 0;
+    for (const [key, slot] of slots) notify(key, slot, olds[i++]);
   };
 
   const subscribe = (key: string, cb: KeyListener) => {
@@ -109,31 +132,27 @@ export const createStore = (defs: Record<string, unknown> = {}, { name = "store"
     return () => observers.delete(cb);
   };
 
-  const snapshot = () =>
-    Object.fromEntries(Object.entries(values).map(([k, v]) => {
-      const { pack } = spec[k];
-      return [k, pack ? pack(v) : v];
-    }));
+  const snapshot = () => Object.fromEntries([...slots].map(([key, slot]) => [key, slot.pack ? slot.pack(slot.value) : slot.value]));
 
   const restore = (snap?: Record<string, unknown>) => {
-    const olds: Record<string, unknown> = {};
-    for (const key of Object.keys(spec)) {
-      olds[key] = values[key];
-      const { unpack } = spec[key];
-      values[key] = snap && key in snap
-        ? (unpack ? unpack(snap[key]) : snap[key])
-        : seed(key);
+    const olds: unknown[] = [];
+    for (const [key, slot] of slots) {
+      olds.push(slot.value);
+      slot.value = snap && key in snap
+        ? (slot.unpack ? slot.unpack(snap[key]) : snap[key])
+        : clone(slot.initial);
     }
-    for (const key of Object.keys(spec)) notify(key, olds[key]);
+    let i = 0;
+    for (const [key, slot] of slots) notify(key, slot, olds[i++]);
   };
 
   const store: Record<string, unknown> = { keys, get, set, update, reset, resetAll, subscribe, observe, snapshot, restore };
 
   if (accessors)
-    for (const key of Object.keys(spec))
+    for (const [key, slot] of slots)
       Object.defineProperty(store, key, {
-        get: () => values[key],
-        set: (value) => set(key, value),
+        get: () => slot.value,
+        set: (value: unknown) => set(key, value),
         enumerable: true,
         configurable: true,
       });

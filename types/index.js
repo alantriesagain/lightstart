@@ -98,10 +98,11 @@ export const isReactive = (prop) => prop?.reactive !== false;
  * A field's starting value from its descriptor, fresh per instance: a factory
  * default is called, an object or array is deep-cloned, a primitive passes.
  * @param {{ defaultValue?: unknown } | undefined} prop
+ * @returns {unknown}
  */
 export const cloneDefault = (prop) => {
   const dv = prop?.defaultValue;
-  return typeof dv === "function" ? dv() : dv && typeof dv === "object" ? structuredClone(dv) : dv;
+  return typeof dv === "function" ? /** @type {() => unknown} */ (dv)() : dv && typeof dv === "object" ? structuredClone(dv) : dv;
 };
 
 /**

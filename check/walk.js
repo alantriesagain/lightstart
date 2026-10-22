@@ -20,13 +20,21 @@ const isDir = (p) => {
 };
 
 /**
+ * A parsed package.json as a manifest, or null when it is not a JSON object.
+ * Its members keep the shapes JSON gave them; a reader checks each one.
+ * @param {unknown} value
+ * @returns {PackageJson | null}
+ */
+export const asPackageJson = (value) => (value !== null && typeof value === "object" && !Array.isArray(value) ? /** @type {PackageJson} */ (value) : null);
+
+/**
  * Parse `<dir>/package.json`; null when missing or malformed.
  * @param {string} dir
  * @returns {PackageJson | null}
  */
 export const readPackageJson = (dir) => {
   try {
-    return JSON.parse(readFileSync(path.join(dir, "package.json"), "utf-8"));
+    return asPackageJson(JSON.parse(readFileSync(path.join(dir, "package.json"), "utf-8")));
   } catch {
     return null;
   }
@@ -48,6 +56,7 @@ const byName = (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
  * @param {string[]} out
  */
 const walk = (base, dir, options, out) => {
+  /** @type {import("node:fs").Dirent[]} */
   let entries;
   try {
     entries = readdirSync(dir, { withFileTypes: true });

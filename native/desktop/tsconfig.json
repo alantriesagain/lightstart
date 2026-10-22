@@ -5,6 +5,7 @@
     "types": ["node"]
   },
   "include": [
+    "../../types/lib.d.ts",
     "./ffi.ts",
     "./init.js",
     "./server.js",

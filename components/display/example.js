@@ -62,10 +62,10 @@ export default defineComponent({
                 ${this.description ? html`<span class="example-description">${this.description}</span>` : nothing}
               </div>
               ${this.code
-                ? html`<lc-segmented class="example-view" size="sm" .options=${this._viewOptions()} value=${this.view === "both" ? "preview" : this.view} @change=${(/** @type {CustomEvent} */ e) => { this.view = e.detail.value; this.$emit("view-change", { view: this.view }); }}></lc-segmented>`
+                ? html`<lc-segmented class="example-view" size="sm" .options=${this._viewOptions()} value=${this.view === "both" ? "preview" : this.view} @change=${(/** @type {CustomEvent<{ value: string }>} */ e) => { this.view = e.detail.value; this.$emit("view-change", { view: this.view }); }}></lc-segmented>`
                 : nothing}
               ${this.viewports
-                ? html`<lc-segmented class="example-viewports" size="sm" .options=${this._viewportOptions()} value=${String(this.viewport)} @change=${(/** @type {CustomEvent} */ e) => { this.viewport = Number(e.detail.value); this.$emit("viewport-change", { viewport: this.viewport }); }}></lc-segmented>`
+                ? html`<lc-segmented class="example-viewports" size="sm" .options=${this._viewportOptions()} value=${String(this.viewport)} @change=${(/** @type {CustomEvent<{ value: string }>} */ e) => { this.viewport = Number(e.detail.value); this.$emit("viewport-change", { viewport: this.viewport }); }}></lc-segmented>`
                 : nothing}
             </div>
           `

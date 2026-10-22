@@ -31,8 +31,33 @@ export interface GenerateResult {
   unknown: string[];
 }
 
-/** The scales `buildTheme` answers: colors, spacing, radii, shadows and the rest, each a map of names to CSS values or nested maps. */
-export type Theme = Record<string, any>;
+/** A theme scale: utility names to CSS values. A name the scale lacks reads as undefined. */
+export type Scale = { [key: string]: string | undefined };
+
+/** A scale whose entries may be lists: a font size with its line height. */
+export type ValueScale = { [key: string]: string | string[] | undefined };
+
+/** The scales `buildTheme` answers: utility names to CSS values, a colour to its shades where it has them, and a font size to its size and line height. */
+export interface Theme {
+  screens: Scale;
+  colors: ColorScale;
+  textColor: ColorScale;
+  backgroundColor: ColorScale;
+  borderColor: ColorScale;
+  spacing: Scale;
+  fontSize: ValueScale;
+  fontWeight: Scale;
+  fontFamily: Scale;
+  borderRadius: Scale;
+  boxShadow: Scale;
+  dropShadow: Scale;
+  lineHeight: Scale;
+  letterSpacing: Scale;
+  blur: Scale;
+  zIndex: Scale;
+  maxWidth: Scale;
+  transitionTimingFunction: Scale;
+}
 
 export interface Engine {
   compile: (cls: string) => CompiledRule | null;
@@ -46,7 +71,11 @@ export interface EngineOptions {
   safelist?: string[];
 }
 
-export type ColorScale = { [key: string]: string | ColorScale };
+/** A colour's shades by name: `DEFAULT`, `dark`, `100`, ... */
+export type Shades = { [key: string]: string | undefined };
+
+/** A colour scale: a name to a colour, or to its shades. */
+export type ColorScale = { [key: string]: string | Shades | undefined };
 
 export type RuleInput = ParsedClass & { restBase: string; restStem: string };
 

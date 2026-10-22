@@ -16,8 +16,11 @@ const serialize = (value: unknown) => {
   return value as string;
 };
 
+const JSON_START = /^\s*(?:[[{"\-\d]|true|false|null)/;
+
 const deserialize = (value: string | null): unknown => {
   if (value === null) return null;
+  if (!JSON_START.test(value)) return value;
   try {
     return JSON.parse(value);
   } catch {

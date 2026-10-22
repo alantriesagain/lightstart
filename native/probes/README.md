@@ -5,6 +5,23 @@ static binary. `node native/probes/run.js [--scriptc <path>] [p-a …]` reports 
 each probe natively, runs it, diffs the output against node, and writes `RESULTS.md`. Rerun them on
 every scriptc upgrade.
 
+## Paired probes
+
+`node native/probes/pairs.js [--rounds N] [id …]` builds each `pairs/<id>-slow.ts` and `pairs/<id>-fast.ts` with scriptc, runs both under node and natively, interleaved round by round after a dropped warm-up, checks that all four print the same thing, and reports each variant's fastest run as the fast/slow ratio. A pair decides one way of writing the core before the core changes; the numbers below are from scriptc-dev on light-integration (0.3.6 and its patches), node v25.3.0, on a machine under load, so read the ratios, not the milliseconds.
+
+| Pair | node | native | Decision |
+|---|---|---|---|
+| child-state: a child part's state as nine string-tagged records, against a class per kind with shared empty and pending instances | 0.94x | 0.63x | `html/states.ts`. A class with an `unknown[] \| null` field made `instanceof` an internal compiler error ("unknown class"); an unkeyed list carries empty keys and `keyed: false`. |
+| child-inplace: those classes against one state object per part updated in place, a numeric kind and every field nullable | 0.61x | 0.57x | Not taken: the gain comes from transitions, which a real render makes rarely, at the cost of every field nullable in the core's hottest file. |
+| keyed-cast: the reconciled `(ChildPart \| null)[]` copied into a `ChildPart[]`, against checked for holes and returned as is | 1.00x | 0.89x | Returned as is. |
+| keyed-map: two `.map` calls for a list's values and keys, against one loop pushing into two arrays | 0.89x | 1.88x | The maps stay: `.map` sizes its result once. |
+| store-slots: a store's values and declarations in two string-keyed Records, against a `Map` of slot objects | 0.51x | 0.24x | `signals/store.ts`. A class field typed with a record alias holding `unknown` is refused natively; a field typed with a class is not. |
+| sgr-v1, sgr-v2: a Style made per changed cell, against the style passed as seven numbers (parameters joined as a string or as an array) | 0.75x, 0.81x | 2.69x, 2.71x | Not taken: seven number parameters cost more natively than two objects. |
+| sgr-v3: a Style made per changed cell, against two scratch Styles the diff alternates between | 0.88x | 0.89x | `diffScreens`. |
+| static-attrs, attr-class, attr-style: cloning a template with `class`, `fg` and `bold` static attributes, against one without | 0.71x | 0.88x | Three static attributes are about an eighth of a native clone and three tenths of a node one, mostly the style props' `setProp` path; resolving them once per template would mean cloning an element's state, so it waits. |
+
+Rerun on an unpatched scriptc v0.4.1 (2026-10-21, load average 12, so the ratios only): child-state 1.05x node and 0.68x native, child-inplace 0.57x and 0.58x, keyed-cast 1.04x and 1.04x, keyed-map 0.81x and 1.53x, store-slots 0.44x and 0.24x, sgr-v3 0.87x and 0.97x. v0.4.0 stores a union of records as the record pointer, and classes still win natively; the two scratch Styles are near neutral natively there and still 0.87x under node. No decision changes.
+
 ## Decisions (scriptc 0.2.9 and 0.2.10 behave identically on every probe)
 
 | Probe | Outcome | Decision |

@@ -183,7 +183,7 @@ export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }
       res?.dispose();
       res = null;
       const writer = writerOf(host.$queries);
-      if (writer) writer.dropKey(key);
+      if (writer && writer.dropKey !== null) writer.dropKey(key);
     },
   };
 };

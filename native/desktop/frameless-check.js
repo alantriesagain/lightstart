@@ -80,8 +80,8 @@ const shoot = (id, file) => {
 const launch = (exe, args) => {
   const child = spawn(exe, args, { stdio: ["ignore", "pipe", "pipe"] });
   let log = "";
-  child.stdout.on("data", (chunk) => (log += String(chunk)));
-  child.stderr.on("data", (chunk) => (log += String(chunk)));
+  child.stdout.on("data", (/** @type {Buffer} */ chunk) => (log += String(chunk)));
+  child.stderr.on("data", (/** @type {Buffer} */ chunk) => (log += String(chunk)));
   /** @type {Promise<number | null>} */
   const exited = new Promise((resolve) => child.on("exit", (code) => resolve(code)));
   return { child, exited, log: () => log };

@@ -1,6 +1,7 @@
 /**
  * @file The desktop coverage gate: scriptc's coverage of the demo backend, against the shim's
- * manifest, must be fully static with nothing deferred to a runtime throw and no slow path. Skipped, with a
+ * manifest, read from scriptc's JSON report, must be fully static with nothing deferred to a
+ * runtime throw, no slow path and no divergence from node. Skipped, with a
  * notice, when WebKitGTK's development package is not installed, since the manifest needs the
  * archive. Run with `node native/desktop/coverage.js`.
  */
@@ -9,6 +10,7 @@ import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { shim } from "./build.js";
+import { formatDiagnostic, gate, readCoverage } from "../diagnostics.js";
 import { scriptcPath } from "../scriptc.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -22,15 +24,14 @@ const target = process.platform === "darwin" ? "mac-arm64" : process.platform ==
 const dir = shim(target);
 const scriptc = scriptcPath(light);
 const entry = "native/desktop/demo/backend.js";
-const r = spawnSync(scriptc, ["coverage", entry, "--ffi", join(dir, "ffi.json"), "--fail-on=slow-paths"], { encoding: "utf8", cwd: light, timeout: 600000 });
-const out = (r.stdout ?? "") + (r.stderr ?? "");
-const statically = /compile statically\s+(\d+)\s+\((\d+)%\)/.exec(out);
-const fully = /fully static/.test(out);
-const deferred = /deferred to runtime/.test(out);
-if (r.status === 0 && fully && !deferred) {
-  console.log(`${entry}: fully static, ${statically ? statically[1] : "?"} statements, nothing deferred`);
+const coverage = readCoverage(scriptc, entry, { cwd: light, args: ["--ffi", join(dir, "ffi.json")] });
+const result = gate(coverage, {});
+for (const d of result.failures) console.log(formatDiagnostic(d, light));
+for (const note of result.notes) console.log(`note: ${note}`);
+const stats = coverage.envelope.stats;
+if (result.pass) {
+  console.log(`${entry}: fully static, ${stats?.statementsTotal ?? "?"} statements, nothing deferred`);
   process.exit(0);
 }
-console.log(out);
-console.log(`${entry}: ${/slower natively/.test(out) ? "slow paths (a write makes methods replaceable)" : r.status !== 0 ? "blockers" : !fully ? "a dynamic remainder" : "statements deferred to runtime"}`);
+console.log(`${entry}: ${coverage.slowPaths.length} slow paths, ${coverage.blockers.length} blockers, ${coverage.divergences.length} divergences, ${coverage.deferred.length} deferred statements${coverage.fullyStatic ? "" : ", not fully static"}`);
 process.exit(1);

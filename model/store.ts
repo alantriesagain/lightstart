@@ -29,7 +29,7 @@ const copy = (record: Record<string, unknown>): Record<string, unknown> => Objec
 
 const callHook = (name: keyof ModelHooks, fn: unknown, row: Row | null, ctx: HookContext): unknown => {
   if (typeof fn !== "function") throw new TypeError(`$hooks.${name} is not a function`);
-  return fn(row, ctx);
+  return (fn as (row: Row | null, ctx: HookContext) => unknown)(row, ctx);
 };
 
 const forStorage = (schema: ModelSchema | undefined, row: Row): Row => {

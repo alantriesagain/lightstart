@@ -9,9 +9,11 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { formatDiagnostic, readCoverage } from "../diagnostics.js";
 import { scriptcPath } from "../scriptc.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
+const root = join(here, "..", "..");
 const args = process.argv.slice(2);
 const at = args.indexOf("--scriptc");
 const scriptc = at >= 0 ? args[at + 1] : scriptcPath(join(here, "..", ".."));
@@ -54,24 +56,24 @@ for (const file of files) {
   const name = file.replace(/\.js$/, "");
   const path = join("native", "probes", file);
   const ffi = ffiArgs(name);
-  const cov = run(scriptc, ["coverage", path, "--fail-on=blockers", ...ffi]);
-  const statically = /compile statically\s+(\d+)\s+\((\d+)%\)/.exec(cov.out);
-  const deferred = /deferred to runtime/.test(cov.out);
-  const fully = /fully static/.test(cov.out);
+  const cov = readCoverage(scriptc, path, { cwd: root, args: ffi, failOn: "blockers" });
+  const stats = cov.envelope.stats;
+  const deferred = cov.deferred.length > 0;
+  const fully = cov.fullyStatic;
   const build = run(scriptc, ["build", path, "-o", join("native", "probes", "out", name), "--no-keep-llvm", ...ffi]);
   const nodeRun = ffi.length > 0 ? { code: 0, out: "", ms: 0 } : run("node", [path]);
   const native = build.code === 0 ? run(join(here, "out", name), []) : { code: -1, out: "(build failed)" };
   const same = ffi.length > 0 ? !/^FAIL /m.test(native.out) && /^done ok/m.test(native.out) : nodeRun.out === native.out;
-  const pass = cov.code === 0 && fully && !deferred && build.code === 0 && nodeRun.code === 0 && native.code === 0 && same;
+  const pass = cov.status === 0 && fully && !deferred && build.code === 0 && nodeRun.code === 0 && native.code === 0 && same;
   if (!pass) failed++;
   /** @type {string[]} */
   const lines = [];
   lines.push("## " + name + ": " + (pass ? "PASS" : "FAIL"));
-  lines.push("- coverage rc=" + String(cov.code) + " static=" + (statically ? statically[1] + " (" + statically[2] + "%)" : "?") + " fully=" + String(fully) + " deferred=" + String(deferred));
+  lines.push("- coverage rc=" + String(cov.status) + " static=" + (stats ? String(stats.statementsStatic) + " (" + String(stats.percentStatic) + "%)" : "?") + " fully=" + String(fully) + " deferred=" + String(deferred));
   lines.push("- build rc=" + String(build.code) + " node rc=" + String(nodeRun.code) + " native rc=" + String(native.code) + " same output=" + String(same));
   if (!pass) {
     lines.push("```");
-    lines.push(cov.out.trim().split("\n").slice(-20).join("\n"));
+    lines.push([...cov.blockers, ...cov.slowPaths, ...cov.divergences, ...cov.deferred, ...cov.unreached].map((d) => formatDiagnostic(d, root)).join("\n").split("\n").slice(-20).join("\n"));
     lines.push("--- build");
     lines.push(build.out.trim().split("\n").slice(-20).join("\n"));
     lines.push("--- node");

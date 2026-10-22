@@ -40,7 +40,7 @@ View.define("demo-page", {
     const host = env.window;
     if (host === null) return;
     await desktop.log("info", "window " + host.platform + " frameless=" + String(host.frameless));
-    /** @param {boolean} wanted */
+    /** @param {boolean} wanted @returns {Promise<boolean>} */
     const until = (wanted) => new Promise((resolve) => {
       if (host.maximized === wanted) return void resolve(true);
       const stop = host.subscribe((h) => {

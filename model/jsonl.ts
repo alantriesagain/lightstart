@@ -29,14 +29,19 @@ const readLines = (text: string): { rows: Map<string, Row>, stale: number, clean
   let clean = text === "" || text.endsWith("\n");
   for (const line of text.split("\n")) {
     if (line.trim() === "") continue;
-    let entry: Row | null = null;
+    let parsed: unknown = null;
     try {
-      entry = JSON.parse(line);
+      parsed = JSON.parse(line);
     } catch {
       clean = false;
       continue;
     }
-    if (entry === null || typeof entry !== "object" || entry.id === undefined || entry.id === null) {
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+      clean = false;
+      continue;
+    }
+    const entry = parsed as Row;
+    if (entry.id === undefined || entry.id === null) {
       clean = false;
       continue;
     }
@@ -76,7 +81,7 @@ const copy = (row: Row): Row => Object.fromEntries(Object.entries(row));
 
 const record = (adapter: JsonlStorage, table: JsonlTable, row: Row): Row => {
   const line = JSON.stringify(row);
-  const stored: Row = JSON.parse(line);
+  const stored = JSON.parse(line) as Row;
   const key = String(stored.id);
   if (table.rows.has(key)) table.stale++;
   table.rows.set(key, stored);

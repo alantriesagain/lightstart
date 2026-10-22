@@ -6,6 +6,8 @@
  * through and dark mode still answers.
  */
 
+/** @import { ColorScale, Theme } from "./types.ts" */
+
 const COLOR_VALUE = /^(?:#|rgba?\(|hsla?\(|oklch\(|oklab\(|color-mix\(|var\()/i;
 
 /** A theme group mixes colours with sizes and weights; only the colours become utilities. */
@@ -59,6 +61,7 @@ const shades = (name) => ({
   darker: `var(--color-${name}-darker)`,
 });
 
+/** @type {ColorScale} */
 export const FRAMEWORK_COLORS = {
   default: "var(--text-color)",
   muted: "var(--text-muted)",
@@ -92,6 +95,7 @@ export const FRAMEWORK_COLORS = {
   "on-info": "var(--color-on-info)",
 };
 
+/** @type {ColorScale} */
 const BASE_COLORS = {
   inherit: "inherit",
   current: "currentColor",
@@ -100,6 +104,7 @@ const BASE_COLORS = {
   white: "#fff",
 };
 
+/** @type {Theme} */
 export const DEFAULT_THEME = {
   screens: { sm: "640px", md: "768px", lg: "1024px", xl: "1280px", "2xl": "1536px" },
   colors: { ...BASE_COLORS, ...FRAMEWORK_COLORS },
@@ -244,21 +249,36 @@ const onColors = (colors) => {
 };
 
 /**
+ * A group's entries that are CSS values: strings, and numbers as the text a
+ * template literal writes for them.
+ * @param {Record<string, unknown> | undefined} group
+ * @returns {Record<string, string>}
+ */
+const cssValues = (group) => {
+  /** @type {Record<string, string>} */
+  const values = {};
+  for (const [key, value] of Object.entries(group ?? {}))
+    if (typeof value === "string") values[key] = value;
+    else if (typeof value === "number") values[key] = String(value);
+  return values;
+};
+
+/**
  * @param {Record<string, Record<string, unknown>>} [projectTheme] the project's theme.js default export
- * @param {{palette?: Record<string, unknown>|null}} [options] pass the palette.js data to enable raw Tailwind colours
+ * @param {{palette?: ColorScale|null}} [options] pass the palette.js data to enable raw Tailwind colours
  */
 export const buildTheme = (projectTheme = {}, options = {}) => {
   const palette = options.palette === undefined ? null : options.palette;
   const projectColors = themeColorVariables(projectTheme);
   const declaredColors = themeColorVariables({ color: projectTheme?.color });
-  const colors = /** @type {Record<string, unknown>} */ ({ ...(palette ?? {}), ...DEFAULT_THEME.colors });
-  for (const [key, value] of Object.entries({ ...projectColors, ...onColors(declaredColors) }))
-    colors[key] = colors[key] && typeof colors[key] === "object"
-      ? { ...colors[key], DEFAULT: value }
-      : value;
+  const colors = palette !== null ? { ...palette, ...DEFAULT_THEME.colors } : { ...DEFAULT_THEME.colors };
+  for (const [key, value] of Object.entries({ ...projectColors, ...onColors(declaredColors) })) {
+    const shades = colors[key];
+    colors[key] = shades && typeof shades === "object" ? { ...shades, DEFAULT: value } : value;
+  }
   return {
     ...DEFAULT_THEME,
-    screens: { ...DEFAULT_THEME.screens, ...projectTheme?.screens },
+    screens: { ...DEFAULT_THEME.screens, ...cssValues(projectTheme?.screens) },
     colors,
     spacing: { ...DEFAULT_THEME.spacing, ...scaleFromGroup(projectTheme?.spacing, "spacing") },
     borderRadius: { ...DEFAULT_THEME.borderRadius, ...scaleFromGroup(projectTheme?.radius, "radius") },

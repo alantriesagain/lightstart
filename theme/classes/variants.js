@@ -7,6 +7,7 @@
  */
 
 import { arbitraryValue } from "./parse.js";
+/** @import { Scale } from "./types.ts" */
 
 /** Identical in browser and Node (no CSS.escape dependency) so build and runtime emit byte-identical selectors. */
 /** @param {string} cls */
@@ -78,11 +79,11 @@ const MEDIA_VARIANTS = /** @type {Record<string, [string, number]>} */ ({
 });
 
 /**
- * @param {Record<string, string>} screens
+ * @param {Scale} screens
  * @returns {(variants: string[], className: string) => {selector: string, medias: string[], weight: number}|null}
  */
 export const createVariantApplier = (screens) => {
-  const screenWidth = (/** @type {string} */ name) => parseInt(screens[name], 10) || 0;
+  const screenWidth = (/** @type {string} */ name) => parseInt(screens[name] ?? "", 10) || 0;
 
   return (variants, className) => {
     const prefixes = [];
@@ -106,7 +107,7 @@ export const createVariantApplier = (screens) => {
       }
       if (variant.startsWith("max-") && screens[variant.slice(4)] !== undefined) {
         const name = variant.slice(4);
-        medias.push(`(max-width: ${parseInt(screens[name], 10) - 0.02}px)`);
+        medias.push(`(max-width: ${parseInt(screens[name] ?? "", 10) - 0.02}px)`);
         weight = Math.max(weight, 100000 + (100000 - screenWidth(name)));
         continue;
       }

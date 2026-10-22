@@ -85,7 +85,7 @@ const freshCopy = (member: unknown): unknown => {
  * `ThisType<import("./types.ts").ControllerInstance & YourController>`.
  */
 export function defineMixin<D extends Record<string, unknown>, P extends Record<string, PropertyDeclaration> = {}>(
-  definition: D & { props?: P } & ThisType<PropsToThis<P> & Omit<D, ControllerDefinitionKey> & ControllerInstance & Record<string, any>>,
+  definition: D & { props?: P } & ThisType<PropsToThis<P> & Omit<D, ControllerDefinitionKey> & ControllerInstance & Record<string, unknown>>,
 ): D & { props?: P };
 export function defineMixin(definition: Record<string, unknown>): Record<string, unknown> {
   return definition;
@@ -108,10 +108,10 @@ const createController = (definition: Record<string, unknown>): Record<string, u
   for (const key of [...Object.keys(definition), ...Object.keys(properties)])
     if (RESERVED.has(key))
       throw new Error(`Controller "${name}": "${key}" is reserved by the controller's handle (definition, has, dispose; create and get are retired); rename it`);
-  const memberDescs: Record<string, PropertyDescriptor> = {};
+  const memberDescs: Map<string, PropertyDescriptor> = new Map();
   for (const key of Object.keys(definition))
     if (!DEFINITION_KEYS.includes(key))
-      memberDescs[key] = Object.getOwnPropertyDescriptor(definition, key) as PropertyDescriptor;
+      memberDescs.set(key, Object.getOwnPropertyDescriptor(definition, key) as PropertyDescriptor);
 
   for (const key of Object.keys(properties))
     for (const option of ["query", "dependsOn"])
@@ -136,12 +136,12 @@ const createController = (definition: Record<string, unknown>): Record<string, u
     };
     const dispose = (): Promise<void> | undefined => {
       const drain = () => teardowns.drain(name);
-      const result: unknown = typeof disconnected === "function" ? disconnected.call(instance) : undefined;
+      const result: unknown = typeof disconnected === "function" ? (disconnected as (this: unknown) => unknown).call(instance) : undefined;
       if (!isThenable(result)) {
         drain();
         return undefined;
       }
-      return (result as Promise<unknown>).then(drain, (error) => {
+      return (result as Promise<unknown>).then(drain, (error: unknown) => {
         drain();
         throw error;
       });
@@ -162,21 +162,19 @@ const createController = (definition: Record<string, unknown>): Record<string, u
         (key, value) => {
           instance[key] = value;
         },
-        (key) => {
-          delete instance[key];
-        },
+        null,
       ),
     );
 
     for (const key of Object.keys(properties))
       Object.defineProperty(instance, key, {
         get: () => store.get(key),
-        set: (value) => store.set(key, value),
+        set: (value: unknown) => store.set(key, value),
         enumerable: true,
       });
 
-    for (const [key, desc] of Object.entries(memberDescs)) {
-      const value: unknown = desc.value;
+    for (const [key, desc] of memberDescs) {
+      const value = (desc as { value?: unknown }).value;
       if (desc.get || desc.set) Object.defineProperty(instance, key, { ...desc, enumerable: true });
       else instance[key] = typeof value === "function" ? value.bind(instance) : freshCopy(value);
     }
@@ -190,7 +188,7 @@ const createController = (definition: Record<string, unknown>): Record<string, u
     }
 
     adopt(instance);
-    const start = (): unknown => (typeof connected === "function" ? connected.call(instance) : undefined);
+    const start = (): unknown => (typeof connected === "function" ? (connected as (this: unknown) => unknown).call(instance) : undefined);
     const started: unknown = after ? after.then(start) : start();
     if (isThenable(started)) pending.push((started as Promise<unknown>).then(() => undefined));
     instance.$ready = pending.length
@@ -253,10 +251,10 @@ const createController = (definition: Record<string, unknown>): Record<string, u
     },
   };
 
-  for (const key of [...Object.keys(properties), ...Object.keys(memberDescs), ...INSTANCE_KEYS])
+  for (const key of [...Object.keys(properties), ...memberDescs.keys(), ...INSTANCE_KEYS])
     Object.defineProperty(handle, key, {
       get: () => instance()[key],
-      set: (value) => {
+      set: (value: unknown) => {
         const writer = writerOf(instance());
         if (writer) writer.writeKey(key, value);
       },
@@ -306,7 +304,7 @@ const createController = (definition: Record<string, unknown>): Record<string, u
 export function defineController<
   P extends Record<string, PropertyDeclaration>,
   D extends Record<string, unknown> & { sync?: SyncBlock<P & MixinProps<M>> },
-  M extends readonly Record<string, unknown>[] = [],
+  M extends readonly Record<string, unknown>[] | [] = [],
 >(
   rawDefinition: D & { name: string, props?: P, sync?: SyncBlock<P & MixinProps<M>>, mixins?: M } & ThisType<PropsToThis<P & MixinProps<M>> & Omit<D, ControllerDefinitionKey> & MixinMembers<M, ControllerDefinitionKey> & ControllerInstance>,
 ): ControllerHandle<P & MixinProps<M>, D & MixinMembers<M, ControllerDefinitionKey>>;

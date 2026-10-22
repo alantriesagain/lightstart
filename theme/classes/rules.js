@@ -14,7 +14,7 @@ import {
   resolveSpacing,
 } from "./resolve.js";
 import { parseArbitrary } from "./parse.js";
-/** @import { ColorScale, DynamicRuleFn, MatchedRule, ParsedClass, RuleInput, RuleResult, SpacingOptions } from "./types.ts" */
+/** @import { ColorScale, DynamicRuleFn, MatchedRule, ParsedClass, RuleInput, RuleResult, SpacingOptions, ValueScale } from "./types.ts" */
 
 /** @param {string} value */
 const negate = (value) =>
@@ -435,8 +435,11 @@ export class DynamicRule {
    * @param {DynamicRuleFn} fn
    */
   constructor(prefix, fn) {
+    /** @type {string} */
     this.prefix = prefix;
+    /** @type {DynamicRuleFn} */
     this.fn = fn;
+    /** @type {number} */
     this.order = 0;
   }
 }
@@ -476,7 +479,7 @@ export const createRules = (theme) => {
 
   /**
    * @param {string[]} props
-   * @param {Record<string, string | string[]> | undefined} scale
+   * @param {ValueScale | undefined} scale
    * @param {{ negative?: boolean }} options
    * @param {((value: string, type: string | null) => string | null) | null} arbitrary what an arbitrary value becomes, null to take it as written
    */
@@ -533,6 +536,7 @@ export const createRules = (theme) => {
    * @param {string | null} fn
    */
   const angleRule = (property, fn) => (/** @type {RuleInput} */ r) => {
+    /** @type {string | null} */
     let value = null;
     if (/^\d+(?:\.\d+)?$/.test(r.restBase)) value = `${r.restBase}deg`;
     else {
@@ -547,7 +551,8 @@ export const createRules = (theme) => {
   const fontSize = (/** @type {RuleInput} */ r) => {
     const hit = theme.fontSize[r.restStem];
     if (hit !== undefined) {
-      const [size, lineHeight] = Array.isArray(hit) ? hit : [hit, null];
+      const size = Array.isArray(hit) ? hit[0] : hit;
+      const lineHeight = Array.isArray(hit) ? (hit[1] ?? null) : null;
       const overridden = r.modifier !== null ? resolveSpacing(r.modifier, theme.spacing) : null;
       const line = overridden ?? lineHeight;
       return line ? [`font-size:${size}`, `line-height:${line}`] : [`font-size:${size}`];
@@ -826,6 +831,7 @@ export const createRules = (theme) => {
     }),
     rule("outline", colorRule(["outline-color"], {})),
     rule("outline-offset", (/** @type {RuleInput} */ r) => {
+      /** @type {string | null} */
       let value = null;
       if (/^\d+$/.test(r.restBase)) value = `${r.restBase}px`;
       else {
@@ -839,6 +845,7 @@ export const createRules = (theme) => {
     rule("shadow", lookupRule(["box-shadow"], theme.boxShadow, {}, (value, type) =>
       type === null || type === "shadow" ? value : null)),
     rule("ring", (/** @type {RuleInput} */ r) => {
+      /** @type {string | null} */
       let width = null;
       if (r.restBase === "") width = "3px";
       else if (/^\d+$/.test(r.restBase)) width = `${r.restBase}px`;
@@ -1006,6 +1013,7 @@ export const createRules = (theme) => {
       if (hit) return hit;
     }
     for (const entry of DYNAMIC) {
+      /** @type {string | null} */
       let restBase = null;
       if (parsed.base === entry.prefix) restBase = "";
       else if (parsed.base.startsWith(`${entry.prefix}-`)) restBase = parsed.base.slice(entry.prefix.length + 1);

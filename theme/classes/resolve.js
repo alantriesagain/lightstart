@@ -6,7 +6,7 @@
  */
 
 import { parseArbitrary } from "./parse.js";
-/** @import { ColorScale } from "./types.ts" */
+/** @import { ColorScale, Scale, Shades, ValueScale } from "./types.ts" */
 
 const COLOR_SHAPE = /^(?:#[0-9a-f]{3,8}$|rgba?\(|hsla?\(|oklch\(|oklab\(|lab\(|lch\(|hwb\(|color-mix\(|color\(|var\()/i;
 const COLOR_KEYWORDS = new Set(["transparent", "currentColor", "inherit"]);
@@ -41,10 +41,10 @@ const fractionToPercent = (value) => {
 
 /**
  * @param {string} rest the token remainder after the rule prefix
- * @param {Record<string, string>} [themeSpacing] named spacing entries
+ * @param {Scale} [themeSpacing] named spacing entries
  * @param {{keywords?: Record<string, string>, fractions?: boolean, arbitraryTypes?: string[]}} [options]
  */
-export const resolveSpacing = (rest, themeSpacing = {}, options = {}) => {
+export function resolveSpacing(rest, themeSpacing = {}, options = {}) {
   const { keywords = {}, fractions = true, arbitraryTypes = ["length", "size", "percentage"] } = options;
   if (keywords[rest] !== undefined) return keywords[rest];
   if (themeSpacing[rest] !== undefined) return themeSpacing[rest];
@@ -58,11 +58,11 @@ export const resolveSpacing = (rest, themeSpacing = {}, options = {}) => {
   if (arb && (arb.type === null || arbitraryTypes.includes(arb.type)))
     return arb.type === null && looksLikeColorShape(arb.value) && !arb.value.startsWith("var(") ? null : arb.value;
   return null;
-};
+}
 
 /**
  * @param {string} rest
- * @param {Record<string, string|string[]> | undefined} scale
+ * @param {ValueScale | undefined} scale
  * @param {((value: string, type: string | null) => string | null) | null} arbitrary what an arbitrary value becomes, null to take it as written
  */
 export const resolveLookup = (rest, scale, arbitrary) => {
@@ -78,7 +78,7 @@ export const resolveLookup = (rest, scale, arbitrary) => {
 
 /**
  * The colour a scale entry stands for: a plain value, or the entry's `DEFAULT`.
- * @param {string | ColorScale} hit
+ * @param {string | Shades} hit
  * @returns {string | null}
  */
 const colorValue = (hit) => {
@@ -154,11 +154,11 @@ export const resolvePercentNumber = (rest, options = {}) => {
  * @param {string} rest
  * @param {{ keywords?: Record<string, string> }} [options]
  */
-export const resolveInteger = (rest, options = {}) => {
+export function resolveInteger(rest, options = {}) {
   const keywords = options.keywords === undefined ? {} : options.keywords;
   if (keywords[rest] !== undefined) return keywords[rest];
   if (/^\d+$/.test(rest)) return rest;
   const arb = parseArbitrary(rest);
   if (arb && (arb.type === null || arb.type === "number")) return arb.value;
   return null;
-};
+}

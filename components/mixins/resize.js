@@ -1,4 +1,5 @@
 import { defineMixin } from "@bootstrapp/light";
+/** @import View from "@bootstrapp/light" */
 
 /**
  * @bootstrapp/light/components/mixins/resize
@@ -17,9 +18,11 @@ import { defineMixin } from "@bootstrapp/light";
  *     _draw() { drawInto(this.querySelector("canvas")); },
  *   });
  *
- * @param {string} method the host method to call
+ * @template {string} K
+ * @param {K} method the host method to call
  */
 export const withResize = (method) => defineMixin({
+  /** @this {View & Record<K, () => void>} */
   connected() {
     const observer = new ResizeObserver(() => this[method]());
     observer.observe(this);

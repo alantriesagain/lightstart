@@ -31,8 +31,8 @@ export const loadRect = (storage, key, fallback) => {
   try {
     const parsed = JSON.parse(storage.getItem(key) ?? "");
     if (!parsed || typeof parsed !== "object") return { ...fallback };
-    const { x, y, w, h } = parsed;
-    if (![x, y, w, h].every(Number.isFinite)) return { ...fallback };
+    const { x, y, w, h } = /** @type {Record<string, unknown>} */ (parsed);
+    if (typeof x !== "number" || typeof y !== "number" || typeof w !== "number" || typeof h !== "number" || ![x, y, w, h].every(Number.isFinite)) return { ...fallback };
     return { x, y, w, h };
   } catch {
     return { ...fallback };

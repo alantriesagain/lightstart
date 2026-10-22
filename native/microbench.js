@@ -5,6 +5,10 @@
  */
 import { Dep, ElementSpec, Keyed, TAnchor, TBox, TElement, TRoot, TRun, TemplateResult, Unsafe, effect, graphemes, html, nothing, render, signal, stringWidth } from "./index.ts";
 import { getTemplate, TemplateInstance } from "../html/template.ts";
+import { Screen, diffScreens } from "../tdom/screen.ts";
+import { Caret, Clip, paint } from "../tdom/paint.ts";
+import { layout } from "../tdom/layout.ts";
+import { DEFAULT_STYLE, Style } from "../tdom/style.ts";
 
 /**
  * @param {string} name
@@ -122,6 +126,43 @@ time("render 2k rows (engine)", () => {
   const ids = [];
   for (let i = 0; i < 2000; i++) ids.push(i);
   render(html`<box>${ids.map((id) => html`<text>${id}</text>`)}</box>`, root);
+});
+
+time("diff 120x40 screens 200 frames", () => {
+  const front = new Screen(120, 40);
+  const back = new Screen(120, 40);
+  const styles = [new Style(1, -1, 0), new Style(2, 4, 1), new Style(-1, 3, 8)];
+  let bytes = 0;
+  for (let frame = 0; frame < 200; frame++) {
+    for (let y = 0; y < 40; y++) back.fill(0, y, 120, 1, styles[(y + frame) % styles.length]);
+    bytes += diffScreens(front, back).length;
+  }
+  if (bytes === 0) throw new Error("diff");
+});
+
+time("layout + paint 2k rows 50 frames", () => {
+  const root = new TRoot();
+  /** @type {number[]} */
+  const ids = [];
+  for (let i = 0; i < 2000; i++) ids.push(i);
+  render(html`<box>${ids.map((id) => html`<text class="row">${id} of ${2000}</text>`)}</box>`, root);
+  const screen = new Screen(120, 40);
+  for (let frame = 0; frame < 50; frame++) {
+    layout(root, 120, 40, DEFAULT_STYLE);
+    screen.clear();
+    paint(root, screen, new Clip(0, 0, 120, 40), DEFAULT_STYLE, new Caret(), null);
+  }
+});
+
+time("layout a tree 6 boxes deep 3 wide, 100 frames", () => {
+  /** @param {number} depth @returns {import("../html/core.ts").TemplateResult} */
+  const tree = (depth) =>
+    depth === 0
+      ? html`<text>leaf ${depth}</text>`
+      : html`<box direction=${depth % 2 === 0 ? "row" : "column"} padding=${1}>${tree(depth - 1)}${tree(depth - 1)}<text>at ${depth}</text></box>`;
+  const root = new TRoot();
+  render(tree(6), root);
+  for (let frame = 0; frame < 100; frame++) layout(root, 200, 60, DEFAULT_STYLE);
 });
 
 time("signal write with one effect 10k", () => {

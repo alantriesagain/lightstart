@@ -10,6 +10,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import http from "node:http";
 import { stripTypeScriptTypes } from "node:module";
 import path from "node:path";
+import { asPackageJson } from "../check/walk.js";
 import { runnerPage } from "./page.js";
 
 const TYPES = /** @type {Record<string, string>} */ ({
@@ -37,7 +38,7 @@ const stripped = (file) => {
 /** @param {string} dir */
 const manifestOf = (dir) => {
   const file = path.join(dir, "package.json");
-  return existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : null;
+  return existsSync(file) ? asPackageJson(JSON.parse(readFileSync(file, "utf8"))) : null;
 };
 
 /**

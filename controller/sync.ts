@@ -19,7 +19,7 @@ const syncTypes: Array<{ check: SyncCheck, handler: SyncHandler }> = [];
 
 const binders: SyncBinder[] = [];
 
-const adapters: Record<string, Adapter> = Object.create(null);
+const adapters: Map<string, Adapter> = new Map();
 const pendingBinds: Map<string, Array<() => void>> = new Map();
 
 const isAdapter = (target: unknown): target is Adapter => {
@@ -29,7 +29,7 @@ const isAdapter = (target: unknown): target is Adapter => {
 };
 
 /** The adapter registered as `name`, or null. */
-export const getAdapter = (name: string): Adapter | null => adapters[name] ?? null;
+export const getAdapter = (name: string): Adapter | null => adapters.get(name) ?? null;
 
 /**
  * Register a named sync target. Anything not adapter-shaped (a controller
@@ -37,7 +37,7 @@ export const getAdapter = (name: string): Adapter | null => adapters[name] ?? nu
  * Bindings queued against the name run the moment it registers.
  */
 export const registerAdapter = (name: string, target: unknown) => {
-  adapters[name] = isAdapter(target) ? target : adapterFor(name, target as StoreShaped);
+  adapters.set(name, isAdapter(target) ? target : adapterFor(name, target as StoreShaped));
   const queued = pendingBinds.get(name);
   pendingBinds.delete(name);
   if (queued) for (const bind of queued) bind();
@@ -48,13 +48,21 @@ export const registerAdapter = (name: string, target: unknown) => {
  * bound; a later binding by the name waits for a new registration.
  */
 export const unregisterAdapter = (name: string) => {
-  delete adapters[name];
+  adapters.delete(name);
 };
 
 /** Names bindings are still waiting on; after boot, these are typos. */
 export const pendingAdapterNames = () => [...pendingBinds.keys()];
 
-const lazyAdapters: Record<string, () => void> = Object.create(null);
+class LazyAdapter {
+  create: () => void;
+
+  constructor(create: () => void) {
+    this.create = create;
+  }
+}
+
+const lazyAdapters: Map<string, LazyAdapter> = new Map();
 
 /**
  * Register a deferred provider for a named sync target: the first binding
@@ -63,19 +71,19 @@ const lazyAdapters: Record<string, () => void> = Object.create(null);
  * something actually binds to them.
  */
 export const registerLazyAdapter = (name: string, create: () => void) => {
-  if (adapters[name]) return;
+  if (adapters.has(name)) return;
   if (pendingBinds.has(name)) {
     create();
     return;
   }
-  lazyAdapters[name] = create;
+  lazyAdapters.set(name, new LazyAdapter(create));
 };
 
 const triggerLazyAdapter = (name: string) => {
-  const create = lazyAdapters[name];
-  if (!create) return;
-  delete lazyAdapters[name];
-  create();
+  const lazy = lazyAdapters.get(name);
+  if (!lazy) return;
+  lazyAdapters.delete(name);
+  lazy.create();
 };
 
 /**
@@ -207,7 +215,7 @@ export const bindStoreSync = ({ store, key, prop, host = null }: { store: StoreC
  * before its target exists declares `() => target` and the target is read when
  * the property binds.
  */
-export const resolveSync = (sync: unknown): unknown => (typeof sync === "function" ? sync() : sync);
+export const resolveSync = (sync: unknown): unknown => (typeof sync === "function" ? (sync as () => unknown)() : sync);
 
 /**
  * Teach the binding a data source it cannot follow as an adapter, a store or a

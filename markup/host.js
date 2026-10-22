@@ -24,6 +24,7 @@ export class MarkupPrepared extends Prepared {
    */
   constructor(parts, tree) {
     super(parts);
+    /** @type {TplNode[]} */
     this.tree = tree;
   }
 }
@@ -31,10 +32,13 @@ export class MarkupPrepared extends Prepared {
 class CloneWalk {
   /** @param {PartSpec[]} specs */
   constructor(specs) {
+    /** @type {PartSpec[]} */
     this.specs = specs;
     /** @type {HostNode[]} */
     this.targets = [];
+    /** @type {number} */
     this.index = -1;
+    /** @type {number} */
     this.partIdx = 0;
   }
 

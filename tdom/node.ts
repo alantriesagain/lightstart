@@ -19,7 +19,7 @@ import { applyClasses, classStyler, markExplicit } from "./classes.ts";
 
 import type { ViewCore } from "../view/core.ts";
 import type { EventBinding } from "../html/parts.ts";
-import type { ScrollState, TextLayout } from "./layout.ts";
+import type { MeasureCache, ScrollState, TextLayout } from "./layout.ts";
 
 export type PropValue = string | number | boolean | null;
 
@@ -151,6 +151,10 @@ export const asBool = (v: PropValue) => {
   if (typeof v === "number") return v !== 0;
   return v !== "false";
 };
+
+const DIRECTIONS = ["column", "row"];
+const ALIGNS = ["stretch", "start", "end"];
+const WRAPS = ["word", "char", "none"];
 
 export const asEnum = (name: string, v: PropValue, allowed: string[]) => {
   const s = asString(name, v);
@@ -360,7 +364,11 @@ export class TElement extends TNode {
    */
   handle(e: unknown) {
     if (!(e instanceof UIEvent)) return false;
-    for (const entry of this.handlers.slice()) {
+    const handlers = this.handlers;
+    let first = 0;
+    while (first < handlers.length && handlers[first].name !== e.type) first++;
+    if (first === handlers.length) return false;
+    for (const entry of handlers.slice(first)) {
       if (entry.name !== e.type) continue;
       if (entry.once) this.removeHandler(entry.name, entry.binding);
       entry.binding.handleEvent(e);
@@ -425,6 +433,7 @@ export class TBox extends TElement {
   align: string;
   rule: boolean;
   scrollState: ScrollState | null;
+  measured: MeasureCache | null;
 
   constructor(tag: string) {
     super("box", tag);
@@ -442,12 +451,13 @@ export class TBox extends TElement {
     this.align = "stretch";
     this.rule = false;
     this.scrollState = null;
+    this.measured = null;
   }
 
   setOwnProp(name: string, v: PropValue) {
     switch (name) {
       case "direction":
-        this.setDirection(asEnum(name, v, ["column", "row"]));
+        this.setDirection(asEnum(name, v, DIRECTIONS));
         return true;
       case "flex":
         this.setFlex(asNumber(name, v));
@@ -480,7 +490,7 @@ export class TBox extends TElement {
         this.setStickToBottom(asBool(v));
         return true;
       case "align":
-        this.setAlign(asEnum(name, v, ["stretch", "start", "end"]));
+        this.setAlign(asEnum(name, v, ALIGNS));
         return true;
       default:
         return false;
@@ -602,7 +612,7 @@ export class TText extends TElement {
 
   setOwnProp(name: string, v: PropValue) {
     if (name !== "wrap") return false;
-    const w = asEnum(name, v, ["word", "char", "none"]);
+    const w = asEnum(name, v, WRAPS);
     if (w !== this.wrap) {
       this.wrap = w;
       this.invalidate();

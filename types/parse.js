@@ -66,7 +66,7 @@ export const parsers = {
       typeof item !== "object" || item === null
         ? item
         : Object.fromEntries(
-            Object.entries(item).map(([key, val]) => {
+            Object.entries(/** @type {Record<string, unknown>} */ (item)).map(([key, val]) => {
               const parser = itemType[key] && parsers[itemType[key].$type];
               return [key, parser ? parser(val, prop) : val];
             }),

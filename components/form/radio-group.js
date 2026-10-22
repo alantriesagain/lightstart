@@ -3,7 +3,7 @@ import { defineComponent } from "@bootstrapp/light";
 import { withFormControl } from "@bootstrapp/light/components/mixins/form-control.js";
 import T from "@bootstrapp/light/types";
 
-/** @import { Prop } from "../types.ts" */
+/** @import { Prop, RadioElement, Renderable } from "../types.ts" */
 
 export default defineComponent({
   mixins: [withFormControl],
@@ -25,7 +25,7 @@ export default defineComponent({
 
   connected() {
     this._onRadioChange = /** @type {EventListener} */ ((e) => {
-      const detail = /** @type {CustomEvent} */ (e).detail;
+      const detail = /** @type {CustomEvent<{ checked: boolean, value: Exclude<Renderable, undefined> } | undefined>} */ (e).detail;
       if (!detail?.checked) return;
       this.value = detail.value;
       this._updateFormValue();
@@ -40,7 +40,7 @@ export default defineComponent({
   },
 
   _radios() {
-    return [...this.querySelectorAll("lc-radio")];
+    return [.../** @type {NodeListOf<RadioElement>} */ (this.querySelectorAll("lc-radio"))];
   },
 
   /** @param {{ changedProps: Map<string, unknown> }} props */

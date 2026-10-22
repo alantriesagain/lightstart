@@ -55,7 +55,7 @@ export default defineComponent({
         <span class="darkmode-label">${this.label || lcText("lc-darkmode", "label")}</span>
         <lc-switch
           ?checked=${this.dark}
-          @change=${(/** @type {CustomEvent} */ e) => colorScheme.choose(e.detail.checked)}
+          @change=${(/** @type {CustomEvent<{ checked: boolean }>} */ e) => colorScheme.choose(e.detail.checked)}
         ></lc-switch>
       </div>`;
   },

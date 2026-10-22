@@ -98,6 +98,7 @@ export default defineComponent({
     this._dropIndex = index;
 
     const areaRect = this.getBoundingClientRect();
+    /** @type {number} */
     let indicatorPos;
     if (children.length === 0)
       indicatorPos = 4;

@@ -60,7 +60,7 @@ export const inspect = (value, { depth = 4, indent = 0, seen = new Set() } = {})
     }
     if (value instanceof ArrayBuffer) return `ArrayBuffer { byteLength: ${value.byteLength} }`;
     if (value instanceof Map)
-      return `Map(${value.size}) ${wrap("{", [...value].map(([k, v]) => `${nested(k)} => ${nested(v)}`), "}", indent)}`;
+      return `Map(${value.size}) ${wrap("{", [.../** @type {Map<unknown, unknown>} */ (value)].map(([k, v]) => `${nested(k)} => ${nested(v)}`), "}", indent)}`;
     if (value instanceof Set)
       return `Set(${value.size}) ${wrap("{", [...value].map(nested), "}", indent)}`;
     if (Array.isArray(value)) return wrap("[", value.map(nested), "]", indent);

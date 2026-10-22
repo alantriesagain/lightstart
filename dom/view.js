@@ -9,7 +9,7 @@
  */
 import { cloneDefault, isReactive, normalizeProperties, parse } from "../types/index.js";
 import { createStore } from "../signals/store.ts";
-import { assertDefinitionKeys, composeDefinition, LIFECYCLE_HOOKS } from "../view/definition.js";
+import { assertDefinitionKeys, composeDefinition, isThenable, LIFECYCLE_HOOKS } from "../view/definition.js";
 import { UNSLOTTED_TAG, hasRootPart, isMoving, projectSlots, render, topLevelPair, unprojectUnits } from "../html/index.js";
 import { untracked } from "../signals/index.ts";
 import { CORE_METHODS, ViewCore, config } from "../view/core.ts";
@@ -102,7 +102,19 @@ const hooksOf = (plugins) => [...LIFECYCLE_HOOKS, ...plugins.flatMap((plugin) =>
 
 const BaseElement = /** @type {typeof HTMLElement} */ (globalThis.HTMLElement ?? class {});
 
-/** @typedef {(el: any) => unknown} RenderFn */
+/**
+ * A render written as a function of the element. Method-style, so a render
+ * typed for its own element's members is accepted for any element.
+ * @typedef {{ render(el: View): unknown }["render"]} RenderFn
+ */
+
+/**
+ * An element's members read and written by name, for the keys its
+ * definition declares.
+ * @param {object} el
+ * @returns {Record<string, unknown>}
+ */
+const membersOf = (el) => /** @type {Record<string, unknown>} */ (el);
 
 /** @type {WeakMap<object, ComponentDefinition>} */
 const composedDefinitions = new WeakMap();
@@ -218,12 +230,18 @@ class View extends BaseElement {
     return component;
   }
 
-  /** @type {import("../signals/types.ts").Store & Record<string, unknown>} */
-  $state = /** @type {any} */ (createStore(this.$ctor._storeDefs ?? {}, { name: this.$ctor.tag ?? "view", accessors: false }));
+  /** @type {import("../signals/types.ts").Store} */
+  $state = /** @type {import("../signals/types.ts").Store} */ (createStore(this.$ctor._storeDefs ?? {}, { name: this.$ctor.tag ?? "view", accessors: false }));
+  /**
+   * The values of the props declared `reactive: false`, made on first use.
+   * @type {Record<string, unknown> | null}
+   */
+  _plainFields = null;
   $hasUpdated = false;
   $forceNextUpdate = false;
   /** @type {Map<string, unknown>} */
   $changedProps = new Map();
+  $updatePending = false;
   /** @type {Promise<void> | null} */
   $updatePromise = null;
   /** @type {(() => void) | null} */
@@ -301,7 +319,7 @@ class View extends BaseElement {
       const descriptor = Object.getOwnPropertyDescriptor(prototypeMethods, key);
       return descriptor && !descriptor.get;
     });
-    /** @type {any} */
+    /** @type {ViewConstructor} */
     const component = class extends base {
       static $trackRender = false;
       static $methodHooks = false;
@@ -330,9 +348,10 @@ class View extends BaseElement {
 
       constructor() {
         super();
+        const self = membersOf(this);
         methodKeysToBind.forEach((key) => {
-          const self = /** @type {any} */ (this);
-          if (typeof self[key] === "function") self[key] = self[key].bind(self);
+          const method = self[key];
+          if (typeof method === "function") self[key] = /** @type {(...args: unknown[]) => unknown} */ (method).bind(this);
         });
       }
 
@@ -379,12 +398,12 @@ class View extends BaseElement {
         Object.defineProperty(component.prototype, key, {
           configurable: true,
           enumerable: true,
-          /** @this {any} */
+          /** @this {View} */
           get() {
             const store = this._plainFields ?? (this._plainFields = {});
             return key in store ? store[key] : (store[key] = cloneDefault(prop));
           },
-          /** @this {any} */
+          /** @this {View} @param {unknown} value */
           set(value) {
             (this._plainFields ?? (this._plainFields = {}))[key] = value;
           },
@@ -396,17 +415,17 @@ class View extends BaseElement {
         configurable: true,
         enumerable: true,
         get: getter
-          ? /** @this {any} */ function () {
+          ? /** @this {View} */ function () {
               return /** @type {() => unknown} */ (getter).call(this);
             }
-          : /** @this {any} */ function () {
+          : /** @this {View} */ function () {
               return this.$state.get(key);
             },
         set: setter
-          ? /** @this {any} */ function (value) {
+          ? /** @this {View} @param {unknown} value */ function (value) {
               /** @type {(value: unknown) => void} */ (setter).call(this, value);
             }
-          : /** @this {any} */ function (value) {
+          : /** @this {View} @param {unknown} value */ function (value) {
               this.$state.set(key, value);
             },
       });
@@ -425,7 +444,7 @@ class View extends BaseElement {
           set: descriptor.set,
         });
        else
-        component.prototype[key] = descriptor.value;
+        membersOf(component.prototype)[key] = /** @type {{ value?: unknown }} */ (descriptor).value;
 
     }
 
@@ -503,7 +522,7 @@ class View extends BaseElement {
     }
     /** @type {EventListener} */
     const wrapper = (event) => {
-      listener(/** @type {CustomEvent} */ (event).detail);
+      listener(/** @type {CustomEvent<unknown>} */ (event).detail);
     };
     this.addEventListener(eventName, wrapper);
     return wrapper;
@@ -549,7 +568,7 @@ class View extends BaseElement {
    */
   $runHook(name, detail) {
     const ctor = this.$ctor;
-    const lists = (ctor._hookLists ??= new Map());
+    const lists = (ctor._hookLists ??= /** @type {Map<string, LifecycleHook[]>} */ (new Map()));
     let fns = lists.get(name);
     if (!fns) {
       /** @type {LifecycleHook[]} */
@@ -561,7 +580,7 @@ class View extends BaseElement {
     }
     for (const fn of fns) {
       const result = fn.call(this, detail);
-      if (result?.then) config.wrap(result, `view:${ctor.tag}:${name}`);
+      if (isThenable(result)) config.wrap(/** @type {Promise<void>} */ (result), `view:${ctor.tag}:${name}`);
     }
     this.$runMethodHook(name, detail.changedProps ?? null);
   }
@@ -575,10 +594,11 @@ class View extends BaseElement {
    */
   $runMethodHook(name, changedProps) {
     if (!this.$ctor.$methodHooks || !LIFECYCLE_HOOKS.includes(name)) return;
-    const fn = /** @type {Record<string, unknown>} */ (/** @type {unknown} */ (this))[name];
-    if (typeof fn !== "function") return;
+    const method = membersOf(this)[name];
+    if (typeof method !== "function") return;
+    const fn = /** @type {(this: View, changedProps?: Map<string, unknown>) => unknown} */ (method);
     const result = changedProps === null ? fn.call(this) : fn.call(this, changedProps);
-    if (result?.then) config.wrap(result, `view:${this.$ctor.tag}:${name}`);
+    if (isThenable(result)) config.wrap(/** @type {Promise<unknown>} */ (result), `view:${this.$ctor.tag}:${name}`);
   }
 
   /** @param {string} element */
@@ -614,7 +634,7 @@ class View extends BaseElement {
       const prop = this.$ctor.properties[key];
       if (prop?.attribute && !this.$attrOriginated && !this.$ignoreAttributeChange)
         this.$updateAttribute({ key, value, skipPropUpdate: true, type: prop.$type });
-      this.$requestUpdate(key, oldValue);
+      this.$enqueueUpdate(key, oldValue);
     });
     if (this.$ctor._klass) this.classList.add(...this.$ctor._klass.split(" "));
     if (this.$ctor._role && !this.hasAttribute("role")) this.setAttribute("role", this.$ctor._role);
@@ -637,7 +657,9 @@ class View extends BaseElement {
    * @returns {T}
    */
   $own(teardown) {
-    for (const one of Array.isArray(teardown) ? teardown : [teardown])
+    /** @type {(() => void) | Array<(() => void) | null | undefined | false>} */
+    const given = teardown;
+    for (const one of typeof given === "function" ? [given] : given)
       if (one) (this.$teardowns ??= []).push(one);
     return teardown;
   }
@@ -664,8 +686,8 @@ class View extends BaseElement {
     for (const [key, prop] of Object.entries(this.$ctor.properties)) {
       if (!isReactive(prop)) continue;
       const { $type: type, attribute } = /** @type {TypeDefinition} */ (prop);
-      const self = /** @type {any} */ (this);
       if (Object.hasOwn(this, key)) {
+        const self = membersOf(this);
         const adopted = self[key];
         delete self[key];
         self[key] = adopted;
@@ -756,9 +778,21 @@ class View extends BaseElement {
     return core.$requestUpdate.call(this, key, oldValue);
   }
 
+  /**
+   * @param {string} [key]
+   * @param {unknown} [oldValue]
+   */
+  $enqueueUpdate(key, oldValue) {
+    core.$enqueueUpdate.call(this, key, oldValue);
+  }
+
   /** @returns {Promise<void>} */
+  $whenUpdated() {
+    return core.$whenUpdated.call(this);
+  }
+
   $schedule() {
-    return core.$schedule.call(this);
+    core.$schedule.call(this);
   }
 
   $flushUpdate() {
@@ -899,7 +933,7 @@ class View extends BaseElement {
         this.setAttribute(attr, String(value));
       else if (type === "string" || value === null) this.removeAttribute(attr);
 
-    if (!skipPropUpdate) /** @type {any} */ (this)[key] = value;
+    if (!skipPropUpdate) membersOf(this)[key] = value;
     else this.$ignoreAttributeChange = false;
   }
 }
@@ -929,7 +963,7 @@ export default View;
  * declare an exported component.
  *
  * @template {Record<string, unknown>} D
- * @template {readonly Record<string, unknown>[]} [M=[]]
+ * @template {readonly Record<string, unknown>[] | []} [M=[]]
  * @template {Record<string, import("../types/types.ts").PropertyDeclaration>} [P={}]
  * @template {Record<string, import("../types/types.ts").TypeDefinition<unknown>>} [E={}]
  * @param {import("../view/types.ts").Definition<D, M, P, E>} def
@@ -958,10 +992,10 @@ export const defineComponent = (def) => def;
  *     render() { ... },
  *   });
  *
- * @template {Record<string, import("../types/types.ts").PropertyDeclaration>} P
- * @template {Record<string, import("../types/types.ts").TypeDefinition<unknown>>} E
  * @template {Record<string, unknown>} D
- * @param {D & { props?: P, events?: E } & ThisType<import("../view/types.ts").PropsToThis<P> & Omit<D, keyof P | import("../view/types.ts").DefinitionKey> & Omit<View, "$emit"> & { $emit: import("../view/types.ts").TypedEmit<E> } & { [k: `_${string}`]: any } & Record<string, any>>} def
+ * @template {Record<string, import("../types/types.ts").PropertyDeclaration>} [P={}]
+ * @template {Record<string, import("../types/types.ts").TypeDefinition<unknown>>} [E={}]
+ * @param {D & { props?: P, events?: E } & ThisType<import("../view/types.ts").PropsToThis<P> & Omit<D, keyof P | import("../view/types.ts").DefinitionKey> & Omit<View, "$emit"> & { $emit: import("../view/types.ts").TypedEmit<E> } & Record<string, unknown>>} def
  * @returns {D & { props?: P, events?: E }}
  */
 export const defineMixin = (def) => def;

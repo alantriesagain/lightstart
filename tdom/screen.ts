@@ -150,6 +150,8 @@ export const diffScreens = (front: Screen, back: Screen) => {
   let out = "";
   let curX = -1;
   let curY = -1;
+  const spare = new Style(0, 0, 0);
+  const held = new Style(0, 0, 0);
   let style: Style | null = null;
   const w = back.w;
   for (let y = 0; y < back.h; y++) {
@@ -168,7 +170,10 @@ export const diffScreens = (front: Screen, back: Screen) => {
         curX = x;
         curY = y;
       }
-      const next = new Style(back.fg[i], back.bg[i], back.attrs[i]);
+      const next: Style = style === spare ? held : spare;
+      next.fg = back.fg[i];
+      next.bg = back.bg[i];
+      next.attrs = back.attrs[i];
       out += sgrTransition(style, next);
       style = next;
       out += glyphString(g);

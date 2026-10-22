@@ -18,6 +18,7 @@ import { walkFiles } from "./walk.js";
 /** @typedef {{ entry: RuleEntry } | { warning: string }} Loaded */
 
 const LIGHT_ROOT = fileURLToPath(new URL("../", import.meta.url));
+/** @type {(id: string) => unknown} */
 const require = createRequire(import.meta.url);
 
 /** @param {string} dir */
@@ -112,7 +113,7 @@ export const loadRuleFile = async (owner, file) => {
  */
 export const loadRuleFileSync = (owner, file) => {
   try {
-    return entryOf(owner, file, require(file));
+    return entryOf(owner, file, /** @type {{ default?: unknown }} */ (require(file)));
   } catch (e) {
     return loadFailed(owner, file, e);
   }

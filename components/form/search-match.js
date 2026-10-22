@@ -8,6 +8,7 @@
 export const matchDocs = (docs, query, limit) => {
   const q = query.trim().toLowerCase();
   if (!q) return [];
+  /** @type {Map<string, number>} */
   const counts = new Map();
   return docs.filter((doc) => {
     if (!`${doc.title} ${doc.hint || ""}`.toLowerCase().includes(q))

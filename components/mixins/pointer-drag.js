@@ -1,7 +1,7 @@
 import T from "@bootstrapp/light/types";
 import { defineMixin } from "@bootstrapp/light";
 
-/** @import { Prop, DragState } from "../types.ts" */
+/** @import { Prop, DragState, PointerDragHost } from "../types.ts" */
 
 /**
  * @bootstrapp/light/components/mixins/pointer-drag
@@ -53,6 +53,7 @@ export const withPointerDrag = ({ handle, enabled, capture = true, touchFallback
     },
 
     connected() {
+      const host = /** @type {PointerDragHost} */ (this);
       /** @param {Event} e */
       const onHandle = (e) => {
         if (!handle) return true;
@@ -66,7 +67,7 @@ export const withPointerDrag = ({ handle, enabled, capture = true, touchFallback
       const flush = () => {
         this._dragRaf = 0;
         const d = this._drag;
-        if (d) this.onDragMove?.({ dx: d.dx, dy: d.dy, x: d.x, y: d.y });
+        if (d) host.onDragMove?.({ dx: d.dx, dy: d.dy, x: d.x, y: d.y });
       };
 
       /**
@@ -78,7 +79,7 @@ export const withPointerDrag = ({ handle, enabled, capture = true, touchFallback
       const begin = (pointerId, x, y, event) => {
         this._drag = { pointerId, startX: x, startY: y, x, y, dx: 0, dy: 0 };
         this.setAttribute("dragging", "");
-        this.onDragStart?.({ x, y, event });
+        host.onDragStart?.({ x, y, event });
       };
 
       /**
@@ -106,7 +107,7 @@ export const withPointerDrag = ({ handle, enabled, capture = true, touchFallback
         }
         this._drag = null;
         this.removeAttribute("dragging");
-        this.onDragEnd?.({ dx: d.dx, dy: d.dy, x: d.x, y: d.y, cancelled });
+        host.onDragEnd?.({ dx: d.dx, dy: d.dy, x: d.x, y: d.y, cancelled });
       };
 
       /** @type {(() => void) | null} */
@@ -124,7 +125,7 @@ export const withPointerDrag = ({ handle, enabled, capture = true, touchFallback
        */
       const yields = (x, y) => {
         const d = this._drag;
-        return Boolean(d && this.dragYields?.({ dx: x - d.startX, dy: y - d.startY }));
+        return Boolean(d && host.dragYields?.({ dx: x - d.startX, dy: y - d.startY }));
       };
 
       const onPointerMove = /** @type {EventListener} */ ((e) => {

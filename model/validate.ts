@@ -61,12 +61,13 @@ export function validateRow(models: Record<string, ModelSchema>, modelName: stri
 
     const { validator, format } = def;
     if (validator && value !== undefined)
-      try {
-        if (typeof validator !== "function") throw new TypeError(`${field}.validator is not a function`);
-        if (!validator(value, row)) errors[field] = `${field} failed custom validation`;
-      } catch (e) {
-        errors[field] = (e as Error).message || `${field} validation error`;
-      }
+      if (typeof validator !== "function") errors[field] = `${field}.validator is not a function`;
+      else
+        try {
+          if (!(validator as (value: unknown, row: unknown) => unknown)(value, row)) errors[field] = `${field} failed custom validation`;
+        } catch (e) {
+          errors[field] = (e as Error).message || `${field} validation error`;
+        }
 
     const pattern = typeof format === "string" ? FORMATS[format] : undefined;
     if (pattern && value && !pattern.test(value as string))

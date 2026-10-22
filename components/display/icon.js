@@ -84,7 +84,7 @@ export default defineComponent({
     if (!isIconName(name) || !icons.load || variantsOf(solid, bold).every((variant) => drawn.has(ruleKey(name, variant)))) return;
     return trackWork(drawIcon(name, solid, bold), "icon").then(
       () => this.$requestUpdate(),
-      (error) => console.error(`Error drawing icon: ${name}`, error),
+      (/** @type {unknown} */ error) => console.error(`Error drawing icon: ${name}`, error),
     );
   },
   /** @param {{ changedProps: Map<string, unknown> }} arg */

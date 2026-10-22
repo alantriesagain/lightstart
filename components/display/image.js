@@ -13,6 +13,7 @@ const inlineBase64Style = async (url, className) => {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Image request failed: ${response.status}`);
   const blob = await response.blob();
+  /** @type {string} */
   const base64String = await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(String(reader.result));
@@ -42,7 +43,7 @@ export const createBase64Style = (url, className) => {
   const inFlight = imageStyleCache.get(url);
   if (inFlight) return inFlight;
   const pending = trackWork(
-    inlineBase64Style(url, className).catch((error) => {
+    inlineBase64Style(url, className).catch((/** @type {unknown} */ error) => {
       imageStyleCache.delete(url);
       console.error("Failed to fetch and convert image:", error);
     }),

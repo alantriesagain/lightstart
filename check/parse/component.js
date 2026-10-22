@@ -31,6 +31,7 @@ export const parseComponentSources = (source, filename) => {
   return definitionSites(sf).map((site) => {
     const { literal } = site;
     let tag = site.tag;
+    /** @type {string | null} */
     let extendsTag = null;
     let styleTrue = false;
     let styleKnown = site.direct;

@@ -17,7 +17,7 @@ export default defineComponent({
 
     return html`
       <div class="lc-rating__container">
-        ${Array.from({ length: max }, (_, index) => {
+        ${Array.from({ length: max }, (/** @type {unknown} */ _, index) => {
           const isFilled = index < Math.round(value);
           return html`
             <lc-icon

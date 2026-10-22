@@ -5,6 +5,7 @@ import T from "@bootstrapp/light/types";
 import View from "@bootstrapp/light";
 
 /** @import { Prop, LabeledOption, IdbRecord, DexieTableLike, DexieIndexSpec, IdbSchema, IdbSchemaTable, IdbSchemaIndex } from "./types.ts" */
+/** @import { DexieCollection } from "https://esm.sh/dexie@4.0.11" */
 
 /**
  * Message of a thrown value, whatever it is.
@@ -281,6 +282,7 @@ View.define("example-indexeddb-explorer", {
       await db.open();
 
       const table = db.table(this.selectedStore);
+      /** @type {DexieCollection} */
       let query;
 
       switch (this.queryOperator) {
@@ -385,20 +387,21 @@ View.define("example-indexeddb-explorer", {
     try {
       const text = await file.text();
       const data = JSON.parse(text);
+      const records = data && typeof data === "object" && "records" in data ? data.records : undefined;
 
-      if (!data.records || !Array.isArray(data.records))
+      if (!Array.isArray(records) || !records.every((record) => record !== null && typeof record === "object"))
         throw new Error("Invalid JSON format");
 
       const db = new Dexie(this.selectedDatabase);
       await db.open();
 
       const table = db.table(this.selectedStore);
-      await table.bulkAdd(data.records);
+      await table.bulkAdd(/** @type {Record<string, unknown>[]} */ (records));
 
       db.close();
 
       await this.loadRecords();
-      this.showToast(`Imported ${data.records.length} record(s)`, "success");
+      this.showToast(`Imported ${records.length} record(s)`, "success");
     } catch (error) {
       console.error("Import failed:", error);
       this.showToast(`Import failed: ${errorMessage(error)}`, "error");

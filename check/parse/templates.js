@@ -46,6 +46,7 @@ export const htmlTemplates = (source) => {
   /** @type {Template[]} */
   const out = [];
   TAGGED.lastIndex = 0;
+  /** @type {RegExpExecArray | null} */
   let m;
   while ((m = TAGGED.exec(source)) !== null) {
     const start = m.index + m[0].length;

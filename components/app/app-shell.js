@@ -72,6 +72,7 @@ export default defineComponent({
   },
 
   render() {
+    /** @type {boolean} */
     let mobile;
     if (this.layout === "mobile") mobile = true;
     else if (this.layout === "desktop") mobile = false;

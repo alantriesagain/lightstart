@@ -7,7 +7,7 @@ export default defineRoutes({
   "/settings": { name: "settings", title: "Settings", component: "app-settings" },
 }, { spa: true });`;
 
-const LONG = Array.from({ length: 14 }, (_, i) => `<lc-list-row label="Row ${i + 1}"></lc-list-row>`).join("\n");
+const LONG = Array.from({ length: 14 }, (/** @type {unknown} */ _, i) => `<lc-list-row label="Row ${i + 1}"></lc-list-row>`).join("\n");
 
 export default {
   description: "A snippet coloured by the editor's tokenizer, with a copy control and an optional fold.",

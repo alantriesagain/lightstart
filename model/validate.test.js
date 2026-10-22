@@ -41,6 +41,8 @@ describe("validateRow", () => {
     assert.deepEqual(validateRow(models, "users", { name: "n", age: -1 }).errors, { age: "age failed custom validation" });
     const throwing = { thing: { boom: { $type: "number", validator: () => { throw new Error("nope"); } } } };
     assert.deepEqual(validateRow(throwing, "thing", { boom: 1 }).errors, { boom: "nope" });
+    const broken = { thing: { boom: { $type: "number", validator: "not a function" } } };
+    assert.deepEqual(validateRow(broken, "thing", { boom: 1 }).errors, { boom: "boom.validator is not a function" });
   });
 
   it("checks formats", () => {

@@ -17,7 +17,7 @@ export default defineComponent({
   style: true,
 
   render() {
-    const skeletons = Array.from({ length: this.count }, (_, i) => i);
+    const skeletons = Array.from({ length: this.count }, (/** @type {unknown} */ _, i) => i);
 
     return html`
       <div class="skeleton-container">

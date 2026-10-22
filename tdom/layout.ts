@@ -1,8 +1,11 @@
 /**
  * @bootstrapp/light/tdom/layout: two passes, measure bottom-up and arrange
  * top-down. One flex axis per box, fixed sizes, padding, a one-cell border,
- * scroll boxes that stick to the bottom. Wrapped text and scroll positions
- * are cached on the node across frames by version.
+ * scroll boxes that stick to the bottom. Wrapped text, measured sizes and
+ * scroll positions are cached on the node across frames by version, so a
+ * box measured again in the same frame, or in the next one with nothing
+ * changed beneath it, answers at once; a cached Size is never changed. An
+ * input, whose lines may be set without a version bump, is measured afresh.
  */
 import { TAnchor, TBox, TElement, TInput, TNode, TRun, TSpan, TText } from "./node.ts";
 import { Style } from "./style.ts";
@@ -19,13 +22,31 @@ export class Size {
   }
 }
 
-/** The wrapped lines of a text-like node, kept across frames while its width, its version and the style it inherits hold. */
+const NO_SIZE = new Size(0, 0);
+
+/** A box's last measure, kept across frames while the width it was offered, its version and the style it inherits hold. */
+export class MeasureCache {
+  width: number;
+  version: number;
+  under: Style;
+  size: Size;
+
+  constructor(width: number, version: number, under: Style, size: Size) {
+    this.width = width;
+    this.version = version;
+    this.under = under;
+    this.size = size;
+  }
+}
+
+/** The wrapped lines of a text-like node, and its size at that width, kept across frames while its width, its version and the style it inherits hold. */
 export class TextLayout {
   lines: WrappedLine[];
   wrappedFor: number;
   version: number;
   under: Style | null;
   naturalWidth: number;
+  size: Size;
 
   constructor() {
     this.lines = [];
@@ -33,6 +54,7 @@ export class TextLayout {
     this.version = -1;
     this.under = null;
     this.naturalWidth = 0;
+    this.size = NO_SIZE;
   }
 }
 
@@ -70,15 +92,15 @@ export const inlineRuns = (el: TElement, base: Style, out: InlineRun[]) => {
 
 const chrome = (box: TBox) => box.padding * 2 + (box.border ? 2 : 0);
 
-const visibleChildren = (el: TElement) => {
-  const out: TNode[] = [];
-  for (let c = el.firstChild; c !== null; c = c.next) {
-    if (c instanceof TAnchor) continue;
-    if (c instanceof TElement && c.hidden) continue;
-    out.push(c);
-  }
-  return out;
-};
+const shown = (node: TNode) => !(node instanceof TAnchor) && !(node instanceof TElement && node.hidden);
+
+const flexOf = (node: TNode) => (node instanceof TBox ? node.flex : 0);
+
+/** The flex a column gives a child: a box's, unless the box fixes its height. */
+const growOf = (node: TNode) => (node instanceof TBox && node.height === null ? node.flex : 0);
+
+/** The width a child takes in a row: the width a box fixes, else its measured width. */
+const widthIn = (node: TNode, size: Size) => (node instanceof TBox && node.width !== null ? node.width : size.w);
 
 const wrapText = (node: TElement, width: number, mode: string, inherited: Style) => {
   const tl = textLayoutOf(node);
@@ -92,6 +114,18 @@ const wrapText = (node: TElement, width: number, mode: string, inherited: Style)
   let natural = 0;
   for (const l of tl.lines) if (l.width > natural) natural = l.width;
   tl.naturalWidth = natural;
+  tl.size = new Size(Math.min(natural, width), tl.lines.length);
+  return tl;
+};
+
+const wrapRun = (node: TRun, width: number, inherited: Style) => {
+  const tl = textLayoutOf(node);
+  if (tl.wrappedFor === width && tl.version === node.version) return tl;
+  tl.lines = wrapRuns([new InlineRun(node.text, inherited)], width, "none");
+  tl.wrappedFor = width;
+  tl.version = node.version;
+  tl.naturalWidth = stringWidth(node.text);
+  tl.size = new Size(Math.min(tl.naturalWidth, width), tl.lines.length);
   return tl;
 };
 
@@ -109,74 +143,75 @@ export const inputRows = (input: TInput, width: number) => {
 };
 
 /**
- * Measure a node for the available width; answers its natural size.
+ * Measure a node for the available width; answers its natural size, which
+ * the caller reads and never changes.
  */
 export const measure = (node: TNode, availW: number, inherited: Style): Size => {
-  if (node instanceof TRun) {
-    const tl = textLayoutOf(node);
-    if (tl.wrappedFor !== availW || tl.version !== node.version) {
-      tl.lines = wrapRuns([new InlineRun(node.text, inherited)], availW, "none");
-      tl.wrappedFor = availW;
-      tl.version = node.version;
-      tl.naturalWidth = stringWidth(node.text);
-    }
-    return new Size(Math.min(tl.naturalWidth, availW), tl.lines.length);
-  }
-  if (node instanceof TText) {
-    const tl = wrapText(node, availW, node.wrap, inherited);
-    return new Size(Math.min(tl.naturalWidth, availW), tl.lines.length);
-  }
-  if (node instanceof TInput) {
-    const rows = inputRows(node, availW);
-    const h = Math.max(node.minLines, Math.min(node.maxLines, rows));
-    return new Size(availW, h);
-  }
+  if (node instanceof TRun) return wrapRun(node, availW, inherited).size;
+  if (node instanceof TText) return wrapText(node, availW, node.wrap, inherited).size;
+  if (node instanceof TInput) return new Size(availW, Math.max(node.minLines, Math.min(node.maxLines, inputRows(node, availW))));
   if (node instanceof TBox) return measureBox(node, availW, inherited);
-  return new Size(0, 0);
+  return NO_SIZE;
 };
 
 const measureBox = (box: TBox, availW: number, inherited: Style) => {
-  const style = box.style.inherit(inherited);
+  const cache = box.measured;
+  if (cache !== null && cache.width === availW && cache.version === box.version && cache.under.equals(inherited)) return cache.size;
+  const size = boxSize(box, availW, inherited);
+  if (cache === null) box.measured = new MeasureCache(availW, box.version, inherited, size);
+  else {
+    cache.width = availW;
+    cache.version = box.version;
+    cache.under = inherited;
+    cache.size = size;
+  }
+  return size;
+};
+
+const boxSize = (box: TBox, availW: number, inherited: Style) => {
   const outerW = box.width !== null ? box.width : availW;
+  if (box.rule) return new Size(outerW, box.height !== null ? box.height : 1);
+  const style = box.style.inherit(inherited);
   const innerW = Math.max(0, outerW - chrome(box));
-  const kids = visibleChildren(box);
   let w = 0;
   let h = 0;
-  if (box.rule) return new Size(outerW, box.height !== null ? box.height : 1);
+  let count = 0;
   if (box.direction === "row") {
     let fixed = 0;
     let flexTotal = 0;
-    const sizes: Size[] = [];
-    for (const k of kids)
-      if (k instanceof TBox && k.flex > 0) {
-        flexTotal += k.flex;
-        sizes.push(new Size(0, 0));
+    for (let k = box.firstChild; k !== null; k = k.next) {
+      if (!shown(k)) continue;
+      count++;
+      const flex = flexOf(k);
+      if (flex > 0) flexTotal += flex;
+      else fixed += widthIn(k, measure(k, innerW, style));
+    }
+    const gaps = count > 1 ? box.gap * (count - 1) : 0;
+    const remaining = Math.max(0, innerW - fixed - gaps);
+    for (let k = box.firstChild; k !== null; k = k.next) {
+      if (!shown(k)) continue;
+      const flex = flexOf(k);
+      if (flex > 0) {
+        const share = flexTotal > 0 ? Math.floor((remaining * flex) / flexTotal) : 0;
+        const s = measure(k, share, style);
+        if (s.h > h) h = s.h;
+        w += share;
       } else {
         const s = measure(k, innerW, style);
-        if (k instanceof TBox && k.width !== null) s.w = k.width;
-        sizes.push(s);
-        fixed += s.w;
+        if (s.h > h) h = s.h;
+        w += widthIn(k, s);
       }
-    const gaps = kids.length > 1 ? box.gap * (kids.length - 1) : 0;
-    const remaining = Math.max(0, innerW - fixed - gaps);
-    for (let i = 0; i < kids.length; i++) {
-      const k = kids[i];
-      if (k instanceof TBox && k.flex > 0) {
-        const share = flexTotal > 0 ? Math.floor((remaining * k.flex) / flexTotal) : 0;
-        sizes[i] = measure(k, share, style);
-        sizes[i].w = share;
-      }
-      if (sizes[i].h > h) h = sizes[i].h;
-      w += sizes[i].w;
     }
     w += gaps;
   } else {
-    for (const k of kids) {
+    for (let k = box.firstChild; k !== null; k = k.next) {
+      if (!shown(k)) continue;
+      count++;
       const s = measure(k, innerW, style);
       if (s.w > w) w = s.w;
       h += s.h;
     }
-    if (kids.length > 1) h += box.gap * (kids.length - 1);
+    if (count > 1) h += box.gap * (count - 1);
   }
   return new Size(box.width !== null ? box.width : w + chrome(box), box.height !== null ? box.height : h + chrome(box));
 };
@@ -194,12 +229,7 @@ export const arrange = (node: TNode, x: number, y: number, w: number, h: number,
     return;
   }
   if (node instanceof TRun) {
-    const tl = textLayoutOf(node);
-    if (tl.wrappedFor !== w || tl.version !== node.version) {
-      tl.lines = wrapRuns([new InlineRun(node.text, inherited)], w, "none");
-      tl.wrappedFor = w;
-      tl.version = node.version;
-    }
+    wrapRun(node, w, inherited);
     return;
   }
   if (!(node instanceof TBox)) return;
@@ -210,30 +240,26 @@ export const arrange = (node: TNode, x: number, y: number, w: number, h: number,
   const cy = y + pad;
   const cw = Math.max(0, w - pad * 2);
   const ch = Math.max(0, h - pad * 2);
-  const kids = visibleChildren(box);
-  if (kids.length === 0) return;
+  let count = 0;
+  for (let k = box.firstChild; k !== null; k = k.next) if (shown(k)) count++;
+  if (count === 0) return;
+  const gaps = count > 1 ? box.gap * (count - 1) : 0;
 
   if (box.direction === "row") {
-    const sizes: Size[] = [];
     let fixed = 0;
     let flexTotal = 0;
-    for (const k of kids)
-      if (k instanceof TBox && k.flex > 0) {
-        flexTotal += k.flex;
-        sizes.push(new Size(0, 0));
-      } else {
-        const s = measure(k, cw, style);
-        if (k instanceof TBox && k.width !== null) s.w = k.width;
-        sizes.push(s);
-        fixed += s.w;
-      }
-    const gaps = kids.length > 1 ? box.gap * (kids.length - 1) : 0;
+    for (let k = box.firstChild; k !== null; k = k.next) {
+      if (!shown(k)) continue;
+      const flex = flexOf(k);
+      if (flex > 0) flexTotal += flex;
+      else fixed += widthIn(k, measure(k, cw, style));
+    }
     const remaining = Math.max(0, cw - fixed - gaps);
     let cursor = cx;
-    for (let i = 0; i < kids.length; i++) {
-      const k = kids[i];
-      let kw = sizes[i].w;
-      if (k instanceof TBox && k.flex > 0) kw = flexTotal > 0 ? Math.floor((remaining * k.flex) / flexTotal) : 0;
+    for (let k = box.firstChild; k !== null; k = k.next) {
+      if (!shown(k)) continue;
+      const flex = flexOf(k);
+      const kw = flex > 0 ? (flexTotal > 0 ? Math.floor((remaining * flex) / flexTotal) : 0) : widthIn(k, measure(k, cw, style));
       const kh = box.align === "stretch" ? ch : Math.min(ch, measure(k, kw, style).h);
       const ky = box.align === "end" ? cy + ch - kh : cy;
       arrange(k, cursor, ky, kw, kh, style);
@@ -242,30 +268,26 @@ export const arrange = (node: TNode, x: number, y: number, w: number, h: number,
     return;
   }
 
-  const sizes: Size[] = [];
   let fixedH = 0;
   let flexTotal = 0;
-  for (const k of kids) {
+  for (let k = box.firstChild; k !== null; k = k.next) {
+    if (!shown(k)) continue;
     const s = measure(k, cw, style);
-    sizes.push(s);
-    if (k instanceof TBox && k.flex > 0 && k.height === null) flexTotal += k.flex;
+    const grow = growOf(k);
+    if (grow > 0) flexTotal += grow;
     else fixedH += s.h;
   }
-  const gaps = kids.length > 1 ? box.gap * (kids.length - 1) : 0;
   const totalH = fixedH + gaps;
   let remaining = Math.max(0, ch - totalH);
   if (flexTotal === 0 && !box.scroll && totalH > ch) remaining = 0;
-  const scrolling = box.scroll;
-  let contentH = 0;
-  for (let i = 0; i < kids.length; i++) {
-    const k = kids[i];
-    let kh = sizes[i].h;
-    if (k instanceof TBox && k.flex > 0 && k.height === null && flexTotal > 0) kh = Math.floor((remaining * k.flex) / flexTotal);
-    contentH += kh;
-    if (i > 0) contentH += box.gap;
-  }
   let offset = 0;
-  if (scrolling) {
+  if (box.scroll) {
+    let contentH = gaps;
+    for (let k = box.firstChild; k !== null; k = k.next) {
+      if (!shown(k)) continue;
+      const grow = growOf(k);
+      contentH += grow > 0 && flexTotal > 0 ? Math.floor((remaining * grow) / flexTotal) : measure(k, cw, style).h;
+    }
     const st = scrollStateOf(box);
     const maxScroll = Math.max(0, contentH - ch);
     let top = box.scrollTop;
@@ -278,12 +300,12 @@ export const arrange = (node: TNode, x: number, y: number, w: number, h: number,
     offset = top;
   }
   let cursor = cy - offset;
-  for (let i = 0; i < kids.length; i++) {
-    const k = kids[i];
-    let kh = sizes[i].h;
-    if (k instanceof TBox && k.flex > 0 && k.height === null && flexTotal > 0) kh = Math.floor((remaining * k.flex) / flexTotal);
+  for (let k = box.firstChild; k !== null; k = k.next) {
+    if (!shown(k)) continue;
+    const grow = growOf(k);
+    const kh = grow > 0 && flexTotal > 0 ? Math.floor((remaining * grow) / flexTotal) : measure(k, cw, style).h;
     let kw = cw;
-    if (box.align !== "stretch") kw = Math.min(cw, sizes[i].w);
+    if (box.align !== "stretch") kw = Math.min(cw, measure(k, cw, style).w);
     if (k instanceof TBox && k.width !== null) kw = Math.min(cw, k.width);
     const kx = box.align === "end" ? cx + cw - kw : cx;
     arrange(k, kx, cursor, kw, kh, style);
@@ -313,6 +335,9 @@ export const scrollBy = (box: TBox, delta: number) => {
  */
 export const forgetLayout = (node: TNode) => {
   node.textLayout = null;
-  if (node instanceof TBox) node.scrollState = null;
+  if (node instanceof TBox) {
+    node.scrollState = null;
+    node.measured = null;
+  }
   if (node instanceof TElement) for (let c = node.firstChild; c !== null; c = c.next) forgetLayout(c);
 };

@@ -137,9 +137,9 @@ type IsUnion<V, U = V> = V extends unknown ? ([U] extends [V] ? false : true) : 
  * declaration not yet decided (the whole `PropertyDeclaration` union, as a
  * generic signature carries it) is `any`.
  */
-export type PropertyValue<V> = [PropertyDeclaration] extends [V] ? any
+export type PropertyValue<V> = [PropertyDeclaration] extends [V] ? unknown
   : [V] extends [TypeDefinition<infer T>] ? T
-  : [V] extends [null | undefined] ? any
+  : [V] extends [null | undefined] ? unknown
   : [V] extends [readonly never[]] ? unknown[]
   : true extends IsUnion<V> ? V
   : [V] extends [boolean] ? boolean

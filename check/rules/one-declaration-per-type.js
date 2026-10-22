@@ -14,6 +14,7 @@ export default defineRule({
       /** @type {Map<string, number[]>} */
       const seen = new Map();
       DECL.lastIndex = 0;
+      /** @type {RegExpExecArray | null} */
       let match;
       while ((match = DECL.exec(source)) !== null) {
         const name = /** @type {string} */ (match[1]);

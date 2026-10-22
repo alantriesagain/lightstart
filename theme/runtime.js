@@ -21,6 +21,7 @@ export const createRuntime = (engine, options = {}) => {
   const raf = options.raf ?? ((cb) => requestAnimationFrame(cb));
   const preflight = options.preflight ?? true;
 
+  /** @type {Set<string>} */
   const seen = new Set();
   /** @type {CompiledRule[]} */
   const rules = [];

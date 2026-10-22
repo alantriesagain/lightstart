@@ -74,7 +74,7 @@ const compileField = (field: string, condition: unknown): ((record: Record<strin
   }
 
   const operatorChecks: Array<(value: unknown) => boolean> = [];
-  for (const [operator, expected] of Object.entries(condition)) operatorChecks.push(compileOperator(operator, expected, asKey));
+  for (const [operator, expected] of Object.entries(condition as Record<string, unknown>)) operatorChecks.push(compileOperator(operator, expected, asKey));
 
   return (record) => {
     const value = record[field];
@@ -242,10 +242,10 @@ export default {
   matchesWhere,
   validateQueryOptions,
   compileMatcher,
-  applyOrder,
-  applyPagination,
-  applyGroupBy,
-  applyFields,
+  applyOrder: (records: Record<string, unknown>[], order: string | OrderSpec[]) => applyOrder(records, order),
+  applyPagination: (records: Record<string, unknown>[] | null | undefined, limit: number | undefined, offset = 0) => applyPagination(records, limit, offset),
+  applyGroupBy: (records: Record<string, unknown>[], groupField: string | undefined) => applyGroupBy(records, groupField),
+  applyFields: (records: Record<string, unknown>[], fields: string[]) => applyFields(records, fields),
   buildQueryResult,
   parseOrder,
 };

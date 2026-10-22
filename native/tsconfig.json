@@ -9,6 +9,7 @@
     ]
   },
   "include": [
+    "../types/lib.d.ts",
     "../html/constants.ts",
     "../html/parser.ts",
     "../html/values.ts",
@@ -20,6 +21,7 @@
     "../html/part.ts",
     "../html/tags.js",
     "../html/types.ts",
+    "../html/states.ts",
     "../signals/index.ts",
     "../signals/store.ts",
     "../signals/types.ts",

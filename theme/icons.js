@@ -43,7 +43,8 @@ export const iconify = (set = DEFAULT_SET) => async (name) => {
   const response = await fetch(`https://api.iconify.design/${set}.json?icons=${name}`);
   if (!response.ok) return null;
   const collection = await response.json().catch(() => null);
-  return collection?.icons ? icon(collection, name) : null;
+  const icons = collection && typeof collection === "object" && "icons" in collection ? collection.icons : null;
+  return icons && typeof icons === "object" ? icon(/** @type {IconCollection} */ (collection), name) : null;
 };
 
 /** @type {IconSource} */

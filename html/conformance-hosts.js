@@ -24,6 +24,7 @@ import { TAnchor, TElement, TNode, TRoot, TRun, TermHost, UIEvent, childNodes, f
  *   flush: () => Promise<void>,
  *   iterables: boolean,
  *   handlerThis: boolean,
+ *   rawText: boolean,
  * }} HostAdapter
  */
 
@@ -49,6 +50,7 @@ export const markup = {
   flush: () => new Promise((resolve) => setTimeout(resolve, 0)),
   iterables: true,
   handlerThis: true,
+  rawText: true,
 };
 
 const VOID_TAGS = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"]);
@@ -102,6 +104,7 @@ export const tdom = {
   flush: () => frames.nextFrame(),
   iterables: false,
   handlerThis: false,
+  rawText: false,
 };
 
 /** @type {HostAdapter[]} */

@@ -18,6 +18,7 @@ export default defineRule({
       if (!file.endsWith(".css")) continue;
       const css = stripCssComments(ctx.read(file) || "");
       SHADOW_SELECTOR.lastIndex = 0;
+      /** @type {RegExpExecArray | null} */
       let m;
       while ((m = SHADOW_SELECTOR.exec(css)) !== null) {
         const which = /** @type {keyof typeof FIX} */ (m[0]);

@@ -2,7 +2,7 @@ import { translate } from "@bootstrapp/light";
 import en from "../../locales/en.js";
 
 /** @type {(s: string, params: Record<string, unknown>) => string} */
-const fill = (s, params) => s.replace(/\{(\w+)\}/g, (m, k) => (k in params ? String(params[k]) : m));
+const fill = (s, params) => s.replace(/\{(\w+)\}/g, (m, /** @type {string} */ k) => (k in params ? String(params[k]) : m));
 
 /**
  * A word the library draws: the host's translation of `<tag>.<key>` when it

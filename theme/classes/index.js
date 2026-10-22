@@ -21,11 +21,12 @@ export const createEngine = (options = {}) => {
   const safelist = options.safelist === undefined ? [] : options.safelist;
   const rules = createRules(theme);
   const applyVariants = createVariantApplier(theme.screens);
+  /** @type {Map<string, CompiledRule | null>} */
   const memo = new Map();
 
   /** @type {(cls: string) => CompiledRule|null} */
   const compile = (cls) => {
-    if (memo.has(cls)) return memo.get(cls);
+    if (memo.has(cls)) return memo.get(cls) ?? null;
     const compiled = compileFresh(cls);
     memo.set(cls, compiled);
     return compiled;

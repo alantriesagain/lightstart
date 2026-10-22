@@ -26,7 +26,7 @@ export type ControllerDefinition = {
   mixins?: readonly DefinitionFragment[];
   connected?: () => void | Promise<void>;
   disconnected?: () => void | Promise<void>;
-} & Record<string, unknown> & ThisType<Record<string, any>>;
+} & Record<string, unknown> & ThisType<Record<string, unknown>>;
 
 /**
  * The members every instance carries. All of them start with `$`, so every
@@ -40,7 +40,7 @@ export interface ControllerInstance {
   $state: Store<this>;
   $sync: StoreSync;
   /** The live resource a sync binder keeps behind a property (a model query): `pending`, `error`, `total`, `refresh()`. */
-  $queries: Record<string, Resource<any> & { total?: number }>;
+  $queries: Record<string, ResourceHandle & { total?: number }>;
   /** Re-render `host` on every store change; returns the detach function. */
   $attach(host: { $requestUpdate(): unknown }): () => void;
   /** Hold a teardown (or an array of them) until the instance is retired; returns its argument so it wraps inline. */
@@ -70,6 +70,11 @@ export interface SyncTargets {}
  */
 export type SyncTarget = string | { readonly $sync: unknown } | SyncTargets[keyof SyncTargets] | (() => unknown);
 
+/** A sync entry's query as a function of the host. Method-style, so a function typed for its own host is accepted. */
+interface QueryOfHost {
+  query(self: unknown): object;
+}
+
 /** The long form of a sync entry, for a target that needs more than its name. */
 export interface SyncEntry {
   to: SyncTarget;
@@ -78,7 +83,7 @@ export interface SyncEntry {
   /** A sibling property whose value prefixes the key as `${value}:${key}`; an empty value skips the bind. */
   scope?: string;
   /** The query a binder runs, or a function of the host rebuilt when a `dependsOn` property changes. */
-  query?: object | ((self: any) => object);
+  query?: object | QueryOfHost["query"];
   /** Properties whose change rebuilds the query. */
   dependsOn?: string[];
 }
@@ -237,14 +242,27 @@ export interface ResourceOptions {
   /** The bus `invalidateOn` listens on; absent takes the host's. */
   events?: EventBus | null;
   invalidateOn?: string | string[];
-  /** Whether an `invalidateOn` event refreshes the resource; the event key tells the events apart. */
-  filter?: (payload: any, eventKey: string) => boolean;
+  /** Whether an `invalidateOn` event refreshes the resource; the event key tells the events apart. Method-style, so a filter typed for its event's payload is accepted. */
+  filter?(payload: unknown, eventKey: string): boolean;
   /**
    * Resources whose change refetches this one. A change that lands while the
    * first load is in flight refetches once that load lands; a dependency's own
    * first value does not count as a change.
    */
-  dependsOn?: Resource<any>[];
+  dependsOn?: ResourceHandle[];
+}
+
+/** A resource whatever its value's type: what `dependsOn` waits on and what a host's `$queries` holds. */
+export interface ResourceHandle {
+  name: string;
+  readonly value: { peek(): unknown; subscribe(callback: (value: unknown) => void): () => void };
+  pending: Signal<boolean>;
+  error: Signal<unknown>;
+  ensure(): Promise<unknown>;
+  refresh(): Promise<unknown>;
+  invalidate(): void;
+  peek(): unknown;
+  dispose(): void;
 }
 
 export interface Resource<T> {

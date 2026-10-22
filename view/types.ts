@@ -15,15 +15,16 @@ export type PropertiesSchema = Record<string, TypeDefinition>;
  * and from mixins; the sibling members declared on the same literal and on
  * the mixins (the definition keys the engine consumes never reach `this`, so
  * a property may share a hook's name); the engine's instance members; the
- * narrowed `$emit`; `_`-prefixed members as `any`; and, with `extends`, any
- * other member as `unknown`, since the base is known only by its tag.
+ * narrowed `$emit`; and, with `extends`, any other member as `unknown`, since
+ * the base is known only by its tag. A `_`-prefixed member is declared like
+ * any other: a field as a `props` entry (`reactive: false` for a plain
+ * handle), a method as a member of the definition.
  */
 export type ComponentThis<D, M, P, E> = PropsToThis<P & Omit<MixinProps<M>, keyof P>> &
   Omit<D, keyof P | DefinitionKey> &
   MixinMembers<M> &
   Omit<View, "$emit"> &
   { $emit: TypedEmit<E & MixinEvents<M>> } &
-  { [k: `_${string}`]: any } &
   (D extends { extends: string } ? Record<string, unknown> : unknown);
 
 /**
@@ -54,16 +55,16 @@ export type RenderOf<M, P, E> = (el: ElementOf<M, P, E>) => unknown;
 export interface Define {
   <P extends PropertyDeclarations>(tag: string, props: P, render: RenderOf<[], P, {}>): ViewConstructor;
   (tag: string, render: RenderOf<[], {}, {}>): ViewConstructor;
-  <P extends PropertyDeclarations, D extends Record<string, unknown>, M extends readonly Record<string, unknown>[] = [], E extends Record<string, TypeDefinition> = {}>(
+  <P extends PropertyDeclarations, D extends Record<string, unknown>, M extends readonly Record<string, unknown>[] | [] = [], E extends Record<string, TypeDefinition> = {}>(
     tag: string,
     props: P,
     definition: Definition<D, M, P, E> & { props?: never },
   ): Defined<D>;
-  <D extends Record<string, unknown>, M extends readonly Record<string, unknown>[] = [], P extends PropertyDeclarations = {}, E extends Record<string, TypeDefinition> = {}>(
+  <D extends Record<string, unknown>, M extends readonly Record<string, unknown>[] | [] = [], P extends PropertyDeclarations = {}, E extends Record<string, TypeDefinition> = {}>(
     tag: string,
     definition: Definition<D, M, P, E>,
   ): Defined<D>;
-  <D extends Record<string, unknown>, M extends readonly Record<string, unknown>[] = [], P extends PropertyDeclarations = {}, E extends Record<string, TypeDefinition> = {}>(
+  <D extends Record<string, unknown>, M extends readonly Record<string, unknown>[] | [] = [], P extends PropertyDeclarations = {}, E extends Record<string, TypeDefinition> = {}>(
     definition: Definition<D, M, P, E> & { tag: string },
   ): Defined<D>;
 }

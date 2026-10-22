@@ -1,7 +1,7 @@
 import T from "@bootstrapp/light/types";
 import { defineMixin } from "@bootstrapp/light";
 
-/** @import { Prop, SwipeStart } from "../types.ts" */
+/** @import { Prop, SwipeHost, SwipeStart } from "../types.ts" */
 
 /**
  * @bootstrapp/light/components/mixins/swipe-threshold
@@ -39,6 +39,7 @@ export const withSwipeThreshold = ({ axis = "x", axisProp, threshold = 60, ratio
     },
 
     connected() {
+      const host = /** @type {SwipeHost} */ (this);
       const onDown = /** @type {EventListener} */ ((e) => {
         const point = /** @type {PointerEvent} */ (e);
         if (enabled && !this[enabled]) return;
@@ -59,7 +60,7 @@ export const withSwipeThreshold = ({ axis = "x", axisProp, threshold = 60, ratio
         const across = vertical ? dx : dy;
         if (Math.abs(along) < threshold) return;
         if (Math.abs(along) <= Math.abs(across) * ratio) return;
-        this.onSwipe?.(along < 0 ? -1 : 1);
+        host.onSwipe?.(along < 0 ? -1 : 1);
       });
 
       this.addEventListener("pointerdown", onDown);

@@ -95,6 +95,7 @@ export class MockTracker {
    * @returns {MockedFn<F>}
    */
   method(object, methodName, implementation, options = {}) {
+    /** @type {TypedPropertyDescriptor<unknown> | undefined} */
     const descriptor = Object.getOwnPropertyDescriptor(object, methodName);
     const kind = options.getter ? "get" : options.setter ? "set" : "value";
     const original = /** @type {AnyFn | undefined} */ (descriptor ? descriptor[kind] : object[methodName]);

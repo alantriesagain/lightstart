@@ -16,20 +16,28 @@ const escapeAttribute = (text) => text.replace(/&/g, "&amp;").replace(/"/g, "&qu
 let current = { slug: createSlugger(), headings: [], anchors: false };
 
 const renderer = {
-  /** @this {{ parser: { parseInline: (tokens: unknown[]) => string } }} @param {any} token */
-  heading(token) {
-    const depth = typeof token === "object" ? token.depth : arguments[1];
+  /**
+   * @this {{ parser: { parseInline: (tokens: unknown[]) => string } }}
+   * @param {string | { depth: number, tokens: unknown[], text: string }} token a token from marked 5 on; before, the text, with the level and raw text after it
+   * @param {number} [level]
+   * @param {string} [raw]
+   */
+  heading(token, level, raw) {
+    const depth = typeof token === "object" ? token.depth : (level ?? 1);
     const inner = typeof token === "object" ? this.parser.parseInline(token.tokens) : token;
-    const text = typeof token === "object" ? token.text : (arguments[2] ?? token);
+    const text = typeof token === "object" ? token.text : (raw ?? token);
     const id = current.slug(text);
     current.headings.push({ id, text, level: depth });
     const anchor = current.anchors ? `<a class="anchor" href="#${id}" aria-label="${escapeAttribute(text)}">#</a>` : "";
     return `<h${depth} id="${id}">${inner}${anchor}</h${depth}>\n`;
   },
-  /** @param {any} token */
-  code(token) {
+  /**
+   * @param {string | { text: string, lang?: string }} token a token from marked 5 on; before, the code, with the info string after it
+   * @param {string} [info]
+   */
+  code(token, info) {
     const text = typeof token === "object" ? token.text : token;
-    const lang = typeof token === "object" ? token.lang : arguments[1];
+    const lang = typeof token === "object" ? token.lang : info;
     const language = (lang || "").split(/\s/)[0];
     return `<lc-code-block language="${escapeAttribute(language)}" code="${escapeAttribute(text)}"></lc-code-block>\n`;
   },

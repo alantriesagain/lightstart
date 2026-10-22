@@ -618,4 +618,35 @@ describe("glitch-free notification", () => {
     a.value = 1;
     assert.deepEqual(order, ["b:0", "a:0", "a-done:0", "a:1", "a-done:1", "b:1"]);
   });
+
+  it("reaches every subscriber of a write once, while the effects it runs subscribe, dispose and resubscribe", () => {
+    const a = signal(0);
+    /** @type {string[]} */
+    const runs = [];
+    /** @type {{ dispose(): void } | null} */
+    let late = null;
+    const second = effect(() => {
+      runs.push(`second:${a.value}`);
+    });
+    effect(() => {
+      const value = a.value;
+      runs.push(`first:${value}`);
+      if (value === 1) {
+        second.dispose();
+        late = effect(() => {
+          runs.push(`late:${a.value}`);
+        });
+      }
+    });
+    effect(() => {
+      runs.push(`third:${a.value}`);
+    });
+    runs.length = 0;
+    a.value = 1;
+    assert.deepEqual(runs, ["second:1", "first:1", "late:1", "third:1"]);
+    runs.length = 0;
+    a.value = 2;
+    assert.deepEqual(runs, ["first:2", "late:2", "third:2"]);
+    late?.dispose();
+  });
 });

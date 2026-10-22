@@ -27,6 +27,7 @@ export default defineComponent({
   /** @returns {KanbanColumn[]} */
   _resolvedColumns() {
     if (this.columns.length) return this.columns;
+    /** @type {Set<string>} */
     const seen = new Set();
     for (const r of this.rows || []) {
       const v = r?.[this.groupByField];

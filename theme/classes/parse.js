@@ -61,6 +61,7 @@ export const parseClass = (raw) => {
   }
 
   let stem = base;
+  /** @type {string | null} */
   let modifier = null;
   const slashParts = splitOutsideBrackets(base, "/");
   if (slashParts.length > 1) {

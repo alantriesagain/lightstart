@@ -23,7 +23,7 @@ export const createDocumentAdapter = (name: string): DocumentAdapter => {
   const persist = () => {
     const result = backing?.write(doc);
     if (isThenable(result))
-      result.catch((error) => console.error(`[sync:${name}] write failed:`, error));
+      result.catch((error: unknown) => console.error(`[sync:${name}] write failed:`, error));
   };
 
   const adapter = withKeyedListeners({

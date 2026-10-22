@@ -143,8 +143,15 @@ export type MockedFn<F extends AnyFn = AnyFn> = F & { mock: MockContext };
 /** The cycle guard threaded through a deep comparison: every object already compared to which others. */
 export type Memo = Map<object, Set<unknown>>;
 
+/** A function `assert.throws`/`assert.rejects` accept as the expectation: an error class the error is an instance of, or a validator that answers `true`. */
+export interface ErrorFunction {
+  (error: unknown): unknown;
+  readonly prototype: unknown;
+  readonly name: string;
+}
+
 /** What `assert.throws`/`assert.rejects` accept as the expectation on the thrown error. */
-export type ErrorMatcher = RegExp | Function | object | string;
+export type ErrorMatcher = RegExp | ErrorFunction | object | string;
 
 /** An error as it crosses the page boundary: `Error` does not survive JSON. */
 export interface SerializedError {

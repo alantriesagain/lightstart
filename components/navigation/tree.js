@@ -1,5 +1,10 @@
 import { defineComponent } from "@bootstrapp/light";
 
+/** @import { TreeItemElement } from "../types.ts" */
+
+/** @param {Element} item @returns {HTMLElement | null} the row a click on toggles or selects the item */
+const contentOf = (item) => item.querySelector(":scope > [part~=lc-tree-item-item-content]");
+
 /** @param {Element} item */
 const isShown = (item) => {
   for (let parent = item.parentElement; parent && parent.tagName === "LC-TREE-ITEM"; parent = parent.parentElement)
@@ -12,12 +17,12 @@ export default defineComponent({
   style: true,
 
   _items() {
-    return /** @type {any[]} */ ([...this.querySelectorAll("lc-tree-item")].filter(isShown));
+    return [.../** @type {NodeListOf<TreeItemElement>} */ (this.querySelectorAll("lc-tree-item"))].filter(isShown);
   },
   /** @param {KeyboardEvent} e */
   _keydown(e) {
     const items = this._items();
-    const from = items.indexOf(/** @type {any} */ (e.target));
+    const from = items.findIndex((item) => item === e.target);
     if (from === -1) return;
     const current = items[from];
     /** @type {HTMLElement | null} */
@@ -27,12 +32,12 @@ export default defineComponent({
     else if (e.key === "Home") next = items[0];
     else if (e.key === "End") next = items[items.length - 1];
     else if (e.key === "ArrowRight")
-      if (current._hasChildren() && !current.expanded) current.querySelector(":scope > [part~=lc-tree-item-item-content]")?.click();
+      if (current._hasChildren() && !current.expanded) contentOf(current)?.click();
       else next = items[from + 1] ?? null;
      else if (e.key === "ArrowLeft")
-      if (current._hasChildren() && current.expanded) current.querySelector(":scope > [part~=lc-tree-item-item-content]")?.click();
+      if (current._hasChildren() && current.expanded) contentOf(current)?.click();
       else next = /** @type {HTMLElement | null} */ (current.parentElement?.closest("lc-tree-item"));
-     else if (e.key === "Enter" || e.key === " ") current.querySelector(":scope > [part~=lc-tree-item-item-content]")?.click();
+     else if (e.key === "Enter" || e.key === " ") contentOf(current)?.click();
     else return;
     e.preventDefault();
     if (next) {

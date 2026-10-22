@@ -7,7 +7,9 @@ import { ThunkHolder, disposeThunk, resolveEager, setThunk } from "./reactive.ts
 import { TemplateInstance, getTemplate } from "./template.ts";
 import { ElementSpec, Keyed, TemplateResult, Unsafe } from "./values.ts";
 
-import type { ChildState, ElementState, HostElement, HostNode, NothingValue, PartSpec, RenderOptions } from "./types.ts";
+import { EMPTY, ElementState, ItemsState, KeyedState, NodeState, PENDING, TemplateState, TextState, UnsafeState } from "./states.ts";
+import type { ChildState } from "./states.ts";
+import type { HostElement, HostNode, NothingValue, PartSpec, RenderOptions } from "./types.ts";
 
 /** The uncommitted sentinel a part compares its first value against. */
 export const NOT_SET = Symbol();
@@ -32,6 +34,8 @@ export const installAdoption = (a: Adoption) => {
 };
 
 export { Part };
+
+const NO_KEYS: unknown[] = [];
 
 export class EventBinding {
   el: unknown;
@@ -68,9 +72,12 @@ export class EventBinding {
     }
   }
 
-  handleEvent(event: unknown) {
+  handleEvent(event: unknown): unknown {
     const h = this.handler;
-    if (typeof h === "function") return currentHost().bindsHandlerThis ? h.call(this.owner ?? this.el, event) : h(event);
+    if (typeof h === "function") {
+      const handler = h as (this: unknown, event: unknown) => unknown;
+      return currentHost().bindsHandlerThis ? handler.call(this.owner ?? this.el, event) : handler(event);
+    }
     if (h === undefined) return undefined;
     return currentHost().invokeListener(h, event);
   }
@@ -151,7 +158,7 @@ export class BooleanAttributePart extends ThunkHolder {
   }
 
   commit(value: unknown) {
-    if (typeof value === "function") return setThunk(this, value as () => unknown, (v) => this._commitResolved(v));
+    if (typeof value === "function") return setThunk(this, value as () => unknown);
     disposeThunk(this);
     this._commitResolved(value);
   }
@@ -203,12 +210,12 @@ export class AttributePart extends ThunkHolder {
   }
 
   commit(value: unknown) {
-    if (typeof value === "function") return setThunk(this, value as () => unknown, (v) => this._commitSingle(v));
+    if (typeof value === "function") return setThunk(this, value as () => unknown);
     disposeThunk(this);
-    this._commitSingle(value);
+    this._commitResolved(value);
   }
 
-  _commitSingle(value: unknown) {
+  _commitResolved(value: unknown) {
     this._commitString(value === nothing ? nothing : value == null ? "" : String(value));
   }
 
@@ -244,7 +251,7 @@ export class RawTextPart extends ThunkHolder {
   }
 
   commit(value: unknown) {
-    if (typeof value === "function") return setThunk(this, value as () => unknown, (v) => this._commitResolved(v));
+    if (typeof value === "function") return setThunk(this, value as () => unknown);
     disposeThunk(this);
     this._commitResolved(value);
   }
@@ -279,7 +286,7 @@ export class ChildPart extends ThunkHolder {
     this.end = end;
     this.owner = owner;
     this.valueIndex = 0;
-    this.state = { type: "empty" };
+    this.state = EMPTY;
     this._bindNext = false;
     this._settle = null;
     this._settled = false;
@@ -306,13 +313,13 @@ export class ChildPart extends ThunkHolder {
   }
 
   commit(value: unknown) {
-    if (typeof value === "function") return setThunk(this, value as () => unknown, (v) => this._commitResolved(v));
+    if (typeof value === "function") return setThunk(this, value as () => unknown);
     disposeThunk(this);
     this._commitResolved(value);
   }
 
   _commitResolved(value: unknown) {
-    if (this.state.type === "pending") {
+    if (this.state === PENDING) {
       const bind = this._bindNext;
       this._bindNext = false;
       if (adoption !== null) return adoption.resolvePending(this, value, bind);
@@ -340,7 +347,7 @@ export class ChildPart extends ThunkHolder {
 
   _commitText(text: string) {
     const st = this.state;
-    if (st.type === "text") {
+    if (st instanceof TextState) {
       if (st.text !== text) {
         currentHost().setText(st.node, text);
         st.text = text;
@@ -350,63 +357,55 @@ export class ChildPart extends ThunkHolder {
     this._clear();
     const node = currentHost().createText(text);
     this._insert(node);
-    this.state = { type: "text", node, text };
+    this.state = new TextState(node, text);
   }
 
   _commitTemplate(result: TemplateResult) {
     const template = getTemplate(result.strings, result.kind);
     const st = this.state;
-    if (st.type === "template" && st.instance.template === template)
+    if (st instanceof TemplateState && st.instance.template === template)
       return st.instance.commit(result.values);
     this._clear();
     const instance = new TemplateInstance(template, this.owner);
     const fragment = instance.clone();
     instance.commit(result.values);
     this._insert(fragment);
-    this.state = { type: "template", instance };
+    this.state = new TemplateState(instance);
   }
 
   _commitNode(node: HostNode) {
     const st = this.state;
-    if (st.type === "node" && st.node === node) return;
+    if (st instanceof NodeState && st.node === node) return;
     this._clear();
     this._insert(node);
-    this.state = { type: "node", node };
+    this.state = new NodeState(node);
   }
 
   _commitUnsafe(wrap: Unsafe) {
     const st = this.state;
-    if (st.type === "unsafe" && st.s === wrap.s) return;
+    if (st instanceof UnsafeState && st.s === wrap.s) return;
     this._clear();
     this._insert(currentHost().parseMarkup(wrap.s));
-    this.state = { type: "unsafe", s: wrap.s };
+    this.state = new UnsafeState(wrap.s);
   }
 
   _commitKeyed(wrap: Keyed) {
     const st = this.state;
-    if (st.type === "keyed" && st.k === wrap.k) return st.inner.commit(wrap.v);
+    if (st instanceof KeyedState && st.k === wrap.k) return st.inner.commit(wrap.v);
     this._clear();
     const inner = new ChildPart(this.start, this.end, this.owner);
     inner.commit(wrap.v);
-    this.state = { type: "keyed", k: wrap.k, inner };
+    this.state = new KeyedState(wrap.k, inner);
   }
 
   _commitElement(spec: ElementSpec) {
     const st = this.state;
-    if (st.type === "element" && st.tag === spec.tag) return this._updateElement(st, spec);
+    if (st instanceof ElementState && st.tag === spec.tag) return this._updateElement(st, spec);
     if (!VALID_TAG.test(spec.tag))
       throw new Error(`[light/html] invalid element() tag: ${String(spec.tag)}`);
     this._clear();
     const el = currentHost().createElement(spec.tag);
-    const next = {
-      type: "element",
-      tag: spec.tag,
-      el,
-      committed: new Map(),
-      events: new Map(),
-      ref: null,
-      childPart: null,
-    } as ElementState;
+    const next = new ElementState(spec.tag, el);
     const bindings = spec.bindings ?? {};
     for (const [rawKey, value] of Object.entries(bindings)) {
       if (rawKey === "ref") continue;
@@ -489,16 +488,22 @@ export class ChildPart extends ThunkHolder {
       console.warn("[light/html] mixed key()/plain items in one list, falling back to index diff");
     }
     let st = this.state;
-    if (st.type !== "items") {
+    if (!(st instanceof ItemsState)) {
       this._clear();
-      st = { type: "items", parts: [], keys: null };
+      st = new ItemsState([], NO_KEYS, false);
       this.state = st;
     }
     const values = raw.map((item) => (item instanceof Keyed ? item.v : item));
-    const newKeys = keyed ? raw.map((item) => (item instanceof Keyed ? item.k : undefined)) : null;
-    if (keyed && st.keys !== null) {
-      st.parts = this._reconcileKeyed(st.parts.slice(), st.keys, values, newKeys as unknown[]);
-      st.keys = newKeys;
+    const newKeys = keyed ? raw.map((item) => (item instanceof Keyed ? item.k : undefined)) : NO_KEYS;
+    if (keyed && st.keyed) {
+      let reconciled = false;
+      try {
+        st.parts = this._reconcileKeyed(st.parts.slice(), st.keys, values, newKeys);
+        st.keys = newKeys;
+        reconciled = true;
+      } finally {
+        if (!reconciled) this._clear();
+      }
       return;
     }
     const parts = st.parts;
@@ -523,13 +528,16 @@ export class ChildPart extends ThunkHolder {
       if (last !== undefined) this._removeItemPart(last);
     }
     st.keys = newKeys;
+    st.keyed = keyed;
   }
 
   /**
    * Keyed list reconciliation: the head/tail two-pointer algorithm with
    * key-map fallback (same strategy as lit's repeat). Items move as whole
    * marker-delimited DOM ranges; a reordered item is never recreated, so
-   * focus, selection, and input state survive shuffles.
+   * focus, selection, and input state survive shuffles. It nulls out the
+   * entries of `oldParts` it moves, so the caller passes a copy: if an item's
+   * commit throws, the part's own list still holds every part to clear.
    */
   _reconcileKeyed(oldParts: (ChildPart | null)[], oldKeys: unknown[], newValues: unknown[], newKeys: unknown[]) {
     const newParts: (ChildPart | null)[] = [];
@@ -608,12 +616,8 @@ export class ChildPart extends ThunkHolder {
       const part = oldParts[oldHead++];
       if (part !== null) this._removeItemPart(part);
     }
-    const out: ChildPart[] = [];
-    for (const p of newParts) {
-      if (p === null) throw new Error("[light/html] keyed reconcile left a hole");
-      out.push(p);
-    }
-    return out;
+    for (const p of newParts) if (p === null) throw new Error("[light/html] keyed reconcile left a hole");
+    return newParts as ChildPart[];
   }
 
   _createItemPart(refNode: HostNode) {
@@ -668,10 +672,10 @@ export class ChildPart extends ThunkHolder {
 
   _disposeState() {
     const st = this.state;
-    if (st.type === "template") st.instance.dispose();
-    else if (st.type === "items") for (const part of st.parts) part?.dispose();
-    else if (st.type === "keyed") st.inner.dispose();
-    else if (st.type === "element") {
+    if (st instanceof TemplateState) st.instance.dispose();
+    else if (st instanceof ItemsState) for (const part of st.parts) part?.dispose();
+    else if (st instanceof KeyedState) st.inner.dispose();
+    else if (st instanceof ElementState) {
       st.ref?.(null);
       st.childPart?.dispose();
       for (const eventBinding of st.events.values()) eventBinding.dispose();
@@ -679,21 +683,21 @@ export class ChildPart extends ThunkHolder {
   }
 
   _clear() {
-    if (this.state.type === "empty") return;
+    if (this.state === EMPTY) return;
     this._disposeState();
     this._removeRange();
-    this.state = { type: "empty" };
+    this.state = EMPTY;
   }
 
   _clearPending() {
     this._removeRange();
-    this.state = { type: "empty" };
+    this.state = EMPTY;
   }
 
   dispose() {
     disposeThunk(this);
     this._disposeState();
-    this.state = { type: "empty" };
+    this.state = EMPTY;
   }
 }
 

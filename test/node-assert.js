@@ -10,7 +10,7 @@ import { AssertionError } from "./assertion-error.js";
 import { isDeepEqual, isDeepStrictEqual, isPartialDeepStrictEqual } from "./deep-equal.js";
 import { diffLines, inspect } from "./inspect.js";
 
-/** @import { ErrorMatcher } from "./types.ts" */
+/** @import { ErrorFunction, ErrorMatcher } from "./types.ts" */
 
 /**
  * @param {{ actual?: unknown, expected?: unknown, operator?: string, message?: string, stackStartFn?: Function, detail?: string }} options
@@ -226,13 +226,14 @@ const build = (strict) => {
       return;
     }
     if (typeof expected === "function") {
-      if (expected.prototype !== undefined && error instanceof expected) return;
-      if (expected.prototype === undefined || !Object.getOwnPropertyNames(expected.prototype).includes("constructor")) {
-        if (expected(error) === true) return;
+      const matcher = /** @type {ErrorFunction} */ (expected);
+      if (matcher.prototype !== undefined && error instanceof matcher) return;
+      if (matcher.prototype === undefined || !Object.getOwnPropertyNames(matcher.prototype).includes("constructor")) {
+        if (matcher(error) === true) return;
         reject("The validation function is expected to return \"true\".");
         return;
       }
-      reject(`The error is expected to be an instance of "${expected.name}". Received ${inspect(error)}`);
+      reject(`The error is expected to be an instance of "${matcher.name}". Received ${inspect(error)}`);
       return;
     }
     if (typeof expected === "object") {

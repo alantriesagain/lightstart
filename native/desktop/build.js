@@ -21,6 +21,9 @@ const packModule = "../../scripts/pack.js";
 
 /** @typedef {{ dir: string, manifest: { exports: Record<string, string | { types: string, default: string }> } }} Staged */
 
+/** @param {string} dir @returns {Staged["manifest"]} the package.json a staging of light's own build writes */
+const manifestIn = (dir) => /** @type {Staged["manifest"]} */ (JSON.parse(readFileSync(join(dir, "package.json"), "utf8")));
+
 /**
  * Light's files as a page can load them: staged through scripts/pack.js in the checkout, or the
  * installed package itself, which is already that staging.
@@ -29,8 +32,8 @@ const packModule = "../../scripts/pack.js";
  */
 const stageLight = async (keepLight) => {
   const dist = join(light, "dist");
-  if (keepLight && existsSync(join(dist, "package.json"))) return { dir: dist, manifest: JSON.parse(readFileSync(join(dist, "package.json"), "utf8")) };
-  if (!existsSync(join(light, "scripts", "pack.js"))) return { dir: light, manifest: JSON.parse(readFileSync(join(light, "package.json"), "utf8")) };
+  if (keepLight && existsSync(join(dist, "package.json"))) return { dir: dist, manifest: manifestIn(dist) };
+  if (!existsSync(join(light, "scripts", "pack.js"))) return { dir: light, manifest: manifestIn(light) };
   const pack = /** @type {{ stage: () => Staged }} */ (await import(packModule));
   return pack.stage();
 };
@@ -260,8 +263,7 @@ export class Built {
 export const compileBackend = (backend, exe, target, npmStatic) => {
   const dir = currentShim(target);
   mkdirSync(dirname(exe), { recursive: true });
-  /** @type {string[]} */
-  const paths = JSON.parse(readFileSync(join(dir, "library-paths.json"), "utf8"));
+  const paths = /** @type {string[]} */ (JSON.parse(readFileSync(join(dir, "library-paths.json"), "utf8")));
   const libraryPath = [...paths, ...(process.env.LIBRARY_PATH ? [process.env.LIBRARY_PATH] : [])].join(":");
   const flags = npmStatic.flatMap((pkg) => ["--npm-static", pkg]);
   const r = spawnSync(scriptcPath(light), ["build", backend, "--ffi", join(dir, "ffi.json"), ...flags, "-o", exe, "--strip", "--no-keep-llvm"], {

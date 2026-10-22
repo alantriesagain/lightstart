@@ -19,6 +19,7 @@ export class MText extends MNode {
   /** @param {string} data */
   constructor(data) {
     super();
+    /** @type {string} */
     this.data = data;
   }
 }
@@ -27,6 +28,7 @@ export class MComment extends MNode {
   /** @param {string} data */
   constructor(data) {
     super();
+    /** @type {string} */
     this.data = data;
   }
 }
@@ -38,7 +40,9 @@ export class MListener {
    * @param {{ capture: boolean, once: boolean, passive: boolean } | null} options
    */
   constructor(binding, options) {
+    /** @type {EventBinding} */
     this.binding = binding;
+    /** @type {{ capture: boolean, once: boolean, passive: boolean } | null} */
     this.options = options;
   }
 }
@@ -47,6 +51,7 @@ export class MElement extends MNode {
   /** @param {string} tag */
   constructor(tag) {
     super();
+    /** @type {string} */
     this.tag = tag;
     /** @type {Map<string, string>} */
     this.attrs = new Map();

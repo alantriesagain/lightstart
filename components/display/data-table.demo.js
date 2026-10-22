@@ -6,7 +6,7 @@ const columns = [
   { name: "City" },
   { name: "Going", align: "right" },
 ];
-const rows = Array.from({ length: 64 }, (_, index) => ({
+const rows = Array.from({ length: 64 }, (/** @type {unknown} */ _, index) => ({
   id: index,
   Name: `Meetup #${index + 1}`,
   City: CITIES[index % CITIES.length],

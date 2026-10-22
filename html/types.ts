@@ -9,26 +9,46 @@ export type HostNode = unknown;
 
 type Global = typeof globalThis;
 
+/** The prototype of the global class `Name` where the host's lib declares it, unknown elsewhere. */
+type Prototype<Name extends string> = Global extends Record<Name, { prototype: infer P }> ? P : unknown;
+
+/** The members of the global class `Name` that `Keys` names, where the host's lib declares it; nothing elsewhere. */
+type Members<Name extends string, Keys extends string> = Prototype<Name> extends infer P ? (unknown extends P ? unknown : Pick<P, Keys & keyof P>) : never;
+
 /** The browser's Element where the DOM lib is present, unknown elsewhere. */
-export type HostElement = Global extends { Element: { prototype: infer E } } ? E : unknown;
+export type HostElement = Prototype<"Element">;
 
 /** The browser's EventTarget where present, unknown elsewhere. */
-export type HostEventTarget = Global extends { EventTarget: { prototype: infer E } } ? E : unknown;
+export type HostEventTarget = Prototype<"EventTarget">;
 
 /** The browser's Event where present, unknown elsewhere. */
-export type HostEvent = Global extends { Event: { prototype: infer E } } ? E : unknown;
+export type HostEvent = Prototype<"Event">;
 
-/** An event target read through a template handler: the element's members are open. */
-export type HandlerTarget = HostEventTarget & Record<string, any>;
+/**
+ * An event target read through a template handler: an element with a form
+ * control's state and methods, since the control a binding sits on is not
+ * knowable from the template. Any other member reads as unknown and is
+ * narrowed before use.
+ */
+export type HandlerTarget = HostEventTarget &
+  HostElement &
+  Members<"HTMLInputElement", "value" | "checked" | "disabled" | "name" | "files" | "blur" | "focus" | "select"> &
+  Record<string, unknown>;
 
 /**
  * The event a template handler receives: an Event whose `target` and
- * `currentTarget` are present with open members, plus an open index
- * signature on the event itself. The concrete DOM event type is not
- * knowable from the template, so a handler that needs it annotates its
- * own parameter.
+ * `currentTarget` are present, with the key, pointer, drag and input fields
+ * the common DOM events carry; any other member reads as unknown. The
+ * concrete DOM event type is not knowable from the template, so a handler
+ * that needs it annotates its own parameter.
  */
-export type HandlerEvent = HostEvent & { target: HandlerTarget; currentTarget: HandlerTarget } & Record<string, any>;
+export type HandlerEvent = HostEvent &
+  { target: HandlerTarget; currentTarget: HandlerTarget } &
+  Members<"KeyboardEvent", "key" | "code" | "altKey" | "ctrlKey" | "metaKey" | "shiftKey" | "repeat" | "isComposing"> &
+  Members<"PointerEvent", "button" | "buttons" | "clientX" | "clientY" | "offsetX" | "offsetY" | "pointerId" | "pointerType"> &
+  Members<"DragEvent", "dataTransfer"> &
+  Members<"InputEvent", "data" | "inputType"> &
+  Record<string, unknown>;
 
 /** Method-style so the parameter compares bivariantly: a handler may declare the concrete DOM event its binding delivers. */
 interface HandlerSignature {
@@ -99,27 +119,6 @@ export type ElementBindings = Record<string, unknown> & {
   ref?: (el: HostElement | null) => void;
 };
 
-/** The state of a child part rendering an `element()`: the element, what each binding committed, its listeners and its own child part. */
-export type ElementState = {
-  type: "element";
-  tag: string;
-  el: HostNode;
-  committed: Map<string, unknown>;
-  events: Map<string, import("./parts.ts").EventBinding>;
-  ref: ((el: HostElement | null) => void) | null;
-  childPart: import("./parts.ts").ChildPart | null;
-};
-
-/** What a child part currently renders; `pending` is a served range awaiting adoption. */
-export type ChildState =
-  | { type: "empty" }
-  | { type: "pending" }
-  | { type: "text"; node: HostNode; text: string }
-  | { type: "template"; instance: import("./template.ts").TemplateInstance }
-  | { type: "items"; parts: import("./parts.ts").ChildPart[]; keys: unknown[] | null }
-  | { type: "keyed"; k: unknown; inner: import("./parts.ts").ChildPart }
-  | { type: "node"; node: HostNode }
-  | { type: "unsafe"; s: string }
-  | ElementState;
+export type { ChildState, ElementState } from "./states.ts";
 
 export * from "./core.ts";

@@ -18,6 +18,7 @@ import { hasNonNullDefault, mixinBindings, nameOf, sourceFile, unwrapParens, unw
  */
 const syncEntryOf = (entry, prop, sf) => {
   let to = unwrapParens(entry.initializer) ?? entry.initializer;
+  /** @type {string | null} */
   let key = null;
   if (ts.isObjectLiteralExpression(to)) {
     const options = to.properties;
@@ -55,6 +56,7 @@ const memberKind = (m) => {
  * @returns {ParsedController}
  */
 const readDefinition = (literal, offset, sf) => {
+  /** @type {string | null} */
   let name = null;
   /** @type {string[]} */
   const topLevelKeys = [];

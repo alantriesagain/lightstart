@@ -23,6 +23,7 @@ export const parseImports = (source) => {
   /** @type {ParsedImport[]} */
   const out = [];
   IMPORT_RE.lastIndex = 0;
+  /** @type {RegExpExecArray | null} */
   let m;
   while ((m = IMPORT_RE.exec(code)) !== null) {
     const stmt = m[0];
@@ -49,6 +50,7 @@ export const parseImports = (source) => {
 export const typeImports = (source) => {
   const out = [];
   TYPE_IMPORT_RE.lastIndex = 0;
+  /** @type {RegExpExecArray | null} */
   let m;
   while ((m = TYPE_IMPORT_RE.exec(source)) !== null) out.push({ spec: m[1] ?? m[2] ?? m[3], offset: m.index });
   return out;

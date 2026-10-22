@@ -52,6 +52,7 @@ const BENIGN = /^ResizeObserver loop/;
 
 /** @param {Event} event @returns {string} */
 const describeUncaught = (event) => {
+  /** @type {{ error: unknown, message: string }} */
   const { error, message } = /** @type {ErrorEvent} */ (event);
   if (error instanceof Error) return `${error.name}: ${error.message}`;
   return String(message || error || event.type);
@@ -71,8 +72,10 @@ export const _watchUncaught = (target) => {
   };
   /** @param {Event} event */
   const onRejection = (event) => {
+    /** @type {{ reason: unknown }} */
     const { reason } = /** @type {PromiseRejectionEvent} */ (event);
-    uncaught.push(`unhandled rejection: ${reason?.message ?? String(reason)}`);
+    const message = (typeof reason === "object" || typeof reason === "function") && reason !== null && "message" in reason ? reason.message : undefined;
+    uncaught.push(`unhandled rejection: ${message ?? String(reason)}`);
   };
   target.addEventListener("error", onError);
   target.addEventListener("unhandledrejection", onRejection);
@@ -242,7 +245,7 @@ const withTimeout = (promise, ms, controller) => {
     }, ms);
     promise.then(
       (value) => { clearTimeout(timer); resolve(value); },
-      (error) => { clearTimeout(timer); reject(error); },
+      (/** @type {unknown} */ error) => { clearTimeout(timer); reject(error); },
     );
   });
 };
@@ -299,7 +302,7 @@ const countingAssert = (result) => {
   if (!assertModule) return NOT_SUPPORTED("t.assert", "the assert module was not attached", "Call attachAssert() from the node:test shim.");
   /** @type {Record<string, LooseFn>} */
   const bound = {};
-  for (const [key, value] of Object.entries(assertModule))
+  for (const [key, value] of Object.entries(/** @type {Record<string, LooseFn>} */ (assertModule)))
     bound[key] = typeof value === "function"
       ? (...args) => { result.assertions += 1; return value(...args); }
       : value;

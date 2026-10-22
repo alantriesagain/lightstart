@@ -38,6 +38,9 @@ export class ThunkHolder extends Part {
   _anchor(): HostNode | null {
     return null;
   }
+
+  /** @param _value what the thunk answered, committed as the part commits any value */
+  _commitResolved(_value: unknown) {}
 }
 
 export const disposeThunk = (part: ThunkHolder) => {
@@ -55,12 +58,12 @@ export const disposeThunk = (part: ThunkHolder) => {
  * identity swaps the effect; an effect firing after its anchor left the
  * document disposes itself.
  */
-export const setThunk = (part: ThunkHolder, fn: () => unknown, commit: (value: unknown) => void) => {
+export const setThunk = (part: ThunkHolder, fn: () => unknown) => {
   if (part._thunk === fn) return;
   disposeThunk(part);
   part._thunk = fn;
   if (!adapter) {
-    commit(fn());
+    part._commitResolved(fn());
     return;
   }
   part._effect = adapter(() => {
@@ -70,8 +73,8 @@ export const setThunk = (part: ThunkHolder, fn: () => unknown, commit: (value: u
       disposeThunk(part);
       return;
     }
-    commit(fn());
+    part._commitResolved(fn());
   });
 };
 
-export const resolveEager = (value: unknown): unknown => (typeof value === "function" ? value() : value);
+export const resolveEager = (value: unknown): unknown => (typeof value === "function" ? (value as () => unknown)() : value);

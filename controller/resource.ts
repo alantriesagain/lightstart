@@ -115,7 +115,7 @@ const createResource = (fetcher: () => unknown, options: LoadOptions): Resource<
 
     ensure() {
       if (!loading)
-        loading = load().catch((err) => {
+        loading = load().catch((err: unknown) => {
           loading = null;
           throw err;
         });

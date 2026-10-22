@@ -2,7 +2,7 @@ import T from "@bootstrapp/light/types";
 import { defineMixin } from "@bootstrapp/light";
 import { withPointerDrag } from "./pointer-drag.js";
 
-/** @import { Prop } from "../types.ts" */
+/** @import { Prop, PullToRefreshHost } from "../types.ts" */
 
 /**
  * @bootstrapp/light/components/mixins/pull-to-refresh
@@ -81,7 +81,7 @@ export const withPullToRefresh = ({ threshold = 64, resistance = 0.5, max = 96, 
       if (!far || this.refreshing) return;
 
       this.refreshing = true;
-      try { await this.onRefresh?.(); } finally { this.refreshing = false; }
+      try { await /** @type {PullToRefreshHost} */ (this).onRefresh?.(); } finally { this.refreshing = false; }
     },
   });
 

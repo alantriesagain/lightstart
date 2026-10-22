@@ -4,7 +4,7 @@ import { defineComponent } from "@bootstrapp/light";
 import { matchesShortcut, parseShortcut, shortcutKeys } from "../utils/shortcut.js";
 import { lcText } from "../utils/text.js";
 import { env } from "@bootstrapp/light/env";
-/** @import { Prop, SearchDoc } from "../types.ts" */
+/** @import { Prop, SearchDoc, SearchElement } from "../types.ts" */
 
 const TAG = "lc-command-palette";
 
@@ -64,7 +64,7 @@ export default defineComponent({
     this.$own(() => document.removeEventListener("keydown", onKey));
   },
   _focusSearch() {
-    customElements.whenDefined("lc-search").then(() => /** @type {any} */ (this.querySelector("lc-search"))?.focusInput());
+    customElements.whenDefined("lc-search").then(() => /** @type {SearchElement | null} */ (this.querySelector("lc-search"))?.focusInput());
   },
   /** @param {Event} e */
   _closed(e) {
@@ -72,7 +72,7 @@ export default defineComponent({
     if (modal.dialog?.open) return;
     this.open = false;
   },
-  /** @param {CustomEvent} e */
+  /** @param {CustomEvent<SearchDoc>} e */
   _select(e) {
     this.open = false;
     this.$emit("command-select", e.detail);

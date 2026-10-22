@@ -162,15 +162,41 @@ export interface MarkupText { kind: "text"; text: string; offset: number }
 export interface MarkupExpression { kind: "expression"; offset: number; end: number }
 export type MarkupNode = MarkupElement | MarkupText | MarkupExpression;
 
-export type PackageJson = Record<string, any> & {
+/** The slow-code rules' `perf` block: the folders they read, the parts that compile natively, and the hot functions as `file#Class.method`. */
+export interface PerfOptions {
+  scope?: string[];
+  native?: string[];
+  hot?: string[];
+}
+
+/** `bootstrapp.check` in package.json. `allow` maps a rule id to `file` or `file#Symbol` keys, each with the reason the site is allowed. */
+export interface CheckOptions {
+  from?: string[];
+  ignore?: string[];
+  rules?: Record<string, string>;
+  perf?: PerfOptions;
+  allow?: Record<string, Record<string, string>>;
+  noAny?: { tests?: boolean };
+}
+
+/** The `bootstrapp` block of package.json, as far as the checker reads it. Its values come from JSON, so a reader still checks their shape. */
+export interface BootstrappConfig {
+  [key: string]: unknown;
+  components?: Record<string, string | Record<string, string>>;
+  check?: CheckOptions;
+}
+
+export interface PackageJson {
+  [key: string]: unknown;
   name?: string;
+  version?: string;
   main?: string;
   exports?: Record<string, unknown> | string;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
-  bootstrapp?: Record<string, any>;
-};
+  bootstrapp?: BootstrappConfig;
+}
 
 export interface WalkOptions {
   extensions?: readonly string[];
@@ -228,7 +254,7 @@ export interface HostOptions {
 export interface ProjectModel {
   projectDir: string;
   pkg: PackageJson;
-  config: Record<string, any>;
+  config: BootstrappConfig;
   deps: Record<string, string>;
   componentDirs: string[];
   styling: Styling;

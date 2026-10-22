@@ -122,8 +122,7 @@ export const createAssetServer = (webDir, lightDir, listening) => {
   });
   const handle = new AssetServer(token, server);
   server.listen(0, "127.0.0.1", () => {
-    /* @ts-expect-error */
-    handle.port = server.address().port;
+    handle.port = /** @type {import("node:net").AddressInfo} */ (server.address()).port;
     listening(handle);
   });
   return handle;

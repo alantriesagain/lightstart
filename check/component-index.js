@@ -43,6 +43,7 @@ export function createComponentIndex({ projectDir, maps, views, listFiles, readF
 
   const build = () => {
     if (tagMap) return tagMap;
+    /** @type {Map<string, Entry>} */
     const map = (tagMap = new Map());
     for (const view of views()) if (view.tag && !map.has(view.tag)) map.set(view.tag, { view, owner: null });
     for (const { owner, dir, components } of maps())

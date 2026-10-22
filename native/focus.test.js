@@ -129,6 +129,17 @@ render(html`<box><textarea autofocus></textarea></box>`, lateRoot);
 late.renderFrame();
 ok("autofocus: an input that appears after the first frame still takes it", late.focus instanceof TInput);
 late.stop();
+
+const markedRoot = new TRoot();
+render(html`<box><textarea></textarea></box>`, markedRoot);
+const marked = new Renderer(new TestTerminal(), markedRoot);
+marked.start();
+marked.renderFrame();
+marked.renderFrame();
+focusables(markedRoot, [])[0].setProp("autofocus", true);
+marked.renderFrame();
+ok("autofocus: an input marked after the first frames takes it", marked.focus instanceof TInput);
+marked.stop();
 frames.flush();
 
 done();

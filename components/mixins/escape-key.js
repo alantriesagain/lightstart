@@ -26,12 +26,15 @@
  */
 import { defineMixin } from "@bootstrapp/light";
 
+/** @import { EscapeKeyHost } from "../types.ts" */
+
 export const withEscapeKey = defineMixin({
   connected() {
+    const host = /** @type {EscapeKeyHost} */ (this);
     /** @param {KeyboardEvent} e */
     const handler = (e) => {
-      if (e.key === "Escape" && typeof this.onEscape === "function")
-        this.onEscape(e);
+      if (e.key === "Escape" && typeof host.onEscape === "function")
+        host.onEscape(e);
     };
     document.addEventListener("keydown", handler);
     this.$own(() => document.removeEventListener("keydown", handler));

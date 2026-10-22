@@ -466,12 +466,12 @@ describe("light - Property System", () => {
   });
 
   describe("reactive updates", () => {
-    it("should trigger $requestUpdate on property change", async () => {
+    it("should schedule an update on property change", async () => {
       let updateCalled = false;
-      const originalRequest = element.$requestUpdate.bind(element);
-      element.$requestUpdate = (...args) => {
+      const originalEnqueue = element.$enqueueUpdate.bind(element);
+      element.$enqueueUpdate = (...args) => {
         updateCalled = true;
-        return originalRequest(...args);
+        return originalEnqueue(...args);
       };
       element.count = 5;
       assert.equal(updateCalled, true);
@@ -480,10 +480,10 @@ describe("light - Property System", () => {
     it("should not trigger update when value unchanged", async () => {
       await element.$requestUpdate();
       let updateCalled = false;
-      const originalRequest = element.$requestUpdate.bind(element);
-      element.$requestUpdate = (...args) => {
+      const originalEnqueue = element.$enqueueUpdate.bind(element);
+      element.$enqueueUpdate = (...args) => {
         updateCalled = true;
-        return originalRequest(...args);
+        return originalEnqueue(...args);
       };
       element.count = 0;
       assert.equal(updateCalled, false);
@@ -1454,8 +1454,8 @@ describe("light - reactive: false properties", () => {
 
   it("mutating it triggers no re-render, while a reactive prop does", async () => {
     let renders = 0;
-    const original = element.$requestUpdate.bind(element);
-    element.$requestUpdate = (...args) => { renders++; return original(...args); };
+    const original = element.$enqueueUpdate.bind(element);
+    element.$enqueueUpdate = (...args) => { renders++; return original(...args); };
     element.handle = new Map([["x", 1]]);
     element.handle.set("y", 2);
     await Promise.resolve();
@@ -1846,13 +1846,13 @@ describe("light - light-DOM slots", () => {
       document.body.appendChild(host);
       assert.equal(connected, 1);
       await host.$requestUpdate();
-      if (child.$updatePromise) await child.$updatePromise;
+      await child.$whenUpdated();
       assert.equal(child.parentNode, host.querySelector("div > slot"));
       assert.equal(connected, 1);
       assert.equal(disconnected, 0);
       assert.equal(renders, 1);
       child.label = "b";
-      await child.$updatePromise;
+      await child.$whenUpdated();
       assert.equal(child.querySelector("i").textContent, "b", "the moved view still reacts to its state");
       assert.equal(renders, 2);
       host.remove();
@@ -2233,7 +2233,7 @@ describe("light - a class with signal fields", () => {
     await el.$requestUpdate();
     assert.equal(el.querySelector("b").textContent, "0");
     el.count.value = 1;
-    assert.ok(el.$updatePromise, "the signal write scheduled an update");
+    assert.ok(el.$updatePending, "the signal write scheduled an update");
     await el.$requestUpdate();
     assert.equal(el.querySelector("b").textContent, "1");
     assert.equal(renders, 2);

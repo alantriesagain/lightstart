@@ -38,7 +38,7 @@ export const createAdapter = (type: string, config: Record<string, unknown> & { 
   const definition = ADAPTER_REGISTRY.get(type);
   if (!definition)
     throw new Error(`Unknown adapter type "${type}". Available types: ${getAvailableAdapters().join(", ")}. Use registerStorageAdapter() to register adapters.`);
-  const instance: StorageAdapter = Object.create(definition);
+  const instance = Object.create(definition) as StorageAdapter;
   for (const [key, value] of Object.entries(config)) instance[key] = value;
   modelBus().emit(DATABASE_CREATED, { type, name: config.name, version: config.version });
   return instance;

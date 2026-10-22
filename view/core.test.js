@@ -95,10 +95,30 @@ describe("light/view/core on markup", () => {
     await view.$requestUpdate();
     n.value = 1;
     n.value = 2;
-    assert.ok(view.$updatePromise);
+    assert.ok(view.$updatePending);
     await view.$requestUpdate();
     assert.equal(markupOf(root), "<x-b>2</x-b>");
     assert.equal(view.renders, 2);
+  });
+
+  it("makes a promise only for an update someone waits for", async () => {
+    const view = new MarkupView(host, "x-p");
+    const n = signal(0);
+    view.template = () => html`${n.value}`;
+    view.mount(root);
+    await view.$requestUpdate();
+    n.value = 1;
+    assert.equal(view.$updatePending, true);
+    assert.equal(view.$updatePromise, null);
+    const waiting = view.$whenUpdated();
+    assert.equal(view.$whenUpdated(), waiting);
+    await waiting;
+    assert.equal(markupOf(root), "<x-p>1</x-p>");
+    assert.equal(view.$updatePending, false);
+    assert.equal(view.$updatePromise, null);
+    await view.$whenUpdated();
+    await view.$requestUpdate();
+    assert.equal(view.renders, 3);
   });
 
   it("flushes parents before children, and a child dirtied twice once", async () => {

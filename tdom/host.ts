@@ -238,7 +238,7 @@ export class TermHost extends Host {
   stringify(value: unknown) {
     if (typeof value !== "object" || value === null) return String(value);
     const toString = (value as { toString?: unknown }).toString;
-    return typeof toString === "function" ? String(toString.call(value)) : "[object]";
+    return typeof toString === "function" ? String((toString as (this: unknown) => unknown).call(value)) : "[object]";
   }
 
   setAttribute(el: HostNode, name: string, value: string) {
