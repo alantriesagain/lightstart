@@ -1,0 +1,19 @@
+{
+  "name": "@light/workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A folder as a native app works in it: its files (git's view or a capped walk), its git state read without touching the index (status, branches, the log, a commit's files, a file at HEAD), what changed against a base, a tree of the files, a watcher batching the folder's changes, a file's lines read from an offset, and a controller holding the folder's snapshots for the views.",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@bootstrapp/light": "workspace:*",
+    "@light/lib": "workspace:*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  }
+}

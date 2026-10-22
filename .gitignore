@@ -6,3 +6,6 @@ dist/
 .deployed/
 native/desktop/out/
 benchmarks/noise.local.json
+**/native/out/
+.scriptc/
+*.ll

@@ -33,7 +33,7 @@ export default {
       blocks: [
         {
           kind: "text",
-          text: "The entry point is `native/index.js`. It re-exports light's html core, signals and view core, and installs a terminal host (`tdom/`) under the view engine. Components then render into a tree of terminal nodes instead of the DOM, which `tdom/` lays out and paints as text in a terminal. The same code runs under Node and as an executable, so a component can be tested under Node and shipped as a binary.",
+          text: "The entry point is `native/tui/index.ts`. It re-exports light's html core, signals and view core, and installs a terminal host (`native/tui/`) under the view engine. Components then render into a tree of terminal nodes instead of the DOM, which `native/tui/` lays out and paints as text in a terminal. The same code runs under Node and as an executable, so a component can be tested under Node and shipped as a binary.",
         },
         {
           kind: "text",
@@ -47,9 +47,9 @@ export default {
       blocks: [
         {
           kind: "text",
-          text: `\`npm run coverage:native\` runs \`scriptc coverage\` on \`native/index.js\` with \`--fail-on=slow-paths\` and fails unless every statement compiles statically and no write makes method calls dynamic. All ${coverage.statements.toLocaleString("en-US")} statements do. \`coverage:tasks\` checks the tasks example the same way, except that its JSDoc-typed JavaScript may compile partly dynamically.`,
+          text: `\`npm run coverage:native\` runs \`scriptc coverage\` on \`native/tui/index.ts\` with \`--fail-on=slow-paths\` and fails unless every statement compiles statically and no write makes method calls dynamic. All ${coverage.statements.toLocaleString("en-US")} statements do. \`coverage:tasks\` checks the tasks example the same way, except that its JSDoc-typed JavaScript may compile partly dynamically.`,
         },
-        { kind: "code", title: "scriptc coverage native/index.js --fail-on=slow-paths", code: coverage.text, language: "text" },
+        { kind: "code", title: "scriptc coverage native/tui/index.ts --fail-on=slow-paths", code: coverage.text, language: "text" },
       ],
     },
     {
@@ -86,7 +86,7 @@ export default {
       id: "benchmark",
       title: "Benchmark",
       blocks: [
-        { kind: "text", text: `\`native/bench.js\` renders 10,000 keyed rows into a terminal tree, lays them out, relabels every tenth row, reverses the rows and clears them. The table shows the fastest of three runs under Node and as a ${megabytes(bench.sizeBytes)} stripped executable:` },
+        { kind: "text", text: `\`native/tui/bench.js\` renders 10,000 keyed rows into a terminal tree, lays them out, relabels every tenth row, reverses the rows and clears them. The table shows the fastest of three runs under Node and as a ${megabytes(bench.sizeBytes)} stripped executable:` },
         {
           kind: "table",
           columns: [

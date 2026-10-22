@@ -1,5 +1,5 @@
 /**
- * @file The native gate: scriptc's coverage of an entry (native/index.ts by default), read from its
+ * @file The native gate: scriptc's coverage of an entry (native/tui/index.ts by default), read from its
  * JSON report. It fails on a blocker, a slow path (a write that makes methods replaceable, so every
  * call dispatches dynamically), and a divergence from node not listed with its reason in
  * `divergences.json`; unless `--allow-dynamic` says the entry's graph holds JSDoc-typed JavaScript,
@@ -25,7 +25,7 @@ const at = args.indexOf("--scriptc");
 const scriptc = at >= 0 ? args[at + 1] : scriptcPath(rootDir);
 const allowDynamic = args.includes("--allow-dynamic");
 const updateBaseline = args.includes("--update-baseline");
-const entry = args.find((arg, i) => !arg.startsWith("--") && (at < 0 || i !== at + 1)) ?? "native/index.ts";
+const entry = args.find((arg, i) => !arg.startsWith("--") && (at < 0 || i !== at + 1)) ?? "native/tui/index.ts";
 
 /** @param {string} file */
 const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {});

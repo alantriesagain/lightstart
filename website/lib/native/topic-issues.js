@@ -35,7 +35,7 @@ export default {
         },
         {
           kind: "text",
-          text: "Light's notes attribute the remaining time to three things: boxing class instances so they can pass through `unknown`-typed values and releasing them again, the cycle collector, and objects that scriptc keeps in its dynamic representation, where every field write is a lookup by name. A terminal screen has hundreds of nodes rather than ten thousand, so a frame still renders in milliseconds. `native/microbench.js` times each of these operations separately, to measure each scriptc release.",
+          text: "Light's notes attribute the remaining time to three things: boxing class instances so they can pass through `unknown`-typed values and releasing them again, the cycle collector, and objects that scriptc keeps in its dynamic representation, where every field write is a lookup by name. A terminal screen has hundreds of nodes rather than ten thousand, so a frame still renders in milliseconds. `native/tui/microbench.js` times each of these operations separately, to measure each scriptc release.",
         },
       ],
     },

@@ -39,6 +39,123 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  packages/native/cli:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/native/highlight:
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../../tui/test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/native/lib:
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../../tui/test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/native/plugins:
+    dependencies:
+      '@bootstrapp/light':
+        specifier: workspace:*
+        version: link:../../..
+      '@light/lib':
+        specifier: workspace:*
+        version: link:../lib
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../../tui/test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/native/workspace:
+    dependencies:
+      '@bootstrapp/light':
+        specifier: workspace:*
+        version: link:../../..
+      '@light/lib':
+        specifier: workspace:*
+        version: link:../lib
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../../tui/test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/tui/kernel:
+    dependencies:
+      '@light/lib':
+        specifier: workspace:*
+        version: link:../../native/lib
+    devDependencies:
+      '@bootstrapp/light':
+        specifier: workspace:*
+        version: link:../../..
+      '@light/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/tui/markdown:
+    dependencies:
+      '@bootstrapp/light':
+        specifier: workspace:*
+        version: link:../../..
+      '@light/highlight':
+        specifier: workspace:*
+        version: link:../../native/highlight
+      '@light/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/tui/test:
+    dependencies:
+      '@bootstrapp/light':
+        specifier: workspace:*
+        version: link:../../..
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/tui/ui:
+    dependencies:
+      '@bootstrapp/light':
+        specifier: workspace:*
+        version: link:../../..
+      '@light/lib':
+        specifier: workspace:*
+        version: link:../../native/lib
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
 packages:
 
   '@eslint-community/eslint-utils@4.10.1':

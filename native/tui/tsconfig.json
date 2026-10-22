@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": [
+      "es2024"
+    ],
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "../../types/lib.d.ts",
+    "../../html/constants.ts",
+    "../../html/parser.ts",
+    "../../html/values.ts",
+    "../../html/host.ts",
+    "../../html/template.ts",
+    "../../html/parts.ts",
+    "../../html/reactive.ts",
+    "../../html/core.ts",
+    "../../html/part.ts",
+    "../../html/tags.js",
+    "../../html/types.ts",
+    "../../html/states.ts",
+    "../../signals/index.ts",
+    "../../signals/store.ts",
+    "../../signals/types.ts",
+    "../../view/core.ts",
+    "../../html/tokenizer.ts",
+    "./*.ts",
+    "../../theme/baked.ts"
+  ],
+  "exclude": []
+}

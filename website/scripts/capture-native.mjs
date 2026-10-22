@@ -766,7 +766,7 @@ const measures = () => {
   const benchDir = mkdtempSync(join(tmpdir(), "light-native-bench-"));
   try {
     const binary = join(benchDir, "bench");
-    run(scriptc, ["build", "native/bench.js", "-o", binary, "--strip"], light);
+    run(scriptc, ["build", "native/tui/bench.js", "-o", binary, "--strip"], light);
     /** @param {string} output @returns {Record<string, number>} */
     const steps = (output) =>
       Object.fromEntries(
@@ -783,9 +783,9 @@ const measures = () => {
       const runs = [0, 1, 2].map(() => steps(run(command, args, light).stdout));
       return Object.fromEntries(Object.keys(runs[0]).map((step) => [step, Math.min(...runs.map((r) => r[step]))]));
     };
-    const node = fastest(process.execPath, ["native/bench.js"]);
+    const node = fastest(process.execPath, ["native/tui/bench.js"]);
     const native = fastest(binary, []);
-    const coverage = coverageOf(run(scriptc, ["coverage", "native/index.js", "--fail-on=slow-paths"], light).stdout, light);
+    const coverage = coverageOf(run(scriptc, ["coverage", "native/tui/index.ts", "--fail-on=slow-paths"], light).stdout, light);
     const repo = process.env.SCRIPTC_REPO;
     const corpus = repo && existsSync(repo) ? run("pnpm", ["exec", "vitest", "list", "tests/harness/llvm-differential.test.ts"], repo).stdout.trim().split("\n").length : null;
     return {

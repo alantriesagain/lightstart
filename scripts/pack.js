@@ -5,9 +5,9 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const LIGHT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const LEFT_OUT = new Set([".bootstrapp", "benchmarks", "dist", "eslint.config.js", "examples", "fixtures", "node_modules", "probes", "scripts", "skills", "website"]);
+const LEFT_OUT = new Set([".bootstrapp", "benchmarks", "dist", "eslint.config.js", "examples", "fixtures", "node_modules", "packages", "probes", "scripts", "skills", "website"]);
 const SIDE_FILE = /\.(test|demo)\.js$/;
-const TOOL_FILE = /^(native\/(run|coverage|diagnostics|bench|microbench|demo|assert)\.js|native\/test-(terminal|views|lines)\.ts|native\/desktop\/((smoke|coverage|frameless-check)\.js|(demo|out)\/.*)|html\/conformance-hosts\.js)$/;
+const TOOL_FILE = /^(native\/(run|coverage|diagnostics|assert)\.js|native\/tui\/(bench|microbench|elements-bench|demo)\.js|native\/tui\/test-(terminal|views|lines)\.ts|native\/desktop\/((smoke|coverage|frameless-check)\.js|(demo|out)\/.*)|html\/conformance-hosts\.js)$/;
 const SHIM_FILE = /^native\/desktop\/shim\//;
 const KEPT_TS = /^native\/desktop\/ffi\.ts$/;
 const TS_SPECIFIER = /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)(["'])(\.{1,2}\/[^"']+)\.ts\2/g;

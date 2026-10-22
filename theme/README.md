@@ -139,14 +139,14 @@ Deliberate divergences from Tailwind's preset: `dark:` targets `:root.dark`, the
 The engine answers CSS, and the browser is the host that needs nothing more: the runtime writes the rules into a `<style>` and the page does the rest. Any other host reads the same compiled declarations and maps the subset it can show onto its own elements, so a class means one thing everywhere and a host documents what it leaves out. The terminal is the first (`theme/terminal.ts`); a host for a native toolkit would be another `ClassStyler` over the same `createRules`.
 
 ```js
-import { configureClasses } from "@bootstrapp/light/native";
+import { configureClasses } from "@bootstrapp/light/native/tui";
 import { TerminalClasses } from "@bootstrapp/light/theme/terminal";
 import theme from "@bootstrapp/light/theme/themes/default.js";
 
 configureClasses(new TerminalClasses(theme, "dark"));
 ```
 
-`TerminalClasses(theme, scheme)` resolves colors through the variables of one side of the theme (`"light"` or `"dark"`; terminals are mostly dark) and applies the `dark:` variant on the dark scheme. `focus:` (and `focus-visible:`) applies while the element has the renderer's focus, `focus-within:` while it or a descendant has it: the styler answers those props with the state they need, the element applies the layers its state selects, base first, and applies its classes again when the focus moves (`tdom/focus.ts`). Every other variant (`hover:`, `active:`, `group-*:`, `md:`) is ignored. Lengths round to cells, half a rem or eight pixels each and at least one when positive (`p-1`, `p-2` → 1, `p-4` → 2, `gap-2` → 1, `w-10` → 5); `tdom` has one `padding`, so `px-2` and `py-1` set it too. Colors are truecolor (`#rrggbb` from the tokens; a 16-color fallback is a later option). Later rules win as in a stylesheet: between two classes of one prop, the one later in the rule table (`items-end items-stretch` → stretch), and between two of the same rule, the later class (`p-4 p-1` → 1). What a class compiled to nothing a terminal shows, or to nothing at all, lands in the styler's `ignored` set.
+`TerminalClasses(theme, scheme)` resolves colors through the variables of one side of the theme (`"light"` or `"dark"`; terminals are mostly dark) and applies the `dark:` variant on the dark scheme. `focus:` (and `focus-visible:`) applies while the element has the renderer's focus, `focus-within:` while it or a descendant has it: the styler answers those props with the state they need, the element applies the layers its state selects, base first, and applies its classes again when the focus moves (`native/tui/focus.ts`). Every other variant (`hover:`, `active:`, `group-*:`, `md:`) is ignored. Lengths round to cells, half a rem or eight pixels each and at least one when positive (`p-1`, `p-2` → 1, `p-4` → 2, `gap-2` → 1, `w-10` → 5); `tdom` has one `padding`, so `px-2` and `py-1` set it too. Colors are truecolor (`#rrggbb` from the tokens; a 16-color fallback is a later option). Later rules win as in a stylesheet: between two classes of one prop, the one later in the rule table (`items-end items-stretch` → stretch), and between two of the same rule, the later class (`p-4 p-1` → 1). What a class compiled to nothing a terminal shows, or to nothing at all, lands in the styler's `ignored` set.
 
 | Declaration | tdom prop | Examples |
 |---|---|---|

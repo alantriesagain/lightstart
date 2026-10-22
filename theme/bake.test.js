@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import ts from "typescript";
-import { STATE_FOCUS_WITHIN } from "../tdom/classes.ts";
+import { STATE_FOCUS_WITHIN } from "../native/tui/classes.ts";
 import { bakeTables, classStringsOf, collectClasses, render } from "./bake.js";
 import defaultTheme from "./themes/default.js";
 
@@ -29,7 +29,7 @@ test("collectClasses walks the tasks app's imports and answers exactly its nine 
   const { classes, problems, files } = collectClasses("examples/tasks/main.js", ts);
   assert.deepEqual(problems, []);
   assert.deepEqual(classes, TASKS);
-  assert.ok(files.includes("examples/tasks/views/task-row.ts") && files.includes("tdom/node.ts"));
+  assert.ok(files.includes("examples/tasks/views/task-row.ts") && files.includes("native/tui/node.ts"));
 });
 
 test("bakeTables compiles each string per scheme through the terminal styler, states kept, and names an ignored class", () => {

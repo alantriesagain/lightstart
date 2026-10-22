@@ -1,11 +1,12 @@
 /**
- * @file The native test runner: every `native/*.test.js` runs under node and under
- * `scriptc run`; both must exit zero and print the same output. Run with
+ * @file The native test runner: every `*.test.js` of a native target's folder
+ * (`native/tui/`, `native/<target>/`) runs under node and under `scriptc run`;
+ * both must exit zero and print the same output. Run with
  * `node native/run.js [--scriptc <path>] [--node-only] [name …]`.
  */
 
 import { spawnSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { readdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { scriptcPath } from "./scriptc.js";
@@ -29,7 +30,8 @@ const run = (cmd, cmdArgs) => {
 };
 
 let failed = 0;
-const files = readdirSync(here).filter((f) => f.endsWith(".test.js") && (only.length === 0 || only.some((o) => f.includes(o)))).sort();
+const targets = readdirSync(here).filter((d) => d !== "probes" && statSync(join(here, d)).isDirectory()).sort();
+const files = targets.flatMap((d) => readdirSync(join(here, d)).filter((f) => f.endsWith(".test.js")).map((f) => `${d}/${f}`)).filter((f) => only.length === 0 || only.some((o) => f.includes(o)));
 for (const file of files) {
   const path = join("native", file);
   const n = run("node", [path]);

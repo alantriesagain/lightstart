@@ -8,11 +8,11 @@
  * used must be in the table. A second store over the same files reads the
  * tasks and the boards back. Runs with `node examples/tasks/tasks.test.js`.
  */
-import { ATTR_BOLD, ATTR_STRIKE, TInput, TRUECOLOR_FLAG, frames, runApp } from "@bootstrapp/light/native";
+import { ATTR_BOLD, ATTR_STRIKE, TInput, TRUECOLOR_FLAG, frames, runApp } from "@bootstrapp/light/native/tui";
 import { BakedClasses } from "@bootstrapp/light/theme/baked";
 import { openJsonl } from "@bootstrapp/light/model/jsonl";
 import { done, eq, eqn, ok } from "../../native/assert.js";
-import { TestTerminal } from "../../native/test-terminal.ts";
+import { TestTerminal } from "../../native/tui/test-terminal.ts";
 import boards from "./models/boards.js";
 import tasks from "./models/tasks.js";
 import board from "./controllers/board.js";

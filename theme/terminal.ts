@@ -8,7 +8,7 @@
  * what a terminal cannot show (sizes, radii, margins, every other variant)
  * is ignored and listed in `ignored`, the dev aid.
  */
-import { ClassProp, ClassStyler, STATE_FOCUS, STATE_FOCUS_WITHIN } from "../tdom/classes.ts";
+import { ClassProp, ClassStyler, STATE_FOCUS, STATE_FOCUS_WITHIN } from "../native/tui/classes.ts";
 import { parseClass } from "./classes/parse.js";
 import { createRules } from "./classes/rules.js";
 import { buildTheme } from "./classes/scales.js";

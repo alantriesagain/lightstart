@@ -1,6 +1,6 @@
 import { html } from "../../../html/core.ts";
 import { TemplateInstance, getTemplate } from "../../../html/template.ts";
-import "../../index.ts";
+import "../../tui/index.ts";
 
 const strings = html`<text fg="red" bold>${0} ${1}</text>`.strings;
 const template = getTemplate(strings, 1);

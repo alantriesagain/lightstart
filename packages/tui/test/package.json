@@ -1,0 +1,16 @@
+{
+  "name": "@light/test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "What a member's tests share: the assertions that print what they check, and a headless screen for a light view.",
+  "dependencies": {
+    "@bootstrapp/light": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5"
+  },
+  "exports": {
+    "./*": "./*"
+  }
+}

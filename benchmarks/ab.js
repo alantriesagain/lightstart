@@ -26,7 +26,7 @@ import { scriptcPath } from "../native/scriptc.js";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CANDIDATE = join(HERE, "..");
 const NOISE_FILE = join(HERE, "noise.local.json");
-const NATIVE_SUITES = { bench: "native/bench.js", microbench: "native/microbench.js", elements: "native/elements-bench.js" };
+const NATIVE_SUITES = { bench: "native/tui/bench.js", microbench: "native/tui/microbench.js", elements: "native/tui/elements-bench.js" };
 const PAGES = ["rows-view", "rows-components", "rows-html", "rows-thunks", "cascade", "reflect"];
 const DEFAULT_BAND = 0.05;
 const MIN_BAND = 0.03;

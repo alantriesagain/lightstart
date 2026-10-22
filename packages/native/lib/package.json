@@ -1,0 +1,15 @@
+{
+  "name": "@light/lib",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "What the core's modules share, light-free: dynamic data narrowed to records, text and numbers, JSON written as text, files read and written whole, the paths a walk takes, a child process run to its end with its output capped, a watcher's closer and the latest-wins ticket, a log file and the command line, NDJSON lines.",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  }
+}

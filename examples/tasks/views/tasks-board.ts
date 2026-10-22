@@ -9,7 +9,7 @@
  * taking the focus makes the board the controller's focused one; an empty
  * board is focusable itself, so the arrows can land on it.
  */
-import { View, define, html, key, nothing } from "@bootstrapp/light/native";
+import { View, define, html, key, nothing } from "@bootstrapp/light/native/tui";
 import board from "../controllers/board.js";
 import "./task-row.ts";
 

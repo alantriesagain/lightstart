@@ -1,0 +1,19 @@
+{
+  "name": "@light/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "What the terminal views of the packages share: the palette the process draws with, durations as the views write them, word wrap over styled runs, the windowed list in the palette's colors, and the clipboard.",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@bootstrapp/light": "workspace:*",
+    "@light/lib": "workspace:*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  }
+}

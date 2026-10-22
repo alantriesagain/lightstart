@@ -390,7 +390,7 @@ const matchTemplate = (template, start, end) => {
     return units.every((u) => u.taken);
   };
 
-  const prepared = /** @type {import("../dom/host.js").DomPrepared} */ (template.prepared);
+  const prepared = /** @type {import("./host.js").DomPrepared} */ (template.prepared);
   if (!walkLevel(prepared.el.content.firstChild, start.nextSibling, end)) return null;
   if (partIdx !== specs.length) return null;
   return { targets, fresh, parked };

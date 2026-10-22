@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { STATE_FOCUS } from "../tdom/classes.ts";
+import { STATE_FOCUS } from "../native/tui/classes.ts";
 import { BakedClasses } from "./baked.ts";
 
 const styler = new BakedClasses([

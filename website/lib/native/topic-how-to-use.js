@@ -39,13 +39,13 @@ export default {
           ],
           rows: [
             { command: "npm run typecheck:native", does: "Type-checks the native code with tsc-ts against es2024, with Node's types and no DOM." },
-            { command: "npm run coverage:native", does: "Runs scriptc coverage on native/index.js; fails on any statement that does not compile statically and on any slow path." },
+            { command: "npm run coverage:native", does: "Runs scriptc coverage on native/tui/index.ts; fails on any statement that does not compile statically and on any slow path." },
             { command: "npm run coverage:tasks", does: "The same for the tasks example, whose JSDoc-typed JavaScript may compile partly dynamically." },
             { command: "npm run test:native", does: "Runs every native/*.test.js under Node and with scriptc run; both must exit zero and print the same output." },
             { command: "npm run probes", does: "Runs the compiler probes in native/probes/, one-file programs that test what scriptc accepts." },
-            { command: "node native/bench.js", does: "The benchmark on the How it works page, under Node; build it with scriptc to run it natively." },
-            { command: "node native/demo.js", does: "A demo screen: a counter button, a scrolling list and an editor, in the terminal." },
-            { command: "native/pty.sh", does: "Builds the demo natively and drives it in a pseudo-terminal: clicks, scrolling, Tab, Enter, submit." },
+            { command: "node native/tui/bench.js", does: "The benchmark on the How it works page, under Node; build it with scriptc to run it natively." },
+            { command: "node native/tui/demo.js", does: "A demo screen: a counter button, a scrolling list and an editor, in the terminal." },
+            { command: "native/tui/pty.sh", does: "Builds the demo natively and drives it in a pseudo-terminal: clicks, scrolling, Tab, Enter, submit." },
             { command: "node native/desktop/build.js run native/desktop/demo/backend.js", does: "Builds and opens the desktop shell's demo, a light page in the system web view." },
             { command: "npm run verify", does: "All of light's checks, the native and desktop ones included." },
           ],
@@ -58,11 +58,11 @@ export default {
       blocks: [
         {
           kind: "text",
-          text: "`node:test` is not available in scriptc, so a native test is a plain program. It imports the code it tests from `native/index.js` and the checks from `native/assert.js`: `ok`, `eq`, `eqn`, `throws` and `done`. Each check prints `ok name` or `FAIL name`, and `done()` ends the test with a non-zero exit code if any check failed. `npm run test:native` runs each test under Node and as an executable and compares the two outputs.",
+          text: "`node:test` is not available in scriptc, so a native test is a plain program. It imports the code it tests from `native/tui/index.ts` and the checks from `native/assert.js`: `ok`, `eq`, `eqn`, `throws` and `done`. Each check prints `ok name` or `FAIL name`, and `done()` ends the test with a non-zero exit code if any check failed. `npm run test:native` runs each test under Node and as an executable and compares the two outputs.",
         },
         {
           kind: "code",
-          title: "A native test, shortened from native/parts.test.js",
+          title: "A native test, shortened from native/tui/parts.test.js",
           language: "js",
           code: `import { TRoot, childNodes, dumpTree, render, textOf, TRun } from "./index.js";
 import { done, eq, ok } from "./assert.js";

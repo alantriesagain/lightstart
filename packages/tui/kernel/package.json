@@ -1,0 +1,19 @@
+{
+  "name": "@light/kernel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The plugin kernel of a native app: plugins ordered by what they require, slash commands, named actions with default keys, layered keymaps, payload-less hooks, settings and kept state.",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@light/lib": "workspace:*"
+  },
+  "devDependencies": {
+    "@bootstrapp/light": "workspace:*",
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  }
+}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { STATE_FOCUS, STATE_FOCUS_WITHIN } from "../tdom/classes.ts";
+import { STATE_FOCUS, STATE_FOCUS_WITHIN } from "../native/tui/classes.ts";
 import { TerminalClasses } from "./terminal.ts";
 import defaultTheme from "./themes/default.js";
 

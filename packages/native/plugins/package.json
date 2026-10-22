@@ -1,0 +1,24 @@
+{
+  "name": "@light/plugins",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "User plugins in a native app: an embedded QuickJS (scriptc's vendored quickjs-ng behind a C shim, linked through the FFI manifest in native/), the engine that evaluates and invokes a plugin's code with a time budget, a plugin's child process with its output batched, and the sources of a plugin folder.",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@bootstrapp/light": "workspace:*",
+    "@light/lib": "workspace:*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  },
+  "native": {
+    "prepare": [
+      "native/build.sh"
+    ]
+  }
+}

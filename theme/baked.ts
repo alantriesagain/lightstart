@@ -8,9 +8,9 @@
  * styles nothing and lands in `ignored`, token by token, which a test
  * asserting the set empty turns into a stale-table detector.
  */
-import { ClassProp, ClassStyler } from "../tdom/classes.ts";
+import { ClassProp, ClassStyler } from "../native/tui/classes.ts";
 
-import type { PropValue } from "../tdom/node.ts";
+import type { PropValue } from "../native/tui/node.ts";
 
 /** One prop a class string means: the prop's name, its value and the state bits it needs (0 for always). */
 export type BakedProp = [string, PropValue, number];

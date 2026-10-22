@@ -1,0 +1,20 @@
+{
+  "name": "@light/markdown",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Markdown as terminal lines: a line of prose to styled runs (emphasis, code, links, headings, lists, code blocks colored by the tokenizers) and a table laid out in columns.",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@bootstrapp/light": "workspace:*",
+    "@light/highlight": "workspace:*",
+    "@light/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  }
+}

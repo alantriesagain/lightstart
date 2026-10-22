@@ -1,0 +1,15 @@
+{
+  "name": "@light/highlight",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Syntax tokenizers (JavaScript, CSS, HTML, Markdown), a line at a time with a carried state, and the registry of languages by file extension and fence name.",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  }
+}

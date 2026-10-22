@@ -1,0 +1,55 @@
+{
+  "ffi_format": 7,
+  "functions": [
+    { "name": "wcjsNew", "symbol": "wcjs_new", "params": ["i32", "i32"], "returns": "pointer" },
+    { "name": "wcjsFree", "symbol": "wcjs_free", "params": ["pointer"], "returns": "void" },
+    { "name": "wcjsSetBudget", "symbol": "wcjs_set_budget", "params": ["pointer", "i32"], "returns": "void" },
+    {
+      "name": "wcjsSetHost",
+      "symbol": "wcjs_set_host",
+      "params": [
+        "pointer",
+        { "callback": { "id": "host", "params": ["string", "string", { "context": "host" }], "returns": "i32", "lifetime": "retained" } },
+        { "context": "host" }
+      ],
+      "returns": "void"
+    },
+    { "name": "wcjsReply", "symbol": "wcjs_reply", "params": ["pointer", "string"], "returns": "void" },
+    {
+      "name": "wcjsEval",
+      "symbol": "wcjs_eval",
+      "params": [
+        "pointer",
+        "string",
+        "string",
+        { "callback": { "id": "done", "params": ["i32", "string", { "context": "done" }], "returns": "void", "lifetime": "call" } },
+        { "context": "done" }
+      ],
+      "returns": "i32"
+    },
+    {
+      "name": "wcjsInvoke",
+      "symbol": "wcjs_invoke",
+      "params": [
+        "pointer",
+        "i32",
+        "string",
+        { "callback": { "id": "done", "params": ["i32", "string", { "context": "done" }], "returns": "void", "lifetime": "call" } },
+        { "context": "done" }
+      ],
+      "returns": "i32"
+    },
+    {
+      "name": "wcjsJobs",
+      "symbol": "wcjs_jobs",
+      "params": [
+        "pointer",
+        { "callback": { "id": "done", "params": ["i32", "string", { "context": "done" }], "returns": "void", "lifetime": "call" } },
+        { "context": "done" }
+      ],
+      "returns": "i32"
+    }
+  ],
+  "libraries": ["./out/libwcjs.a"],
+  "system_libraries": ["m"]
+}

@@ -11,7 +11,7 @@
  * done tasks: `appKey` takes those before any element sees them, so they
  * work with nothing focused too.
  */
-import { KeyEvent, Renderer, SubmitEvent, TBox, TElement, TInput, View, find, focusables, html, key } from "@bootstrapp/light/native";
+import { KeyEvent, Renderer, SubmitEvent, TBox, TElement, TInput, View, find, focusables, html, key } from "@bootstrapp/light/native/tui";
 import board from "../controllers/board.js";
 import { TasksBoard } from "./tasks-board.ts";
 

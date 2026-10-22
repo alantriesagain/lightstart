@@ -75,7 +75,7 @@ describe("@bootstrapp/light/theme/classes: the engine stands alone", () => {
   });
 
   it("the baked styler reaches the terminal's class hook alone, no engine and no tokens", () => {
-    assert.deepEqual(reach("theme/baked.ts"), ["theme/baked.ts", "tdom/classes.ts"]);
+    assert.deepEqual(reach("theme/baked.ts"), ["theme/baked.ts", "native/tui/classes.ts"]);
   });
 
   it("the browser runtime reaches the engine and nothing of the view or the hosts", () => {

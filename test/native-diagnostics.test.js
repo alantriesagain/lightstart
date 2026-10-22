@@ -29,7 +29,7 @@ const report = (diagnostics, counts = {}) => ({
   schema: "scriptc-diagnostics",
   schemaVersion: 1,
   compilerVersion: "0.3.6",
-  entry: "native/index.js",
+  entry: "native/tui/index.ts",
   success: true,
   stats: { statementsTotal: counts.total ?? 100, statementsStatic: counts.static ?? 100, statementsFailed: counts.failed ?? 0, functionsSkipped: 0, percentStatic: 100 },
   diagnostics,

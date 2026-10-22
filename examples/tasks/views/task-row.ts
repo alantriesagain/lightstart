@@ -4,7 +4,7 @@
  * or a click toggles it, `d` removes it, Shift+Left and Shift+Right move it
  * to the neighbour board, each a call on the board controller.
  */
-import { KeyEvent, View, define, html } from "@bootstrapp/light/native";
+import { KeyEvent, View, define, html } from "@bootstrapp/light/native/tui";
 import board from "../controllers/board.js";
 
 import type { Task } from "../models/types.ts";
