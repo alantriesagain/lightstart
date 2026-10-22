@@ -1,4 +1,4 @@
-# Probe results (2026-10-20T15:42Z, scriptc 0.3.6, node v25.3.0)
+# Probe results (2026-10-21T11:24Z, scriptc 0.3.6, node v25.3.0)
 
 ## p-a-dispatch: PASS
 - coverage rc=0 static=64 (100%) fully=true deferred=false
@@ -21,11 +21,11 @@
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-ae-model: PASS
-- coverage rc=0 static=986 (100%) fully=true deferred=false
+- coverage rc=0 static=987 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-af-controller: PASS
-- coverage rc=0 static=1914 (100%) fully=true deferred=false
+- coverage rc=0 static=1916 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-ag-prop-signal: PASS
@@ -41,11 +41,11 @@
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-aj-ts-controller: PASS
-- coverage rc=0 static=1472 (100%) fully=true deferred=false
+- coverage rc=0 static=1473 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-ak-ts-model: PASS
-- coverage rc=0 static=943 (100%) fully=true deferred=false
+- coverage rc=0 static=944 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-b-host: PASS
@@ -167,23 +167,23 @@ scriptc coverage /home/alanleal/Projects/light/native/probes/p-n-alloc.js
 --- build
 /home/alanleal/Projects/light/native/probes/out/p-n-alloc
 --- node
-one-field class: 7.4 ms
-seven-field class: 12.3 ms
-three-level subclass with an array field: 11.9 ms
-two-level subclass with an array field: 6.0 ms
-object literal: 3.2 ms
-small array: 4.3 ms
-one-field class, dropped: 8.8 ms
-empty array field only: 2.0 ms
+one-field class: 40.8 ms
+seven-field class: 69.0 ms
+three-level subclass with an array field: 81.7 ms
+two-level subclass with an array field: 36.6 ms
+object literal: 10.3 ms
+small array: 13.8 ms
+one-field class, dropped: 5.6 ms
+empty array field only: 46.4 ms
 --- native
-one-field class: 15.7 ms
-seven-field class: 3.9 ms
-three-level subclass with an array field: 12.7 ms
-two-level subclass with an array field: 6.0 ms
-object literal: 0.7 ms
-small array: 4.2 ms
-one-field class, dropped: 3.6 ms
-empty array field only: 1.5 ms
+one-field class: 66.6 ms
+seven-field class: 15.8 ms
+three-level subclass with an array field: 175.6 ms
+two-level subclass with an array field: 26.6 ms
+object literal: 5.2 ms
+small array: 20.8 ms
+one-field class, dropped: 21.8 ms
+empty array field only: 9.0 ms
 ```
 
 ## p-o-subclass-field: PASS

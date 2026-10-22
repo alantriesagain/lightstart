@@ -107,7 +107,7 @@ test("a method member and a shorthand member are not bare fields", async () => {
 
 test("a definition that is not a defineController call is ignored", async () => {
   const findings = await runRuleOn(rule, {
-    "controllers/lib/helper.js": "export const f = (o) => o._x.y;\n",
+    "lib/helper.js": "export const f = (o) => o._x.y;\n",
     "views/thing.js": "export default { tag: \"fx-thing\", go() { this._z = 1; return this._z.w(); } };\n",
     "controllers/plain.js": "export default { name: \"plain\", _x: null };\n",
   });
@@ -154,7 +154,7 @@ export const storeMixin = defineMixin({
 test("a fragment spread into the definition declares what it carries", async () => {
   const findings = await runRuleOn(rule, {
     "controllers/ide.js": `import { defineController } from "@bootstrapp/light/controller";
-import { ui } from "./lib/ui.js";
+import { ui } from "./ide/ui.js";
 export default defineController({
   name: "ide",
   ...ui,
@@ -162,7 +162,7 @@ export default defineController({
   stray() { return this.notThere(); },
 });
 `,
-    "controllers/lib/ui.js": `export const ui = {
+    "controllers/ide/ui.js": `export const ui = {
   showConfirm(options) { return Promise.resolve(true); },
 };
 `,

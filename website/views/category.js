@@ -20,7 +20,7 @@ export default defineComponent({
   render() {
     const category = categoryById(this.category);
     if (!category) return html`<lc-empty-state icon="folder-x" title="No such category" description=${`Nothing is filed under "${this.category}".`}></lc-empty-state>`;
-    const { previous, next } = neighbourCategories(browsableCategories(), this.category);
+    const { previous, next } = neighbourCategories(browsableCategories($APP.manifest), this.category);
     return html`
       <div class="docs-page">
         <lc-breadcrumbs size="sm" .items=${[{ text: "Components", href: COMPONENTS_PATH, isLast: false }, { text: category.label, href: null, isLast: true }]}></lc-breadcrumbs>

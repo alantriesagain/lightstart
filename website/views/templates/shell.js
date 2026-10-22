@@ -60,7 +60,7 @@ export default defineComponent({
     this.native = inNative($APP.Router.path);
     const category = categoryOf($APP.Router.path);
     if (category && !this.openGroups.includes(category)) this.openGroups = [...this.openGroups, category];
-    if (!this.openGroups.length) this.openGroups = [browsableCategories()[0]?.id ?? ""];
+    if (!this.openGroups.length) this.openGroups = [browsableCategories($APP.manifest)[0]?.id ?? ""];
   },
 
   /** @returns {NavTreeGroup[]} */
@@ -70,7 +70,7 @@ export default defineComponent({
         const items = NATIVE_PAGES.filter((page) => page.group === group.id).map(({ topic, label, nav, href }) => ({ label: nav ?? label, href, exact: !topic }));
         return { id: `native-${group.id}`, label: group.label, icon: group.id === "native" ? "cpu" : "book-open", count: items.length, items };
       });
-    return browsableCategories().map((category) => ({
+    return browsableCategories($APP.manifest).map((category) => ({
       id: category.id,
       label: category.label,
       icon: category.icon,
@@ -113,7 +113,7 @@ export default defineComponent({
   },
 
   render() {
-    const docs = searchIndex(browsableCategories(), presets);
+    const docs = searchIndex(browsableCategories($APP.manifest), presets);
     return html`
       <lc-app-shell breakpoint="md" aside-breakpoint="xl" nav-width=${this.landing ? "0px" : "var(--docs-nav)"} aside-width=${this.toc.length && !this.landing ? "var(--docs-aside)" : "0px"} header-height="var(--docs-header)">
         <header slot="navbar" class="shell-header">

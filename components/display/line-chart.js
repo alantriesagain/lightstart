@@ -20,6 +20,8 @@ export default defineComponent({
 		showDots: true,
 		showArea: false,
 		smooth: true,
+		fit: false,
+		reference: /** @type {Prop<number | null>} */ (T.number({ defaultValue: null })),
 		_gradientId: T.string({ reactive: false, defaultValue: "" }),
 	},
 
@@ -27,8 +29,10 @@ export default defineComponent({
 		if (!this.data || this.data.length === 0)
 			return html`<div class="line-chart-empty">${lcText("lc-chart", "noData")}</div>`;
 
-		const maxValue = Math.max(...this.data.map((d) => d.value || 0), 1);
-		const minValue = Math.min(...this.data.map((d) => d.value || 0), 0);
+		const reference = typeof this.reference === "number" ? this.reference : null;
+		const values = this.data.map((d) => d.value || 0);
+		const spanned = reference === null ? values : [...values, reference];
+		const [minValue, maxValue] = this._scale(spanned);
 		const range = maxValue - minValue || 1;
 
 		const viewWidth = 300;
@@ -48,6 +52,7 @@ export default defineComponent({
 
 		const linePath = this._createPath(points);
 		const areaPath = this._createAreaPath(points, padding.top + chartHeight);
+		const referenceY = reference === null ? null : padding.top + chartHeight - ((reference - minValue) / range) * chartHeight;
 
 		return html`
 			<div class="line-chart line-chart-${this.variant}" style="height: ${this.height}px">
@@ -57,6 +62,7 @@ export default defineComponent({
 					preserveAspectRatio="none"
 				>
 					${this.showArea ? this._area(areaPath) : ""}
+					${referenceY === null ? "" : svg`<line class="line-reference" x1="${padding.left}" x2="${viewWidth - padding.right}" y1="${referenceY}" y2="${referenceY}" stroke-dasharray="4 3"><title>${reference}</title></line>`}
 
 					<path
 						class="line-path"
@@ -94,6 +100,21 @@ export default defineComponent({
 				</svg>
 			</div>
 		`;
+	},
+
+	/**
+	 * The value range the chart spans: from zero, or with `fit`, the values'
+	 * own range with a margin above and below.
+	 *
+	 * @param {number[]} values
+	 * @returns {[number, number]}
+	 */
+	_scale(values) {
+		if (!this.fit) return [Math.min(...values, 0), Math.max(...values, 1)];
+		const low = Math.min(...values);
+		const high = Math.max(...values);
+		const margin = (high - low || Math.abs(high) || 1) * 0.15;
+		return [low - margin, high + margin];
 	},
 
 	/** @param {string} areaPath */

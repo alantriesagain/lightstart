@@ -41,7 +41,7 @@ export default defineComponent({
 
   render() {
     const category = categoryById(this.category);
-    const { previous, next } = neighbours(browsableCategories(), this.category, this.name);
+    const { previous, next } = neighbours(browsableCategories($APP.manifest), this.category, this.name);
     return html`
       <div class="docs-page">
         <lc-breadcrumbs

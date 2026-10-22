@@ -11,7 +11,6 @@ import { NATIVE_GROUPS, NATIVE_PAGES, nativeNeighbours } from "../lib/native/pag
 
 /** @import { TocItem } from "@bootstrapp/light/components/types.ts" */
 
-/** What each group of pages is for. */
 const GROUP_TEXT = {
   native: "How light's native build works, how to use it, and what is not finished yet.",
   background: "How V8 and scriptc run TypeScript, starting from the concepts, with the actual output of each tool and measurements under both.",

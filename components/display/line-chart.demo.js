@@ -31,6 +31,13 @@ export default {
       `,
     },
     {
+      title: "Fitted, with a reference",
+      description: "fit spans the values' own range instead of starting at zero, and reference draws a value, a target, as a dashed line.",
+      render: () => html`
+        <lc-line-chart .data=${[{ label: "Mon", value: 80.4 }, { label: "Tue", value: 80.1 }, { label: "Wed", value: 79.9 }, { label: "Thu", value: 79.6 }, { label: "Fri", value: 79.7 }, { label: "Sat", value: 79.2 }]} height="160" fit .reference=${78}></lc-line-chart>
+      `,
+    },
+    {
       title: "Straight segments",
       render: () => html`
         <lc-line-chart .data=${signups} height="200" .smooth=${false}></lc-line-chart>

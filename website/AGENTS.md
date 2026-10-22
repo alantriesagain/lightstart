@@ -9,8 +9,9 @@ through the ordinary boot with nothing set up by hand.
 
 - The nine categories and their order: `@bootstrapp/showcase/lib/categories.js`.
 - A component's page is drawn from two things and nothing else: its `props` block
-  and the `<component>.demo.js` beside it in the package. `@bootstrapp/showcase/lib/demos.js`
-  loads one; the snippet under an example is `render.toString()`.
+  and the `<component>.demo.js` beside it in the package. The `showcase` controller
+  (`@bootstrapp/showcase/controllers/showcase.js`) loads one; the snippet under an example is
+  `render.toString()` (`@bootstrapp/showcase/lib/demos.js`).
 - The skins: `@bootstrapp/theme/presets.js`. A skin dresses the stages only, through
   `applyScopedTheme`; the chrome keeps this project's `theme.js`.
 - The route table is `routes.js`: `/` (the landing page, `views/home.js`, its words and

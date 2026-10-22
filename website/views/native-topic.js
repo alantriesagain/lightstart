@@ -80,7 +80,6 @@ export default defineComponent({
     if (!changedProps || changedProps.has("topic")) this._reveal();
   },
 
-  /** Scroll to the section the URL names, as a link from another page asks. */
   _reveal() {
     const id = decodeURIComponent(location.hash.slice(1));
     if (!id) return window.scrollTo({ top: 0 });

@@ -67,3 +67,42 @@ describe("@bootstrapp/light - lc-line-chart area", () => {
     assert.equal(el.querySelector("linearGradient"), null);
   });
 });
+
+describe("@bootstrapp/light - lc-line-chart scale", () => {
+  before(async () => {
+    if (!customElements.get("lc-line-chart")) View.define("lc-line-chart", chartDef);
+    await tick();
+  });
+
+  afterEach(async () => {
+    for (const el of mounted.splice(0)) el.remove();
+    await tick();
+  });
+
+  const WEIGHTS = [{ label: "a", value: 80 }, { label: "b", value: 79 }, { label: "c", value: 78 }];
+  /** @param {Element} el */
+  const dotYs = (el) => [...el.querySelectorAll("circle.line-dot")].map((dot) => Number(dot.getAttribute("cy")));
+
+  it("starts the scale at zero, so close values sit together near the top", async () => {
+    const el = await mount({ data: WEIGHTS, showLabels: false });
+    const [first, , last] = dotYs(el);
+    assert.ok(last - first < 3, `${first} and ${last} are close`);
+  });
+
+  it("with fit, spans the values' own range, so their change shows", async () => {
+    const el = await mount({ data: WEIGHTS, showLabels: false, fit: true });
+    const [first, , last] = dotYs(el);
+    assert.ok(last - first > 50, `${first} to ${last} spans the chart`);
+  });
+
+  it("draws a reference value as a dashed line, inside a fitted scale", async () => {
+    const el = await mount({ data: WEIGHTS, showLabels: false, fit: true, reference: 75 });
+    const line = el.querySelector("line.line-reference");
+    assert.ok(line, "the reference line is drawn");
+    const y = Number(line.getAttribute("y1"));
+    assert.ok(y > Math.max(...dotYs(el)), "below every point, since 75 is the lowest value");
+    assert.ok(y < 100, "inside the chart");
+    const plain = await mount({ data: WEIGHTS });
+    assert.equal(plain.querySelector("line.line-reference"), null);
+  });
+});

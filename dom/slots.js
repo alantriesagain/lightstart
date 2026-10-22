@@ -26,6 +26,14 @@ export const isSlotHost = (host) => host instanceof Element && "$slotParts" in h
 const isStart = (node) => node.nodeType === 8 && /** @type {Comment} */ (node).data === MARKER_START;
 
 /**
+ * A text node that is only the whitespace between two elements. It still moves
+ * with the default slot, but it is never what a "renders no default slot"
+ * warning is about, so the projection parks it silently.
+ * @param {ChildNode} node
+ */
+const isBlank = (node) => node.nodeType === 3 && !(node.textContent ?? "").trim();
+
+/**
  * The last node of the unit beginning at `first`: the balanced end marker of
  * a child-part range, or the node itself.
  * @param {ChildNode} first
@@ -263,7 +271,7 @@ export const projectSlots = (host, hooks) => {
     if (slot) /** @type {ChildNode[]} */ (wanted.get(slot)).push(unit);
     else {
       stray.push(unit);
-      hooks.unknown(name);
+      if (!isBlank(unit)) hooks.unknown(name);
     }
   };
   for (const slot of slots) for (const unit of slot.units) if (unit.parentNode === slot.el) route(unit);

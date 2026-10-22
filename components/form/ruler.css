@@ -1,0 +1,116 @@
+:where(.lc-ruler, lc-ruler) {
+  position: relative;
+  display: block;
+  height: var(--lc-ruler-height, 3rem);
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: ew-resize;
+  outline: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--lc-ruler-fade, 22%), #000 calc(100% - var(--lc-ruler-fade, 22%)), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--lc-ruler-fade, 22%), #000 calc(100% - var(--lc-ruler-fade, 22%)), transparent 100%);
+
+  &[dragging] {
+    user-select: none;
+    cursor: grabbing;
+  }
+
+  &[disabled] {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  &:focus-visible [part~=lc-ruler-mark] {
+    outline: 2px solid var(--lc-ruler-focus-color, var(--color-focus, currentColor));
+    outline-offset: 2px;
+  }
+
+  > [part~=lc-ruler-track] {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    display: flex;
+    align-items: flex-start;
+    height: 100%;
+    transform: translateX(var(--lc-ruler-offset, 0px));
+    will-change: transform;
+  }
+
+  &:not([dragging]) > [part~=lc-ruler-track] {
+    transition: transform var(--lc-ruler-transition, 160ms ease-out);
+  }
+
+  [part~=lc-ruler-tick] {
+    display: block;
+    width: var(--lc-ruler-tick-width, 1px);
+    height: var(--lc-ruler-tick-height, 0.5rem);
+    margin: var(--lc-ruler-tick-top, 0.6rem) calc(var(--lc-ruler-step, 16px) / 2 - var(--lc-ruler-tick-width, 1px) / 2) 0;
+    background: var(--lc-ruler-tick-color, color-mix(in srgb, currentColor 35%, transparent));
+    flex: 0 0 auto;
+  }
+
+  [part~=lc-ruler-tick].major {
+    height: var(--lc-ruler-major-height, 0.9rem);
+    margin-top: var(--lc-ruler-major-top, 0.4rem);
+    background: var(--lc-ruler-major-color, color-mix(in srgb, currentColor 70%, transparent));
+  }
+
+  [part~=lc-ruler-label] {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    flex: 0 0 auto;
+    margin: 0 calc(var(--lc-ruler-step, 16px) / 2);
+  }
+
+  [part~=lc-ruler-label] > [part~=lc-ruler-tick] {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  [part~=lc-ruler-text] {
+    position: absolute;
+    top: var(--lc-ruler-text-top, 1.6rem);
+    white-space: nowrap;
+    font-size: var(--lc-ruler-font-size, 0.6875rem);
+    font-weight: var(--lc-ruler-font-weight, 700);
+    font-variant-numeric: tabular-nums;
+    color: var(--lc-ruler-text-color, var(--text-muted, currentColor));
+    transition: color 120ms, font-size 120ms;
+  }
+
+  [part~=lc-ruler-label].on [part~=lc-ruler-text] {
+    font-size: var(--lc-ruler-active-font-size, 0.8125rem);
+    font-weight: var(--lc-ruler-active-font-weight, 800);
+    color: var(--lc-ruler-active-color, var(--text-color, currentColor));
+  }
+
+  > [part~=lc-ruler-mark] {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: var(--lc-ruler-mark-width, 2.5px);
+    height: var(--lc-ruler-mark-height, 1.5rem);
+    transform: translateX(-50%);
+    border-radius: 9999px;
+    background: var(--lc-ruler-mark-color, var(--color-primary, currentColor));
+    pointer-events: none;
+  }
+
+  > [part~=lc-ruler-mark]::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    border: 5px solid transparent;
+    border-top: 6px solid var(--lc-ruler-mark-color, var(--color-primary, currentColor));
+    transform: translate(-50%, -100%);
+  }
+}

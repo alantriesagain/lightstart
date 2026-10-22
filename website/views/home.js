@@ -5,6 +5,7 @@
  * the total, the form validates, the second sign-in card wears a skin.
  */
 import { html, key, nothing } from "@bootstrapp/light/html";
+import $APP from "bootstrapp";
 import T from "@bootstrapp/light/types";
 import { defineComponent } from "@bootstrapp/light";
 import { env } from "@bootstrapp/light/env";
@@ -160,7 +161,7 @@ export default defineComponent({
   },
 
   render() {
-    const total = browsableCategories().reduce((sum, category) => sum + category.components.length, 0);
+    const total = browsableCategories($APP.manifest).reduce((sum, category) => sum + category.components.length, 0);
     return html`
       <section class="home-hero">
         <h1 class="home-title">Light<span class="home-tagline">${TAGLINE}</span></h1>

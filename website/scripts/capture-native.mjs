@@ -285,7 +285,6 @@ const same = (a, b, what) => {
   if (a !== b) throw new Error(`${what}: node printed ${JSON.stringify(a)}, the executable ${JSON.stringify(b)}`);
 };
 
-/** Each example, and what the pages read of it. */
 const EXAMPLES = {
   counter: () => {
     const s = stage("counter.ts");
@@ -457,7 +456,6 @@ const demangle = (name) => name.replace(/^sc_(bf|f)_/, "").replace(/^sc_/, "").r
  */
 const typesOf = (module, llvm, fns, bodies) => {
   const lines = llvm.split("\n");
-  /** Each LLVM function's IR name, from the comment on its `define` line. */
   const irNames = new Map(
     lines.flatMap((line) => {
       const match = /^define [^@]*@([\w.$%-]+)\(.*\{ ; (.+)$/.exec(line);
@@ -664,13 +662,11 @@ const captureTypes = () => {
   return { tools, examples: out };
 };
 
-/** The optimization page's pairs, `native-examples/fast/<id>-slow.ts` and `-fast.ts`: the same work written two ways. */
 const PAIRS = ["any", "unknown", "dictionary", "dispatch", "exceptions", "allocation", "shapes", "delete", "literals", "interfaces", "strings"];
 
 const capturePairs = () => {
   /** @type {Record<string, unknown>} */
   const out = {};
-  /** The throwing version's time under node with stack traces turned off. */
   let stacklessThrow = 0;
   for (const id of PAIRS) {
     const staged = { slow: stage(`fast/${id}-slow.ts`), fast: stage(`fast/${id}-fast.ts`) };
@@ -680,7 +676,6 @@ const capturePairs = () => {
       const times = { slow: { node: [], native: [], printed: "" }, fast: { node: [], native: [], printed: "" } };
       /** One timed run: the milliseconds the program printed on stderr. @param {{ stdout: string, stderr: string }} result */
       const timeOf = (result) => Number.parseFloat(result.stderr.trim().split("\n").at(-1) ?? "");
-      // Interleaved, so both versions run under the same load; a warm-up round first.
       for (let round = 0; round <= 7; round++)
         for (const variant of /** @type {const} */ (["slow", "fast"])) {
           const node = staged[variant].node([]);
@@ -721,7 +716,6 @@ const tools = {
   platform: `${process.platform}-${process.arch}`,
   runs: RUNS,
   capturedAt: new Date().toISOString().slice(0, 10),
-  /** The machine's one-minute load average when the capture started, and its CPU count: timings are only comparable at low load. */
   load: Math.round(loadavg()[0] * 10) / 10,
   cpus: cpus().length,
 };
@@ -737,7 +731,6 @@ const write = (name, data) => {
   writeFileSync(join(website, "lib", "native", `${name}.js`), `${header}export default ${JSON.stringify(data, null, 2)};\n`);
 };
 
-/** The native executable of the tsc-ts package light installs. */
 const tscTsBinary = () => {
   const store = join(light, "node_modules", ".pnpm");
   const dir = readdirSync(store).find((entry) => entry.startsWith(`@tsc-ts+${process.platform}-${process.arch}`));

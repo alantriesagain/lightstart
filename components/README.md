@@ -50,7 +50,7 @@ Components load themselves. There is no import step and no registration call: th
 
 | Category | Components |
 |---|---|
-| **form** (24) | auth-form, checkbox, color-picker, day-strip, file-upload, form, icon-picker, image-crop, input, join, label, month-picker, number-input, radio, radio-group, rating, search, segmented, select, slider, switch, textarea, time, week-hours |
+| **form** (25) | auth-form, checkbox, color-picker, day-strip, file-upload, form, icon-picker, image-crop, input, join, label, month-picker, number-input, radio, radio-group, rating, ruler, search, segmented, select, slider, switch, textarea, time, week-hours |
 | **display** (34) | avatar, avatar-group, badge, bar-chart, button, calendar, circle, code-block, comment, data-table, editable, example, icon, image, kanban, kbd, line-chart, link, link-preview, list, list-item, list-row, markdown, media-card, palette, pattern, pie-chart, sparkline, stat, story-circle, table, tag, text, tile |
 | **layout** (11) | card, container, divider, flex, grid, page, panel, prose, section, split-pane, toolbar |
 | **navigation** (14) | accordion, breadcrumbs, menu, nav-item, nav-tree, navbar, pagination, sidebar, sidebar-section, tabs, toc, tree, tree-item, wizard |

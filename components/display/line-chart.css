@@ -36,6 +36,12 @@
 		stop-opacity: 0;
 	}
 
+	& .line-reference {
+		stroke: var(--lc-line-chart-reference-color, var(--text-muted));
+		stroke-width: 1;
+		vector-effect: non-scaling-stroke;
+	}
+
 	& .line-dot {
 		fill: var(--lc-line-chart-color, var(--color-primary));
 		stroke: var(--color-surface);

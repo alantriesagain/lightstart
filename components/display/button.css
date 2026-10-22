@@ -380,7 +380,7 @@
   }
 
   /* A button holding nothing but an icon is square, and round if the theme is. */
-  &[icononly] {
+  &[icon-only] {
     width: var(--lc-button-height, 2.5rem);
     aspect-ratio: 1;
   }
@@ -398,8 +398,8 @@ lc-button [part~=lc-link-anchor] {
  * a zero-specificity override is settled by bundle order and can differ between
  * dev and prod.
  */
-.lc-button[icononly] [part~=lc-link-anchor],
-lc-button[icononly] [part~=lc-link-anchor] {
+.lc-button[icon-only] [part~=lc-link-anchor],
+lc-button[icon-only] [part~=lc-link-anchor] {
   padding: 0;
   justify-content: center;
 }
