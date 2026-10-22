@@ -79,14 +79,8 @@ export class Line {
  */
 export abstract class LineSource {
   prepare(_width: number): void {}
-
-  count(): number {
-    return 0;
-  }
-
-  line(index: number, _width: number): Line {
-    throw new Error(`[tdom] LineSource.line(${index}): the source answers count() but not line()`);
-  }
+  abstract count(): number;
+  abstract line(index: number, width: number): Line;
 
   liveFrom(): number {
     return this.count();
