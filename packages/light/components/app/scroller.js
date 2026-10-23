@@ -12,6 +12,7 @@ export default defineComponent({
     gap: "0.75rem",
     pad: "0",
     chevrons: T.string({ defaultValue: "auto", enum: ["auto", "always", "never"] }),
+    snap: false,
     _track: /** @type {Prop<HTMLElement | null>} */ (T.object({ reactive: false, defaultValue: null })),
     _prev: /** @type {Prop<HTMLElement | null>} */ (T.object({ reactive: false, defaultValue: null })),
     _next: /** @type {Prop<HTMLElement | null>} */ (T.object({ reactive: false, defaultValue: null })),
@@ -88,8 +89,12 @@ export default defineComponent({
  * A horizontal rail: the scrollbar is hidden and, where a pointer can hover, a
  * left/right chevron appears only in the direction there is more to see. On
  * touch it is a plain swipe. Slot in any row of `shrink-0` children (chips,
- * avatars, thumbnail cards).
+ * avatars, thumbnail cards). `snap` makes it a carousel: a swipe comes to
+ * rest with a child centred, so full-width children page one at a time.
+ * `--lc-scroller-height: 100%` lets the rail take the height the host is
+ * given, for children that fill it.
  *
+ * @prop {boolean} snap - Each swipe comes to rest on a child, centred.
  * @slot default - The row items (each should be `shrink-0`).
  * @part track - The scrolling container.
  * @part nav - Either chevron button.

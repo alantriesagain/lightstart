@@ -8,6 +8,7 @@
     gap: var(--lc-scroller-gap, 0.75rem);
     padding-inline: var(--lc-scroller-pad, 0);
     padding-block: var(--lc-scroller-pad-block, 0);
+    height: var(--lc-scroller-height, auto);
     overflow-x: auto;
     scroll-behavior: smooth;
     scrollbar-width: none;
@@ -15,6 +16,14 @@
 
   & [part~=lc-scroller-track]::-webkit-scrollbar {
     display: none;
+  }
+
+  &[snap] [part~=lc-scroller-track] {
+    scroll-snap-type: x mandatory;
+  }
+
+  &[snap] [part~=lc-scroller-track] > slot > * {
+    scroll-snap-align: center;
   }
 
   & [part~=lc-scroller-nav] {
