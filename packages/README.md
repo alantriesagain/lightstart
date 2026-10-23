@@ -28,7 +28,7 @@ A package never imports one after it in that order, nor an app. `lib` and `highl
 - A `tsconfig.json` equal to `native/cli/templates/tsconfig.json`: scriptc reads the one nearest an app's entry for the whole program, so every member typechecks under the same options.
 - A `README.md`, and `test/*.test.ts`: plain scripts on `@light/test/assert.ts`, run from the member's folder under node and natively, the outputs equal. A test's first line may be `// ffi: <manifest>` (it reaches native calls the manifest binds; under node the manifest folder's stand-in is preloaded) or `// node-only`.
 - A `native` block for what the tools need: a package's prepare steps (`@light/plugins` builds its QuickJS archive), an app's entry, binary, FFI manifest and selftests (`native/cli/README.md`).
-- The code follows light's rules for code that compiles statically (`native/README.md`) and light's comment rule: a JSDoc module header, JSDoc on an exported symbol or a JSDoc type, nothing else.
+- The code follows light's rules for code that compiles statically (`light/native/README.md`) and light's comment rule: a JSDoc module header, JSDoc on an exported symbol or a JSDoc type, nothing else.
 
 `light-native check --all` holds the members to this layout.
 

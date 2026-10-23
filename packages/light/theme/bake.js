@@ -189,7 +189,7 @@ export const render = (tables, entry, command) => {
 };
 
 /**
- * The command: `<entry> -o <file> [--scheme a,b] [--theme <file>] [--check]`; answers whether it succeeded.
+ * The command: `<entry> -o <file> [--scheme a,b] [--theme <file>] [--check]`, both paths from the working directory; answers whether it succeeded.
  * @param {string[]} argv
  */
 export const bake = async (argv) => {
@@ -219,7 +219,7 @@ export const bake = async (argv) => {
     return false;
   }
   const theme = /** @type {ThemeData} */ ((await import(themeFile ? pathToFileURL(resolve(themeFile)).href : "./themes/default.js")).default);
-  const found = collectClasses(entry, ts);
+  const found = collectClasses(resolve(entry), ts);
   const baked = bakeTables(found.classes, theme, schemes);
   const problems = [...found.problems, ...baked.problems];
   if (problems.length > 0) {

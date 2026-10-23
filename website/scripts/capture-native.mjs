@@ -37,7 +37,8 @@ import { fileURLToPath } from "node:url";
 import { scriptcPath } from "@bootstrapp/light/native/scriptc.js";
 
 const website = join(dirname(fileURLToPath(import.meta.url)), "..");
-const light = join(website, "..");
+const repo = join(website, "..");
+const light = join(repo, "packages", "light");
 const examplesDir = join(website, "native-examples");
 const scriptc = scriptcPath(light);
 const tscTs = join(light, "node_modules", ".bin", "tsc-ts");
@@ -732,7 +733,7 @@ const write = (name, data) => {
 };
 
 const tscTsBinary = () => {
-  const store = join(light, "node_modules", ".pnpm");
+  const store = join(repo, "node_modules", ".pnpm");
   const dir = readdirSync(store).find((entry) => entry.startsWith(`@tsc-ts+${process.platform}-${process.arch}`));
   if (!dir) throw new Error("no tsc-ts platform package under node_modules/.pnpm");
   const pkg = readdirSync(join(store, dir, "node_modules", "@tsc-ts"))[0];

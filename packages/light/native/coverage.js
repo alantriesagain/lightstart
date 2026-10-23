@@ -6,11 +6,12 @@
  * also on any statement deferred to a runtime throw and on a statically compiled share under 100%.
  * An entry listed in `coverage-baseline.json` may not gain failed or deferred statements;
  * `--update-baseline` records the current counts. Every finding prints with its file, line, column
- * and hint. Run with `node native/coverage.js [entry] [--allow-dynamic] [--update-baseline] [--scriptc <path>]`.
+ * and hint. Run with `node native/coverage.js [entry] [--allow-dynamic] [--update-baseline] [--scriptc <path>]`; a named
+ * entry is relative to the working directory and keys its baseline as written.
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { formatDiagnostic, gate, readCoverage } from "./diagnostics.js";
 import { scriptcPath } from "./scriptc.js";
@@ -25,13 +26,14 @@ const at = args.indexOf("--scriptc");
 const scriptc = at >= 0 ? args[at + 1] : scriptcPath(rootDir);
 const allowDynamic = args.includes("--allow-dynamic");
 const updateBaseline = args.includes("--update-baseline");
-const entry = args.find((arg, i) => !arg.startsWith("--") && (at < 0 || i !== at + 1)) ?? "native/tui/index.ts";
+const named = args.find((arg, i) => !arg.startsWith("--") && (at < 0 || i !== at + 1));
+const entry = named ?? "native/tui/index.ts";
 
 /** @param {string} file */
 const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {});
 
 const baselines = /** @type {Record<string, { failed: number, deferred: number }>} */ (readJson(BASELINE));
-const coverage = readCoverage(scriptc, entry, { cwd: rootDir });
+const coverage = readCoverage(scriptc, named === undefined ? entry : relative(rootDir, resolve(named)), { cwd: rootDir });
 const stats = coverage.envelope.stats;
 const result = gate(coverage, { allowDynamic, divergences: /** @type {Record<string, string>} */ (readJson(DIVERGENCES)), baseline: updateBaseline ? undefined : baselines[entry] });
 

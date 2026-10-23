@@ -1,0 +1,52 @@
+{
+  "name": "light-workspace",
+  "private": true,
+  "type": "module",
+  "description": "The light repository: @bootstrapp/light in packages/light, the workspace packages native apps share, the examples, the benchmarks and the website.",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc-ts --noEmit",
+    "pack": "npm --prefix packages/light run pack",
+    "check:root": "node packages/light/bin/light.js check",
+    "check": "npm run check:root && npm --prefix packages/light run check",
+    "test": "npm --prefix packages/light test",
+    "bench": "node benchmarks/run.js",
+    "coverage:tasks": "node packages/light/native/coverage.js examples/tasks/main.js --allow-dynamic",
+    "bake:tasks": "node packages/light/bin/light.js classes:bake examples/tasks/main.js -o examples/tasks/classes.baked.js --scheme dark,light",
+    "packages:check": "node packages/native/cli/bin/light-native.js check --all",
+    "packages:typecheck": "node packages/native/cli/bin/light-native.js typecheck --all",
+    "packages:test": "node packages/native/cli/bin/light-native.js test",
+    "packages:coverage": "node packages/native/cli/bin/light-native.js coverage",
+    "verify:packages": "npm run packages:check && npm run packages:typecheck && npm run packages:test && npm run packages:coverage",
+    "verify": "npm run lint && npm run typecheck && npm run check:root && npm --prefix packages/light run verify && npm run coverage:tasks && npm run bake:tasks -- --check && npm run verify:packages"
+  },
+  "dependencies": {
+    "@bootstrapp/light": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "eslint": "^9.17.0",
+    "playwright": "^1.58.2",
+    "tsc-ts": "0.0.5",
+    "typescript": "^6.0.3"
+  },
+  "bootstrapp": {
+    "check": {
+      "from": [
+        "bootstrapp",
+        "@bootstrapp/check"
+      ],
+      "ignore": [
+        "website/",
+        "packages/light/"
+      ],
+      "rules": {
+        "view/no-raw-localstorage": "off",
+        "light/no-any": "error",
+        "light/declare-instance-surface": "error"
+      },
+      "noAny": {}
+    }
+  }
+}

@@ -211,7 +211,7 @@ A component library needs a few things from the page it runs on. Light holds the
 
 ## The repository
 
-This repository is the package: `pnpm install` once, `pnpm test` runs the node tests and then `light test` over the browser ones, `pnpm verify` runs the lint, the typecheck, `light check` and the tests, and passes only at zero errors. `components/` is the component library, `locales/` the words it draws, `examples/` whole pages built on light alone (`npx light serve` serves the repository with the core's TypeScript stripped as it goes out; open `/examples/…`), and `website/` the catalogue site (a Bootstrapp app, left out of the published package). The Bootstrapp monorepo consumes this repository in place: its `light/` is a symlink to a checkout beside it, and its `projects/light` one to `website/`.
+The package is `packages/light` in the light repository, whose root README has the layout and the gates. `pnpm install` once at the repository's root; in this folder, `pnpm test` runs the node tests and then `light test` over the browser ones, and `pnpm verify` the package's typechecks, `light check`, the tests and the native gates, passing only at zero errors. `components/` is the component library and `locales/` the words it draws.
 
 ## Testing
 
@@ -248,7 +248,6 @@ One engine, three hosts. The renderer and the view core never touch a document: 
 | `native/` | Light as a native binary: what every native target shares, the scriptc resolution, the parity runner, the coverage gate, the compiler probes (`native/README.md`) |
 | `native/tui/` | The terminal target, `@bootstrapp/light/native/tui`: a node tree, layout, paint, a screen diff, key input, an editor, `View` on it and `runApp` |
 | `native/desktop/` | The desktop shell: a native backend, a web view, a typed bridge; the shim over webview, the build tool, the demo and its gates |
-| `packages/` | Workspace packages native apps of a kind share: `native/` for any native app, `tui/` for terminal apps, and `light-native`, their tooling (`packages/README.md`) |
 | `env/`, `navigation/` | The page's environment and the host's router, as components read them |
 | `controller/` | Controllers, the sync binding and its registries, the storage, document and hash adapters, `resource()`, the component sync plugin |
 | `model/` | Models: `defineModel` and the api, the store and its write pipeline, the storage SPI, the IndexedDB adapter, the binding of a property to a live query |

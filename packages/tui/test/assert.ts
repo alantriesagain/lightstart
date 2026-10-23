@@ -1,5 +1,5 @@
 /**
- * @file The checks a member's test uses: light's own (`native/assert.ts`), which print "ok <name>"
+ * @file The checks a member's test uses: light's own (`packages/light/native/assert.ts`), which print "ok <name>"
  * or "FAIL <name>" and end with a tally, the same under `node` and `scriptc run`; `budget` scales a
  * speed check's time for the build being tested.
  */

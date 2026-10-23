@@ -135,7 +135,8 @@ const readPackage = (dir) => {
 };
 
 /**
- * Every member, light's linked packages included, packages first, each group by folder.
+ * Every member but light itself (`@bootstrapp/light`, not a native package), light's linked packages
+ * included, packages first, each group by folder.
  * @param {string} root
  * @returns {Member[]}
  */
@@ -154,7 +155,7 @@ export const allMembers = (root) => {
     for (const dir of dirs) {
       if (!statSync(dir).isDirectory()) continue;
       const pkg = readPackage(dir);
-      if (pkg === null) continue;
+      if (pkg === null || pkg.name === "@bootstrapp/light") continue;
       const label = relative(root, dir);
       out.push(new Member(String(pkg.name ?? basename(dir)), dir, basename(dirname(dir)) === "apps" ? "apps" : "packages", pkg, label, !label.startsWith("light/")));
     }

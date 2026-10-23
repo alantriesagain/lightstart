@@ -29,13 +29,10 @@
     "**/*.ts"
   ],
   "exclude": [
-    "benchmarks",
     "node_modules",
     "native/desktop/out",
     "native/probes/out",
-    "packages",
     "dist",
-    "website",
     "**/*.test.js",
     "**/*.browser.test.js"
   ]

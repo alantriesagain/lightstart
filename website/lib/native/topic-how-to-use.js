@@ -32,6 +32,10 @@ export default {
       title: "Commands",
       blocks: [
         {
+          kind: "text",
+          text: "In a checkout of light, from `packages/light`; `npm run coverage:tasks` and `npm run verify` run from the repository's root, where `verify` covers the package and the rest of the repository.",
+        },
+        {
           kind: "table",
           columns: [
             { name: "command", label: "Command", code: true },

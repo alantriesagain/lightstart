@@ -7,6 +7,28 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@bootstrapp/light':
+        specifier: workspace:*
+        version: link:packages/light
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.5
+      playwright:
+        specifier: ^1.58.2
+        version: 1.64.0
+      tsc-ts:
+        specifier: 0.0.5
+        version: 0.0.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/light:
     devDependencies:
       '@stylistic/eslint-plugin':
         specifier: ^2.13.0
@@ -43,7 +65,7 @@ importers:
     dependencies:
       '@bootstrapp/light':
         specifier: workspace:*
-        version: link:../../..
+        version: link:../../light
     devDependencies:
       '@types/node':
         specifier: ^26.6.5
@@ -71,7 +93,7 @@ importers:
     dependencies:
       '@bootstrapp/light':
         specifier: workspace:*
-        version: link:../../..
+        version: link:../../light
       '@light/lib':
         specifier: workspace:*
         version: link:../lib
@@ -87,7 +109,7 @@ importers:
     dependencies:
       '@bootstrapp/light':
         specifier: workspace:*
-        version: link:../../..
+        version: link:../../light
       '@light/lib':
         specifier: workspace:*
         version: link:../lib
@@ -107,7 +129,7 @@ importers:
     devDependencies:
       '@bootstrapp/light':
         specifier: workspace:*
-        version: link:../../..
+        version: link:../../light
       '@light/test':
         specifier: workspace:*
         version: link:../test
@@ -119,7 +141,7 @@ importers:
     dependencies:
       '@bootstrapp/light':
         specifier: workspace:*
-        version: link:../../..
+        version: link:../../light
       '@light/highlight':
         specifier: workspace:*
         version: link:../../native/highlight
@@ -138,7 +160,7 @@ importers:
     dependencies:
       '@bootstrapp/light':
         specifier: workspace:*
-        version: link:../../..
+        version: link:../../light
     devDependencies:
       '@types/node':
         specifier: ^26.6.5
@@ -148,7 +170,7 @@ importers:
     dependencies:
       '@bootstrapp/light':
         specifier: workspace:*
-        version: link:../../..
+        version: link:../../light
       '@light/lib':
         specifier: workspace:*
         version: link:../../native/lib

@@ -4,7 +4,7 @@ dist/
 .bootstrapp/
 .bootstrapp.json
 .deployed/
-native/desktop/out/
+packages/light/native/desktop/out/
 benchmarks/noise.local.json
 **/native/out/
 .scriptc/

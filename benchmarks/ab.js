@@ -8,7 +8,7 @@
  *
  * The base is checked out in /tmp/light-ab-<sha>, outside any folder an editor
  * watches, with this tree's node_modules linked in. Native binaries are built
- * in both trees with the same scriptc (`$SCRIPTC`, as `native/scriptc.js`
+ * in both trees with the same scriptc (`$SCRIPTC`, as `packages/light/native/scriptc.js`
  * resolves it). Each round runs every suite once per tree, in ABBA order, each
  * run a fresh process or page; a first round warms the machine and is dropped.
  * For each step the report gives the candidate/base ratio: the median of the
@@ -21,10 +21,11 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSy
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { scriptcPath } from "../native/scriptc.js";
+import { scriptcPath } from "../packages/light/native/scriptc.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CANDIDATE = join(HERE, "..");
+const PACKAGE = join("packages", "light");
 const NOISE_FILE = join(HERE, "noise.local.json");
 const NATIVE_SUITES = { bench: "native/tui/bench.js", microbench: "native/tui/microbench.js", elements: "native/tui/elements-bench.js" };
 const PAGES = ["rows-view", "rows-components", "rows-html", "rows-thunks", "cascade", "reflect"];
@@ -57,7 +58,10 @@ const checkoutBaseWithModules = () => {
   const sha = execFileSync("git", ["rev-parse", "--verify", `${baseRef}^{commit}`], { cwd: CANDIDATE, encoding: "utf8" }).trim();
   const dir = join(tmpdir(), `light-ab-${sha.slice(0, 12)}`);
   if (!existsSync(dir)) execFileSync("git", ["worktree", "add", "--detach", dir, sha], { cwd: CANDIDATE, stdio: "ignore" });
-  if (!existsSync(join(dir, "node_modules"))) symlinkSync(join(CANDIDATE, "node_modules"), join(dir, "node_modules"));
+  const links = existsSync(join(dir, PACKAGE, "package.json"))
+    ? [["node_modules", "node_modules"], [join(PACKAGE, "node_modules"), join(PACKAGE, "node_modules")]]
+    : [[join(PACKAGE, "node_modules"), "node_modules"]];
+  for (const [from, to] of links) if (!existsSync(join(dir, to))) symlinkSync(join(CANDIDATE, from), join(dir, to));
   return { dir, sha: sha.slice(0, 12) };
 };
 
@@ -72,7 +76,7 @@ const stepsOf = (output) =>
 
 const base = checkoutBaseWithModules();
 const trees = aa ? { base: base.dir, candidate: base.dir } : { base: base.dir, candidate: CANDIDATE };
-const scriptc = scriptcPath(CANDIDATE);
+const scriptc = scriptcPath(join(CANDIDATE, PACKAGE));
 const out = mkdtempSync(join(tmpdir(), "light-ab-bin-"));
 
 /** Samples per key `suite/engine/step`, per tree. @type {Map<string, { base: number[], candidate: number[] }>} */
@@ -87,29 +91,35 @@ const record = (key, tree, ms) => {
 const order = (round) => (round % 2 === 0 ? ["base", "candidate"] : ["candidate", "base"]);
 
 const nativeSuites = suites.filter((suite) => suite in NATIVE_SUITES);
+/**
+ * A suite's entry in `tree`: under packages/light, or at the root in a base from before the package moved there.
+ * @param {string} suite @param {string} tree
+ */
+const entryIn = (suite, tree) => {
+  const file = NATIVE_SUITES[/** @type {keyof typeof NATIVE_SUITES} */ (suite)];
+  return existsSync(join(tree, PACKAGE, file)) ? join(PACKAGE, file) : file;
+};
 /** @type {Record<string, Record<"base" | "candidate", string>>} */
 const binaries = {};
 for (const suite of nativeSuites) {
-  const entry = NATIVE_SUITES[/** @type {keyof typeof NATIVE_SUITES} */ (suite)];
   binaries[suite] = { base: join(out, `base-${suite}`), candidate: join(out, `candidate-${suite}`) };
   for (const tree of /** @type {const} */ (["base", "candidate"]))
     if (aa && tree === "candidate") binaries[suite].candidate = binaries[suite].base;
-    else run(scriptc, ["build", entry, "-o", binaries[suite][tree], "--strip"], trees[tree]);
+    else run(scriptc, ["build", entryIn(suite, trees[tree]), "-o", binaries[suite][tree], "--strip"], trees[tree]);
 
   console.error(`built ${suite} in both trees`);
 }
 
 for (let round = 0; round <= rounds; round++) {
-  for (const suite of nativeSuites) {
-    const entry = NATIVE_SUITES[/** @type {keyof typeof NATIVE_SUITES} */ (suite)];
+  for (const suite of nativeSuites)
     for (const tree of order(round)) {
-      const node = stepsOf(run(process.execPath, [entry], trees[tree]));
+      const node = stepsOf(run(process.execPath, [entryIn(suite, trees[tree])], trees[tree]));
       const native = stepsOf(run(binaries[suite][tree], [], trees[tree]));
       if (round === 0) continue;
       for (const [step, ms] of node) record(`${suite}/node/${step}`, tree, ms);
       for (const [step, ms] of native) record(`${suite}/native/${step}`, tree, ms);
     }
-  }
+
   if (round > 0) console.error(`round ${round}/${rounds}`);
 }
 

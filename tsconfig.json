@@ -1,0 +1,13 @@
+{
+  "extends": "./packages/light/tsconfig.json",
+  "include": [
+    "examples/**/*.js",
+    "examples/**/*.ts",
+    "eslint.config.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.test.js",
+    "**/*.browser.test.js"
+  ]
+}

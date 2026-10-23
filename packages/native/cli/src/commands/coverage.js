@@ -2,7 +2,7 @@
  * @file `light-native coverage [member…] [--jobs N] [--apps]`: scriptc's static coverage of every app
  * entry (with its `native.ffi` manifest) and, unless --apps, of every test (with its `// ffi:`
  * manifest; node-only tests left out), read from scriptc's JSON report through light's
- * `native/diagnostics.js` gate: each must compile fully statically, with no blocker, slow path,
+ * `packages/light/native/diagnostics.js` gate: each must compile fully statically, with no blocker, slow path,
  * divergence from node, deferred or unreached site. The entries are analysed $JOBS at a time
  * (default 4); results print in order.
  */

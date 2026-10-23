@@ -32,7 +32,7 @@ export const run = async (args, root) => {
     const flags = ["build", entry, "--out", out, "--name", binary];
     if (typeof app.config.web === "string") flags.push("--web", app.config.web);
     for (const pkg of app.config.npmStatic ?? []) flags.push("--npm-static", pkg);
-    const code = await exec("node", [join(LIGHT, "native", "desktop", "build.js"), ...flags], { cwd: app.dir });
+    const code = await exec("node", [join(LIGHT, "packages", "light", "native", "desktop", "build.js"), ...flags], { cwd: app.dir });
     if (code !== 0) throw new Error(app.name + ": the desktop build failed");
   }
   const log = process.env["NATIVE_LOG"] ?? join("/tmp", binary + ".log");

@@ -2,10 +2,10 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { stage } from "../scripts/pack.js";
+import { stage } from "../packages/light/scripts/pack.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(HERE, "..");
+const ROOT = path.resolve(HERE, "..", "packages", "light");
 const PAGES = path.join(HERE, "pages");
 const TYPES = { ".js": "text/javascript", ".html": "text/html", ".json": "application/json", ".css": "text/css" };
 
