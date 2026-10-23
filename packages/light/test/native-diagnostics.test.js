@@ -68,6 +68,25 @@ describe("the native coverage gate", () => {
     assert.equal(gate(coverage, { allowDynamic: true }).pass, true);
   });
 
+  it("passes blockers in unreached code only when unreached code is allowed", () => {
+    const unreached = diagnostic({ scope: "unreached", code: "SC2009", group: "SC2009-ffff" });
+    const coverage = classify(report([unreached], { static: 87, failed: 13 }));
+    assert.deepEqual(gate(coverage).failures, [unreached]);
+    assert.equal(gate(coverage).pass, false);
+    assert.equal(gate(coverage, { allowUnreached: true }).pass, true);
+    const reached = classify(report([diagnostic({})], { static: 90, failed: 10 }));
+    assert.equal(gate(reached, { allowUnreached: true }).pass, false);
+  });
+
+  it("notes an untyped hot function (SC6101) and passes", () => {
+    const hot = diagnostic({ code: "SC6101", category: "performance", severity: "warning", message: "1 function that likely runs often uses untyped values", group: "SC6101-eeee" });
+    const coverage = classify(report([hot]));
+    assert.deepEqual(coverage.performance, [hot]);
+    assert.deepEqual(coverage.blockers, []);
+    assert.equal(gate(coverage).pass, true);
+    assert.deepEqual(gate(coverage).notes, ["SC6101 1 function that likely runs often uses untyped values"]);
+  });
+
   it("fails on a divergence unless its group is allowed, and notes an allowed group no longer reported", () => {
     const coverage = classify(report([divergence]));
     assert.equal(gate(coverage).pass, false);

@@ -28,7 +28,7 @@ SCRIPTC=/path/to/scriptc npm run verify
 
 `native/scriptc.js` resolves the compiler for every tool, `light-native` included: `$SCRIPTC`, else the fork's `scriptc-dev` on `PATH`, else the scriptc in the workspace's `node_modules`, else the one on `PATH`. `light desktop build` and `native/tui/pty.sh` follow it too.
 
-The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on any write that makes methods replaceable (a computed key that can be any string, a reflective write), which would make every method call in the program dispatch dynamically and several times slower while the build still reports "fully static". The report names the write and how to avoid it.
+The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on any write that makes methods replaceable (a computed key that can be any string, a reflective write), which would make every method call in the program dispatch dynamically and several times slower while the build still reports "fully static". The report names the write and how to avoid it. scriptc's SC6101 warning, a function that likely runs often and works on untyped values (an `any`, an untyped `JSON.parse` result, an untyped JavaScript file), is printed as a note: the warning guesses which functions are hot, and data parsed from outside stays `unknown` on purpose.
 
 | File | What it owns |
 |---|---|

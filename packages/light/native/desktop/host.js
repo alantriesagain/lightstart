@@ -191,13 +191,14 @@ export class DesktopApp {
    * @param {string} req
    */
   dispatchCall(id, req) {
-    const parsed = JSON.parse(req);
+    const parsed = /** @type {unknown} */ (JSON.parse(req));
     if (!Array.isArray(parsed) || parsed.length !== 2 || typeof parsed[0] !== "string" || !Array.isArray(parsed[1])) {
       this.reply(id, false, "bad request");
       return;
     }
-    const method = parsed[0];
-    const args = parsed[1];
+    const call = /** @type {unknown[]} */ (parsed);
+    const method = /** @type {string} */ (call[0]);
+    const args = /** @type {unknown[]} */ (call[1]);
     if (method === "$ready") {
       this.ready = true;
       const onConnect = this.onConnect;

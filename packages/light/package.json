@@ -120,8 +120,8 @@
     "globals": "^15.14.0",
     "marked": "^18.1.0",
     "playwright": "^1.58.2",
-    "scriptc": "0.4.1",
-    "tsc-ts": "0.0.5",
+    "scriptc": "0.4.2",
+    "tsc-ts": "0.0.8",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {

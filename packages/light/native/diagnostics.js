@@ -1,6 +1,7 @@
 /**
  * @file scriptc's coverage, read from its JSON report (`--print=diagnostics`) rather than its
- * text: every blocker, slow path, divergence from node, deferred and unreached site, with its
+ * text: every blocker, slow path, divergence from node, untyped hot function (SC6101), deferred
+ * and unreached site, with its
  * file, line, column and hint. `classify` and `gate` are pure, so a test drives them with saved
  * reports; `readCoverage` runs scriptc. The coverage gates and the probe runner share it.
  */
@@ -39,6 +40,7 @@ import { relative } from "node:path";
  * @property {Diagnostic[]} blockers code the entry reaches that does not compile
  * @property {Diagnostic[]} slowPaths code that compiles and behaves like node, but slower
  * @property {Diagnostic[]} divergences code that compiles but behaves differently from node
+ * @property {Diagnostic[]} performance functions that likely run often and use untyped values (SC6101)
  * @property {Diagnostic[]} deferred JavaScript statements compiled to a throw if they run
  * @property {Diagnostic[]} unreached blockers in code the entry never reaches
  * @property {boolean} fullyStatic every analyzed statement compiles statically
@@ -58,6 +60,7 @@ export const classify = (envelope) => {
     envelope,
     slowPaths: all.filter((d) => d.category === "slow-path"),
     divergences: all.filter((d) => d.category === "divergence"),
+    performance: all.filter((d) => d.category === "performance"),
     deferred: all.filter((d) => d.scope === "deferred"),
     unreached: all.filter((d) => d.scope === "unreached"),
     blockers: all.filter((d) => (d.scope === "reached" || d.scope === "preflight") && d.severity === "error" && d.category !== "slow-path" && d.category !== "divergence"),
@@ -68,6 +71,7 @@ export const classify = (envelope) => {
 /**
  * @typedef {object} GateOptions
  * @property {boolean} [allowDynamic] deferred and unreached sites, and a statically compiled share under 100%, pass
+ * @property {boolean} [allowUnreached] blockers in code the entry never reaches pass, as scriptc's own `--fail-on` lets them, and so does the share they leave uncompiled: a test compiles a slice of its packages, whose unreached code the programs that reach it answer for
  * @property {Record<string, string>} [divergences] divergence groups that pass, by group id, with the reason
  * @property {{ failed: number, deferred: number }} [baseline] counts that may go down but never up
  */
@@ -81,7 +85,9 @@ export const classify = (envelope) => {
 
 /**
  * What fails the gate: blockers, slow paths, divergences not in the allowlist, and, unless
- * dynamic code is allowed, deferred and unreached sites. With a baseline, the failed and deferred
+ * dynamic code is allowed, deferred and unreached sites. An untyped hot function (SC6101) is a
+ * note: the warning guesses which functions run often, and data parsed from outside stays
+ * `unknown` on purpose. With a baseline, the failed and deferred
  * counts may not grow.
  * @param {Coverage} coverage
  * @param {GateOptions} [options]
@@ -91,12 +97,13 @@ export const gate = (coverage, options = {}) => {
   const allowed = options.divergences ?? {};
   /** @type {Diagnostic[]} */
   const failures = [...coverage.blockers, ...coverage.slowPaths, ...coverage.divergences.filter((d) => !(d.group in allowed))];
-  if (!options.allowDynamic) failures.push(...coverage.deferred, ...coverage.unreached);
+  if (!options.allowDynamic) failures.push(...coverage.deferred, ...(options.allowUnreached ? [] : coverage.unreached));
   /** @type {string[]} */
   const notes = [];
   const seen = new Set(coverage.divergences.map((d) => d.group));
   for (const group of Object.keys(allowed)) if (!seen.has(group)) notes.push(`divergence ${group} is allowed but no longer reported: remove it from the allowlist`);
-  let pass = failures.length === 0 && (options.allowDynamic === true || coverage.fullyStatic);
+  for (const d of coverage.performance) notes.push(`${d.code} ${d.message}`);
+  let pass = failures.length === 0 && (options.allowDynamic === true || coverage.fullyStatic || (options.allowUnreached === true && coverage.unreached.length > 0));
   const failed = coverage.envelope.stats?.statementsFailed ?? 0;
   if (options.baseline) {
     if (failed > options.baseline.failed || coverage.deferred.length > options.baseline.deferred) pass = false;

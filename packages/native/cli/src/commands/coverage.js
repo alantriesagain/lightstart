@@ -3,8 +3,9 @@
  * entry (with its `native.ffi` manifest) and, unless --apps, of every test (with its `// ffi:`
  * manifest; node-only tests left out), read from scriptc's JSON report through light's
  * `packages/light/native/diagnostics.js` gate: each must compile fully statically, with no blocker, slow path,
- * divergence from node, deferred or unreached site. The entries are analysed $JOBS at a time
- * (default 4); results print in order.
+ * divergence from node, deferred site, or, in an app's entry, unreached site (a test compiles a
+ * slice of its packages, whose unreached code the apps answer for). The apps' notes (SC6101) print
+ * after the entries. The entries are analysed $JOBS at a time (default 4); results print in order.
  */
 import { join, relative } from "node:path";
 import { formatDiagnostic, gate, parseCoverage } from "@bootstrapp/light/native/diagnostics.js";
@@ -22,16 +23,20 @@ class Entry {
   path;
   /** @type {string | null} */
   manifest;
+  /** Whether it is a test, which compiles a slice of its packages, rather than an app's entry. @type {boolean} */
+  test;
 
   /**
    * @param {Member} member
    * @param {string} path
    * @param {string | null} manifest
+   * @param {boolean} test
    */
-  constructor(member, path, manifest) {
+  constructor(member, path, manifest, test) {
     this.member = member;
     this.path = path;
     this.manifest = manifest;
+    this.test = test;
   }
 }
 
@@ -48,14 +53,14 @@ const entriesOf = (_root, targets, appsOnly) => {
   for (const app of targets.filter((m) => m.group === "apps")) {
     if (typeof app.config.entry !== "string") continue;
     if (app.config.coverage === false) continue;
-    out.push(new Entry(app, join(app.dir, app.config.entry), typeof app.config.ffi === "string" ? resolveFfi(app, app.config.ffi) : null));
+    out.push(new Entry(app, join(app.dir, app.config.entry), typeof app.config.ffi === "string" ? resolveFfi(app, app.config.ffi) : null, false));
   }
   if (appsOnly) return out;
   for (const m of targets)
     for (const t of testsOf(m)) {
       if (nodeOnly(t.path)) continue;
       const header = ffiHeader(t.path);
-      out.push(new Entry(m, t.path, header === null ? null : resolveFfi(m, header)));
+      out.push(new Entry(m, t.path, header === null ? null : resolveFfi(m, header), true));
     }
   return out;
 };
@@ -80,6 +85,9 @@ export const run = async (args, root) => {
     return captureStreams(scriptc, flags, { cwd: e.member.dir });
   });
   let status = 0;
+  /** @type {Set<string>} */
+  const notes = new Set();
+  let notedTests = 0;
   for (let i = 0; i < entries.length; i++) {
     const label = relative(root, entries[i].path);
     const r = results[i];
@@ -91,7 +99,9 @@ export const run = async (args, root) => {
       console.log("NOT STATIC: " + label + "\n" + (error instanceof Error ? error.message : String(error)));
       continue;
     }
-    const verdict = gate(coverage);
+    const verdict = gate(coverage, { allowUnreached: entries[i].test });
+    if (!entries[i].test) for (const note of verdict.notes) notes.add(note);
+    else if (verdict.notes.length > 0) notedTests++;
     const stats = coverage.envelope.stats;
     const statements = stats === undefined ? "" : " (" + String(stats.statementsStatic) + "/" + String(stats.statementsTotal) + " statements)";
     if (verdict.pass && coverage.status === 0) {
@@ -104,6 +114,8 @@ export const run = async (args, root) => {
     if (verdict.failures.length > 40) console.log("  … " + String(verdict.failures.length - 40) + " more");
     if (verdict.failures.length === 0) console.log(r.stderr.split("\n").slice(-20).join("\n"));
   }
+  for (const note of notes) console.log("note: " + note);
+  if (notedTests > 0) console.log("note: " + String(notedTests) + " test" + (notedTests === 1 ? "" : "s") + " also noted (SC6101 for the code they compile)");
   console.log(String(entries.length) + " entries in " + String(Math.round((Date.now() - start) / 1000)) + " s, " + String(jobs) + " at a time");
   return status;
 };

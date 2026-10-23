@@ -63,7 +63,7 @@ export class AssetServer {
 const importMapTag = (webDir, prefix) => {
   const file = join(webDir, "importmap.json");
   if (!existsSync(file)) return "";
-  const parsed = JSON.parse(readFileSync(file, "utf8"));
+  const parsed = /** @type {unknown} */ (JSON.parse(readFileSync(file, "utf8")));
   if (typeof parsed !== "object" || parsed === null) return "";
   const imports = /** @type {{ imports?: unknown }} */ (parsed).imports;
   if (typeof imports !== "object" || imports === null) return "";
