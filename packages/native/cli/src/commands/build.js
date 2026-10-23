@@ -7,7 +7,7 @@ import { basename, dirname, join } from "node:path";
 import { resolveFfi } from "../ffi.js";
 import { prepare } from "../prepare.js";
 import { exec } from "../run.js";
-import { scriptcPath } from "../scriptc.js";
+import { scriptcPath } from "@bootstrapp/light/native/scriptc.js";
 import { Member, memberByName } from "../workspace.js";
 
 /**

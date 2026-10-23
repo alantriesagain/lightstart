@@ -58,14 +58,14 @@ export default {
       blocks: [
         {
           kind: "text",
-          text: "`node:test` is not available in scriptc, so a native test is a plain program. It imports the code it tests from `native/tui/index.ts` and the checks from `native/assert.js`: `ok`, `eq`, `eqn`, `throws` and `done`. Each check prints `ok name` or `FAIL name`, and `done()` ends the test with a non-zero exit code if any check failed. `npm run test:native` runs each test under Node and as an executable and compares the two outputs.",
+          text: "`node:test` is not available in scriptc, so a native test is a plain program. It imports the code it tests from `native/tui/index.ts` and the checks from `native/assert.ts`: `ok`, `eq`, `eqn`, `throws`, `budget` and `done`. Each check prints `ok name` or `FAIL name`, and `done()` prints the tally and makes the exit code non-zero if any check failed. `npm run test:native` runs each test under Node and as an executable and compares the two outputs.",
         },
         {
           kind: "code",
           title: "A native test, shortened from native/tui/parts.test.js",
           language: "js",
-          code: `import { TRoot, childNodes, dumpTree, render, textOf, TRun } from "./index.js";
-import { done, eq, ok } from "./assert.js";
+          code: `import { TRoot, childNodes, dumpTree, render, textOf, TRun } from "./index.ts";
+import { done, eq, ok } from "../assert.ts";
 
 {
   const root = new TRoot();

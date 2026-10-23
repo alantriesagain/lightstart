@@ -13,6 +13,9 @@
   "native": {
     "tooling": true
   },
+  "dependencies": {
+    "@bootstrapp/light": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^26.6.5"
   }

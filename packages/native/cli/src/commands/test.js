@@ -13,7 +13,7 @@ import { basename, join, relative } from "node:path";
 import { ffiHeader, nodeOnly, nodePreload, resolveFfi } from "../ffi.js";
 import { prepare } from "../prepare.js";
 import { capture, pool } from "../run.js";
-import { scriptcPath } from "../scriptc.js";
+import { scriptcPath } from "@bootstrapp/light/native/scriptc.js";
 import { Member, memberByName, members } from "../workspace.js";
 
 export class TestFile {

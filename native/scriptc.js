@@ -1,20 +1,21 @@
 /**
- * @file Which scriptc light's native tools run: the executable named by
- * `$SCRIPTC` when it is set, else the one installed in light's
- * `node_modules`. Light's TypeScript sources keep `unknown`-typed class
- * fields, which need a scriptc built with that support (see
- * `native/README.md`), so `SCRIPTC` points at such a build until a release
- * carries it.
+ * @file Which scriptc the native tools run, light's and `light-native`'s alike: the executable
+ * named by `$SCRIPTC` when it is set, else the fork's `scriptc-dev` on `PATH`, else the scriptc
+ * installed in the given folder's `node_modules`, else the one on `PATH`. Light's TypeScript core
+ * needs patches no release carries yet (`native/README.md`, "Which scriptc"), so the fork comes
+ * before a release.
  */
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 
 /**
- * @param {string} light light's directory
+ * @param {string} root the folder whose `node_modules` may hold scriptc
  * @returns {string}
  */
-export const scriptcPath = (light) => {
-  if (process.env.SCRIPTC) return process.env.SCRIPTC;
-  const local = join(light, "node_modules", ".bin", "scriptc");
+export const scriptcPath = (root) => {
+  const named = process.env.SCRIPTC;
+  if (named !== undefined && named.length > 0) return named;
+  for (const dir of (process.env.PATH ?? "").split(delimiter)) if (dir.length > 0 && existsSync(join(dir, "scriptc-dev"))) return join(dir, "scriptc-dev");
+  const local = join(root, "node_modules", ".bin", "scriptc");
   return existsSync(local) ? local : "scriptc";
 };

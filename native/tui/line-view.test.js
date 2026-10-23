@@ -7,7 +7,7 @@
  * spinner's frame.
  */
 import { Caret, Clip, DEFAULT_STYLE, Line, MouseEvent, SPINNER, Screen, TElement, TRoot, Thumb, WheelEvent, barCell, copyRows, frames, hitTest, layout, mount, paint, selectRuns, sliceCells, thumbOf, topAt } from "./index.ts";
-import { done, eq, ok } from "../assert.js";
+import { done, eq, ok } from "../assert.ts";
 import { Holder, Numbers, Rows } from "./test-lines.ts";
 
 eq("every line fits: no thumb", String(thumbOf(10, 10, 0).length), "0");

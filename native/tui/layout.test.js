@@ -1,5 +1,5 @@
 import { Caret, Clip, DEFAULT_STYLE, Screen, Style, TBox, TInput, TRoot, TRun, TRUECOLOR_FLAG, TText, createElement, diffScreens, forgetLayout, layout, measure, paint, scrollStateOf, sgrTransition } from "./index.ts";
-import { done, eq, eqn, ok } from "../assert.js";
+import { done, eq, eqn, ok } from "../assert.ts";
 
 /** @param {string} s */
 const text = (s) => {

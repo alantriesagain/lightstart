@@ -57,6 +57,47 @@ export const capture = (cmd, args, opts = {}) =>
     });
   });
 
+/** A finished run's exit code and its two streams apart. */
+export class Streams {
+  /** @type {number} */
+  code;
+  /** @type {string} */
+  stdout;
+  /** @type {string} */
+  stderr;
+
+  /**
+   * @param {number} code
+   * @param {string} stdout
+   * @param {string} stderr
+   */
+  constructor(code, stdout, stderr) {
+    this.code = code;
+    this.stdout = stdout;
+    this.stderr = stderr;
+  }
+}
+
+/**
+ * Run `cmd` to its end with its output gathered, stdout and stderr kept apart.
+ * @param {string} cmd
+ * @param {string[]} args
+ * @param {{ cwd?: string }} [opts]
+ * @returns {Promise<Streams>}
+ */
+export const captureStreams = (cmd, args, opts = {}) =>
+  new Promise((resolvePromise) => {
+    const child = spawn(cmd, args, { cwd: opts.cwd, stdio: ["ignore", "pipe", "pipe"] });
+    /** @type {Buffer[]} */
+    const out = [];
+    /** @type {Buffer[]} */
+    const err = [];
+    child.stdout.on("data", (c) => out.push(c));
+    child.stderr.on("data", (c) => err.push(c));
+    child.on("error", (error) => resolvePromise(new Streams(127, "", error.message + "\n")));
+    child.on("close", (code) => resolvePromise(new Streams(code ?? 1, Buffer.concat(out).toString("utf8"), Buffer.concat(err).toString("utf8"))));
+  });
+
 /**
  * Run `cmd` with the terminal as its streams; answers its exit code.
  * @param {string} cmd

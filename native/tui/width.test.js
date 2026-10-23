@@ -1,5 +1,5 @@
 import { DEFAULT_STYLE, InlineRun, graphemeWidth, graphemes, lineText, stringWidth, wrapRuns } from "./index.ts";
-import { done, eq, eqn } from "../assert.js";
+import { done, eq, eqn } from "../assert.ts";
 
 eq("ascii graphemes", graphemes("ab c").join("|"), "a|b| |c");
 eqn("combining mark is one grapheme", graphemes("éx").length, 2);

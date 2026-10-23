@@ -1,5 +1,5 @@
 import { ATTR_INVERSE, DEFAULT_STYLE, FocusEvent, KeyEvent, MouseEvent, Renderer, TBox, TElement, TInput, TRoot, WheelEvent, childNodes, focusables, frames, hitTest, html, layout, nextFocusable, render, scrollBoxOf } from "./index.ts";
-import { done, eq, eqn, ok } from "../assert.js";
+import { done, eq, eqn, ok } from "../assert.ts";
 import { TestTerminal } from "./test-terminal.ts";
 
 /** @type {string[]} */

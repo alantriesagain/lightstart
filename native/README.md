@@ -26,16 +26,16 @@ Light's core is TypeScript (`html/`, `signals/`, `view/core.ts`, `native/tui/`, 
 SCRIPTC=/path/to/scriptc npm run verify
 ```
 
-`native/scriptc.js` resolves the compiler for every tool: `$SCRIPTC`, else the scriptc in light's `node_modules`, else the one on `PATH`. `light desktop build` and `native/tui/pty.sh` follow it too.
+`native/scriptc.js` resolves the compiler for every tool, `light-native` included: `$SCRIPTC`, else the fork's `scriptc-dev` on `PATH`, else the scriptc in the workspace's `node_modules`, else the one on `PATH`. `light desktop build` and `native/tui/pty.sh` follow it too.
 
 The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on any write that makes methods replaceable (a computed key that can be any string, a reflective write), which would make every method call in the program dispatch dynamically and several times slower while the build still reports "fully static". The report names the write and how to avoid it.
 
 | File | What it owns |
 |---|---|
-| `assert.js` | `ok`, `eq`, `eqn`, `throws`, `done`: the checks a native test uses, since node:test does not run under scriptc |
+| `assert.ts` | `ok`, `eq`, `eqn`, `throws`, `budget`, `done`: the checks a native test uses, light's and its packages' (`@light/test` re-exports them), since node:test does not run under scriptc |
 | `run.js` | The parity runner `npm run test:native` runs: every `*.test.js` of a target's folder under node and under `scriptc run` |
 | `coverage.js`, `diagnostics.js`, `coverage-baseline.json` | The coverage gate `npm run verify` runs, over `native/tui/index.ts` and, with `--allow-dynamic`, the tasks app's entry; the reading of scriptc's JSON report it shares with the desktop gate and the probes; the counts the tasks graph may only lower |
-| `scriptc.js` | Which scriptc the native tools run (`$SCRIPTC` first) |
+| `scriptc.js` | Which scriptc the native tools and `light-native` run (`$SCRIPTC`, then the fork's `scriptc-dev`) |
 | `probes/` | One-file programs that pin what the compiler accepts, and the decisions they produced (`probes/README.md`) |
 | `tui/`, `desktop/` | The targets |
 

@@ -128,7 +128,20 @@ export const readCoverage = (scriptc, entry, options) => {
     maxBuffer: 64 * 1024 * 1024,
   });
   if (r.error) throw r.error;
-  const start = (r.stdout ?? "").indexOf("{");
-  if (start < 0) throw new Error(`scriptc coverage ${entry} printed no report (exit ${r.status})\n${r.stderr}`);
-  return { ...classify(/** @type {Envelope} */ (JSON.parse(r.stdout.slice(start)))), status: r.status ?? -1 };
+  return parseCoverage(r.stdout ?? "", entry, r.status ?? -1, r.stderr ?? "");
+};
+
+/**
+ * The report a `scriptc coverage --print=diagnostics` run printed, classified: for a caller that
+ * runs scriptc itself, several at a time.
+ * @param {string} stdout what the run printed on stdout
+ * @param {string} entry the program's entry, for the error when there is no report
+ * @param {number} status the run's exit code
+ * @param {string} stderr what it printed on stderr, for that error
+ * @returns {Coverage & { status: number }}
+ */
+export const parseCoverage = (stdout, entry, status, stderr) => {
+  const start = stdout.indexOf("{");
+  if (start < 0) throw new Error(`scriptc coverage ${entry} printed no report (exit ${status})\n${stderr}`);
+  return { ...classify(/** @type {Envelope} */ (JSON.parse(stdout.slice(start)))), status };
 };

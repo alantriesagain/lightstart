@@ -40,6 +40,10 @@ importers:
         version: 6.0.3
 
   packages/native/cli:
+    dependencies:
+      '@bootstrapp/light':
+        specifier: workspace:*
+        version: link:../../..
     devDependencies:
       '@types/node':
         specifier: ^26.6.5

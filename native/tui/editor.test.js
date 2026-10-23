@@ -1,6 +1,6 @@
 import { EventBinding } from "../../html/parts.ts";
 import { ChangeEvent, KeyEvent, SubmitEvent, TInput, deleteWord, editorHandleKey, killToEnd, killToStart, lineEnd, lineStart, moveRow, newline, setValue, wordLeft } from "./index.ts";
-import { done, eq, eqn, ok } from "../assert.js";
+import { done, eq, eqn, ok } from "../assert.ts";
 
 /**
  * @param {string} name

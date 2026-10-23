@@ -11,7 +11,7 @@
 import { ATTR_BOLD, ATTR_STRIKE, TInput, TRUECOLOR_FLAG, frames, runApp } from "@bootstrapp/light/native/tui";
 import { BakedClasses } from "@bootstrapp/light/theme/baked";
 import { openJsonl } from "@bootstrapp/light/model/jsonl";
-import { done, eq, eqn, ok } from "../../native/assert.js";
+import { done, eq, eqn, ok } from "../../native/assert.ts";
 import { TestTerminal } from "../../native/tui/test-terminal.ts";
 import boards from "./models/boards.js";
 import tasks from "./models/tasks.js";

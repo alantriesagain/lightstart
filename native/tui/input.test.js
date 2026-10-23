@@ -1,5 +1,5 @@
 import { InputDecoder, KeyEvent } from "./index.ts";
-import { done, eq } from "../assert.js";
+import { done, eq } from "../assert.ts";
 
 /** @type {string[]} */
 const got = [];
