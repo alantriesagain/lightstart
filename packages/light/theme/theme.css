@@ -35,16 +35,6 @@ html {
   -webkit-tap-highlight-color: transparent;
   font-size: var(--canvas-font-size, 16px);
 }
-@media (max-width: 768px) {
-  html {
-    font-size: calc(var(--canvas-font-size, 16px) * 1.125);
-  }
-}
-@media (max-width: 480px) {
-  html {
-    font-size: calc(var(--canvas-font-size, 16px) * 1.25);
-  }
-}
 
 textarea {
   font-family: inherit;

@@ -86,9 +86,10 @@ is right for a palette colour and wrong for a role.
 | `canvas` | `background`, `font-size`, `line-height`, `selection`, `selection-text`, `backdrop`, `scrollbar-width`, `scrollbar-thumb`, `scrollbar-track` | `--canvas-*` |
 
 `canvas.background` is required. The rest are optional: `theme.css` reads each
-with today's default as its fallback (`font-size` 16px, scaled ×1.125 under
-768px and ×1.25 under 480px; `line-height` 1.2; the selection tinted from the
-primary colour; a `rgba(0,0,0,.8)` dialog backdrop; a thin grey scrollbar).
+with today's default as its fallback (`font-size` 16px at every viewport, so a
+rem is the same length on a phone as on a desktop; `line-height` 1.2; the
+selection tinted from the primary colour; a `rgba(0,0,0,.8)` dialog backdrop; a
+thin grey scrollbar).
 
 ## Shape tokens
 
