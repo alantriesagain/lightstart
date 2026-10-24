@@ -305,7 +305,6 @@
         "native/desktop/out/"
       ],
       "rules": {
-        "view/no-raw-localstorage": "off",
         "light/no-any": "error",
         "light/declare-instance-surface": "error"
       },

@@ -50,5 +50,5 @@ export default defineController({
 - Small persisted state is a prop bound to `"local"` in the sync block; strings are stored raw, everything else as JSON.
 - Members that are arrays, plain objects, `Map` or `Set` are copied per instance; anything that has to be built per instance (a `WeakMap`, a value read from `$APP`) is declared with a cast and assigned in `connected()`.
 - A timer uses `Date.now()` as its time source and keeps the resumable handle in a prop bound to `"local"` so a reload rebuilds it; the interval id is a member stopped in `this.$own(() => ...)`.
-- The controller is light's (`light/controller/README.md`); `bootstrapp/controller` adds `registerControllers` (`framework/controller/README.md`), and binding to the model is `@bootstrapp/light/model/binder` (`framework/model/README.md`).
+- The controller is light's (`light/packages/light/controller/README.md`); `bootstrapp/controller` adds `registerControllers` (`framework/controller/README.md`), and binding to the model is `@bootstrapp/light/model/binder` (`framework/model/README.md`).
 - Reference: `projects/bboxe/controllers/timer.js` (timer, resumable handle, wake lock), `projects/bboxe/controllers/library.js` (model-bound props), `examples/centavo/controllers/rates.js` (`resource()`).

@@ -13,7 +13,7 @@ user_invocable: true
 Before writing any `docs-*` component, look for a light component to compose:
 
 ```bash
-grep -rhoE 'tag:\s*"lc-[a-z-]+"' light/components
+grep -rhoE 'tag:\s*"lc-[a-z-]+"' light/packages/light/components
 ```
 
 Views are thin: they render controller state and dispatch to controller methods. Never hand-roll a button, input, dialog, list row or stat.
