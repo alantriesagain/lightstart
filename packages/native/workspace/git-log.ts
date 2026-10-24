@@ -13,6 +13,16 @@ import { git } from "./git.read.ts";
 import { LineCount, parseNameStatus, parseNumstat } from "./git-parse.ts";
 export const LOG_MAX = 200;
 
+export class AheadBehind {
+  readonly ahead: number;
+  readonly behind: number;
+
+  constructor(ahead: number, behind: number) {
+    this.ahead = ahead;
+    this.behind = behind;
+  }
+}
+
 export class Branch {
   name = "";
   upstream = "";
@@ -145,6 +155,24 @@ export const readDefaultBranch = async (repo: GitRepo, folder: string): Promise<
 
 /** The commit where HEAD and `ref` part ("" when they share none). */
 export const readMergeBase = async (repo: GitRepo, folder: string, ref: string): Promise<string> => (repo.isRepo ? firstLine(await git(["merge-base", "HEAD", ref], folder, 4096)) : "");
+
+/** How many commits `a` has that `b` lacks (ahead) and the reverse (behind); -1 and -1 when either is unknown. */
+export const readAheadBehind = async (repo: GitRepo, folder: string, a: string, b: string): Promise<AheadBehind> => {
+  if (!repo.isRepo) return new AheadBehind(-1, -1);
+  const line = firstLine(await git(["rev-list", "--left-right", "--count", a + "..." + b], folder, 4096));
+  const parts = line.split(/\s+/);
+  if (parts.length < 2) return new AheadBehind(-1, -1);
+  const ahead = Number(parts[0]);
+  const behind = Number(parts[1]);
+  return Number.isInteger(ahead) && Number.isInteger(behind) ? new AheadBehind(ahead, behind) : new AheadBehind(-1, -1);
+};
+
+/** The repository's oldest root commit ("" without one): what the same repository is called on another machine. */
+export const readRootCommit = async (repo: GitRepo, folder: string): Promise<string> => {
+  if (!repo.isRepo) return "";
+  const lines = (await git(["rev-list", "--max-parents=0", "HEAD"], folder, 65536)).text.split("\n").filter((l: string) => l.trim().length > 0);
+  return lines.length > 0 ? lines[lines.length - 1].trim() : "";
+};
 
 /** HEAD's commit now ("" without one). */
 export const readHeadCommit = async (repo: GitRepo, folder: string): Promise<string> => (repo.isRepo ? firstLine(await git(["rev-parse", "--verify", "--quiet", "HEAD"], folder, 4096)) : "");
