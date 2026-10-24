@@ -6,7 +6,8 @@
  * of a temp folder the app takes as its own through the `homeEnv` variable; an object is written as
  * JSON), `live` (the agent it talks to: run only with NATIVE_LIVE=1), `wait` (seconds, 40 by default),
  * `checks` ([label, grep pattern] pairs), `noProcessLeft` (a pgrep pattern that must find nothing
- * once the app exited), `exitCode` (the code the app ends with, 0 by default).
+ * once the app exited), `exitCode` (the code the app ends with, 0 by default). The terminal is
+ * util-linux `script` under `timeout` on Linux and BSD `script` under a timer on macOS.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -90,9 +91,16 @@ export const run = async (args, root) => {
   const flags = [.../** @type {string[]} */ (absolute(app, cfg.args ?? [])), ...extra];
   const line = ["stty cols 200 rows 40;", quote(binary), "--dir", quote(repo), "--trust", "--selftest", quote(scenario), "--log", quote(log), ...flags.map(quote)].join(" ");
   const code = await new Promise((resolvePromise) => {
-    const child = spawn("timeout", [String(wait), "script", "-q", "-e", "-c", line, "/dev/null"], { env, stdio: ["pipe", "ignore", "ignore"] });
+    const darwin = process.platform === "darwin";
+    const child = darwin
+      ? spawn("script", ["-q", "/dev/null", "sh", "-c", line], { env, stdio: ["pipe", "ignore", "ignore"] })
+      : spawn("timeout", [String(wait), "script", "-q", "-e", "-c", line, "/dev/null"], { env, stdio: ["pipe", "ignore", "ignore"] });
+    const timer = darwin ? setTimeout(() => child.kill("SIGTERM"), wait * 1000) : null;
     child.on("error", () => resolvePromise(127));
-    child.on("close", (c) => resolvePromise(c ?? 1));
+    child.on("close", (c) => {
+      if (timer !== null) clearTimeout(timer);
+      resolvePromise(c ?? 1);
+    });
   });
   let status = 0;
   for (const [label, pattern] of cfg.checks ?? [])
@@ -103,7 +111,7 @@ export const run = async (args, root) => {
     }
   if (typeof cfg.noProcessLeft === "string") {
     await new Promise((r) => setTimeout(r, 1000));
-    const left = spawnSync("pgrep", ["-af", "--", cfg.noProcessLeft], { encoding: "utf8" });
+    const left = spawnSync("pgrep", [process.platform === "darwin" ? "-lf" : "-af", "--", cfg.noProcessLeft], { encoding: "utf8" });
     if (left.status === 0) {
       console.log("FAIL a process is left: " + left.stdout.trim());
       status = 1;
