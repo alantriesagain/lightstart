@@ -2,7 +2,8 @@
  * @bootstrapp/light/native/tui: the terminal host of the renderer, as one import.
  */
 export { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, COLOR_DEFAULT, DEFAULT_STYLE, Style, TRUECOLOR_FLAG, colorName } from "./style.ts";
-export { colorSgr, parseColor } from "./color.ts";
+export { colorDepth, colorDepthOf, colorSgr, parseColor, setColorDepth, to256 } from "./color.ts";
+export type { ColorDepth } from "./color.ts";
 export { ChangeEvent, CustomEvent, FocusEvent, KeyEvent, MouseEvent, SubmitEvent, UIEvent, WheelEvent } from "./events.ts";
 export { focusables, hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.ts";
 export { FLUSH_AFTER, FLUSH_RENDER, FLUSH_VIEWS, FrameScheduler, frames } from "./scheduler.ts";

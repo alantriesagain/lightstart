@@ -3,6 +3,7 @@
  * is idempotent so every exit path restores the terminal exactly once.
  */
 import { ALT_SCREEN_OFF, ALT_SCREEN_ON, CLEAR, CURSOR_HIDE, CURSOR_SHOW, HOME, MOUSE_OFF, MOUSE_ON, PASTE_OFF, PASTE_ON, RESET, TITLE_POP, TITLE_PUSH, windowTitle } from "./ansi.ts";
+import { colorDepthOf, setColorDepth } from "./color.ts";
 
 export class Terminal {
   cols: number;
@@ -58,6 +59,7 @@ export class Terminal {
     if (this.entered) return;
     this.entered = true;
     this.readSize();
+    setColorDepth(colorDepthOf(process.env["COLORTERM"] ?? "", process.env["TERM"] ?? "", process.env["TERM_PROGRAM"] ?? "", process.env["LIGHT_COLORS"] ?? ""));
     this.write(TITLE_PUSH + ALT_SCREEN_ON + CURSOR_HIDE + PASTE_ON + MOUSE_ON + CLEAR + HOME);
     if (process.stdin.isTTY === true) process.stdin.setRawMode(true);
     process.stdin.resume();
