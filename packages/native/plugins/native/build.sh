@@ -3,7 +3,8 @@
 # which the FFI manifest (ffi.json) links. scriptc's runtime links its own copy of QuickJS's regex
 # and Unicode code, and libregexp calls hooks its host defines (lre_realloc, lre_check_timeout,
 # lre_check_stack_overflow); so this copy's every exported regex, Unicode and number-conversion
-# symbol is renamed qjs_*, keeping the two apart. Builds again only when a source is newer.
+# symbol is renamed qjs_*, keeping the two apart (on Mach-O, nm shows C symbols with a leading
+# underscore, which is stripped first). Builds again only when a source is newer.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd -P)"
 root="$(cd "$here/../../../.." && pwd -P)"
@@ -19,12 +20,13 @@ for s in "${sources[@]}"; do [ "$quickjs/$s" -nt "$lib" ] && fresh=0; done
 if [ "$fresh" = 1 ]; then exit 0; fi
 mkdir -p "$out/plain" "$out/renamed"
 cc=${CC:-cc}
+case "$(uname -s)" in Darwin) sym="s/^_//" ;; *) sym="" ;; esac
 flags=(-std=gnu11 -O2 -funsigned-char -D_GNU_SOURCE -DQUICKJS_NG_BUILD -w -I"$quickjs")
 # First pass: what the regex, Unicode and number code exports, and the hooks quickjs.c defines for it.
 for s in "${sources[@]}"; do "$cc" "${flags[@]}" -c "$quickjs/$s" -o "$out/plain/${s%.c}.o"; done
 {
-  for o in libregexp libunicode dtoa; do nm -g --defined-only "$out/plain/$o.o" | awk 'NF==3{print $3}'; done
-  nm -g --defined-only "$out/plain/quickjs.o" | awk 'NF==3{print $3}' | grep -E '^(lre_|cr_|unicode_)'
+  for o in libregexp libunicode dtoa; do nm -g --defined-only "$out/plain/$o.o" | awk 'NF==3{print $3}' | sed -e "$sym"; done
+  nm -g --defined-only "$out/plain/quickjs.o" | awk 'NF==3{print $3}' | sed -e "$sym" | grep -E '^(lre_|cr_|unicode_)'
 } | sort -u | awk '{print "#define " $1 " qjs_" $1}' > "$out/rename.h"
 # Second pass: everything with those names prefixed, and the shim.
 for s in "${sources[@]}"; do "$cc" "${flags[@]}" -include "$out/rename.h" -c "$quickjs/$s" -o "$out/renamed/${s%.c}.o"; done
