@@ -167,6 +167,51 @@ export const readAheadBehind = async (repo: GitRepo, folder: string, a: string, 
   return Number.isInteger(ahead) && Number.isInteger(behind) ? new AheadBehind(ahead, behind) : new AheadBehind(-1, -1);
 };
 
+/** A branch of a remote (`mac/main`): its tip, and how it stands to the local branch of the same name when there is one. */
+export class RemoteBranch {
+  /** The branch's name without the remote ("main"). */
+  readonly name: string;
+  /** The ref as git names it ("mac/main"). */
+  readonly ref: string;
+  readonly sha: string;
+  readonly commitMs: number;
+  /** Whether a local branch of the same name exists. */
+  readonly local: boolean;
+  /** Commits the local branch has that the remote's lacks, and the reverse (-1 without a local branch). */
+  readonly ahead: number;
+  readonly behind: number;
+
+  constructor(name: string, ref: string, sha: string, commitMs: number, local: boolean, ahead: number, behind: number) {
+    this.name = name;
+    this.ref = ref;
+    this.sha = sha;
+    this.commitMs = commitMs;
+    this.local = local;
+    this.ahead = ahead;
+    this.behind = behind;
+  }
+}
+
+/** The branches of `remote` as fetched here, each against the local branch of its name (`HEAD` of the remote left out). */
+export const readRemoteBranches = async (repo: GitRepo, folder: string, remote: string): Promise<RemoteBranch[]> => {
+  const out: RemoteBranch[] = [];
+  if (!repo.isRepo || remote.length === 0) return out;
+  const text = (await git(["for-each-ref", "--format=%(refname:short)%09%(objectname)%09%(committerdate:unix)", "refs/remotes/" + remote + "/"], folder, 1048576)).text;
+  const locals = new Set<string>();
+  for (const line of (await git(["for-each-ref", "--format=%(refname:short)", "refs/heads/"], folder, 1048576)).text.split("\n")) if (line.trim().length > 0) locals.add(line.trim());
+  for (const line of text.split("\n")) {
+    const f = line.split("\t");
+    if (f.length < 3 || !f[0].startsWith(remote + "/")) continue;
+    const name = f[0].slice(remote.length + 1);
+    if (name === "HEAD") continue;
+    const local = locals.has(name);
+    const track = local ? await readAheadBehind(repo, folder, "refs/heads/" + name, "refs/remotes/" + f[0]) : new AheadBehind(-1, -1);
+    const ms = Number(f[2]);
+    out.push(new RemoteBranch(name, f[0], f[1], Number.isInteger(ms) ? ms * 1000 : 0, local, track.ahead, track.behind));
+  }
+  return out;
+};
+
 /** The repository's oldest root commit ("" without one): what the same repository is called on another machine. */
 export const readRootCommit = async (repo: GitRepo, folder: string): Promise<string> => {
   if (!repo.isRepo) return "";
