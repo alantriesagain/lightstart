@@ -46,6 +46,11 @@ export class Commands {
     this.list.put(c.name, c.owner, c);
   }
 
+  /** Drop `owner`'s command `name` (one it replaced comes back); false when `owner` has none of that name. */
+  remove(name: string, owner: string): boolean {
+    return this.list.remove(name, owner);
+  }
+
   /** Drop every command plugin `owner` added. */
   removeOwner(owner: string): void {
     this.list.removeOwner(owner);

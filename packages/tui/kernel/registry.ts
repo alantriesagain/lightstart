@@ -35,23 +35,35 @@ export class Keyed<T> {
     return null;
   }
 
+  /** Drop `owner`'s item under `key`, the key going back to what it held before; false when `owner` holds no item there. */
+  remove(key: string, owner: string): boolean {
+    for (let i = 0; i < this.keys.length; i++) {
+      if (this.keys[i] !== key || this.owners[i] !== owner) continue;
+      this.dropAt(i);
+      return true;
+    }
+    return false;
+  }
+
   /** Drop every item of `owner`; a key it replaced goes back to what it held before. */
   removeOwner(owner: string): void {
-    for (let i = this.keys.length - 1; i >= 0; i--)
-      if (this.owners[i] === owner) {
-        const owners = this.previousOwners[i];
-        const items = this.previousItems[i];
-        if (items.length > 0) {
-          this.owners[i] = owners.pop() ?? "";
-          this.items[i] = items.pop() as T;
-        } else {
-          this.keys.splice(i, 1);
-          this.owners.splice(i, 1);
-          this.items.splice(i, 1);
-          this.previousOwners.splice(i, 1);
-          this.previousItems.splice(i, 1);
-        }
-      }
+    for (let i = this.keys.length - 1; i >= 0; i--) if (this.owners[i] === owner) this.dropAt(i);
+  }
+
+  /** Drop the item at `i`: the one it replaced comes back, else the key goes. */
+  private dropAt(i: number): void {
+    const owners = this.previousOwners[i];
+    const items = this.previousItems[i];
+    if (items.length > 0) {
+      this.owners[i] = owners.pop() ?? "";
+      this.items[i] = items.pop() as T;
+    } else {
+      this.keys.splice(i, 1);
+      this.owners.splice(i, 1);
+      this.items.splice(i, 1);
+      this.previousOwners.splice(i, 1);
+      this.previousItems.splice(i, 1);
+    }
   }
 
   /** Every item, in the order added. */

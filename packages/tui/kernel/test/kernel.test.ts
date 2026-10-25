@@ -103,6 +103,10 @@ ok("a command by name, its argument trimmed", kc.commands.run("/model  fable[1m]
 ok("not a command", !kc.commands.run("/nope") && !kc.commands.run("hello"));
 eq("ran, the later of a name winning", ran.join(", "), "other fable[1m]");
 eq("listed by name for /help", kc.commands.all().map((c) => c.name + " " + c.usage + " · " + c.help).join(" | "), "/help  · this list | /model <name> · a replacement");
+ok("a plugin removes a command of its own by name, not another's", !kc.commands.remove("/model", "models") && kc.commands.remove("/model", "other"));
+kc.commands.run("/model opus");
+eq("the command it replaced is back", ran.join(", "), "other fable[1m], model opus");
+ok("removed again: none of that name is the plugin's", !kc.commands.remove("/model", "other") && kc.commands.remove("/help", "shell") && kc.commands.find("/help") === null);
 
 const got: string[] = [];
 const kk = new Kernel();
