@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 const TWO_HOURS_AGO = new Date(Date.now() - 2 * 3600e3).toISOString();
 const YESTERDAY = new Date(Date.now() - 26 * 3600e3).toISOString();

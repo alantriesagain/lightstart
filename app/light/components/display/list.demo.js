@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "A vertical set of items with consistent spacing and dividers.",

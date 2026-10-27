@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "What the device is, as props other components can render against.",

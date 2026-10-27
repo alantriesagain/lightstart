@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "One entry in a navigation: icon, label, badge and its active state.",

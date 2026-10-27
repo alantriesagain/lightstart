@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "One band of a page, with its own background and vertical padding.",

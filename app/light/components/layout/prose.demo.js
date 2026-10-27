@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "Long-form text with the spacing and measure of a document.",

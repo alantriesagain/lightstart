@@ -1,4 +1,4 @@
-import { html, nothing } from "/app/light/html/index.js";
+import { html, nothing } from "/app/__light-runtime__.js";
 import T from "/app/light/types/types.js";
 import { defineComponent } from "/app/light/view/index.js";
 

@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "A denser list entry built for a feed: leading media, two lines of text, a trailing state.",

@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 const PHOTO = "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=600&q=70";
 

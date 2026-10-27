@@ -1,4 +1,4 @@
-import { unsafeHTML } from "/app/light/html/index.js";
+import { unsafeHTML } from "/app/__light-runtime__.js";
 import T from "/app/light/types/types.js";
 import { defineComponent } from "/app/light/view/index.js";
 import { createSlugger } from "../utils/slug.js";

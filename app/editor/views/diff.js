@@ -1,6 +1,6 @@
 import { block } from "/app/editor/decorations.js";
 import { applyPatch, parsePatch } from "/app/editor/patch.js";
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 import { defineComponent } from "/app/light/view/index.js";
 import T from "/app/light/types/types.js";
 

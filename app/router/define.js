@@ -7,7 +7,7 @@
  */
 
 import $APP from "/app/base/app.js";
-import { element } from "/app/light/html/index.js";
+import { element } from "/app/__light-runtime__.js";
 
 /** @import { RouteConfig, RouteValue, RoutesMap, RoutesDefinition } from "./types.js" */
 

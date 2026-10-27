@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 const BUTTONS = `<lc-button>Default</lc-button>
 <lc-button primary>Primary</lc-button>

@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "A clickable action. Colour attributes map to the theme's roles, so a skin redresses every button at once.",

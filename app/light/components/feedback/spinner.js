@@ -48,7 +48,7 @@ import T from "/app/light/types/types.js";
  * <lc-spinner style="--spinner-color: #ff6b6b;"></lc-spinner>
  * ```
  */
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 import { defineComponent } from "/app/light/view/index.js";
 
 export default defineComponent({

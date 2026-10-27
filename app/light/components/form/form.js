@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 import T from "/app/light/types/types.js";
 import { getFormFieldRenderer, renderFormControl, drawsOwnLabel } from "./field-renderers.js";
 import { getPath, setPath } from "./path.js";

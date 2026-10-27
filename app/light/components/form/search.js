@@ -1,4 +1,4 @@
-import { html, nothing } from "/app/light/html/index.js";
+import { html, nothing } from "/app/__light-runtime__.js";
 import { defineComponent } from "/app/light/view/index.js";
 import { withClickOutside } from "/app/light/components/mixins/click-outside.js";
 import { withOverlay } from "/app/light/components/mixins/overlay.js";
@@ -9,7 +9,7 @@ import { lcText } from "../utils/text.js";
 import { navigation } from "/app/light/navigation/index.js";
 
 /** @import { Prop, SearchDoc } from "../types.js" */
-/** @import { TemplateValue } from "/app/light/html/index.js" */
+/** @import { TemplateValue } from "/app/__light-runtime__.js" */
 
 export default defineComponent({
   mixins: [withOverlay(), withClickOutside()],

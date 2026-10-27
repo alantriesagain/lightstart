@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 import { defineComponent } from "/app/light/view/index.js";
 import { withOverlay } from "/app/light/components/mixins/overlay.js";
 import { withSwipeThreshold } from "../mixins/swipe-threshold.js";

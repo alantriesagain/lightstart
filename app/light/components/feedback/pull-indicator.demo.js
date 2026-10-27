@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "The hint above a list being pulled to refresh: how far so far, whether a release refreshes, and the refresh running.",

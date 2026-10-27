@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "An image that loads lazily, keeps its aspect ratio, and has something to show while it waits.",

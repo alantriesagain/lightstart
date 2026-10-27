@@ -5,7 +5,7 @@
  */
 
 /** @import { EditorMixinDefinition } from "../types.js" */
-import { html, render } from "/app/light/html/index.js";
+import { html, render } from "/app/__light-runtime__.js";
 import { effect, signal } from "/app/light/signals/index.js";
 import T from "/app/light/types/types.js";
 import { defineMixin } from "/app/light/view/index.js";

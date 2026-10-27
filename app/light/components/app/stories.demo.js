@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 const items = [
   { id: "1", background: "#0f766e", title: "Doors open" },

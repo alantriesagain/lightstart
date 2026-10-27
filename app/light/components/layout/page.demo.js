@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 const sections = [
   { type: "lc-hero-section", props: { headline: "Ship the thing", subheadline: "A page assembled from sections." } },

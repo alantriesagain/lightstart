@@ -1,4 +1,4 @@
-import { html, nothing } from "/app/light/html/index.js";
+import { html, nothing } from "/app/__light-runtime__.js";
 import T from "/app/light/types/types.js";
 import { defineComponent } from "/app/light/view/index.js";
 import { lcText } from "../utils/text.js";
@@ -28,7 +28,7 @@ export default defineComponent({
   tag: "lc-example",
   style: true,
   props: {
-    preview: /** @type {Prop<(() => import("/app/light/html/index.js").TemplateValue) | null>} */ (T.function()),
+    preview: /** @type {Prop<(() => import("/app/__light-runtime__.js").TemplateValue) | null>} */ (T.function()),
     code: "",
     language: "html",
     title: "",

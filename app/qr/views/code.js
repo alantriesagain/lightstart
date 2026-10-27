@@ -1,4 +1,4 @@
-import { html, svg } from "/app/light/html/index.js";
+import { html, svg } from "/app/__light-runtime__.js";
 import { encode } from "/app/qr/encode.js";
 import { toPath } from "/app/qr/svg.js";
 import T from "/app/light/types/types.js";

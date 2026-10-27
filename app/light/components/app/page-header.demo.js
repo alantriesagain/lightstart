@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 const CRUMBS = [{ label: "Workspace", href: "#workspace" }, { label: "Projects" }];
 

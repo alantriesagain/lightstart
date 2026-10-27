@@ -1,4 +1,4 @@
-import { html, unsafeHTML } from "/app/light/html/index.js";
+import { html, unsafeHTML } from "/app/__light-runtime__.js";
 import T from "/app/light/types/types.js";
 import { defineComponent } from "/app/light/view/index.js";
 /** @import { Prop, SiteHeaderBrand, SiteHeaderLink, SiteHeaderAction } from "../types.js" */

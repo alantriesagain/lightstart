@@ -1,4 +1,4 @@
-import { html, nothing } from "/app/light/html/index.js";
+import { html, nothing } from "/app/__light-runtime__.js";
 import { defineComponent } from "/app/light/view/index.js";
 import { withFormControl } from "/app/light/components/mixins/form-control.js";
 import { nextIndex } from "../utils/roving.js";

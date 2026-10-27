@@ -13,7 +13,7 @@
  * how a project rethemes one rather than reaching around it.
  */
 
-import { html as defaultHtml, nothing } from "/app/light/html/index.js";
+import { html as defaultHtml, nothing } from "/app/__light-runtime__.js";
 import { getPath } from "./path.js";
 import { lcText } from "../utils/text.js";
 

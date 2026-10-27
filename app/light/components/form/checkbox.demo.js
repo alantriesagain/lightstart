@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "A box a reader ticks. Takes its own label, so a form does not have to pair it with one.",

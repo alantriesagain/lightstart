@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 const ITEMS = [
   { id: "toc-demo-examples", label: "Examples" },

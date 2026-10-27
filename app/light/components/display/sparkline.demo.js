@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 const week = [{ value: 4 }, { value: 7 }, { value: 5 }, { value: 9 }, { value: 8 }, { value: 12 }, { value: 11 }];
 

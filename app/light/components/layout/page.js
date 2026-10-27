@@ -1,4 +1,4 @@
-import { element, html } from "/app/light/html/index.js";
+import { element, html } from "/app/__light-runtime__.js";
 import { applyScopedTheme } from "/app/light/theme/index.js";
 import DEFAULT_THEME from "../page/theme.js";
 import T from "/app/light/types/types.js";

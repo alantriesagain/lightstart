@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 const BAR = [
   { days: [2, 3, 4], open: "18:00", close: "01:00" },

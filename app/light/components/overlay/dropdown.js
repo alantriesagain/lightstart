@@ -1,10 +1,10 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 import T from "/app/light/types/types.js";
 import { defineComponent } from "/app/light/view/index.js";
 import { withPopover } from "/app/light/components/mixins/popover.js";
 import { nextIndex } from "../utils/roving.js";
 /** @import { Prop, DropdownItem } from "../types.js" */
-/** @import { TemplateValue } from "/app/light/html/index.js" */
+/** @import { TemplateValue } from "/app/__light-runtime__.js" */
 
 export default defineComponent({
   mixins: [withPopover],

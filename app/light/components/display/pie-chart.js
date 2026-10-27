@@ -1,4 +1,4 @@
-import { html, svg } from "/app/light/html/index.js";
+import { html, svg } from "/app/__light-runtime__.js";
 import T from "/app/light/types/types.js";
 import { defineComponent } from "/app/light/view/index.js";
 import { lcText } from "../utils/text.js";

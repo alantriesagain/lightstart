@@ -1,4 +1,4 @@
-import { html } from "/app/light/html/index.js";
+import { html } from "/app/__light-runtime__.js";
 
 export default {
   description: "Sign in and sign up in one component: tabs, OAuth buttons, a guest route, and the validation between them.",

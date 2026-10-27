@@ -1,4 +1,4 @@
-import { html, nothing } from "/app/light/html/index.js";
+import { html, nothing } from "/app/__light-runtime__.js";
 import T from "/app/light/types/types.js";
 import { defineComponent } from "/app/light/view/index.js";
 import { lcText } from "../utils/text.js";
@@ -79,7 +79,7 @@ export default defineComponent({
 
   /**
    * @param {number} page
-   * @param {{ cls?: string, label: string, content: import("/app/light/html/index.js").TemplateValue, disabled?: boolean }} arg
+   * @param {{ cls?: string, label: string, content: import("/app/__light-runtime__.js").TemplateValue, disabled?: boolean }} arg
    */
   _ctrl(page, { cls = "", label, content, disabled = false }) {
     const active = page === this.current;
