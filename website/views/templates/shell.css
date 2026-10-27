@@ -10,6 +10,11 @@
   lc-app-shell {
     --lc-app-shell-max-width: 90rem;
 
+    &.shell-no-nav [part~=lc-app-shell-nav] {
+      padding: 0;
+      border: 0;
+    }
+
     &.shell-no-aside .shell-aside {
       display: none;
     }

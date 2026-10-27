@@ -117,8 +117,9 @@ export default defineComponent({
 
   render() {
     const docs = searchIndex(browsableCategories($APP.manifest), presets);
+    const shellClass = [this.wide && "shell-no-nav", (this.wide || !this.toc.length) && "shell-no-aside"].filter(Boolean).join(" ");
     return html`
-      <lc-app-shell class=${this.wide || !this.toc.length ? "shell-no-aside" : nothing} breakpoint="md" aside-breakpoint="xl" nav-width=${this.wide ? "0px" : "var(--docs-nav)"} aside-width=${this.toc.length && !this.wide ? "var(--docs-aside)" : "0px"} header-height="var(--docs-header)">
+      <lc-app-shell class=${shellClass || nothing} breakpoint="md" aside-breakpoint="xl" nav-width=${this.wide ? "0px" : "var(--docs-nav)"} aside-width=${this.toc.length && !this.wide ? "var(--docs-aside)" : "0px"} header-height="var(--docs-header)">
         <header slot="navbar" class="shell-header">
           <lc-link href="/" class="shell-brand" aria-label="Light home">
             <span class="shell-mark"><lc-icon name="box" size="14"></lc-icon></span>

@@ -2,6 +2,7 @@
   display: inline-block;
 
   & [part~=lc-modal-dialog] {
+    margin: auto;
     background: var(--lc-modal-background, var(--color-surface, #ffffff));
     border: var(--lc-modal-border-width, var(--border-width, 1px)) solid
       var(--lc-modal-border-color, var(--color-surface-darker));

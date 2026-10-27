@@ -45,7 +45,7 @@ log(`dev server on ${origin}`);
 const server = spawn("pnpm", ["exec", "bootstrapp", "serve", "--port", String(port)], {
   cwd: website,
   detached: true,
-  stdio: ["ignore", "ignore", "inherit"],
+  stdio: "ignore",
 });
 
 let manifest = null;

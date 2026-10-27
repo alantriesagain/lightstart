@@ -58,7 +58,13 @@
   }
 
   .command-palette-modal {
-    --lc-modal-padding: 0;
+    --lc-modal-body-padding: var(--spacing-md, 0.75rem);
+    --lc-modal-header-padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
+    --lc-modal-header-border-width: 0;
+  }
+
+  .command-palette-modal [part~=lc-modal-header] {
+    justify-content: flex-end;
   }
 
   .command-palette-footer {
