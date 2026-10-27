@@ -1,10 +1,10 @@
 /**
  * @bootstrapp/light/components/utils/day-groups
  *
- * Dated entries as the reader's days. A day is the calendar date the instant
- * falls on in the reader's zone, and a date with no time is that day as given.
- * `Intl` owns the words, so this module has none of its own and needs no
- * locale file.
+ * Dated entries as the reader's days, and an instant's time of day as the reader
+ * writes it. A day is the calendar date the instant falls on in the reader's
+ * zone, and a date with no time is that day as given. `Intl` owns the words, so
+ * this module has none of its own and needs no locale file.
  */
 
 /** @import { TimelineDay, TimelineEntry, TimelineMoment } from "../types.ts" */
@@ -126,6 +126,20 @@ const wordsIn = (day, locale, today) => {
 };
 
 /**
+ * @param {(locale: string) => string} words
+ * @param {string} locale
+ * @returns {string}
+ */
+const inLocale = (words, locale) => {
+  try {
+    return words(locale);
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    return words("en");
+  }
+};
+
+/**
  * A day's heading in the reader's language: "Today", "Yesterday" and
  * "Tomorrow" around `today`, the weekday and date otherwise, with the year only
  * when it is not this one. An unknown locale reads as English.
@@ -135,11 +149,15 @@ const wordsIn = (day, locale, today) => {
  * @param {string} today
  * @returns {string}
  */
-export const dayWords = (day, locale, today) => {
-  try {
-    return wordsIn(day, locale, today);
-  } catch (error) {
-    if (!(error instanceof RangeError)) throw error;
-    return wordsIn(day, "en", today);
-  }
-};
+export const dayWords = (day, locale, today) => inLocale((tag) => wordsIn(day, tag, today), locale);
+
+/**
+ * An instant's time of day, short, in the reader's language. An unknown locale
+ * reads as English.
+ *
+ * @param {number} ms
+ * @param {string} locale
+ * @returns {string}
+ */
+export const timeWords = (ms, locale) =>
+  inLocale((tag) => new Date(ms).toLocaleTimeString(tag, { timeStyle: "short" }), locale);
