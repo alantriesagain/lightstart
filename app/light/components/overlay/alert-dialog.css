@@ -1,5 +1,6 @@
 :where(.lc-alert-dialog, lc-alert-dialog) {
   dialog {
+    margin: auto;
     padding: 0;
     border: none;
     border-radius: var(--lc-alert-dialog-border-radius, var(--radius-lg, 0.5rem));
