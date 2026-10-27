@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { definitionOf, parseComponentSources } from "./component.js";
 
-const LIGHT = 'import View from "@bootstrapp/light";\n';
+const LIGHT = 'import View from "@lightstart/light";\n';
 
 test("parseComponentSources reads tag, flags, keys and property defaults of a default export", () => {
   const src = `export default {
@@ -68,7 +68,7 @@ test("a name that holds no literal, or refers to itself, defines nothing", () =>
 });
 
 test("View.define's five shapes each read as a component", () => {
-  const src = `${LIGHT}import { html } from "@bootstrapp/light/html";
+  const src = `${LIGHT}import { html } from "@lightstart/light/html";
 View.define({ tag: "fx-one", props: { a: T.string() }, render() {} });
 View.define("fx-two", { props: { b: 0 }, connected() {} });
 View.define("fx-three", (el) => html\`<b>\${el.c}</b>\`);
@@ -96,7 +96,7 @@ View.define("fx-five", { e: "" }, (el) => html\`<i>\${el.e}</i>\`);
 });
 
 test("props and render given as named constants, inside an exported function, are followed", () => {
-  const src = `${LIGHT}import { html } from "@bootstrapp/light/html";
+  const src = `${LIGHT}import { html } from "@lightstart/light/html";
 const props = { label: "Clicks", count: 0 };
 const render = (el) => html\`<button>\${el.label}: \${el.count}</button>\`;
 export const defineDemos = () => {
@@ -125,7 +125,7 @@ test("the tag argument wins over a tag key inside the literal", () => {
 test("a View that is a parameter is not light's import, and a definition nothing can read is no site", () => {
   const param = `${LIGHT}const install = (View) => View.define("app-container", { tag: "app-container" });\nexport default { connected() { install(this.constructor); } };\n`;
   assert.deepEqual(parseComponentSources(param, "frontend.js").map((p) => p.tag), [null]);
-  const loop = `${LIGHT}for (const path of ["display/button"]) View.define((await import(\`@bootstrapp/light/components/\${path}.js\`)).default);\n`;
+  const loop = `${LIGHT}for (const path of ["display/button"]) View.define((await import(\`@lightstart/light/components/\${path}.js\`)).default);\n`;
   assert.deepEqual(parseComponentSources(loop, "index.js"), []);
 });
 

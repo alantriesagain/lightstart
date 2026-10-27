@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "A key as the reader would press it; a combination is siblings.",

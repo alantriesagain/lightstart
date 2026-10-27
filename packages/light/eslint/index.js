@@ -1,9 +1,9 @@
 /**
- * @bootstrapp/light/eslint: light's eslint plugin. `check-errors` and
+ * @lightstart/light/eslint: light's eslint plugin. `check-errors` and
  * `check-warnings` are `light check` in the editor: the findings of light's
  * rules and the project's `check/rules/` for the file being linted.
  * `no-non-jsdoc-comments` and `no-explicit-any-jsdoc` hold light's code
- * style. `@bootstrapp/light/eslint/recommended.js` wires them up with the
+ * style. `@lightstart/light/eslint/recommended.js` wires them up with the
  * house style; this module loads nothing of eslint.
  */
 
@@ -19,7 +19,7 @@ const pkg = readPackageJson(fileURLToPath(new URL("../", import.meta.url)));
 
 /** @type {import("eslint").ESLint.Plugin} */
 const plugin = {
-  meta: { name: pkg?.name ?? "@bootstrapp/light", version: pkg?.version ?? "0.0.0" },
+  meta: { name: pkg?.name ?? "@lightstart/light", version: pkg?.version ?? "0.0.0" },
   rules: {
     ...checkRules((root) => {
       const { context, sources } = openProject(root);

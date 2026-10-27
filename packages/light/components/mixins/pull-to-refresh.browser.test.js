@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import T from "@bootstrapp/light/types";
-import View, { defineComponent } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import View, { defineComponent } from "@lightstart/light";
 import { withPullToRefresh } from "./pull-to-refresh.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -80,7 +80,7 @@ const pullByTouch = async (host, distance, { end = "touchend" } = {}) => {
   await tick();
 };
 
-describe("@bootstrapp/light - withPullToRefresh", () => {
+describe("@lightstart/light - withPullToRefresh", () => {
   afterEach(async () => {
     for (const el of mounted.splice(0)) el.remove();
     await tick();

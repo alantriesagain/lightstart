@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/check/parse/sites.js: where a module defines components.
+ * @lightstart/light/check/parse/sites.js: where a module defines components.
  * Its default export (a definition literal, or a call that takes one), and
  * every `View.define(...)` call on light's default import, in its five shapes:
  * a definition; a tag and a definition; a tag and a render function; a tag,
@@ -15,7 +15,7 @@ import { defaultExportExpression, defaultImportBinding, resolveLocal, unwrapPare
 const DEFINERS = new Set(["defineComponent", "defineMixin"]);
 
 /** @param {string} spec */
-const isLight = (spec) => spec === "@bootstrapp/light" || spec.endsWith("/view/index.js");
+const isLight = (spec) => spec === "@lightstart/light" || spec.endsWith("/view/index.js");
 
 /**
  * Whether the literal behind `expr` is the definition itself. `unwrapToLiteral`

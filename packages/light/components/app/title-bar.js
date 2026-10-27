@@ -1,7 +1,7 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
-import { env } from "@bootstrapp/light/env";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
+import { env } from "@lightstart/light/env";
 import { lcText } from "../utils/text.js";
 
 /** @import { WindowHost } from "../../env/types.ts" */

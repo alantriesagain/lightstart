@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/dump: a tree as indented text, for tests and the
+ * @lightstart/light/native/tui/dump: a tree as indented text, for tests and the
  * dump flag.
  */
 import { TAnchor, TElement, TNode, TRun } from "./node.ts";

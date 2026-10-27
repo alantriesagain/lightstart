@@ -6,7 +6,7 @@ test("moduleScripts keeps the page's offsets and newlines, and only the module s
   const html = `<!doctype html>
 <script type="importmap">{ "imports": {} }</script>
 <script type="module">
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 View.define("fx-a", {});
 </script>
 <p class="x">hi</p>
@@ -19,7 +19,7 @@ View.define("fx-a", {});
   assert.equal(out.indexOf("View.define"), html.indexOf("View.define"));
   assert.equal(out.indexOf("const b = 2;"), html.indexOf("const b = 2;"));
   assert.ok(!out.includes("importmap") && !out.includes("<p") && !out.includes("app.js"));
-  assert.deepEqual(out.split("\n").filter((line) => line.trim()).map((line) => line.trim()), ['import View from "@bootstrapp/light";', 'View.define("fx-a", {});', "const b = 2;"]);
+  assert.deepEqual(out.split("\n").filter((line) => line.trim()).map((line) => line.trim()), ['import View from "@lightstart/light";', 'View.define("fx-a", {});', "const b = 2;"]);
 });
 
 test("a page without a module script blanks to spaces", () => {

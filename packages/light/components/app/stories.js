@@ -1,7 +1,7 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
-import { withOverlay } from "@bootstrapp/light/components/mixins/overlay.js";
+import { html, nothing } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
+import { withOverlay } from "@lightstart/light/components/mixins/overlay.js";
 import { withSwipeThreshold } from "../mixins/swipe-threshold.js";
 import { nextIndex } from "../utils/roving.js";
 import { lcText } from "../utils/text.js";

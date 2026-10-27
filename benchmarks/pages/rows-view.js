@@ -1,6 +1,6 @@
-import { html, key } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import View from "@bootstrapp/light";
+import { html, key } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import View from "@lightstart/light";
 import { register, rowSteps } from "./bench.js";
 
 let renderedAt = 0;

@@ -1,9 +1,9 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import { html, nothing } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { isActivePath } from "../utils/active-path.js";
 import { lcText } from "../utils/text.js";
-import { navigation } from "@bootstrapp/light/navigation";
+import { navigation } from "@lightstart/light/navigation";
 /** @import { NavTreeGroup, Prop } from "../types.ts" */
 
 const TAG = "lc-nav-tree";

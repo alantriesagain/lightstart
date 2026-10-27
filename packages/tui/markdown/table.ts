@@ -6,9 +6,9 @@
  * a cell, and a bar inside `code` does not split it.
  */
 import { palette } from "@light/ui/palette.ts";
-import { Line, Run } from "@bootstrapp/light/native/tui/lines.ts";
+import { Line, Run } from "@lightstart/light/native/tui/lines.ts";
 import { wrap } from "@light/ui/text.ts";
-import { stringWidth } from "@bootstrapp/light/native/tui/width.ts";
+import { stringWidth } from "@lightstart/light/native/tui/width.ts";
 
 const BAR = " │ ";
 /** A column narrows no further than this; past it the table lists its rows instead. */

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: pieChartDef } = await import("./pie-chart.js");
 
@@ -22,7 +22,7 @@ const mount = async (props) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-pie-chart centre label", () => {
+describe("@lightstart/light - lc-pie-chart centre label", () => {
   before(async () => {
     if (!customElements.get("lc-pie-chart")) View.define("lc-pie-chart", pieChartDef);
     const style = document.createElement("style");

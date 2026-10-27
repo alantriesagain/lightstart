@@ -58,7 +58,7 @@ const inClasses = (/** @type {string} */ file) => file.startsWith("theme/classes
 
 const codeOf = (/** @type {string} */ file) => readFileSync(join(ROOT, file), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").split("\n").filter((line) => !/^\s*\/\//.test(line)).join("\n");
 
-describe("@bootstrapp/light/theme/classes: the engine stands alone", () => {
+describe("@lightstart/light/theme/classes: the engine stands alone", () => {
   it("no entry outside the theme, and no component, reaches the engine", () => {
     const outside = Object.keys(pkg.exports).filter((key) => !key.startsWith("./theme") && !key.includes("*")).map((key) => exportFile(pkg.exports[key])).filter((file) => typeof file === "string");
     for (const file of [...outside, ...sourceFiles("components")]) {

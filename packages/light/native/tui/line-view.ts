@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/line-view: a pane of styled lines that renders only
+ * @lightstart/light/native/tui/line-view: a pane of styled lines that renders only
  * the rows that fit. The terminal layout measures every child, so a long
  * transcript or file never becomes one node per line: a `LineSource` answers
  * the line count and builds a line on demand, and the view asks for the

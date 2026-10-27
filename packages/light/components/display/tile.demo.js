@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "A square target with an icon and a label, for a grid of destinations.",

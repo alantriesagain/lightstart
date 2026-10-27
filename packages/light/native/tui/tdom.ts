@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui: the terminal host of the renderer, as one import.
+ * @lightstart/light/native/tui: the terminal host of the renderer, as one import.
  */
 export { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, COLOR_DEFAULT, DEFAULT_STYLE, Style, TRUECOLOR_FLAG, colorName } from "./style.ts";
 export { colorDepth, colorDepthOf, colorSgr, parseColor, setColorDepth, to256 } from "./color.ts";

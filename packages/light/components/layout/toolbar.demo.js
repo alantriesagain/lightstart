@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "A row of actions with its own spacing and overflow.",

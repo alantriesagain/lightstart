@@ -7,8 +7,8 @@
  * Text joins the last run when it looks the same, but never a decoration run (the prefix a copy
  * leaves out). A word wider than the room breaks by characters.
  */
-import { graphemes, graphemeWidth, stringWidth } from "@bootstrapp/light/native/tui/width.ts";
-import { Line, Run } from "@bootstrapp/light/native/tui/lines.ts";
+import { graphemes, graphemeWidth, stringWidth } from "@lightstart/light/native/tui/width.ts";
+import { Line, Run } from "@lightstart/light/native/tui/lines.ts";
 
 class Piece {
   run: Run;

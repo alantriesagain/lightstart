@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/components/mixins/escape-key
+ * @lightstart/light/components/mixins/escape-key
  *
  * Micro-mixin: wires a document-level Escape keydown listener that calls a
  * configurable handler. Attaches on `connected()`; cleanup is registered
@@ -8,8 +8,8 @@
  * without using a native `<dialog>` (which gets ESC handling via the
  * browser's `cancel` event for free).
  *
- *   import { defineComponent } from "@bootstrapp/light";
- *   import { withEscapeKey } from "@bootstrapp/light/components/mixins/escape-key.js";
+ *   import { defineComponent } from "@lightstart/light";
+ *   import { withEscapeKey } from "@lightstart/light/components/mixins/escape-key.js";
  *
  *   export default defineComponent({
  *     mixins: [withEscapeKey],
@@ -24,7 +24,7 @@
  * The component implements `onEscape()` (called with the keydown event).
  * Component decides whether to act (e.g. only when `open && !persistent`).
  */
-import { defineMixin } from "@bootstrapp/light";
+import { defineMixin } from "@lightstart/light";
 
 /** @import { EscapeKeyHost } from "../types.ts" */
 

@@ -1,5 +1,5 @@
-import T from "@bootstrapp/light/types";
-import { defineComponent, trackWork } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineComponent, trackWork } from "@lightstart/light";
 
 /** @type {Map<string, Promise<void>>} */
 const imageStyleCache = new Map();

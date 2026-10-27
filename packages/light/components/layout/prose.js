@@ -1,5 +1,5 @@
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 /**
  * Prose Component
  * Reading container: caps the line measure, centers it, and sets the

@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "A surface that groups things, with a header, a body and a footer it pads itself.",

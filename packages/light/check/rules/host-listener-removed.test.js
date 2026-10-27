@@ -3,7 +3,7 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./host-listener-removed.js";
 
-const component = (body) => `import { defineComponent } from "@bootstrapp/light";
+const component = (body) => `import { defineComponent } from "@lightstart/light";
 export default defineComponent({
   tag: "fx-thing",
 ${body}
@@ -115,7 +115,7 @@ test("silent on a component that adds no listeners", async () => {
 
 test("an example in a doc comment is not code", async () => {
   const findings = await runRuleOn(rule, {
-    "views/thing.js": `import { defineComponent } from "@bootstrapp/light";
+    "views/thing.js": `import { defineComponent } from "@lightstart/light";
 export default defineComponent({
   tag: "fx-thing",
   /**

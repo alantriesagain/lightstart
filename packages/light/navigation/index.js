@@ -1,5 +1,5 @@
 /**
- * @file @bootstrapp/light/navigation
+ * @file @lightstart/light/navigation
  * The host's router as components see it. A link asks for the URL a path is
  * served at, hands its click over, and follows route changes; without a
  * router configured, links are plain anchors and the location is the route.

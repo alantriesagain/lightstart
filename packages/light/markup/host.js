@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/markup/host: the renderer on an in-memory tree. It
+ * @lightstart/light/markup/host: the renderer on an in-memory tree. It
  * prepares templates by reading the parser's marker markup with the
  * tokenizer, clones them into markup nodes, and answers every node,
  * attribute and listener operation on the tree in markup/node.js. Frames

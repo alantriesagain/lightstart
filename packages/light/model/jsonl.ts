@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/model/jsonl: a storage adapter over JSON Lines files, one
+ * @lightstart/light/model/jsonl: a storage adapter over JSON Lines files, one
  * file per model (`<dir>/<model>.jsonl`). A file is the log of its model's
  * writes: every write appends the row as one line, a later line for an id
  * replaces an earlier one, and a removal appends `{"id":…,"$removed":true}`.

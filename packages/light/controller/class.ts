@@ -1,8 +1,8 @@
 /**
- * @bootstrapp/light/controller/class: a controller as a TypeScript class, the
+ * @lightstart/light/controller/class: a controller as a TypeScript class, the
  * form that compiles natively (`defineController`'s literal does not lower
  * from TypeScript). A subclass's signal fields are its props, a live query of
- * a model is `liveRows(this, model, build)` from `@bootstrapp/light/model/binder`
+ * a model is `liveRows(this, model, build)` from `@lightstart/light/model/binder`
  * (its `sync:` block), `connected()` and `disconnected()` are its hooks, `$own`
  * keeps a teardown for `dispose()`, `$wait` names work `$ready` waits for, and
  * `$ready` settles once `start()` ran `connected()` and that work is done. A

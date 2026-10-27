@@ -20,7 +20,7 @@ const both = (script) => {
   return { set: run(new Set()), listeners: run(new Listeners()) };
 };
 
-describe("@bootstrapp/light/signals/listeners", () => {
+describe("@lightstart/light/signals/listeners", () => {
   it("holds a callback once, in insertion order", () => {
     const { set, listeners } = both((list, { a, b }, log) => {
       list.add(a);

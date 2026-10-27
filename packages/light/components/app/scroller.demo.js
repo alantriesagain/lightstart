@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "A horizontal strip that scrolls, with its own snap points and scrollbar.",

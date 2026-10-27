@@ -5,7 +5,7 @@ import rule from "./component-uses-define.js";
 
 test("a bare object literal component is flagged at its export", async () => {
   const findings = await runRuleOn(rule, {
-    "views/thing.js": `import T from "@bootstrapp/light/types";\nexport default {\n  tag: "x-thing",\n  props: { count: T.number() },\n};\n`,
+    "views/thing.js": `import T from "@lightstart/light/types";\nexport default {\n  tag: "x-thing",\n  props: { count: T.number() },\n};\n`,
   });
   assert.equal(findings.length, 1);
   assert.equal(findings[0].line, 2);
@@ -14,7 +14,7 @@ test("a bare object literal component is flagged at its export", async () => {
 
 test("a wrapped component passes", async () => {
   const findings = await runRuleOn(rule, {
-    "views/thing.js": `import { defineComponent } from "@bootstrapp/light";\nexport default defineComponent({\n  tag: "x-thing",\n});\n`,
+    "views/thing.js": `import { defineComponent } from "@lightstart/light";\nexport default defineComponent({\n  tag: "x-thing",\n});\n`,
   });
   assert.equal(findings.length, 0);
 });
@@ -36,7 +36,7 @@ test("a tag inside a helper elsewhere in the file does not make the module a com
 
 test("a literal declared under a name and then default-exported is flagged at the declaration", async () => {
   const findings = await runRuleOn(rule, {
-    "views/thing.js": `import T from "@bootstrapp/light/types";\nconst Thing = {\n  tag: "x-thing",\n};\nexport default Thing;\n`,
+    "views/thing.js": `import T from "@lightstart/light/types";\nconst Thing = {\n  tag: "x-thing",\n};\nexport default Thing;\n`,
   });
   assert.equal(findings.length, 1);
   assert.equal(findings[0].line, 2);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: rulerDef } = await import("./ruler.js");
 
@@ -35,7 +35,7 @@ const mount = async (attrs = {}) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-ruler", () => {
+describe("@lightstart/light - lc-ruler", () => {
   before(async () => {
     if (!customElements.get("lc-ruler")) View.define("lc-ruler", rulerDef);
     await loadSheet(new URL("./ruler.css", import.meta.url).href);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: tableDef } = await import("./table.js");
 
@@ -9,7 +9,7 @@ const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 /** @type {Element[]} */
 const mounted = [];
 
-describe("@bootstrapp/light - lc-table", () => {
+describe("@lightstart/light - lc-table", () => {
   before(() => {
     if (!customElements.get("lc-table")) View.define("lc-table", tableDef);
   });

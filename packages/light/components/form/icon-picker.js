@@ -1,6 +1,6 @@
-import { html } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
-import { withPopover } from "@bootstrapp/light/components/mixins/popover.js";
+import { html } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
+import { withPopover } from "@lightstart/light/components/mixins/popover.js";
 import { lcText } from "../utils/text.js";
 
 const ICONS = {

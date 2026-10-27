@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, afterEach, before, describe, it } from "node:test";
-import { env } from "@bootstrapp/light/env";
+import { env } from "@lightstart/light/env";
 import { colorScheme } from "./color-scheme.js";
 
 const KEY = "darkmode";

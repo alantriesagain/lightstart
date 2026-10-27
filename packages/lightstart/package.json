@@ -1,0 +1,39 @@
+{
+  "name": "lightstart",
+  "version": "0.1.0",
+  "description": "The unscoped install of @lightstart/light: light-DOM web components, signals, a renderer, models and a theme.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/lightstart"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "web-components",
+    "custom-elements",
+    "light-dom",
+    "signals",
+    "renderer",
+    "ui",
+    "framework"
+  ],
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "dependencies": {
+    "@lightstart/light": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

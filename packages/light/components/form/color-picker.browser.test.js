@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: pickerDef } = await import("./color-picker.js");
 
@@ -27,7 +27,7 @@ const type = (input, value, type = "input") => {
   input.dispatchEvent(new Event(type, { bubbles: true }));
 };
 
-describe("@bootstrapp/light - lc-color-picker", () => {
+describe("@lightstart/light - lc-color-picker", () => {
   before(() => {
     if (!customElements.get("lc-color-picker")) View.define("lc-color-picker", pickerDef);
   });

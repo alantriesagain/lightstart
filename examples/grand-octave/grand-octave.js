@@ -1,11 +1,11 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import { signal } from "@bootstrapp/light/signals";
-import T from "@bootstrapp/light/types";
-import View from "@bootstrapp/light";
+import { html, nothing } from "@lightstart/light/html";
+import { signal } from "@lightstart/light/signals";
+import T from "@lightstart/light/types";
+import View from "@lightstart/light";
 
 /**
- * @import { Signal } from "@bootstrapp/light/signals"
- * @import { TypeDefinition } from "@bootstrapp/light/types"
+ * @import { Signal } from "@lightstart/light/signals"
+ * @import { TypeDefinition } from "@lightstart/light/types"
  */
 
 const OCTAVE = [

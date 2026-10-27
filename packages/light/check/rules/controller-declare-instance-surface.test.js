@@ -3,8 +3,8 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./controller-declare-instance-surface.js";
 
-const wrap = (body) => `import { defineController } from "@bootstrapp/light/controller";
-import T from "@bootstrapp/light/types";
+const wrap = (body) => `import { defineController } from "@lightstart/light/controller";
+import T from "@lightstart/light/types";
 export default defineController({
   name: "blocks",
   props: { count: T.number({ defaultValue: 0 }) },
@@ -48,12 +48,12 @@ test("a definition member is a declared plain field", async () => {
 
 test("a member a method assigns is declared", async () => {
   const findings = await runRuleOn(rule, {
-    "controllers/blocks.js": `import { defineController } from "@bootstrapp/light/controller";
-import T from "@bootstrapp/light/types";
+    "controllers/blocks.js": `import { defineController } from "@lightstart/light/controller";
+import T from "@lightstart/light/types";
 export default defineController({
   name: "blocks",
   props: { count: 0 },
-  _rows: /** @type {import("@bootstrapp/light/controller").Resource<any>} */ (/** @type {unknown} */ (null)),
+  _rows: /** @type {import("@lightstart/light/controller").Resource<any>} */ (/** @type {unknown} */ (null)),
   connected() { this._rows = makeRows(); this.$own(this._rows.dispose); },
   ensure() { return this._rows.ensure(); },
 });
@@ -116,7 +116,7 @@ test("a definition that is not a defineController call is ignored", async () => 
 
 test("a defineController call anywhere is a controller, each checked against its own definition", async () => {
   const findings = await runRuleOn(rule, {
-    "lib/stores.js": `import { defineController } from "@bootstrapp/light/controller";
+    "lib/stores.js": `import { defineController } from "@lightstart/light/controller";
 export const first = defineController({ name: "first", go() { this._x = 1; } });
 const second = defineController({ name: "second", _y: null, go() { this._y = 2; } });
 export { second };
@@ -127,7 +127,7 @@ export { second };
 
 test("a field declared by a mixins fragment, or by a fragment's own mixin, counts as declared", async () => {
   const findings = await runRuleOn(rule, {
-    "controllers/doc.js": `import { defineController } from "@bootstrapp/light/controller";
+    "controllers/doc.js": `import { defineController } from "@lightstart/light/controller";
 import { storeMixin } from "./doc/store.js";
 export default defineController({
   name: "doc",
@@ -136,8 +136,8 @@ export default defineController({
   drop() { this._orphan = 1; },
 });
 `,
-    "controllers/doc/store.js": `import { defineMixin } from "@bootstrapp/light/controller";
-import T from "@bootstrapp/light/types";
+    "controllers/doc/store.js": `import { defineMixin } from "@lightstart/light/controller";
+import T from "@lightstart/light/types";
 import { makeUndo } from "./undo.js";
 export const storeMixin = defineMixin({
   mixins: [makeUndo({ depth: 5 })],
@@ -153,7 +153,7 @@ export const storeMixin = defineMixin({
 
 test("a fragment spread into the definition declares what it carries", async () => {
   const findings = await runRuleOn(rule, {
-    "controllers/ide.js": `import { defineController } from "@bootstrapp/light/controller";
+    "controllers/ide.js": `import { defineController } from "@lightstart/light/controller";
 import { ui } from "./ide/ui.js";
 export default defineController({
   name: "ide",

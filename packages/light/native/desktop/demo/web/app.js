@@ -5,17 +5,17 @@
  * window through its host, reports where the title bar's controls are (for frameless-check.js),
  * and can close the app.
  */
-import View from "@bootstrapp/light";
-import titleBar from "@bootstrapp/light/components/app/title-bar.js";
-import { env } from "@bootstrapp/light/env";
-import { html } from "@bootstrapp/light/html";
-import { connect } from "@bootstrapp/light/native/desktop/client.js";
+import View from "@lightstart/light";
+import titleBar from "@lightstart/light/components/app/title-bar.js";
+import { env } from "@lightstart/light/env";
+import { html } from "@lightstart/light/html";
+import { connect } from "@lightstart/light/native/desktop/client.js";
 
 View.define("lc-title-bar", titleBar);
 
 /** @import { DemoApi, DemoEvents, DemoPageEvents } from "../contract.ts" */
 
-/** @type {import("@bootstrapp/light/native/desktop/types.ts").Desktop<DemoApi, DemoEvents, DemoPageEvents>} */
+/** @type {import("@lightstart/light/native/desktop/types.ts").Desktop<DemoApi, DemoEvents, DemoPageEvents>} */
 const desktop = connect();
 
 View.define("demo-page", {

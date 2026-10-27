@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "Every piece of type in the app: the heading levels, the sizes and the muted variants.",

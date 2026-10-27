@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it, beforeEach, afterEach } from "node:test";
-import { element, html, key, nothing, render } from "@bootstrapp/light/html";
+import { element, html, key, nothing, render } from "@lightstart/light/html";
 
 if (typeof document === "undefined")
   throw new Error("document is not defined; browser-only suite, run with --browser");

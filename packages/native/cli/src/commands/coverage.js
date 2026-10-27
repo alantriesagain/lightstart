@@ -8,8 +8,8 @@
  * after the entries. The entries are analysed $JOBS at a time (default 4); results print in order.
  */
 import { join, relative } from "node:path";
-import { formatDiagnostic, gate, parseCoverage } from "@bootstrapp/light/native/diagnostics.js";
-import { scriptcPath } from "@bootstrapp/light/native/scriptc.js";
+import { formatDiagnostic, gate, parseCoverage } from "@lightstart/light/native/diagnostics.js";
+import { scriptcPath } from "@lightstart/light/native/scriptc.js";
 import { ffiHeader, nodeOnly, resolveFfi } from "../ffi.js";
 import { prepare } from "../prepare.js";
 import { captureStreams, pool } from "../run.js";

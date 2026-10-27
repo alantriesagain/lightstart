@@ -6,8 +6,8 @@ import test from "node:test";
 import { ESLint } from "eslint";
 import light from "./index.js";
 
-const SOURCE = `import { defineComponent } from "@bootstrapp/light";
-import T from "@bootstrapp/light/types";
+const SOURCE = `import { defineComponent } from "@lightstart/light";
+import T from "@lightstart/light/types";
 export default defineComponent({ tag: "fx-card", props: { click: T.function() }, render() { return null; } });
 `;
 

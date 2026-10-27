@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const BUTTONS = `<lc-button>Default</lc-button>
 <lc-button primary>Primary</lc-button>

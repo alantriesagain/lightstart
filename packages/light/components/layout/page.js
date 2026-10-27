@@ -1,8 +1,8 @@
-import { element, html } from "@bootstrapp/light/html";
-import { applyScopedTheme } from "@bootstrapp/light/theme";
+import { element, html } from "@lightstart/light/html";
+import { applyScopedTheme } from "@lightstart/light/theme";
 import DEFAULT_THEME from "../page/theme.js";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 /** @import { Prop, PageSection } from "../types.ts" */
 
 /** @param {unknown} v */

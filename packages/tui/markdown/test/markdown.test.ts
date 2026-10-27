@@ -7,7 +7,7 @@
  */
 import { inline, renderMarkdown } from "../markdown.ts";
 import { cells } from "../table.ts";
-import { Line, Run } from "@bootstrapp/light/native/tui/lines.ts";
+import { Line, Run } from "@lightstart/light/native/tui/lines.ts";
 import { done, eq, ok } from "@light/test/assert.ts";
 
 const text = (lines: Line[]): string[] => lines.map((l) => l.runs.map((r) => r.text).join("").replace(/\s+$/, ""));

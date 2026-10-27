@@ -1,14 +1,14 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
 import {
   BREAKPOINTS,
   breakpointWidth,
   matchesBreakpoint,
 } from "../utils/breakpoints.js";
-import { defineComponent } from "@bootstrapp/light";
+import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
-import { env } from "@bootstrapp/light/env";
-import { navigation } from "@bootstrapp/light/navigation";
+import { env } from "@lightstart/light/env";
+import { navigation } from "@lightstart/light/navigation";
 
 const TAG = "lc-app-shell";
 

@@ -1,6 +1,6 @@
 # Tasks: a terminal app on light
 
-Boards of tasks on the terminal, built from light's three parts and nothing else: two models (`models/tasks.js` and `models/boards.js`, `defineModel` over `T`), a controller (`controllers/board.js`, `defineController` with its rows and boards bound to live queries of the models), and views (`views/`, `View`s from `@bootstrapp/light/native/tui` rendering into the terminal host, two of them elements a template names by tag, each calling the controller for the change it wants). The entry opens the store with `openJsonl` and runs the app with `runApp`, the kit's two calls. The rows live in JSON Lines files through light's JSONL adapter, one line per write, so the files are readable and appendable by any other program.
+Boards of tasks on the terminal, built from light's three parts and nothing else: two models (`models/tasks.js` and `models/boards.js`, `defineModel` over `T`), a controller (`controllers/board.js`, `defineController` with its rows and boards bound to live queries of the models), and views (`views/`, `View`s from `@lightstart/light/native/tui` rendering into the terminal host, two of them elements a template names by tag, each calling the controller for the change it wants). The entry opens the store with `openJsonl` and runs the app with `runApp`, the kit's two calls. The rows live in JSON Lines files through light's JSONL adapter, one line per write, so the files are readable and appendable by any other program.
 
 ```
 node examples/tasks/main.js                 # rows in ./tasks.jsonl and ./boards.jsonl

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: chartDef } = await import("./sparkline.js");
 
@@ -22,7 +22,7 @@ const mount = async (props) => {
 
 const PROPS = { data: [3, 8, 5] };
 
-describe("@bootstrapp/light - lc-sparkline area", () => {
+describe("@lightstart/light - lc-sparkline area", () => {
   before(async () => {
     if (!customElements.get("lc-sparkline")) View.define("lc-sparkline", chartDef);
     const css = await (await fetch(new URL("./sparkline.css", import.meta.url))).text();

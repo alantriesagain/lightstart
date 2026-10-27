@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/input: bytes from the terminal into key events.
+ * @lightstart/light/native/tui/input: bytes from the terminal into key events.
  * CSI and SS3 sequences with modifiers, the kitty keyboard protocol's `u`
  * form, bracketed paste, SGR mouse reports, Alt as an ESC prefix, control
  * characters, and UTF-8 text split into graphemes.

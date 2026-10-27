@@ -1,6 +1,6 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import { html, nothing } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
 
 /** @import { PagerLink, Prop } from "../types.ts" */
@@ -79,7 +79,7 @@ export default defineComponent({
 
   /**
    * @param {number} page
-   * @param {{ cls?: string, label: string, content: import("@bootstrapp/light/html").TemplateValue, disabled?: boolean }} arg
+   * @param {{ cls?: string, label: string, content: import("@lightstart/light/html").TemplateValue, disabled?: boolean }} arg
    */
   _ctrl(page, { cls = "", label, content, disabled = false }) {
     const active = page === this.current;

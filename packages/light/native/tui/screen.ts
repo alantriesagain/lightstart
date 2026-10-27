@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/screen: a cell grid double buffer and the diff
+ * @lightstart/light/native/tui/screen: a cell grid double buffer and the diff
  * that turns two frames into the smallest escape stream.
  */
 import { CSI, SYNC_END, SYNC_START, cup, sgrTransition } from "./ansi.ts";

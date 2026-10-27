@@ -1,8 +1,8 @@
 import Dexie from "https://esm.sh/dexie@4.0.11";
-import { html } from "@bootstrapp/light/html";
-import { toasts } from "@bootstrapp/light/components/feedback/toasts.js";
-import T from "@bootstrapp/light/types";
-import View from "@bootstrapp/light";
+import { html } from "@lightstart/light/html";
+import { toasts } from "@lightstart/light/components/feedback/toasts.js";
+import T from "@lightstart/light/types";
+import View from "@lightstart/light";
 
 /** @import { Prop, LabeledOption, IdbRecord, DexieTableLike, DexieIndexSpec, IdbSchema, IdbSchemaTable, IdbSchemaIndex } from "./types.ts" */
 /** @import { DexieCollection } from "https://esm.sh/dexie@4.0.11" */

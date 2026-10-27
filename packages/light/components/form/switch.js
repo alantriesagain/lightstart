@@ -1,8 +1,8 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
 
 /** @import { Prop } from "../types.ts" */
-import { defineComponent } from "@bootstrapp/light";
+import { defineComponent } from "@lightstart/light";
 
 export default defineComponent({
   tag: "lc-switch",

@@ -14,7 +14,7 @@
     "tooling": true
   },
   "dependencies": {
-    "@bootstrapp/light": "workspace:*"
+    "@lightstart/light": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.5"

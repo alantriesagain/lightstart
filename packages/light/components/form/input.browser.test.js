@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: inputDef } = await import("./input.js");
 
@@ -29,7 +29,7 @@ const type = (el, text) => {
   field(el).dispatchEvent(new Event("input", { bubbles: true }));
 };
 
-describe("@bootstrapp/light - lc-input", () => {
+describe("@lightstart/light - lc-input", () => {
   before(() => {
     if (!customElements.get("lc-input")) View.define("lc-input", inputDef);
   });

@@ -1,9 +1,30 @@
 {
-  "name": "@bootstrapp/light",
+  "name": "@lightstart/light",
   "version": "0.1.0",
   "description": "Light-DOM web components from object definitions, with reactive properties, a tagged-template renderer, signals, property types, a theme engine and a component library.",
   "type": "module",
   "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/light"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "web-components",
+    "custom-elements",
+    "light-dom",
+    "signals",
+    "renderer",
+    "ui",
+    "framework"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "light": "./bin/light.js"
   },

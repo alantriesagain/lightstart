@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: circleDef } = await import("./story-circle.js");
 const { default: avatarDef } = await import("./avatar.js");
@@ -32,7 +32,7 @@ const mount = async (attrs = {}) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-story-circle", () => {
+describe("@lightstart/light - lc-story-circle", () => {
   before(async () => {
     if (!customElements.get("lc-avatar")) View.define("lc-avatar", avatarDef);
     if (!customElements.get("lc-story-circle")) View.define("lc-story-circle", circleDef);

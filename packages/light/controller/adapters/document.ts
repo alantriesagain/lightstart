@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller/document: Document Adapter
+ * @lightstart/light/controller/document: Document Adapter
  * A sync adapter over one JSON document: the keys a `sync: "<name>"`
  * property binds to are the document's top-level keys. The document lives
  * in memory; while a backing (`{ read, write, flush? }`) is attached every

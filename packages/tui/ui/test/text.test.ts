@@ -2,7 +2,7 @@
  * @file Text as the views measure it: tabs stop on terminal cells (a wide character takes two),
  * wrapping moves words whole and breaks a word too long for the room, and clipping ends in "…".
  */
-import { Run } from "@bootstrapp/light/native/tui/lines.ts";
+import { Run } from "@lightstart/light/native/tui/lines.ts";
 import { clipText, expandTabs, wrap } from "../text.ts";
 import { done, eq } from "@light/test/assert.ts";
 

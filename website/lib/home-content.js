@@ -6,9 +6,9 @@
  * rewrite, which reads the module's text, leaves them alone.
  */
 
-const LIGHT = "@bootstrapp/light";
+const LIGHT = "@lightstart/light";
 
-/** @import { FormField } from "@bootstrapp/light/components/types.ts" */
+/** @import { FormField } from "@lightstart/light/components/types.ts" */
 
 export const TAGLINE = "Web Components made simple.";
 

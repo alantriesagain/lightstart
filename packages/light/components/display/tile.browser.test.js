@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: tileDef } = await import("./tile.js");
 
@@ -20,7 +20,7 @@ const mount = async (attrs = {}) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-tile", () => {
+describe("@lightstart/light - lc-tile", () => {
   before(async () => {
     const css = await (await fetch(new URL("./tile.css", import.meta.url))).text();
     const style = document.createElement("style");

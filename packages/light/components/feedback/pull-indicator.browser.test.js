@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 import indicator from "./pull-indicator.js";
 
 View.define("lc-pull-indicator", indicator);
@@ -24,7 +24,7 @@ const mount = async (props) => {
 /** @param {any} el */
 const band = (el) => /** @type {HTMLElement} */ (el.querySelector(".lc-pull-indicator-band"));
 
-describe("@bootstrapp/light - lc-pull-indicator", () => {
+describe("@lightstart/light - lc-pull-indicator", () => {
   afterEach(() => {
     for (const el of mounted.splice(0)) el.remove();
   });

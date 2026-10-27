@@ -1,5 +1,5 @@
-import { html } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
+import { html } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
 
 export default defineComponent({
   tag: "docs-theming",

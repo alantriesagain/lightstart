@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "A denser list entry built for a feed: leading media, two lines of text, a trailing state.",

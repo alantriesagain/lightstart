@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 import { ANCHOR_GUTTER_PX } from "./anchor.js";
-import { env } from "@bootstrapp/light/env";
+import { env } from "@lightstart/light/env";
 
 const { default: tooltipDef } = await import("./tooltip.js");
 
@@ -38,7 +38,7 @@ const shown = async (tip) => {
   };
 };
 
-describe("@bootstrapp/light - lc-tooltip", () => {
+describe("@lightstart/light - lc-tooltip", () => {
   before(() => View.define("lc-tooltip", tooltipDef));
 
   afterEach(async () => {

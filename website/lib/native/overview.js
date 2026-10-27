@@ -7,7 +7,7 @@
 import captures from "./captures.js";
 import { describeRun } from "./v8-trace.js";
 
-/** @import { FlowLane } from "@bootstrapp/light/components/types.ts" */
+/** @import { FlowLane } from "@lightstart/light/components/types.ts" */
 
 const counter = captures.examples.counter;
 const { tools } = captures;

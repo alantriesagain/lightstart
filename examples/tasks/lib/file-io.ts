@@ -4,7 +4,7 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 
-import type { JsonlIO } from "@bootstrapp/light/model";
+import type { JsonlIO } from "@lightstart/light/model";
 
 export const fileIO = (dir: string): JsonlIO => {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });

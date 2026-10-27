@@ -4,9 +4,9 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import navItemDef from "@bootstrapp/light/components/navigation/nav-item.js";
-import navTreeDef from "@bootstrapp/light/components/navigation/nav-tree.js";
+import View from "@lightstart/light";
+import navItemDef from "@lightstart/light/components/navigation/nav-item.js";
+import navTreeDef from "@lightstart/light/components/navigation/nav-tree.js";
 
 const define = (tag, definition) => {
   if (!customElements.get(tag)) View.define(tag, definition);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 import breadcrumbsDef from "../navigation/breadcrumbs.js";
 import pageHeaderDef from "./page-header.js";
 

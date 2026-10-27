@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/color: color names to numbers and numbers to SGR
+ * @lightstart/light/native/tui/color: color names to numbers and numbers to SGR
  * parameters. A template's `fg="salmon"` fails at its first render rather
  * than painting the default. A `#rrggbb` paints as 24-bit color, or as the
  * nearest cell of the 256-color palette when the terminal announced no more.

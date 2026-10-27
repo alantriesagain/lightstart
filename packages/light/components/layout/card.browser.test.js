@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 import cardDef from "./card.js";
 import containerDef from "./container.js";
 
@@ -33,7 +33,7 @@ const mount = async (attrs = {}, cssText = "") => {
 
 const bodyOf = (el) => el.querySelector("[part~=lc-card-body]");
 
-describe("@bootstrapp/light - lc-card", () => {
+describe("@lightstart/light - lc-card", () => {
   before(async () => {
     if (!customElements.get("lc-container")) View.define("lc-container", containerDef);
     if (!customElements.get("lc-card")) View.define("lc-card", cardDef);

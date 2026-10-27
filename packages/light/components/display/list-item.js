@@ -5,7 +5,7 @@
  * this is.
  */
 
-import { defineComponent } from "@bootstrapp/light";
+import { defineComponent } from "@lightstart/light";
 
 export default defineComponent({
   tag: "lc-list-item",

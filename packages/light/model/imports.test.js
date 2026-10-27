@@ -55,7 +55,7 @@ const sourceFiles = (dir) =>
 const entry = (/** @type {string} */ key) => /** @type {string} */ (exportFile(pkg.exports[key])).replace(/^\.\//, "");
 const inModel = (/** @type {string} */ file) => file.startsWith("model/");
 
-describe("@bootstrapp/light/model: nothing loads what it did not ask for", () => {
+describe("@lightstart/light/model: nothing loads what it did not ask for", () => {
   it("no entry outside the model, and no component, reaches model/", () => {
     const outside = Object.keys(pkg.exports).filter((key) => !key.startsWith("./model") && !key.includes("*")).map((key) => exportFile(pkg.exports[key])).filter((file) => typeof file === "string");
     for (const file of [...outside, ...sourceFiles("components")]) {

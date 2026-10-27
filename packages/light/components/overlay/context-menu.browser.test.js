@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: menuDef } = await import("./context-menu.js");
 
@@ -18,7 +18,7 @@ const mount = async () => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-context-menu", () => {
+describe("@lightstart/light - lc-context-menu", () => {
   before(() => {
     if (!customElements.get("lc-context-menu")) View.define("lc-context-menu", menuDef);
   });

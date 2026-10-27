@@ -1,15 +1,15 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
-import { withClickOutside } from "@bootstrapp/light/components/mixins/click-outside.js";
-import { withOverlay } from "@bootstrapp/light/components/mixins/overlay.js";
-import { groupDocs, matchDocs } from "@bootstrapp/light/components/form/search-match.js";
+import { html, nothing } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
+import { withClickOutside } from "@lightstart/light/components/mixins/click-outside.js";
+import { withOverlay } from "@lightstart/light/components/mixins/overlay.js";
+import { groupDocs, matchDocs } from "@lightstart/light/components/form/search-match.js";
 import { nextIndex } from "../utils/roving.js";
-import T from "@bootstrapp/light/types";
+import T from "@lightstart/light/types";
 import { lcText } from "../utils/text.js";
-import { navigation } from "@bootstrapp/light/navigation";
+import { navigation } from "@lightstart/light/navigation";
 
 /** @import { Prop, SearchDoc } from "../types.ts" */
-/** @import { TemplateValue } from "@bootstrapp/light/html" */
+/** @import { TemplateValue } from "@lightstart/light/html" */
 
 export default defineComponent({
   mixins: [withOverlay(), withClickOutside()],

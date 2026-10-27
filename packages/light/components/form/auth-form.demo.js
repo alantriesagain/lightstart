@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "Sign in and sign up in one component: tabs, OAuth buttons, a guest route, and the validation between them.",

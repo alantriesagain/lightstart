@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: segmentedDef } = await import("./segmented.js");
 
@@ -38,7 +38,7 @@ const listen = (el) => {
   return seen;
 };
 
-describe("@bootstrapp/light - lc-segmented", () => {
+describe("@lightstart/light - lc-segmented", () => {
   before(() => {
     if (!customElements.get("lc-segmented")) View.define("lc-segmented", segmentedDef);
   });

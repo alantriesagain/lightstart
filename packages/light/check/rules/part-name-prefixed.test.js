@@ -3,7 +3,7 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./part-name-prefixed.js";
 
-const component = (body) => `import { html } from "@bootstrapp/light/html";
+const component = (body) => `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-card",
   render() { return html\`${body}\`; },
@@ -44,8 +44,8 @@ test("a component that renders nothing of its own has nothing to check", async (
 });
 
 test("two definitions in one file: each other's parts are fine, an unprefixed one is reported once", async () => {
-  const src = `import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+  const src = `import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 View.define("fx-a", {}, (el) => html\`<div part="fx-a-body"><span part="fx-b-chip"></span></div>\`);
 View.define("fx-b", {}, (el) => html\`<div part="fx-b-body"><i part="chip"></i></div>\`);
 `;

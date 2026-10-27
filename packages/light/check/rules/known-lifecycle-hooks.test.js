@@ -30,7 +30,7 @@ test("silent on real hooks and arbitrary methods", async () => {
 });
 
 test("fires on a hook name inside View.define's definition argument", async () => {
-  const src = `import View from "@bootstrapp/light";
+  const src = `import View from "@lightstart/light";
 View.define("fx-thing", { n: 0 }, { mounted() {}, render() { return null; } });
 `;
   const findings = await runRuleOn(rule, { "views/a.js": src });

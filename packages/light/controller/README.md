@@ -1,4 +1,4 @@
-# @bootstrapp/light/controller
+# @lightstart/light/controller
 
 A controller is a named piece of app state and the methods that change it. It is state shared at runtime by every component that uses it; code shared at definition time is a mixin. There is one per name, made the first time anything reaches it: components and other controllers read it, bind to it by name, or call it. `connected()` runs once when it is made, and `dispose()` resets it, so the next reach makes a fresh one. A controller is never scoped: one per document or per conversation is a keyed collection inside one controller, or a `keyedResource`.
 
@@ -8,17 +8,17 @@ Each piece is its own entry, and an entry loads only its own code. Nothing else 
 
 | Entry | Holds |
 |---|---|
-| `@bootstrapp/light/controller` | `defineController`, `defineMixin`, `nameControllers`, `registerAdapter`, `registerSyncType`, `registerSyncBinder`, `getAdapter`, `pendingAdapterNames`, `configureControllers` |
-| `@bootstrapp/light/controller/resource` | `resource`, `keyedResource` |
-| `@bootstrapp/light/controller/storage` | `localStorage`, `sessionStorage`, `memoryStorage`, `createStorageAdapter` |
-| `@bootstrapp/light/controller/document` | `createDocumentAdapter` |
-| `@bootstrapp/light/controller/url` | `hash` |
-| `@bootstrapp/light/controller/view` | `syncPlugin` |
+| `@lightstart/light/controller` | `defineController`, `defineMixin`, `nameControllers`, `registerAdapter`, `registerSyncType`, `registerSyncBinder`, `getAdapter`, `pendingAdapterNames`, `configureControllers` |
+| `@lightstart/light/controller/resource` | `resource`, `keyedResource` |
+| `@lightstart/light/controller/storage` | `localStorage`, `sessionStorage`, `memoryStorage`, `createStorageAdapter` |
+| `@lightstart/light/controller/document` | `createDocumentAdapter` |
+| `@lightstart/light/controller/url` | `hash` |
+| `@lightstart/light/controller/view` | `syncPlugin` |
 
 ## Defining
 
 ```js
-import { defineController } from "@bootstrapp/light/controller";
+import { defineController } from "@lightstart/light/controller";
 
 /** @import { Summary } from "./types.ts" */
 
@@ -56,12 +56,12 @@ export const ledger = defineController({
 
 ## In TypeScript
 
-A controller in TypeScript is a `Controller` subclass (`@bootstrapp/light/controller/class`), the form that compiles natively: `defineController`'s literal does not lower from TypeScript (scriptc refuses `this` in an object literal's methods), a class does. The words mean what they mean above: signal fields are the props, `liveRows(this, model, build)` from `@bootstrapp/light/model/binder` is the `sync:` block (the options `build` answers, built again whenever a signal it read changes; the rows a `LiveRows<T>` read as `.value`, with `pending`, `total` and `refresh()` from the resource; the model layer stays out of `controller/`, as it does for the definition form), `$own`, `$wait` (work `$ready` waits for), `connected()`, `disconnected()`, `dispose()` and `$ready`. The hooks are plain methods answering the promise of the work they start (an async method's) or null, since natively an async method cannot be overridden. The one addition is `start()`: a base constructor runs before the subclass's fields exist, so the entry (or the subclass's constructor, last) calls `start()`, which runs `connected()` and settles `$ready` with it and the first load of every query made before it. A signal a `build` reads is declared above the query that reads it. The rows cross as dynamic data, so `T` is an interface whose fields are `unknown`, read through `String(row.title)` and the like.
+A controller in TypeScript is a `Controller` subclass (`@lightstart/light/controller/class`), the form that compiles natively: `defineController`'s literal does not lower from TypeScript (scriptc refuses `this` in an object literal's methods), a class does. The words mean what they mean above: signal fields are the props, `liveRows(this, model, build)` from `@lightstart/light/model/binder` is the `sync:` block (the options `build` answers, built again whenever a signal it read changes; the rows a `LiveRows<T>` read as `.value`, with `pending`, `total` and `refresh()` from the resource; the model layer stays out of `controller/`, as it does for the definition form), `$own`, `$wait` (work `$ready` waits for), `connected()`, `disconnected()`, `dispose()` and `$ready`. The hooks are plain methods answering the promise of the work they start (an async method's) or null, since natively an async method cannot be overridden. The one addition is `start()`: a base constructor runs before the subclass's fields exist, so the entry (or the subclass's constructor, last) calls `start()`, which runs `connected()` and settles `$ready` with it and the first load of every query made before it. A signal a `build` reads is declared above the query that reads it. The rows cross as dynamic data, so `T` is an interface whose fields are `unknown`, read through `String(row.title)` and the like.
 
 ```ts
-import { Controller } from "@bootstrapp/light/controller/class";
-import { liveRows } from "@bootstrapp/light/model/binder";
-import { signal } from "@bootstrapp/light/signals";
+import { Controller } from "@lightstart/light/controller/class";
+import { liveRows } from "@lightstart/light/model/binder";
+import { signal } from "@lightstart/light/signals";
 import tasks from "../models/tasks.js";
 
 interface TaskRow { id: unknown; title: unknown; done: unknown }
@@ -110,7 +110,7 @@ Adapters are named by the page: `registerAdapter("local", localStorage)`. Import
 `registerSyncBinder({ test, bind, options })` teaches the binding a data source it cannot follow as an adapter, a store or a signal (a model, a query service). `test(target)` claims an opened target; `bind({ store, key, prop, host, target })` keeps the prop current and answers `{ unbind, loaded? }`, where `loaded` settles with the first value and is part of `$ready`; `options` lists the long-form options it reads (`query`, `dependsOn`). A binder that reads `query` keeps the host's `dataPending` true while a load is in flight. `registerSyncType(check, handler)` is the lighter seam for a target that is a store under another shape. A host that adds a binder types its targets by merging into `SyncTargets`:
 
 ```ts
-declare module "@bootstrapp/light/controller" {
+declare module "@lightstart/light/controller" {
   interface SyncTargets { model: ModelApi }
 }
 ```

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/theme/terminal: the utility classes on the terminal
+ * @lightstart/light/theme/terminal: the utility classes on the terminal
  * host. `TerminalClasses` is a `ClassStyler` over the classes engine: a
  * class compiles as it does for a page, and the declarations a terminal can
  * show become tdom props, colors resolved through the theme's tokens on one

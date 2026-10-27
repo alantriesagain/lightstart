@@ -3,8 +3,8 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./boolean-prop-binds-bool-attr.js";
 
-const modal = (props) => `import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
+const modal = (props) => `import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
 export default {
   tag: "fx-modal",
   props: {
@@ -14,7 +14,7 @@ ${props}
 };
 `;
 
-const binder = (body) => `import { html } from "@bootstrapp/light/html";
+const binder = (body) => `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-thing",
   render() { return html\`${body}\`; },
@@ -144,7 +144,7 @@ test("an expression with an arrow before the binding does not break tag resoluti
 test("a quoted value holding a tag does not hide the element the binding sits on", async () => {
   const findings = await runRuleOn(rule, {
     "views/target.js": 'export default { tag: "fx-target", props: { open: false } };',
-    "views/page.js": 'import { html } from "@bootstrapp/light/html";\nexport default { tag: "fx-page", render() { return html`<fx-target title="a <i> b" .open=${this.o}></fx-target>`; } };',
+    "views/page.js": 'import { html } from "@lightstart/light/html";\nexport default { tag: "fx-page", render() { return html`<fx-target title="a <i> b" .open=${this.o}></fx-target>`; } };',
   });
   assert.deepEqual(findings.map((f) => f.message), [".open on <fx-target>: open is a T.boolean property; bind it as ?open=${...}"]);
 });

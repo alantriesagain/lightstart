@@ -1,4 +1,4 @@
-import { html, key, render } from "@bootstrapp/light/html";
+import { html, key, render } from "@lightstart/light/html";
 import { register, rowSteps } from "./bench.js";
 
 /** @type {{ id: number, label: string }[]} */

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/ansi: the escape sequences the renderer writes.
+ * @lightstart/light/native/tui/ansi: the escape sequences the renderer writes.
  */
 import { colorSgr } from "./color.ts";
 import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, Style } from "./style.ts";

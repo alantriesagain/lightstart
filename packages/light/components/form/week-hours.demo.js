@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const BAR = [
   { days: [2, 3, 4], open: "18:00", close: "01:00" },

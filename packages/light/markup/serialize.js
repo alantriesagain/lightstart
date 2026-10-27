@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/markup/serialize: a markup tree as the HTML a browser
+ * @lightstart/light/markup/serialize: a markup tree as the HTML a browser
  * would serialize it to, so a page served from it adopts cleanly in the
  * browser: the engine's marker comments stay in, text and attribute values
  * are escaped, void elements take no end tag, `<script>` and `<style>` keep

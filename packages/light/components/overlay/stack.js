@@ -14,7 +14,7 @@
  * lock, and nothing here answers for it.
  */
 
-import { signal } from "@bootstrapp/light/signals";
+import { signal } from "@lightstart/light/signals";
 
 /** @import { OverlayEntry, OverlayOptions } from "../types.ts" */
 

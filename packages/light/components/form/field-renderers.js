@@ -13,7 +13,7 @@
  * how a project rethemes one rather than reaching around it.
  */
 
-import { html as defaultHtml, nothing } from "@bootstrapp/light/html";
+import { html as defaultHtml, nothing } from "@lightstart/light/html";
 import { getPath } from "./path.js";
 import { lcText } from "../utils/text.js";
 

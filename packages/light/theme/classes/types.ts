@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/theme/classes: the shapes of the engine. A class parsed,
+ * @lightstart/light/theme/classes: the shapes of the engine. A class parsed,
  * a rule compiled, the engine and its options, the scales a theme gives it.
  * Nothing of a document: the browser runtime's shapes are `../runtime-types.ts`.
  */

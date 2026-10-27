@@ -1,10 +1,10 @@
-import { html } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
-import { withOverlay } from "@bootstrapp/light/components/mixins/overlay.js";
+import { html } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
+import { withOverlay } from "@lightstart/light/components/mixins/overlay.js";
 import { withPointerDrag } from "../mixins/pointer-drag.js";
 import { DISMISS_ZONE_PX, classify, resolveStops } from "./detents.js";
-import T from "@bootstrapp/light/types";
-import { env } from "@bootstrapp/light/env";
+import T from "@lightstart/light/types";
+import { env } from "@lightstart/light/env";
 
 /** @import { DetentName, DragEnd, DragMove, Prop, SheetGeometry } from "../types.ts" */
 

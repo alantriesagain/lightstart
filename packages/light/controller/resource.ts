@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller/resource: resource()
+ * @lightstart/light/controller/resource: resource()
  * The async primitive for a value something fetches: an HTTP answer, baked
  * JSON, a join across sources. It holds the value, whether it is loading and
  * the last error as signals, dedupes concurrent loads, and never shows an

@@ -1,6 +1,6 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import View from "@bootstrapp/light";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import View from "@lightstart/light";
 import { register } from "./bench.js";
 
 const COUNT = 2000;

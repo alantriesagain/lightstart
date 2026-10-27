@@ -1,6 +1,6 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { compactNumber, niceMax } from "../utils/scale.js";
 import { lcText } from "../utils/text.js";
 /** @import { Prop, BarChartDatum } from "../types.ts" */

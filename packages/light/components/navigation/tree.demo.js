@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 /** @param {CustomEvent<{ expanded: boolean }>} e */
 const TOGGLED = (e) => console.log("toggled", e.detail.expanded);

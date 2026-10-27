@@ -1,7 +1,7 @@
-import { html, nothing } from "@bootstrapp/light/html";
+import { html, nothing } from "@lightstart/light/html";
 import $APP from "bootstrapp";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { browsableCategories, categoryById } from "@bootstrapp/showcase/lib/categories.js";
 import { categoryPath, COMPONENTS_PATH, neighbourCategories } from "../lib/paths.js";
 

@@ -7,10 +7,10 @@
   <script type="importmap">
   {
     "imports": {
-      "@bootstrapp/light": "../packages/light/view/index.js",
-      "@bootstrapp/light/html": "../packages/light/html/index.js",
-      "@bootstrapp/light/signals": "../packages/light/signals/index.ts",
-      "@bootstrapp/light/types": "../packages/light/types/index.js"
+      "@lightstart/light": "../packages/light/view/index.js",
+      "@lightstart/light/html": "../packages/light/html/index.js",
+      "@lightstart/light/signals": "../packages/light/signals/index.ts",
+      "@lightstart/light/types": "../packages/light/types/index.js"
     }
   }
   </script>
@@ -41,8 +41,8 @@
   <demo-card>Only default content: the header and footer show their fallback.</demo-card>
 
   <script type="module">
-    import { html } from "@bootstrapp/light/html";
-    import View from "@bootstrapp/light";
+    import { html } from "@lightstart/light/html";
+    import View from "@lightstart/light";
 
     View.define("demo-card", {
       render() {

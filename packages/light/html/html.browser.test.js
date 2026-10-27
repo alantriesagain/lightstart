@@ -12,7 +12,7 @@ import {
   render,
   svg,
   unsafeHTML,
-} from "@bootstrapp/light/html";
+} from "@lightstart/light/html";
 
 if (typeof document === "undefined")
   throw new Error("document is not defined; browser-only suite, run with --browser");

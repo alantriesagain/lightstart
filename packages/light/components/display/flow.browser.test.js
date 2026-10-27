@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: flowDef } = await import("./flow.js");
 
@@ -49,7 +49,7 @@ const mount = async (props, width = "800px") => {
 /** @param {Element} el */
 const box = (el) => el.getBoundingClientRect();
 
-describe("@bootstrapp/light - lc-flow", () => {
+describe("@lightstart/light - lc-flow", () => {
   before(async () => {
     if (!customElements.get("lc-flow")) View.define("lc-flow", flowDef);
     const style = document.createElement("style");

@@ -1,9 +1,9 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import View from "@bootstrapp/light";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import View from "@lightstart/light";
 
 /**
- * @import { TypeDefinition } from "@bootstrapp/light/types"
+ * @import { TypeDefinition } from "@lightstart/light/types"
  * @import { Todo } from "./types.ts"
  */
 

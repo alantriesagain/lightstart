@@ -1,4 +1,4 @@
-import { translate } from "@bootstrapp/light";
+import { translate } from "@lightstart/light";
 import en from "../../locales/en.js";
 
 /** @type {(s: string, params: Record<string, unknown>) => string} */

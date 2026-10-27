@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: stripDef, stripDays, todayIn } = await import("./day-strip.js");
 
@@ -34,7 +34,7 @@ const mount = async (props = {}) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-day-strip", () => {
+describe("@lightstart/light - lc-day-strip", () => {
   before(async () => {
     if (!customElements.get("lc-day-strip")) View.define("lc-day-strip", stripDef);
     await loadStyles("day-strip");

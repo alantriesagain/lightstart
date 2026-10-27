@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller/storage: Storage Adapters
+ * @lightstart/light/controller/storage: Storage Adapters
  * localStorage, sessionStorage, and memory storage with signal integration.
  */
 

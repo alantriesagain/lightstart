@@ -5,13 +5,13 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import { html } from "@bootstrapp/light/html";
-import View from "@bootstrapp/light";
-import buttonDef from "@bootstrapp/light/components/display/button.js";
-import codeBlockDef from "@bootstrapp/light/components/display/code-block.js";
-import exampleDef from "@bootstrapp/light/components/display/example.js";
-import segmentedDef from "@bootstrapp/light/components/form/segmented.js";
-import clipboardDef from "@bootstrapp/light/components/utility/clipboard.js";
+import { html } from "@lightstart/light/html";
+import View from "@lightstart/light";
+import buttonDef from "@lightstart/light/components/display/button.js";
+import codeBlockDef from "@lightstart/light/components/display/code-block.js";
+import exampleDef from "@lightstart/light/components/display/example.js";
+import segmentedDef from "@lightstart/light/components/form/segmented.js";
+import clipboardDef from "@lightstart/light/components/utility/clipboard.js";
 
 const define = (tag, definition) => {
   if (!customElements.get(tag)) View.define(tag, definition);

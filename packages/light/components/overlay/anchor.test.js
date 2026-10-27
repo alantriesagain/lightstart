@@ -16,7 +16,7 @@ const viewport = { width: 1000, height: 800 };
 const trigger = rect(400, 300, 100, 40);
 const floating = { width: 200, height: 120 };
 
-describe("@bootstrapp/light - parseAnchor", () => {
+describe("@lightstart/light - parseAnchor", () => {
   it("reads a side and a modifier", () => {
     assert.deepEqual(parseAnchor("bottom-left"), { side: "bottom", align: "start" });
     assert.deepEqual(parseAnchor("top-right"), { side: "top", align: "end" });
@@ -38,7 +38,7 @@ describe("@bootstrapp/light - parseAnchor", () => {
   });
 });
 
-describe("@bootstrapp/light - anchorPosition", () => {
+describe("@lightstart/light - anchorPosition", () => {
   it("puts a bottom-start box under the trigger's left edge", () => {
     const at = anchorPosition({ trigger, floating, side: "bottom", align: "start", offset: 4, viewport });
     assert.deepEqual(at, { top: 344, left: 400 });

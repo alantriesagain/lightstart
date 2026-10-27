@@ -1,7 +1,7 @@
 # light/website (projects/light in the monorepo)
 
-The component catalogue: the app that renders every `@bootstrapp/light` component from
-its own demo, in any skin. It depends on `@bootstrapp/light` and `@bootstrapp/theme` the
+The component catalogue: the app that renders every `@lightstart/light` component from
+its own demo, in any skin. It depends on `@lightstart/light` and `@bootstrapp/theme` the
 way every project does, so the palette, the Google font and the icon collection arrive
 through the ordinary boot with nothing set up by hand.
 
@@ -16,10 +16,10 @@ through the ordinary boot with nothing set up by hand.
   `applyScopedTheme`; the chrome keeps this project's `theme.js`.
 - The route table is `routes.js`: `/` (the landing page, `views/home.js`, its words and
   snippets in `lib/home-content.js` and its live `my-counter` in `lib/home-demos.js`),
-  `/components`, `/components/:category`, `/components/:category/:name`, `/theming`,
-  `/skins`, `/native`, `/native/comparison`, `/native/:topic`, every one inside the `template-shell` template, which
-  drops the rail and the outline on the landing page. The router spreads `category`, `name`
-  and `topic` onto the page as props.
+  `/components`, `/components/:category`, `/components/:category/:name`, `/built-with-light`,
+  `/theming`, `/skins`, `/native`, `/native/comparison`, `/native/:topic`, every one inside the
+  `template-shell` template, which drops the rail and the outline on the landing page and the
+  built-with gallery. The router spreads `category`, `name` and `topic` onto the page as props.
 - `/native` (`views/native.js`) introduces the section and lists its pages in two groups,
   light's native build and the background, as `lib/native/pages.js` orders them (the nav
   column inside the section, the pager, the palette; `nav` is a shorter label where the full

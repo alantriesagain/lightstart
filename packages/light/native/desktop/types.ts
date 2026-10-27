@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/desktop: the types of the bridge. An app declares one contract (its
+ * @lightstart/light/native/desktop: the types of the bridge. An app declares one contract (its
  * methods) and one events map, and both the page and the backend import them: the page's `call`
  * is the contract with every method returning a Promise, the backend's handlers receive the
  * arguments as `unknown[]` and narrow them, since a native build checks nothing it did not parse.

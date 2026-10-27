@@ -1,10 +1,10 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
-import { withPopover } from "@bootstrapp/light/components/mixins/popover.js";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
+import { withPopover } from "@lightstart/light/components/mixins/popover.js";
 import { nextIndex } from "../utils/roving.js";
 /** @import { Prop, DropdownItem } from "../types.ts" */
-/** @import { TemplateValue } from "@bootstrapp/light/html" */
+/** @import { TemplateValue } from "@lightstart/light/html" */
 
 export default defineComponent({
   mixins: [withPopover],

@@ -8,7 +8,7 @@
  * A label goes as it is on a first line that is not a wrapped paragraph (a fence, a rule).
  */
 import { palette } from "@light/ui/palette.ts";
-import { Line, Run } from "@bootstrapp/light/native/tui/lines.ts";
+import { Line, Run } from "@lightstart/light/native/tui/lines.ts";
 import { clipText, expandTabs, wrap } from "@light/ui/text.ts";
 import { HlState, languageForFence, TOKEN_COLORS, tokenizeLine } from "@light/highlight";
 import { parseTable, renderTable } from "./table.ts";

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/components/utils/time-ago
+ * @lightstart/light/components/utils/time-ago
  *
  * How long ago, in the reader's language. `Intl.RelativeTimeFormat` owns the
  * words, so this module has none of its own and needs no locale file.

@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "Buttons or inputs fused into one control, with the corners rounded only on the ends.",

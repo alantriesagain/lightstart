@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
-import { configure, html, key, render } from "@bootstrapp/light/html";
-import { DomHost } from "@bootstrapp/light/dom/host.js";
-import { MRoot, MarkupHost, serialize } from "@bootstrapp/light/markup/index.js";
-import { effect, signal } from "@bootstrapp/light/signals";
+import { configure, html, key, render } from "@lightstart/light/html";
+import { DomHost } from "@lightstart/light/dom/host.js";
+import { MRoot, MarkupHost, serialize } from "@lightstart/light/markup/index.js";
+import { effect, signal } from "@lightstart/light/signals";
 
 if (typeof document === "undefined")
   throw new Error("document is not defined; browser-only suite, run with --browser");

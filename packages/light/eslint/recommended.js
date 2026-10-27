@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/eslint/recommended.js: light's house style as one flat
+ * @lightstart/light/eslint/recommended.js: light's house style as one flat
  * config object. The core and stylistic rules light's code is written to,
  * `eslint-plugin-lit`'s checks of html templates, light's two style rules,
  * and the checker's findings as `light/check-errors` and

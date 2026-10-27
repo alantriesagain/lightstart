@@ -1,5 +1,5 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
+import { html, nothing } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
 
 /** @param {string} url */
 const deriveDomain = (url) => {

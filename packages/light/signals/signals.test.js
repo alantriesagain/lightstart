@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { signal, computed, effect, batch, untracked, selector, getCurrentEffect, Signal } from "@bootstrapp/light/signals";
+import { signal, computed, effect, batch, untracked, selector, getCurrentEffect, Signal } from "@lightstart/light/signals";
 
 describe("light/signals", () => {
   describe("signal()", () => {

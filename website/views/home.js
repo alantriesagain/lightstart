@@ -4,24 +4,25 @@
  * it does. The results are live: the counter counts, the number input drives
  * the total, the form validates, the second sign-in card wears a skin.
  */
-import { html, key, nothing } from "@bootstrapp/light/html";
+import { html, key, nothing } from "@lightstart/light/html";
 import $APP from "bootstrapp";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
-import { env } from "@bootstrapp/light/env";
-import { matchesBreakpoint } from "@bootstrapp/light/components/utils/breakpoints.js";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
+import { env } from "@lightstart/light/env";
+import { matchesBreakpoint } from "@lightstart/light/components/utils/breakpoints.js";
 import { browsableCategories } from "@bootstrapp/showcase/lib/categories.js";
 import { applySkin, clearSkin } from "@bootstrapp/showcase/lib/skins.js";
-import { COMPONENTS_PATH, GITHUB_URL, NPM_URL, README_URL } from "../lib/paths.js";
+import { BUILT_WITH_LIGHT_PATH, COMPONENTS_PATH, GITHUB_URL, NPM_URL, README_URL } from "../lib/paths.js";
+import { PROJECTS } from "../lib/built-with-light.js";
 import { FACTS, FORM_FIELDS, LIST_ITEMS, PAIRS, PRICE, PRINCIPLES, SNIPPETS, TAGLINE, TERMINAL, THEME_SKIN } from "../lib/home-content.js";
 import { defineDemos } from "../lib/home-demos.js";
 
 /** @import { Prop } from "../types.ts" */
 
 const TABS = [{ value: "code", label: "Code" }, { value: "result", label: "Result" }];
-const INSTALL = "npm i @bootstrapp/light";
+const INSTALL = "npm i @lightstart/light";
 const FOOTER = [
-  { title: "Site", links: [{ label: "Components", href: COMPONENTS_PATH }, { label: "Theming", href: "/theming" }, { label: "Skins", href: "/skins" }] },
+  { title: "Site", links: [{ label: "Components", href: COMPONENTS_PATH }, { label: "Built with Light", href: BUILT_WITH_LIGHT_PATH }, { label: "Theming", href: "/theming" }, { label: "Skins", href: "/skins" }] },
   { title: "Source", links: [{ label: "GitHub", href: GITHUB_URL }, { label: "npm", href: NPM_URL }, { label: "README", href: README_URL }] },
 ];
 
@@ -177,6 +178,19 @@ export default defineComponent({
       </section>
       <section class="home-principles">
         ${PRINCIPLES.map((principle) => html`<lc-card padding="lg" class="home-principle"><span class="home-eyebrow">${principle.eyebrow}</span><h2>${principle.title}</h2><p>${principle.text}</p></lc-card>`)}
+      </section>
+      <section class="home-built">
+        <div class="home-built-head">
+          <div class="home-section-head">
+            <span class="home-eyebrow">In production</span>
+            <h2>Built with Light</h2>
+            <p>Apps, sites and tools that ship with the same package.</p>
+          </div>
+          <lc-button href=${BUILT_WITH_LIGHT_PATH}>All projects</lc-button>
+        </div>
+        <div class="home-built-grid">
+          ${PROJECTS.slice(0, 3).map((project) => html`<docs-project-card .project=${project} compact></docs-project-card>`)}
+        </div>
       </section>
       <section class="home-index">
         <div class="home-section-head"><span class="home-eyebrow">The package</span><h2>What is in it</h2></div>

@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const items = [
   { id: "1", background: "#0f766e", title: "Doors open" },

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/renderer: frames. Layout, paint, diff and write,
+ * @lightstart/light/native/tui/renderer: frames. Layout, paint, diff and write,
  * one per scheduler tick after the views flushed. A key goes to the
  * focused editor first, then bubbles from it (or the root) through the
  * element handlers; Tab and Shift+Tab move the focus along the focusable

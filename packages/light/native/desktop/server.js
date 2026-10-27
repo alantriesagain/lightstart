@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/desktop/server: the page's files over loopback. The webview has no
+ * @lightstart/light/native/desktop/server: the page's files over loopback. The webview has no
  * custom URL scheme, so the backend serves `web/` over HTTP on 127.0.0.1 at a port the system
  * picks, under a path prefix only this launch knows, with light's own files under `light/` and
  * an import map injected into index.html. Nothing is cached, nothing is listed, and a request

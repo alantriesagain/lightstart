@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const today = new Date().toISOString().slice(0, 10);
 const plus = (/** @type {number} */ n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);

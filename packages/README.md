@@ -5,7 +5,7 @@ What native apps of a kind share, as workspace packages on light's native target
 | Folder | For | Packages, in dependency order |
 |---|---|---|
 | `native/` | any native app | `lib`, `highlight`; `plugins`, `workspace`; `cli` (node tooling) |
-| `tui/` | terminal apps, on `@bootstrapp/light/native/tui` | `test`; `kernel`, `ui`; `markdown` |
+| `tui/` | terminal apps, on `@lightstart/light/native/tui` | `test`; `kernel`, `ui`; `markdown` |
 
 | Package | What it is |
 |---|---|
@@ -24,7 +24,7 @@ A package never imports one after it in that order, nor an app. `lib` and `highl
 ## A member
 
 - A `package.json` with `"type": "module"` and `"private": true`, and `exports` of `{ ".": "./index.ts", "./*": "./*" }`: every export target is a `.ts` file, which is what lets scriptc compile a bare import of a linked package as program source (a `.js` target would make it an npm package and fail the build).
-- Every member and `@bootstrapp/light` it imports declared as `workspace:*`; `@light/test` and `@types/node` are devDependencies. Imports are by name (`@bootstrapp/light/native/tui`, `@bootstrapp/light/native/tui/lines.ts`, `@light/lib/json.ts`); a relative import never leaves the member.
+- Every member and `@lightstart/light` it imports declared as `workspace:*`; `@light/test` and `@types/node` are devDependencies. Imports are by name (`@lightstart/light/native/tui`, `@lightstart/light/native/tui/lines.ts`, `@light/lib/json.ts`); a relative import never leaves the member.
 - A `tsconfig.json` equal to `native/cli/templates/tsconfig.json`: scriptc reads the one nearest an app's entry for the whole program, so every member typechecks under the same options.
 - A `README.md`, and `test/*.test.ts`: plain scripts on `@light/test/assert.ts`, run from the member's folder under node and natively, the outputs equal. A test's first line may be `// ffi: <manifest>` (it reaches native calls the manifest binds; under node the manifest folder's stand-in is preloaded) or `// node-only`.
 - A `native` block for what the tools need: a package's prepare steps (`@light/plugins` builds its QuickJS archive), an app's entry, binary, FFI manifest and selftests (`native/cli/README.md`).

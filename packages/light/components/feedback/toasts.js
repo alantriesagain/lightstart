@@ -9,7 +9,7 @@
  * toast about something opens that thing.
  */
 
-import { signal } from "@bootstrapp/light/signals";
+import { signal } from "@lightstart/light/signals";
 
 /** @import { ToastItem, ToastQueue } from "../types.ts" */
 

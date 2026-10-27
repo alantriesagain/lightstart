@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/html/host: the renderer behind the parts engine. The
+ * @lightstart/light/html/host: the renderer behind the parts engine. The
  * engine never touches a document; it asks the installed host to prepare and
  * clone templates, create and move nodes, write attributes, properties and
  * text, and bind listeners. The browser host is `dom/host.js`; a terminal or

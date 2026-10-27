@@ -1,5 +1,5 @@
-import { html } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
+import { html } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
 
 const TAG = /** @type {const} */ ("lc-pull-indicator");

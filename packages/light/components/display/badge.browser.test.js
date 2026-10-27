@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: badgeDef } = await import("./badge.js");
 
@@ -37,7 +37,7 @@ const mount = async (attrs = {}, text = "") => {
 
 const px = (/** @type {Element} */ el, /** @type {string} */ prop) => Number.parseFloat(getComputedStyle(el)[prop]);
 
-describe("@bootstrapp/light - lc-badge", () => {
+describe("@lightstart/light - lc-badge", () => {
   before(async () => {
     if (!customElements.get("lc-badge")) View.define("lc-badge", badgeDef);
     await loadStyles("badge");

@@ -24,9 +24,9 @@
  * @part description - The description text
  * @part actions - The call-to-action slot wrapper
  */
-import { html, nothing } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import { html, nothing } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 
 const ICON_SIZE = { sm: 22, md: 30, lg: 40 };
 

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/paint: a laid-out tree into a Screen, clipping
+ * @lightstart/light/native/tui/paint: a laid-out tree into a Screen, clipping
  * with a rectangle passed down the tree.
  */
 import { TAnchor, TBox, TElement, TInput, TNode, TRun, TText } from "./node.ts";

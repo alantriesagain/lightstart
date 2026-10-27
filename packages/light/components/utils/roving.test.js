@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { nextIndex } from "./roving.js";
 
-describe("@bootstrapp/light - nextIndex", () => {
+describe("@lightstart/light - nextIndex", () => {
   it("steps forward and back along the vertical axis by default", () => {
     assert.equal(nextIndex("ArrowDown", 1, 5), 2);
     assert.equal(nextIndex("ArrowUp", 1, 5), 0);

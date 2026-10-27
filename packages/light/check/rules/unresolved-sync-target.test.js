@@ -3,7 +3,7 @@ import test from "node:test";
 import { appliesOn, runRuleOn } from "../test-utils.js";
 import rule from "./unresolved-sync-target.js";
 
-const controller = (name) => `import { defineController } from "@bootstrapp/light/controller";
+const controller = (name) => `import { defineController } from "@lightstart/light/controller";
 export default defineController({ name: "${name}", props: {} });
 `;
 
@@ -11,7 +11,7 @@ test("a name nothing registers fires, and any controller's name binds", async ()
   const findings = await runRuleOn(rule, {
     "controllers/history.js": controller("history"),
     "controllers/mood.js": controller("mood"),
-    "views/home.js": `import T from "@bootstrapp/light/types";
+    "views/home.js": `import T from "@lightstart/light/types";
 export default { tag: "fx-home", props: {
   sessions: T.array({ defaultValue: [], sync: "histroy" }),
   moods: T.array({ defaultValue: [], sync: "mood" }),
@@ -28,7 +28,7 @@ test("the host's adapters, resolved controllers, registered names and non-string
   const findings = await runRuleOn(rule, {
     "controllers/history.js": controller("history"),
     "frontend.js": `registerAdapter("custom", makeAdapter());`,
-    "views/home.js": `import T from "@bootstrapp/light/types";
+    "views/home.js": `import T from "@lightstart/light/types";
 export default { tag: "fx-home", props: {
   a: T.string({ sync: "local" }),
   b: T.string({ sync: "session" }),
@@ -45,7 +45,7 @@ export default { tag: "fx-home", props: {
 test("a sync block entry naming nothing registered fires at its target", async () => {
   const findings = await runRuleOn(rule, {
     "controllers/history.js": controller("history"),
-    "controllers/journal.js": `import { defineController } from "@bootstrapp/light/controller";
+    "controllers/journal.js": `import { defineController } from "@lightstart/light/controller";
 export default defineController({ name: "journal", props: { a: "", b: "", c: "" }, sync: { a: "history", b: { to: "histroy", key: "x" }, c: "local" } });
 `,
   }, HOST);

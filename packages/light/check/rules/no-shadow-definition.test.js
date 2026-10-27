@@ -3,7 +3,7 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./no-shadow-definition.js";
 
-const component = (extra = "") => `import { html } from "@bootstrapp/light/html";
+const component = (extra = "") => `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-thing",${extra}
   render() { return html\`<div><slot></slot></div>\`; },
@@ -34,8 +34,8 @@ test("silent on a definition without either key", async () => {
 });
 
 test("a property named shadow is not the definition key", async () => {
-  const source = `import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
+  const source = `import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
 export default {
   tag: "fx-card",
   props: { shadow: T.string({ defaultValue: "none" }) },

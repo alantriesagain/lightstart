@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import T from "@bootstrapp/light/types";
-import View, { defineComponent } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import View, { defineComponent } from "@lightstart/light";
 import { withSwipeThreshold } from "./swipe-threshold.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -61,7 +61,7 @@ const swipe = (host, { from, to, id = 1, pointerType = "touch", end = "pointerup
   point(host, end, { x: to[0], y: to[1], id, pointerType });
 };
 
-describe("@bootstrapp/light - withSwipeThreshold", () => {
+describe("@lightstart/light - withSwipeThreshold", () => {
   afterEach(async () => {
     for (const el of mounted.splice(0)) el.remove();
     await tick();

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/check/cli.js
+ * @lightstart/light/check/cli.js
  * `light check [dir]`: light's conventions over a project's component files.
  * The project is the nearest directory up from `dir` holding a package.json
  * (or `--root`); a `dir` inside it narrows the pass to that directory and

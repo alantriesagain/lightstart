@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/check/context.js: the project model a rule reads. Files
+ * @lightstart/light/check/context.js: the project model a rule reads. Files
  * and their parsed shapes, the manifest, its dependencies and the component
  * index, cached per file and invalidated per save by a live runner. `fileMap`
  * (relative path to content) makes the context fully in-memory for tests.
@@ -336,7 +336,7 @@ export function createContext({ projectDir, fileMap = null, pkg: givenPkg = null
     styling,
     pluginHooks,
     pluginEvents,
-    hasDep: (dep) => (host.hasDep ? host.hasDep(dep, model) : !!deps[`@bootstrapp/${dep}`]),
+    hasDep: (dep) => (host.hasDep ? host.hasDep(dep, model) : !!(deps[`@lightstart/${dep}`] || deps[`@bootstrapp/${dep}`])),
     files,
     read,
     code,

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/check/walk.js: the file system as the checker reads it.
+ * @lightstart/light/check/walk.js: the file system as the checker reads it.
  * `walkFiles` lists a directory's files sorted per level, `readPackageJson`
  * parses a manifest or answers null, `toRel` makes a posix path relative to a
  * root.

@@ -4,26 +4,27 @@
  * drawer on a phone), or the section's pages inside /native; the page; and
  * the page's outline on the right.
  */
-import { html, nothing } from "@bootstrapp/light/html";
+import { html, nothing } from "@lightstart/light/html";
 import $APP from "bootstrapp";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { ROUTER_CHANGED } from "bootstrapp/router/events.js";
-import presets from "@bootstrapp/light/theme/presets.js";
+import presets from "@lightstart/light/theme/presets.js";
 import { browsableCategories, humanize } from "@bootstrapp/showcase/lib/categories.js";
-import { matchesBreakpoint } from "@bootstrapp/light/components/utils/breakpoints.js";
-import { componentPath, GITHUB_URL } from "../../lib/paths.js";
+import { matchesBreakpoint } from "@lightstart/light/components/utils/breakpoints.js";
+import { BUILT_WITH_LIGHT_PATH, componentPath, GITHUB_URL } from "../../lib/paths.js";
 import { GROUPS, searchIndex } from "../../lib/search-index.js";
 import { inNative, NATIVE_GROUPS, NATIVE_PAGES } from "../../lib/native/pages.js";
 
 /** @import { Prop, SkinOption } from "../../types.ts" */
-/** @import { NavTreeGroup, TocItem } from "@bootstrapp/light/components/types.ts" */
+/** @import { NavTreeGroup, TocItem } from "@lightstart/light/components/types.ts" */
 
 const COLLAPSE_AT = 7;
 const SKIN_MENU = "docs-skin-menu";
 
 const LINKS = [
   { label: "Components", href: "/components" },
+  { label: "Built with Light", href: BUILT_WITH_LIGHT_PATH, wide: true },
   { label: "Theming", href: "/theming" },
   { label: "Skins", href: "/skins" },
   { label: "Native", href: "/native" },
@@ -42,6 +43,7 @@ export default defineComponent({
     toc: /** @type {Prop<TocItem[]>} */ (T.array({ sync: "catalogue", defaultValue: [] })),
     phone: false,
     landing: false,
+    wide: false,
     native: false,
     openGroups: /** @type {Prop<string[]>} */ (T.array({ defaultValue: [] })),
   },
@@ -57,6 +59,7 @@ export default defineComponent({
 
   _follow() {
     this.landing = $APP.Router.path === "/";
+    this.wide = this.landing || $APP.Router.path === BUILT_WITH_LIGHT_PATH;
     this.native = inNative($APP.Router.path);
     const category = categoryOf($APP.Router.path);
     if (category && !this.openGroups.includes(category)) this.openGroups = [...this.openGroups, category];
@@ -115,14 +118,14 @@ export default defineComponent({
   render() {
     const docs = searchIndex(browsableCategories($APP.manifest), presets);
     return html`
-      <lc-app-shell breakpoint="md" aside-breakpoint="xl" nav-width=${this.landing ? "0px" : "var(--docs-nav)"} aside-width=${this.toc.length && !this.landing ? "var(--docs-aside)" : "0px"} header-height="var(--docs-header)">
+      <lc-app-shell class=${this.wide || !this.toc.length ? "shell-no-aside" : nothing} breakpoint="md" aside-breakpoint="xl" nav-width=${this.wide ? "0px" : "var(--docs-nav)"} aside-width=${this.toc.length && !this.wide ? "var(--docs-aside)" : "0px"} header-height="var(--docs-header)">
         <header slot="navbar" class="shell-header">
           <lc-link href="/" class="shell-brand" aria-label="Light home">
             <span class="shell-mark"><lc-icon name="box" size="14"></lc-icon></span>
             <b>Light</b>
           </lc-link>
           <nav class="shell-links" aria-label="Site">
-            ${LINKS.map((link) => html`<lc-nav-item href=${link.href} label=${link.label} active-match=${link.href} active-bg size="sm"></lc-nav-item>`)}
+            ${LINKS.map((link) => html`<lc-nav-item class=${link.wide ? "shell-links-wide" : nothing} href=${link.href} label=${link.label} active-match=${link.href} active-bg size="sm"></lc-nav-item>`)}
           </nav>
           <span class="shell-spacer"></span>
           <lc-command-palette
@@ -138,7 +141,7 @@ export default defineComponent({
           <lc-darkmode compact size="18"></lc-darkmode>
           <lc-link href=${GITHUB_URL} external class="shell-github" aria-label="Light on GitHub"><lc-icon name="github" size="16"></lc-icon></lc-link>
         </header>
-        ${this.landing
+        ${this.wide
           ? nothing
           : html`
               <div slot="nav" class="shell-nav">
@@ -146,8 +149,8 @@ export default defineComponent({
                 <lc-nav-tree .groups=${this._groups()} .open=${this.native ? NATIVE_GROUPS.map((group) => `native-${group.id}`) : this.openGroups} collapse-at=${COLLAPSE_AT} @nav-tree-toggle=${(/** @type {CustomEvent} */ e) => { this.openGroups = e.detail.open ? [...this.openGroups, e.detail.id] : this.openGroups.filter((id) => id !== e.detail.id); }}></lc-nav-tree>
               </div>
             `}
-        <div class=${this.landing ? "shell-main shell-main-landing" : "shell-main"}>${this.component}</div>
-        ${this.landing || !this.toc.length
+        <div class=${this.wide ? "shell-main shell-main-landing" : "shell-main"}>${this.component}</div>
+        ${this.wide || !this.toc.length
           ? nothing
           : html`<aside slot="aside" class="shell-aside"><lc-toc .items=${this.toc} offset="56"></lc-toc></aside>`}
       </lc-app-shell>

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/node: the terminal node tree, the DOM's
+ * @lightstart/light/native/tui/node: the terminal node tree, the DOM's
  * replacement. Elements are typed classes with closed prop tables for what
  * they lay out and paint; an attribute an element has no prop for is kept
  * as an attribute, inert. Children are a doubly linked list (`firstChild`,

@@ -1,7 +1,7 @@
-import { html } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
-import { withPointerDrag } from "@bootstrapp/light/components/mixins/pointer-drag.js";
-import T from "@bootstrapp/light/types";
+import { html } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
+import { withPointerDrag } from "@lightstart/light/components/mixins/pointer-drag.js";
+import T from "@lightstart/light/types";
 
 /** @import { Prop } from "../types.ts" */
 

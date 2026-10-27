@@ -4,13 +4,13 @@ import { runRuleOn } from "../test-utils.js";
 import rule from "./controller-state-key-declared.js";
 
 const files = {
-  "controllers/history.js": `import { defineController } from "@bootstrapp/light/controller";
-import T from "@bootstrapp/light/types";
+  "controllers/history.js": `import { defineController } from "@lightstart/light/controller";
+import T from "@lightstart/light/types";
 import { extra } from "./history/extra.js";
 export default defineController({ name: "history", mixins: [extra], props: { rows: T.array({ defaultValue: [] }), mood: T.string({ defaultValue: "" }) } });
 `,
-  "controllers/history/extra.js": `import { defineMixin } from "@bootstrapp/light/controller";
-import T from "@bootstrapp/light/types";
+  "controllers/history/extra.js": `import { defineMixin } from "@lightstart/light/controller";
+import T from "@lightstart/light/types";
 export const extra = defineMixin({ props: { paletteOpen: T.boolean({ defaultValue: false }) } });
 `,
 };
@@ -19,7 +19,7 @@ test("a binding or subscription to a key the controller does not declare fires",
   const findings = await runRuleOn(rule, {
     ...files,
     "views/home.js": `import $APP from "bootstrapp";
-import T from "@bootstrapp/light/types";
+import T from "@lightstart/light/types";
 export default {
   tag: "fx-home",
   props: {
@@ -51,12 +51,12 @@ export default {
 
 test("a controller that spreads into its properties block is skipped, since its surface is not readable here", async () => {
   const findings = await runRuleOn(rule, {
-    "controllers/profile.js": `import { defineController } from "@bootstrapp/light/controller";
-import T from "@bootstrapp/light/types";
+    "controllers/profile.js": `import { defineController } from "@lightstart/light/controller";
+import T from "@lightstart/light/types";
 const shape = () => ({ level: T.string({ defaultValue: "" }) });
 export default defineController({ name: "profile", props: { loaded: T.boolean({ defaultValue: false }), ...shape() } });
 `,
-    "views/home.js": `import T from "@bootstrapp/light/types";
+    "views/home.js": `import T from "@lightstart/light/types";
 export default { tag: "fx-home", props: { level: T.string({ defaultValue: "", sync: "profile" }) } };
 `,
   });
@@ -66,7 +66,7 @@ export default { tag: "fx-home", props: { level: T.string({ defaultValue: "", sy
 test("a controller's sync block entry is checked like a descriptor, the long form's key included", async () => {
   const findings = await runRuleOn(rule, {
     ...files,
-    "controllers/journal.js": `import { defineController } from "@bootstrapp/light/controller";
+    "controllers/journal.js": `import { defineController } from "@lightstart/light/controller";
 export default defineController({
   name: "journal",
   props: { rows: [], gone: [], open: false, feeling: "" },
@@ -79,10 +79,10 @@ export default defineController({
 
 test("a dependency's controller, from the host's controller files, is a target like the project's own", async () => {
   const findings = await runRuleOn(rule, {
-    "node_modules/@bootstrapp/devices/controllers/devices.js": `import { defineController } from "@bootstrapp/light/controller";
+    "node_modules/@bootstrapp/devices/controllers/devices.js": `import { defineController } from "@lightstart/light/controller";
 export default defineController({ name: "devices", props: { paired: [] } });
 `,
-    "views/home.js": `import T from "@bootstrapp/light/types";
+    "views/home.js": `import T from "@lightstart/light/types";
 export default { tag: "fx-home", props: {
   paired: T.array({ sync: "devices" }),
   gone: T.array({ sync: "devices" }),

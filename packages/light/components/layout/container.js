@@ -1,5 +1,5 @@
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 /**
  * Container Component
  * Generic container component with padding, overflow, and variant support

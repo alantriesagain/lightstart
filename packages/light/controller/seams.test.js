@@ -45,7 +45,7 @@ const bus = () => {
   };
 };
 
-describe("@bootstrapp/light/controller: the binder seam", () => {
+describe("@lightstart/light/controller: the binder seam", () => {
   it("hands a target a binder claims to that binder, with the query and the host", async () => {
     const rows = source({ a: { id: "a", title: "Alpha" } });
     const ctrl = defineController({
@@ -93,7 +93,7 @@ describe("@bootstrapp/light/controller: the binder seam", () => {
   });
 });
 
-describe("@bootstrapp/light/controller: the host's hooks", () => {
+describe("@lightstart/light/controller: the host's hooks", () => {
   it("a resource waits for the host's ready gate unless told not to", async () => {
     let open = () => {};
     const gate = new Promise((resolve) => { open = () => resolve(undefined); });

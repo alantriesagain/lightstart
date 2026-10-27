@@ -1,10 +1,10 @@
 /**
  * This app's own type surface. The catalogue keeps no models: what it draws
- * comes from `@bootstrapp/light` (the component registry and each component's
+ * comes from `@lightstart/light` (the component registry and each component's
  * demo), so only the shapes the app computes are declared here.
  */
 
-import type { TypeDefinition } from "@bootstrapp/light/types";
+import type { TypeDefinition } from "@lightstart/light/types";
 
 /**
  * The declared type of a reactive property. `T.array()`/`T.object()` alone

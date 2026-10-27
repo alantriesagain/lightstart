@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native: light on the terminal, the entry a native
+ * @lightstart/light/native: light on the terminal, the entry a native
  * build compiles. Importing it installs the terminal host and light's
  * signals as the effect adapter; it re-exports the html core, the signals,
  * the view core and the terminal host.

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/signals: the reactive primitives.
+ * @lightstart/light/signals: the reactive primitives.
  * Preact Signals-compatible: signal, computed, effect, batch, untracked,
  * plus selector (keyed O(2) selection) and the dependency protocol
  * (getCurrentEffect / Dep / Reactive) external sources build on. A write

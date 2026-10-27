@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const week = [{ value: 4 }, { value: 7 }, { value: 5 }, { value: 9 }, { value: 8 }, { value: 12 }, { value: 11 }];
 

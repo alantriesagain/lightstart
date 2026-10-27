@@ -7,14 +7,14 @@
   <script type="importmap">
   {
     "imports": {
-      "@bootstrapp/light": "../../packages/light/view/index.js",
-      "@bootstrapp/light/html": "../../packages/light/html/index.js",
-      "@bootstrapp/light/signals": "../../packages/light/signals/index.ts",
-      "@bootstrapp/light/types": "../../packages/light/types/index.js",
-      "@bootstrapp/light/env": "../../packages/light/env/index.js",
-      "@bootstrapp/light/navigation": "../../packages/light/navigation/index.js",
-      "@bootstrapp/light/theme": "../../packages/light/theme/index.js",
-      "@bootstrapp/light/": "../../packages/light/"
+      "@lightstart/light": "../../packages/light/view/index.js",
+      "@lightstart/light/html": "../../packages/light/html/index.js",
+      "@lightstart/light/signals": "../../packages/light/signals/index.ts",
+      "@lightstart/light/types": "../../packages/light/types/index.js",
+      "@lightstart/light/env": "../../packages/light/env/index.js",
+      "@lightstart/light/navigation": "../../packages/light/navigation/index.js",
+      "@lightstart/light/theme": "../../packages/light/theme/index.js",
+      "@lightstart/light/": "../../packages/light/"
     }
   }
   </script>
@@ -25,10 +25,10 @@
   <example-indexeddb-explorer></example-indexeddb-explorer>
 
   <script type="module">
-    import View from "@bootstrapp/light";
-    import { applyTheme } from "@bootstrapp/light/theme";
-    import { loadPreset } from "@bootstrapp/light/theme/presets.js";
-    import { configureIcons, iconify } from "@bootstrapp/light/theme/icons.js";
+    import View from "@lightstart/light";
+    import { applyTheme } from "@lightstart/light/theme";
+    import { loadPreset } from "@lightstart/light/theme/presets.js";
+    import { configureIcons, iconify } from "@lightstart/light/theme/icons.js";
     import "./explorer.js";
 
     configureIcons({ load: iconify("lucide") });
@@ -40,7 +40,7 @@
       "form/select", "layout/card", "layout/container", "layout/flex", "layout/split-pane", "navigation/accordion", "navigation/menu",
       "navigation/nav-item", "navigation/tabs", "overlay/alert-dialog", "overlay/modal",
     ];
-    for (const path of components) View.define((await import(`@bootstrapp/light/components/${path}.js`)).default);
+    for (const path of components) View.define((await import(`@lightstart/light/components/${path}.js`)).default);
   </script>
 </body>
 </html>

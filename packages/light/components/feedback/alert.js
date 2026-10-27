@@ -1,4 +1,4 @@
-import T from "@bootstrapp/light/types";
+import T from "@lightstart/light/types";
 /**
  * Alert Component
  *
@@ -49,8 +49,8 @@ import T from "@bootstrapp/light/types";
  * };
  * ```
  */
-import { html } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
+import { html } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
 
 export default defineComponent({
 	tag: "lc-alert",

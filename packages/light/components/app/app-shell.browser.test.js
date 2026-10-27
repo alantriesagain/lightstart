@@ -5,9 +5,9 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import shellDef from "@bootstrapp/light/components/app/app-shell.js";
-import drawerDef from "@bootstrapp/light/components/overlay/drawer.js";
+import View from "@lightstart/light";
+import shellDef from "@lightstart/light/components/app/app-shell.js";
+import drawerDef from "@lightstart/light/components/overlay/drawer.js";
 
 const define = (tag, definition) => {
   if (!customElements.get(tag)) View.define(tag, definition);

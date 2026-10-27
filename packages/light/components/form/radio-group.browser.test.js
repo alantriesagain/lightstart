@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: radioGroupDef } = await import("./radio-group.js");
 
@@ -35,7 +35,7 @@ const pick = (radio) =>
     bubbles: false,
   }));
 
-describe("@bootstrapp/light - lc-radio-group", () => {
+describe("@lightstart/light - lc-radio-group", () => {
   before(() => View.define("lc-radio-group", radioGroupDef));
 
   afterEach(async () => {

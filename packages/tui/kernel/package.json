@@ -12,7 +12,7 @@
     "@light/lib": "workspace:*"
   },
   "devDependencies": {
-    "@bootstrapp/light": "workspace:*",
+    "@lightstart/light": "workspace:*",
     "@light/test": "workspace:*",
     "@types/node": "^26.6.5"
   }

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/model/store: every model's reads and writes over the
+ * @lightstart/light/model/store: every model's reads and writes over the
  * adapter that holds it, in the page or in a worker. The write pipeline runs
  * once here for every adapter: hooks, id, relation stripping, defaults,
  * validation, file uploads, then the adapter's own insert/update/delete, then

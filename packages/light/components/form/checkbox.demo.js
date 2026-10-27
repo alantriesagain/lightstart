@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "A box a reader ticks. Takes its own label, so a form does not have to pair it with one.",

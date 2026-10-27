@@ -1,6 +1,6 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
 import { toasts } from "./toasts.js";
 
@@ -188,7 +188,7 @@ export default defineComponent({
  * @example
  * // Raising one from anywhere on the page
  * ```js
- * import { toasts } from "@bootstrapp/light/components/feedback/toasts.js";
+ * import { toasts } from "@lightstart/light/components/feedback/toasts.js";
  *
  * toasts.success("Saved");
  * toasts.show({ title: "Error", message: "Something went wrong!", variant: "error" });

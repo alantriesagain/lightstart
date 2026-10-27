@@ -10,6 +10,10 @@
   lc-app-shell {
     --lc-app-shell-max-width: 90rem;
 
+    &.shell-no-aside .shell-aside {
+      display: none;
+    }
+
     & [part~=lc-app-shell-navbar],
     & [part~=lc-app-shell-header] {
       background: var(--canvas-background);
@@ -190,6 +194,12 @@
   .docs-pager {
     padding-top: var(--spacing-xl);
     border-top: var(--border-width, 1px) solid var(--border-color);
+  }
+
+  @media (max-width: 1279px) {
+    .shell-links-wide {
+      display: none;
+    }
   }
 
   @media (max-width: 1199px) {

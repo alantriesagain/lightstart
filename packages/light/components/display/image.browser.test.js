@@ -34,7 +34,7 @@ const fail = () => new Response("nope", { status: 500 });
 let seq = 0;
 const freshUrl = () => `/probe-${++seq}.png`;
 
-describe("@bootstrapp/light - lc-image style cache", () => {
+describe("@lightstart/light - lc-image style cache", () => {
   afterEach(() => {
     globalThis.fetch = realFetch;
   });

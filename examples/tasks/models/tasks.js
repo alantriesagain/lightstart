@@ -2,8 +2,8 @@
  * @file The tasks model: a title, whether it is done, when it was added, and
  * the board it belongs to.
  */
-import T from "@bootstrapp/light/types";
-import { defineModel } from "@bootstrapp/light/model";
+import T from "@lightstart/light/types";
+import { defineModel } from "@lightstart/light/model";
 
 export default defineModel("tasks", {
   title: T.string({ required: true }),

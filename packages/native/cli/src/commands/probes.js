@@ -7,7 +7,7 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { capture } from "../run.js";
-import { scriptcPath } from "@bootstrapp/light/native/scriptc.js";
+import { scriptcPath } from "@lightstart/light/native/scriptc.js";
 
 /**
  * @param {string[]} args

@@ -21,8 +21,8 @@ user_invocable: true
 ## Schema file shape
 
 ```js
-import T from "@bootstrapp/light/types";
-import { slugHooks } from "@bootstrapp/light/model/slug";
+import T from "@lightstart/light/types";
+import { slugHooks } from "@lightstart/light/model/slug";
 
 export default {
   post: {

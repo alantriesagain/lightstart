@@ -108,7 +108,7 @@ test("an ancestor block with a nested rule that skips the view's tag fires", asy
 });
 
 test("a css shared by two style: true definitions is scoped by either tag", async () => {
-  const two = `import View from "@bootstrapp/light";
+  const two = `import View from "@lightstart/light";
 View.define("fx-a", {}, { style: true, render() { return null; } });
 View.define("fx-b", {}, { style: true, render() { return null; } });
 `;

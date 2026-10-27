@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/components/overlay/detents
+ * @lightstart/light/components/overlay/detents
  *
  * The stop arithmetic a draggable sheet needs, as pure functions of numbers:
  * where each named stop sits, which one a release belongs to, how fast the

@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 import sample from "./sample-bootstrapp.js";
 
 const props = sample.footer.props;

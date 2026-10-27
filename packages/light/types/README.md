@@ -1,4 +1,4 @@
-# @bootstrapp/light/types
+# @lightstart/light/types
 
 `T`: the descriptors a component's `props`, a controller's state and a model's fields are declared with. A descriptor carries its type, whether it reads an attribute, its default, whether a model persists it, and a `validate` method; the shorthand a `props` block allows (`count: 0`, `items: []`) reads a descriptor off the default. `parse` coerces what an attribute, an input or a stored row holds into the declared type.
 

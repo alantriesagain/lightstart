@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/model/indexeddb: the IndexedDB storage adapter. One
+ * @lightstart/light/model/indexeddb: the IndexedDB storage adapter. One
  * object store per model, an index per
  * `index: true` / `unique: true` field, booleans and dates encoded so the
  * indexes can hold them. `query` reads one index when the `where` names an

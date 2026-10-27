@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/check/types.ts: the convention checker's contract. A rule,
+ * @lightstart/light/check/types.ts: the convention checker's contract. A rule,
  * the project model it reads, the shapes the parsers answer, and what a host
  * of the engine adds to the model.
  */

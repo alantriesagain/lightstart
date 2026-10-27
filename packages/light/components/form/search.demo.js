@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const docs = [
   { id: "1", title: "Button", group: "Display", description: "A clickable action" },

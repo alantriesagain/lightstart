@@ -11,7 +11,7 @@ const RUNTIME_IMPORT = /^\s*(?:import|export)\s+(?!type\s)(?:[^'";]*?\sfrom\s+)?
 const SIDE_IMPORT = /^\s*import\s+["']([^"']+)["']/gm;
 
 export class Reach {
-  /** The packages reached, by name (`@light/lib`, `@bootstrapp/light`). */
+  /** The packages reached, by name (`@light/lib`, `@lightstart/light`). */
   readonly packages = new Set<string>();
   /** The files reached, absolute and real. */
   readonly files = new Set<string>();

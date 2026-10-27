@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/focus: where the pointer lands and where the
+ * @lightstart/light/native/tui/focus: where the pointer lands and where the
  * focus goes. A hit test walks the laid-out tree to the deepest visible
  * element under a cell, clipped by every box on the way; the focus order
  * is the document order of the focusable elements: inputs, buttons, and

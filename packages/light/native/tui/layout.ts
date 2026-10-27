@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/layout: two passes, measure bottom-up and arrange
+ * @lightstart/light/native/tui/layout: two passes, measure bottom-up and arrange
  * top-down. One flex axis per box, fixed sizes, padding, a one-cell border,
  * scroll boxes that stick to the bottom. Wrapped text, measured sizes and
  * scroll positions are cached on the node across frames by version, so a

@@ -4,8 +4,8 @@ Light compiled to a native binary with [scriptc](https://github.com/vercel-labs/
 
 | Target | Entry | What it is |
 |---|---|---|
-| `tui/` | `@bootstrapp/light/native/tui` | The terminal: the signals, the html engine and the view core on a terminal host, and `runApp` for an app (`tui/README.md`) |
-| `desktop/` | `@bootstrapp/light/native/desktop` | The backend of a desktop app whose UI is a light page in the system web view (`desktop/README.md`) |
+| `tui/` | `@lightstart/light/native/tui` | The terminal: the signals, the html engine and the view core on a terminal host, and `runApp` for an app (`tui/README.md`) |
+| `desktop/` | `@lightstart/light/native/desktop` | The backend of a desktop app whose UI is a light page in the system web view (`desktop/README.md`) |
 
 What every target shares sits here: which scriptc the tools run, the parity runner, the coverage gate and the report it reads, the checks a native test uses, and the compiler probes. Another kind of native app gets a folder beside these; the packages under `packages/` (`packages/README.md`) are what apps of a kind share.
 

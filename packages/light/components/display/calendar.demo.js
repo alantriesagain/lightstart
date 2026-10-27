@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const today = new Date();
 const day = (/** @type {number} */ offset) => {

@@ -5,8 +5,8 @@
  * wheel scrolls over it, and in the chat a drag to the end follows new lines again.
  */
 import { LineView } from "../line-view.ts";
-import { Line, LineSource } from "@bootstrapp/light/native/tui/lines.ts";
-import { Caret, Clip, DEFAULT_STYLE, MouseEvent, Screen, TElement, Thumb, TRoot, WheelEvent, barCell, frames, hitTest, layout, mount, paint, thumbOf, topAt } from "@bootstrapp/light/native/tui";
+import { Line, LineSource } from "@lightstart/light/native/tui/lines.ts";
+import { Caret, Clip, DEFAULT_STYLE, MouseEvent, Screen, TElement, Thumb, TRoot, WheelEvent, barCell, frames, hitTest, layout, mount, paint, thumbOf, topAt } from "@lightstart/light/native/tui";
 import { done, eq, ok } from "@light/test/assert.ts";
 
 eq("every line fits: no thumb", String(thumbOf(10, 10, 0).length), "0");

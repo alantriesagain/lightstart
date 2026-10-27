@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/check/project.js: a project as light checks it on its
+ * @lightstart/light/check/project.js: a project as light checks it on its
  * own, shared by `light check` and the eslint bridge. The project root is the
  * nearest directory holding a package.json; its context knows light's own
  * components, and its rules are light's and the project's `check/rules/`.

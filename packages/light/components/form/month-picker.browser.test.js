@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: pickerDef, monthDays, monthOf, shiftMonth } = await import("./month-picker.js");
 
@@ -37,7 +37,7 @@ const mount = async (props = {}) => {
 /** @param {any} el @param {string} date */
 const cell = (el, date) => /** @type {HTMLButtonElement} */ (el.querySelector(`[data-date='${date}']`));
 
-describe("@bootstrapp/light - lc-month-picker", () => {
+describe("@lightstart/light - lc-month-picker", () => {
   before(async () => {
     if (!customElements.get("lc-month-picker")) View.define("lc-month-picker", pickerDef);
     await loadStyles("month-picker");

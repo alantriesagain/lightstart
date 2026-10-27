@@ -1,4 +1,4 @@
-# @bootstrapp/light/model
+# @lightstart/light/model
 
 The data layer: a schema per model, a store that runs every write the same way over any storage adapter, a model's api that its module declares and every user imports, and one change event that keeps every live query current. It needs no host: a page or a native program builds a store and binds components and controllers to its queries. A host that keeps the store elsewhere (Bootstrapp runs it in a db-worker) configures a request that crosses to it and forwards the change event back.
 
@@ -8,25 +8,25 @@ Each entry loads only its own code; nothing is a barrel.
 
 | Entry | Holds |
 |---|---|
-| `@bootstrapp/light/model` | `defineModel`, `modelApi`, `isModelApi`, `onChange`, `ValidationError`, `registerQueryHook`, `setFileStorage`, `configureModel`, `modelRequest`, `modelBus` |
-| `@bootstrapp/light/model/store` | `createStore`, `storeRequest`, `createModelHandlers` |
-| `@bootstrapp/light/model/adapter` | the storage SPI: `registerStorageAdapter`, `createAdapter`, `registerAdapterDecorator`, `validateRow`, the query helpers |
-| `@bootstrapp/light/model/indexeddb` | the IndexedDB adapter |
-| `@bootstrapp/light/model/jsonl` | the JSON Lines adapter: a file per model, through the IO its host hands it |
-| `@bootstrapp/light/model/binder` | `modelQuery`, `bindModelQuery`, `modelBinder` |
-| `@bootstrapp/light/model/slug` | `slugify`, `slugHooks` |
-| `@bootstrapp/light/model/events` | the event names the model emits |
+| `@lightstart/light/model` | `defineModel`, `modelApi`, `isModelApi`, `onChange`, `ValidationError`, `registerQueryHook`, `setFileStorage`, `configureModel`, `modelRequest`, `modelBus` |
+| `@lightstart/light/model/store` | `createStore`, `storeRequest`, `createModelHandlers` |
+| `@lightstart/light/model/adapter` | the storage SPI: `registerStorageAdapter`, `createAdapter`, `registerAdapterDecorator`, `validateRow`, the query helpers |
+| `@lightstart/light/model/indexeddb` | the IndexedDB adapter |
+| `@lightstart/light/model/jsonl` | the JSON Lines adapter: a file per model, through the IO its host hands it |
+| `@lightstart/light/model/binder` | `modelQuery`, `bindModelQuery`, `modelBinder` |
+| `@lightstart/light/model/slug` | `slugify`, `slugHooks` |
+| `@lightstart/light/model/events` | the event names the model emits |
 
-`@bootstrapp/light/model` is what a page that talks to a store elsewhere loads: it reaches no store, no adapter and no binding.
+`@lightstart/light/model` is what a page that talks to a store elsewhere loads: it reaches no store, no adapter and no binding.
 
 ## A page with no host
 
 ```javascript
-import T from "@bootstrapp/light/types";
-import { configureModel, defineModel, modelBus } from "@bootstrapp/light/model";
-import { createStore, storeRequest } from "@bootstrapp/light/model/store";
-import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
-import IndexedDBAdapter from "@bootstrapp/light/model/indexeddb";
+import T from "@lightstart/light/types";
+import { configureModel, defineModel, modelBus } from "@lightstart/light/model";
+import { createStore, storeRequest } from "@lightstart/light/model/store";
+import { createAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
+import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
 
 // models/todos.js
 export const todos = defineModel("todos", { title: T.string({ required: true }), done: T.boolean({ index: true, defaultValue: false }) });
@@ -144,7 +144,7 @@ The foreign key of a `many`/`one` is `targetForeignKey`, else `${modelName}Id` (
 An adapter stores rows; the store runs the pipeline. Register one under a type name:
 
 ```javascript
-import { registerStorageAdapter } from "@bootstrapp/light/model/adapter";
+import { registerStorageAdapter } from "@lightstart/light/model/adapter";
 
 registerStorageAdapter("custom", {
   async init() {},
@@ -168,8 +168,8 @@ The JSON Lines adapter keeps a file per model, `<dir>/<model>.jsonl`, written as
 
 ```javascript
 import { appendFileSync, existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
-import JsonlAdapter from "@bootstrapp/light/model/jsonl";
+import { createAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
+import JsonlAdapter from "@lightstart/light/model/jsonl";
 
 registerStorageAdapter("jsonl", JsonlAdapter);
 const io = {
@@ -188,7 +188,7 @@ await db.init();
 A package may wrap the adapter of every model whose schema declares a directive of its own:
 
 ```javascript
-import { registerAdapterDecorator } from "@bootstrapp/light/model/adapter";
+import { registerAdapterDecorator } from "@lightstart/light/model/adapter";
 
 registerAdapterDecorator("$moderated", (base, { model, schema, store, shadow, emit }) => ({
   init: () => base.init(),

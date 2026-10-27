@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const CITIES = ["Rio de Janeiro", "São Paulo", "Recife", "Salvador"];
 const columns = [

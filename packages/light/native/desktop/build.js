@@ -217,9 +217,9 @@ const importMap = (exports) => {
   for (const [key, target] of Object.entries(exports)) {
     const file = typeof target === "string" ? target : target.default;
     if (key === "./*") continue;
-    imports["@bootstrapp/light" + key.slice(1)] = "light/" + file.replace(/^\.\//, "");
+    imports["@lightstart/light" + key.slice(1)] = "light/" + file.replace(/^\.\//, "");
   }
-  imports["@bootstrapp/light/"] = "light/";
+  imports["@lightstart/light/"] = "light/";
   return { imports };
 };
 
@@ -254,7 +254,7 @@ export class Built {
 
 /**
  * Compile `backend` with scriptc against the target's shim manifest into `exe`. `npmStatic` names
- * packages the backend imports bare (`@bootstrapp/light` for a backend outside this checkout).
+ * packages the backend imports bare (`@lightstart/light` for a backend outside this checkout).
  * @param {string} backend the backend's entry module
  * @param {string} exe the executable to write
  * @param {string} target

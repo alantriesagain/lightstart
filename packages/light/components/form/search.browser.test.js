@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { after, afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 import searchDef from "./search.js";
 import joinDef from "./join.js";
 
@@ -63,7 +63,7 @@ const keepThePage = (e) => {
   if (/** @type {Element} */ (e.target).closest?.("a[href]")) e.preventDefault();
 };
 
-describe("@bootstrapp/light - lc-search", () => {
+describe("@lightstart/light - lc-search", () => {
   before(async () => {
     document.addEventListener("click", keepThePage, true);
     if (!customElements.get("lc-join")) View.define("lc-join", joinDef);

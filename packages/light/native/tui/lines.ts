@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/lines: styled lines, the unit a windowed list
+ * @lightstart/light/native/tui/lines: styled lines, the unit a windowed list
  * draws. A `Run` is a piece of a line in one style ("" colors inherit;
  * `inverse` draws it with its colors swapped, a selection; `live` names what
  * moves on its own, "spinner" drawn as the spinner's frame of the moment). A

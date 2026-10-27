@@ -28,9 +28,9 @@ Views are thin: they render controller state and dispatch to controller methods.
 ## Template
 
 ```js
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 import $APP from "bootstrapp";
-import T from "@bootstrapp/light/types";
+import T from "@lightstart/light/types";
 
 export default {
   tag: "docs-task-list",
@@ -50,7 +50,7 @@ export default {
 
 ## Rules
 
-- Plain object literal; `defineComponent` from `@bootstrapp/light` only when typed `this` is wanted.
+- Plain object literal; `defineComponent` from `@lightstart/light` only when typed `this` is wanted.
 - `props` entries are reactive render state: a bare default (`draft: ""`, `open: false`, `rows: []`) or `T.*(options)` when an option is needed; mutate them, never `_vars` plus manual updates. Small persisted state is `T.*({ sync: "local" })` on a controller, not localStorage.
 - A listener or subscription made in `connected()` is wrapped in `this.$own(...)`.
 - Multi-word attributes are kebab-case (`use-system-preference`); a boolean prop (`open: false` or `T.boolean(...)`) binds as `?kebab-attr=${v}`, never `.prop=`.

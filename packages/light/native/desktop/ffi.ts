@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/desktop/ffi: the shell's edge into the C shim. Signature-only
+ * @lightstart/light/native/desktop/ffi: the shell's edge into the C shim. Signature-only
  * declarations bound to the shim's symbols by the manifest build.js writes; a `declare` has no
  * JSDoc form, so this one file is TypeScript. Strings cross as UTF-8 spans, the window handle as
  * a bigint, and a bound callback is released by passing the same function value to the unbind.

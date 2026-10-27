@@ -1,7 +1,7 @@
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { anchorPosition, parseAnchor } from "./anchor.js";
-import { env } from "@bootstrapp/light/env";
+import { env } from "@lightstart/light/env";
 
 /** @import { Prop } from "../types.ts" */
 

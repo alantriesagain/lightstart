@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/events: what the terminal dispatches through a
+ * @lightstart/light/native/tui/events: what the terminal dispatches through a
  * tree. An event bubbles from the element it targets to the root; a
  * handler that calls `consume()` stops it.
  */

@@ -6,8 +6,8 @@
  * new tab). `prose.js` reads the marks; this
  * draws them for both native views.
  */
-import { html } from "@bootstrapp/light/html";
-import navigation from "@bootstrapp/light/navigation";
+import { html } from "@lightstart/light/html";
+import navigation from "@lightstart/light/navigation";
 import { runsOf } from "./prose.js";
 
 /** @param {import("./prose.js").Run} run */

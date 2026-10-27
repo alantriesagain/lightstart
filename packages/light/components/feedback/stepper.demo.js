@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const PUBLISH = [
   { id: "upload", label: "Upload" },

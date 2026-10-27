@@ -8,7 +8,7 @@ const pkgJson = {
   bootstrapp: { prefix: "fx", components: { fx: { card: "layout/card.js" } } },
 };
 
-const component = (body) => `import { defineComponent } from "@bootstrapp/light";
+const component = (body) => `import { defineComponent } from "@lightstart/light";
 export default defineComponent({
 ${body}
   style: true,
@@ -43,7 +43,7 @@ test("a tag in a doc comment is not a declaration", async () => {
  * @tag fx-card
  * tag: "fx-card"
  */
-import { defineComponent } from "@bootstrapp/light";
+import { defineComponent } from "@lightstart/light";
 export default defineComponent({ style: true });
 `;
   const findings = await runRuleOn(rule, { "layout/card.js": source }, { pkgJson });

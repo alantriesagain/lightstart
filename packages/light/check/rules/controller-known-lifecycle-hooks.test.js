@@ -3,7 +3,7 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./controller-known-lifecycle-hooks.js";
 
-const wrap = (body) => `import { defineController } from "@bootstrapp/light/controller";
+const wrap = (body) => `import { defineController } from "@lightstart/light/controller";
 export default defineController({ name: "rates", props: {},
 ${body}
 });

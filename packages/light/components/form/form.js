@@ -1,8 +1,8 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
 import { getFormFieldRenderer, renderFormControl, drawsOwnLabel } from "./field-renderers.js";
 import { getPath, setPath } from "./path.js";
-import { defineComponent } from "@bootstrapp/light";
+import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
 
 const TAG = /** @type {const} */ ("lc-form");

@@ -93,8 +93,8 @@ test("silent outside component files", async () => {
 });
 
 test("two definitions in one file are read once: a shared prop reports each match once, and $emit?. once", async () => {
-  const src = `import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+  const src = `import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 View.define("fx-a", { items: [] }, { render() { return html\`\${this.items?.length}\`; } });
 View.define("fx-b", { items: [] }, { ping() { this.$emit?.("x"); return this.items ?? []; } });
 `;

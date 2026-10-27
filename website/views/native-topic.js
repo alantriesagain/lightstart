@@ -6,11 +6,11 @@
  * Captured tool output wraps, and so does everything side by side; source
  * code on its own keeps its lines.
  */
-import { html, nothing } from "@bootstrapp/light/html";
+import { html, nothing } from "@lightstart/light/html";
 import $APP from "bootstrapp";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
-import navigation from "@bootstrapp/light/navigation";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
+import navigation from "@lightstart/light/navigation";
 import { prose } from "../lib/native/prose-html.js";
 import { nativeNeighbours } from "../lib/native/pages.js";
 import { TOPICS } from "../lib/native/topics.js";

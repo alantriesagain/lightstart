@@ -1,11 +1,11 @@
-import T from "@bootstrapp/light/types";
-import { defineMixin } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineMixin } from "@lightstart/light";
 import { overlays } from "../overlay/stack.js";
 
 /** @import { OverlayHost, Prop } from "../types.ts" */
 
 /**
- * @bootstrapp/light/components/mixins/overlay
+ * @lightstart/light/components/mixins/overlay
  *
  * Micro-mixin: put a component on the overlay stack while it is open. The host
  * declares which of its properties means "open"; the mixin registers on the way
@@ -16,8 +16,8 @@ import { overlays } from "../overlay/stack.js";
  * while the host is the topmost layer that will take one. A host without it
  * joins for the accounting and the lock, and Escape passes it by.
  *
- *   import { defineComponent } from "@bootstrapp/light";
- *   import { withOverlay } from "@bootstrapp/light/components/mixins/overlay.js";
+ *   import { defineComponent } from "@lightstart/light";
+ *   import { withOverlay } from "@lightstart/light/components/mixins/overlay.js";
  *
  *   export default defineComponent({
  *     mixins: [withOverlay({ lockScroll: true })],

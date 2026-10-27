@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/app: an app on a terminal in one call. `runApp`
+ * @lightstart/light/native/app: an app on a terminal in one call. `runApp`
  * puts a renderer over the terminal given (a `Terminal` on the screen, a
  * `TestTerminal` in a test), installs the classes styler when the app brings
  * one, mounts the app's view at the root, gives `focus` the focus from the

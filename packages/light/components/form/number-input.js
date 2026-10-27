@@ -1,7 +1,7 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
-import { withFormControl } from "@bootstrapp/light/components/mixins/form-control.js";
-import T from "@bootstrapp/light/types";
+import { html, nothing } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
+import { withFormControl } from "@lightstart/light/components/mixins/form-control.js";
+import T from "@lightstart/light/types";
 import { lcText } from "../utils/text.js";
 
 /** @import { Prop } from "../types.ts" */

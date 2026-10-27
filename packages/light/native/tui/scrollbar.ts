@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/scrollbar: the scrollbar a `LineView` draws in its
+ * @lightstart/light/native/tui/scrollbar: the scrollbar a `LineView` draws in its
  * last cell: where the thumb sits for a scroll position, and the scroll
  * position a place of the thumb stands for. Measured in half rows, drawn
  * with box drawing's half-heavy lines (`╽` `╿`), so the thumb moves half a

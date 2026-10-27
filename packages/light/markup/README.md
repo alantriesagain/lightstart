@@ -1,4 +1,4 @@
-# @bootstrapp/light/markup
+# @lightstart/light/markup
 
 The renderer on an in-memory tree: no document, no browser. Two uses: a server renders a page with it and serializes the tree into markup the browser host adopts without replacing a node; and the engine's conformance suite (`html/conformance.test.js`) runs against it under plain `node --test`, which makes it the host every other host is measured against.
 
@@ -9,9 +9,9 @@ The renderer on an in-memory tree: no document, no browser. Two uses: a server r
 | `serialize.js` | `serialize` (markup with the engine's marker comments, for a page to adopt), `markupOf` (without them, for a reader), `textContent` |
 
 ```js
-import { configure, html, render } from "@bootstrapp/light/html/core.js";
-import { effect } from "@bootstrapp/light/signals";
-import { MRoot, MarkupHost, serialize } from "@bootstrapp/light/markup/index.js";
+import { configure, html, render } from "@lightstart/light/html/core.js";
+import { effect } from "@lightstart/light/signals";
+import { MRoot, MarkupHost, serialize } from "@lightstart/light/markup/index.js";
 
 configure({ host: new MarkupHost(), effect });
 const root = new MRoot();

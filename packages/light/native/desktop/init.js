@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/desktop/init: the script the shell installs into every page load
+ * @lightstart/light/native/desktop/init: the script the shell installs into every page load
  * before the page's own scripts run. It gives the page the event side of the bridge: a listener
  * table and a queue for events that arrive before a listener does, so a reload keeps working and
  * nothing emitted early is lost. The call side, `window.__desktop`, is the webview's own binding.

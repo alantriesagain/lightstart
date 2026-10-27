@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/html/conformance-hosts: the hosts the engine's
+ * @lightstart/light/html/conformance-hosts: the hosts the engine's
  * conformance suite runs against, each behind the same small adapter (a
  * container, the markup and text rendered into it, the elements in it, a
  * way to fire an event), so one suite reads the same on every host.

@@ -6,11 +6,11 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import buttonDef from "@bootstrapp/light/components/display/button.js";
-import codeBlockDef from "@bootstrapp/light/components/display/code-block.js";
-import { configureHighlight } from "@bootstrapp/light/components/utils/highlight.js";
-import clipboardDef from "@bootstrapp/light/components/utility/clipboard.js";
+import View from "@lightstart/light";
+import buttonDef from "@lightstart/light/components/display/button.js";
+import codeBlockDef from "@lightstart/light/components/display/code-block.js";
+import { configureHighlight } from "@lightstart/light/components/utils/highlight.js";
+import clipboardDef from "@lightstart/light/components/utility/clipboard.js";
 
 const keywords = (code) => code.split("\n").map((line) => line.split(/(const)/).filter(Boolean).map((text) => ({ text, type: text === "const" ? "keyword" : null })));
 

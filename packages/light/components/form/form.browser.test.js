@@ -13,7 +13,7 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 import formDef from "./form.js";
 import inputDef from "./input.js";
 import selectDef from "./select.js";

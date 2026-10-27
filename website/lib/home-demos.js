@@ -4,12 +4,12 @@
  * `View.define` takes the same arguments again as a no-op, so the page may
  * call `defineDemos()` every time it connects.
  */
-import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 
 const props = { label: "Clicks", count: 0, big: false };
 
-/** @param {import("@bootstrapp/light/view/types.ts").ElementOf<[], typeof props, {}>} el */
+/** @param {import("@lightstart/light/view/types.ts").ElementOf<[], typeof props, {}>} el */
 const render = (el) => html`<button type="button" ?data-big=${el.big} @click=${() => el.count++}>${el.label}: ${el.count}</button>`;
 
 export const defineDemos = () => {

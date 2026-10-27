@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it, beforeEach, afterEach } from "node:test";
-import View, { defineComponent, defineMixin } from "@bootstrapp/light";
-import T from "@bootstrapp/light/types";
-import { disposeTree, element, html, key } from "@bootstrapp/light/html";
-import { signal } from "@bootstrapp/light/signals";
+import View, { defineComponent, defineMixin } from "@lightstart/light";
+import T from "@lightstart/light/types";
+import { disposeTree, element, html, key } from "@lightstart/light/html";
+import { signal } from "@lightstart/light/signals";
 import { composeDefinition } from "./definition.js";
 
 let testElementCounter = 0;

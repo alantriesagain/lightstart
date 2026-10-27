@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: linkDef } = await import("./link.js");
 const { default: buttonDef } = await import("./button.js");
@@ -26,7 +26,7 @@ const button = async (/** @type {Record<string, string>} */ attrs = {}) => {
 
 const anchorOf = (/** @type {any} */ el) => el.querySelector("[part~=lc-link-anchor]");
 
-describe("@bootstrapp/light - lc-button inherits lc-link's click wiring", () => {
+describe("@lightstart/light - lc-button inherits lc-link's click wiring", () => {
   before(() => {
     View.define("lc-link", linkDef);
     View.define("lc-button", buttonDef);

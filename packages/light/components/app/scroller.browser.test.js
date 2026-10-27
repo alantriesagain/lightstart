@@ -5,7 +5,7 @@
  */
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: scrollerDef } = await import("./scroller.js");
 
@@ -38,7 +38,7 @@ const mount = async (attrs = {}) => {
   };
 };
 
-describe("@bootstrapp/light - lc-scroller", () => {
+describe("@lightstart/light - lc-scroller", () => {
   before(async () => {
     View.define("lc-scroller", scrollerDef);
     const css = await (await fetch(new URL("./scroller.css", import.meta.url))).text();

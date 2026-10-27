@@ -1,6 +1,6 @@
-import { html, svg } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import { html, svg } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
 /** @import { Prop, PieChartDatum } from "../types.ts" */
 

@@ -1,5 +1,5 @@
 /**
- * @file @bootstrapp/light/test/cli.js
+ * @file @lightstart/light/test/cli.js
  * `light test <files...>`: run the given `*.test.js` files in headless
  * Chromium, served from the current package with its importmap. It runs
  * exactly the files it is given; which files those are is the caller's.

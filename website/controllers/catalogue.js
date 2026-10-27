@@ -1,10 +1,10 @@
 import $APP from "bootstrapp";
-import { defineController } from "@bootstrapp/light/controller";
-import presets, { loadPreset } from "@bootstrapp/light/theme/presets.js";
+import { defineController } from "@lightstart/light/controller";
+import presets, { loadPreset } from "@lightstart/light/theme/presets.js";
 import { componentPath } from "../lib/paths.js";
 
 /** @import { SkinOption } from "../types.ts" */
-/** @import { SearchDoc, TocItem } from "@bootstrapp/light/components/types.ts" */
+/** @import { SearchDoc, TocItem } from "@lightstart/light/components/types.ts" */
 
 const HOST_THEME = "";
 

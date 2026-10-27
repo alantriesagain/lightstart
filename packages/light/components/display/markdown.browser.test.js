@@ -6,8 +6,8 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import markdownDef from "@bootstrapp/light/components/display/markdown.js";
+import View from "@lightstart/light";
+import markdownDef from "@lightstart/light/components/display/markdown.js";
 
 const define = (tag, definition) => {
   if (!customElements.get(tag)) View.define(tag, definition);

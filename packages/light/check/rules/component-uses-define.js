@@ -29,7 +29,7 @@ export default defineRule({
       const literal = source.slice(index, close === -1 ? undefined : close);
       if (!DECLARES_TAG.test(literal)) continue;
       const line = source.slice(0, index).split("\n").length;
-      ctx.report({ file, line, col: 1, message: "the component is a bare object literal; declare it with defineComponent({ ... }) from @bootstrapp/light so this is typed from its props" });
+      ctx.report({ file, line, col: 1, message: "the component is a bare object literal; declare it with defineComponent({ ... }) from @lightstart/light so this is typed from its props" });
     }
   },
 });

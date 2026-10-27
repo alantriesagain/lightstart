@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/html/index.js: the browser entry of the renderer. It
+ * @lightstart/light/html/index.js: the browser entry of the renderer. It
  * installs the DOM host and re-exports the renderer-agnostic API from
  * `core.js` together with the browser-only adoption and slot helpers.
  */

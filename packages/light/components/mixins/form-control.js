@@ -1,5 +1,5 @@
-import T from "@bootstrapp/light/types";
-import { defineMixin } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineMixin } from "@lightstart/light";
 import { uniqueId } from "../utils/id.js";
 
 /** @import { Prop, Renderable } from "../types.ts" */

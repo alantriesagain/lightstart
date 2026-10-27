@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/ticks: one tick for everything that moves on its
+ * @lightstart/light/native/tui/ticks: one tick for everything that moves on its
  * own (a spinner, a running clock), four times a second. Every listener runs
  * in the same turn, so what they redraw lands in one frame instead of a frame
  * each; the timer runs while something listens and stops with the last

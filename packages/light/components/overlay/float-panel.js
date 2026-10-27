@@ -1,8 +1,8 @@
-import T from "@bootstrapp/light/types";
+import T from "@lightstart/light/types";
 import { clampRect, loadRect, saveRect } from "./float-rect.js";
-import { defineComponent } from "@bootstrapp/light";
+import { defineComponent } from "@lightstart/light";
 import { withPointerDrag } from "../mixins/pointer-drag.js";
-import { env } from "@bootstrapp/light/env";
+import { env } from "@lightstart/light/env";
 
 /** @import { Prop, DragMove } from "../types.ts" */
 

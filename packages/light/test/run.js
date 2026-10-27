@@ -1,5 +1,5 @@
 /**
- * @file @bootstrapp/light/test/run.js
+ * @file @lightstart/light/test/run.js
  * Runs browser test files one page at a time in headless Chromium and reports
  * what each found. A runner page imports the file (whose `node:test` resolves
  * to the shims beside this module), runs it and publishes the result on

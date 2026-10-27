@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 import { overlays } from "./stack.js";
 
 const { default: dropdownDef } = await import("./dropdown.js");
@@ -33,7 +33,7 @@ const open = async (/** @type {string[]} */ labels = []) => {
   return { trigger, menu };
 };
 
-describe("@bootstrapp/light - lc-dropdown", () => {
+describe("@lightstart/light - lc-dropdown", () => {
   before(() => View.define("lc-dropdown", dropdownDef));
 
   afterEach(async () => {

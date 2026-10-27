@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 import { resetIds, uniqueId } from "./id.js";
 
-describe("@bootstrapp/light - uniqueId", () => {
+describe("@lightstart/light - uniqueId", () => {
   beforeEach(() => resetIds());
 
   it("carries the prefix it was given", () => {

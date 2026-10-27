@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: dividerDef } = await import("./divider.js");
 
@@ -43,7 +43,7 @@ const point = (target, type, x, y) =>
     bubbles: true, composed: true, cancelable: true,
   }));
 
-describe("@bootstrapp/light - lc-divider", () => {
+describe("@lightstart/light - lc-divider", () => {
   before(() => View.define("lc-divider", dividerDef));
   after(() => row?.remove());
 

@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import T from "@bootstrapp/light/types";
-import { html } from "@bootstrapp/light/html";
-import { defineController, nameControllers, registerAdapter } from "@bootstrapp/light/controller";
-import { localStorage } from "@bootstrapp/light/controller/storage";
-import { syncPlugin } from "@bootstrapp/light/controller/view";
+import View from "@lightstart/light";
+import T from "@lightstart/light/types";
+import { html } from "@lightstart/light/html";
+import { defineController, nameControllers, registerAdapter } from "@lightstart/light/controller";
+import { localStorage } from "@lightstart/light/controller/storage";
+import { syncPlugin } from "@lightstart/light/controller/view";
 
 View.use(syncPlugin);
 registerAdapter("local", localStorage);
@@ -13,7 +13,7 @@ registerAdapter("local", localStorage);
 let counter = 0;
 const uniqueTag = (prefix) => `${prefix}-${Date.now()}-${++counter}`;
 
-describe("@bootstrapp/light/controller: a page with no framework", () => {
+describe("@lightstart/light/controller: a page with no framework", () => {
   it("binds a component property to local storage and to a controller by name", async () => {
     globalThis.localStorage.removeItem("lightSyncTheme");
     const prefs = defineController({ name: "lightSyncPrefs", props: { density: "comfy" } });

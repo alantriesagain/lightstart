@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { iconMaskCSS, maskDataUri, maskRule } from "./icon-mask.js";
 
-/** @type {import("@bootstrapp/light/theme").IconEntry} */
+/** @type {import("@lightstart/light/theme").IconEntry} */
 const DOT = { body: `<circle cx="6" cy="19" r="3" fill="none" stroke="currentColor" stroke-width="2"/>`, width: 24, height: 24 };
 
 const CALENDAR = {

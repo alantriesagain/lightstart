@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: barChartDef } = await import("./bar-chart.js");
 
@@ -28,7 +28,7 @@ const mount = async (props) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-bar-chart", () => {
+describe("@lightstart/light - lc-bar-chart", () => {
   before(async () => {
     if (!customElements.get("lc-bar-chart")) View.define("lc-bar-chart", barChartDef);
     const style = document.createElement("style");

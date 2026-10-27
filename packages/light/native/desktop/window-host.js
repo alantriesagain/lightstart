@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/desktop/window-host: the script that gives a page its window. Installed
+ * @lightstart/light/native/desktop/window-host: the script that gives a page its window. Installed
  * by DesktopWindow right after the `__desktop` binding, it defines `window.__desktopWindow`, the
  * object `env.window` answers in the page: the platform, whether the window draws its own title bar
  * (`frameless`) and whether the system's controls stay on it (`nativeControls`, macOS), the

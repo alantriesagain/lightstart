@@ -6,8 +6,8 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import tocDef from "@bootstrapp/light/components/navigation/toc.js";
+import View from "@lightstart/light";
+import tocDef from "@lightstart/light/components/navigation/toc.js";
 
 const define = (tag, definition) => {
   if (!customElements.get(tag)) View.define(tag, definition);

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/components/utils/scale
+ * @lightstart/light/components/utils/scale
  *
  * The arithmetic behind a chart's value axis: a round top for the scale, and a
  * short label for a tick.

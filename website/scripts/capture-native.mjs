@@ -34,7 +34,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFile
 import { cpus, loadavg, tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { scriptcPath } from "@bootstrapp/light/native/scriptc.js";
+import { scriptcPath } from "@lightstart/light/native/scriptc.js";
 
 const website = join(dirname(fileURLToPath(import.meta.url)), "..");
 const repo = join(website, "..");

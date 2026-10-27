@@ -16,7 +16,7 @@
  * has no Intl.Segmenter, so clusters are found here: combining marks, a zero-width joiner and what
  * it joins, a flag's two letters.
  */
-import { WIDE, ZERO } from "@bootstrapp/light/native/tui/width.ts";
+import { WIDE, ZERO } from "@lightstart/light/native/tui/width.ts";
 
 /** One part of the api object: a namespace (`name`) whose members are `source`, or, with "" as the name, members spliced in as they are. */
 export class PreludePart {

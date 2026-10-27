@@ -6,8 +6,8 @@
  */
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import titleBarDef from "@bootstrapp/light/components/app/title-bar.js";
+import View from "@lightstart/light";
+import titleBarDef from "@lightstart/light/components/app/title-bar.js";
 
 if (!customElements.get("lc-title-bar")) View.define("lc-title-bar", titleBarDef);
 

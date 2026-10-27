@@ -3,7 +3,7 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./prefer-kebab-attribute.js";
 
-const TARGET = `import T from "@bootstrapp/light/types";
+const TARGET = `import T from "@lightstart/light/types";
 export default {
   tag: "fx-toggle",
   props: { useSystemPreference: T.boolean(), size: T.string() },
@@ -11,7 +11,7 @@ export default {
 };
 `;
 
-const userOf = (markup) => `import { html } from "@bootstrapp/light/html";
+const userOf = (markup) => `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-page",
   render() { return html\`${markup}\`; },
@@ -44,8 +44,8 @@ test("silent on unknown tags and attributes with no matching prop", async () => 
 });
 
 test("a using file with two definitions reports each binding once", async () => {
-  const src = `import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+  const src = `import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 View.define("fx-a", {}, (el) => html\`<fx-target usesystem></fx-target>\`);
 View.define("fx-b", {}, (el) => html\`<i></i>\`);
 `;
@@ -56,7 +56,7 @@ View.define("fx-b", {}, (el) => html\`<i></i>\`);
 test("a name inside an expression is not an attribute", async () => {
   const findings = await runRuleOn(rule, {
     "views/target.js": 'export default { tag: "fx-target", props: { useSystem: false } };',
-    "views/page.js": 'import { html } from "@bootstrapp/light/html";\nexport default { tag: "fx-page", render() { return html`<fx-target title=${this.a ? usesystem : "b"} alt="usesystem x"></fx-target>`; } };',
+    "views/page.js": 'import { html } from "@lightstart/light/html";\nexport default { tag: "fx-page", render() { return html`<fx-target title=${this.a ? usesystem : "b"} alt="usesystem x"></fx-target>`; } };',
   });
   assert.deepEqual(findings, []);
 });

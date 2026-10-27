@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const items = [
   { id: "1", title: "Meetup Rio", subtitle: "Tonight, 19:00" },

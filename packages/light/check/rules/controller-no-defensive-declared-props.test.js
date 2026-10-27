@@ -3,8 +3,8 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./controller-no-defensive-declared-props.js";
 
-const wrap = (props, body) => `import { defineController } from "@bootstrapp/light/controller";
-import T from "@bootstrapp/light/types";
+const wrap = (props, body) => `import { defineController } from "@lightstart/light/controller";
+import T from "@lightstart/light/types";
 export default defineController({
   name: "demo",
   props: {
@@ -64,7 +64,7 @@ test("views are not scanned by this rule", async () => {
 
 test("each controller of a file is read against its own props", async () => {
   const findings = await runRuleOn(rule, {
-    "lib/stores.js": `import { defineController } from "@bootstrapp/light/controller";
+    "lib/stores.js": `import { defineController } from "@lightstart/light/controller";
 export const a = defineController({ name: "a", props: { rows: [] } });
 export const b = defineController({ name: "b", props: { rows: null }, go() { return this.rows?.length; } });
 `,

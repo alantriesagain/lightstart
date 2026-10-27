@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it, before, after, afterEach } from "node:test";
-import View from "@bootstrapp/light";
-import { configureIcons } from "@bootstrapp/light/theme/icons.js";
-import { html } from "@bootstrapp/light/html";
+import View from "@lightstart/light";
+import { configureIcons } from "@lightstart/light/theme/icons.js";
+import { html } from "@lightstart/light/html";
 import { maskRule } from "./icon-mask.js";
 
 const ICON = "heart";
@@ -40,7 +40,7 @@ const waitFor = async (predicate, label, timeout = 5000) => {
 
 const maskOf = (el) => getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage;
 
-describe("@bootstrapp/light - lc-icon", () => {
+describe("@lightstart/light - lc-icon", () => {
   before(() => {
     View.define("lc-icon", iconDef);
   });

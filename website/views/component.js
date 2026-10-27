@@ -2,15 +2,15 @@
  * One component's page: the package's `showcase-component-doc` between the site's
  * breadcrumbs and its pager, with the outline handed to the shell's aside.
  */
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 import $APP from "bootstrapp";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { browsableCategories, categoryById, humanize } from "@bootstrapp/showcase/lib/categories.js";
 import { categoryPath, componentPath, COMPONENTS_PATH, neighbours } from "../lib/paths.js";
 
 /** @import { ComponentRef } from "../lib/paths.js" */
-/** @import { TocItem } from "@bootstrapp/light/components/types.ts" */
+/** @import { TocItem } from "@lightstart/light/components/types.ts" */
 
 /** @param {ComponentRef | null} ref */
 const pagerLink = (ref) => (ref ? { label: humanize(ref.name), href: componentPath(ref.category, ref.name), hint: humanize(ref.category) } : null);

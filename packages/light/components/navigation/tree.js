@@ -1,4 +1,4 @@
-import { defineComponent } from "@bootstrapp/light";
+import { defineComponent } from "@lightstart/light";
 
 /** @import { TreeItemElement } from "../types.ts" */
 

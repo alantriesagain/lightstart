@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/env: the page's environment as components read it.
+ * @lightstart/light/env: the page's environment as components read it.
  */
 
 /** A point-in-time read of `env` (the data fields, no methods). */

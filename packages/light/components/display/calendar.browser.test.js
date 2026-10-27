@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 
 const { default: calendarDef, localDateKey, weekDaysOf } = await import("./calendar.js");
 
@@ -28,7 +28,7 @@ const EVENTS = [
   { id: "c", title: "Next week", date: "2026-09-28" },
 ];
 
-describe("@bootstrapp/light - lc-calendar week view", () => {
+describe("@lightstart/light - lc-calendar week view", () => {
   before(async () => {
     if (!customElements.get("lc-calendar")) View.define("lc-calendar", calendarDef);
     const css = await (await fetch(new URL("./calendar.css", import.meta.url))).text();

@@ -5,11 +5,11 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import kbdDef from "@bootstrapp/light/components/display/kbd.js";
-import searchDef from "@bootstrapp/light/components/form/search.js";
-import paletteDef from "@bootstrapp/light/components/overlay/command-palette.js";
-import modalDef from "@bootstrapp/light/components/overlay/modal.js";
+import View from "@lightstart/light";
+import kbdDef from "@lightstart/light/components/display/kbd.js";
+import searchDef from "@lightstart/light/components/form/search.js";
+import paletteDef from "@lightstart/light/components/overlay/command-palette.js";
+import modalDef from "@lightstart/light/components/overlay/modal.js";
 
 const define = (tag, definition) => {
   if (!customElements.get(tag)) View.define(tag, definition);

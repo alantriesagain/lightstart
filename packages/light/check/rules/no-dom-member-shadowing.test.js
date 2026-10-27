@@ -3,7 +3,7 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./no-dom-member-shadowing.js";
 
-const view = (body) => `import T from "@bootstrapp/light/types";
+const view = (body) => `import T from "@lightstart/light/types";
 export default { tag: "fx-card", ${body} render() { return null; } };
 `;
 
@@ -27,8 +27,8 @@ test("leaves accessors, near-misses and ordinary names alone", async () => {
 });
 
 test("props given as View.define's second argument count, and a render-only component has no literal to crash on", async () => {
-  const src = `import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+  const src = `import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 View.define("fx-a", { click: false, label: "" }, { close() {} });
 View.define("fx-b", { focus: 0 }, (el) => html\`<b>\${el.focus}</b>\`);
 `;

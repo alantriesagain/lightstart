@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/check/discover.js: where rules come from. A rule is one
+ * @lightstart/light/check/discover.js: where rules come from. A rule is one
  * file under a `check/rules/` directory, its id `<owner>/<basename>`; light's
  * own rules are owned by `light`, a project's by its name. A host adds the
  * directories of the project's dependencies. `loadRulesSync` loads the same

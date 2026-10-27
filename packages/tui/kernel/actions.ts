@@ -6,7 +6,7 @@
  * (actions of a scope with the same help show as one). The core adds its own and the plugins
  * theirs; a later action of an id replaces the earlier (a plugin can replace the core's).
  */
-import type { KeyEvent } from "@bootstrapp/light/native/tui";
+import type { KeyEvent } from "@lightstart/light/native/tui";
 import { Keyed } from "./registry.ts";
 
 export class Action {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: rowDef } = await import("./list-row.js");
 const { default: badgeDef } = await import("./badge.js");
@@ -34,7 +34,7 @@ const mount = async (attrs = {}) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-list-row", () => {
+describe("@lightstart/light - lc-list-row", () => {
   before(async () => {
     if (!customElements.get("lc-badge")) View.define("lc-badge", badgeDef);
     if (!customElements.get("lc-list-row")) View.define("lc-list-row", rowDef);

@@ -4,8 +4,8 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import searchDef from "@bootstrapp/light/components/form/search.js";
+import View from "@lightstart/light";
+import searchDef from "@lightstart/light/components/form/search.js";
 
 const define = (tag, definition) => {
   if (!customElements.get(tag)) View.define(tag, definition);

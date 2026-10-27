@@ -1,6 +1,6 @@
 /**
  * @file The conventions every member follows, each a rule answering findings for one member: a relative
- * import never leaves the member; every import of a member or of `@bootstrapp/light` is declared, as
+ * import never leaves the member; every import of a member or of `@lightstart/light` is declared, as
  * `workspace:*`; a package's export targets are TypeScript files and `./*` its only pattern (a
  * `.js` target would make the package an npm package to scriptc); a `// ffi:` header names a
  * manifest that exists; a member's tsconfig equals the template; a test names no path from the
@@ -112,7 +112,7 @@ export const undeclaredDeps = (m, names) => {
     for (const spec of specifiersOf(readFileSync(file, "utf8"))) {
       const pkg = packageOf(spec);
       if (pkg === null || pkg === m.name) continue;
-      if (!names.has(pkg) && pkg !== "@bootstrapp/light") continue;
+      if (!names.has(pkg) && pkg !== "@lightstart/light") continue;
       if (declared.has(pkg) || seen.has(pkg)) continue;
       seen.add(pkg);
       out.push(new Finding("undeclared-deps", file, pkg + " is imported but not declared in package.json"));
@@ -130,7 +130,7 @@ export const workspaceProtocol = (m, names) => {
   const out = [];
   for (const key of DEPENDENCY_FIELDS)
     for (const [name, range] of Object.entries(m.pkg[key] ?? {}))
-      if ((names.has(name) || name === "@bootstrapp/light") && range !== "workspace:*") out.push(new Finding("workspace-protocol", join(m.dir, "package.json"), name + " is " + range + ", not workspace:*"));
+      if ((names.has(name) || name === "@lightstart/light") && range !== "workspace:*") out.push(new Finding("workspace-protocol", join(m.dir, "package.json"), name + " is " + range + ", not workspace:*"));
   return out;
 };
 

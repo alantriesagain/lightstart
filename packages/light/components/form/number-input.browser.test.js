@@ -6,9 +6,9 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import numberInputDef from "@bootstrapp/light/components/form/number-input.js";
-import labelDef from "@bootstrapp/light/components/form/label.js";
+import View from "@lightstart/light";
+import numberInputDef from "@lightstart/light/components/form/number-input.js";
+import labelDef from "@lightstart/light/components/form/label.js";
 
 const define = (tag, definition) => {
   if (!customElements.get(tag)) View.define(tag, definition);

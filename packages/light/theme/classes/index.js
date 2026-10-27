@@ -1,5 +1,5 @@
 /**
- * `@bootstrapp/light/theme/classes`: the utility classes a theme gives, as an atomic-CSS engine. Pure and
+ * `@lightstart/light/theme/classes`: the utility classes a theme gives, as an atomic-CSS engine. Pure and
  * isomorphic: no DOM, no globals, the same modules compile classes in the
  * browser runtime and in the Node build, so dev and prod cannot drift.
  */

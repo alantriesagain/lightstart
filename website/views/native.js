@@ -3,13 +3,13 @@
  * section's pages in their two groups (light's native build, and the
  * background), each with what it covers. The pages are `lib/native/pages.js`.
  */
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 import $APP from "bootstrapp";
-import { defineComponent } from "@bootstrapp/light";
-import navigation from "@bootstrapp/light/navigation";
+import { defineComponent } from "@lightstart/light";
+import navigation from "@lightstart/light/navigation";
 import { NATIVE_GROUPS, NATIVE_PAGES, nativeNeighbours } from "../lib/native/pages.js";
 
-/** @import { TocItem } from "@bootstrapp/light/components/types.ts" */
+/** @import { TocItem } from "@lightstart/light/components/types.ts" */
 
 const GROUP_TEXT = {
   native: "How light's native build works, how to use it, and what is not finished yet.",

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/host: the renderer on the terminal node tree.
+ * @lightstart/light/native/tui/host: the renderer on the terminal node tree.
  * Templates are read from the parser's marker markup with the tokenizer
  * and cloned into terminal nodes under the terminal's whitespace rules
  * (blank text between block children is dropped, inline text collapses

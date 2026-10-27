@@ -5,6 +5,7 @@ export default defineRoutes({
   "/components": { name: "components", title: "Components", component: "docs-overview" },
   "/components/:category": { name: "category", title: "Components", component: "docs-category" },
   "/components/:category/:name": { name: "component", title: "Components", component: "docs-component" },
+  "/built-with-light": { name: "built-with-light", title: "Built with Light", component: "docs-built-with-light" },
   "/theming": { name: "theming", title: "Theming", component: "docs-theming" },
   "/skins": { name: "skins", title: "Skins", component: "docs-skins" },
   "/native": { name: "native", title: "Native", component: "docs-native" },

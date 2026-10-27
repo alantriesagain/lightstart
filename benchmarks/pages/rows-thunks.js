@@ -1,10 +1,10 @@
-import { configure, html, key, render } from "@bootstrapp/light/html";
-import { effect, selector, signal } from "@bootstrapp/light/signals";
+import { configure, html, key, render } from "@lightstart/light/html";
+import { effect, selector, signal } from "@lightstart/light/signals";
 import { register, rowSteps } from "./bench.js";
 
 configure({ effect });
 
-/** @typedef {{ id: number, label: import("@bootstrapp/light/signals").Signal<string>, view?: unknown }} Row */
+/** @typedef {{ id: number, label: import("@lightstart/light/signals").Signal<string>, view?: unknown }} Row */
 
 /** @type {Row[]} */
 let rows = [];

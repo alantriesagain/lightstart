@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/markup/node: an in-memory tree with the shape the
+ * @lightstart/light/markup/node: an in-memory tree with the shape the
  * renderer's host seam needs and nothing a browser adds. Elements hold
  * attributes, properties and listeners as maps; a fragment's children move
  * into the parent it is inserted into; a root is the one container whose

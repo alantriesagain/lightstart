@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/model/binder: the model as a sync target
+ * @lightstart/light/model/binder: the model as a sync target
  * A property bound to a model's api (`Model.x`), on a controller or a view, is
  * one live query mirrored into the host's store key: an array property runs
  * `modelQuery()`, any other keeps one row (`query.id`, or a `where`) current.

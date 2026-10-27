@@ -2,7 +2,7 @@
  * @file What the members' tests share: a wait, a wait for a condition, and a view mounted on a root and
  * painted headless to a screen whose rows the checks read.
  */
-import { Caret, Clip, DEFAULT_STYLE, Screen, TRoot, View, frames, layout, mount, paint, unmount } from "@bootstrapp/light/native/tui";
+import { Caret, Clip, DEFAULT_STYLE, Screen, TRoot, View, frames, layout, mount, paint, unmount } from "@lightstart/light/native/tui";
 
 /** `ms` later. */
 export const wait = (ms: number): Promise<void> =>

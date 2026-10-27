@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/model: a model's api. `defineModel(name, schema)` is a
+ * @lightstart/light/model: a model's api. `defineModel(name, schema)` is a
  * plain object of the eleven methods, imported where it is used, sending
  * `MODEL:*` commands through the request `configureModel` set: a store in
  * the same runtime, or a port to a worker that holds one. Rows are the plain

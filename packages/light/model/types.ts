@@ -1,6 +1,6 @@
 /**
- * @bootstrapp/light/model: type declarations. Public types are reachable via
- * `import("@bootstrapp/light/model").Foo`.
+ * @lightstart/light/model: type declarations. Public types are reachable via
+ * `import("@lightstart/light/model").Foo`.
  */
 
 import type { TypeDefinition, TypeDefinitionFields } from "../types/types.ts";
@@ -285,7 +285,7 @@ export type ModelRequest = (action: string, model: string, payload?: ModelPayloa
  * runs hooks, defaults, validation, uploads and change events around it.
  * `query` answers a page and the size of the whole match, and honours
  * `where`, `order`, `limit`, `offset` and `fields` itself (a local adapter
- * borrows `buildQueryResult` from `@bootstrapp/light/model/adapter`).
+ * borrows `buildQueryResult` from `@lightstart/light/model/adapter`).
  */
 export interface StorageAdapter {
   type?: string;

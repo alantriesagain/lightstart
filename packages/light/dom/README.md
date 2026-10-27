@@ -1,4 +1,4 @@
-# @bootstrapp/light/dom
+# @lightstart/light/dom
 
 The browser host of the renderer: everything in light that needs a document.
 
@@ -11,4 +11,4 @@ The browser host of the renderer: everything in light that needs a document.
 | `slots.js` | Light-DOM `<slot>` projection: unit walkers, `SlotPart`, `projectSlots`, the `<unslotted>` holder |
 | `types.ts` | `SlotHost`, `ProjectHooks`, `ProjectedUnit` |
 
-`@bootstrapp/light/html` installs the DOM host when it loads; `@bootstrapp/light/html/core` is the same engine without it, for hosts that are not a browser.
+`@lightstart/light/html` installs the DOM host when it loads; `@lightstart/light/html/core` is the same engine without it, for hosts that are not a browser.

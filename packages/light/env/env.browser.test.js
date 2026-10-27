@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { BREAKPOINTS, env } from "@bootstrapp/light/env";
+import { BREAKPOINTS, env } from "@lightstart/light/env";
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 

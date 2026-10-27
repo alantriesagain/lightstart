@@ -5,7 +5,7 @@
  */
 import assert from "node:assert/strict";
 import { after, afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: sheetDef } = await import("./bottom-sheet.js");
 
@@ -73,7 +73,7 @@ const countDocumentMoves = () => {
   };
 };
 
-describe("@bootstrapp/light - lc-bottom-sheet drag", () => {
+describe("@lightstart/light - lc-bottom-sheet drag", () => {
   before(() => View.define("lc-bottom-sheet", sheetDef));
 
   afterEach(async () => {
@@ -266,7 +266,7 @@ const mountModal = async (attrs, style, contentHeight) => {
   return { sheet, root, grabber: /** @type {HTMLElement} */ (root.querySelector("[part~=lc-bottom-sheet-grabber]")) };
 };
 
-describe("@bootstrapp/light - lc-bottom-sheet grabber and lift", () => {
+describe("@lightstart/light - lc-bottom-sheet grabber and lift", () => {
   /** @type {HTMLLinkElement | null} */
   let css = null;
 

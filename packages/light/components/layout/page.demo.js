@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const sections = [
   { type: "lc-hero-section", props: { headline: "Ship the thing", subheadline: "A page assembled from sections." } },

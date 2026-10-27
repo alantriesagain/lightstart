@@ -2,3 +2,4 @@ packages:
   - 'packages/light'
   - 'packages/native/*'
   - 'packages/tui/*'
+  - 'packages/lightstart'

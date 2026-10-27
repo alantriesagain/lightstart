@@ -66,7 +66,7 @@ test("the maps are asked again after the index is cleared", () => {
 
 test("propsOf picks the definition naming the tag when a project file holds several", () => {
   const ctx = contextFromFiles({
-    "views/pair.js": 'import View from "@bootstrapp/light";\nView.define("fx-a", { props: { a: 1 } });\nView.define("fx-b", { props: { b: 1 } });\n',
+    "views/pair.js": 'import View from "@lightstart/light";\nView.define("fx-a", { props: { a: 1 } });\nView.define("fx-b", { props: { b: 1 } });\n',
   });
   const index = ctx.componentIndex();
   assert.deepEqual([...index.propsOf("fx-a")], ["a"]);

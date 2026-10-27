@@ -1,23 +1,23 @@
 # light
 
-`@bootstrapp/light` is a small runtime for light-DOM web components. A component
+`@lightstart/light` is a small runtime for light-DOM web components. A component
 can be a class with signal fields, or a definition object with reactive props;
 both become standard custom elements. The package has no dependencies and runs
 in browsers, under server-side prerendering, and on native targets.
 
 | Import | What it provides |
 |---|---|
-| `@bootstrapp/light` | The view engine: `View`, `View.define`, `defineComponent`, `defineMixin`, `configureView` |
-| `@bootstrapp/light/html` | The tagged-template renderer: `html`, `svg`, `render`, `key`, `element`, `nothing`, `unsafeHTML` ([README](html/README.md)) |
-| `@bootstrapp/light/signals` | `signal`, `computed`, `effect`, `batch`, `untracked`, `selector` ([README](signals/README.md)) |
-| `@bootstrapp/light/types` | `T`, the descriptors used for a component's props, a controller's state and a model's fields |
-| `@bootstrapp/light/controller` | Controllers: shared state, the `sync` binding, `resource()` ([README](controller/README.md)) |
-| `@bootstrapp/light/model` | Models: schemas, a store over IndexedDB or another adapter, live queries ([README](model/README.md)) |
-| `@bootstrapp/light/env` | The page environment: viewport, breakpoint, OS, color scheme, `subscribe` |
-| `@bootstrapp/light/navigation` | The host's router as components see it; plain anchors until one is configured |
-| `@bootstrapp/light/theme` | Design tokens from a theme object, presets, `theme.css`, the color scheme, icons ([README](theme/README.md)) |
-| `@bootstrapp/light/theme/classes` | The utility classes a theme provides: `createEngine`, `buildTheme`, the rule table ([README](theme/README.md#classes)) |
-| `@bootstrapp/light/components/<category>/<name>.js` | The component library: `lc-*` tags in nine categories ([README](components/README.md)) |
+| `@lightstart/light` | The view engine: `View`, `View.define`, `defineComponent`, `defineMixin`, `configureView` |
+| `@lightstart/light/html` | The tagged-template renderer: `html`, `svg`, `render`, `key`, `element`, `nothing`, `unsafeHTML` ([README](html/README.md)) |
+| `@lightstart/light/signals` | `signal`, `computed`, `effect`, `batch`, `untracked`, `selector` ([README](signals/README.md)) |
+| `@lightstart/light/types` | `T`, the descriptors used for a component's props, a controller's state and a model's fields |
+| `@lightstart/light/controller` | Controllers: shared state, the `sync` binding, `resource()` ([README](controller/README.md)) |
+| `@lightstart/light/model` | Models: schemas, a store over IndexedDB or another adapter, live queries ([README](model/README.md)) |
+| `@lightstart/light/env` | The page environment: viewport, breakpoint, OS, color scheme, `subscribe` |
+| `@lightstart/light/navigation` | The host's router as components see it; plain anchors until one is configured |
+| `@lightstart/light/theme` | Design tokens from a theme object, presets, `theme.css`, the color scheme, icons ([README](theme/README.md)) |
+| `@lightstart/light/theme/classes` | The utility classes a theme provides: `createEngine`, `buildTheme`, the rule table ([README](theme/README.md#classes)) |
+| `@lightstart/light/components/<category>/<name>.js` | The component library: `lc-*` tags in nine categories ([README](components/README.md)) |
 
 ## Two ways to write a component
 
@@ -25,8 +25,8 @@ A definition object describes the props and a render function. The props are
 reactive, and their types are inferred from the defaults:
 
 ```js
-import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 
 View.define("my-counter", { count: 0, label: "Count" }, (el) => html`
   <button @click=${() => el.count++}>
@@ -39,9 +39,9 @@ A class extends `View` and holds state in signal fields. Its `render()` is
 tracked, so any signal the render reads re-renders the element when it changes:
 
 ```js
-import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
-import { signal } from "@bootstrapp/light/signals";
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
+import { signal } from "@lightstart/light/signals";
 
 class MyCounter extends View {
   count = signal(0);
@@ -103,7 +103,7 @@ number, `label: ""` a string, `open: false` a boolean, `items: []` an array, and
 attribute; arrays, objects and functions do not.
 
 A prop that needs an option uses a descriptor from `T`
-(`import T from "@bootstrapp/light/types"`). Each factory takes an options
+(`import T from "@lightstart/light/types"`). Each factory takes an options
 object or a bare default, so `T.string("hi")` is the same as
 `T.string({ defaultValue: "hi" })`.
 
@@ -261,7 +261,7 @@ View.use({
 
 ## Controllers
 
-`@bootstrapp/light/controller` holds shared app state. A controller is a named
+`@lightstart/light/controller` holds shared app state. A controller is a named
 piece of state and the methods that change it, created the first time anything
 reaches it and reset by `dispose()`. Its props use the same shorthand as a
 component's. Its `sync` block binds props to storage, another controller or a
@@ -269,8 +269,8 @@ store. A component can bind its own props to the same targets after the page
 calls `View.use(syncPlugin)`.
 
 ```js
-import { defineController, nameControllers, registerAdapter } from "@bootstrapp/light/controller";
-import { localStorage } from "@bootstrapp/light/controller/storage";
+import { defineController, nameControllers, registerAdapter } from "@lightstart/light/controller";
+import { localStorage } from "@lightstart/light/controller/storage";
 
 registerAdapter("local", localStorage);
 
@@ -290,18 +290,18 @@ See [controller/README.md](controller/README.md).
 
 ## Models
 
-`@bootstrapp/light/model` is the data layer. A model has a schema written with
+`@lightstart/light/model` is the data layer. A model has a schema written with
 `T` and an api created by `defineModel`. A store applies every write the same
 way (hooks, defaults, validation, file uploads, the adapter, then
 `model:changed`) over any storage adapter. A page can keep rows in IndexedDB
 and bind components and controllers to live queries:
 
 ```js
-import T from "@bootstrapp/light/types";
-import { configureModel, defineModel, modelBus } from "@bootstrapp/light/model";
-import { createStore, storeRequest } from "@bootstrapp/light/model/store";
-import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
-import IndexedDBAdapter from "@bootstrapp/light/model/indexeddb";
+import T from "@lightstart/light/types";
+import { configureModel, defineModel, modelBus } from "@lightstart/light/model";
+import { createStore, storeRequest } from "@lightstart/light/model/store";
+import { createAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
+import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
 
 export const todos = defineModel("todos", {
   title: T.string({ required: true }),
@@ -336,9 +336,9 @@ Light needs a few things from the page it runs on. Each has a working default,
 and a host with more (a router, translations, a settle tracker) provides its own
 once.
 
-- **`env`** (`@bootstrapp/light/env`): `width`, `height`, `breakpoint`,
+- **`env`** (`@lightstart/light/env`): `width`, `height`, `breakpoint`,
   `isMobile`, `os`, `isTouch`, `prefersDark`, `dark` and `subscribe(fn)`.
-- **`navigation`** (`@bootstrapp/light/navigation`): `href(path)`, `go(path)`,
+- **`navigation`** (`@lightstart/light/navigation`): `href(path)`, `go(path)`,
   `click(event)`, `path()`, `subscribe(fn)`. Without a router, a link is a plain
   anchor; `configureNavigation({ href, go, click, path, subscribe })` plugs one
   in.
@@ -351,7 +351,7 @@ once.
   run; `wrap(promise, label)` receives every async hook, plugin init and tracked
   work; `settle()` resolves when served content the client cannot adopt may be
   rendered over; `dev` turns on diagnostics.
-- **Theme** (`@bootstrapp/light/theme`): `applyTheme(theme)` writes the tokens a
+- **Theme** (`@lightstart/light/theme`): `applyTheme(theme)` writes the tokens a
   stylesheet reads; `presets.js` lists the shipped themes; `color-scheme.js`
   keeps the `dark` class and the reader's choice; `icons.js` says where an icon
   comes from (`configureIcons({ load: iconify("lucide") })`; nothing is fetched
@@ -372,12 +372,12 @@ through the component's tag. It reads templates as trees, including `<script
 type="module">` blocks in pages. Findings are reported at their file, line and
 column; `--rule <id>` runs one rule and `--json` prints the result.
 
-`@bootstrapp/light/eslint` provides `light/check-errors` and
+`@lightstart/light/eslint` provides `light/check-errors` and
 `light/check-warnings` inside ESLint, plus the style rules light uses.
-`@bootstrapp/light/eslint/recommended.js` combines them into one flat config:
+`@lightstart/light/eslint/recommended.js` combines them into one flat config:
 
 ```js
-import recommended from "@bootstrapp/light/eslint/recommended.js";
+import recommended from "@lightstart/light/eslint/recommended.js";
 
 export default [recommended];
 ```
@@ -387,19 +387,19 @@ export default [recommended];
 The renderer and view core do not touch a document. A host (`html/host.js`)
 provides nodes, attributes, listeners, template cloning and frames.
 
-- **Browser** (`@bootstrapp/light` and `@bootstrapp/light/html`): installs the
+- **Browser** (`@lightstart/light` and `@lightstart/light/html`): installs the
   browser host from `dom/`.
-- **Markup** (`@bootstrapp/light/markup`): renders on an in-memory tree and
+- **Markup** (`@lightstart/light/markup`): renders on an in-memory tree and
   serializes markup a page adopts. It is also the host for the engine's
   conformance suite under plain Node.
-- **Terminal** (`@bootstrapp/light/native/tui`): installs a node tree with its
+- **Terminal** (`@lightstart/light/native/tui`): installs a node tree with its
   own layout, painter, screen diff, input decoder, editor, mouse and focus. It
   compiles with [scriptc](https://github.com/vercel-labs/scriptc) to a static
   binary with no JavaScript engine. A terminal component is a `View` with signal
   fields and a `render()` returning an `html` template; HTML tag names map onto
   the terminal's box, text, span and input. See
   [native/tui/README.md](native/tui/README.md).
-- **Desktop** (`@bootstrapp/light/native/desktop`): a native backend compiled
+- **Desktop** (`@lightstart/light/native/desktop`): a native backend compiled
   by scriptc, a UI served as a light page in the operating system's web view,
   and a typed bridge between them. See
   [native/desktop/README.md](native/desktop/README.md).

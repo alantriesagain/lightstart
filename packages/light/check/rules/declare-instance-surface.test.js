@@ -3,8 +3,8 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./declare-instance-surface.js";
 
-const component = (body, head = "") => `${head}import { defineComponent } from "@bootstrapp/light";
-import T from "@bootstrapp/light/types";
+const component = (body, head = "") => `${head}import { defineComponent } from "@lightstart/light";
+import T from "@lightstart/light/types";
 export default defineComponent({
   tag: "fx-list",
   props: { rows: T.array({ defaultValue: [] }), _io: T.object({ reactive: false, defaultValue: null }) },
@@ -35,7 +35,7 @@ test("declared properties, literal methods, engine fields and DOM members are no
 test("a field a view mixin declares counts as declared", async () => {
   const findings = await runRuleOn(rule, {
     "views/list.js": component(`  connected() { this._raf = 1; this._orphan = 2; },`, 'import { withRaf } from "./mixins/with-raf.js";\n').replace('tag: "fx-list",', 'tag: "fx-list",\n  mixins: [withRaf],'),
-    "views/mixins/with-raf.js": `import { defineMixin } from "@bootstrapp/light";
+    "views/mixins/with-raf.js": `import { defineMixin } from "@lightstart/light";
 export const withRaf = defineMixin({ props: { _raf: { reactive: false, defaultValue: 0 } } });
 `,
   });
@@ -44,7 +44,7 @@ export const withRaf = defineMixin({ props: { _raf: { reactive: false, defaultVa
 
 test("a field a mixin declares counts as declared through the package's own bare specifier", async () => {
   const pkgJson = {
-    name: "@bootstrapp/light",
+    name: "@lightstart/light",
     bootstrapp: { components: { fx: { list: "views/list.js" } } },
   };
   const findings = await runRuleOn(
@@ -52,9 +52,9 @@ test("a field a mixin declares counts as declared through the package's own bare
     {
       "views/list.js": component(
         `  connected() { this._raf = 1; this._orphan = 2; },`,
-        'import { withRaf } from "@bootstrapp/light/components/mixins/with-raf.js";\n',
+        'import { withRaf } from "@lightstart/light/components/mixins/with-raf.js";\n',
       ).replace('tag: "fx-list",', 'tag: "fx-list",\n  mixins: [withRaf],'),
-      "components/mixins/with-raf.js": `import { defineMixin } from "@bootstrapp/light";
+      "components/mixins/with-raf.js": `import { defineMixin } from "@lightstart/light";
 export const withRaf = defineMixin({ props: { _raf: { reactive: false, defaultValue: 0 } } });
 `,
     },
@@ -71,14 +71,14 @@ test("a field the extended component declares counts as declared", async () => {
   const findings = await runRuleOn(
     rule,
     {
-      "views/base.js": `import { defineComponent } from "@bootstrapp/light";
+      "views/base.js": `import { defineComponent } from "@lightstart/light";
 export default defineComponent({
   tag: "fx-base",
   props: { _slot: { reactive: false, defaultValue: null } },
   _close() {},
 });
 `,
-      "views/child.js": `import { defineComponent } from "@bootstrapp/light";
+      "views/child.js": `import { defineComponent } from "@lightstart/light";
 export default defineComponent({
   tag: "fx-child",
   extends: "fx-base",
@@ -92,8 +92,8 @@ export default defineComponent({
 });
 
 test("a field declared in View.define's props argument is declared", async () => {
-  const src = `import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+  const src = `import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 View.define("fx-io", { _io: T.object({ reactive: false, defaultValue: null }) }, {
   connected() { this._io = new IntersectionObserver(() => {}); this._stray = 1; },
   render() { return html\`<i></i>\`; },

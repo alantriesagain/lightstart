@@ -1,6 +1,6 @@
 /**
- * @bootstrapp/light/html/core: the renderer-agnostic html API. Everything
- * `@bootstrapp/light/html` exports except the browser pieces (the DOM host,
+ * @lightstart/light/html/core: the renderer-agnostic html API. Everything
+ * `@lightstart/light/html` exports except the browser pieces (the DOM host,
  * adoption and slot projection), so a native build can import the engine
  * without a document. A page uses `./index.js`, which installs the DOM host.
  */

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/types: the property descriptor `T` builds, the shorthand
+ * @lightstart/light/types: the property descriptor `T` builds, the shorthand
  * a `props` block may use in its place, and what validation answers.
  */
 

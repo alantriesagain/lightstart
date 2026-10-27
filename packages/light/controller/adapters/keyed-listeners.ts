@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller: Keyed Listeners Mixin
+ * @lightstart/light/controller: Keyed Listeners Mixin
  * Shared on/off/emit/hasListeners/signal pattern used by all adapters.
  */
 

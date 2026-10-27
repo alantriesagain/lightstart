@@ -1,8 +1,8 @@
-import T from "@bootstrapp/light/types";
-import View, { defineComponent, trackWork } from "@bootstrapp/light";
-import { icons } from "@bootstrapp/light/theme/icons.js";
+import T from "@lightstart/light/types";
+import View, { defineComponent, trackWork } from "@lightstart/light";
+import { icons } from "@lightstart/light/theme/icons.js";
 import { ICON_NAME, maskRule } from "./icon-mask.js";
-/** @import { IconEntry } from "@bootstrapp/light/theme" */
+/** @import { IconEntry } from "@lightstart/light/theme" */
 /** @import { IconVariant } from "../types.ts" */
 
 /** @param {unknown} name */

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/eslint/bridge.js: the convention checker as two eslint
+ * @lightstart/light/eslint/bridge.js: the convention checker as two eslint
  * rules, so an eslint editor extension shows its findings in the file being
  * edited. `check-errors` reports the findings of severity error, and
  * `check-warnings` those of severity warn, each at its line and column with

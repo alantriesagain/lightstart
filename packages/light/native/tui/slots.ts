@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/slots: light-DOM projection on the terminal. A
+ * @lightstart/light/native/tui/slots: light-DOM projection on the terminal. A
  * `<slot>` in a view's template is a part the engine hands the host
  * (`createSlotPart`). After each render the view projects the children a
  * parent's template wrote inside its tag, the units before the root range

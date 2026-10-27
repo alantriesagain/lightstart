@@ -5,7 +5,7 @@ import { parseImports, typeImports } from "./imports.js";
 test("parseImports classifies statements, skips type imports and commented specifiers", () => {
   const src = `import "bootstrapp/app/entry.js";
 import T from "bootstrapp/types";
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 import * as ns from "./ns.js";
 import type { X } from "@bootstrapp/x";
 export { y } from "./y.js";
@@ -16,7 +16,7 @@ const mod = await import("./lazy.js");
   assert.deepEqual(parseImports(src).map((i) => [i.spec, i.kind]), [
     ["bootstrapp/app/entry.js", "side-effect"],
     ["bootstrapp/types", "default"],
-    ["@bootstrapp/light/html", "named"],
+    ["@lightstart/light/html", "named"],
     ["./ns.js", "named"],
     ["./y.js", "reexport"],
     ["./lazy.js", "dynamic"],

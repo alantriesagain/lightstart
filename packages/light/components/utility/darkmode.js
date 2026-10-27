@@ -1,7 +1,7 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
-import { colorScheme } from "@bootstrapp/light/theme/color-scheme.js";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
+import { colorScheme } from "@lightstart/light/theme/color-scheme.js";
 import { lcText } from "../utils/text.js";
 
 export default defineComponent({

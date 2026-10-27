@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "A panel that rises from the bottom edge and settles at a detent the reader drags it to.",

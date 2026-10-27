@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: statDef } = await import("./stat.js");
 
@@ -20,7 +20,7 @@ const mount = async (attrs) => {
   return { el, root: el };
 };
 
-describe("@bootstrapp/light - lc-stat delta", () => {
+describe("@lightstart/light - lc-stat delta", () => {
   before(async () => {
     if (!customElements.get("lc-stat")) View.define("lc-stat", statDef);
     const css = await (await fetch(new URL("./stat.css", import.meta.url))).text();

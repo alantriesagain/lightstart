@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/selection: a selection in a windowed list, by
+ * @lightstart/light/native/tui/selection: a selection in a windowed list, by
  * screen cells: the runs split where it starts and ends (drawn inverse), and
  * the text it holds as a copy gives it: each row's runs past its decoration
  * (a prompt's "› ", an indent), trailing spaces dropped, a row that continues

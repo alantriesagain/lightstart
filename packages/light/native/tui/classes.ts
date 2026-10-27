@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/classes: the `class` attribute on the terminal. An
+ * @lightstart/light/native/tui/classes: the `class` attribute on the terminal. An
  * element's classes are inert until the app configures a styler
  * (`configureClasses`), the host's half of the utility classes: the styler
  * answers the props a class string means and the element takes them, under

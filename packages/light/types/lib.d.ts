@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/types/lib.d.ts: the standard library's members that
+ * @lightstart/light/types/lib.d.ts: the standard library's members that
  * answer `any`, answering `unknown` (or what they can answer) in light's own
  * typecheck, so that parsed JSON, a value an array test admits, a response
  * body, a prototype, a fresh object and a `Function` bound to a receiver are

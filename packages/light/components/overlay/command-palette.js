@@ -1,9 +1,9 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import { html, nothing } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { matchesShortcut, parseShortcut, shortcutKeys } from "../utils/shortcut.js";
 import { lcText } from "../utils/text.js";
-import { env } from "@bootstrapp/light/env";
+import { env } from "@lightstart/light/env";
 /** @import { Prop, SearchDoc, SearchElement } from "../types.ts" */
 
 const TAG = "lc-command-palette";

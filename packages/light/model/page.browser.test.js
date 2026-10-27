@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import T from "@bootstrapp/light/types";
-import { html } from "@bootstrapp/light/html";
-import { registerSyncBinder } from "@bootstrapp/light/controller";
-import { syncPlugin } from "@bootstrapp/light/controller/view";
-import { configureModel, defineModel, modelBus } from "@bootstrapp/light/model";
-import { createStore, storeRequest } from "@bootstrapp/light/model/store";
-import { createAdapter, registerStorageAdapter } from "@bootstrapp/light/model/adapter";
-import IndexedDBAdapter from "@bootstrapp/light/model/indexeddb";
-import { modelBinder } from "@bootstrapp/light/model/binder";
+import View from "@lightstart/light";
+import T from "@lightstart/light/types";
+import { html } from "@lightstart/light/html";
+import { registerSyncBinder } from "@lightstart/light/controller";
+import { syncPlugin } from "@lightstart/light/controller/view";
+import { configureModel, defineModel, modelBus } from "@lightstart/light/model";
+import { createStore, storeRequest } from "@lightstart/light/model/store";
+import { createAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
+import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
+import { modelBinder } from "@lightstart/light/model/binder";
 
 View.use(syncPlugin);
 registerSyncBinder(modelBinder);
@@ -28,7 +28,7 @@ const listed = async (el, expected) => {
   return items();
 };
 
-describe("@bootstrapp/light/model: a page with no framework", () => {
+describe("@lightstart/light/model: a page with no framework", () => {
   it("keeps rows in IndexedDB and binds a component to a live query", async () => {
     const todo = defineModel("todo", { title: T.string({ required: true }), done: T.boolean({ index: true, defaultValue: false }) });
     const models = { todo: todo.schema };

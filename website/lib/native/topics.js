@@ -14,7 +14,7 @@ import types from "./topic-types.js";
 import performance from "./topic-performance.js";
 import tscTs from "./topic-tsc-ts.js";
 
-/** @import { FlowLane } from "@bootstrapp/light/components/types.ts" */
+/** @import { FlowLane } from "@lightstart/light/components/types.ts" */
 
 /**
  * @typedef {{ kind: "code", title: string, code: string, language: string, highlight?: string, foldAt?: number }} CodeBlock

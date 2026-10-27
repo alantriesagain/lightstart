@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/tags: the tags a terminal template may use. The
+ * @lightstart/light/native/tui/tags: the tags a terminal template may use. The
  * four node kinds have their own names (box, text, span, input) and the
  * HTML names map onto them, with the style the HTML name implies, so a
  * template reads like HTML: `div`, `section`, `ul` are boxes; `p`, `h1`,

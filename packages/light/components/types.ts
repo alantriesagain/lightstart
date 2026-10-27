@@ -1,11 +1,11 @@
 /**
- * @bootstrapp/light/components: public type declarations.
+ * @lightstart/light/components: public type declarations.
  */
 
-export type Prop<V> = import("@bootstrapp/light/types").TypeDefinition<V>;
+export type Prop<V> = import("@lightstart/light/types").TypeDefinition<V>;
 
 /** Anything a component may place in a template: what a caller-supplied render callback returns. */
-export type Renderable = import("@bootstrapp/light/html").Renderable;
+export type Renderable = import("@lightstart/light/html").Renderable;
 
 /** utils/highlight.js: one coloured run of a code line; `type` is null for plain text. */
 export interface Run {
@@ -279,7 +279,7 @@ export type FormFieldRenderer = (
   field: FormField,
   value: unknown,
   onChange: (newValue: unknown) => void,
-  html: typeof import("@bootstrapp/light/html").html,
+  html: typeof import("@lightstart/light/html").html,
 ) => Renderable;
 
 /** form/form.js: a control `collectFormData` reads; the native inputs and the `lc-*` controls share this surface. */
@@ -579,7 +579,7 @@ export interface ToastOptions {
 
 /** feedback/toasts.js: the notification queue. */
 export interface ToastQueue {
-  items: import("@bootstrapp/light/signals").Signal<ToastItem[]>;
+  items: import("@lightstart/light/signals").Signal<ToastItem[]>;
   show(options?: ToastOptions): string;
   success(message: string, options?: ToastOptions): string;
   error(message: string, options?: ToastOptions): string;

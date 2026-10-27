@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: hoursDef } = await import("./week-hours.js");
 const { default: switchDef } = await import("./switch.js");
 const { renderFormControl } = await import("./field-renderers.js");
-const { render, html } = await import("@bootstrapp/light/html");
+const { render, html } = await import("@lightstart/light/html");
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -45,7 +45,7 @@ const BAR = [
   { days: [5, 6], open: "18:00", close: "02:00" },
 ];
 
-describe("@bootstrapp/light - lc-week-hours", () => {
+describe("@lightstart/light - lc-week-hours", () => {
   before(() => {
     if (!customElements.get("lc-switch")) View.define("lc-switch", switchDef);
     if (!customElements.get("lc-week-hours")) View.define("lc-week-hours", hoursDef);

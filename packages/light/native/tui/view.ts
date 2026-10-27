@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/view: a component on the terminal. A View is a
+ * @lightstart/light/native/tui/view: a component on the terminal. A View is a
  * ViewCore that owns a box: `render()` answers a template rendered into
  * the box, signal fields it reads re-render it, `${this.child}` in a
  * template places a child view's box, and the host attaches the view when

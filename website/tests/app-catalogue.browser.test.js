@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it, before, after } from "node:test";
 import { bootApp, disposeApp, awaitModule, until } from "@bootstrapp/test/app.js";
-import presets from "@bootstrapp/light/theme/presets.js";
+import presets from "@lightstart/light/theme/presets.js";
 
 describe("catalogue controller and the shell", () => {
   let app;

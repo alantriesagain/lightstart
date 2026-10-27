@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/desktop/host: the backend half of a desktop app. A DesktopApp opens
+ * @lightstart/light/native/desktop/host: the backend half of a desktop app. A DesktopApp opens
  * the operating system's web view through the shim, serves the page to it over loopback, pumps
  * the platform's event loop from a timer (so the program's own loop, with its timers, child
  * processes and sockets, keeps running), and carries the bridge: the page calls methods the app

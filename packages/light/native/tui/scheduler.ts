@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/scheduler: one frame per setImmediate tick. Views
+ * @lightstart/light/native/tui/scheduler: one frame per setImmediate tick. Views
  * flush first, then the renderer lays out and paints; both register
  * through `onFlush` in that order. The terminal's requestAnimationFrame.
  */

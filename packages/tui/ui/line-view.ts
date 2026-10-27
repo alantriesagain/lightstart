@@ -3,11 +3,11 @@
  * track, thumb and held thumb. The lines, the press and copy events and the row template are
  * light's, re-exported here for the views.
  */
-import { LineView as LightLineView } from "@bootstrapp/light/native/tui";
+import { LineView as LightLineView } from "@lightstart/light/native/tui";
 import { palette } from "./palette.ts";
 
-export { Line, LineSource, Run } from "@bootstrapp/light/native/tui/lines.ts";
-export { LineCopy, LinePress, lineTemplate } from "@bootstrapp/light/native/tui";
+export { Line, LineSource, Run } from "@lightstart/light/native/tui/lines.ts";
+export { LineCopy, LinePress, lineTemplate } from "@lightstart/light/native/tui";
 
 export class LineView extends LightLineView {
   constructor() {

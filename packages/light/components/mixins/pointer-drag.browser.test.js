@@ -8,9 +8,9 @@
  */
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import T from "@bootstrapp/light/types";
-import View, { defineComponent } from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+import T from "@lightstart/light/types";
+import View, { defineComponent } from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 import { withPointerDrag } from "./pointer-drag.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -89,7 +89,7 @@ const point = (target, type, { x = 0, y = 0, id = 1, button = 0, pointerType = "
 /** @param {any} host */
 const grip = (host) => /** @type {Element} */ (host.querySelector("[part=grip]"));
 
-describe("@bootstrapp/light - withPointerDrag", () => {
+describe("@lightstart/light - withPointerDrag", () => {
   afterEach(async () => {
     for (const el of mounted.splice(0)) el.remove();
     await tick();

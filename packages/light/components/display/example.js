@@ -1,6 +1,6 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import { html, nothing } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
 import { VIEWPORT_PRESETS, viewportCss } from "../utils/viewport.js";
 /** @import { Prop } from "../types.ts" */
@@ -28,7 +28,7 @@ export default defineComponent({
   tag: "lc-example",
   style: true,
   props: {
-    preview: /** @type {Prop<(() => import("@bootstrapp/light/html").TemplateValue) | null>} */ (T.function()),
+    preview: /** @type {Prop<(() => import("@lightstart/light/html").TemplateValue) | null>} */ (T.function()),
     code: "",
     language: "html",
     title: "",

@@ -42,7 +42,7 @@ export const matchesShortcut = (event, shortcut) => {
 /**
  * The keys to draw, in order, for the platform.
  * @param {Shortcut} shortcut
- * @param {string} os an `env.os` value (`@bootstrapp/light/env`)
+ * @param {string} os an `env.os` value (`@lightstart/light/env`)
  * @returns {string[]}
  */
 export const shortcutKeys = (shortcut, os) => {

@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const ITEMS = [
   { id: "toc-demo-examples", label: "Examples" },

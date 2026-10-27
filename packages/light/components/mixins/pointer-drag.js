@@ -1,10 +1,10 @@
-import T from "@bootstrapp/light/types";
-import { defineMixin } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineMixin } from "@lightstart/light";
 
 /** @import { Prop, DragState, PointerDragHost } from "../types.ts" */
 
 /**
- * @bootstrapp/light/components/mixins/pointer-drag
+ * @lightstart/light/components/mixins/pointer-drag
  *
  * A drag the host follows 1:1. The mixin owns the bookkeeping every drag needs
  * and no geometry: it gates the gesture, tracks one pointer, coalesces moves
@@ -21,8 +21,8 @@ import { defineMixin } from "@bootstrapp/light";
  * move back to the page, which ends the drag as cancelled and leaves the
  * browser to scroll, rather than holding the page still under the finger.
  *
- *   import { defineComponent } from "@bootstrapp/light";
- *   import { withPointerDrag } from "@bootstrapp/light/components/mixins/pointer-drag.js";
+ *   import { defineComponent } from "@lightstart/light";
+ *   import { withPointerDrag } from "@lightstart/light/components/mixins/pointer-drag.js";
  *
  *   export default defineComponent({
  *     mixins: [withPointerDrag({ handle: "[part~=lc-split-pane-divider]", enabled: "resizable" })],

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/eslint/types.ts: the eslint bridge's contract. A host
+ * @lightstart/light/eslint/types.ts: the eslint bridge's contract. A host
  * opens a project for a root; the bridge holds what it opened and the last
  * run's findings.
  */

@@ -447,8 +447,8 @@ const inlineCode = (c, text) => `<code class="mono" style="font-size: 0.9em; pad
 
 const SNIPPETS = {
   counter: [
-    `${KW("import")} View ${KW("from")} ${S('"@bootstrapp/light"')};`,
-    `${KW("import")} { html } ${KW("from")} ${S('"@bootstrapp/light/html"')};`,
+    `${KW("import")} View ${KW("from")} ${S('"@lightstart/light"')};`,
+    `${KW("import")} { html } ${KW("from")} ${S('"@lightstart/light/html"')};`,
     ``,
     `View.define(${S('"my-counter"')}, { count: 0, label: ${S('"Clicks"')} }, (el) =&gt; html\``,
     `  ${TAG("button", ` ${A("@click", "").trim()}${P("=")}\${() =&gt; el.count++}`, "\${el.label}: \${el.count}")}`,
@@ -471,7 +471,7 @@ const SNIPPETS = {
     `}`,
   ],
   signals: [
-    `${KW("import")} { signal, computed, effect } ${KW("from")} ${S('"@bootstrapp/light/signals"')};`,
+    `${KW("import")} { signal, computed, effect } ${KW("from")} ${S('"@lightstart/light/signals"')};`,
     ``,
     `${KW("const")} qty = signal(2);`,
     `${KW("const")} price = signal(9.5);`,
@@ -481,8 +481,8 @@ const SNIPPETS = {
     `qty.set(3); ${P("// output reads 28.50")}`,
   ],
   theme: [
-    `${KW("import")} { applyTheme, applyScopedTheme } ${KW("from")} ${S('"@bootstrapp/light/theme"')};`,
-    `${KW("import")} { loadPreset } ${KW("from")} ${S('"@bootstrapp/light/theme/presets.js"')};`,
+    `${KW("import")} { applyTheme, applyScopedTheme } ${KW("from")} ${S('"@lightstart/light/theme"')};`,
+    `${KW("import")} { loadPreset } ${KW("from")} ${S('"@lightstart/light/theme/presets.js"')};`,
     ``,
     `applyTheme({`,
     `  color: { primary: ${S('"#101210"')}, accent: ${S('"#e4572e"')} },`,
@@ -502,8 +502,8 @@ const SNIPPETS = {
     `${P("&gt;&lt;/")}<span class="tk-tag">lc-form</span>${P("&gt;")}`,
   ],
   env: [
-    `${KW("import")} { env } ${KW("from")} ${S('"@bootstrapp/light/env"')};`,
-    `${KW("import")} { configureNavigation } ${KW("from")} ${S('"@bootstrapp/light/navigation"')};`,
+    `${KW("import")} { env } ${KW("from")} ${S('"@lightstart/light/env"')};`,
+    `${KW("import")} { configureNavigation } ${KW("from")} ${S('"@lightstart/light/navigation"')};`,
     ``,
     `env.subscribe(() =&gt; { label.textContent = \`\${env.width}×\${env.height} · \${env.breakpoint} · \${env.os}\`; });`,
     ``,
@@ -571,7 +571,7 @@ const hero = (c, { phone }) => `
 <section style="display: flex; flex-direction: column; gap: 1.25rem; padding: ${phone ? "2rem 0 1.5rem" : "4rem 0 3rem"}; max-width: 46rem;">
   <h1 style="display: flex; flex-direction: column; gap: 0.25rem;"><span style="font-size: ${phone ? "3.5rem" : "5rem"}; line-height: 0.95; letter-spacing: -0.045em;">Light</span><span style="font-size: ${phone ? "1.5rem" : "2.25rem"}; line-height: 1.1; letter-spacing: -0.025em; color: ${c.secondary};">Web Components made simple.</span></h1>
   <p style="font-size: ${phone ? "1rem" : "1.125rem"}; line-height: 1.55; color: ${c.secondary};">Everything React does, on custom elements and event listeners instead of a virtual DOM. Signals, a theme engine and ${TOTAL} components come in the box.</p>
-  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;"><a href="Components.dc.html" class="btn primary">Components</a><a href="#readme" class="btn">${ic("github", 15)}README</a><span class="mono card" style="display: inline-flex; align-items: center; gap: 0.75rem; height: 2.25rem; padding: 0 0.5rem 0 0.875rem; font-size: 0.8125rem; color: ${c.text};"><span><span style="color: ${c.muted};">$</span> npm i @bootstrapp/light</span><button type="button" class="btn icon xs" aria-label="Copy" style="box-shadow: none; border-color: transparent; background: transparent;">${ic("copy", 13)}</button></span></div>
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;"><a href="Components.dc.html" class="btn primary">Components</a><a href="#readme" class="btn">${ic("github", 15)}README</a><span class="mono card" style="display: inline-flex; align-items: center; gap: 0.75rem; height: 2.25rem; padding: 0 0.5rem 0 0.875rem; font-size: 0.8125rem; color: ${c.text};"><span><span style="color: ${c.muted};">$</span> npm i @lightstart/light</span><button type="button" class="btn icon xs" aria-label="Copy" style="box-shadow: none; border-color: transparent; background: transparent;">${ic("copy", 13)}</button></span></div>
 </section>`;
 
 const FACTS = [

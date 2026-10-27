@@ -8,8 +8,8 @@
  */
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 
 const { default: deckDef } = await import("./swipe-deck.js");
 
@@ -53,7 +53,7 @@ const drag = async (el, from, dx, dy) => {
   await el.$requestUpdate();
 };
 
-describe("@bootstrapp/light - lc-swipe-deck", () => {
+describe("@lightstart/light - lc-swipe-deck", () => {
   before(() => {
     if (!customElements.get("lc-swipe-deck")) View.define("lc-swipe-deck", deckDef);
     const sheet = document.createElement("link");

@@ -27,7 +27,7 @@ const fakeBus = () => {
   };
 };
 
-describe("@bootstrapp/light/controller/resource: resource() semantics", () => {
+describe("@lightstart/light/controller/resource: resource() semantics", () => {
   describe("ensure()", () => {
     it("dedupes concurrent calls into one fetch", async () => {
       let calls = 0;

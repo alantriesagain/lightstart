@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/model/adapter: the storage adapter SPI. Everything an
+ * @lightstart/light/model/adapter: the storage adapter SPI. Everything an
  * adapter or a host needs beside the store: the registry (an adapter under a
  * type name, a decorator under a schema directive, an instance made from a
  * registered adapter) and the query helpers a local adapter matches, pages

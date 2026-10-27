@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const ago = (hours) => new Date(Date.now() - hours * 3600e3).toISOString();
 

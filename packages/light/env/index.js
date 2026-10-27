@@ -1,5 +1,5 @@
 /**
- * @file @bootstrapp/light/env
+ * @file @lightstart/light/env
  * What a component reads about the page it runs in: the viewport and its
  * breakpoint, the OS, touch, the color scheme, and the window when a desktop
  * shell gave the page one (`env.window`, null in a browser). Volatile values

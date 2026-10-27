@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/width: grapheme segmentation and terminal cell
+ * @lightstart/light/native/tui/width: grapheme segmentation and terminal cell
  * widths. Intl.Segmenter gives grapheme clusters; a cluster is as wide as
  * its first non-zero-width code point, forced to two cells by an emoji
  * presentation selector (U+FE0F). The wide table covers East Asian Wide

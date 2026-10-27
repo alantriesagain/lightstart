@@ -49,7 +49,7 @@ const walk = (dir) =>
 /**
  * Copy the sources into `dist`, generate their `.d.ts`, and leave the `.js`
  * and `.d.ts` files with a package.json whose exports name the declarations.
- * The manifest is written before tsc runs, so a bare `@bootstrapp/light/...`
+ * The manifest is written before tsc runs, so a bare `@lightstart/light/...`
  * import in a source resolves to its copy in `dist` and not to the
  * repository beside it.
  * @returns {{ dir: string, manifest: { name: string, exports: Record<string, string | { types: string, default: string }> } }}

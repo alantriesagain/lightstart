@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { after, afterEach, before, describe, it } from "node:test";
-import { html } from "@bootstrapp/light/html";
-import View from "@bootstrapp/light";
+import { html } from "@lightstart/light/html";
+import View from "@lightstart/light";
 
 const { default: timelineDef } = await import("./timeline.js");
 const { default: linkDef } = await import("./link.js");
@@ -72,7 +72,7 @@ const container = (dir) => {
   return box;
 };
 
-describe("@bootstrapp/light - lc-timeline", () => {
+describe("@lightstart/light - lc-timeline", () => {
   const lang = document.documentElement.lang;
 
   before(async () => {

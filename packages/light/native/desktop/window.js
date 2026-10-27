@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/desktop/window: the operating system's web view as one object. A
+ * @lightstart/light/native/desktop/window: the operating system's web view as one object. A
  * DesktopWindow creates the view through the shim, binds the one page-callable function
  * `__desktop` (before any init script, since the view runs its user scripts in registration
  * order on every page load), installs init scripts, navigates, evaluates, answers calls, pumps

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/check/parse/markup.js: a template's markup as a tree.
+ * @lightstart/light/check/parse/markup.js: a template's markup as a tree.
  * Each `${...}` is read as an expression (brace depth, nested templates and
  * string literals honoured); the rest is tokenised into elements, attributes,
  * text and comments, every node carrying its offset in the source file. A

@@ -81,7 +81,7 @@ class Board extends Controller {
   }
 }
 
-describe("@bootstrapp/light/controller/class: a controller as a class", () => {
+describe("@lightstart/light/controller/class: a controller as a class", () => {
   it("start() runs connected() and $ready settles with it and the first load", async () => {
     const board = new Board();
     assert.deepEqual(board.hooks, []);

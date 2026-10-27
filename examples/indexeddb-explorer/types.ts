@@ -2,7 +2,7 @@
  * The IndexedDB explorer example: its records and the Dexie surface it drives.
  */
 
-export type Prop<V> = import("@bootstrapp/light/types").TypeDefinition<V>;
+export type Prop<V> = import("@lightstart/light/types").TypeDefinition<V>;
 
 /** A `{ label, value }` option pair for the database and store pickers. */
 export interface LabeledOption {

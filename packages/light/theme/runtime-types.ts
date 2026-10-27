@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/theme/runtime: the shapes of the browser runtime, the
+ * @lightstart/light/theme/runtime: the shapes of the browser runtime, the
  * ones that name a document. The engine's own shapes are `classes/types.ts`.
  */
 

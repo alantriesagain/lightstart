@@ -1,11 +1,11 @@
-import T from "@bootstrapp/light/types";
-import { defineMixin } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineMixin } from "@lightstart/light";
 import { withPointerDrag } from "./pointer-drag.js";
 
 /** @import { Prop, PullToRefreshHost } from "../types.ts" */
 
 /**
- * @bootstrapp/light/components/mixins/pull-to-refresh
+ * @lightstart/light/components/mixins/pull-to-refresh
  *
  * The gesture a list of what-is-happening-now is expected to answer: drag down
  * from the top and it reloads. Built on `withPointerDrag`, so the pointer

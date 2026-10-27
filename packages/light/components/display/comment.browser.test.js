@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { after, afterEach, before, describe, it } from "node:test";
-import { html } from "@bootstrapp/light/html";
-import View from "@bootstrapp/light";
+import { html } from "@lightstart/light/html";
+import View from "@lightstart/light";
 
 const { default: commentDef } = await import("./comment.js");
 
@@ -36,7 +36,7 @@ const mount = async (props = {}) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-comment", () => {
+describe("@lightstart/light - lc-comment", () => {
   const lang = document.documentElement.lang;
 
   before(async () => {

@@ -1,4 +1,4 @@
-# @bootstrapp/light/html
+# @lightstart/light/html
 
 light's tagged-template renderer. Same `html`` `` authoring and
 `TemplateStringsArray` cache contract as lit-html, plus the three things lit
@@ -24,7 +24,7 @@ The engine is TypeScript (erasable syntax only), so scriptc compiles its classes
 
 ## Hosts
 
-The engine never touches a document: every node, attribute and listener operation goes through the `Host` installed with `configure({ host, effect })`, and templates are prepared and cloned by it. Three hosts ship: `dom/host.js` for the browser (installed by `@bootstrapp/light/html` and `@bootstrapp/light`), `markup/host.js` for an in-memory tree that serializes to markup a page adopts, and `native/tui/host.ts` for the terminal, which `@bootstrapp/light/native/tui` installs. A host answers `prepare`/`clone`, the node operations, `asNode` (what child values are nodes of its own), `listenerOptions`/`addListener`/`removeListener`, `bindsHandlerThis`, `parseMarkup`, `scheduleFlush` and `reportError`; `html/conformance.test.js` is what it must pass.
+The engine never touches a document: every node, attribute and listener operation goes through the `Host` installed with `configure({ host, effect })`, and templates are prepared and cloned by it. Three hosts ship: `dom/host.js` for the browser (installed by `@lightstart/light/html` and `@lightstart/light`), `markup/host.js` for an in-memory tree that serializes to markup a page adopts, and `native/tui/host.ts` for the terminal, which `@lightstart/light/native/tui` installs. A host answers `prepare`/`clone`, the node operations, `asNode` (what child values are nodes of its own), `listenerOptions`/`addListener`/`removeListener`, `bindsHandlerThis`, `parseMarkup`, `scheduleFlush` and `reportError`; `html/conformance.test.js` is what it must pass.
 | `../dom/adopt.js` | Two-stage adoption of browser-prerendered DOM, installed into the engine through `installAdoption` |
 | `../dom/slots.js` | Light-DOM `<slot>` projection: unit walkers, `SlotPart`, `projectSlots`, the `<unslotted>` holder |
 
@@ -62,8 +62,8 @@ later; a thunk commits directly into its own part, synchronously with the
 event that caused it. Invisible at one small component; it is the
 update-every-10th benchmark row at scale. Two things the pattern needs:
 `configure({ effect })` must be wired; the view engine does it when it
-loads (importing `@bootstrapp/light` is enough; the effect comes from
-`@bootstrapp/light/signals`), so any page using View gets live thunks
+loads (importing `@lightstart/light` is enough; the effect comes from
+`@lightstart/light/signals`), so any page using View gets live thunks
 for free. A standalone page rendering without View must call
 `configure({ effect })` itself, or thunks silently evaluate once and
 never update. Templates rendered per list item should be

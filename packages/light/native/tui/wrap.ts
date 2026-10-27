@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/wrap: line wrapping over styled inline runs. The
+ * @lightstart/light/native/tui/wrap: line wrapping over styled inline runs. The
  * output is a list of visual lines made of cells, each a grapheme with its
  * width and style, ready to paint.
  */

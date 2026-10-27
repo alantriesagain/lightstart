@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/dom/host.js: the browser host. Templates are prepared
+ * @lightstart/light/dom/host.js: the browser host. Templates are prepared
  * through `<template>` + `innerHTML` (the parser of record for lit parity)
  * and cloned with `importNode` + a TreeWalker, exactly as the engine did
  * before the host seam; nodes are DOM nodes; listeners are the engine's

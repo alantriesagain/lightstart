@@ -6,9 +6,9 @@
  * first board when there is none and gives the tasks from before boards to
  * the first one.
  */
-import { defineController, registerSyncBinder } from "@bootstrapp/light/controller";
-import { onChange } from "@bootstrapp/light/model";
-import { modelBinder } from "@bootstrapp/light/model/binder";
+import { defineController, registerSyncBinder } from "@lightstart/light/controller";
+import { onChange } from "@lightstart/light/model";
+import { modelBinder } from "@lightstart/light/model/binder";
 import boards from "../models/boards.js";
 import tasks from "../models/tasks.js";
 

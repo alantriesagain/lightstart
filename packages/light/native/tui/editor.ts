@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/editor: multi-line editing for an input node,
+ * @lightstart/light/native/tui/editor: multi-line editing for an input node,
  * grapheme-aware: caret movement (by grapheme, and by word with Alt or Ctrl
  * and ←/→, or Alt+b and Alt+f), insertion, deletion (Ctrl+D forward), the
  * kill keys, paste, and submit. Every edit dispatches a change event through the

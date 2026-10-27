@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller: shared app state, and what binds to it
+ * @lightstart/light/controller: shared app state, and what binds to it
  * `defineController` and its mixins, naming controllers as sync targets, the
  * adapter, sync-type and binder registries, and the host's hooks. Everything
  * here is loaded by `defineController` anyway; the adapters, `resource()` and

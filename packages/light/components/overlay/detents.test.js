@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { classify, releaseVelocity, resolveStops, rubber } from "./detents.js";
 
-describe("@bootstrapp/light - detent math", () => {
+describe("@lightstart/light - detent math", () => {
   const stops = resolveStops({ height: 800, halfPx: 350, peekPx: 60 });
 
   it("resolves stops as translate offsets from fully open", () => {

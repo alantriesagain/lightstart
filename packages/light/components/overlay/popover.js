@@ -1,5 +1,5 @@
-import { defineComponent } from "@bootstrapp/light";
-import { withPopover } from "@bootstrapp/light/components/mixins/popover.js";
+import { defineComponent } from "@lightstart/light";
+import { withPopover } from "@lightstart/light/components/mixins/popover.js";
 
 export default defineComponent({
   mixins: [withPopover],

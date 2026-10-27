@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/check/engine.js: run a set of rules over a project
+ * @lightstart/light/check/engine.js: run a set of rules over a project
  * context. Each rule passes its gate, takes its effective severity from the
  * project's `bootstrapp.check.rules` overrides, and reports through a
  * closure that resolves offsets to lines; a crash in a rule is a warning,

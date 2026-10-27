@@ -6,9 +6,9 @@
  * table (`classes.baked.js`; `--scheme light|dark`, dark by default), and
  * the app. Ctrl+C quits.
  */
-import { Terminal, runApp } from "@bootstrapp/light/native/tui";
-import { BakedClasses } from "@bootstrapp/light/theme/baked";
-import { openJsonl } from "@bootstrapp/light/model/jsonl";
+import { Terminal, runApp } from "@lightstart/light/native/tui";
+import { BakedClasses } from "@lightstart/light/theme/baked";
+import { openJsonl } from "@lightstart/light/model/jsonl";
 import boards from "./models/boards.js";
 import tasks from "./models/tasks.js";
 import board from "./controllers/board.js";

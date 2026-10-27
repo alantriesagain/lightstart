@@ -1,5 +1,5 @@
 /**
- * @file @bootstrapp/light/test/page.js
+ * @file @lightstart/light/test/page.js
  * The runner page: an importmap, the `node:test` handshake, the test file,
  * the harness, and the result published on `window.testResults` for the loop
  * in `run.js` to read. `prelude` is what a host runs before the file (a boot).

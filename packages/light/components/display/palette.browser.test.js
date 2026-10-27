@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: paletteDef } = await import("./palette.js");
 
@@ -27,7 +27,7 @@ const mount = async (attrs = {}, colors = COLORS) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-palette", () => {
+describe("@lightstart/light - lc-palette", () => {
   before(async () => {
     const css = await (await fetch(new URL("./palette.css", import.meta.url))).text();
     const style = document.createElement("style");

@@ -10,7 +10,7 @@
  * - xxl: 1400px (large desktops)
  */
 
-import { env } from "@bootstrapp/light/env";
+import { env } from "@lightstart/light/env";
 
 export const BREAKPOINTS = {
   xs: 0,

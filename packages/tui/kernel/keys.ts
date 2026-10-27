@@ -12,7 +12,7 @@
  * shows no hint.
  */
 import { Action, Actions } from "./actions.ts";
-import type { KeyEvent } from "@bootstrapp/light/native/tui";
+import type { KeyEvent } from "@lightstart/light/native/tui";
 import { Keyed } from "./registry.ts";
 
 /** A key as a spec; a character's shift is in its text, so it carries none. */

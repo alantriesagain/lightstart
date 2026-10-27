@@ -90,7 +90,7 @@ export class Member {
   /** The members it declares, in any class: every dependency on `workspace:` but light. @returns {string[]} */
   get workspaceDependencies() {
     const out = [];
-    for (const key of DEPENDENCY_FIELDS) for (const [name, range] of Object.entries(this.pkg[key] ?? {})) if (range.startsWith("workspace:") && name !== "@bootstrapp/light") out.push(name);
+    for (const key of DEPENDENCY_FIELDS) for (const [name, range] of Object.entries(this.pkg[key] ?? {})) if (range.startsWith("workspace:") && name !== "@lightstart/light") out.push(name);
     return out;
   }
 }
@@ -135,8 +135,9 @@ const readPackage = (dir) => {
 };
 
 /**
- * Every member but light itself (`@bootstrapp/light`, not a native package), light's linked packages
- * included, packages first, each group by folder.
+ * Every member but light itself (`@lightstart/light`) and its unscoped alias
+ * (`lightstart`), neither a native package, light's linked packages included,
+ * packages first, each group by folder.
  * @param {string} root
  * @returns {Member[]}
  */
@@ -155,7 +156,7 @@ export const allMembers = (root) => {
     for (const dir of dirs) {
       if (!statSync(dir).isDirectory()) continue;
       const pkg = readPackage(dir);
-      if (pkg === null || pkg.name === "@bootstrapp/light") continue;
+      if (pkg === null || pkg.name === "@lightstart/light" || pkg.name === "lightstart") continue;
       const label = relative(root, dir);
       out.push(new Member(String(pkg.name ?? basename(dir)), dir, basename(dirname(dir)) === "apps" ? "apps" : "packages", pkg, label, !label.startsWith("light/")));
     }

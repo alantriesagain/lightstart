@@ -6,8 +6,8 @@
  * announce the same loads to plugins. One per folder: `/open` makes another, with the same hooks,
  * the host's, so the listeners stay. One of light's controllers, as the app's state is.
  */
-import { signal } from "@bootstrapp/light/signals";
-import { Controller } from "@bootstrapp/light/controller/class.ts";
+import { signal } from "@lightstart/light/signals";
+import { Controller } from "@lightstart/light/controller/class.ts";
 import { Hook } from "@light/lib/hook.ts";
 import { Latest } from "@light/lib/timing.ts";
 import { buildChanges, FileChange, readBaseMarks, readNumstat, UntrackedCounter } from "./changes.ts";

@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "An image that loads lazily, keeps its aspect ratio, and has something to show while it waits.",

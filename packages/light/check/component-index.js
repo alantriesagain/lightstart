@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/check/component-index.js: every tag a project can
+ * @lightstart/light/check/component-index.js: every tag a project can
  * render, from its own component map and from each map a host adds (its
  * dependencies, its extension units), with the source and the declared props
  * behind each tag. The project's parsed views come first, then the maps in

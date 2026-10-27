@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: checkboxDef } = await import("./checkbox.js");
 
@@ -37,7 +37,7 @@ const mount = async (attrs = {}) => {
 /** @param {Element} el */
 const box = (el) => /** @type {HTMLInputElement} */ (el.querySelector("input.checkbox"));
 
-describe("@bootstrapp/light - lc-checkbox", () => {
+describe("@lightstart/light - lc-checkbox", () => {
   before(async () => {
     if (!customElements.get("lc-checkbox")) View.define("lc-checkbox", checkboxDef);
     await loadSheet(new URL("./checkbox.css", import.meta.url).href);

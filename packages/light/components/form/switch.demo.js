@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "An on and off that applies immediately, unlike a checkbox that waits for a submit.",

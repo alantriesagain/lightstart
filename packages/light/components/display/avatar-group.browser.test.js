@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: avatarDef } = await import("./avatar.js");
 const { default: groupDef } = await import("./avatar-group.js");
@@ -28,7 +28,7 @@ const mount = async (count, attrs = {}) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-avatar-group", () => {
+describe("@lightstart/light - lc-avatar-group", () => {
   before(async () => {
     if (!customElements.get("lc-avatar")) View.define("lc-avatar", avatarDef);
     if (!customElements.get("lc-avatar-group")) View.define("lc-avatar-group", groupDef);

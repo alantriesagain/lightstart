@@ -1,6 +1,6 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import { html, nothing } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
 import { cropToBlob, loadPicture, releasePicture } from "./crop-canvas.js";
 import { boundsOf, coverRect, keyIntent, panRect, pinchRect, rectAtZoom, wheelFactor, zoomOf, zoomRectAt } from "./crop-rect.js";

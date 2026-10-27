@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: stepperDef } = await import("./stepper.js");
 
@@ -41,7 +41,7 @@ const statesOf = (el) => [...el.querySelectorAll(".stepper-step")].map((step) =>
 /** @param {Element} el @param {string} id */
 const stepOf = (el, id) => el.querySelector(`.stepper-step[data-step="${id}"]`);
 
-describe("@bootstrapp/light - lc-stepper", () => {
+describe("@lightstart/light - lc-stepper", () => {
   before(async () => {
     if (!customElements.get("lc-stepper")) View.define("lc-stepper", stepperDef);
     await loadStyles("stepper");

@@ -2,18 +2,19 @@
  * What the command palette searches: every component, the site's pages and
  * every skin, as the documents `<lc-search>` ranks.
  */
-import { componentPath } from "./paths.js";
+import { BUILT_WITH_LIGHT_PATH, componentPath } from "./paths.js";
 import { NATIVE_PAGES } from "./native/pages.js";
 
-/** @import { SearchDoc } from "@bootstrapp/light/components/types.ts" */
+/** @import { SearchDoc } from "@lightstart/light/components/types.ts" */
 /** @import { ShowcaseCategoryListing } from "@bootstrapp/showcase/types.ts" */
-/** @import { ThemePreset } from "@bootstrapp/light/theme" */
+/** @import { ThemePreset } from "@lightstart/light/theme" */
 
 export const GROUPS = ["Components", "Pages", "Skins"];
 
 /** @type {{ title: string, href: string, hint: string }[]} */
 export const PAGES = [
   { title: "Components", href: "/components", hint: "Every component, by category" },
+  { title: "Built with Light", href: BUILT_WITH_LIGHT_PATH, hint: "Projects and sites shipping with the package" },
   { title: "Theming", href: "/theming", hint: "Edit the tokens and export a theme" },
   { title: "Skins", href: "/skins", hint: "Each preset on the same controls" },
   ...NATIVE_PAGES.map((page) => ({ title: page.topic ? `Native: ${page.label}` : "Native", href: page.href, hint: page.hint })),

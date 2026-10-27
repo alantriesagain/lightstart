@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "A clickable action. Colour attributes map to the theme's roles, so a skin redresses every button at once.",

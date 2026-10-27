@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it, before, after } from "node:test";
 import { bootApp, disposeApp, until } from "@bootstrapp/test/app.js";
 import { PAIRS } from "../lib/home-content.js";
+import { PROJECTS } from "../lib/built-with-light.js";
 
 describe("the home page", () => {
   let app;
@@ -43,6 +44,16 @@ describe("the home page", () => {
     const plain = app.win.getComputedStyle(app.doc.querySelector("docs-home #theme .home-skin")).getPropertyValue("--radius-field").trim();
     assert.notEqual(app.win.getComputedStyle(skinned).getPropertyValue("--radius-field").trim(), plain);
     assert.deepEqual(app.errors, []);
+  });
+
+  it("shows the first projects and links to the full gallery", () => {
+    const cards = [...app.doc.querySelectorAll("docs-home .home-built-grid docs-project-card .project-card")];
+    assert.equal(cards.length, Math.min(3, PROJECTS.length));
+    for (const card of cards) {
+      assert.ok(card.getAttribute("href"));
+      assert.equal(card.getAttribute("target"), "_blank");
+    }
+    assert.ok(app.doc.querySelector(`docs-home .home-built-head lc-button[href="/built-with-light"]`));
   });
 
   it("keeps the catalogue on /components, with its rail back", async () => {

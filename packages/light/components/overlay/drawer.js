@@ -1,8 +1,8 @@
-import { html } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
-import { withOverlay } from "@bootstrapp/light/components/mixins/overlay.js";
+import { html } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
+import { withOverlay } from "@lightstart/light/components/mixins/overlay.js";
 import { withSwipeThreshold } from "../mixins/swipe-threshold.js";
-import T from "@bootstrapp/light/types";
+import T from "@lightstart/light/types";
 
 export default defineComponent({
   mixins: [

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/terminal: raw-mode setup and teardown. Everything
+ * @lightstart/light/native/tui/terminal: raw-mode setup and teardown. Everything
  * is idempotent so every exit path restores the terminal exactly once.
  */
 import { ALT_SCREEN_OFF, ALT_SCREEN_ON, CLEAR, CURSOR_HIDE, CURSOR_SHOW, HOME, MOUSE_OFF, MOUSE_ON, PASTE_OFF, PASTE_ON, RESET, TITLE_POP, TITLE_PUSH, windowTitle } from "./ansi.ts";

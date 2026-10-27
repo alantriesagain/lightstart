@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: barDef } = await import("./bottom-nav.js");
 
@@ -43,7 +43,7 @@ const mount = async (style = "") => {
   return { el, search, wide, plus };
 };
 
-describe("@bootstrapp/light - lc-bottom-nav pill", () => {
+describe("@lightstart/light - lc-bottom-nav pill", () => {
   before(() => {
     if (!customElements.get("lc-bottom-nav")) View.define("lc-bottom-nav", barDef);
     const sheet = document.createElement("link");
@@ -103,7 +103,7 @@ const mountDock = async (marks = {}, style = "", names = ["today", "map", "saved
   return { el, items };
 };
 
-describe("@bootstrapp/light - lc-bottom-nav dock", () => {
+describe("@lightstart/light - lc-bottom-nav dock", () => {
   before(() => {
     if (!customElements.get("lc-bottom-nav")) View.define("lc-bottom-nav", barDef);
   });

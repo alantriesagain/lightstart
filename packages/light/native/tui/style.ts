@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/native/tui/style: an immutable text style. Colors are
+ * @lightstart/light/native/tui/style: an immutable text style. Colors are
  * numbers (-1 default, 0..255 indexed, 0x1000000 | rgb truecolor) and the
  * attributes are bits, so a style compares and copies cheaply.
  */

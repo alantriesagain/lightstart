@@ -1,9 +1,9 @@
-import { html } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
-import { withClickOutside } from "@bootstrapp/light/components/mixins/click-outside.js";
-import { withPopover } from "@bootstrapp/light/components/mixins/popover.js";
-import { env } from "@bootstrapp/light/env";
+import { html } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
+import { withClickOutside } from "@lightstart/light/components/mixins/click-outside.js";
+import { withPopover } from "@lightstart/light/components/mixins/popover.js";
+import { env } from "@lightstart/light/env";
 
 /** @import { ContextMenuItem, Prop } from "../types.ts" */
 

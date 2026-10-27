@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const PHOTO = "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=600&q=70";
 

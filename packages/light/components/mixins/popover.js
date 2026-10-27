@@ -1,22 +1,22 @@
-import T from "@bootstrapp/light/types";
-import { defineMixin } from "@bootstrapp/light";
-import { withClickOutside } from "@bootstrapp/light/components/mixins/click-outside.js";
-import { withOverlay } from "@bootstrapp/light/components/mixins/overlay.js";
+import T from "@lightstart/light/types";
+import { defineMixin } from "@lightstart/light";
+import { withClickOutside } from "@lightstart/light/components/mixins/click-outside.js";
+import { withOverlay } from "@lightstart/light/components/mixins/overlay.js";
 import { anchorPosition, parseAnchor } from "../overlay/anchor.js";
-import { env } from "@bootstrapp/light/env";
+import { env } from "@lightstart/light/env";
 
 /** @import { Prop } from "../types.ts" */
 
 /**
- * @bootstrapp/light/components/mixins/popover
+ * @lightstart/light/components/mixins/popover
  *
  * A layer anchored to whatever opened it: `toggle(trigger)` positions the host
  * against that element, keeps it there while the page scrolls or the viewport
  * changes, and takes it down on Escape or an outside click. The host stays
  * `position: fixed` in its own stylesheet and draws whatever it likes.
  *
- *   import { defineComponent } from "@bootstrapp/light";
- *   import { withPopover } from "@bootstrapp/light/components/mixins/popover.js";
+ *   import { defineComponent } from "@lightstart/light";
+ *   import { withPopover } from "@lightstart/light/components/mixins/popover.js";
  *
  *   export default defineComponent({
  *     mixins: [withPopover],

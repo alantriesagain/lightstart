@@ -6,8 +6,8 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { env } from "@bootstrapp/light/env";
-import { windowHostScript } from "@bootstrapp/light/native/desktop/window-host.js";
+import { env } from "@lightstart/light/env";
+import { windowHostScript } from "@lightstart/light/native/desktop/window-host.js";
 
 /** @type {unknown[][]} */
 const calls = [];
@@ -16,7 +16,7 @@ const calls = [];
   return Promise.resolve(args[0] === "state" ? 17 : null);
 };
 (0, eval)(windowHostScript("linux", true));
-const host = /** @type {import("@bootstrapp/light/env/types.ts").WindowHost} */ (env.window);
+const host = /** @type {import("@lightstart/light/env/types.ts").WindowHost} */ (env.window);
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 const ops = () => calls.map((c) => c[1]);
 

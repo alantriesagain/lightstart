@@ -3,10 +3,10 @@ import test from "node:test";
 import { runRuleOn } from "@bootstrapp/check/test-utils.js";
 import rule from "./pages-through-components.js";
 
-const site = JSON.stringify({ name: "lc", dependencies: { "@bootstrapp/light": "workspace:*" } });
+const site = JSON.stringify({ name: "lc", dependencies: { "@lightstart/light": "workspace:*" } });
 
-const view = (markup) => `import { html } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
+const view = (markup) => `import { html } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
 export default defineComponent({ tag: "docs-page", render() { return html\`${markup}\`; } });`;
 
 test("a page composed from lc components passes", async () => {

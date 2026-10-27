@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: chartDef } = await import("./line-chart.js");
 
@@ -24,7 +24,7 @@ const DATA = [{ label: "a", value: 3 }, { label: "b", value: 8 }, { label: "c", 
 
 const PROPS = { data: DATA };
 
-describe("@bootstrapp/light - lc-line-chart area", () => {
+describe("@lightstart/light - lc-line-chart area", () => {
   before(async () => {
     if (!customElements.get("lc-line-chart")) View.define("lc-line-chart", chartDef);
     const css = await (await fetch(new URL("./line-chart.css", import.meta.url))).text();
@@ -68,7 +68,7 @@ describe("@bootstrapp/light - lc-line-chart area", () => {
   });
 });
 
-describe("@bootstrapp/light - lc-line-chart scale", () => {
+describe("@lightstart/light - lc-line-chart scale", () => {
   before(async () => {
     if (!customElements.get("lc-line-chart")) View.define("lc-line-chart", chartDef);
     await tick();

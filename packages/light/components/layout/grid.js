@@ -1,8 +1,8 @@
-import { html } from "@bootstrapp/light/html";
-import { getResponsiveValue } from "@bootstrapp/light/components/utils/breakpoints.js";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
-import { env } from "@bootstrapp/light/env";
+import { html } from "@lightstart/light/html";
+import { getResponsiveValue } from "@lightstart/light/components/utils/breakpoints.js";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
+import { env } from "@lightstart/light/env";
 
 export default defineComponent({
   tag: "lc-grid",

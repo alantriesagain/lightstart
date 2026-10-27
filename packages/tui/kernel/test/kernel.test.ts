@@ -13,7 +13,7 @@ import { Hook } from "@light/lib/hook.ts";
 import { Kernel } from "../kernel.ts";
 import { Action } from "../actions.ts";
 import { KeyEntry, Layer, keySpec } from "../keys.ts";
-import { KeyEvent } from "@bootstrapp/light/native/tui";
+import { KeyEvent } from "@lightstart/light/native/tui";
 import { Plugin } from "../plugin.ts";
 import { NoStateFile } from "../settings.ts";
 import { done, eq, ok } from "@light/test/assert.ts";

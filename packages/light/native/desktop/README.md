@@ -52,7 +52,7 @@ export interface PageEvents {    // the page emits these
 
 ```js
 // backend.js: compiled by scriptc, never run under node
-import { DesktopApp, num } from "@bootstrapp/light/native/desktop";
+import { DesktopApp, num } from "@lightstart/light/native/desktop";
 
 const app = new DesktopApp({ title: "my app", width: 640, height: 400 });
 app.handle("add", (args) => Promise.resolve(num(args, 0) + num(args, 1)));
@@ -69,11 +69,11 @@ app.start();
 
 ```js
 // web/app.js: a light page, loaded by web/index.html
-import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
-import { connect } from "@bootstrapp/light/native/desktop/client.js";
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
+import { connect } from "@lightstart/light/native/desktop/client.js";
 
-/** @type {import("@bootstrapp/light/native/desktop/types.ts").Desktop<Api, Events, PageEvents>} */
+/** @type {import("@lightstart/light/native/desktop/types.ts").Desktop<Api, Events, PageEvents>} */
 const desktop = connect();
 View.define("my-page", {
   props: { ticks: 0, sum: 0 },
@@ -91,10 +91,10 @@ View.define("my-page", {
 
 `light desktop build backend.js --web web --out dist/my-app --name my-app` leaves `dist/my-app/my-app`
 (the executable) and `dist/my-app/web/` (the page, light's own files under `web/light/`, and the
-import map that maps `@bootstrapp/light…` onto them). The executable looks for `web/` beside
+import map that maps `@lightstart/light…` onto them). The executable looks for `web/` beside
 itself; `--web <dir>` on its command line points it elsewhere. `--no-web` builds only the
 executable, for a backend that serves or navigates to a page of its own; `--npm-static <pkg>`
-is passed to scriptc for a backend outside this checkout that imports `@bootstrapp/light` bare.
+is passed to scriptc for a backend outside this checkout that imports `@lightstart/light` bare.
 `compileBackend(backend, exe, target, npmStatic)` is the same step as a function.
 
 ### The window
@@ -215,8 +215,8 @@ page itself: an HTTP server on `127.0.0.1` at a port the system picks, under
 `/<token>/` with a token drawn at launch, `GET` and `HEAD` only, the `Host` header checked, paths
 normalised to inside `web/`, `Cache-Control: no-store`, no directory listing. `index.html` gets
 the import map from `importmap.json` injected at `<!--importmap-->` (or before `</head>`).
-`web/light/` holds light's package files; the map points `@bootstrapp/light`, every entry in
-its `exports`, and the prefix `@bootstrapp/light/` at them.
+`web/light/` holds light's package files; the map points `@lightstart/light`, every entry in
+its `exports`, and the prefix `@lightstart/light/` at them.
 
 ## Layout
 

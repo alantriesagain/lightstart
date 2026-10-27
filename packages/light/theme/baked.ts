@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/theme/baked: the utility classes on a host from a table
+ * @lightstart/light/theme/baked: the utility classes on a host from a table
  * baked ahead of time. `light classes:bake` compiles the class strings an
  * app's templates write through the engine once, under node, into entries of
  * `[classString, [name, value, state][]]` per scheme, and `BakedClasses`

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/components/utils/day-groups
+ * @lightstart/light/components/utils/day-groups
  *
  * Dated entries as the reader's days, and an instant's time of day as the reader
  * writes it. A day is the calendar date the instant falls on in the reader's

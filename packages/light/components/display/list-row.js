@@ -1,7 +1,7 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
-import { navigation } from "@bootstrapp/light/navigation";
+import { html, nothing } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
+import { navigation } from "@lightstart/light/navigation";
 
 export default defineComponent({
   tag: "lc-list-row",

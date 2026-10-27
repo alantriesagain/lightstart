@@ -1,9 +1,9 @@
-import { html, nothing } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
-import { withFormControl } from "@bootstrapp/light/components/mixins/form-control.js";
+import { html, nothing } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
+import { withFormControl } from "@lightstart/light/components/mixins/form-control.js";
 import { nextIndex } from "../utils/roving.js";
-import { withClickOutside } from "@bootstrapp/light/components/mixins/click-outside.js";
-import T from "@bootstrapp/light/types";
+import { withClickOutside } from "@lightstart/light/components/mixins/click-outside.js";
+import T from "@lightstart/light/types";
 import { lcText } from "../utils/text.js";
 
 /** @import { Prop, SelectOption } from "../types.ts" */

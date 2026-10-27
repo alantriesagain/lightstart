@@ -37,7 +37,7 @@
     "test": "bootstrapp test"
   },
   "dependencies": {
-    "@bootstrapp/light": "workspace:*",
+    "@lightstart/light": "workspace:*",
     "@bootstrapp/showcase": "workspace:*",
     "bootstrapp": "workspace:*",
     "@bootstrapp/theme": "workspace:*",

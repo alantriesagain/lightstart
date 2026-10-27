@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const OCEAN = ["#1b262c", "#0f4c75", "#3282b8", "#bbe1fa"];
 const CANDY = ["#364f6b", "#3fc1c9", "#f5f5f5", "#fc5185"];

@@ -3,7 +3,7 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./event-binding-has-emitter.js";
 
-const LIST = `import { html } from "@bootstrapp/light/html";
+const LIST = `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-list",
   events: { "row-pick": T.object() },
@@ -15,7 +15,7 @@ export default {
 test("fires on a binding for an event the target never emits nor declares", async () => {
   const findings = await runRuleOn(rule, {
     "views/list.js": LIST,
-    "views/page.js": `import { html } from "@bootstrapp/light/html";
+    "views/page.js": `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-page",
   render() {
@@ -32,7 +32,7 @@ export default {
 test("silent when the event is declared or emitted by the target", async () => {
   const findings = await runRuleOn(rule, {
     "views/list.js": LIST,
-    "views/page.js": `import { html } from "@bootstrapp/light/html";
+    "views/page.js": `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-page",
   render() {
@@ -46,13 +46,13 @@ export default {
 
 test("silent when a fragment the target lists under mixins declares the event", async () => {
   const findings = await runRuleOn(rule, {
-    "views/sheet-ui.js": `import { defineMixin } from "@bootstrapp/light";
+    "views/sheet-ui.js": `import { defineMixin } from "@lightstart/light";
 export const withSheet = () => defineMixin({
   events: { "sheet-closed": T.object({}) },
   sheet(body) { return body(); },
 });
 `,
-    "views/spot-sheet.js": `import { html } from "@bootstrapp/light/html";
+    "views/spot-sheet.js": `import { html } from "@lightstart/light/html";
 import { withSheet } from "./sheet-ui.js";
 export default {
   tag: "fx-spot-sheet",
@@ -60,7 +60,7 @@ export default {
   render() { return this.sheet(() => html\`<div></div>\`); },
 };
 `,
-    "views/page.js": `import { html } from "@bootstrapp/light/html";
+    "views/page.js": `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-page",
   render() {
@@ -76,7 +76,7 @@ export default {
 test("silent on native events, unresolvable tags, and elements with children", async () => {
   const findings = await runRuleOn(rule, {
     "views/list.js": LIST,
-    "views/page.js": `import { html } from "@bootstrapp/light/html";
+    "views/page.js": `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-page",
   render() {
@@ -103,7 +103,7 @@ test("silent when a checkable file dispatches the event with bubbles: true", asy
   render() { return null; },
 };
 `,
-    "views/page.js": `import { html } from "@bootstrapp/light/html";
+    "views/page.js": `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-page",
   render() {
@@ -118,7 +118,7 @@ export default {
 test("silent on the events a host's plugins make every component emit, like dataLoaded", async () => {
   const findings = await runRuleOn(rule, {
     "views/list.js": LIST,
-    "views/page.js": `import { html } from "@bootstrapp/light/html";
+    "views/page.js": `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-page",
   render() {
@@ -133,7 +133,7 @@ export default {
 test("handles arrow functions with > inside the binding expression", async () => {
   const findings = await runRuleOn(rule, {
     "views/list.js": LIST,
-    "views/page.js": `import { html } from "@bootstrapp/light/html";
+    "views/page.js": `import { html } from "@lightstart/light/html";
 export default {
   tag: "fx-page",
   render() {
@@ -149,7 +149,7 @@ export default {
 test("a quoted value holding a tag does not hide the element the listener sits on", async () => {
   const findings = await runRuleOn(rule, {
     "views/list.js": 'export default { tag: "fx-list", render() { return null; } };',
-    "views/page.js": 'import { html } from "@bootstrapp/light/html";\nexport default { tag: "fx-page", render() { return html`<fx-list title="a <i> b" @row-click=${this.pick}></fx-list>`; } };',
+    "views/page.js": 'import { html } from "@lightstart/light/html";\nexport default { tag: "fx-page", render() { return html`<fx-list title="a <i> b" @row-click=${this.pick}></fx-list>`; } };',
   });
   assert.deepEqual(findings.map((f) => f.message), ['@row-click on <fx-list>: the component neither declares nor dispatches "row-click"; this handler can never run']);
 });

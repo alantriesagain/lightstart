@@ -14,12 +14,16 @@ so a page's stylesheet and a theme reach them as they reach any other element.
 ## Install
 
 ```bash
-npm i @bootstrapp/light
+npm i @lightstart/light
 ```
 
+`lightstart` is the same runtime under an unscoped name: it re-exports the root
+entry, while the subpaths (`@lightstart/light/html`, …) come from the scoped
+package.
+
 ```js
-import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
 
 View.define("my-counter", { count: 0 }, (el) => html`
   <button @click=${() => el.count++}>Count: ${el.count}</button>
@@ -30,9 +34,9 @@ That registers `<my-counter>`. The same component as a class holds its state in
 signals, and `render()` re-runs when one it reads changes:
 
 ```js
-import View from "@bootstrapp/light";
-import { html } from "@bootstrapp/light/html";
-import { signal } from "@bootstrapp/light/signals";
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
+import { signal } from "@lightstart/light/signals";
 
 class MyCounter extends View {
   count = signal(0);
@@ -67,7 +71,7 @@ from its own demo, in any skin.
 
 | Folder | Holds |
 |---|---|
-| `packages/light/` | `@bootstrapp/light`: the runtime and the `light` command, with [its documentation](packages/light/README.md) |
+| `packages/light/` | `@lightstart/light`: the runtime and the `light` command, with [its documentation](packages/light/README.md) |
 | `packages/native/`, `packages/tui/` | The workspace packages native apps share, and `light-native`, their tooling ([README](packages/README.md)) |
 | `examples/` | Pages and apps on light alone: `starter`, `todomvc`, `indexeddb-explorer`, `grand-octave`, the five guided pages (`01-basic-counter.html` … `05-plugin-system.html`), and `tasks`, the terminal reference app ([README](examples/tasks/README.md)) |
 | `benchmarks/` | The view engine and renderer under node, natively and in Chromium ([README](benchmarks/README.md)) |

@@ -1,6 +1,6 @@
 /** An icon's body as a CSS mask rule, keyed by the `name` attribute. */
 
-/** @import { IconEntry } from "@bootstrapp/light/theme" */
+/** @import { IconEntry } from "@lightstart/light/theme" */
 
 const ICON_NAME = /^[a-z][a-z0-9-]*$/;
 const STROKE_WIDTH = /stroke-width="[\d.]+"/g;

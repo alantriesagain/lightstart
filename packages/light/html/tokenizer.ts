@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/html/tokenizer: marker markup to a template tree, for
+ * @lightstart/light/html/tokenizer: marker markup to a template tree, for
  * hosts without an HTML parser of their own. The parser emits the static
  * markup of a template with a `<!--$--><!--/-->` pair at every child binding
  * and a `data-$$` attribute on every element with bound attributes; this

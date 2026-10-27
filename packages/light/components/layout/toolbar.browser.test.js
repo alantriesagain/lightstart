@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: toolbarDef } = await import("./toolbar.js");
 
@@ -30,7 +30,7 @@ const mount = async (attrs = {}) => {
   return el;
 };
 
-describe("@bootstrapp/light - lc-toolbar", () => {
+describe("@lightstart/light - lc-toolbar", () => {
   before(async () => {
     if (!customElements.get("lc-toolbar")) View.define("lc-toolbar", toolbarDef);
     await loadSheet();

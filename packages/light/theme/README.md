@@ -1,11 +1,11 @@
-# @bootstrapp/light/theme
+# @lightstart/light/theme
 
 A theme is a plain object of tokens; this module turns it into the CSS custom
 properties every component reads.
 
 ```javascript
-import { applyTheme } from "@bootstrapp/light/theme";
-import { loadPreset } from "@bootstrapp/light/theme/presets.js";
+import { applyTheme } from "@lightstart/light/theme";
+import { loadPreset } from "@lightstart/light/theme/presets.js";
 
 applyTheme(await loadPreset("neobrutalist"));
 applyTheme({ color: { primary: "#fabd2f" }, radius: { field: "0.75rem" } });
@@ -19,13 +19,13 @@ selection, scrollbars); link it once. `presets.js` lists the themes in
 
 | Import | Holds |
 |---|---|
-| `@bootstrapp/light/theme` | the API below: a theme applied to a document, a region or a stylesheet string, the color math, the presets |
-| `@bootstrapp/light/theme/tokens` | the host-neutral half: the color math, `generateThemeVariables`, `variablesFor(theme, scheme)`, `cssColorToHex`; nothing of a document, so a terminal reads the same tokens |
-| `@bootstrapp/light/theme/classes` | the utility classes a theme gives: `createEngine`, `buildTheme`, the rule table (see Classes) |
-| `@bootstrapp/light/theme/palette` | the opt-in Tailwind palette, reached by a dynamic import |
-| `@bootstrapp/light/theme/runtime` | the browser host of the classes: `createRuntime(engine, { doc, raf, preflight })` |
-| `@bootstrapp/light/theme/terminal` | the terminal host of the classes: `TerminalClasses(theme, scheme)`, a `ClassStyler` for `tdom`'s `configureClasses` |
-| `@bootstrapp/light/theme/baked` | `BakedClasses`, the terminal's classes from a table `light classes:bake` compiled ahead of time, with no engine in the binary |
+| `@lightstart/light/theme` | the API below: a theme applied to a document, a region or a stylesheet string, the color math, the presets |
+| `@lightstart/light/theme/tokens` | the host-neutral half: the color math, `generateThemeVariables`, `variablesFor(theme, scheme)`, `cssColorToHex`; nothing of a document, so a terminal reads the same tokens |
+| `@lightstart/light/theme/classes` | the utility classes a theme gives: `createEngine`, `buildTheme`, the rule table (see Classes) |
+| `@lightstart/light/theme/palette` | the opt-in Tailwind palette, reached by a dynamic import |
+| `@lightstart/light/theme/runtime` | the browser host of the classes: `createRuntime(engine, { doc, raf, preflight })` |
+| `@lightstart/light/theme/terminal` | the terminal host of the classes: `TerminalClasses(theme, scheme)`, a `ClassStyler` for `tdom`'s `configureClasses` |
+| `@lightstart/light/theme/baked` | `BakedClasses`, the terminal's classes from a table `light classes:bake` compiled ahead of time, with no engine in the binary |
 
 ## API Reference
 
@@ -123,15 +123,15 @@ That is most of what separates `themes/neobrutalist.js` from `themes/daisy.js`.
 Every token is also a utility class. `theme/classes/` is an atomic-CSS engine with Tailwind's grammar: a class such as `flex`, `p-4`, `text-primary` or `hover:bg-muted` compiles to a rule whose declarations point at the theme's variables (`color: var(--color-primary)`), never at the values, so a `:root.dark` reassignment flows through untouched. One implementation serves a page's dev runtime and a build, so the two cannot drift.
 
 ```js
-import { createEngine, buildTheme } from "@bootstrapp/light/theme/classes";
-import theme from "@bootstrapp/light/theme/themes/default.js";
+import { createEngine, buildTheme } from "@lightstart/light/theme/classes";
+import theme from "@lightstart/light/theme/themes/default.js";
 
 const engine = createEngine({ theme: buildTheme(theme) });
 const { css, matched, unknown } = engine.generate(["flex", "bg-surface", "hover:text-primary"]);
 engine.compile("p-4"); // { cls, selector, medias, weight, decls: ["padding:1rem"], order, important }
 ```
 
-`buildTheme(theme, { palette })` turns the theme's groups into the utility scales: `color.*` and `text.*` become color utilities (`color.ink` gives `text-ink`, `bg-ink`, `border-ink`), `shadow.*` `shadow-<k>`, `radius.*` `rounded-<k>`, `spacing.*` named spacing, `leading.*` and `font.*` likewise; a declared color earns an `on-<k>` companion (`text-on-hero` reads `--color-on-hero`, the readable contrast color the tokens derive). The raw Tailwind palette (`text-gray-400`) is opt-in through `palette`, loaded from `@bootstrapp/light/theme/palette`. `createEngine({ theme, safelist })` compiles the safelist with whatever classes it is given, for class names composed at run time that a build cannot see. `engine.generate(classes)` answers the stylesheet and the classes it did not know; the browser runtime (`@bootstrapp/light/theme/runtime`) compiles classes as a `MutationObserver` sees them appear and rewrites one `<style data-tw-runtime>` once per frame. A Bootstrapp app gets both from `@bootstrapp/theme`, which boots the runtime in development and compiles `style.css` in a build.
+`buildTheme(theme, { palette })` turns the theme's groups into the utility scales: `color.*` and `text.*` become color utilities (`color.ink` gives `text-ink`, `bg-ink`, `border-ink`), `shadow.*` `shadow-<k>`, `radius.*` `rounded-<k>`, `spacing.*` named spacing, `leading.*` and `font.*` likewise; a declared color earns an `on-<k>` companion (`text-on-hero` reads `--color-on-hero`, the readable contrast color the tokens derive). The raw Tailwind palette (`text-gray-400`) is opt-in through `palette`, loaded from `@lightstart/light/theme/palette`. `createEngine({ theme, safelist })` compiles the safelist with whatever classes it is given, for class names composed at run time that a build cannot see. `engine.generate(classes)` answers the stylesheet and the classes it did not know; the browser runtime (`@lightstart/light/theme/runtime`) compiles classes as a `MutationObserver` sees them appear and rewrites one `<style data-tw-runtime>` once per frame. A Bootstrapp app gets both from `@bootstrapp/theme`, which boots the runtime in development and compiles `style.css` in a build.
 
 Deliberate divergences from Tailwind's preset: `dark:` targets `:root.dark`, the class `colorScheme` flips, so the variables and the variant can never disagree; breakpoints are px; transforms are individual properties (`translate:`, `rotate:`, `scale:`); filters do not compose; shadows and rings are plain `box-shadow`, last wins; `space-*` and `divide-*` use the child combinator; font weights read the theme (`font-bold` is `font-weight: var(--font-bold, 700)`); the palette is Tailwind v3 hex; opacity is fractional and a `/modifier` alpha compiles to `color-mix(in srgb, …)`, the one alpha form that works on `var()` tokens; the no-hyphen shorthands (`p1`, `w2`) are rejected. Left unbuilt until a project needs them: shadow colors, `ring-offset-*`, keyframes beyond the four stock animations, container queries, `before:`/`after:` content injection, `theme()` inside arbitrary values. Anything parked shows up in `generate`'s `unknown` list instead of silently missing.
 
@@ -140,9 +140,9 @@ Deliberate divergences from Tailwind's preset: `dark:` targets `:root.dark`, the
 The engine answers CSS, and the browser is the host that needs nothing more: the runtime writes the rules into a `<style>` and the page does the rest. Any other host reads the same compiled declarations and maps the subset it can show onto its own elements, so a class means one thing everywhere and a host documents what it leaves out. The terminal is the first (`theme/terminal.ts`); a host for a native toolkit would be another `ClassStyler` over the same `createRules`.
 
 ```js
-import { configureClasses } from "@bootstrapp/light/native/tui";
-import { TerminalClasses } from "@bootstrapp/light/theme/terminal";
-import theme from "@bootstrapp/light/theme/themes/default.js";
+import { configureClasses } from "@lightstart/light/native/tui";
+import { TerminalClasses } from "@lightstart/light/theme/terminal";
+import theme from "@lightstart/light/theme/themes/default.js";
 
 configureClasses(new TerminalClasses(theme, "dark"));
 ```
@@ -172,7 +172,7 @@ configureClasses(new TerminalClasses(theme, "dark"));
 
 `border-color` is ignored because a border paints in the box's own style, so it would recolor the box's text too.
 
-An app that ships natively bakes its classes instead of carrying the engine (about two megabytes of a binary): `light classes:bake <entry> -o <file> --scheme dark,light` walks the entry's runtime imports, finds every `class=` value the `html` templates write (a literal, a ternary or an alternation of literals), compiles each through `TerminalClasses` per scheme and writes a module with one `BakedEntry[]` export per scheme; `new BakedClasses(dark)` (`@bootstrapp/light/theme/baked`) answers them by lookup, and a string the table lacks lands in its `ignored` set, so a test asserting the set empty catches a stale table (`--check` fails on drift without writing). A class string composed at run time, and a class the terminal ignores, fail the bake naming the site. An app that wants run-time classes keeps `TerminalClasses` and the engine.
+An app that ships natively bakes its classes instead of carrying the engine (about two megabytes of a binary): `light classes:bake <entry> -o <file> --scheme dark,light` walks the entry's runtime imports, finds every `class=` value the `html` templates write (a literal, a ternary or an alternation of literals), compiles each through `TerminalClasses` per scheme and writes a module with one `BakedEntry[]` export per scheme; `new BakedClasses(dark)` (`@lightstart/light/theme/baked`) answers them by lookup, and a string the table lacks lands in its `ignored` set, so a test asserting the set empty catches a stale table (`--check` fails on drift without writing). A class string composed at run time, and a class the terminal ignores, fail the bake naming the site. An app that wants run-time classes keeps `TerminalClasses` and the engine.
 
 ## Presets
 

@@ -1,10 +1,10 @@
 /**
- * @bootstrapp/light/native/desktop/client: the page half of the bridge. `connect()` answers the
+ * @lightstart/light/native/desktop/client: the page half of the bridge. `connect()` answers the
  * contract as a typed proxy whose every method calls the backend through the webview's
  * `window.__desktop` binding, the event listeners the init script installed, `emit` for the
  * page's own events to the backend, a log that reaches the backend's stderr, and `ready()`,
  * which tells the backend the page is up. Browser code; a page loads it through the import map
- * as @bootstrapp/light/native/desktop/client.js.
+ * as @lightstart/light/native/desktop/client.js.
  */
 
 /** @import { Contract, Desktop, Events } from "./types.ts" */

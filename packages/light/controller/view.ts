@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller/view: the sync plugin
+ * @lightstart/light/controller/view: the sync plugin
  * `View.use(syncPlugin)` makes a component property declared with `sync:`
  * follow its target, through the same binding a controller uses: an adapter
  * or controller name, a store, a signal, a controller, or a target a sync

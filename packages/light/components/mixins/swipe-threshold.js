@@ -1,10 +1,10 @@
-import T from "@bootstrapp/light/types";
-import { defineMixin } from "@bootstrapp/light";
+import T from "@lightstart/light/types";
+import { defineMixin } from "@lightstart/light";
 
 /** @import { Prop, SwipeHost, SwipeStart } from "../types.ts" */
 
 /**
- * @bootstrapp/light/components/mixins/swipe-threshold
+ * @lightstart/light/components/mixins/swipe-threshold
  *
  * A swipe nothing follows: two samples, one decision. Where `withPointerDrag`
  * hands the host a position every frame, this one measures where the pointer
@@ -13,8 +13,8 @@ import { defineMixin } from "@bootstrapp/light";
  * `direction` is -1 or 1 along that axis, so a host reads it without knowing
  * which axis it asked for.
  *
- *   import { defineComponent } from "@bootstrapp/light";
- *   import { withSwipeThreshold } from "@bootstrapp/light/components/mixins/swipe-threshold.js";
+ *   import { defineComponent } from "@lightstart/light";
+ *   import { withSwipeThreshold } from "@lightstart/light/components/mixins/swipe-threshold.js";
  *
  *   export default defineComponent({
  *     mixins: [withSwipeThreshold({ axis: "y", ratio: 1.2, enabled: "open" })],

@@ -2,9 +2,9 @@
  * Every preset on the same controls, one under the other, so the shape roles
  * a preset sets can be compared at a glance.
  */
-import { html } from "@bootstrapp/light/html";
-import { defineComponent } from "@bootstrapp/light";
-import presets from "@bootstrapp/light/theme/presets.js";
+import { html } from "@lightstart/light/html";
+import { defineComponent } from "@lightstart/light";
+import presets from "@lightstart/light/theme/presets.js";
 import { applySkin, clearSkin } from "@bootstrapp/showcase/lib/skins.js";
 
 export default defineComponent({

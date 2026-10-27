@@ -15,7 +15,7 @@ registerAdapter("local", localStorage);
 registerAdapter("session", sessionStorage);
 registerAdapter("memory", memoryStorage);
 
-describe("@bootstrapp/light/controller: Signal as sync source", () => {
+describe("@lightstart/light/controller: Signal as sync source", () => {
   describe("getSyncInfo(signal)", () => {
     it("classifies a Signal through the $sync duck-type", () => {
       const sig = signal(1);
@@ -68,7 +68,7 @@ describe("@bootstrapp/light/controller: Signal as sync source", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/store.js", () => {
+describe("@lightstart/light/controller/store.js", () => {
   describe("createStore()", () => {
     it("should seed declared fields from shorthand and StateDef defaults", () => {
       const store = createStore({ count: 0, name: { default: "test" } });
@@ -166,7 +166,7 @@ describe("@bootstrapp/light/controller/store.js", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/definition.js: lifecycle chaining", () => {
+describe("@lightstart/light/controller/definition.js: lifecycle chaining", () => {
   const deferred = () => {
     /** @type {(value?: unknown) => void} */
     let resolve = () => {};
@@ -229,7 +229,7 @@ describe("@bootstrapp/light/controller/definition.js: lifecycle chaining", () =>
   });
 });
 
-describe("@bootstrapp/light/controller/define.ts", () => {
+describe("@lightstart/light/controller/define.ts", () => {
   const definition = () => ({
     name: "demo",
     props: {
@@ -574,7 +574,7 @@ describe("@bootstrapp/light/controller/define.ts", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.ts: mixins", () => {
+describe("@lightstart/light/controller/define.ts: mixins", () => {
   const store = () => defineMixin({
     props: { slug: "draft" },
     _timer: null,
@@ -644,7 +644,7 @@ describe("@bootstrapp/light/controller/define.ts: mixins", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.ts: per-instance members", () => {
+describe("@lightstart/light/controller/define.ts: per-instance members", () => {
   const withMembers = () => defineController({
     name: "members",
     props: {},
@@ -698,7 +698,7 @@ describe("@bootstrapp/light/controller/define.ts: per-instance members", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.ts: own()", () => {
+describe("@lightstart/light/controller/define.ts: own()", () => {
   const record = () => {
     const log = [];
     const make = defineController({
@@ -790,7 +790,7 @@ describe("@bootstrapp/light/controller/define.ts: own()", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.ts: ready", () => {
+describe("@lightstart/light/controller/define.ts: ready", () => {
   const deferred = () => {
     let resolve;
     let reject;
@@ -856,7 +856,7 @@ describe("@bootstrapp/light/controller/define.ts: ready", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/adapters/storage.ts", () => {
+describe("@lightstart/light/controller/adapters/storage.ts", () => {
   beforeEach(() => {
     memoryStorage.clear();
   });
@@ -1326,7 +1326,7 @@ const fakeBus = () => {
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
-describe("@bootstrapp/light/controller/resource.ts", () => {
+describe("@lightstart/light/controller/resource.ts", () => {
   describe("ensure()", () => {
     it("fetches once and dedupes concurrent calls", async () => {
       let calls = 0;
@@ -1609,7 +1609,7 @@ describe("@bootstrapp/light/controller/resource.ts", () => {
   });
 });
 
-describe("@bootstrapp/light/controller: the view sync plugin", () => {
+describe("@lightstart/light/controller: the view sync plugin", () => {
   it("keeps a synced property off attributes, and gives a query-backed one dataPending", () => {
     const plugin = /** @type {any} */ (syncPlugin);
     const props = plugin.props({ label: T.string(), mode: T.string({ sync: "local" }), rows: T.array({ sync: "x", query: {} }) });
@@ -1621,7 +1621,7 @@ describe("@bootstrapp/light/controller: the view sync plugin", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.ts: the sync block", () => {
+describe("@lightstart/light/controller/define.ts: the sync block", () => {
   it("binds a plain default to a named adapter, as the descriptor option does", () => {
     memoryStorage.set("blockMode", "stored");
     const ctrl = defineController({ name: "blockShort", props: { blockMode: "unset" }, sync: { blockMode: "memory" } });
@@ -1687,7 +1687,7 @@ describe("@bootstrapp/light/controller/define.ts: the sync block", () => {
   });
 });
 
-describe("@bootstrapp/light/controller/define.ts: what a definition refuses", () => {
+describe("@lightstart/light/controller/define.ts: what a definition refuses", () => {
   it("refuses adapter:, since every registered controller is a sync target", () => {
     assert.throws(() => defineController({ name: "oldAdapter", adapter: true, props: {} }), /adapter: is gone/);
   });

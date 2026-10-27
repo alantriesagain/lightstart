@@ -5,7 +5,7 @@
   "type": "module",
   "description": "What a member's tests share: the assertions that print what they check, and a headless screen for a light view.",
   "dependencies": {
-    "@bootstrapp/light": "workspace:*"
+    "@lightstart/light": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.5"

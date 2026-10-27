@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 import joinDef from "./join.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -40,7 +40,7 @@ const hitsItself = (el) => {
   return el.contains(hit);
 };
 
-describe("@bootstrapp/light - lc-join", () => {
+describe("@lightstart/light - lc-join", () => {
   before(async () => {
     if (!customElements.get("lc-join")) View.define("lc-join", joinDef);
     await loadSheet(new URL("./join.css", import.meta.url).href);

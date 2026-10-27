@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, afterEach, before, describe, it } from "node:test";
-import View from "@bootstrapp/light";
+import View from "@lightstart/light";
 
 const { default: mediaCardDef } = await import("./media-card.js");
 
@@ -26,7 +26,7 @@ const mount = async (attrs, inner = "") => {
   return { el, root: el };
 };
 
-describe("@bootstrapp/light - lc-media-card", () => {
+describe("@lightstart/light - lc-media-card", () => {
   before(async () => {
     const css = await (await fetch(new URL("./media-card.css", import.meta.url))).text();
     const style = document.createElement("style");

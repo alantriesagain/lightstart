@@ -26,7 +26,7 @@ const fakeWindow = () => {
   };
 };
 
-describe("@bootstrapp/light/controller/url: the hash adapter", () => {
+describe("@lightstart/light/controller/url: the hash adapter", () => {
   it("listens to navigation from its first subscriber, once, and reports keys a back step changed", () => {
     const win = fakeWindow();
     const global = /** @type {Record<string, unknown>} */ (globalThis);

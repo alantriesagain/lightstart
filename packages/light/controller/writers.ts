@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller/writers: writing a record by a key named at
+ * @lightstart/light/controller/writers: writing a record by a key named at
  * run time. Natively, a write by a key that is not a literal is static only
  * when its receiver is the object literal itself, so a record that takes such
  * writes is made here with closures over its literal, and its writer is found

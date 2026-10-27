@@ -1,6 +1,6 @@
 # light's components
 
-132 web components in nine categories, with the mixins, libs and two stores they are built from. They are part of `@bootstrapp/light` and depend on nothing else: a component reads its host through light (`env`, `navigation`, `translate`, `trackWork`, `@bootstrapp/light/theme`).
+132 web components in nine categories, with the mixins, libs and two stores they are built from. They are part of `@lightstart/light` and depend on nothing else: a component reads its host through light (`env`, `navigation`, `translate`, `trackWork`, `@lightstart/light/theme`).
 
 ```html
 <lc-card>
@@ -14,13 +14,13 @@
 A component module is a plain definition; `View.define` registers the tag. Every component declares `style: true` and keeps its stylesheet beside it, so import that too, after `theme/theme.css` (the base the tokens hang off). A component that `extends` another needs its base defined first; `lc-button` extends `lc-link`.
 
 ```js
-import View from "@bootstrapp/light";
-import { applyTheme } from "@bootstrapp/light/theme";
-import { loadPreset } from "@bootstrapp/light/theme/presets.js";
-import { configureIcons, iconify } from "@bootstrapp/light/theme/icons.js";
-import link from "@bootstrapp/light/components/display/link.js";
-import button from "@bootstrapp/light/components/display/button.js";
-import icon from "@bootstrapp/light/components/display/icon.js";
+import View from "@lightstart/light";
+import { applyTheme } from "@lightstart/light/theme";
+import { loadPreset } from "@lightstart/light/theme/presets.js";
+import { configureIcons, iconify } from "@lightstart/light/theme/icons.js";
+import link from "@lightstart/light/components/display/link.js";
+import button from "@lightstart/light/components/display/button.js";
+import icon from "@lightstart/light/components/display/icon.js";
 
 applyTheme(await loadPreset("default"));
 configureIcons({ load: iconify("lucide") });
@@ -28,21 +28,21 @@ for (const component of [link, button, icon]) View.define(component);
 ```
 
 ```css
-@import "@bootstrapp/light/theme/theme.css";
-@import "@bootstrapp/light/components/display/link.css";
-@import "@bootstrapp/light/components/display/button.css";
-@import "@bootstrapp/light/components/display/icon.css";
+@import "@lightstart/light/theme/theme.css";
+@import "@lightstart/light/components/display/link.css";
+@import "@lightstart/light/components/display/button.css";
+@import "@lightstart/light/components/display/icon.css";
 ```
 
-A browser resolves the bare specifiers through an importmap (`"@bootstrapp/light/": "/node_modules/@bootstrapp/light/"` covers every subpath); a bundler resolves them from `node_modules`.
+A browser resolves the bare specifiers through an importmap (`"@lightstart/light/": "/node_modules/@lightstart/light/"` covers every subpath); a bundler resolves them from `node_modules`.
 
-`applyTheme` writes the design tokens the stylesheets read; `configureIcons` says where `<lc-icon>` fetches an icon (the public Iconify API here; a page that has the icons in its own stylesheet leaves it unset). Four more hooks matter only when you have the thing they connect: `configureNavigation` from `@bootstrapp/light/navigation` for a router (links are plain anchors without one), `configureView({ translate })` for translations (the components speak English without one), `configureMarkdown` from `display/markdown.js` for where `marked` comes from (the bare `marked` specifier by default), and `configureHighlight` from `utils/highlight.js` for a tokenizer behind `<lc-code-block>` (plain lines without one).
+`applyTheme` writes the design tokens the stylesheets read; `configureIcons` says where `<lc-icon>` fetches an icon (the public Iconify API here; a page that has the icons in its own stylesheet leaves it unset). Four more hooks matter only when you have the thing they connect: `configureNavigation` from `@lightstart/light/navigation` for a router (links are plain anchors without one), `configureView({ translate })` for translations (the components speak English without one), `configureMarkdown` from `display/markdown.js` for where `marked` comes from (the bare `marked` specifier by default), and `configureHighlight` from `utils/highlight.js` for a tokenizer behind `<lc-code-block>` (plain lines without one).
 
 A component that draws other tags needs them defined too, or they stay inert; the table at the end lists what each one renders. `examples/starter` and `examples/indexeddb-explorer` are whole pages built this way.
 
 ## Inside a Bootstrapp app
 
-Components load themselves. There is no import step and no registration call: the tag is the lookup key, and the framework's loader resolves `<lc-button>` to `components/display/button.js` through the `bootstrapp.components.lc` map in light's `package.json`, and the theme plugin brings the stylesheet along. Declare `@bootstrapp/light` in the project's `package.json` and write the tags. A production build inlines only the components a project's `bootstrapp.bundle.components` map lists, so an app ships what it renders and nothing else.
+Components load themselves. There is no import step and no registration call: the tag is the lookup key, and the framework's loader resolves `<lc-button>` to `components/display/button.js` through the `bootstrapp.components.lc` map in light's `package.json`, and the theme plugin brings the stylesheet along. Declare `@lightstart/light` in the project's `package.json` and write the tags. A production build inlines only the components a project's `bootstrapp.bundle.components` map lists, so an app ships what it renders and nothing else.
 
 ## The catalogue
 
@@ -65,7 +65,7 @@ Every tag is `lc-` plus the name. The nine categories are declared in `@bootstra
 Each component carries a `<component>.demo.js` beside it: the sentence that describes it, its worked examples, and the content the playground puts inside it. That file is what the catalogue draws, and the code under an example is the example's own source.
 
 ```js
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 export default {
   description: "A clickable action. Colour attributes map to the theme's roles.",
@@ -113,7 +113,7 @@ export default {
 A control it does not have is registered rather than worked around:
 
 ```js
-import { registerFormFieldRenderer } from "@bootstrapp/light/components/form/field-renderers.js";
+import { registerFormFieldRenderer } from "@lightstart/light/components/form/field-renderers.js";
 
 registerFormFieldRenderer("colour", (field, value, onChange, html) => html`
   <input type="color" .value=${value} @input=${(e) => onChange(e.target.value)} />
@@ -185,8 +185,8 @@ Eight mixins carry behaviour that more than one component needs. List them under
 | `withResize(method)` | the named method called on connect and whenever the host's box changes |
 
 ```js
-import { defineComponent } from "@bootstrapp/light";
-import { withFormControl } from "@bootstrapp/light/components/mixins/form-control.js";
+import { defineComponent } from "@lightstart/light";
+import { withFormControl } from "@lightstart/light/components/mixins/form-control.js";
 
 export default defineComponent({
   mixins: [withFormControl],

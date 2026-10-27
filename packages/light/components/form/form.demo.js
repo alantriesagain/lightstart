@@ -1,4 +1,4 @@
-import { html } from "@bootstrapp/light/html";
+import { html } from "@lightstart/light/html";
 
 const fields = [
   { name: "title", label: "Title", type: "text", required: true },

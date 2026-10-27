@@ -1,9 +1,9 @@
-import { defineMixin } from "@bootstrapp/light";
+import { defineMixin } from "@lightstart/light";
 
-/** @import View from "@bootstrapp/light" */
+/** @import View from "@lightstart/light" */
 
 /**
- * @bootstrapp/light/components/mixins/click-outside
+ * @lightstart/light/components/mixins/click-outside
  *
  * Micro-mixin: dismiss-on-outside-interaction. Attaches a document-level
  * listener on `connected()` (torn down via the View's `own()` registry) and
@@ -12,8 +12,8 @@ import { defineMixin } from "@bootstrapp/light";
  * test: it crosses shadow boundaries and survives the target being detached
  * by a re-render between the click and the listener.
  *
- *   import { defineComponent } from "@bootstrapp/light";
- *   import { withClickOutside } from "@bootstrapp/light/components/mixins/click-outside.js";
+ *   import { defineComponent } from "@lightstart/light";
+ *   import { withClickOutside } from "@lightstart/light/components/mixins/click-outside.js";
  *
  *   export default defineComponent({
  *     mixins: [withClickOutside()],

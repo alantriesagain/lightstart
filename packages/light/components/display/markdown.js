@@ -1,6 +1,6 @@
-import { unsafeHTML } from "@bootstrapp/light/html";
-import T from "@bootstrapp/light/types";
-import { defineComponent } from "@bootstrapp/light";
+import { unsafeHTML } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
+import { defineComponent } from "@lightstart/light";
 import { createSlugger } from "../utils/slug.js";
 /** @import { MarkdownHeading, MarkedLike, Prop } from "../types.ts" */
 

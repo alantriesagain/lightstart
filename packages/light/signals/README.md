@@ -1,4 +1,4 @@
-# @bootstrapp/light/signals
+# @lightstart/light/signals
 
 The reactive primitives everything else builds on: `signal`, `computed`,
 `effect`, `batch`, `untracked`, and `selector` (keyed O(2) selection fan-out).
