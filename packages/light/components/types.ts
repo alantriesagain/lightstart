@@ -143,6 +143,31 @@ export interface StepperStep {
 /** display/comment.js: the `actions` render property, drawn in the comment's actions row. */
 export type CommentActions = () => Renderable;
 
+/** display/timeline.js: one entry in the `entries` array property. */
+export interface TimelineEntry {
+  at: string;
+  title?: string;
+  body?: string;
+  icon?: string;
+  variant?: TimelineVariant;
+  href?: string;
+}
+
+/** display/timeline.js: an entry's marker colour, `lc-badge`'s vocabulary. */
+export type TimelineVariant = "default" | "primary" | "secondary" | "success" | "danger" | "warning" | "info";
+
+/** display/timeline.js: the `extra` render property, drawn under each entry. */
+export type TimelineExtra = (entry: TimelineEntry) => Renderable;
+
+/** utils/day-groups.js: what `readAt` makes of an entry's `at`. */
+export type TimelineMoment = { kind: "instant"; ms: number } | { kind: "date"; day: string } | { kind: "unreadable" };
+
+/** utils/day-groups.js: one group `groupByDay` answers; `day` is null for the unreadable entries. */
+export interface TimelineDay {
+  day: string | null;
+  entries: TimelineEntry[];
+}
+
 /** page/steps-section.js: the `footerCta` object property. */
 export interface FooterCta {
   label?: string;
