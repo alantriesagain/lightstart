@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { dayKeyOf, dayWords, groupByDay, readAt } from "./day-groups.js";
+import { dayKeyOf, dayWords, groupByDay, readAt, timeWords } from "./day-groups.js";
 
 /** @import { TimelineDay, TimelineEntry } from "../types.ts" */
 
@@ -104,4 +104,11 @@ test("the day's words come from the reader's language, capitalised as a heading"
 test("any other day is its weekday and date, with the year only when it is not this one", () => {
   assert.equal(dayWords("2026-03-03", "en", "2026-10-27"), "Tuesday, March 3");
   assert.equal(dayWords("2025-03-03", "en", "2026-10-27"), "Monday, March 3, 2025");
+});
+
+test("an instant's time is the reader's short clock, and a malformed locale reads as English", () => {
+  const ms = Date.parse("2026-10-27T15:05:00Z");
+  const english = new Date(ms).toLocaleTimeString("en", { timeStyle: "short" });
+  assert.equal(timeWords(ms, "en"), english);
+  assert.equal(timeWords(ms, "en_US"), english);
 });

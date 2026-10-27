@@ -1,24 +1,10 @@
 import { html, nothing } from "@bootstrapp/light/html";
 import T from "@bootstrapp/light/types";
 import { defineComponent } from "@bootstrapp/light";
-import { dayKeyOf, dayWords, groupByDay, readAt } from "../utils/day-groups.js";
+import { dayKeyOf, dayWords, groupByDay, readAt, timeWords } from "../utils/day-groups.js";
 /** @import { Prop, TimelineEntry, TimelineExtra } from "../types.ts" */
 
 const EXTERNAL = /^[a-z][a-z\d+.-]*:/i;
-
-/**
- * @param {number} ms
- * @param {string} locale
- * @returns {string}
- */
-const clockOf = (ms, locale) => {
-  try {
-    return new Date(ms).toLocaleTimeString(locale, { timeStyle: "short" });
-  } catch (error) {
-    if (!(error instanceof RangeError)) throw error;
-    return new Date(ms).toLocaleTimeString("en", { timeStyle: "short" });
-  }
-};
 
 /**
  * @param {TimelineEntry} entry
@@ -32,7 +18,7 @@ const entryOf = (entry, locale, extra) => {
       <span class="timeline-marker" part="lc-timeline-marker">${entry.icon ? html`<lc-icon name=${entry.icon}></lc-icon>` : nothing}</span>
       <div class="timeline-main" part="lc-timeline-main">
         ${moment.kind === "instant"
-          ? html`<time class="timeline-time" part="lc-timeline-time" datetime=${entry.at}>${clockOf(moment.ms, locale)}</time>`
+          ? html`<time class="timeline-time" part="lc-timeline-time" datetime=${entry.at}>${timeWords(moment.ms, locale)}</time>`
           : nothing}
         ${entry.title
           ? entry.href
