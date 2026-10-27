@@ -27,6 +27,7 @@ const origin = `http://127.0.0.1:${port}`;
 
 const log = (message) => console.log(`▸ ${message}`);
 const SPECIFIER = /\b(?:from|import)\s*(?:\(\s*)?(["'])([^"']+)\1/g;
+const RUNTIME_SHIM = "/app/__light-runtime__.js";
 const CSS_URL = /@import\s+(["'])([^"']+)\1|url\(\s*(["']?)([^)"']+)\3\s*\)/g;
 
 /** @param {string} dir */
@@ -140,6 +141,7 @@ async function mirrorModules(buildDir, dev) {
   const enqueue = (url) => {
     const pathname = new URL(url, origin).pathname;
     if (!pathname.startsWith("/app/")) return;
+    if (pathname === RUNTIME_SHIM) return;
     if (!/\.(?:m?js|m?ts|css|json)$/.test(pathname)) return;
     if (seen.has(pathname)) return;
     seen.add(pathname);
@@ -173,6 +175,7 @@ async function mirrorModules(buildDir, dev) {
     if (!((isModule && /javascript/.test(mime)) || (isCss && /css/.test(mime)) || (isJson && /json/.test(mime)))) continue;
     let body = await response.text();
     if (isModule) {
+      body = body.replaceAll("/app/light/html/index.js", RUNTIME_SHIM);
       body = body.replace(SPECIFIER, (match, quote, specifier) => {
         const fixed = specifier.replace(/\.m?ts$/, (ext) => ext.replace("ts", "js"));
         return fixed === specifier ? match : match.replace(specifier, fixed);
@@ -193,5 +196,19 @@ async function mirrorModules(buildDir, dev) {
     await writeFile(file, body);
     written += 1;
   }
-  return written;
+  await writeFile(
+    join(buildDir, RUNTIME_SHIM),
+    [
+      "const r = globalThis.__LIGHT_RENDERER__;",
+      "export const html = r.html;",
+      "export const svg = r.svg;",
+      "export const render = r.render;",
+      "export const key = r.key;",
+      "export const element = r.element;",
+      "export const nothing = r.nothing;",
+      "export const unsafeHTML = r.unsafeHTML;",
+      "",
+    ].join("\n"),
+  );
+  return written + 1;
 }
