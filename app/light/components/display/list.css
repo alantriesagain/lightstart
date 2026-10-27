@@ -1,0 +1,21 @@
+/*
+ * The spacing lands on the host. This used to style a rendered `<ul>` wrapping
+ * a `<slot>`, which projects nothing in light DOM; the items sat outside it
+ * and the gap applied to an empty element.
+ */
+:where(.lc-list, lc-list) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lc-list-spacing, var(--spacing-sm, 0.5rem));
+  background: var(--lc-list-background, transparent);
+  color: var(--lc-list-color, inherit);
+  padding: 0;
+  margin: 0;
+
+  &[spacing="none"] { --lc-list-spacing: 0; }
+  &[spacing="xs"] { --lc-list-spacing: var(--spacing-xs, 0.25rem); }
+  &[spacing="sm"] { --lc-list-spacing: var(--spacing-sm, 0.5rem); }
+  &[spacing="md"] { --lc-list-spacing: var(--spacing-md, 0.75rem); }
+  &[spacing="lg"] { --lc-list-spacing: var(--spacing-lg, 1rem); }
+  &[spacing="xl"] { --lc-list-spacing: var(--spacing-xl, 1.5rem); }
+}

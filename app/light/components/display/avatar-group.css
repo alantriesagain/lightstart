@@ -1,0 +1,55 @@
+:where(.lc-avatar-group, lc-avatar-group) {
+  display: inline-flex;
+  vertical-align: middle;
+
+  &[size="xs"] {
+    --lc-avatar-group-size: 1.5rem;
+  }
+
+  &[size="md"] {
+    --lc-avatar-group-size: 2.5rem;
+  }
+
+  &[size="lg"] {
+    --lc-avatar-group-size: 3.5rem;
+  }
+
+  &[size="xl"] {
+    --lc-avatar-group-size: 5rem;
+  }
+
+  & [part~=lc-avatar-group-group] {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  & slot > .lc-avatar {
+    --lc-avatar-shadow: 0 0 0 2px var(--lc-avatar-group-ring-color, var(--canvas-background, #f3f4f2));
+  }
+
+  & slot > .lc-avatar + .lc-avatar {
+    margin-left: var(--lc-avatar-group-overlap, -8px);
+  }
+
+  & slot > .lc-avatar[hidden] {
+    display: none;
+  }
+
+  & [part~=lc-avatar-group-more] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    box-sizing: border-box;
+    width: var(--lc-avatar-group-size, 2rem);
+    height: var(--lc-avatar-group-size, 2rem);
+    margin-left: var(--lc-avatar-group-overlap, -8px);
+    border-radius: 50%;
+    font-size: calc(var(--lc-avatar-group-size, 2rem) / 2.8);
+    font-weight: var(--font-semibold, 600);
+    line-height: 1;
+    color: var(--lc-avatar-group-more-color, var(--text-secondary, #3f443f));
+    background: var(--lc-avatar-group-more-background, var(--color-surface-dark, #e8eae6));
+    box-shadow: 0 0 0 2px var(--lc-avatar-group-ring-color, var(--canvas-background, #f3f4f2));
+  }
+}

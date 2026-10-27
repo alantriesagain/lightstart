@@ -1,0 +1,93 @@
+/*
+ * Every declaration sits on the host selector, which `:where()` holds at zero
+ * specificity; the attribute rules below only set variables. So a utility class
+ * on the call site always wins, and the 45 headings that carry one keep looking
+ * exactly as they did.
+ */
+:where(.lc-text, lc-text) {
+  display: var(--lc-text-display, inline);
+  font-size: var(--lc-text-size, inherit);
+  font-weight: var(--lc-text-font-weight, inherit);
+  font-family: var(--lc-text-font-family, inherit);
+  line-height: var(--lc-text-line-height, inherit);
+  letter-spacing: var(--lc-text-tracking, inherit);
+  text-transform: var(--lc-text-transform, none);
+  text-align: var(--lc-text-align, inherit);
+  color: var(--lc-text-color, inherit);
+
+  &[size="xs"] { --lc-text-size: var(--text-xs, 0.75rem); }
+  &[size="sm"] { --lc-text-size: var(--text-sm, 0.875rem); }
+  &[size="base"] { --lc-text-size: var(--text-base, 1rem); }
+  &[size="lg"] { --lc-text-size: var(--text-lg, 1.125rem); }
+  &[size="xl"] { --lc-text-size: var(--text-xl, 1.25rem); }
+  &[size="2xl"] { --lc-text-size: var(--text-2xl, 1.5rem); }
+  &[size="3xl"] { --lc-text-size: var(--text-3xl, 1.875rem); }
+  &[size="4xl"] { --lc-text-size: var(--text-4xl, 2.25rem); }
+
+  &[weight="normal"] { --lc-text-font-weight: var(--font-normal, 400); }
+  &[weight="medium"] { --lc-text-font-weight: var(--font-medium, 500); }
+  &[weight="semibold"] { --lc-text-font-weight: var(--font-semibold, 600); }
+  &[weight="bold"] { --lc-text-font-weight: var(--font-bold, 700); }
+  &[weight="black"] { --lc-text-font-weight: var(--font-black, 800); }
+
+  &[tracking="tight"] { --lc-text-tracking: -0.015em; }
+  &[tracking="normal"] { --lc-text-tracking: 0; }
+  &[tracking="wide"] { --lc-text-tracking: 0.025em; }
+  &[tracking="wider"] { --lc-text-tracking: 0.05em; }
+  &[tracking="widest"] { --lc-text-tracking: 0.1em; }
+
+  &[align="left"] { --lc-text-align: left; }
+  &[align="center"] { --lc-text-align: center; }
+  &[align="right"] { --lc-text-align: right; }
+
+  &[transform="capitalize"] { --lc-text-transform: capitalize; }
+  &[transform="uppercase"] { --lc-text-transform: uppercase; }
+  &[transform="lowercase"] { --lc-text-transform: lowercase; }
+  &[transform="none"] { --lc-text-transform: none; }
+
+  &[muted],
+  &[color="muted"] { --lc-text-color: var(--text-muted); }
+  &[color="primary"] { --lc-text-color: var(--color-primary); }
+  &[color="secondary"] { --lc-text-color: var(--color-secondary); }
+  &[color="success"] { --lc-text-color: var(--color-success); }
+  &[color="danger"] { --lc-text-color: var(--color-danger); }
+  &[color="warning"] { --lc-text-color: var(--color-warning); }
+  &[color="info"] { --lc-text-color: var(--color-info); }
+  &[color="inverse"] { --lc-text-color: var(--color-inverse); }
+
+  &[mono] { --lc-text-font-family: var(--font-mono, monospace); }
+
+  /* A heading has no element to be, so it takes the block and the type scale. */
+  &[level] {
+    --lc-text-display: block;
+    --lc-text-font-family: var(--font-heading, var(--font-family-base));
+    --lc-text-font-weight: var(--font-bold, 700);
+    --lc-text-line-height: var(--leading-tight, 1.2);
+  }
+
+  &[level="1"] { --lc-text-size: var(--text-4xl, 2.25rem); }
+  &[level="2"] { --lc-text-size: var(--text-3xl, 1.875rem); }
+  &[level="3"] { --lc-text-size: var(--text-2xl, 1.5rem); }
+  &[level="4"] { --lc-text-size: var(--text-xl, 1.25rem); }
+  &[level="5"] { --lc-text-size: var(--text-lg, 1.125rem); }
+  &[level="6"] { --lc-text-size: var(--text-base, 1rem); }
+
+  /*
+   * The section label. Its tracking is the whole look and it is far wider than
+   * the `tracking` scale goes, so a theme sets its own through these.
+   */
+  &[eyebrow] {
+    --lc-text-display: block;
+    --lc-text-size: var(--lc-text-eyebrow-size, var(--text-xs, 0.75rem));
+    --lc-text-font-weight: var(--lc-text-eyebrow-font-weight, var(--font-semibold, 600));
+    --lc-text-tracking: var(--lc-text-eyebrow-tracking, 0.1em);
+    --lc-text-color: var(--lc-text-eyebrow-color, var(--text-muted));
+    --lc-text-transform: uppercase;
+  }
+
+  /* Last, so an explicit size or colour beside `eyebrow` still means something. */
+  &[eyebrow][size="xs"] { --lc-text-size: var(--text-xs, 0.75rem); }
+  &[eyebrow][size="sm"] { --lc-text-size: var(--text-sm, 0.875rem); }
+  &[eyebrow][color="danger"] { --lc-text-color: var(--color-danger); }
+  &[eyebrow][color="primary"] { --lc-text-color: var(--color-primary); }
+}

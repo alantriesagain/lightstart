@@ -1,0 +1,84 @@
+:where(.lc-icon, lc-icon) {
+  display: inline-block;
+  vertical-align: middle;
+  width: var(--lc-icon-size, calc(var(--spacing, 0.25rem) * 4));
+  height: var(--lc-icon-size, calc(var(--spacing, 0.25rem) * 4));
+
+  --lc-icon-mask: initial;
+  --lc-icon-paint: transparent;
+  -webkit-mask-image: var(--lc-icon-mask);
+  mask-image: var(--lc-icon-mask);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background-color: var(--lc-icon-paint);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+
+  svg {
+    display: none;
+  }
+
+  &[color="primary"] {
+    color: var(--color-primary);
+  }
+
+  &[color="secondary"] {
+    color: var(--color-secondary);
+  }
+
+  &[color="success"] {
+    color: var(--color-success);
+  }
+
+  &[color="danger"] {
+    color: var(--color-danger);
+  }
+
+  &[color="warning"] {
+    color: var(--color-warning);
+  }
+
+  &[color="info"] {
+    color: var(--color-info);
+  }
+
+  &[color="inverse"] {
+    color: var(--color-inverse);
+  }
+
+  &[size="xs"] {
+    --lc-icon-size: calc(var(--spacing, 0.25rem) * 3);
+  }
+
+  &[size="sm"] {
+    --lc-icon-size: calc(var(--spacing, 0.25rem) * 4);
+  }
+
+  &[size="md"] {
+    --lc-icon-size: calc(var(--spacing, 0.25rem) * 6);
+  }
+
+  &[size="lg"] {
+    --lc-icon-size: calc(var(--spacing, 0.25rem) * 8);
+  }
+
+  &[size="xl"] {
+    --lc-icon-size: calc(var(--spacing, 0.25rem) * 10);
+  }
+
+  &[size="2xl"] {
+    --lc-icon-size: calc(var(--spacing, 0.25rem) * 14);
+  }
+
+  &[size="3xl"] {
+    --lc-icon-size: calc(var(--spacing, 0.25rem) * 20);
+  }
+
+  &[size="4xl"] {
+    --lc-icon-size: calc(var(--spacing, 0.25rem) * 30);
+  }
+}

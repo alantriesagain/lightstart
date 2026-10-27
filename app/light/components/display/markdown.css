@@ -1,0 +1,222 @@
+:where(.lc-markdown, lc-markdown) {
+  display: block;
+  font-size: var(--lc-markdown-size, var(--text-base, 1rem));
+  line-height: var(--lc-markdown-leading, var(--leading-relaxed, 1.75));
+  color: var(--lc-markdown-color, var(--text-color));
+
+  & > :first-child {
+    margin-top: 0;
+  }
+
+  & > :last-child {
+    margin-bottom: 0;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--lc-markdown-heading-font, var(--font-heading, inherit));
+    font-weight: var(--lc-markdown-heading-font-weight, var(--font-semibold, 600));
+    margin-top: var(--lc-markdown-heading-space, 1.5em);
+    margin-bottom: 0.5em;
+    line-height: var(--lc-markdown-heading-leading, 1.3);
+  }
+
+  .anchor {
+    margin-left: 0.35em;
+    color: var(--lc-markdown-anchor-color, var(--text-muted));
+    text-decoration: none;
+    opacity: 0;
+    font-weight: var(--font-normal, 400);
+  }
+
+  h1:hover .anchor,
+  h2:hover .anchor,
+  h3:hover .anchor,
+  h4:hover .anchor,
+  h5:hover .anchor,
+  h6:hover .anchor,
+  .anchor:focus-visible {
+    opacity: 1;
+  }
+
+  h1 {
+    font-size: var(--lc-markdown-h1-size, 1.75em);
+    padding-bottom: 0.2em;
+    border-bottom: var(--lc-markdown-heading-border, 1px solid var(--border-color));
+  }
+
+  h2 {
+    font-size: var(--lc-markdown-h2-size, 1.4em);
+    padding-bottom: 0.15em;
+    border-bottom: var(--lc-markdown-heading-border, 1px solid var(--border-color));
+  }
+
+  h3 {
+    font-size: var(--lc-markdown-h3-size, 1.2em);
+  }
+
+  h4 {
+    font-size: 1.05em;
+  }
+
+  h5 {
+    font-size: 1em;
+  }
+
+  h6 {
+    font-size: 0.9em;
+    color: var(--text-muted);
+  }
+
+  p {
+    margin-bottom: var(--lc-markdown-block-space, 1em);
+  }
+
+  a {
+    font-weight: var(--lc-markdown-link-font-weight, var(--font-medium, 500));
+    text-decoration: none;
+    color: var(--lc-markdown-link-color, var(--color-primary));
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  ul,
+  ol {
+    margin: 0 0 var(--lc-markdown-block-space, 1em);
+    padding-left: 2em;
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ul ul {
+    list-style-type: circle;
+  }
+
+  ul ul ul {
+    list-style-type: square;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  li {
+    margin-bottom: 0.25em;
+  }
+
+  li > ul,
+  li > ol {
+    margin-top: 0.25em;
+    margin-bottom: 0;
+  }
+
+  li:has(> input[type="checkbox"]) {
+    list-style: none;
+    margin-left: -1.5em;
+  }
+
+  input[type="checkbox"] {
+    margin-right: 0.5em;
+    accent-color: var(--color-primary);
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--border-color);
+    margin-block: 1.5em;
+  }
+
+  blockquote {
+    margin: 0 0 var(--lc-markdown-block-space, 1em);
+    padding: 0.25em 1em;
+    border-left: var(--lc-markdown-blockquote-border-width, 3px) solid
+      var(--lc-markdown-blockquote-border-color, var(--color-primary));
+    color: var(--lc-markdown-blockquote-color, var(--text-muted));
+
+    & > :last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  code {
+    background-color: var(--lc-markdown-code-background, var(--color-surface-light, rgba(255, 255, 255, 0.06)));
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.875em;
+  }
+
+  pre {
+    background-color: var(--lc-markdown-pre-background, var(--color-surface-dark, #1e1e1e));
+    border: 1px solid var(--border-color);
+    padding: 1em 1.25em;
+    margin-block: 1em;
+    border-radius: 6px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+
+    code {
+      background-color: transparent;
+      padding: 0;
+      margin: 0;
+      font-size: 0.875em;
+      line-height: 1.6;
+    }
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0 1.5em;
+    font-size: 0.9em;
+  }
+
+  th,
+  td {
+    border: 1px solid var(--border-color);
+    padding: 0.6em 1em;
+    text-align: left;
+  }
+
+  thead th {
+    font-weight: 600;
+    background-color: var(--color-surface-light, rgba(255, 255, 255, 0.04));
+  }
+
+  tbody tr:nth-child(even) {
+    background-color: var(--color-surface-light, rgba(255, 255, 255, 0.02));
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: 6px;
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  del {
+    color: var(--text-muted);
+  }
+
+  .wiki-link {
+    color: var(--color-primary);
+    cursor: pointer;
+    border-bottom: 1px dashed var(--color-primary);
+    text-decoration: none;
+    padding: 0 2px;
+
+    &:hover {
+      border-bottom-style: solid;
+    }
+  }
+}

@@ -1,0 +1,142 @@
+:where(.lc-month-picker, lc-month-picker) {
+  display: block;
+
+  .month-picker-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: var(--lc-month-picker-head-gap, 0.5rem);
+  }
+
+  .month-picker-title {
+    flex: 1 1 auto;
+    text-align: center;
+    font-size: var(--lc-month-picker-title-font-size, 0.875rem);
+    font-weight: var(--lc-month-picker-title-font-weight, 800);
+    color: var(--lc-month-picker-title-color, var(--text-color, inherit));
+    text-transform: capitalize;
+  }
+
+  .month-picker-nav {
+    appearance: none;
+    margin: 0;
+    border: 0;
+    width: var(--lc-month-picker-nav-size, 2rem);
+    height: var(--lc-month-picker-nav-size, 2rem);
+    border-radius: 9999px;
+    background: var(--lc-month-picker-nav-background, transparent);
+    color: var(--lc-month-picker-nav-color, var(--text-color, inherit));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .month-picker-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    margin-bottom: 0.125rem;
+  }
+
+  .month-picker-weekdays > span {
+    text-align: center;
+    font-size: var(--lc-month-picker-weekday-font-size, 0.625rem);
+    font-weight: var(--lc-month-picker-weekday-font-weight, 700);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--lc-month-picker-weekday-color, var(--text-muted, inherit));
+    line-height: 1.5rem;
+  }
+
+  .month-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    row-gap: var(--lc-month-picker-row-gap, 0.125rem);
+  }
+
+  .month-picker-day {
+    position: relative;
+    appearance: none;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    height: var(--lc-month-picker-day-height, 2.375rem);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.0625rem;
+    background: transparent;
+    color: var(--lc-month-picker-color, var(--text-color, inherit));
+    font: inherit;
+    font-size: var(--lc-month-picker-font-size, 0.8125rem);
+    font-weight: var(--lc-month-picker-font-weight, 600);
+    line-height: 1;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .month-picker-day.is-outside {
+    color: var(--lc-month-picker-outside-color, var(--text-muted, inherit));
+    opacity: var(--lc-month-picker-outside-opacity, 0.45);
+  }
+
+  .month-picker-dot {
+    width: var(--lc-month-picker-dot-size, 4px);
+    height: var(--lc-month-picker-dot-size, 4px);
+    border-radius: 50%;
+    background: var(--lc-month-picker-dot-color, var(--color-primary, currentColor));
+    opacity: 0;
+  }
+
+  .has-dot .month-picker-dot {
+    opacity: 1;
+  }
+
+  .month-picker-day.is-today {
+    box-shadow: inset 0 0 0 2px var(--lc-month-picker-today-color, var(--color-primary, currentColor));
+    border-radius: var(--lc-month-picker-day-border-radius, 0.75rem);
+  }
+
+  .month-picker-day.is-inside {
+    background: var(--lc-month-picker-range-background, var(--color-primary-light, rgba(127, 127, 127, 0.2)));
+    color: var(--lc-month-picker-range-color, var(--text-color, inherit));
+    opacity: 1;
+  }
+
+  .month-picker-day.is-edge {
+    background: var(--lc-month-picker-selected-background, var(--color-primary));
+    color: var(--lc-month-picker-selected-color, var(--color-on-primary, #ffffff));
+    border-radius: var(--lc-month-picker-day-border-radius, 0.75rem);
+    font-weight: var(--lc-month-picker-selected-font-weight, 800);
+    box-shadow: none;
+    opacity: 1;
+  }
+
+  .month-picker-day.is-edge .month-picker-dot {
+    background: currentColor;
+  }
+
+  .month-picker-day:hover:not(.is-edge):not(:disabled) {
+    background: var(--lc-month-picker-hover-background, var(--color-surface-lighter, rgba(127, 127, 127, 0.12)));
+    border-radius: var(--lc-month-picker-day-border-radius, 0.75rem);
+  }
+
+  .month-picker-day:focus-visible {
+    outline: 2px solid var(--lc-month-picker-selected-background, var(--color-primary));
+    outline-offset: -2px;
+    border-radius: var(--lc-month-picker-day-border-radius, 0.75rem);
+  }
+
+  .month-picker-day:disabled {
+    cursor: not-allowed;
+    opacity: var(--lc-month-picker-disabled-opacity, 0.3);
+  }
+
+  .month-picker-grid[aria-disabled="true"] {
+    opacity: 0.5;
+  }
+}

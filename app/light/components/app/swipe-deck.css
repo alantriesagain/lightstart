@@ -1,0 +1,125 @@
+:where(.lc-swipe-deck, lc-swipe-deck) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lc-swipe-deck-gap, 0.75rem);
+  height: var(--lc-swipe-deck-height, 100%);
+  min-height: 0;
+  outline: none;
+
+  &[dragging] {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  & > [part~=lc-swipe-deck-stage] {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    border-radius: var(--lc-swipe-deck-border-radius, 1.5rem);
+    background-size: cover;
+    background-position: center;
+  }
+
+  & [part~=lc-swipe-deck-card] {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: var(--lc-swipe-deck-border-radius, 1.5rem);
+    background: var(--lc-swipe-deck-card-background, var(--color-surface, #fff));
+    border: var(--lc-swipe-deck-card-border-width, 0) solid var(--lc-swipe-deck-card-border-color, transparent);
+    box-shadow: var(--lc-swipe-deck-card-shadow, 0 16px 40px rgba(0, 0, 0, 0.16));
+    transform: translateY(calc(var(--lc-swipe-deck-depth, 0) * var(--lc-swipe-deck-peek-offset, 12px)))
+      scale(calc(1 - var(--lc-swipe-deck-depth, 0) * var(--lc-swipe-deck-peek-scale, 0.04)));
+    transform-origin: 50% 100%;
+    transition: transform var(--lc-swipe-deck-spring-duration, 220ms) ease, opacity var(--lc-swipe-deck-throw-duration, 320ms) ease;
+    touch-action: none;
+    will-change: transform;
+    cursor: grab;
+  }
+
+  &[dragging] [part~=lc-swipe-deck-card][data-depth="0"] {
+    transition: none;
+    cursor: grabbing;
+  }
+
+  &[data-throw] [part~=lc-swipe-deck-card][data-depth="0"] {
+    transition: transform var(--lc-swipe-deck-throw-duration, 320ms) cubic-bezier(0.2, 0.7, 0.3, 1),
+      opacity var(--lc-swipe-deck-throw-duration, 320ms) ease;
+  }
+
+  & [part~=lc-swipe-deck-tint] {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 80ms linear;
+  }
+
+  & [part~=lc-swipe-deck-tint][data-tint="save"] {
+    background: var(--lc-swipe-deck-tint-save, rgba(249, 115, 22, 0.35));
+  }
+
+  & [part~=lc-swipe-deck-tint][data-tint="skip"] {
+    background: var(--lc-swipe-deck-tint-skip, rgba(20, 26, 33, 0.35));
+  }
+
+  &[data-dir="right"] [part~=lc-swipe-deck-tint][data-tint="save"],
+  &[data-dir="left"] [part~=lc-swipe-deck-tint][data-tint="skip"] {
+    opacity: var(--lc-swipe-deck-p, 0);
+  }
+
+  & > [part~=lc-swipe-deck-footer] {
+    flex: 0 0 auto;
+  }
+
+  & > [part~=lc-swipe-deck-actions] {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--lc-swipe-deck-action-gap, 1.5rem);
+  }
+
+  & [part~=lc-swipe-deck-action] {
+    display: grid;
+    place-items: center;
+    width: var(--lc-swipe-deck-action-size, 3.25rem);
+    height: var(--lc-swipe-deck-action-size, 3.25rem);
+    border-radius: 9999px;
+    border: 1px solid var(--lc-swipe-deck-action-border-color, var(--border-control, rgba(0, 0, 0, 0.16)));
+    background: var(--lc-swipe-deck-action-background, var(--color-surface, #fff));
+    box-shadow: var(--lc-swipe-deck-action-shadow, var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.08)));
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+  }
+
+  & [part~=lc-swipe-deck-skip] {
+    color: var(--lc-swipe-deck-skip-color, var(--text-muted, #6b7280));
+  }
+
+  & [part~=lc-swipe-deck-save] {
+    color: var(--lc-swipe-deck-save-color, var(--color-secondary, #f97316));
+  }
+
+  & [part~=lc-swipe-deck-counter] {
+    min-width: 4rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--lc-swipe-deck-counter-color, var(--text-muted, #6b7280));
+  }
+
+  & > [part~=lc-swipe-deck-empty] {
+    flex: 1 1 auto;
+    display: grid;
+    place-items: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    & [part~=lc-swipe-deck-card] {
+      transition: none;
+    }
+  }
+}

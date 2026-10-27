@@ -1,0 +1,98 @@
+lc-form form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--lc-form-gap, 1.25rem);
+}
+
+@media (min-width: 640px) {
+  lc-form[layout="grid"] form {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  lc-form[layout="grid"] .form-field:has(lc-textarea) {
+    grid-column: 1 / -1;
+  }
+}
+
+:where(.lc-form, lc-form) {
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lc-form-field-gap, 0.5rem);
+
+    &.has-error {
+      lc-input,
+      lc-select,
+      lc-textarea {
+        --lc-input-border-color: var(--lc-form-error-color, #ef4444);
+      }
+    }
+  }
+
+  .form-error {
+    color: var(--lc-form-error-color, #ef4444);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+
+  .form-hint {
+    color: var(--lc-form-hint-color, var(--text-muted, #6b7280));
+    font-size: 0.75rem;
+  }
+  .lc-form-group,
+  .lc-form-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lc-form-field-gap, 0.5rem);
+    border: var(--border-width, 1px) solid var(--lc-form-group-border-color, var(--border-color, #d4d4d8));
+    border-radius: var(--radius-md, 0.375rem);
+    padding: var(--spacing-md, 0.75rem);
+    min-inline-size: 0;
+
+    > legend {
+      padding-inline: var(--spacing-xs, 0.25rem);
+      font-size: 0.75rem;
+      font-weight: var(--font-bold, 700);
+      color: var(--lc-form-group-legend, var(--text-muted, #6b7280));
+    }
+  }
+
+  .lc-form-group-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lc-form-field-gap, 0.5rem);
+    min-inline-size: 0;
+  }
+
+  .lc-form-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm, 0.5rem);
+  }
+
+  .lc-form-list-fields {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--lc-form-field-gap, 0.5rem);
+    min-inline-size: 0;
+  }
+
+  .lc-form-list-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.125rem;
+  }
+
+  .lc-form-list-add {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm, 0.5rem);
+  }
+
+  .lc-form-list-empty {
+    margin: 0;
+    color: var(--lc-form-hint-color, var(--text-muted, #6b7280));
+    font-size: 0.75rem;
+  }
+}

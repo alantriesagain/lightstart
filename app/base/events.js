@@ -1,0 +1,11 @@
+export const BOOT_EXTENSIONS = "boot:extensions";
+export const APP_UPDATE_AVAILABLE = "app:update-available";
+export const CONTENT_SYNCED = "content:synced";
+export const CONTENT_SYNCING = "content:syncing";
+export const CONTENT_UPDATED = "content:updated";
+export const FS_RESOURCE_NOT_FOUND = "fs:resource-not-found";
+export const SW_DISABLED = "sw:disabled";
+export const SW_INIT_ERROR = "sw:init-error";
+export const ROUTER_CHANGED = "router:changed";
+export const SW_UPDATE_AVAILABLE = "sw:update-available";
+export const UPDATE_PENDING = "update:pending";

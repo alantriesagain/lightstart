@@ -1,0 +1,174 @@
+:where(.lc-pricing-card, lc-pricing-card) {
+  display: block;
+  height: 100%;
+
+  .pricing-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-2xl);
+    border-radius: var(--radius-panel);
+    background: var(--color-surface);
+    border: 1px solid
+      color-mix(in srgb, var(--text-color) 8%, transparent);
+    box-shadow: var(--shadow-card);
+    transition: all 0.25s ease;
+    height: 100%;
+    position: relative;
+
+    &:hover {
+      border-color: color-mix(
+        in srgb,
+        var(--text-color) 16%,
+        transparent
+      );
+      box-shadow: var(--shadow-card-hover);
+    }
+  }
+
+  .pricing-card-highlighted {
+    background: var(--color-surface-inverse);
+    color: var(--color-surface);
+    border-color: var(--color-surface-inverse);
+    box-shadow: var(--shadow-lg);
+
+    &:hover {
+      border-color: var(--color-surface-inverse);
+      box-shadow: var(--shadow-xl);
+    }
+  }
+
+  .pricing-card-badge {
+    position: absolute;
+    top: calc(var(--spacing-xl) * -0.5);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: var(--text-eyebrow);
+    font-weight: var(--font-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px var(--spacing-md);
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: white;
+  }
+
+  .pricing-card-name {
+    font-size: 1.25rem;
+    font-weight: var(--font-bold);
+    letter-spacing: -0.01em;
+  }
+
+  .pricing-card-standard .pricing-card-name {
+    color: var(--text-color);
+  }
+
+  .pricing-card-desc {
+    font-size: var(--text-caption);
+    line-height: 1.5;
+  }
+
+  .pricing-card-standard .pricing-card-desc {
+    color: var(--text-secondary);
+  }
+
+  .pricing-card-highlighted .pricing-card-desc {
+    color: color-mix(in srgb, var(--color-surface) 65%, transparent);
+  }
+
+  .pricing-card-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .pricing-card-price {
+    font-size: 2.25rem;
+    font-weight: var(--font-black);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .pricing-card-standard .pricing-card-price {
+    color: var(--text-color);
+  }
+
+  .pricing-card-period {
+    font-size: var(--text-caption);
+    font-weight: var(--font-medium);
+  }
+
+  .pricing-card-standard .pricing-card-period {
+    color: var(--text-secondary);
+  }
+
+  .pricing-card-highlighted .pricing-card-period {
+    color: color-mix(in srgb, var(--color-surface) 65%, transparent);
+  }
+
+  .pricing-card-features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin: var(--spacing-md) 0;
+    flex: 1;
+  }
+
+  .pricing-card-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    font-size: var(--text-body);
+    line-height: 1.5;
+  }
+
+  .pricing-card-standard .pricing-card-feature {
+    color: var(--text-color);
+  }
+
+  .pricing-card-feature-icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+  }
+
+  .pricing-card-standard .pricing-card-feature-icon {
+    color: var(--color-success);
+  }
+
+  .pricing-card-highlighted .pricing-card-feature-icon {
+    color: color-mix(in srgb, var(--color-surface) 85%, transparent);
+  }
+
+  .pricing-card-cta {
+    display: block;
+    text-align: center;
+    font-size: var(--text-body);
+    font-weight: var(--font-bold);
+    border-radius: var(--radius-full);
+    padding: var(--spacing-md) var(--spacing-xl);
+    margin-top: var(--spacing-md);
+    transition: all 0.2s ease;
+  }
+
+  .pricing-card-standard .pricing-card-cta {
+    background: var(--color-surface-inverse);
+    color: var(--color-surface);
+
+    &:hover {
+      background: black;
+    }
+  }
+
+  .pricing-card-highlighted .pricing-card-cta {
+    background: var(--color-surface);
+    color: var(--color-surface-inverse);
+
+    &:hover {
+      background: color-mix(in srgb, var(--color-surface) 92%, black);
+    }
+  }
+}

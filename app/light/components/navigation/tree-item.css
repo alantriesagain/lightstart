@@ -1,0 +1,70 @@
+:where(.lc-tree-item, lc-tree-item) {
+  display: block;
+
+  & [part~=lc-tree-item-item-content] {
+    display: flex;
+    align-items: center;
+    gap: var(--lc-tree-item-gap, 0.5rem);
+    padding: var(--lc-tree-item-padding, 0.25rem 0.5rem);
+    cursor: pointer;
+    border-radius: var(--lc-tree-item-border-radius, var(--radius-selector, 0.25rem));
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: var(--lc-tree-item-hover-background, var(--color-surface-dark, rgba(255, 255, 255, 0.05)));
+    }
+  }
+
+  &[active] [part~=lc-tree-item-item-content] {
+    background: var(--lc-tree-item-active-background, color-mix(in srgb, var(--color-primary) 20%, transparent));
+    color: var(--lc-tree-item-active-color, var(--color-primary));
+    margin-left: -1rem;
+    padding-left: 1.5rem;
+    border-radius: 0;
+  }
+
+  & [part~=lc-tree-item-children] {
+    padding-left: var(--lc-tree-item-indent, 1rem);
+  }
+
+  &:not([expanded]) [part~=lc-tree-item-children] {
+    display: none;
+  }
+
+  .actions {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .label {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--lc-tree-item-font-size, 0.875rem);
+  }
+
+  .modified {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lc-tree-item-marker-color, var(--color-primary));
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  lc-icon {
+    width: var(--lc-tree-item-icon-size, 16px);
+    height: var(--lc-tree-item-icon-size, 16px);
+    flex-shrink: 0;
+    color: var(--lc-tree-item-icon-color, inherit);
+  }
+
+  .glyph {
+    width: var(--lc-tree-item-icon-size, 16px);
+    text-align: center;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+}

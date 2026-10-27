@@ -1,0 +1,49 @@
+:where(.lc-label, lc-label) {
+  display: block;
+
+  .label {
+    display: block;
+    font-size: var(--lc-label-font-size, var(--text-sm, 0.875rem));
+    font-weight: var(--lc-label-font-weight, var(--control-weight, var(--font-semibold, 600)));
+    margin-bottom: var(--lc-label-margin, 0.5rem);
+    color: var(--lc-label-color, var(--text-color, #1a1a1a));
+    letter-spacing: var(--lc-label-letter-spacing, var(--control-tracking, 0));
+    text-transform: var(--lc-label-text-transform, var(--control-transform, none));
+    line-height: var(--lc-label-line-height, 1.4);
+    cursor: pointer;
+  }
+
+  .label-required {
+    color: var(--color-danger, #ef4444);
+    margin-left: 0.25rem;
+  }
+
+  &[inline] {
+    display: inline;
+
+    .label {
+      display: inline;
+      margin-bottom: 0;
+    }
+  }
+
+  &[size="xs"] {
+    --lc-label-font-size: var(--text-xs, 0.75rem);
+  }
+
+  &[size="sm"] {
+    --lc-label-font-size: var(--text-sm, 0.875rem);
+  }
+
+  &[size="md"] {
+    --lc-label-font-size: var(--text-base, 1rem);
+  }
+
+  &[size="lg"] {
+    --lc-label-font-size: var(--text-lg, 1.125rem);
+  }
+
+  &[size="xl"] {
+    --lc-label-font-size: var(--text-xl, 1.25rem);
+  }
+}

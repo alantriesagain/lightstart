@@ -1,0 +1,137 @@
+:where(.lc-accordion, lc-accordion) {
+  display: flex;
+  width: 100%;
+
+  & [part~=lc-accordion-container] {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: var(--lc-accordion-gap, 0);
+    background: var(--lc-accordion-background, transparent);
+    border: var(--lc-accordion-border-width, var(--border-width, 1px)) solid var(--lc-accordion-border-color, var(--border-color, transparent));
+    border-radius: var(--lc-accordion-border-radius, var(--radius-md, 0.375rem));
+    overflow: hidden;
+  }
+
+  /* Headers (odd children = 1st, 3rd, 5th...) */
+  & slot > *:nth-child(odd) {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    user-select: none;
+    padding: var(--lc-accordion-padding, 0.5rem 0.75rem);
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: var(--font-semibold, 600);
+    color: var(--lc-accordion-header-color, inherit);
+    background: var(--lc-accordion-header-background, transparent);
+    border: none;
+    border-top: var(--border-width, 1px) solid var(--lc-accordion-header-border-top, var(--color-surface-dark));
+    transition: var(--lc-accordion-transition, background-color 0.15s ease, color 0.15s ease);
+
+    &:hover {
+      background: var(--lc-accordion-header-hover-background, var(--color-surface-dark));
+      color: var(--lc-accordion-header-hover-color, inherit);
+    }
+
+    &[active] {
+      background: var(--lc-accordion-header-active-background, var(--color-surface-darker));
+      color: var(--lc-accordion-header-active-color, inherit);
+    }
+  }
+
+  & slot > *:nth-child(1) {
+    border-top: none;
+  }
+
+  /* Panels (even children = 2nd, 4th, 6th...) */
+  & slot > *:nth-child(even) {
+    background: var(--lc-accordion-panel-background, transparent);
+    color: var(--lc-accordion-panel-color, inherit);
+    font-size: var(--text-sm, 0.875rem);
+    line-height: var(--leading-relaxed, 1.6);
+    transition: var(--lc-accordion-transition, background-color 0.15s ease, color 0.15s ease);
+
+    &[hide] {
+      display: none;
+    }
+  }
+
+  /* Bordered variant */
+  &[variant="bordered"] {
+    --lc-accordion-border-color: var(--color-surface-dark);
+    --lc-accordion-header-border-top: var(--color-surface-dark);
+    --lc-accordion-header-hover-background: var(--color-surface-dark);
+    --lc-accordion-header-active-background: var(--color-surface-darker);
+
+    & [part~=lc-accordion-container] {
+      border-width: 1px;
+    }
+  }
+
+  /* Filled variant */
+  &[variant="filled"] {
+    --lc-accordion-background: var(--color-surface-darker);
+    --lc-accordion-border-color: transparent;
+    --lc-accordion-header-border-top: var(--color-surface-dark);
+    --lc-accordion-header-background: var(--color-surface-darker);
+    --lc-accordion-header-hover-background: var(--color-surface-dark);
+    --lc-accordion-header-active-background: var(--color-surface-dark);
+    --lc-accordion-panel-background: var(--color-surface-darker);
+
+    & slot > *:nth-child(odd)[active] {
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  /* Flush variant: minimal, no borders/padding around container */
+  &[variant="flush"] {
+    --lc-accordion-background: transparent;
+    --lc-accordion-border-color: transparent;
+    --lc-accordion-header-border-top: var(--color-surface-dark);
+    --lc-accordion-header-background: transparent;
+    --lc-accordion-header-hover-background: var(--color-surface-dark);
+    --lc-accordion-header-active-background: var(--color-surface-darker);
+    --lc-accordion-panel-background: transparent;
+
+    & [part~=lc-accordion-container] {
+      border: none;
+      border-radius: 0;
+    }
+
+    & slot > *:nth-child(1) {
+      border-top: none;
+    }
+  }
+
+  /* Separated variant */
+  &[variant="separated"] {
+    --lc-accordion-gap: var(--spacing-xs, 0.25rem);
+    --lc-accordion-border-color: transparent;
+    --lc-accordion-header-border-top: transparent;
+
+    & [part~=lc-accordion-container] {
+      border: none;
+    }
+
+    & slot > *:nth-child(odd) {
+      border: var(--border-width, 1px) solid var(--color-surface-dark);
+      border-radius: var(--lc-accordion-border-radius, var(--radius-md, 0.375rem));
+    }
+
+    & slot > *:nth-child(even) {
+      border: var(--border-width, 1px) solid var(--color-surface-dark);
+      border-top: none;
+      border-radius: 0 0 var(--lc-accordion-border-radius, var(--radius-md, 0.375rem)) var(--lc-accordion-border-radius, var(--radius-md, 0.375rem));
+    }
+  }
+
+  &:not([rounded]) {
+    --lc-accordion-border-radius: 0;
+
+    & [part~=lc-accordion-container] {
+      border-radius: 0;
+    }
+  }
+}

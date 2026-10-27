@@ -1,0 +1,228 @@
+:where(.lc-badge, lc-badge) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  width: fit-content;
+  box-sizing: border-box;
+
+  font-weight: var(--lc-badge-font-weight, var(--control-weight, var(--font-semibold, 600)));
+  font-size: var(--lc-badge-font-size, var(--text-xs, 0.75rem));
+  line-height: var(--lc-badge-line-height, 1rem);
+  text-transform: var(--lc-badge-text-transform, var(--control-transform, none));
+  padding: var(--lc-badge-padding-y, 0.15rem)
+    var(--lc-badge-padding-x, 0.5rem);
+
+  border-radius: var(--lc-badge-border-radius, var(--radius-selector, var(--radius-md, 0.375rem)));
+
+  border: var(--lc-badge-border-width, 0) solid
+    var(--lc-badge-border-color, var(--lc-badge-variant-border-color, transparent));
+
+  /*
+   * The variant blocks below sit on the host, so a theme setting
+   * `--lc-badge-background` on :root loses to them for every badge that has a
+   * variant, which is all of them, since it defaults to "default". They set a
+   * fallback instead, and an explicit value wins.
+   */
+  background-color: var(--lc-badge-background, var(--lc-badge-variant-background));
+  color: var(--lc-badge-color, var(--lc-badge-variant-color));
+
+  &[variant="default"] {
+    --lc-badge-variant-background: var(--lc-badge-default-background, var(--color-surface-dark));
+    --lc-badge-variant-color: var(--lc-badge-default-color, var(--text-color));
+    --lc-badge-variant-border-color: var(--lc-badge-default-border-color, var(--color-surface-lighter));
+  }
+
+  /* The app's accent, the same idea as lc-button's primary. */
+  &[primary],
+  &[variant="primary"] {
+    --lc-badge-variant-background: var(--lc-badge-primary-background, var(--color-primary));
+    --lc-badge-variant-color: var(--lc-badge-primary-color, var(--color-on-primary, #ffffff));
+    --lc-badge-variant-border-color: var(--lc-badge-primary-border-color, var(--color-primary-light));
+  }
+
+  &[secondary],
+  &[variant="secondary"] {
+    --lc-badge-variant-background: var(--lc-badge-secondary-background, var(--color-secondary));
+    --lc-badge-variant-color: var(--lc-badge-secondary-color, var(--color-on-secondary, #ffffff));
+    --lc-badge-variant-border-color: var(--lc-badge-secondary-border-color, var(--color-secondary-light));
+  }
+
+  &[success],
+  &[variant="success"] {
+    --lc-badge-variant-background: var(--lc-badge-success-background, var(--color-success));
+    --lc-badge-variant-color: var(--lc-badge-success-color, var(--color-inverse));
+    --lc-badge-variant-border-color: var(--lc-badge-success-border-color, var(--color-success-light));
+  }
+
+  &[danger],
+  &[variant="danger"] {
+    --lc-badge-variant-background: var(--lc-badge-danger-background, var(--color-danger));
+    --lc-badge-variant-color: var(--lc-badge-danger-color, var(--color-inverse));
+    --lc-badge-variant-border-color: var(--lc-badge-danger-border-color, var(--color-danger-light));
+  }
+
+  &[warning],
+  &[variant="warning"] {
+    --lc-badge-variant-background: var(--lc-badge-warning-background, var(--color-warning));
+    --lc-badge-variant-color: var(--lc-badge-warning-color, var(--color-inverse));
+    --lc-badge-variant-border-color: var(--lc-badge-warning-border-color, var(--color-warning-light));
+  }
+
+  &[info],
+  &[variant="info"] {
+    --lc-badge-variant-background: var(--lc-badge-info-background, var(--color-info));
+    --lc-badge-variant-color: var(--lc-badge-info-color, var(--color-inverse));
+    --lc-badge-variant-border-color: var(--lc-badge-info-border-color, var(--color-info-light));
+  }
+
+  &[outline] {
+    background-color: transparent;
+
+    &[variant="default"] {
+      --lc-badge-border-color: var(--color-surface-dark);
+      --lc-badge-color: var(--color-surface-darker);
+    }
+
+    &[variant="success"] {
+      --lc-badge-border-color: var(--color-success-dark);
+      --lc-badge-color: var(--color-success-dark);
+    }
+
+    &[variant="danger"] {
+      --lc-badge-border-color: var(--color-danger-dark);
+      --lc-badge-color: var(--color-danger-dark);
+    }
+
+    &[variant="warning"] {
+      --lc-badge-border-color: var(--color-warning-dark);
+      --lc-badge-color: var(--color-warning-dark);
+    }
+
+    &[variant="info"] {
+      --lc-badge-border-color: var(--color-info-dark);
+      --lc-badge-color: var(--color-info-dark);
+    }
+  }
+
+  &[soft] {
+    border: 1px solid transparent;
+
+    &[variant="default"] {
+      background-color: var(--lc-badge-soft-background, color-mix(in srgb, var(--text-color, #101210), transparent 92%));
+      color: var(--lc-badge-soft-color, var(--text-secondary, #3f443f));
+    }
+
+    &[primary],
+    &[variant="primary"] {
+      background-color: var(--lc-badge-soft-background, color-mix(in srgb, var(--color-primary, #101210), transparent 88%));
+      color: var(--lc-badge-soft-color, var(--color-primary, #101210));
+    }
+
+    &[variant="success"] {
+      background-color: color-mix(
+        in srgb,
+        var(--color-success),
+        transparent 85%
+      );
+      color: var(--color-success-darker);
+    }
+
+    &[variant="danger"] {
+      background-color: color-mix(in srgb, var(--color-danger), transparent 85%);
+      color: var(--color-danger-darker);
+    }
+
+    &[variant="warning"] {
+      background-color: color-mix(
+        in srgb,
+        var(--color-warning),
+        transparent 85%
+      );
+      color: var(--color-warning-darker);
+    }
+
+    &[variant="info"] {
+      background-color: color-mix(in srgb, var(--color-info), transparent 85%);
+      color: var(--color-info-darker);
+    }
+  }
+
+  &[size="xs"] {
+    --lc-badge-padding-y: 0.0625rem;
+    --lc-badge-padding-x: 0.25rem;
+    --lc-badge-font-size: var(--text-xs, 0.65rem);
+  }
+
+  &[size="sm"] {
+    --lc-badge-padding-y: 0.1rem;
+    --lc-badge-padding-x: 0.375rem;
+    --lc-badge-font-size: var(--text-xs, 0.7rem);
+  }
+
+  &[size="md"] {
+    --lc-badge-padding-y: 0.15rem;
+    --lc-badge-padding-x: 0.5rem;
+    --lc-badge-font-size: var(--text-xs, 0.75rem);
+  }
+
+  &[size="lg"] {
+    --lc-badge-padding-y: 0.25rem;
+    --lc-badge-padding-x: 0.75rem;
+    --lc-badge-font-size: var(--text-sm, 0.875rem);
+  }
+
+  /* After the size blocks: both are `&[attr]`, so the later one wins the padding. */
+  &[dot]:not(:empty) {
+    gap: var(--lc-badge-dot-gap, 0.375rem);
+
+    &::before {
+      content: "";
+      flex: none;
+      width: var(--lc-badge-dot-size, 6px);
+      height: var(--lc-badge-dot-size, 6px);
+      border-radius: 999px;
+      background-color: var(--lc-badge-dot-color, currentColor);
+    }
+  }
+
+  &[dot]:empty {
+    width: var(--lc-badge-dot-size, 0.5rem);
+    height: var(--lc-badge-dot-size, 0.5rem);
+    background-color: var(--lc-badge-dot-color, var(--lc-badge-background, var(--lc-badge-variant-background)));
+    padding: 0;
+    border-radius: 999px;
+    font-size: 0;
+    line-height: 0;
+  }
+
+  /*
+   * Positioned against the nearest positioned ancestor, which is the host's own
+   * business: a bell that does not set `position: relative` pins its dot to the
+   * page instead of to itself.
+   */
+  &[corner] {
+    position: absolute;
+    top: var(--lc-badge-corner-top, -0.125rem);
+    right: var(--lc-badge-corner-right, -0.125rem);
+    box-shadow: 0 0 0 var(--lc-badge-ring-width, 2px)
+      var(--lc-badge-ring-color, var(--color-surface, #ffffff));
+  }
+
+  &[corner][place="bottom-right"] {
+    top: auto;
+    bottom: var(--lc-badge-corner-bottom, -0.125rem);
+  }
+
+  &[corner][place="bottom-left"] {
+    top: auto;
+    right: auto;
+    bottom: var(--lc-badge-corner-bottom, -0.125rem);
+    left: var(--lc-badge-corner-left, -0.125rem);
+  }
+
+  &[corner][place="top-left"] {
+    right: auto;
+    left: var(--lc-badge-corner-left, -0.125rem);
+  }
+}

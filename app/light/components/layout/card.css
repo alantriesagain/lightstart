@@ -1,0 +1,304 @@
+/**
+ * A card pads its own parts, so the host must not pad as well. lc-card extends
+ * lc-container, whose host padding is set at the same specificity as anything
+ * declared inside :where(): zeroing the container's variables loses to
+ * whichever stylesheet happens to load last, which silently doubled the
+ * padding and shrank every card's content box.
+ */
+lc-card[padding],
+.lc-card[padding] {
+  padding: 0;
+}
+
+:where(.lc-card, lc-card) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--lc-card-color, inherit);
+  --lc-container-background: var(--lc-card-background, var(--color-surface));
+  --lc-container-border-color: var(--lc-card-border-color, var(--border-color));
+  --lc-container-border-width: var(--lc-card-border-width, var(--border-width, 1px));
+  --lc-container-border-radius: var(
+    --lc-card-border-radius,
+    var(--radius-box, var(--radius-md, 0.75rem))
+  );
+  box-shadow: var(--lc-card-shadow, var(--shadow-box, none));
+
+  & [part~=lc-card-body] {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  & [part~=lc-card-header-row] {
+    display: flex;
+    align-items: center;
+    gap: var(--lc-card-header-gap, 0.5rem);
+    padding: var(--lc-card-header-padding, var(--lc-card-sm-padding, 1rem));
+    padding-bottom: 0;
+  }
+
+  & [part~=lc-card-icon] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--lc-card-icon-border-radius, 6px);
+    background: var(--lc-card-icon-background, var(--color-surface-light, #f8f9f7));
+    color: var(--lc-card-icon-color, var(--text-secondary, #3f443f));
+  }
+
+  & [part~=lc-card-heading] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--lc-card-heading-font-size, 14px);
+    font-weight: var(--lc-card-heading-font-weight, 600);
+    color: var(--lc-card-heading-color, var(--text-color, #101210));
+  }
+
+  & [part~=lc-card-header-spacer] {
+    flex: 1;
+  }
+
+  & [part~=lc-card-actions] {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: none;
+  }
+
+  > [slot="header"] {
+    margin: 0;
+    display: flex;
+    padding: var(--lc-card-header-padding, var(--lc-card-sm-padding, 1rem));
+    border-bottom-width: var(--lc-card-header-border-width, 0);
+    border-bottom-style: solid;
+    border-bottom-color: var(
+      --lc-card-header-border-color,
+      var(--border-color)
+    );
+    background: var(--lc-card-header-background-color, transparent);
+  }
+
+  > [slot="footer"] {
+    display: flex;
+    padding: var(--lc-card-footer-padding, var(--lc-card-sm-padding, 1rem));
+    border-top-width: var(--lc-card-footer-border-width, 0);
+    border-top-style: var(--lc-card-footer-border-style, solid);
+    border-top-color: var(--lc-card-footer-border-color, var(--border-color));
+    background: var(--lc-card-footer-background-color, transparent);
+    flex-direction: row;
+    gap: var(--spacing-sm, 0.5rem);
+    align-items: center;
+    justify-content: var(--lc-card-footer-justify, flex-end);
+  }
+
+  &[style*="--lc-card-gradient-from"] [part~=lc-card-body] {
+    background: linear-gradient(
+      135deg,
+      var(--lc-card-gradient-from),
+      var(--lc-card-linear-to, var(--lc-card-gradient-from))
+    );
+  }
+
+  &[padding="none"] {
+    --lc-card-footer-padding: 0;
+  }
+  &[padding="none"] [part~=lc-card-header-row] {
+    padding: var(--lc-card-header-padding, var(--lc-card-sm-padding, 1rem));
+    border-bottom: var(--lc-card-header-border-width, 1px) solid
+      var(--lc-card-header-border-color, var(--border-color, rgba(0, 0, 0, 0.08)));
+  }
+  &[padding="none"] [part~=lc-card-body] {
+    padding: 0;
+  }
+
+  &[padding="xs"] {
+    --lc-card-header-padding: var(--lc-card-xs-padding, 0.6rem);
+    --lc-card-footer-padding: var(--lc-card-xs-padding, 0.6rem);
+  }
+  &[padding="xs"] [part~=lc-card-body] {
+    padding: var(--lc-card-xs-padding, 0.6rem);
+  }
+
+  &[padding="sm"] {
+    --lc-card-header-padding: var(--lc-card-sm-padding, 1rem);
+    --lc-card-footer-padding: var(--lc-card-sm-padding, 1rem);
+  }
+  &[padding="sm"] [part~=lc-card-body] {
+    padding: var(--lc-card-sm-padding, 1rem);
+  }
+
+  &[padding="md"] {
+    --lc-card-header-padding: var(--lc-card-md-padding, 1.3rem);
+    --lc-card-footer-padding: var(--lc-card-md-padding, 1.3rem);
+  }
+  &[padding="md"] [part~=lc-card-body] {
+    padding: var(--lc-card-md-padding, 1.3rem);
+  }
+
+  &[padding="lg"] {
+    --lc-card-header-padding: var(--lc-card-lg-padding, 1.8rem);
+    --lc-card-footer-padding: var(--lc-card-lg-padding, 1.8rem);
+  }
+  &[padding="lg"] [part~=lc-card-body] {
+    padding: var(--lc-card-lg-padding, 1.8rem);
+  }
+
+  &[border-width="none"],
+  &[borderwidth="none"],
+  &[border-width="0"],
+  &[borderwidth="0"] {
+    border-width: 0;
+  }
+
+  &[border-width="1"],
+  &[borderwidth="1"] {
+    border-width: 1px;
+  }
+
+  &[border-width="2"],
+  &[borderwidth="2"] {
+    border-width: 2px;
+  }
+
+  &[border-width="3"],
+  &[borderwidth="3"] {
+    border-width: 3px;
+  }
+
+  &[border-style="solid"],
+  &[borderstyle="solid"] {
+    border-style: solid;
+  }
+
+  &[border-style="dashed"],
+  &[borderstyle="dashed"] {
+    border-style: dashed;
+  }
+
+  &[border-style="dotted"],
+  &[borderstyle="dotted"] {
+    border-style: dotted;
+  }
+
+  &[gap="none"] [part~=lc-card-body] {
+    gap: 0;
+  }
+
+  &[gap="xs"] [part~=lc-card-body] {
+    gap: var(--spacing-xs, 0.25rem);
+  }
+
+  &[gap="sm"] [part~=lc-card-body] {
+    gap: var(--spacing-sm, 0.5rem);
+  }
+
+  &[gap="md"] [part~=lc-card-body] {
+    gap: var(--spacing-md, 0.75rem);
+  }
+
+  &[gap="lg"] [part~=lc-card-body] {
+    gap: var(--spacing-lg, 1rem);
+  }
+
+  &[gap="xl"] [part~=lc-card-body] {
+    gap: var(--spacing-xl, 1.5rem);
+  }
+
+  &[shadow="sm"] {
+    box-shadow: var(
+      --lc-card-shadow,
+      var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05))
+    );
+  }
+
+  &[shadow="md"] {
+    box-shadow: var(
+      --lc-card-shadow,
+      var(
+        --shadow-md,
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06)
+      )
+    );
+  }
+
+  &[shadow="lg"] {
+    box-shadow: var(
+      --lc-card-shadow,
+      var(
+        --shadow-lg,
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05)
+      )
+    );
+  }
+
+  &[hover] {
+    transition: all 200ms ease;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--lc-card-hover-border-color, var(--color-primary));
+      box-shadow: var(
+        --lc-card-hover-shadow,
+        var(--lc-card-shadow, var(--shadow-box, none))
+      );
+      translate: var(--lc-card-hover-translate, var(--motion-lift, 0 0));
+    }
+
+    &:active {
+      box-shadow: var(--lc-card-active-shadow, none);
+      translate: var(--lc-card-active-translate, var(--motion-press, 0 0));
+    }
+  }
+
+  &[variant="filled"] {
+    --lc-container-background: var(--color-surface-light);
+    --lc-container-border-color: var(--color-surface);
+  }
+
+  &[variant="outlined"] {
+    --lc-container-background: transparent;
+    --lc-container-border-color: var(--color-surface);
+  }
+
+  &[variant="elevated"] {
+    --lc-container-background: var(--color-surface-lighter);
+    --lc-container-border-color: var(--color-surface-dark);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.12),
+      0 1px 2px rgba(0, 0, 0, 0.24);
+
+    &:hover {
+      box-shadow:
+        0 3px 6px rgba(0, 0, 0, 0.16),
+        0 3px 6px rgba(0, 0, 0, 0.23);
+      transition: box-shadow 0.3s ease;
+    }
+  }
+
+  /**
+   * A card that is its own link fills itself with the anchor, so the whole
+   * surface is the target and the parts keep laying out as they did.
+   */
+  &[href] {
+    cursor: pointer;
+  }
+}
+
+.lc-card [part~=lc-card-link],
+lc-card [part~=lc-card-link] {
+  display: flex;
+  flex-direction: column;
+  gap: inherit;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}

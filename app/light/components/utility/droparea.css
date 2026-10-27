@@ -1,0 +1,46 @@
+:where(.lc-droparea, lc-droparea) {
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  will-change: transform;
+  min-height: 100px;
+
+  &[direction="horizontal"] {
+    flex-direction: row;
+  }
+
+  &.over {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+
+  &[orderable] {
+    position: relative;
+    min-height: 0;
+
+    &.over {
+      background-color: transparent;
+    }
+
+    &[data-dropping]::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      height: 2px;
+      background: var(--color-primary, #fabd2f);
+      border-radius: 1px;
+      top: var(--drop-indicator-y, 0);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    &[direction="horizontal"][data-dropping]::before {
+      top: 4px;
+      bottom: 4px;
+      left: var(--drop-indicator-x, 0);
+      right: auto;
+      width: 2px;
+      height: auto;
+    }
+  }
+}

@@ -1,0 +1,62 @@
+:where(.lc-section, lc-section) {
+  display: block;
+
+  & [part~=lc-section-container] {
+    width: 100%;
+    padding: var(--lc-section-padding, var(--spacing-xl, 1.5rem) var(--spacing-lg, 1rem));
+  }
+
+  & [part~=lc-section-inner] {
+    width: 100%;
+    max-width: var(--lc-section-max-width, 1024px);
+    margin: 0 auto;
+  }
+
+  &[centered] [part~=lc-section-inner] {
+    text-align: center;
+  }
+
+  &[max-width="sm"] [part~=lc-section-inner] {
+    max-width: 640px;
+  }
+
+  &[max-width="md"] [part~=lc-section-inner] {
+    max-width: 768px;
+  }
+
+  &[max-width="lg"] [part~=lc-section-inner] {
+    max-width: 1024px;
+  }
+
+  &[max-width="xl"] [part~=lc-section-inner] {
+    max-width: 1280px;
+  }
+
+  &[max-width="2xl"] [part~=lc-section-inner] {
+    max-width: 1536px;
+  }
+
+  &[max-width="full"] [part~=lc-section-inner] {
+    max-width: 100%;
+  }
+
+  &[padding="none"] [part~=lc-section-container] {
+    padding: 0;
+  }
+
+  &[padding="sm"] [part~=lc-section-container] {
+    padding: var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem);
+  }
+
+  &[padding="md"] [part~=lc-section-container] {
+    padding: var(--spacing-xl, 1.5rem) var(--spacing-lg, 1rem);
+  }
+
+  &[padding="lg"] [part~=lc-section-container] {
+    padding: var(--spacing-2xl, 2rem) var(--spacing-xl, 1.5rem);
+  }
+
+  &[padding="xl"] [part~=lc-section-container] {
+    padding: var(--spacing-3xl, 3rem) var(--spacing-2xl, 2rem);
+  }
+}

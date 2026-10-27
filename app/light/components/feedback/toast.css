@@ -1,0 +1,161 @@
+:where(.lc-toast, lc-toast) {
+  & [part~=lc-toast-container] {
+    position: fixed;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: var(--lc-toast-gap, 0.75rem);
+    padding: var(--lc-toast-container-padding, 1rem);
+    pointer-events: none;
+  }
+
+  &[position="top-left"] [part~=lc-toast-container] {
+    top: var(--lc-toast-top, 0);
+    left: 0;
+  }
+
+  &[position="top-center"] [part~=lc-toast-container] {
+    top: var(--lc-toast-top, 0);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  &[position="top-right"] [part~=lc-toast-container] {
+    top: var(--lc-toast-top, 0);
+    right: 0;
+  }
+
+  &[position="bottom-left"] [part~=lc-toast-container] {
+    bottom: var(--lc-toast-bottom, 0);
+    left: 0;
+  }
+
+  &[position="bottom-center"] [part~=lc-toast-container] {
+    bottom: var(--lc-toast-bottom, 0);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  &[position="bottom-right"] [part~=lc-toast-container] {
+    bottom: var(--lc-toast-bottom, 0);
+    right: 0;
+  }
+
+  & [part~=lc-toast-toast] {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--lc-toast-content-gap, 0.75rem);
+    min-width: min(var(--lc-toast-min-width, 20rem), calc(100vw - 2rem));
+    max-width: min(var(--lc-toast-max-width, 28rem), calc(100vw - 2rem));
+    box-sizing: border-box;
+    padding: var(--lc-toast-padding, 1rem);
+    background-color: var(--lc-toast-background, var(--color-surface));
+    border: var(--border-width, 1px) solid var(--lc-toast-border-color, var(--color-primary));
+    border-radius: var(--lc-toast-border-radius, var(--radius-box, var(--radius-lg, 0.5rem)));
+    box-shadow: var(--lc-toast-shadow, var(--shadow-box, var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15))));
+    pointer-events: auto;
+    animation: toastSlideIn 0.3s ease;
+  }
+
+  & [part~=lc-toast-body] {
+    display: flex;
+    flex: 1;
+    align-items: flex-start;
+    gap: var(--lc-toast-content-gap, 0.75rem);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+  }
+
+  & [part~=lc-toast-tap] {
+    cursor: pointer;
+  }
+
+  & [part~=lc-toast-icon] {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--lc-toast-icon-color, var(--color-secondary));
+  }
+
+  & [part~=lc-toast-content] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  & [part~=lc-toast-title] {
+    font-size: var(--lc-toast-title-font-size, var(--text-sm, 0.875rem));
+    font-weight: var(--lc-toast-title-font-weight, var(--font-semibold, 600));
+    color: var(--lc-toast-title-color, var(--color-primary));
+    margin-bottom: 0.25rem;
+  }
+
+  & [part~=lc-toast-message] {
+    font-size: var(--lc-toast-message-font-size, var(--text-sm, 0.875rem));
+    color: var(--lc-toast-message-color, var(--color-secondary));
+    line-height: 1.5;
+  }
+
+  & [part~=lc-toast-close] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--lc-toast-close-color, var(--text-muted));
+    cursor: pointer;
+    border-radius: var(--radius-sm, 0.25rem);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+
+    &:hover {
+      background-color: var(--lc-toast-close-hover-background, var(--color-hover));
+      color: var(--lc-toast-close-hover-color, var(--color-primary));
+    }
+  }
+
+  & [part~=lc-toast-toast].toast-success {
+    --lc-toast-border-color: var(--color-success);
+    --lc-toast-icon-color: var(--color-success);
+    border-left-width: 4px;
+  }
+
+  & [part~=lc-toast-toast].toast-warning {
+    --lc-toast-border-color: var(--color-warning);
+    --lc-toast-icon-color: var(--color-warning);
+    border-left-width: 4px;
+  }
+
+  & [part~=lc-toast-toast].toast-error {
+    --lc-toast-border-color: var(--color-danger);
+    --lc-toast-icon-color: var(--color-danger);
+    border-left-width: 4px;
+  }
+
+  & [part~=lc-toast-toast].toast-info {
+    --lc-toast-border-color: var(--color-primary);
+    --lc-toast-icon-color: var(--color-primary);
+    border-left-width: 4px;
+  }
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

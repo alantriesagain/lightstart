@@ -1,0 +1,113 @@
+:where(.lc-grid, lc-grid) {
+  display: block;
+
+  & [part~=lc-grid-container] {
+    display: grid;
+    gap: var(--lc-grid-gap, var(--spacing-md, 0.75rem));
+    grid-template-columns: var(
+      --lc-grid-cols,
+      var(
+        --lc-grid-columns,
+        repeat(auto-fit, minmax(var(--lc-grid-min-column-width, 250px), 1fr))
+      )
+    );
+    grid-template-rows: var(--lc-grid-rows, auto);
+    align-items: var(--lc-grid-align, stretch);
+    justify-items: var(--lc-grid-justify, start);
+  }
+
+  &[gap="none"] [part~=lc-grid-container] {
+    gap: 0;
+  }
+
+  &[gap="xs"] [part~=lc-grid-container] {
+    gap: var(--spacing-xs, 0.25rem);
+  }
+
+  &[gap="sm"] [part~=lc-grid-container] {
+    gap: var(--spacing-sm, 0.5rem);
+  }
+
+  &[gap="md"] [part~=lc-grid-container] {
+    gap: var(--spacing-md, 0.75rem);
+  }
+
+  &[gap="lg"] [part~=lc-grid-container] {
+    gap: var(--spacing-lg, 1rem);
+  }
+
+  &[gap="xl"] [part~=lc-grid-container] {
+    gap: var(--spacing-xl, 1.5rem);
+  }
+
+  &[gap="2xl"] [part~=lc-grid-container] {
+    gap: var(--spacing-2xl, 2rem);
+  }
+
+  &[gap="3xl"] [part~=lc-grid-container] {
+    gap: var(--spacing-3xl, 3rem);
+  }
+
+  &[align="start"] [part~=lc-grid-container] {
+    align-items: start;
+  }
+
+  &[align="center"] [part~=lc-grid-container] {
+    align-items: center;
+  }
+
+  &[align="end"] [part~=lc-grid-container] {
+    align-items: end;
+  }
+
+  &[align="stretch"] [part~=lc-grid-container] {
+    align-items: stretch;
+  }
+
+  &[justify="start"] [part~=lc-grid-container] {
+    justify-items: start;
+  }
+
+  &[justify="center"] [part~=lc-grid-container] {
+    justify-items: center;
+  }
+
+  &[justify="end"] [part~=lc-grid-container] {
+    justify-items: end;
+  }
+
+  &[justify="stretch"] [part~=lc-grid-container] {
+    justify-items: stretch;
+  }
+
+  &[columns="1"] [part~=lc-grid-container] {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  &[columns="2"] [part~=lc-grid-container] {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  &[columns="3"] [part~=lc-grid-container] {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  &[columns="4"] [part~=lc-grid-container] {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  &[columns="5"] [part~=lc-grid-container] {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  &[columns="6"] [part~=lc-grid-container] {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  &[columns="auto-fill"] [part~=lc-grid-container] {
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(var(--lc-grid-min-column-width, 250px), 1fr)
+    );
+  }
+}

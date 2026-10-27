@@ -1,0 +1,8 @@
+:where(.lc-clipboard, lc-clipboard) {
+  display: inline-flex;
+  color: var(--lc-clipboard-color, inherit);
+
+  &[copied] {
+    color: var(--lc-clipboard-copied-color, var(--color-success));
+  }
+}

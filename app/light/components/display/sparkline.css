@@ -1,0 +1,50 @@
+:where(.lc-sparkline, lc-sparkline) {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+
+	& .sparkline-empty {
+		color: var(--text-muted);
+		font-size: 0.75rem;
+	}
+
+	/*
+	 * The variant sets a fallback rather than the value: it lands on the inner
+	 * svg, which is nearer than the host, so setting `--lc-sparkline-color`
+	 * directly would otherwise never win.
+	 */
+	& .sparkline-line {
+		stroke: var(--lc-sparkline-color, var(--lc-sparkline-variant-color, var(--color-primary)));
+		stroke-width: var(--lc-sparkline-width, 1.5);
+	}
+
+	& .sparkline-area-top {
+		stop-color: var(--lc-sparkline-color, var(--lc-sparkline-variant-color, var(--color-primary)));
+		stop-opacity: var(--lc-sparkline-area-opacity-top, 0.28);
+	}
+
+	& .sparkline-area-bottom {
+		stop-color: var(--lc-sparkline-color, var(--lc-sparkline-variant-color, var(--color-primary)));
+		stop-opacity: 0;
+	}
+
+	& .sparkline-primary {
+		--lc-sparkline-variant-color: var(--color-primary);
+	}
+
+	& .sparkline-secondary {
+		--lc-sparkline-variant-color: var(--color-secondary);
+	}
+
+	& .sparkline-success {
+		--lc-sparkline-variant-color: var(--color-success);
+	}
+
+	& .sparkline-warning {
+		--lc-sparkline-variant-color: var(--color-warning);
+	}
+
+	& .sparkline-error {
+		--lc-sparkline-variant-color: var(--color-danger);
+	}
+}

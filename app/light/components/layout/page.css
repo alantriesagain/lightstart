@@ -1,0 +1,41 @@
+:where(.lc-page, lc-page) {
+  display: block;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  min-height: 100vh;
+  font-family: var(--font-family-base);
+  line-height: 1.5;
+  overflow-x: hidden;
+
+  .dashboard-border {
+    border: 1px solid
+      color-mix(in srgb, var(--text-color) 6%, transparent);
+    box-shadow:
+      0 40px 80px -20px rgba(0, 0, 0, 0.18),
+      0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    border-radius: var(--radius-panel);
+    overflow: hidden;
+    background: var(--color-surface);
+  }
+
+  .chart-bg {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent) 18%, transparent) 0%,
+      color-mix(in srgb, var(--color-accent) 0%, transparent) 100%
+    );
+  }
+
+  .chart-bg-down {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-danger) 18%, transparent) 0%,
+      color-mix(in srgb, var(--color-danger) 0%, transparent) 100%
+    );
+  }
+
+  .font-caveat,
+  .font-handwriting {
+    font-family: var(--font-handwriting);
+  }
+}

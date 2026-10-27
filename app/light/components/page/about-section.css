@@ -1,0 +1,122 @@
+:where(.lc-about-section, lc-about-section) {
+  display: block;
+
+  .about-section {
+    padding: var(--spacing-4xl) var(--spacing-xl);
+    background: var(--color-surface);
+    color: var(--text-color);
+  }
+
+  .about-section-inner {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .about-section-split .about-section-inner {
+    max-width: 1100px;
+    display: grid;
+    gap: var(--spacing-3xl);
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 768px) {
+    .about-section-split .about-section-inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      align-items: start;
+    }
+  }
+
+  .about-section-head {
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .about-section-split .about-section-head {
+    margin-bottom: 0;
+  }
+
+  .about-section-prose .about-section-head {
+    text-align: center;
+  }
+
+  .about-eyebrow {
+    display: inline-block;
+    font-size: var(--text-eyebrow);
+    font-weight: var(--font-bold);
+    padding: 6px var(--spacing-lg);
+    border-radius: var(--radius-full);
+    background: color-mix(in srgb, var(--text-color) 6%, transparent);
+    color: var(--text-color);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .about-headline {
+    font-size: var(--text-section);
+    font-weight: var(--font-black);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-color);
+  }
+
+  .about-subheadline {
+    font-size: var(--text-subhead);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+    line-height: 1.55;
+    max-width: 620px;
+  }
+
+  .about-section-prose .about-subheadline {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .about-body {
+    font-size: var(--text-body);
+    line-height: 1.7;
+    color: var(--text-color);
+  }
+
+  .about-body :is(p, ul, ol, blockquote) {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .about-body :is(h2, h3, h4) {
+    font-weight: var(--font-bold);
+    margin-top: var(--spacing-2xl);
+    margin-bottom: var(--spacing-md);
+    letter-spacing: -0.01em;
+  }
+
+  .about-body h2 {
+    font-size: 1.5rem;
+  }
+
+  .about-body h3 {
+    font-size: 1.2rem;
+  }
+
+  .about-body a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .about-body blockquote {
+    border-left: 3px solid
+      color-mix(in srgb, var(--text-color) 15%, transparent);
+    padding-left: var(--spacing-lg);
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  .about-body :is(ul, ol) {
+    padding-left: var(--spacing-xl);
+  }
+
+  .about-body li {
+    margin-bottom: var(--spacing-xs);
+  }
+}

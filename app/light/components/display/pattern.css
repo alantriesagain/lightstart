@@ -1,0 +1,49 @@
+:where(.lc-pattern, lc-pattern) {
+  display: block;
+
+  &.pattern-1 {
+    --s: 150px;
+    --c1: #046d8b;
+    --c2: #2fb8ac;
+    --_g: #0000 90deg, var(--c1) 0;
+    background:
+      conic-gradient(from 116.56deg at calc(100% / 3) 0, var(--_g)),
+      conic-gradient(from -63.44deg at calc(200% / 3) 100%, var(--_g)) var(--c2);
+    background-size: var(--s) var(--s);
+  }
+
+  &.pattern-2 {
+    --s: 100px;
+    --c1: #d4d4d8;
+    --c2: #f4f4f5;
+    --c3: #e4e4e7;
+    background:
+      repeating-conic-gradient(from 30deg, #0000 0 120deg, var(--c1) 0 180deg)
+        calc(0.5 * var(--s)) calc(0.5 * var(--s) * 0.577),
+      repeating-conic-gradient(from 30deg, var(--c2) 0 120deg, var(--c3) 0 180deg);
+    background-size: var(--s) calc(var(--s) * 0.577);
+  }
+
+  &.pattern-3 {
+    --s: 80px;
+    --c1: #a8a29e;
+    --c2: #f5f5f4;
+    background:
+      radial-gradient(circle at 50% 50%, #0000 24%, var(--c1) 25%, var(--c1) 29%, #0000 30%) 0 0,
+      radial-gradient(circle at 50% 50%, #0000 24%, var(--c1) 25%, var(--c1) 29%, #0000 30%)
+        calc(var(--s) / 2) calc(var(--s) / 2),
+      var(--c2);
+    background-size: var(--s) var(--s);
+  }
+
+  &.pattern-4 {
+    --s: 60px;
+    --c: #78716c;
+    --_g: #0000 10%, var(--c) 0 15%, #0000 0;
+    background:
+      linear-gradient(45deg, var(--_g)),
+      linear-gradient(-45deg, var(--_g)),
+      #fafaf9;
+    background-size: var(--s) var(--s);
+  }
+}

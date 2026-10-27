@@ -1,0 +1,166 @@
+:where(.lc-drawer, lc-drawer) {
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--lc-drawer-z-index, 1000);
+  pointer-events: none;
+
+  &[open] {
+    pointer-events: auto;
+    display: flex;
+  }
+
+  & [part~=lc-drawer-backdrop] {
+    display: none;
+    pointer-events: none;
+  }
+
+  &[open] [part~=lc-drawer-backdrop] {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--lc-drawer-overlay-background, rgba(0, 0, 0, 0.6));
+    backdrop-filter: var(--lc-drawer-overlay-blur, blur(2px));
+    z-index: var(--lc-drawer-overlay-z-index, 100);
+    animation: drawer-backdrop-fade-in var(--lc-drawer-animation-duration, 0.25s) ease-out;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  & [part~=lc-drawer-panel] {
+    position: absolute;
+    background-color: var(--lc-drawer-background, var(--color-surface-light, #ffffff));
+    box-shadow: var(--lc-drawer-shadow, var(--shadow-box, var(--shadow-xl, 0 0 30px rgba(0, 0, 0, 0.4))));
+    border: var(--lc-drawer-border-width, 0) solid var(--lc-drawer-border-color, var(--color-surface));
+    z-index: var(--lc-drawer-panel-z-index, 1001);
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: var(
+      --lc-drawer-transition,
+      transform var(--lc-drawer-animation-duration, 0.3s) ease-in-out,
+      opacity var(--lc-drawer-animation-duration, 0.3s) ease-in-out
+    );
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &[open] [part~=lc-drawer-panel] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &:not([position]),
+  &[position="left"] {
+    & [part~=lc-drawer-panel] {
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: var(--lc-drawer-width, 280px);
+      min-width: var(--lc-drawer-min-width, min(70%, 280px));
+      max-width: var(--lc-drawer-max-width, 400px);
+      height: 100%;
+      transform: translateX(-100%);
+      border-radius: 0 var(--lc-drawer-border-radius, 0) var(--lc-drawer-border-radius, 0) 0;
+    }
+
+    &[open] [part~=lc-drawer-panel] {
+      transform: translateX(0);
+    }
+  }
+
+  &[position="right"] {
+    & [part~=lc-drawer-panel] {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: var(--lc-drawer-width, 280px);
+      min-width: var(--lc-drawer-min-width, min(70%, 280px));
+      max-width: var(--lc-drawer-max-width, 400px);
+      height: 100%;
+      transform: translateX(100%);
+      border-radius: var(--lc-drawer-border-radius, 0) 0 0 var(--lc-drawer-border-radius, 0);
+    }
+
+    &[open] [part~=lc-drawer-panel] {
+      transform: translateX(0);
+    }
+  }
+
+  &[position="top"] {
+    & [part~=lc-drawer-panel] {
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: var(--lc-drawer-height, 50vh);
+      min-height: var(--lc-drawer-min-height, 200px);
+      max-height: var(--lc-drawer-max-height, 80vh);
+      transform: translateY(-100%);
+      border-radius: 0 0 var(--lc-drawer-border-radius, 0) var(--lc-drawer-border-radius, 0);
+    }
+
+    &[open] [part~=lc-drawer-panel] {
+      transform: translateY(0);
+    }
+  }
+
+  &[position="bottom"] {
+    & [part~=lc-drawer-panel] {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: var(--lc-drawer-height, 50vh);
+      min-height: var(--lc-drawer-min-height, 200px);
+      max-height: var(--lc-drawer-max-height, 80vh);
+      transform: translateY(100%);
+      border-radius: var(--lc-drawer-border-radius, 0) var(--lc-drawer-border-radius, 0) 0 0;
+    }
+
+    &[open] [part~=lc-drawer-panel] {
+      transform: translateY(0);
+    }
+  }
+
+  &[size="sm"] {
+    --lc-drawer-width: 240px;
+    --lc-drawer-height: 30vh;
+  }
+
+  &[size="md"] {
+    --lc-drawer-width: 320px;
+    --lc-drawer-height: 50vh;
+  }
+
+  &[size="lg"] {
+    --lc-drawer-width: 400px;
+    --lc-drawer-height: 70vh;
+  }
+
+  &[size="xl"] {
+    --lc-drawer-width: 500px;
+    --lc-drawer-height: 85vh;
+  }
+
+  &[size="full"] {
+    --lc-drawer-width: 100%;
+    --lc-drawer-height: 100vh;
+    --lc-drawer-max-width: 100%;
+    --lc-drawer-max-height: 100vh;
+  }
+}
+
+@keyframes drawer-backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,80 @@
+:where(.lc-app-shell, lc-app-shell) {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+
+  & [part~=lc-app-shell-container] {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  & [part~=lc-app-shell-header],
+  & [part~=lc-app-shell-navbar] {
+    flex-shrink: 0;
+  }
+
+  & [part~=lc-app-shell-navbar] {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  & [part~=lc-app-shell-header] {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm, 0.5rem);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    min-height: var(--lc-app-shell-header-height, 3.5rem);
+  }
+
+  & [part~=lc-app-shell-menu-button] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0;
+    border-radius: var(--radius-field, var(--radius-md, 0.375rem));
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  & [part~=lc-app-shell-body] {
+    display: grid;
+    grid-template-columns: var(--lc-app-shell-nav-width, 0px) minmax(0, 1fr) var(--lc-app-shell-aside-width, 0px);
+    flex: 1;
+    width: 100%;
+    max-width: var(--lc-app-shell-max-width, none);
+    margin: 0 auto;
+  }
+
+  & [part~=lc-app-shell-nav],
+  & [part~=lc-app-shell-aside] {
+    position: sticky;
+    top: var(--lc-app-shell-header-height, 3.5rem);
+    height: calc(100vh - var(--lc-app-shell-header-height, 3.5rem));
+    overflow-y: auto;
+  }
+
+  & [part~=lc-app-shell-nav] {
+    border-right: var(--border-width, 1px) solid var(--lc-app-shell-border-color, var(--border-color));
+  }
+
+  & [part~=lc-app-shell-content] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  & [part~=lc-app-shell-footer] {
+    flex-shrink: 0;
+  }
+
+  & [part~=lc-app-shell-bottom-nav] {
+    flex-shrink: 0;
+  }
+}

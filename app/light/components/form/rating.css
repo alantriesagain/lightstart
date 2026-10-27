@@ -1,0 +1,36 @@
+:where(.lc-rating, lc-rating) {
+  display: inline-flex;
+
+  .lc-rating__container {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    :where(lc-icon, .lc-icon) {
+      width: 1.25rem;
+      height: 1.25rem;
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.1s ease;
+
+      &:hover {
+        transform: scale(1.15);
+      }
+    }
+
+    .star-empty {
+      color: var(--lc-rating-empty-color, var(--text-muted, #6b7280));
+    }
+
+    .star-filled {
+      color: var(--lc-rating-color, var(--color-primary, #fabd2f));
+    }
+  }
+
+  &[readonly] .lc-rating__container :where(lc-icon, .lc-icon) {
+    cursor: default;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}

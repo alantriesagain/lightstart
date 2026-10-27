@@ -1,0 +1,106 @@
+:where(.lc-cta-section, lc-cta-section) {
+  display: block;
+
+  .cta-section {
+    padding: var(--spacing-4xl) var(--spacing-xl);
+  }
+
+  .cta-section-dark {
+    background: var(--color-surface-inverse);
+    color: var(--color-surface);
+  }
+
+  .cta-section-light {
+    background: var(--color-surface);
+    color: var(--text-color);
+  }
+
+  .cta-headline {
+    font-size: var(--text-section);
+    font-weight: var(--font-black);
+    letter-spacing: -0.03em;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .cta-section-light .cta-headline {
+    color: var(--text-color);
+  }
+
+  .cta-subheadline {
+    font-size: var(--text-subhead);
+    font-weight: var(--font-medium);
+    max-width: 450px;
+    margin: 0 auto var(--spacing-2xl);
+  }
+
+  .cta-section-dark .cta-subheadline {
+    color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  }
+
+  .cta-section-light .cta-subheadline {
+    color: var(--text-secondary);
+  }
+
+  .cta-btn {
+    font-size: var(--text-body);
+    font-weight: var(--font-bold);
+    border-radius: var(--radius-full);
+    padding: var(--spacing-lg) var(--spacing-2xl);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  .cta-section-dark .cta-btn-primary {
+    background: var(--color-surface);
+    color: var(--color-surface-inverse);
+
+    &:hover {
+      background: color-mix(in srgb, var(--color-surface) 92%, black);
+    }
+  }
+
+  .cta-section-light .cta-btn-primary {
+    background: var(--color-surface-inverse);
+    color: var(--color-surface);
+
+    &:hover {
+      background: black;
+    }
+  }
+
+  .cta-section-dark .cta-btn-secondary {
+    background: color-mix(in srgb, var(--color-surface) 10%, transparent);
+    color: var(--color-surface);
+    border: 1px solid
+      color-mix(in srgb, var(--color-surface) 10%, transparent);
+    box-shadow: none;
+
+    &:hover {
+      background: color-mix(in srgb, var(--color-surface) 15%, transparent);
+    }
+  }
+
+  .cta-section-light .cta-btn-secondary {
+    background: color-mix(
+      in srgb,
+      var(--color-surface-inverse) 6%,
+      transparent
+    );
+    color: var(--text-color);
+    border: 1px solid
+      color-mix(in srgb, var(--color-surface-inverse) 10%, transparent);
+    box-shadow: none;
+
+    &:hover {
+      background: color-mix(
+        in srgb,
+        var(--color-surface-inverse) 10%,
+        transparent
+      );
+    }
+  }
+}

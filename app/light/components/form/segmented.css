@@ -1,0 +1,84 @@
+:where(.lc-segmented, lc-segmented) {
+  display: inline-block;
+
+  &[block] {
+    display: block;
+  }
+
+  .segmented-track {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 0.125rem;
+    padding: 0.1875rem;
+    background: var(--lc-segmented-track-background, var(--color-surface-lighter, rgba(127, 127, 127, 0.16)));
+    border: var(--lc-segmented-track-border-width, 0) solid var(--lc-segmented-track-border-color, transparent);
+    border-radius: var(--lc-segmented-border-radius, 999px);
+    box-shadow: var(--lc-segmented-track-shadow, none);
+    backdrop-filter: var(--lc-segmented-track-backdrop, none);
+    -webkit-backdrop-filter: var(--lc-segmented-track-backdrop, none);
+  }
+
+  &[block] .segmented-track {
+    display: flex;
+    width: 100%;
+  }
+
+  /* No border and no radius per segment; the track is the only shape. */
+  .segmented-option {
+    flex: 1 1 auto;
+    appearance: none;
+    border: 0;
+    margin: 0;
+    background: transparent;
+    color: var(--lc-segmented-color, var(--text-muted, inherit));
+    border-radius: var(--lc-segmented-border-radius, 999px);
+    padding: 0.375rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: var(--lc-segmented-font-weight, var(--control-weight, var(--font-semibold, 600)));
+    line-height: 1.25;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+  }
+
+  .segmented-option:hover:not(.is-selected):not(:disabled) {
+    color: var(--lc-segmented-hover-color, var(--text-color, inherit));
+  }
+
+  .segmented-option.is-selected {
+    background: var(--lc-segmented-selected-background, var(--color-primary));
+    color: var(--lc-segmented-selected-color, var(--color-on-primary, #ffffff));
+  }
+
+  .segmented-count {
+    margin-inline-start: 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: var(--lc-segmented-count-weight, var(--font-semibold, 600));
+    color: var(--lc-segmented-count-color, currentColor);
+    opacity: var(--lc-segmented-count-opacity, 0.6);
+  }
+
+  .segmented-option:focus-visible {
+    outline: 2px solid var(--lc-segmented-selected-background, var(--color-primary));
+    outline-offset: 2px;
+  }
+
+  .segmented-option:disabled {
+    cursor: not-allowed;
+  }
+
+  &[aria-disabled="true"] .segmented-track,
+  .segmented-track[aria-disabled="true"] {
+    opacity: 0.5;
+  }
+
+  &[size="sm"] .segmented-option {
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  &[size="lg"] .segmented-option {
+    padding: 0.5rem 1.125rem;
+    font-size: 0.9375rem;
+  }
+}

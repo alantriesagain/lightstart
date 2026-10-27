@@ -1,0 +1,172 @@
+:where(.lc-tag, lc-tag) {
+  display: inline-flex;
+
+  & [part~=lc-tag-container] {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--lc-tag-gap, 0.375rem);
+    padding: var(--lc-tag-padding-y, 0.25rem) var(--lc-tag-padding-x, 0.625rem);
+    background-color: var(--lc-tag-background, var(--color-surface-darker));
+    color: var(--lc-tag-color, var(--text-color));
+    font-size: var(--lc-tag-font-size, var(--text-xs, 0.75rem));
+    font-weight: var(--lc-tag-font-weight, var(--control-weight, var(--font-medium, 500)));
+    line-height: 1.5;
+    border: var(--lc-tag-border-width, 1px) solid var(--lc-tag-border-color, transparent);
+    border-radius: var(--lc-tag-border-radius, var(--radius-selector, var(--radius-md)));
+    box-shadow: var(--lc-tag-shadow, none);
+    backdrop-filter: var(--lc-tag-backdrop, none);
+    -webkit-backdrop-filter: var(--lc-tag-backdrop, none);
+    cursor: default;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &.rounded {
+      border-radius: var(--lc-tag-rounded-border-radius, 9999px);
+    }
+
+    &[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &[clickable]:not([disabled]) [part~=lc-tag-container] {
+    cursor: pointer;
+  }
+  &[selected] [part~=lc-tag-container] {
+    background-color: var(--lc-tag-selected-background, var(--color-primary));
+    color: var(--lc-tag-selected-color, var(--lc-button-primary-color, #fff));
+    border-color: var(--lc-tag-selected-border-color, var(--color-primary));
+  }
+
+  &[clickable]:not([disabled]) [part~=lc-tag-container]:hover {
+    filter: var(--lc-tag-hover-filter, brightness(1.1));
+    transform: var(--lc-tag-hover-transform, none);
+    box-shadow: var(--lc-tag-hover-shadow, var(--lc-tag-shadow, none));
+  }
+
+  & [part~=lc-tag-label] {
+    flex: 1;
+  }
+
+  & [part~=lc-tag-count] {
+    flex-shrink: 0;
+    font-size: var(--lc-tag-count-size, 0.9em);
+    font-weight: var(--lc-tag-count-font-weight, var(--font-medium, 500));
+    font-variant-numeric: tabular-nums;
+    opacity: var(--lc-tag-count-opacity, 0.65);
+  }
+
+  & [part~=lc-tag-close] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.5rem;
+    height: 0.5rem;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 0.25rem;
+    border: none;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.5rem;
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &[size="xs"] {
+    --lc-tag-font-size: var(--text-xs, 0.625rem);
+    --lc-tag-padding-y: 0.0625rem;
+    --lc-tag-padding-x: 0.375rem;
+    --lc-tag-gap: 0.1875rem;
+  }
+
+  &[size="sm"] {
+    --lc-tag-font-size: var(--text-xs, 0.6875rem);
+    --lc-tag-padding-y: 0.125rem;
+    --lc-tag-padding-x: 0.5rem;
+    --lc-tag-gap: 0.25rem;
+  }
+
+  &[size="lg"] {
+    --lc-tag-font-size: var(--text-sm, 0.875rem);
+    --lc-tag-padding-y: 0.375rem;
+    --lc-tag-padding-x: 0.75rem;
+    --lc-tag-gap: 0.5rem;
+  }
+
+  &[variant="primary"] {
+    --lc-tag-background: var(--lc-tag-primary-background, var(--color-primary));
+    --lc-tag-color: var(--lc-tag-primary-color, var(--color-inverse));
+  }
+
+  &[variant="secondary"] {
+    --lc-tag-background: var(--lc-tag-secondary-background, var(--color-secondary));
+    --lc-tag-color: var(--lc-tag-secondary-color, var(--color-inverse));
+  }
+
+  &[variant="success"] {
+    --lc-tag-background: var(--lc-tag-success-background, var(--color-success));
+    --lc-tag-color: var(--lc-tag-success-color, var(--color-inverse));
+  }
+
+  &[variant="warning"] {
+    --lc-tag-background: var(--lc-tag-warning-background, var(--color-warning));
+    --lc-tag-color: var(--lc-tag-warning-color, var(--color-inverse));
+  }
+
+  &[variant="error"] {
+    --lc-tag-background: var(--lc-tag-error-background, var(--color-danger));
+    --lc-tag-color: var(--lc-tag-error-color, var(--color-inverse));
+  }
+
+  &[variant="info"] {
+    --lc-tag-background: var(--lc-tag-info-background, var(--color-info));
+    --lc-tag-color: var(--lc-tag-info-color, var(--color-inverse));
+  }
+
+  &[outlined] [part~=lc-tag-container] {
+    background-color: transparent;
+  }
+
+  &[outlined][variant="default"] {
+    --lc-tag-border-color: var(--border-color);
+    --lc-tag-color: var(--text-color);
+  }
+
+  &[outlined][variant="primary"] {
+    --lc-tag-border-color: var(--color-primary);
+    --lc-tag-color: var(--color-primary);
+  }
+
+  &[outlined][variant="secondary"] {
+    --lc-tag-border-color: var(--color-secondary);
+    --lc-tag-color: var(--color-secondary);
+  }
+
+  &[outlined][variant="success"] {
+    --lc-tag-border-color: var(--color-success);
+    --lc-tag-color: var(--color-success);
+  }
+
+  &[outlined][variant="warning"] {
+    --lc-tag-border-color: var(--color-warning);
+    --lc-tag-color: var(--color-warning);
+  }
+
+  &[outlined][variant="error"] {
+    --lc-tag-border-color: var(--color-danger);
+    --lc-tag-color: var(--color-danger);
+  }
+
+  &[outlined][variant="info"] {
+    --lc-tag-border-color: var(--color-info);
+    --lc-tag-color: var(--color-info);
+  }
+}

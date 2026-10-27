@@ -1,0 +1,174 @@
+:where(.lc-feature-grid, lc-feature-grid) {
+  display: block;
+
+  .feature-grid-section {
+    padding: 7rem var(--spacing-xl);
+  }
+
+  .feature-grid-section-dark {
+    background: var(--color-surface-inverse);
+    color: var(--color-surface);
+  }
+
+  .feature-grid-eyebrow {
+    display: inline-block;
+    font-size: var(--text-eyebrow);
+    font-weight: var(--font-bold);
+    padding: 6px var(--spacing-lg);
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .feature-grid-section-light .feature-grid-eyebrow {
+    background: var(--color-surface-inverse);
+    color: var(--color-surface);
+  }
+
+  .feature-grid-section-dark .feature-grid-eyebrow {
+    background: color-mix(in srgb, var(--color-surface) 10%, transparent);
+    color: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    border: 1px solid
+      color-mix(in srgb, var(--color-surface) 10%, transparent);
+  }
+
+  .feature-grid-headline {
+    font-size: var(--text-section);
+    font-weight: var(--font-black);
+    letter-spacing: -0.03em;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .feature-grid-section-light .feature-grid-headline {
+    color: var(--text-color);
+  }
+
+  .feature-grid-section-dark .feature-grid-headline {
+    color: var(--color-surface);
+  }
+
+  .feature-grid-subheadline {
+    font-size: var(--text-subhead);
+    font-weight: var(--font-medium);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .feature-grid-section-light .feature-grid-subheadline {
+    color: var(--text-secondary);
+  }
+
+  .feature-grid-section-dark .feature-grid-subheadline {
+    color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  }
+
+  .feature-card {
+    border-radius: var(--radius-panel);
+    padding: 1.75rem;
+    transition: all 0.3s ease;
+  }
+
+  .feature-grid-section-light .feature-card {
+    background: var(--color-surface);
+    border: 1px solid
+      color-mix(in srgb, var(--text-color) 8%, transparent);
+
+    &:hover {
+      border-color: color-mix(
+        in srgb,
+        var(--text-color) 16%,
+        transparent
+      );
+    }
+  }
+
+  .feature-grid-section-dark .feature-card {
+    background: color-mix(in srgb, var(--color-surface) 4%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid
+      color-mix(in srgb, var(--color-surface) 8%, transparent);
+
+    &:hover {
+      background: color-mix(in srgb, var(--color-surface) 7%, transparent);
+      border-color: color-mix(
+        in srgb,
+        var(--color-surface) 12%,
+        transparent
+      );
+    }
+  }
+
+  .feature-card-icon-box {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    transition: background 0.2s ease;
+  }
+
+  .feature-grid-section-light .feature-card-icon-box {
+    background: color-mix(
+      in srgb,
+      var(--text-color) 4%,
+      transparent
+    );
+    border: 1px solid
+      color-mix(in srgb, var(--text-color) 8%, transparent);
+  }
+
+  .feature-grid-section-dark .feature-card-icon-box {
+    background: color-mix(in srgb, var(--color-surface) 6%, transparent);
+    border: 1px solid
+      color-mix(in srgb, var(--color-surface) 8%, transparent);
+  }
+
+  .feature-grid-section-dark .feature-card:hover .feature-card-icon-box {
+    background: color-mix(in srgb, var(--color-surface) 10%, transparent);
+  }
+
+  .feature-card-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .feature-grid-section-light .feature-card-icon {
+    color: color-mix(in srgb, var(--text-color) 80%, transparent);
+  }
+
+  .feature-grid-section-dark .feature-card-icon {
+    color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  }
+
+  .feature-card-title {
+    font-size: 1.15rem;
+    font-weight: var(--font-bold);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .feature-grid-section-light .feature-card-title {
+    color: var(--text-color);
+  }
+
+  .feature-grid-section-dark .feature-card-title {
+    color: var(--color-surface);
+  }
+
+  .feature-card-desc {
+    font-size: 14px;
+    font-weight: var(--font-medium);
+    line-height: 1.65;
+  }
+
+  .feature-grid-section-light .feature-card-desc {
+    color: var(--text-secondary);
+  }
+
+  .feature-grid-section-dark .feature-card-desc {
+    color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  }
+}

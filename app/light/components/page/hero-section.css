@@ -1,0 +1,122 @@
+:where(.lc-hero-section, lc-hero-section) {
+  display: block;
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(
+        ellipse 60% 45% at 20% 15%,
+        rgba(255, 180, 120, 0.45),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse 55% 45% at 80% 25%,
+        rgba(160, 210, 255, 0.5),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse 70% 40% at 50% 80%,
+        rgba(255, 220, 180, 0.4),
+        transparent 70%
+      );
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--color-surface);
+    padding: 6px var(--spacing-lg) 6px 6px;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--spacing-2xl);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    }
+  }
+
+  .hero-eyebrow-badge {
+    background: var(--color-primary);
+    color: var(--color-surface);
+    font-size: var(--text-eyebrow);
+    font-weight: var(--font-bold);
+    padding: 6px var(--spacing-md);
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .hero-eyebrow-label {
+    font-size: var(--text-caption);
+    font-weight: var(--font-bold);
+    color: var(--text-color);
+  }
+
+  .hero-eyebrow-meta {
+    font-size: var(--text-caption);
+    font-weight: var(--font-medium);
+    color: var(--text-muted);
+  }
+
+  .hero-headline {
+    font-size: var(--text-hero);
+    line-height: 1.08;
+    font-weight: var(--font-bold);
+    letter-spacing: -0.025em;
+    color: var(--color-primary);
+    margin-bottom: 1.25rem;
+  }
+
+  .hero-subheadline {
+    font-size: var(--text-subhead);
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto var(--spacing-3xl);
+    line-height: 1.65;
+    font-weight: var(--font-medium);
+  }
+
+  .hero-cta {
+    font-size: var(--text-body);
+    font-weight: var(--font-semibold);
+    padding: 14px var(--spacing-2xl);
+    border-radius: var(--radius-full);
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  .hero-cta-primary {
+    background: var(--color-primary);
+    color: var(--color-surface);
+    box-shadow: var(--shadow-lg);
+
+    &:hover {
+      background: var(--color-secondary, var(--color-primary-dark));
+    }
+  }
+
+  .hero-cta-secondary {
+    background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid color-mix(in srgb, var(--color-surface) 60%, transparent);
+
+    &:hover {
+      background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+    }
+  }
+}

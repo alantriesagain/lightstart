@@ -1,0 +1,451 @@
+:where(.lc-select, lc-select) {
+  display: inline-block;
+  width: var(--lc-select-width, auto);
+  box-sizing: border-box;
+
+  .select-label {
+    display: block;
+    font-size: var(--lc-input-label-font-size, var(--text-sm, 0.875rem));
+    font-weight: var(--lc-input-label-font-weight, var(--font-semibold, 600));
+    margin-bottom: var(--lc-input-label-margin, 0.5rem);
+    color: var(--lc-input-label-color, var(--text-color, #1a1a1a));
+    letter-spacing: var(--lc-input-label-letter-spacing, 0);
+    text-transform: var(--lc-input-label-text-transform, none);
+  }
+
+  .select-required {
+    color: var(--color-danger, #ef4444);
+    margin-left: 0.25rem;
+  }
+
+  .select-wrapper {
+    position: relative;
+    height: var(--lc-select-height, var(--lc-input-height, 2.5rem));
+    box-sizing: border-box;
+    background: var(
+      --lc-select-background,
+      var(--lc-input-background, var(--color-surface-light, #ffffff))
+    );
+    border: var(--lc-select-border-width, var(--lc-input-border-width, var(--border-width, 1px)))
+      solid
+      var(
+        --lc-select-border-color,
+        var(--lc-input-border-color, var(--border-color, var(--color-surface, #e5e7eb)))
+      );
+    border-radius: var(
+      --lc-select-border-radius,
+      var(--lc-input-border-radius, var(--radius-field, var(--radius-md, 0.375rem)))
+    );
+    box-shadow: var(--lc-select-shadow, var(--lc-input-shadow, var(--shadow-field, var(--shadow-sm, 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)))));
+
+    transition: var(
+      --lc-select-transition,
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.15s ease,
+      transform 0.15s ease
+    );
+
+    &:hover:not(:focus-within) {
+      border-color: var(
+        --lc-select-hover-border-color,
+        var(--lc-input-hover-border-color, var(--color-primary-light))
+      );
+    }
+
+    &:focus-within {
+      border-color: var(
+        --lc-select-focus-border-color,
+        var(--lc-input-focus-border-color, var(--color-primary))
+      );
+      box-shadow: var(
+        --lc-select-focus-shadow,
+        var(--lc-input-focus-shadow, 0 0 0 3px rgba(250, 189, 47, 0.1))
+      );
+    }
+  }
+
+  .select-wrapper select {
+    appearance: none;
+    background: transparent;
+    border: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    height: 100%;
+    padding: var(--lc-select-padding-y, var(--lc-input-padding-y, 0.5rem))
+      var(--lc-select-padding-x, var(--lc-input-padding-x, 0.75rem));
+    padding-right: calc(
+      var(--lc-select-padding-x, var(--lc-input-padding-x, 0.75rem)) +
+      var(--lc-select-arrow-size, 1rem) +
+      0.5rem
+    );
+    font-size: var(
+      --lc-select-font-size,
+      var(--lc-input-font-size, var(--text-sm, 0.875rem))
+    );
+    font-weight: var(
+      --lc-select-font-weight,
+      var(--lc-input-font-weight, var(--font-normal, 400))
+    );
+    font-family: inherit;
+    line-height: var(--lc-select-line-height, 1.5);
+    color: var(
+      --lc-select-color,
+      var(--lc-input-color, var(--text-color, inherit))
+    );
+    outline: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: var(--lc-select-transition, background-color 0.2s ease);
+
+    option {
+      background: var(
+        --lc-select-option-background,
+        var(--color-surface-light)
+      );
+      color: var(--lc-select-option-color, var(--text-color));
+      padding: var(--spacing-xs, 0.25rem);
+
+      &:checked {
+        background: var(
+          --lc-select-option-checked-background,
+          var(--color-primary)
+        );
+        color: var(--lc-select-option-checked-color, var(--color-inverse));
+      }
+    }
+
+    &::placeholder {
+      color: var(
+        --lc-select-placeholder,
+        var(--lc-input-placeholder, var(--text-muted, #9ca3af))
+      );
+      opacity: 1;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .select-wrapper .select-arrow {
+    position: absolute;
+    right: var(--lc-select-padding-x, var(--lc-input-padding-x, 0.75rem));
+    top: 50%;
+    transform: translateY(-50%);
+    width: var(--lc-select-arrow-size, 1rem);
+    height: var(--lc-select-arrow-size, 1rem);
+    color: var(
+      --lc-select-arrow-color,
+      var(--lc-input-icon, var(--text-muted))
+    );
+    opacity: 0.7;
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  .select-wrapper:focus-within .select-arrow {
+    opacity: 1;
+  }
+
+  &:has(select:disabled) {
+    .select-wrapper {
+      opacity: var(--lc-select-disabled-opacity, 0.6);
+      cursor: not-allowed;
+    }
+
+    select {
+      background: var(
+        --lc-select-disabled-background,
+        var(--lc-input-disabled-background, var(--color-surface-dark))
+      );
+      color: var(--lc-select-disabled-color, var(--text-muted));
+      cursor: not-allowed;
+    }
+
+    .select-wrapper .select-arrow {
+      opacity: 0.4;
+    }
+  }
+
+  &[size="xs"] {
+    --lc-select-height: 1.5rem;
+    --lc-select-padding-y: 0.2rem;
+    --lc-select-padding-x: 0.5rem;
+    --lc-select-font-size: var(--text-xs, 0.75rem);
+    --lc-select-arrow-size: 0.75rem;
+  }
+
+  &[size="sm"] {
+    --lc-select-height: 2rem;
+    --lc-select-padding-y: 0.3rem;
+    --lc-select-padding-x: 0.6rem;
+    --lc-select-font-size: var(--text-sm, 0.875rem);
+    --lc-select-arrow-size: 0.875rem;
+  }
+
+  &[size="md"] {
+    --lc-select-height: 2.5rem;
+    --lc-select-padding-y: 0.5rem;
+    --lc-select-padding-x: 0.75rem;
+    --lc-select-font-size: var(--text-base, 1rem);
+    --lc-select-arrow-size: 1rem;
+  }
+
+  &[size="lg"] {
+    --lc-select-height: 3rem;
+    --lc-select-padding-y: 0.625rem;
+    --lc-select-padding-x: 1rem;
+    --lc-select-font-size: var(--text-lg, 1.125rem);
+    --lc-select-arrow-size: 1.25rem;
+  }
+
+  &[size="xl"] {
+    --lc-select-height: 3.5rem;
+    --lc-select-padding-y: 0.75rem;
+    --lc-select-padding-x: 1.25rem;
+    --lc-select-font-size: var(--text-xl, 1.25rem);
+    --lc-select-arrow-size: 1.5rem;
+  }
+
+  &[required] .select-wrapper {
+    border-left: 3px solid
+      var(--lc-select-required-color, var(--color-warning));
+  }
+
+  &[error] {
+    --lc-select-border-color: var(
+      --lc-input-error-border-color,
+      var(--color-danger)
+    );
+    --lc-select-focus-border-color: var(
+      --lc-input-error-border-color,
+      var(--color-danger)
+    );
+    --lc-select-focus-shadow: 0 0 0 3px rgba(251, 73, 52, 0.1);
+  }
+
+  &[success] {
+    --lc-select-border-color: var(--color-success);
+    --lc-select-focus-border-color: var(--color-success);
+    --lc-select-focus-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+  }
+
+  &[variant="primary"] {
+    --lc-select-border-color: var(--color-primary);
+    --lc-select-focus-border-color: var(--color-primary);
+  }
+
+  &[variant="secondary"] {
+    --lc-select-border-color: var(--color-secondary);
+    --lc-select-focus-border-color: var(--color-secondary);
+  }
+
+  &[variant="success"] {
+    --lc-select-border-color: var(--color-success);
+    --lc-select-focus-border-color: var(--color-success);
+    --lc-select-focus-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+  }
+
+  &[variant="warning"] {
+    --lc-select-border-color: var(--color-warning);
+    --lc-select-focus-border-color: var(--color-warning);
+    --lc-select-focus-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+  }
+
+  &[variant="error"] {
+    --lc-select-border-color: var(
+      --lc-input-error-border-color,
+      var(--color-danger)
+    );
+    --lc-select-focus-border-color: var(
+      --lc-input-error-border-color,
+      var(--color-danger)
+    );
+    --lc-select-focus-shadow: 0 0 0 3px rgba(251, 73, 52, 0.1);
+  }
+
+  /* Searchable select */
+  .select-search-input {
+    appearance: none;
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: 100%;
+    padding: var(--lc-select-padding-y, var(--lc-input-padding-y, 0.5rem))
+      var(--lc-select-padding-x, var(--lc-input-padding-x, 0.75rem));
+    padding-right: calc(
+      var(--lc-select-padding-x, var(--lc-input-padding-x, 0.75rem)) +
+      var(--lc-select-arrow-size, 1rem) +
+      0.5rem
+    );
+    font-size: var(
+      --lc-select-font-size,
+      var(--lc-input-font-size, var(--text-sm, 0.875rem))
+    );
+    font-weight: var(
+      --lc-select-font-weight,
+      var(--lc-input-font-weight, var(--font-normal, 400))
+    );
+    font-family: inherit;
+    line-height: var(--lc-select-line-height, 1.5);
+    color: var(
+      --lc-select-color,
+      var(--lc-input-color, var(--text-color, inherit))
+    );
+    outline: none;
+    box-sizing: border-box;
+
+    &::placeholder {
+      color: var(
+        --lc-select-placeholder,
+        var(--lc-input-placeholder, var(--text-muted, #9ca3af))
+      );
+      opacity: 1;
+    }
+  }
+
+  .select-dropdown {
+    position: absolute;
+    top: 100%;
+    scroll-margin-bottom: var(--lc-select-dropdown-scroll-margin, 0.5rem);
+    left: -1px;
+    right: -1px;
+    z-index: 50;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(
+      --lc-select-dropdown-background,
+      var(--color-surface-light, #fff)
+    );
+    border: 1px solid
+      var(--lc-select-dropdown-border-color, var(--color-surface-dark, #e5e7eb));
+    border-top: none;
+    border-radius: 0 0
+      var(
+        --lc-select-border-radius,
+        var(--lc-input-border-radius, var(--radius-md, 0.375rem))
+      )
+      var(
+        --lc-select-border-radius,
+        var(--lc-input-border-radius, var(--radius-md, 0.375rem))
+      );
+    box-shadow: var(--shadow-md, 0 4px 6px -1px rgb(0 0 0 / 0.1));
+  }
+
+  .select-option {
+    padding: var(--lc-select-padding-y, 0.375rem)
+      var(--lc-select-padding-x, 0.75rem);
+    cursor: pointer;
+    font-size: var(
+      --lc-select-font-size,
+      var(--lc-input-font-size, var(--text-sm, 0.875rem))
+    );
+    color: var(--lc-select-color, var(--text-color, inherit));
+    transition: background-color 0.1s ease;
+
+    &:hover,
+    &.highlighted {
+      background: var(
+        --lc-select-hover-option-background,
+        var(--color-surface-dark, #f3f4f6)
+      );
+    }
+  }
+
+  .select-option {
+    display: flex;
+    align-items: center;
+    gap: var(--lc-select-option-gap, 0.5rem);
+  }
+
+  .select-option-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .select-leading {
+    display: inline-flex;
+    flex: 0 0 auto;
+    line-height: 1;
+  }
+
+  .select-check {
+    flex: 0 0 auto;
+    color: var(--lc-select-check-color, var(--color-primary));
+  }
+
+  /* Searchable and multiple: the picks as tags, the field to type the next */
+  .select-label-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .select-count {
+    flex: 0 0 auto;
+    font-size: var(--lc-select-count-font-size, var(--text-xs, 0.75rem));
+    font-weight: var(--lc-select-count-font-weight, var(--font-semibold, 600));
+    color: var(--lc-select-count-color, var(--text-muted, #6b7280));
+  }
+
+  .select-wrapper.select-tags {
+    height: auto;
+    min-height: var(--lc-select-height, var(--lc-input-height, 2.5rem));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--lc-select-tags-gap, 0.375rem);
+    padding: var(--lc-select-tags-padding, 0.375rem);
+    cursor: text;
+  }
+
+  .select-tags .select-tag {
+    flex: 0 0 auto;
+    max-width: 100%;
+  }
+
+  .select-tags .select-tags-input {
+    flex: 1 1 8rem;
+    min-width: 8rem;
+    width: auto;
+    height: var(--lc-select-tags-input-height, 2rem);
+    padding: 0 var(--lc-select-tags-input-padding-x, 0.375rem);
+  }
+
+  .select-tags .select-dropdown {
+    top: calc(100% + var(--lc-select-dropdown-offset, 0.25rem));
+    max-height: var(--lc-select-dropdown-max-height, 16rem);
+    border-top: 1px solid
+      var(--lc-select-dropdown-border-color, var(--color-surface-dark, #e5e7eb));
+    border-radius: var(
+      --lc-select-dropdown-border-radius,
+      var(--lc-select-border-radius, var(--lc-input-border-radius, var(--radius-md, 0.375rem)))
+    );
+    padding: var(--lc-select-dropdown-padding, 0.25rem);
+  }
+
+  .select-tags .select-option {
+    border-radius: var(--lc-select-option-border-radius, var(--radius-sm, 0.25rem));
+  }
+
+  .select-no-results {
+    cursor: default;
+    opacity: 0.5;
+    &:hover {
+      background: transparent;
+    }
+  }
+
+  &[w-full],
+  &[wfull],
+  &[fullwidth] {
+    width: 100%;
+    display: block;
+  }
+}

@@ -1,0 +1,44 @@
+:where(.lc-data-table, lc-data-table) {
+  display: flex;
+  flex-direction: column;
+  width: var(--lc-data-table-width, 100%);
+  height: var(--lc-data-table-height, 100%);
+  min-height: 0;
+
+  > lc-table {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  > lc-table .lc-table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .lc-data-table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: var(--lc-data-table-footer-justify, flex-end);
+    gap: var(--lc-data-table-footer-gap, 1rem);
+    flex-wrap: wrap;
+    flex: none;
+    padding: var(--lc-data-table-footer-padding, 0.5rem 0.75rem);
+    border-top: 1px solid var(--lc-data-table-footer-border-color, var(--border-color, rgba(0, 0, 0, 0.08)));
+    font-size: var(--text-xs, 0.75rem);
+    color: var(--text-muted, #6b7280);
+  }
+
+  .lc-data-table-range {
+    margin-right: auto;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lc-data-table-size {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}

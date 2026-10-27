@@ -1,0 +1,157 @@
+:where(.lc-split-pane, lc-split-pane) {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  & slot > [slot] {
+    width: 100%;
+  }
+
+  & [part~=lc-split-pane-primary],
+  & [part~=lc-split-pane-secondary] {
+    width: 100%;
+    display: flex;
+    overflow: auto;
+    background: var(
+      --lc-split-pane-panel-background,
+      var(--color-surface-darker, #282828)
+    );
+    flex-shrink: 0;
+    flex-grow: 0;
+  }
+
+  & [part~=lc-split-pane-primary] {
+    min-width: 0;
+    min-height: 0;
+  }
+
+  & [part~=lc-split-pane-secondary] {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  & [part~=lc-split-pane-divider] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(
+      --lc-split-pane-divider-background,
+      var(--color-surface, #504945)
+    );
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    transition: background 0.15s ease;
+  }
+
+  &[direction="horizontal"],
+  &:not([direction]) {
+    flex-direction: row;
+
+    & [part~=lc-split-pane-divider] {
+      width: var(--lc-split-pane-divider-size, 4px);
+      cursor: default;
+
+      &::before {
+        width: var(--lc-split-pane-divider-size, 4px);
+        height: 48px;
+      }
+    }
+  }
+
+  &[direction="vertical"] {
+    flex-direction: column;
+
+    & [part~=lc-split-pane-divider] {
+      height: var(--lc-split-pane-divider-size, 4px);
+      cursor: default;
+
+      &::before {
+        width: 48px;
+        height: var(--lc-split-pane-divider-size, 4px);
+      }
+    }
+  }
+
+  &[resizable] {
+    & [part~=lc-split-pane-divider] {
+      touch-action: none;
+    }
+
+    & [part~=lc-split-pane-divider]:hover {
+      background: var(
+        --lc-split-pane-divider-hover-background,
+        var(--color-primary, #fabd2f)
+      );
+    }
+
+    & [part~=lc-split-pane-divider]:active {
+      background: var(
+        --lc-split-pane-divider-active-background,
+        var(--color-primary, #fabd2f)
+      );
+    }
+
+    & [part~=lc-split-pane-divider]::before {
+      content: "";
+      position: absolute;
+      background: var(--color-surface-light, #3c3836);
+      border-radius: var(--radius-full, 9999px);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    & [part~=lc-split-pane-divider]:hover::before {
+      opacity: 1;
+    }
+
+    &[direction="horizontal"] [part~=lc-split-pane-divider],
+    &:not([direction]) [part~=lc-split-pane-divider] {
+      cursor: col-resize;
+    }
+
+    &[direction="vertical"] [part~=lc-split-pane-divider] {
+      cursor: row-resize;
+    }
+  }
+
+  &[dragging] {
+    user-select: none;
+
+    &[direction="horizontal"],
+    &:not([direction]) {
+      cursor: col-resize;
+
+      * {
+        cursor: col-resize !important;
+      }
+    }
+
+    &[direction="vertical"] {
+      cursor: row-resize;
+
+      * {
+        cursor: row-resize !important;
+      }
+    }
+  }
+}
+
+@media (pointer: coarse) {
+  :where(.lc-split-pane, lc-split-pane) {
+    &[direction="horizontal"] [part~=lc-split-pane-divider],
+    &:not([direction]) [part~=lc-split-pane-divider] {
+      width: calc(var(--lc-split-pane-divider-size, 4px) * 2);
+      margin-left: calc(var(--lc-split-pane-divider-size, 4px) * -0.5);
+      margin-right: calc(var(--lc-split-pane-divider-size, 4px) * -0.5);
+    }
+
+    &[direction="vertical"] [part~=lc-split-pane-divider] {
+      height: calc(var(--lc-split-pane-divider-size, 4px) * 2);
+      margin-top: calc(var(--lc-split-pane-divider-size, 4px) * -0.5);
+      margin-bottom: calc(var(--lc-split-pane-divider-size, 4px) * -0.5);
+    }
+  }
+}

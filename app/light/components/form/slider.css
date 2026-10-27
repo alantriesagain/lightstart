@@ -1,0 +1,152 @@
+:where(.lc-slider, lc-slider) {
+  display: block;
+  width: 100%;
+
+  .slider {
+    width: 100%;
+    height: 1.5rem;
+    background: transparent;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    border-radius: var(--radius-full, 9999px);
+    touch-action: none;
+
+    &::-webkit-slider-runnable-track {
+      width: 100%;
+      height: var(--lc-slider-track-h, 0.5rem);
+      border-radius: var(--radius-full, 9999px);
+      background: linear-gradient(
+        to right,
+        var(--lc-slider-fill-color, var(--color-primary, #fabd2f)) var(--lc-slider-fill, 50%),
+        var(--lc-slider-track-background, var(--color-surface-lighter, #d5d0c4)) var(--lc-slider-fill, 50%)
+      );
+    }
+
+    &::-moz-range-track {
+      width: 100%;
+      height: var(--lc-slider-track-h, 0.5rem);
+      border-radius: var(--radius-full, 9999px);
+      background: var(--lc-slider-track-background, var(--color-surface-lighter, #d5d0c4));
+    }
+
+    &::-moz-range-progress {
+      height: var(--lc-slider-track-h, 0.5rem);
+      border-radius: var(--radius-full, 9999px) 0 0 var(--radius-full, 9999px);
+      background: var(--lc-slider-fill-color, var(--color-primary, #fabd2f));
+    }
+
+    &::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: var(--lc-slider-thumb-background, #ffffff);
+      border: 0.25rem solid var(--lc-slider-fill-color, var(--color-primary, #fabd2f));
+      border-radius: var(--radius-full, 9999px);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+      box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.1));
+      transform: translateY(-50%);
+      top: 50%;
+      position: relative;
+
+      &:hover {
+        transform: translateY(-50%) scale(1.1);
+      }
+    }
+
+    &::-moz-range-thumb {
+      width: 1.5rem;
+      height: 1.5rem;
+      background: var(--lc-slider-thumb-background, #ffffff);
+      border: 0.25rem solid var(--lc-slider-fill-color, var(--color-primary, #fabd2f));
+      border-radius: var(--radius-full, 9999px);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+      box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.1));
+
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-focus, var(--color-primary, #fabd2f));
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+
+      &::-webkit-slider-thumb { cursor: not-allowed; }
+      &::-moz-range-thumb { cursor: not-allowed; }
+    }
+  }
+
+  &[size="xs"] .slider {
+    height: 1rem;
+    --lc-slider-track-h: 0.25rem;
+    &::-webkit-slider-thumb, &::-moz-range-thumb { width: 1rem; height: 1rem; }
+  }
+
+  &[size="sm"] .slider {
+    height: 1.25rem;
+    --lc-slider-track-h: 0.375rem;
+    &::-webkit-slider-thumb, &::-moz-range-thumb { width: 1.25rem; height: 1.25rem; }
+  }
+
+  &[size="lg"] .slider {
+    height: 1.75rem;
+    --lc-slider-track-h: 0.625rem;
+    &::-webkit-slider-thumb, &::-moz-range-thumb { width: 1.75rem; height: 1.75rem; }
+  }
+
+  &[size="xl"] .slider {
+    height: 2rem;
+    --lc-slider-track-h: 0.75rem;
+    &::-webkit-slider-thumb, &::-moz-range-thumb { width: 2rem; height: 2rem; }
+  }
+
+  &[variant="secondary"] { --lc-slider-fill-color: var(--color-secondary, #83a598); }
+  &[variant="success"] { --lc-slider-fill-color: var(--color-success, #b8bb26); }
+  &[variant="warning"] { --lc-slider-fill-color: var(--color-warning, #fe8019); }
+  &[variant="error"] { --lc-slider-fill-color: var(--color-danger, #fb4934); }
+
+  .slider.slider-nofill {
+    &::-webkit-slider-runnable-track {
+      background: var(--lc-slider-track-background, var(--color-surface-lighter, #d5d0c4));
+    }
+    &::-moz-range-progress { background: transparent; }
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .slider { flex: 1; min-width: 0; }
+  }
+
+  .slider-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1;
+    color: inherit;
+    background: var(--lc-slider-step-background, var(--color-surface-lighter, #e9e6dd));
+    border: 0;
+    border-radius: var(--radius-full, 9999px);
+    cursor: pointer;
+
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+  }
+}

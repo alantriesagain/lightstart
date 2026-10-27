@@ -1,0 +1,6 @@
+:where(.lc-tree, lc-tree) {
+  display: block;
+  background: var(--lc-tree-background, var(--color-surface-darker));
+  color: var(--lc-tree-color, var(--text-color));
+  user-select: none;
+}

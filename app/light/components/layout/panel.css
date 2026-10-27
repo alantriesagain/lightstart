@@ -1,0 +1,66 @@
+:where(.lc-panel, lc-panel) {
+  display: block;
+
+  & [part~=lc-panel-container] {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--lc-panel-background, var(--color-surface));
+    border: var(--border-width, 1px) solid var(--lc-panel-border-color, var(--color-primary));
+    border-radius: var(--lc-panel-border-radius, var(--radius-box, var(--radius-lg, 0.5rem)));
+    overflow: hidden;
+  }
+
+  & [part~=lc-panel-header] {
+    padding: var(
+      --lc-panel-header-padding,
+      var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem)
+    );
+    border-bottom: var(--border-width, 1px) solid
+      var(--lc-panel-header-border-color, var(--color-primary));
+    background-color: var(--lc-panel-header-background, inherit);
+    color: var(--lc-panel-header-color, inherit);
+  }
+
+  & [part~=lc-panel-body] {
+    flex: 1;
+    padding: var(--lc-panel-body-padding, var(--spacing-lg, 1rem));
+  }
+
+  & [part~=lc-panel-footer] {
+    padding: var(
+      --lc-panel-footer-padding,
+      var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem)
+    );
+    border-top: var(--border-width, 1px) solid var(--lc-panel-footer-border-color, var(--color-primary));
+    background-color: var(--lc-panel-footer-background, inherit);
+    display: flex;
+    gap: var(--spacing-sm, 0.5rem);
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  &[variant="bordered"] [part~=lc-panel-container] {
+    border-width: 2px;
+  }
+
+  &[variant="elevated"] [part~=lc-panel-container] {
+    box-shadow: var(--lc-panel-elevated-shadow, var(--shadow-box, var(--shadow-md, 0 2px 8px rgba(0, 0, 0, 0.1))));
+    border: none;
+  }
+
+  &[padding="none"] [part~=lc-panel-body] {
+    padding: 0;
+  }
+
+  &[padding="sm"] [part~=lc-panel-body] {
+    padding: var(--spacing-sm, 0.5rem);
+  }
+
+  &[padding="md"] [part~=lc-panel-body] {
+    padding: var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem);
+  }
+
+  &[padding="lg"] [part~=lc-panel-body] {
+    padding: var(--spacing-lg, 1rem) var(--spacing-xl, 1.5rem);
+  }
+}

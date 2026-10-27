@@ -1,0 +1,84 @@
+:where(.lc-testimonial-section, lc-testimonial-section) {
+  display: block;
+
+  .testimonial-eyebrow {
+    display: inline-block;
+    background: var(--color-surface-inverse);
+    color: var(--color-surface);
+    font-size: var(--text-eyebrow);
+    font-weight: var(--font-bold);
+    padding: 6px var(--spacing-lg);
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .testimonial-headline {
+    font-size: var(--text-section);
+    font-weight: var(--font-black);
+    letter-spacing: -0.03em;
+    color: var(--text-color);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .testimonial-subheadline {
+    font-size: var(--text-subhead);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .testimonial-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-hero);
+    border: 1px solid
+      color-mix(in srgb, var(--text-color) 8%, transparent);
+    padding: var(--spacing-2xl);
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: var(--shadow-card-hover);
+      transform: translateY(-4px);
+    }
+  }
+
+  .testimonial-star {
+    fill: var(--color-warning);
+    color: var(--color-warning);
+  }
+
+  .testimonial-quote {
+    font-size: var(--text-body);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .testimonial-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    background: color-mix(
+      in srgb,
+      var(--text-color) 6%,
+      transparent
+    );
+  }
+
+  .testimonial-author {
+    font-size: 14px;
+    font-weight: var(--font-bold);
+    color: var(--text-color);
+  }
+
+  .testimonial-role {
+    font-size: 12px;
+    font-weight: var(--font-medium);
+    color: var(--text-muted);
+  }
+}

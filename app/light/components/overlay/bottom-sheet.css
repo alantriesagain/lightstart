@@ -1,0 +1,133 @@
+:where(.lc-bottom-sheet, lc-bottom-sheet) {
+  position: fixed;
+  inset: 0;
+  z-index: var(--lc-bottom-sheet-z-index, 999);
+  pointer-events: none;
+
+  &[open] {
+    pointer-events: auto;
+  }
+
+  /* Slotted children inherit pointer-events from light DOM parent (host),
+     NOT from shadow DOM slot context: override so they stay interactive */
+  & slot > * {
+    pointer-events: auto;
+  }
+
+  &[nobackdrop] [part~=lc-bottom-sheet-backdrop] {
+    display: none !important;
+  }
+
+  &[nobackdrop][open] {
+    pointer-events: none;
+  }
+
+  /* Backdrop: always in DOM, opacity-controlled */
+  & [part~=lc-bottom-sheet-backdrop] {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  &[open] [part~=lc-bottom-sheet-backdrop] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Panel: single sliding unit (content + nav) */
+  & [part~=lc-bottom-sheet-panel] {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+    background: var(--lc-bottom-sheet-background, var(--color-surface-light, #1a1a1a));
+    border-radius: var(--lc-bottom-sheet-border-radius, 16px) var(--lc-bottom-sheet-border-radius, 16px) 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    /* Collapsed: push down so only nav peeks above viewport */
+    transform: translateY(var(--lc-bottom-sheet-drag-y, calc(100% - var(--lc-bottom-sheet-nav-height, 56px) - min(var(--lc-bottom-sheet-nav-height, 56px), max(env(safe-area-inset-bottom, 0px), var(--sab, 0px))))));
+    transition: var(--lc-bottom-sheet-panel-transition, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94));
+    will-change: transform;
+  }
+
+  &[open] [part~=lc-bottom-sheet-panel] {
+    transform: translateY(var(--lc-bottom-sheet-drag-y, 0px));
+  }
+
+  /* Content: always full height, transform hides/reveals.
+     Inset and the device's bottom inset belong here, not to every caller;
+     `--sab` is the shell's reported inset, 0 on the web. All four default to
+     inert, so a sheet that never asked looks exactly as it did.
+     A sheet sized to its content is never taller than the screen below the
+     status bar (`--sat`, as `--sab` below): past that it scrolls inside
+     rather than running off the top. */
+  & [part~=lc-bottom-sheet-content] {
+    margin-bottom: var(--lc-bottom-sheet-gutter, 0px);
+    height: var(--lc-bottom-sheet-sheet-height, calc(100vh - 104px));
+    max-height: var(
+      --lc-bottom-sheet-max-height,
+      calc(100dvh - var(--lc-bottom-sheet-nav-height, 56px) - var(--lc-bottom-sheet-gutter, 0px) - max(env(safe-area-inset-top, 0px), var(--sat, 0px)) - var(--lc-bottom-sheet-top-gap, 0.75rem) + var(--lc-bottom-sheet-lift, 0px))
+    );
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--lc-bottom-sheet-padding, 0px);
+    padding-bottom: calc(
+      var(--lc-bottom-sheet-padding-bottom, var(--lc-bottom-sheet-padding, 0px)) +
+        max(var(--lc-bottom-sheet-safe-bottom, 0px), var(--sab, 0px))
+    );
+  }
+
+  /* Detent stops: written after the [open] rule so, at equal specificity,
+     source order lets each stop override the two-state transform. */
+  &[detent="closed"] [part~=lc-bottom-sheet-panel] {
+    transform: translateY(var(--lc-bottom-sheet-drag-y, calc(100% - var(--lc-bottom-sheet-nav-height, 56px) - min(var(--lc-bottom-sheet-nav-height, 56px), max(env(safe-area-inset-bottom, 0px), var(--sab, 0px))))));
+  }
+
+  &[detent="half"] [part~=lc-bottom-sheet-panel] {
+    transform: translateY(var(--lc-bottom-sheet-drag-y, calc(100% - var(--lc-bottom-sheet-half-height, 50dvh))));
+  }
+
+  &[detent="full"] [part~=lc-bottom-sheet-panel] {
+    transform: translateY(var(--lc-bottom-sheet-drag-y, 0px));
+  }
+
+  &[expandable] [part~=lc-bottom-sheet-content] {
+    transition: max-height var(--lc-bottom-sheet-lift-duration, 0.3s) cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  &[expandable][dragging] [part~=lc-bottom-sheet-content] {
+    transition: none;
+  }
+
+  /* Nav: top of panel, always visible when collapsed */
+  & [part~=lc-bottom-sheet-nav] {
+    flex-shrink: 0;
+    min-height: var(--lc-bottom-sheet-nav-height, 56px);
+    touch-action: none;
+    user-select: none;
+  }
+
+  &[grabber] [part~=lc-bottom-sheet-nav] {
+    padding-block: var(--lc-bottom-sheet-grabber-padding, 0.625rem);
+    cursor: grab;
+  }
+
+  &[grabber][dragging] [part~=lc-bottom-sheet-nav] {
+    cursor: grabbing;
+  }
+
+  & [part~=lc-bottom-sheet-grabber] {
+    width: var(--lc-bottom-sheet-grabber-width, 2.5rem);
+    height: var(--lc-bottom-sheet-grabber-height, 0.3125rem);
+    margin-inline: auto;
+    border-radius: 9999px;
+    background: var(--lc-bottom-sheet-grabber-color, var(--border-control, rgba(127, 127, 127, 0.4)));
+  }
+}

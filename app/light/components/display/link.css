@@ -1,0 +1,182 @@
+:where(.lc-link, lc-link) {
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: var(--lc-link-justify-content, center);
+  width: var(--lc-link-width, auto);
+  flex-direction: var(--lc-link-direction, row);
+  gap: var(--lc-link-gap, var(--spacing-xs, 0.25rem));
+  box-sizing: border-box;
+
+  font-family: inherit;
+  font-size: var(--lc-link-font-size, var(--text-sm, 0.875rem));
+  font-weight: var(--lc-link-font-weight, var(--font-semibold, 600));
+  line-height: var(--lc-link-line-height, 1.5);
+  text-decoration: var(--lc-link-text-decoration, none);
+
+  color: var(--lc-link-color, var(--text-color, inherit));
+  cursor: pointer;
+
+  &[vertical] [part~=lc-link-anchor] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  & [part~=lc-link-anchor] {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: var(--lc-link-justify-content, left);
+    width: 100%;
+    height: 100%;
+    gap: var(--lc-link-gap, var(--spacing-xs, 0.25rem));
+    flex-direction: var(--lc-link-direction, row);
+
+    padding: var(--lc-link-padding-y, var(--spacing-sm, 0.5rem))
+      var(--lc-link-padding-x, var(--spacing-md, 0.75rem));
+
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    text-decoration: var(--lc-link-text-decoration, none);
+
+    color: inherit;
+    cursor: pointer;
+
+    transition: var(
+      --lc-link-transition,
+      color 0.2s ease,
+      opacity 0.2s ease,
+      transform 0.1s ease
+    );
+
+    &:hover {
+      color: var(--lc-link-hover-color, var(--lc-link-color));
+      text-decoration: var(
+        --lc-link-hover-text-decoration,
+        var(--lc-link-text-decoration, none)
+      );
+      opacity: var(--lc-link-hover-opacity, 0.9);
+    }
+
+    &:active {
+      color: var(--lc-link-active-color, var(--lc-link-color));
+      transform: var(--lc-link-active-transform, scale(0.98));
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-focus, var(--color-primary-dark, #d79921));
+      outline-offset: 2px;
+    }
+
+    &:visited {
+      color: var(--lc-link-visited-color, var(--lc-link-color));
+    }
+  }
+
+  &[disabled],
+  &[aria-disabled="true"] {
+    opacity: var(--lc-link-disabled-opacity, 0.5);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  & [part~=lc-link-icon] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--lc-link-icon-size, 1.25rem);
+    height: var(--lc-link-icon-size, 1.25rem);
+    color: var(--lc-link-icon-color, currentColor);
+    flex-shrink: 0;
+  }
+
+  &[active][active] {
+    color: var(--lc-link-current-color, var(--color-primary));
+    font-weight: var(--lc-link-current-font-weight, var(--lc-link-font-weight, var(--font-semibold, 600)));
+    background: var(
+      --lc-link-current-background,
+      color-mix(in srgb, var(--color-primary) 10%, transparent)
+    );
+  }
+
+  &[underline] {
+    --lc-link-text-decoration: underline;
+  }
+
+  &[underline="hover"] {
+    --lc-link-text-decoration: none;
+    --lc-link-hover-text-decoration: underline;
+  }
+
+  &[variant="primary"] {
+    --lc-link-color: var(--color-primary);
+    --lc-link-hover-color: var(--color-primary-dark);
+    --lc-link-active-color: var(--color-primary-darker);
+  }
+
+  &[variant="secondary"] {
+    --lc-link-color: var(--color-secondary);
+    --lc-link-hover-color: var(--color-secondary-dark);
+    --lc-link-active-color: var(--color-secondary-darker);
+  }
+
+  &[variant="muted"] {
+    --lc-link-color: var(--text-muted);
+    --lc-link-hover-color: var(--text-color);
+  }
+
+  &[size="xs"] {
+    --lc-link-font-size: var(--text-xs, 0.75rem);
+    --lc-link-padding-y: 0.2rem;
+    --lc-link-padding-x: 0.4rem;
+    --lc-link-gap: 0.125rem;
+    --lc-link-icon-size: 0.75em;
+  }
+
+  &[size="sm"] {
+    --lc-link-font-size: var(--text-sm, 0.875rem);
+    --lc-link-padding-y: 0.25rem;
+    --lc-link-padding-x: 0.5rem;
+    --lc-link-gap: 0.25rem;
+    --lc-link-icon-size: 0.875em;
+  }
+
+  &[size="md"] {
+    --lc-link-font-size: var(--text-base, 1rem);
+    --lc-link-padding-y: 0.5rem;
+    --lc-link-padding-x: 0.75rem;
+    --lc-link-gap: 0.375rem;
+    --lc-link-icon-size: 1em;
+  }
+
+  &[size="lg"] {
+    --lc-link-font-size: var(--text-lg, 1.125rem);
+    --lc-link-padding-y: 0.75rem;
+    --lc-link-padding-x: 1rem;
+    --lc-link-gap: 0.5rem;
+    --lc-link-icon-size: 1.125em;
+  }
+
+  &[size="xl"] {
+    --lc-link-font-size: var(--text-xl, 1.25rem);
+    --lc-link-padding-y: 1rem;
+    --lc-link-padding-x: 1.25rem;
+    --lc-link-gap: 0.625rem;
+    --lc-link-icon-size: 1.25em;
+  }
+
+  &[compact] {
+    --lc-link-padding-x: 0;
+    --lc-link-padding-y: 0;
+  }
+
+  &[w-full],
+  &[wfull] {
+    width: 100%;
+    display: flex;
+  }
+}

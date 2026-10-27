@@ -1,0 +1,46 @@
+:where(.lc-container, lc-container) {
+  display: block;
+  box-sizing: border-box;
+  background: var(--lc-container-background, var(--color-surface-lighter));
+  border: var(--lc-container-border-width, var(--border-width, 1px)) solid
+    var(--lc-container-border-color, var(--color-surface-dark));
+  border-radius: var(--lc-container-border-radius, var(--radius-box, var(--radius-md, 0.375rem)));
+  overflow: var(--lc-container-overflow, visible);
+
+  --lc-container-none-padding: 0;
+  --lc-container-sm-padding: var(--spacing-sm, 0.5rem);
+  --lc-container-md-padding: var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem);
+  --lc-container-lg-padding: var(--spacing-lg, 1rem) var(--spacing-xl, 1.5rem);
+
+  &[padding="none"] {
+    padding: var(--lc-container-none-padding);
+  }
+
+  &[padding="sm"] {
+    padding: var(--lc-container-sm-padding);
+  }
+
+  &[padding="md"] {
+    padding: var(--lc-container-md-padding);
+  }
+
+  &[padding="lg"] {
+    padding: var(--lc-container-lg-padding);
+  }
+
+  &[overflow="visible"] {
+    --lc-container-overflow: visible;
+  }
+
+  &[overflow="hidden"] {
+    --lc-container-overflow: hidden;
+  }
+
+  &[overflow="auto"] {
+    --lc-container-overflow: auto;
+  }
+
+  &[overflow="scroll"] {
+    --lc-container-overflow: scroll;
+  }
+}

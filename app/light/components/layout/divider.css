@@ -1,0 +1,62 @@
+:where(.lc-divider, lc-divider) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 0;
+  width: 100%;
+  height: var(--lc-divider-size, 2px);
+
+  span {
+    padding: 0 0.75rem;
+    font-weight: bold;
+    font-size: var(--lc-divider-font-size, 1.5rem);
+  }
+
+  &[resizable] {
+    cursor: row-resize;
+    touch-action: none;
+    user-select: none;
+    height: var(--lc-divider-resize-handle, 6px);
+
+    &[vertical] {
+      cursor: col-resize;
+      height: 100%;
+      width: var(--lc-divider-resize-handle, 6px);
+    }
+  }
+
+  &::before,
+  &::after {
+    content: "";
+    flex-grow: 1;
+    height: var(--lc-divider-size, 2px);
+    background-color: var(--lc-divider-color, rgba(0, 0, 0, 0.05));
+  }
+
+  &[label] {
+    padding: var(--lc-divider-padding, 1rem) 0;
+
+    &::before,
+    &::after {
+      flex-grow: 1;
+    }
+  }
+
+  &[vertical] {
+    flex-direction: column;
+    width: 1px;
+    height: 100%;
+    background-color: transparent;
+
+    &::before,
+    &::after {
+      width: 1px;
+      height: auto;
+    }
+
+    &[label] {
+      padding: 0 var(--lc-divider-padding, 1rem);
+    }
+  }
+}

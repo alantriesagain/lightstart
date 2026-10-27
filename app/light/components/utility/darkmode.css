@@ -1,0 +1,30 @@
+:where(.lc-darkmode, lc-darkmode) {
+  display: block;
+
+  & .darkmode-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--lc-darkmode-gap, 0.75rem);
+    width: 100%;
+  }
+
+  & .darkmode-label {
+    font-size: var(--lc-darkmode-label-size, var(--lc-label-font-size, 0.75rem));
+    font-weight: var(--lc-darkmode-label-font-weight, var(--lc-label-font-weight, 600));
+    letter-spacing: var(--lc-darkmode-label-tracking, var(--lc-label-letter-spacing, normal));
+    text-transform: var(--lc-darkmode-label-transform, var(--lc-label-text-transform, none));
+    color: var(--lc-darkmode-label-color, var(--lc-label-color, var(--text-color)));
+    white-space: nowrap;
+  }
+
+  &[compact] button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+}

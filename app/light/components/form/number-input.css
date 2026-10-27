@@ -1,0 +1,227 @@
+:where(.lc-number-input, lc-number-input) {
+  display: inline-block;
+  width: 100%;
+
+  .number-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .number-input {
+    width: 100%;
+    font-family: inherit;
+    font-size: var(--lc-input-font-size, var(--text-sm, 0.875rem));
+    line-height: var(--lc-input-line-height, var(--leading-normal, 1.5));
+    padding: var(--lc-input-padding-y, 0.5rem) var(--lc-input-padding-x, 0.75rem);
+    padding-right: var(--lc-number-input-padding-right, 2.5rem);
+    background-color: var(--lc-input-background-color, var(--color-surface));
+    color: var(--lc-input-color, var(--color-primary));
+    border: 1px solid var(--lc-input-border-color, var(--color-primary));
+    border-radius: var(--lc-input-border-radius, var(--radius-field, var(--radius-md)));
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus {
+      border-color: var(--lc-input-focus-border-color, var(--color-primary));
+      box-shadow: var(--lc-input-focus-shadow, var(--shadow-focus, 0 0 0 3px color-mix(in srgb, var(--color-focus, var(--color-primary)) 15%, transparent)));
+    }
+
+    &:hover:not(:disabled):not(:focus) {
+      border-color: var(--lc-input-hover-border-color, var(--color-hover));
+    }
+
+    &:disabled {
+      background-color: var(--lc-input-disabled-background-color, var(--color-surface-dark));
+      color: var(--lc-input-disabled-color, var(--text-muted));
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    &[readonly] {
+      background-color: var(--lc-input-readonly-background-color, var(--color-surface-dark));
+      cursor: default;
+    }
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    &[type="number"] {
+      -moz-appearance: textfield;
+    }
+  }
+
+  .number-input-buttons {
+    position: absolute;
+    right: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .number-input-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1rem;
+    padding: 0;
+    border: none;
+    background-color: var(--lc-number-input-button-background, var(--color-hover));
+    color: var(--lc-number-input-button-color, var(--color-secondary));
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--lc-number-input-button-hover-background, var(--color-surface-darker));
+      color: var(--lc-number-input-button-hover-color, var(--color-primary));
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    lc-icon {
+      width: 0.75rem;
+      height: 0.75rem;
+    }
+  }
+
+  &[size="xs"] .number-input {
+    --lc-input-font-size: var(--text-xs, 0.75rem);
+    --lc-input-padding-y: 0.25rem;
+    --lc-input-padding-x: 0.5rem;
+    --lc-number-input-padding-right: 2rem;
+  }
+
+  &[size="sm"] .number-input {
+    --lc-input-font-size: var(--text-sm, 0.8125rem);
+    --lc-input-padding-y: 0.375rem;
+    --lc-input-padding-x: 0.625rem;
+    --lc-number-input-padding-right: 2.25rem;
+  }
+
+  &[size="md"] .number-input {
+    --lc-input-font-size: var(--text-sm, 0.875rem);
+    --lc-input-padding-y: 0.5rem;
+    --lc-input-padding-x: 0.75rem;
+    --lc-number-input-padding-right: 2.5rem;
+  }
+
+  &[size="lg"] .number-input {
+    --lc-input-font-size: var(--text-base, 1rem);
+    --lc-input-padding-y: 0.625rem;
+    --lc-input-padding-x: 1rem;
+    --lc-number-input-padding-right: 3rem;
+  }
+
+  &[size="xl"] .number-input {
+    --lc-input-font-size: var(--text-lg, 1.125rem);
+    --lc-input-padding-y: 0.75rem;
+    --lc-input-padding-x: 1.25rem;
+    --lc-number-input-padding-right: 3.5rem;
+  }
+
+  &[show-buttons="false"] {
+    .number-input {
+      padding-right: var(--lc-input-padding-x, 0.75rem);
+    }
+
+    .number-input-buttons {
+      display: none;
+    }
+  }
+
+  .stepper-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--lc-number-input-stepper-gap, 0.75rem);
+  }
+
+  .stepper-label {
+    font-size: var(--lc-number-input-label-size, 0.875rem);
+    font-weight: var(--lc-number-input-label-font-weight, 600);
+    text-transform: var(--lc-number-input-label-transform, none);
+    letter-spacing: var(--lc-number-input-label-tracking, normal);
+    color: var(--lc-number-input-label-color, inherit);
+  }
+
+  .stepper-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--lc-number-input-controls-gap, 0.625rem);
+    flex-shrink: 0;
+  }
+
+  .stepper-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--lc-number-input-stepper-button-size, 2.25rem);
+    height: var(--lc-number-input-stepper-button-size, 2.25rem);
+    border: var(--lc-number-input-stepper-button-border-width, 0) solid
+      var(--lc-number-input-stepper-button-border-color, transparent);
+    border-radius: var(--lc-number-input-stepper-button-border-radius, 999px);
+    background: var(--lc-number-input-stepper-button-background, var(--canvas-background));
+    color: var(--lc-number-input-stepper-button-color, var(--text-color));
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: var(--lc-number-input-stepper-button-hover-background, var(--color-hover));
+    }
+
+    &:disabled {
+      opacity: var(--lc-number-input-stepper-disabled-opacity, 0.35);
+      cursor: not-allowed;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-focus, var(--color-primary));
+      outline-offset: 2px;
+    }
+  }
+
+  /* Fixed width so the row does not jump between 9 and 10. */
+  .stepper-value {
+    min-width: var(--lc-number-input-value-width, 4.5rem);
+    text-align: center;
+    font-size: var(--lc-number-input-value-size, 1rem);
+    font-weight: var(--lc-number-input-value-font-weight, 600);
+    font-variant-numeric: tabular-nums;
+    color: var(--lc-number-input-value-color, inherit);
+  }
+
+  .stepper-unit {
+    margin-left: 0.125rem;
+    font-size: 0.6875em;
+    font-weight: 500;
+    color: var(--lc-number-input-unit-color, var(--text-muted));
+  }
+
+  &[stepper][size="sm"] {
+    --lc-number-input-stepper-button-size: 1.75rem;
+    --lc-number-input-value-size: 0.875rem;
+    --lc-number-input-value-width: 4rem;
+  }
+
+  /* One number the screen is about: the reading leads and the label recedes. */
+  &[stepper][size="lg"] {
+    --lc-number-input-stepper-button-size: 3rem;
+    --lc-number-input-value-size: 1.875rem;
+    --lc-number-input-label-size: 0.6875rem;
+    --lc-number-input-label-transform: uppercase;
+    --lc-number-input-label-tracking: 0.1em;
+    --lc-number-input-label-color: var(--text-muted);
+  }
+}

@@ -1,0 +1,82 @@
+:where(.lc-toolbar, lc-toolbar) {
+  display: flex;
+  align-items: center;
+  gap: var(--lc-toolbar-gap, 0.125rem);
+  padding: var(--lc-toolbar-padding, 0.25rem 0.5rem);
+  min-height: var(--lc-toolbar-height, 2.5rem);
+  background: var(--lc-toolbar-background, var(--color-surface-dark));
+  border-bottom: var(--lc-toolbar-border-width, 1px) solid var(--lc-toolbar-border-color, var(--border-color, var(--color-surface)));
+  font-family: inherit;
+  box-sizing: border-box;
+  --lc-button-height: var(--lc-toolbar-control-height, 2rem);
+  --lc-button-padding-x: var(--lc-toolbar-control-padding-x, 0.6rem);
+  --lc-button-font-size: var(--lc-toolbar-control-font-size, var(--text-sm, 0.8rem));
+  --lc-button-border-width: 0;
+  --lc-divider-margin: 0 0.25rem;
+
+  &[size="xs"] {
+    --lc-toolbar-height: 2rem;
+    --lc-toolbar-control-height: 1.5rem;
+    --lc-toolbar-control-padding-x: 0.4rem;
+    --lc-toolbar-control-font-size: var(--text-xs, 0.7rem);
+  }
+
+  &[size="md"] {
+    --lc-toolbar-height: 3rem;
+    --lc-toolbar-control-height: 2.5rem;
+    --lc-toolbar-control-padding-x: 0.9rem;
+    --lc-toolbar-control-font-size: var(--text-base, 0.875rem);
+  }
+
+  &[align="center"] {
+    justify-content: center;
+  }
+
+  &[align="end"] {
+    justify-content: flex-end;
+  }
+
+  &[align="between"] {
+    justify-content: space-between;
+  }
+
+  &[vertical] {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    min-width: var(--lc-toolbar-height, 2.5rem);
+    padding: var(--lc-toolbar-vertical-padding, 0.5rem 0.25rem);
+    border-bottom: 0;
+    border-right: var(--lc-toolbar-border-width, 1px) solid var(--lc-toolbar-border-color, var(--border-color, var(--color-surface)));
+    --lc-divider-margin: 0.25rem 0;
+  }
+
+  &[wrap] {
+    flex-wrap: wrap;
+  }
+
+  &[scrollable] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  &[variant="floating"] {
+    border: var(--lc-toolbar-border-width, 1px) solid var(--lc-toolbar-border-color, var(--border-color, var(--color-surface)));
+    border-radius: var(--lc-toolbar-border-radius, var(--radius-lg, 0.75rem));
+    background: var(--lc-toolbar-floating-background, var(--color-surface));
+    box-shadow: var(--lc-toolbar-shadow, var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.25)));
+    padding: var(--lc-toolbar-padding, 0.25rem);
+  }
+
+  &[variant="ghost"] {
+    background: transparent;
+    border: 0;
+    padding: 0;
+  }
+
+  > lc-divider {
+    align-self: stretch;
+    margin: var(--lc-divider-margin);
+  }
+}

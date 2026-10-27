@@ -1,0 +1,95 @@
+:where(.lc-week-hours, lc-week-hours) {
+  display: block;
+  font-family: inherit;
+
+  .week-hours-label {
+    display: block;
+    margin-bottom: var(--lc-week-hours-label-gap, 0.5rem);
+    font-size: var(--lc-week-hours-label-font-size, var(--text-sm, 0.875rem));
+    font-weight: var(--lc-week-hours-label-font-weight, 700);
+    color: var(--lc-week-hours-label-color, var(--text-color, inherit));
+  }
+
+  .week-hours-days {
+    display: flex;
+    flex-direction: column;
+    border: var(--lc-week-hours-border-width, 1px) solid var(--lc-week-hours-border-color, var(--border-color, rgba(0, 0, 0, 0.1)));
+    border-radius: var(--lc-week-hours-border-radius, var(--radius-box, var(--radius-lg, 0.75rem)));
+    background: var(--lc-week-hours-background, var(--color-surface, transparent));
+    overflow: hidden;
+  }
+
+  .week-hours-day {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--lc-week-hours-row-gap, 0.5rem);
+    min-height: var(--lc-week-hours-row-height, 3rem);
+    padding: var(--lc-week-hours-padding-y, 0.5rem) var(--lc-week-hours-padding-x, 0.875rem);
+
+    & + .week-hours-day {
+      border-top: var(--lc-week-hours-border-width, 1px) solid var(--lc-week-hours-border-color, var(--border-color, rgba(0, 0, 0, 0.1)));
+    }
+  }
+
+  .week-hours-closed {
+    font-size: var(--lc-week-hours-font-size, var(--text-sm, 0.875rem));
+    font-weight: 600;
+    color: var(--lc-week-hours-muted-color, var(--text-muted, inherit));
+  }
+
+  .week-hours-times {
+    display: flex;
+    flex: 1 1 var(--lc-week-hours-times-basis, 16rem);
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--lc-week-hours-times-gap, 0.375rem);
+    min-width: 0;
+    font-size: var(--lc-week-hours-font-size, var(--text-sm, 0.875rem));
+  }
+
+  .week-hours-time {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: var(--lc-week-hours-time-max-width, 10rem);
+    appearance: none;
+    margin: 0;
+    padding: var(--lc-week-hours-time-padding-y, 0.3125rem) var(--lc-week-hours-time-padding-x, 0.375rem);
+    border: var(--lc-week-hours-border-width, 1px) solid var(--lc-week-hours-time-border-color, var(--border-control, var(--border-color, rgba(0, 0, 0, 0.15))));
+    border-radius: var(--lc-week-hours-time-border-radius, var(--radius-field, var(--radius-md, 0.5rem)));
+    background: var(--lc-week-hours-time-background, transparent);
+    color: var(--lc-week-hours-color, var(--text-color, inherit));
+    font: inherit;
+    font-size: var(--lc-week-hours-font-size, var(--text-sm, 0.875rem));
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+
+    &::-webkit-calendar-picker-indicator {
+      margin-inline-start: 0.125rem;
+      padding: 0;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--lc-week-hours-focus-color, var(--color-primary, currentColor));
+      outline-offset: 1px;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+    }
+  }
+
+  .week-hours-to,
+  .week-hours-next {
+    color: var(--lc-week-hours-muted-color, var(--text-muted, inherit));
+    font-weight: 600;
+  }
+
+  .week-hours-next {
+    flex: 0 0 100%;
+    text-align: end;
+    font-size: var(--lc-week-hours-next-font-size, 0.75rem);
+  }
+}

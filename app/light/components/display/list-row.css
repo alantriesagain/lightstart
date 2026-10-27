@@ -1,0 +1,150 @@
+:where(.lc-list-row, lc-list-row) {
+  display: block;
+
+  & [part~=lc-list-row-row] {
+    display: flex;
+    align-items: center;
+    gap: var(--lc-list-row-gap, 0.75rem);
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--lc-list-row-padding, 0.75rem 0.875rem);
+    background: var(--lc-list-row-background, var(--color-surface));
+    color: var(--lc-list-row-color, var(--text-color));
+    border: var(--lc-list-row-border-width, 0) solid
+      var(--lc-list-row-border-color, transparent);
+    border-radius: var(--lc-list-row-border-radius, var(--radius-lg, 1rem));
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background var(--lc-list-row-transition, 120ms ease);
+  }
+
+  & [part~=lc-list-row-row]:hover {
+    background: var(--lc-list-row-hover-background, var(--color-hover, var(--color-surface-light)));
+  }
+
+  & [part~=lc-list-row-row]:focus-visible {
+    outline: 2px solid var(--color-focus, var(--color-primary));
+    outline-offset: 2px;
+  }
+
+  & [part~=lc-list-row-badge] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: var(--lc-list-row-badge-size, 2.5rem);
+    height: var(--lc-list-row-badge-size, 2.5rem);
+    border-radius: var(--lc-list-row-badge-border-radius, 999px);
+    background: var(--lc-list-row-badge-background, var(--color-surface-lighter));
+    color: var(--lc-list-row-badge-color, inherit);
+  }
+
+  /*
+   * The only part allowed to shrink, so a long label truncates instead of
+   * pushing what is on the right off the row.
+   */
+  & [part~=lc-list-row-text] {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  & [part~=lc-list-row-label] {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--lc-list-row-label-size, 0.875rem);
+    font-weight: var(--lc-list-row-label-font-weight, 600);
+  }
+
+  & [part~=lc-list-row-hint] {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 0.125rem;
+    font-size: var(--lc-list-row-hint-size, 0.6875rem);
+    font-weight: var(--lc-list-row-hint-font-weight, 500);
+    color: var(--lc-list-row-hint-color, var(--text-muted));
+  }
+
+  & [part~=lc-list-row-meta] {
+    flex-shrink: 0;
+    font-size: var(--lc-list-row-meta-size, 0.6875rem);
+    font-weight: var(--lc-list-row-meta-font-weight, 600);
+    color: var(--lc-list-row-meta-color, var(--text-muted));
+  }
+
+  & [part~=lc-list-row-chevron] {
+    flex-shrink: 0;
+    color: var(--lc-list-row-chevron-color, var(--text-muted));
+  }
+
+  /*
+   * Set through the badge's own variable rather than as a background here: an
+   * explicit `--lc-badge-background` wins over its variant fallback, which a
+   * competing background declaration of equal weight would not reliably do.
+   */
+  & [part~=lc-list-row-dot] {
+    flex-shrink: 0;
+    --lc-badge-background: var(--lc-list-row-unread-color, var(--color-primary));
+  }
+
+  &[wrap] [part~=lc-list-row-row] {
+    align-items: flex-start;
+  }
+
+  &[wrap] [part~=lc-list-row-label],
+  &[wrap] [part~=lc-list-row-hint] {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  &[wrap] [part~=lc-list-row-meta] {
+    margin-top: 0.25rem;
+  }
+
+  &[unread] [part~=lc-list-row-label] {
+    font-weight: var(--lc-list-row-unread-font-weight, 700);
+  }
+
+  &[size="sm"] [part~=lc-list-row-row] {
+    padding: var(--lc-list-row-sm-padding, 0.5rem 0.75rem);
+  }
+
+  &[size="lg"] [part~=lc-list-row-row] {
+    padding: var(--lc-list-row-lg-padding, 1rem 1.125rem);
+  }
+
+  &[flat] [part~=lc-list-row-row] {
+    background: transparent;
+    border-color: transparent;
+  }
+
+  &[selected] [part~=lc-list-row-row],
+  &[selected] [part~=lc-list-row-row]:hover {
+    background: var(--lc-list-row-selected-background, var(--color-primary-surface, color-mix(in srgb, var(--color-primary, #101210) 8%, transparent)));
+    border-color: var(--lc-list-row-selected-border-color, var(--lc-list-row-border-color, transparent));
+  }
+
+  &[static] [part~=lc-list-row-row],
+  &[static] [part~=lc-list-row-row]:hover {
+    background: var(--lc-list-row-background, var(--color-surface));
+    cursor: default;
+  }
+
+  &[static][selected] [part~=lc-list-row-row] {
+    background: var(--lc-list-row-selected-background, var(--color-primary-surface, color-mix(in srgb, var(--color-primary, #101210) 8%, transparent)));
+  }
+
+  &[disabled] [part~=lc-list-row-row] {
+    opacity: var(--lc-list-row-disabled-opacity, 0.45);
+    cursor: not-allowed;
+  }
+}

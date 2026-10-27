@@ -1,0 +1,75 @@
+:where(.lc-page-header, lc-page-header) {
+  display: block;
+
+  & [part~=lc-page-header-row] {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+    height: var(--lc-page-header-height, 56px);
+    padding: var(--lc-page-header-padding, 0 32px 0 40px);
+    background: var(--lc-page-header-background, transparent);
+    border-bottom: 1px solid var(--lc-page-header-border-color, var(--border-color, #d2d5d0));
+  }
+
+  & [part~=lc-page-header-heading] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  & [part~=lc-page-header-crumbs] {
+    flex: none;
+    --lc-breadcrumbs-link-color: var(--lc-page-header-crumb-color, var(--text-muted, #6b716b));
+    --lc-breadcrumbs-current-color: var(--lc-page-header-crumb-color, var(--text-muted, #6b716b));
+    --lc-breadcrumbs-current-font-weight: 500;
+    --lc-breadcrumbs-separator-color: var(--lc-page-header-crumb-color, var(--text-muted, #6b716b));
+  }
+
+  & [part~=lc-page-header-crumb-separator] {
+    color: var(--lc-page-header-crumb-color, var(--text-muted, #6b716b));
+    font-size: var(--text-sm, 0.875rem);
+  }
+
+  & [part~=lc-page-header-title] {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-heading, inherit);
+    font-size: var(--lc-page-header-title-font-size, 18px);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    color: var(--lc-page-header-title-color, var(--text-color, #101210));
+  }
+
+  & [part~=lc-page-header-subtitle] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--text-muted, #6b716b);
+  }
+
+  & [part~=lc-page-header-spacer] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  & [part~=lc-page-header-controls],
+  & [part~=lc-page-header-tools] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+  }
+
+  & [part~=lc-page-header-divider] {
+    flex: none;
+    width: 1px;
+    height: 22px;
+    background: var(--border-color, #d2d5d0);
+  }
+}

@@ -1,0 +1,136 @@
+:where(.lc-auth-form, lc-auth-form) {
+  display: block;
+  --lc-auth-form-border-width: 0;
+  --lc-auth-form-border-color: transparent;
+  --lc-auth-form-border-radius: var(--radius-md, 0.5rem);
+  --lc-auth-form-shadow: none;
+  --lc-auth-form-error-background: #fef2f2;
+  --lc-auth-form-error-border-color: var(--color-danger, #fca5a5);
+  --lc-auth-form-error-color: var(--color-danger-dark, #dc2626);
+  --lc-auth-form-tab-background: var(--color-surface-dark, #f5f5f5);
+  --lc-auth-form-tab-active-background: var(--color-surface, white);
+  --lc-auth-form-font-weight: var(--button-font-weight, 700);
+  --lc-auth-form-text-transform: var(--button-text-transform, none);
+  --lc-auth-form-divider-color: var(--color-surface-darker, #e5e5e5);
+  --lc-auth-form-muted-color: var(--text-muted, #6b7280);
+
+  border: var(--lc-auth-form-border-width) solid var(--lc-auth-form-border-color);
+  border-radius: var(--lc-auth-form-border-radius);
+  box-shadow: var(--lc-auth-form-shadow);
+  overflow: hidden;
+  background: var(--color-surface, white);
+
+  .auth-tabs {
+    --tabs-border-width: 0;
+    --tabs-border-radius: 0;
+    --tabs-shadow: none;
+    --tabs-list-background: var(--lc-auth-form-tab-background);
+    --tabs-list-border-color: var(--color-inverse, black);
+    --tab-active-background: var(--lc-auth-form-tab-active-background);
+    --tab-active-color: var(--color-inverse, black);
+    --tab-font-weight: var(--lc-auth-form-font-weight);
+    --tab-text-transform: var(--lc-auth-form-text-transform);
+    --tab-indicator-color: var(--color-inverse, black);
+
+    [slot="tab"] {
+      font-weight: var(--lc-auth-form-font-weight);
+      text-transform: var(--lc-auth-form-text-transform);
+      font-size: var(--text-sm, 0.875rem);
+      background: var(--lc-auth-form-tab-background);
+      color: var(--lc-auth-form-muted-color);
+      border-bottom: 3px solid transparent;
+
+      &[active] {
+        background: var(--lc-auth-form-tab-active-background);
+        color: var(--color-inverse, black);
+        border-bottom-color: var(--color-inverse, black);
+      }
+    }
+  }
+
+  .auth-form {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .error-message {
+    background: var(--lc-auth-form-error-background);
+    border: 3px solid var(--lc-auth-form-error-border-color);
+    border-radius: var(--radius-md, 0.75rem);
+    padding: 0.75rem;
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: var(--lc-auth-form-font-weight);
+    color: var(--lc-auth-form-error-color);
+    box-shadow: var(--shadow-sm, 2px 2px 0px 0px rgba(0,0,0,1));
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .label {
+    font-weight: var(--lc-auth-form-font-weight);
+    font-size: var(--text-sm, 0.875rem);
+    text-transform: var(--lc-auth-form-text-transform);
+    color: var(--color-secondary, #ec4899);
+  }
+
+  .submit-btn {
+    margin-top: 0.5rem;
+    width: 100%;
+  }
+
+  .oauth-section {
+    padding: 0 1.5rem;
+  }
+
+  .divider {
+    position: relative;
+    padding: 0.5rem 0;
+    text-align: center;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--lc-auth-form-divider-color);
+    }
+
+    span {
+      position: relative;
+      padding: 0 0.75rem;
+      background: var(--color-surface, white);
+      font-weight: var(--lc-auth-form-font-weight);
+      font-size: var(--text-xs, 0.75rem);
+      text-transform: var(--lc-auth-form-text-transform);
+      color: var(--lc-auth-form-muted-color);
+    }
+  }
+
+  .oauth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .oauth-btn {
+    width: 100%;
+  }
+
+  .guest-section {
+    padding: 1rem 1.5rem 1.5rem;
+    text-align: center;
+  }
+
+  .guest-btn {
+    font-size: var(--text-sm, 0.875rem);
+  }
+}

@@ -1,0 +1,61 @@
+:where(.lc-footer, lc-footer) {
+  display: block;
+
+  .footer-root {
+    background: var(--color-surface-inverse);
+    color: var(--color-surface);
+    padding: 0 var(--spacing-xl) var(--spacing-2xl);
+  }
+
+  .footer-divider {
+    border-top: 1px solid
+      color-mix(in srgb, var(--color-surface) 10%, transparent);
+  }
+
+  .footer-brand {
+    font-weight: var(--font-bold);
+    font-size: var(--text-body);
+  }
+
+  .footer-tagline {
+    font-size: var(--text-caption);
+    font-weight: var(--font-medium);
+    line-height: 1.6;
+    color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  }
+
+  .footer-social {
+    color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--color-surface);
+    }
+  }
+
+  .footer-col-title {
+    font-size: var(--text-caption);
+    font-weight: var(--font-bold);
+    color: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .footer-link {
+    font-size: var(--text-caption);
+    font-weight: var(--font-medium);
+    color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--color-surface);
+    }
+  }
+
+  .footer-copyright {
+    font-size: 12px;
+    font-weight: var(--font-medium);
+    color: color-mix(in srgb, var(--color-surface) 45%, transparent);
+  }
+}

@@ -1,0 +1,198 @@
+:where(.lc-stats-section, lc-stats-section) {
+  display: block;
+
+  .stats-section {
+    padding: var(--spacing-4xl) var(--spacing-xl);
+  }
+
+  .stats-section-light {
+    background: var(--color-surface);
+    color: var(--text-color);
+  }
+
+  .stats-section-dark {
+    background: var(--color-surface-inverse);
+    color: var(--color-surface);
+  }
+
+  .stats-section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .stats-section-head {
+    text-align: center;
+    margin-bottom: var(--spacing-3xl);
+  }
+
+  .stats-eyebrow {
+    display: inline-block;
+    font-size: var(--text-eyebrow);
+    font-weight: var(--font-bold);
+    padding: 6px var(--spacing-lg);
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .stats-section-light .stats-eyebrow {
+    background: color-mix(in srgb, var(--text-color) 6%, transparent);
+    color: var(--text-color);
+  }
+
+  .stats-section-dark .stats-eyebrow {
+    background: color-mix(in srgb, var(--color-surface) 10%, transparent);
+    color: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    border: 1px solid
+      color-mix(in srgb, var(--color-surface) 10%, transparent);
+  }
+
+  .stats-headline {
+    font-size: var(--text-section);
+    font-weight: var(--font-black);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .stats-section-light .stats-headline {
+    color: var(--text-color);
+  }
+
+  .stats-section-dark .stats-headline {
+    color: var(--color-surface);
+  }
+
+  .stats-subheadline {
+    font-size: var(--text-subhead);
+    font-weight: var(--font-medium);
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+
+  .stats-section-light .stats-subheadline {
+    color: var(--text-secondary);
+  }
+
+  .stats-section-dark .stats-subheadline {
+    color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  }
+
+  .stats-grid {
+    display: grid;
+    gap: var(--spacing-2xl);
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 640px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .stats-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-panel);
+    transition: transform 0.25s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+    }
+  }
+
+  .stats-section-light .stat-item {
+    background: var(--color-surface);
+    border: 1px solid
+      color-mix(in srgb, var(--text-color) 8%, transparent);
+  }
+
+  .stats-section-dark .stat-item {
+    background: color-mix(in srgb, var(--color-surface) 4%, transparent);
+    border: 1px solid
+      color-mix(in srgb, var(--color-surface) 8%, transparent);
+  }
+
+  .stat-icon-box {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .stats-section-light .stat-icon-box {
+    background: color-mix(in srgb, var(--text-color) 5%, transparent);
+  }
+
+  .stats-section-dark .stat-icon-box {
+    background: color-mix(in srgb, var(--color-surface) 6%, transparent);
+  }
+
+  .stat-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+
+  .stats-section-light .stat-icon {
+    color: color-mix(in srgb, var(--text-color) 70%, transparent);
+  }
+
+  .stats-section-dark .stat-icon {
+    color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: var(--font-black);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .stats-section-light .stat-value {
+    color: var(--text-color);
+  }
+
+  .stats-section-dark .stat-value {
+    color: var(--color-surface);
+  }
+
+  .stat-label {
+    font-size: var(--text-body);
+    font-weight: var(--font-bold);
+  }
+
+  .stats-section-light .stat-label {
+    color: var(--text-color);
+  }
+
+  .stats-section-dark .stat-label {
+    color: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  }
+
+  .stat-description {
+    font-size: var(--text-caption);
+    font-weight: var(--font-medium);
+    line-height: 1.5;
+  }
+
+  .stats-section-light .stat-description {
+    color: var(--text-secondary);
+  }
+
+  .stats-section-dark .stat-description {
+    color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  }
+}

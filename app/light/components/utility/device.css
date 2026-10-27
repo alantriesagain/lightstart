@@ -1,0 +1,126 @@
+:where(.lc-device, lc-device) {
+  display: inline-flex;
+  justify-content: center;
+  padding: var(--spacing-xl);
+
+  &[device="iphone"] [part~=lc-device-container] {
+    --lc-device-border-radius: 36px;
+    --lc-device-screen-border-radius: 28px;
+    --lc-device-padding: 12px;
+  }
+
+  &[device="android"] [part~=lc-device-container] {
+    --lc-device-border-radius: 24px;
+    --lc-device-screen-border-radius: 16px;
+    --lc-device-padding: 8px;
+  }
+
+  &[device="ipad"] [part~=lc-device-container] {
+    --lc-device-border-radius: 18px;
+    --lc-device-screen-border-radius: 12px;
+    --lc-device-padding: 16px;
+  }
+
+  &[device="desktop"] [part~=lc-device-container] {
+    --lc-device-border-radius: 8px;
+    --lc-device-screen-border-radius: 4px;
+    --lc-device-padding: 24px;
+    --lc-device-background: #e5e7eb;
+  }
+
+  &[center] {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  &[device="iphone"] [part~=lc-device-screen], &[device="android"] [part~=lc-device-screen], &[device="ipad"] [part~=lc-device-screen] {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  &[device="iphone"] [part~=lc-device-screen]::-webkit-scrollbar, &[device="android"] [part~=lc-device-screen]::-webkit-scrollbar, &[device="ipad"] [part~=lc-device-screen]::-webkit-scrollbar {
+    display: none;
+  }
+
+  &[device="desktop"] [part~=lc-device-screen] {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  & [part~=lc-device-container] {
+    width: var(--device-width);
+    height: var(--device-height);
+    transform: scale(var(--device-scale));
+    transform-origin: top center;
+    background: var(--device-background, #000);
+    border-radius: var(--device-radius, 36px);
+    padding: var(--device-padding, 12px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.1);
+    position: relative;
+  }
+
+  & [part~=lc-device-screen] {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    background: var(--color-surface, #fff);
+    border-radius: var(--screen-radius, 28px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  & [part~=lc-device-screen]::-webkit-scrollbar {
+    display: none;
+  }
+
+  & [part~=lc-device-notch] {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150px;
+    height: 24px;
+    background: var(--device-background, #000);
+    border-radius: 0 0 16px 16px;
+    z-index: 10;
+  }
+
+  & [part~=lc-device-home-indicator] {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
+    z-index: 10;
+  }
+}
+
+@media (max-width: 768px) {
+  :where(.lc-device, lc-device) {
+    --lc-device-scale: 0.8;
+  }
+}
+
+@media (max-width: 480px) {
+  :where(.lc-device, lc-device) {
+    --lc-device-scale: 0.6;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :where(.lc-device, lc-device)[device="desktop"] [part~=lc-device-container] {
+    --lc-device-background: #374151;
+  }
+}

@@ -1,0 +1,14 @@
+:where(.lc-radio-group, lc-radio-group) {
+  display: inline-flex;
+
+  & [part~=lc-radio-group-container] {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lc-radio-group-gap, 0.75rem);
+  }
+
+  &[orientation="horizontal"] [part~=lc-radio-group-container] {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

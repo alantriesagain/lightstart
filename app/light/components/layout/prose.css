@@ -1,0 +1,26 @@
+lc-prose {
+  margin-inline: auto;
+}
+
+:where(.lc-prose, lc-prose) {
+  display: block;
+  max-width: var(--lc-prose-measure, 65ch);
+  --lc-markdown-size: var(--lc-prose-size, var(--text-lg, 1.125rem));
+  --lc-markdown-leading: var(--lc-prose-leading, var(--leading-relaxed, 1.75));
+
+  &[size="base"] {
+    --lc-prose-size: var(--text-base, 1rem);
+  }
+
+  &[size="lg"] {
+    --lc-prose-size: var(--text-lg, 1.125rem);
+  }
+
+  &[size="xl"] {
+    --lc-prose-size: var(--text-xl, 1.25rem);
+  }
+
+  &[wide] {
+    max-width: none;
+  }
+}

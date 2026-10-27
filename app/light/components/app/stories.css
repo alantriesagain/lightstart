@@ -1,0 +1,30 @@
+@keyframes lc-stories-fill {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 100%;
+  }
+}
+
+:where(.lc-stories, lc-stories) {
+  .lc-stories-fill {
+    width: 0;
+  }
+
+  .is-done .lc-stories-fill {
+    width: 100%;
+  }
+
+  .is-current .lc-stories-fill {
+    width: 100%;
+    animation-name: lc-stories-fill;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+
+  .is-current .lc-stories-fill[style*="animation-duration"] {
+    width: 0;
+  }
+}

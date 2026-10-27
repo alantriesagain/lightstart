@@ -1,0 +1,68 @@
+:where(.lc-float-card, lc-float-card) {
+  display: block;
+  position: absolute;
+  z-index: 30;
+  --lc-float-card-slow-lift: -14px;
+  --lc-float-card-delayed-lift: -10px;
+  --lc-float-card-fast-lift: -8px;
+
+  &[animation="slow"] {
+    animation: lc-float-card-slow 7s ease-in-out infinite;
+  }
+
+  &[animation="delayed"] {
+    animation: lc-float-card-delayed 6s ease-in-out 1s infinite;
+  }
+
+  &[animation="fast"] {
+    animation: lc-float-card-fast 4.5s ease-in-out infinite;
+  }
+}
+
+@media (max-width: 639px) {
+  :where(.lc-float-card, lc-float-card)[hide="sm"] {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  :where(.lc-float-card, lc-float-card)[hide="md"] {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  :where(.lc-float-card, lc-float-card)[hide="lg"] {
+    display: none;
+  }
+}
+
+@keyframes lc-float-card-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(var(--lc-float-card-slow-lift, -14px));
+  }
+}
+
+@keyframes lc-float-card-delayed {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(var(--lc-float-card-delayed-lift, -10px));
+  }
+}
+
+@keyframes lc-float-card-fast {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(var(--lc-float-card-fast-lift, -8px));
+  }
+}
