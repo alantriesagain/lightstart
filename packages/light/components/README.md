@@ -1,6 +1,6 @@
 # light's components
 
-129 web components in nine categories, with the mixins, libs and two stores they are built from. They are part of `@bootstrapp/light` and depend on nothing else: a component reads its host through light (`env`, `navigation`, `translate`, `trackWork`, `@bootstrapp/light/theme`).
+131 web components in nine categories, with the mixins, libs and two stores they are built from. They are part of `@bootstrapp/light` and depend on nothing else: a component reads its host through light (`env`, `navigation`, `translate`, `trackWork`, `@bootstrapp/light/theme`).
 
 ```html
 <lc-card>
@@ -51,7 +51,7 @@ Components load themselves. There is no import step and no registration call: th
 | Category | Components |
 |---|---|
 | **form** (25) | auth-form, checkbox, color-picker, day-strip, file-upload, form, icon-picker, image-crop, input, join, label, month-picker, number-input, radio, radio-group, rating, ruler, search, segmented, select, slider, switch, textarea, time, week-hours |
-| **display** (34) | avatar, avatar-group, badge, bar-chart, button, calendar, circle, code-block, comment, data-table, editable, example, icon, image, kanban, kbd, line-chart, link, link-preview, list, list-item, list-row, markdown, media-card, palette, pattern, pie-chart, sparkline, stat, story-circle, table, tag, text, tile |
+| **display** (35) | avatar, avatar-group, badge, bar-chart, button, calendar, circle, code-block, comment, data-table, editable, example, flow, icon, image, kanban, kbd, line-chart, link, link-preview, list, list-item, list-row, markdown, media-card, palette, pattern, pie-chart, sparkline, stat, story-circle, table, tag, text, tile |
 | **layout** (11) | card, container, divider, flex, grid, page, panel, prose, section, split-pane, toolbar |
 | **navigation** (14) | accordion, breadcrumbs, menu, nav-item, nav-tree, navbar, pagination, sidebar, sidebar-section, tabs, toc, tree, tree-item, wizard |
 | **overlay** (10) | alert-dialog, bottom-sheet, command-palette, context-menu, drawer, dropdown, float-panel, modal, popover, tooltip |
@@ -298,6 +298,7 @@ A page without the framework defines these too, one level deep; follow the table
 | `lc-flex` | `lc-badge`, `lc-button`, `lc-input`, `lc-navbar`, `lc-sidebar` |
 | `lc-float-card` |  |
 | `lc-float-panel` |  |
+| `lc-flow` |  |
 | `lc-footer` | `lc-icon` |
 | `lc-form` | `lc-label` |
 | `lc-grid` | `lc-avatar`, `lc-button`, `lc-flex`, `lc-icon`, `lc-link`, `lc-panel` |
@@ -342,6 +343,7 @@ A page without the framework defines these too, one level deep; follow the table
 | `lc-radio` |  |
 | `lc-radio-group` | `lc-radio` |
 | `lc-rating` | `lc-icon` |
+| `lc-ruler` |  |
 | `lc-scroller` | `lc-icon` |
 | `lc-search` | `lc-icon`, `lc-join` |
 | `lc-section` | `lc-button`, `lc-icon`, `lc-panel` |
