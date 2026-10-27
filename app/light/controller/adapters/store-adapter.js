@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller: Store-as-Adapter Facade
+ * @lightstart/light/controller: Store-as-Adapter Facade
  * Wraps anything store-shaped (a bare store, a controller instance via its
  * `$sync`) in the Adapter interface, so a controller can be registered as a
  * named sync target and bound with the same code as localStorage. The store

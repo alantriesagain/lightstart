@@ -16,7 +16,7 @@ const TAG = "lc-clipboard";
  *
  * @example
  * ```html
- * <lc-clipboard text="npm install @bootstrapp/light"></lc-clipboard>
+ * <lc-clipboard text="npm install @lightstart/light"></lc-clipboard>
  * <lc-clipboard text="<lc-button></lc-button>" icon-only></lc-clipboard>
  * ```
  */

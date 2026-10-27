@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/signals/listeners: a list of callbacks that behaves as a
+ * @lightstart/light/signals/listeners: a list of callbacks that behaves as a
  * Set of them does, for a runtime that cannot hold functions in a Set. A
  * callback is held once and in the order it was added; one added while the
  * list runs is reached in the same run, and one removed before its turn is

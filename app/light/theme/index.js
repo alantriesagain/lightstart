@@ -1,5 +1,5 @@
 /**
- * @file @bootstrapp/light/theme
+ * @file @lightstart/light/theme
  * Design tokens from a theme object: the color math that derives shades,
  * readable "on" colors and a dark side, the CSS variables a theme becomes,
  * and applying them to the document, to one region, or as a stylesheet

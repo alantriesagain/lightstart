@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/components: public type declarations.
+ * @lightstart/light/components: public type declarations.
  */
 
                                                                           
@@ -142,6 +142,31 @@
 
 /** display/comment.js: the `actions` render property, drawn in the comment's actions row. */
                                               
+
+/** display/timeline.js: one entry in the `entries` array property. */
+                                
+             
+                 
+                
+                
+                            
+                
+ 
+
+/** display/timeline.js: an entry's marker colour, `lc-badge`'s vocabulary. */
+                                                                                                              
+
+/** display/timeline.js: the `extra` render property, drawn under each entry. */
+                                                                 
+
+/** utils/day-groups.js: what `readAt` makes of an entry's `at`. */
+                                                                                                                      
+
+/** utils/day-groups.js: one group `groupByDay` answers; `day` is null for the unreadable entries. */
+                              
+                     
+                           
+ 
 
 /** page/steps-section.js: the `footerCta` object property. */
                             

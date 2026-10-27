@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/html/tags: the `html` and `svg` template tags. They stay
+ * @lightstart/light/html/tags: the `html` and `svg` template tags. They stay
  * JavaScript while the rest of the core is TypeScript: a tag takes its values
  * as a rest parameter of any value, which scriptc compiles from JavaScript
  * and has no static form for yet in TypeScript.

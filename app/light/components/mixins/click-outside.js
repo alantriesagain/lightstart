@@ -3,7 +3,7 @@ import { defineMixin } from "/app/light/view/index.js";
 /** @import View from "/app/light/view/index.js" */
 
 /**
- * @bootstrapp/light/components/mixins/click-outside
+ * @lightstart/light/components/mixins/click-outside
  *
  * Micro-mixin: dismiss-on-outside-interaction. Attaches a document-level
  * listener on `connected()` (torn down via the View's `own()` registry) and

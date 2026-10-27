@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/html/values: the values a template can hold besides
+ * @lightstart/light/html/values: the values a template can hold besides
  * text, nodes and lists. `html` and `svg` (in `tags.js`) answer a `TemplateResult`; `key`,
  * `element` and `unsafeHTML` wrap a value in a `Keyed`, `ElementSpec` or
  * `Unsafe`. They are classes so the parts engine recognises them with

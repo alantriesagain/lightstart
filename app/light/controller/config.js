@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller: what controllers read from their host
+ * @lightstart/light/controller: what controllers read from their host
  * `track(label)` is called when async work starts (a controller connecting, a
  * resource fetching) and answers what ends it, so a host that waits for a
  * quiet page counts it; `ready()` answers what a resource waits for before its

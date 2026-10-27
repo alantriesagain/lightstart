@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/view/definition.js: definition composition
+ * @lightstart/light/view/definition.js: definition composition
  * The one merge primitive for definition-shaped citizens (components,
  * controllers, extensions): props, events and a controller's sync block union
  * (incoming wins), lifecycle hooks

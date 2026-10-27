@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller/teardowns: what a controller lets go of when
+ * @lightstart/light/controller/teardowns: what a controller lets go of when
  * it is disposed. `own` keeps an unsubscribe function, `drain` runs every one
  * kept, in the order they came, and forgets them; one that throws is logged
  * under the controller's name and the rest still run. Both forms of a

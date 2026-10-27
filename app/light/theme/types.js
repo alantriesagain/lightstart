@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/theme: the shapes a theme is made of.
+ * @lightstart/light/theme: the shapes a theme is made of.
  */
 
                                                                                      

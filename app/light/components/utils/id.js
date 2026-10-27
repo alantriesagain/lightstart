@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/components/utils/id
+ * @lightstart/light/components/utils/id
  *
  * One source of element ids for the components that have to invent one:
  * a control that needs an id for its `<label for>`, a tablist wiring

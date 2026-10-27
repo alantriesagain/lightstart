@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light: the view engine's public type declarations.
+ * @lightstart/light: the view engine's public type declarations.
  */
 
                                                                                                                 
@@ -259,6 +259,6 @@
                                                    
   
 
-/** Re-export runtime types from the JS entry so the bare `@bootstrapp/light` specifier surfaces both the type-only declarations above and the JSDoc-inferred types of runtime exports (`import type View from "/app/light/view/index.js"`). */
+/** Re-export runtime types from the JS entry so the bare `@lightstart/light` specifier surfaces both the type-only declarations above and the JSDoc-inferred types of runtime exports (`import type View from "/app/light/view/index.js"`). */
 export * from "./index.js";
 export { default } from "./index.js";

@@ -4,7 +4,7 @@ import { defineMixin } from "/app/light/view/index.js";
 /** @import { Prop, DragState, PointerDragHost } from "../types.js" */
 
 /**
- * @bootstrapp/light/components/mixins/pointer-drag
+ * @lightstart/light/components/mixins/pointer-drag
  *
  * A drag the host follows 1:1. The mixin owns the bookkeeping every drag needs
  * and no geometry: it gates the gesture, tracks one pointer, coalesces moves

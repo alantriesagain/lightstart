@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller: sync
+ * @lightstart/light/controller: sync
  * The adapter registry, the sync-type system, the binder registry and the
  * binding itself. Sync is store-level: a binding is a pair of subscriptions
  * between a store key and an adapter key; nothing patches instances. A target

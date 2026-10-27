@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/dom/view: the browser View. A custom element base class
+ * @lightstart/light/dom/view: the browser View. A custom element base class
  * whose instance is the component's own element: attributes reflect
  * properties, light-DOM slots project children, `View.define` builds a class
  * from a definition object and `View.register` installs a class written by

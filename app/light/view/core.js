@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/view/core: the host-neutral half of a view. A ViewCore
+ * @lightstart/light/view/core: the host-neutral half of a view. A ViewCore
  * owns one component's update cycle (the changed properties, the promise of
  * the pending update, the lifecycle hooks, the teardowns held until
  * disconnect, a render tracked for the signals it reads) and the module owns

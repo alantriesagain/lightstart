@@ -4,7 +4,7 @@ import { defineMixin } from "/app/light/view/index.js";
 /** @import { Prop, SwipeHost, SwipeStart } from "../types.js" */
 
 /**
- * @bootstrapp/light/components/mixins/swipe-threshold
+ * @lightstart/light/components/mixins/swipe-threshold
  *
  * A swipe nothing follows: two samples, one decision. Where `withPointerDrag`
  * hands the host a position every frame, this one measures where the pointer

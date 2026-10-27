@@ -1,5 +1,5 @@
 /**
- * @file @bootstrapp/light/types
+ * @file @lightstart/light/types
  * `T`: property descriptors for components, controllers and models. The
  * shorthand that reads a descriptor off a plain default, the coercion of an
  * attribute string into the declared type, persistence and validation for a

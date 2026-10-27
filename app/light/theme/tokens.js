@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/theme/tokens: the host-neutral half of the theme. The
+ * @lightstart/light/theme/tokens: the host-neutral half of the theme. The
  * color math that derives shades, readable "on" colors and a dark side, the
  * CSS variables a theme becomes, and a CSS color resolved to hex, with
  * nothing of a document in it, so a terminal reads the same tokens a page

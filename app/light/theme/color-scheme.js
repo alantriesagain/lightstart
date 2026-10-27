@@ -1,5 +1,5 @@
 /**
- * @file @bootstrapp/light/theme/color-scheme.js
+ * @file @lightstart/light/theme/color-scheme.js
  * The color scheme: the `dark` class on `<html>` that every theme's dark side
  * hangs off, the reader's stored choice, and the OS preference while they
  * have not made one.

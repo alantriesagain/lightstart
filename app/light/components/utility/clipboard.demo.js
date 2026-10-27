@@ -4,8 +4,8 @@ export default {
   description: "A button that copies a text and says so for a moment.",
   preview: () => html`
     <lc-flex gap="sm" align="center">
-      <code>pnpm add @bootstrapp/light</code>
-      <lc-clipboard text="pnpm add @bootstrapp/light" icon-only></lc-clipboard>
+      <code>pnpm add @lightstart/light</code>
+      <lc-clipboard text="pnpm add @lightstart/light" icon-only></lc-clipboard>
     </lc-flex>
   `,
   examples: [
@@ -13,8 +13,8 @@ export default {
       title: "Copy a command",
       render: () => html`
         <lc-flex gap="sm" align="center">
-          <code>pnpm add @bootstrapp/light</code>
-          <lc-clipboard text="pnpm add @bootstrapp/light"></lc-clipboard>
+          <code>pnpm add @lightstart/light</code>
+          <lc-clipboard text="pnpm add @lightstart/light"></lc-clipboard>
         </lc-flex>
       `,
     },

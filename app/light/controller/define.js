@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller: defineController
+ * @lightstart/light/controller: defineController
  * A controller is a named piece of app state and the methods that change it:
  * state shared at runtime by every component that uses it (code shared at
  * definition time is a mixin). There is one per name, made the first time

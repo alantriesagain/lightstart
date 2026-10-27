@@ -5,7 +5,7 @@ import { overlays } from "../overlay/stack.js";
 /** @import { OverlayHost, Prop } from "../types.js" */
 
 /**
- * @bootstrapp/light/components/mixins/overlay
+ * @lightstart/light/components/mixins/overlay
  *
  * Micro-mixin: put a component on the overlay stack while it is open. The host
  * declares which of its properties means "open"; the mixin registers on the way

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/navigation: the router interface components use.
+ * @lightstart/light/navigation: the router interface components use.
  */
 
                              

@@ -8,7 +8,7 @@ import { env } from "/app/light/env/index.js";
 /** @import { Prop } from "../types.js" */
 
 /**
- * @bootstrapp/light/components/mixins/popover
+ * @lightstart/light/components/mixins/popover
  *
  * A layer anchored to whatever opened it: `toggle(trigger)` positions the host
  * against that element, keeps it there while the page scrolls or the viewport

@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/components/utils/roving
+ * @lightstart/light/components/utils/roving
  *
  * Which item an arrow key moves to. Five components in this package answer
  * that question and answered it five ways: a tablist wrapping with Home and

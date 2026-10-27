@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/html/states: what a child part currently renders, one
+ * @lightstart/light/html/states: what a child part currently renders, one
  * class per kind. A part tells them apart with `instanceof`, which a native
  * build checks as a class where a string tag would be compared as a string,
  * and a part that renders nothing, or a served range awaiting adoption,

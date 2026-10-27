@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/html/template: prepared templates and their instances.
+ * @lightstart/light/html/template: prepared templates and their instances.
  * A template is prepared once per strings identity by the installed host
  * (`host.prepare`), which keeps whatever it needs beside the part specs; an
  * instance is a host clone of it with one part per spec, in document order.

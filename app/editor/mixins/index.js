@@ -1,5 +1,5 @@
 /**
- * The view mixins `@bootstrapp/light`'s `<editor-code>` composes. Import this
+ * The view mixins `@lightstart/light`'s `<editor-code>` composes. Import this
  * path only from browser code.
  */
 

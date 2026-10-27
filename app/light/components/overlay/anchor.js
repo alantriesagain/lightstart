@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/components/overlay/anchor
+ * @lightstart/light/components/overlay/anchor
  *
  * Where a floating box goes when it is anchored to something else. Rects in,
  * a top and a left out, already clamped into the viewport, so the two things

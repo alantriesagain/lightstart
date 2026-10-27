@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/light/controller: type declarations.
+ * @lightstart/light/controller: type declarations.
  */
 
                                                                                                 
@@ -58,7 +58,7 @@
 
 /**
  * Targets a host teaches the binding (through `registerSyncBinder`), added by
- * declaration merging: `declare module "@bootstrapp/light/controller" { interface SyncTargets { model: ModelApi } }`.
+ * declaration merging: `declare module "@lightstart/light/controller" { interface SyncTargets { model: ModelApi } }`.
  */
                                
 

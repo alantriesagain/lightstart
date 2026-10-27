@@ -1,5 +1,5 @@
 /**
- * @file @bootstrapp/light/theme/icons.js
+ * @file @lightstart/light/theme/icons.js
  * Icon sets in the `@iconify-json` shape, and where a page reads one icon
  * from. Nothing is fetched until the page says where icons come from:
  * `configureIcons({ load: iconify("lucide") })` reads them from the public
