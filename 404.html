@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0"/><meta name="theme-color" content="#101210"/><title>Light</title><meta name="description" content="The site of light: every component, its examples and its props, in any skin"/><meta property="og:title" content="Light"/><meta property="og:description" content="The site of light: every component, its examples and its props, in any skin"/><meta property="og:url" content="/"/><meta property="og:type" content="website"/><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Light"/><meta name="twitter:description" content="The site of light: every component, its examples and its props, in any skin"/><link rel="manifest" href="/manifest.json"/><link id="favicon" rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="stylesheet" href="/style.css?v=64bf1259"><link rel="modulepreload" href="/backend.js?v=6767c8ad"><script>window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__pwaInstallPrompt=e})</script><script src="/frontend.js?v=6914911e" type="module"></script><script>
+        const startApp = async () => {
+            if (window.__BOOTSTRAPP_NO_SW__ === true || !("serviceWorker" in navigator))
+                return;
+            const swVersion = "05df7884";
+            const swUrl = swVersion ? "/sw.js?v=" + swVersion : "/sw.js";
+            const registration = await navigator.serviceWorker.register(swUrl, {
+                scope: "/",
+            });
+
+            const initSWUpdates = () => {
+                if (window.$APP?.SW?.setRegistration) {
+                    window.$APP.SW.setRegistration(registration);
+                    const updateConfig = {"onPageLoad":true,"pollingInterval":900000,"onVisibilityChange":true};
+                    window.$APP.SW.enableAutoUpdates(updateConfig);
+                } else {
+                    setTimeout(initSWUpdates, 100);
+                }
+            };
+            initSWUpdates();
+        };
+
+        startApp();</script></head><body class="bg-canvas text-default min-h-screen"><div id="app-loader" class="app-loader"><div class="al-spin"></div></div><style>:root{--loader-bg:var(--canvas-background,Canvas);--loader-fg:var(--text-color,CanvasText);--loader-accent:var(--color-primary,#14b8a6)}.app-loader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--loader-bg);color:var(--loader-fg);font:600 15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;transition:opacity .3s ease-out}.app-loader.hidden{opacity:0;pointer-events:none}.al-spin{width:40px;height:40px;border:3px solid color-mix(in srgb,var(--loader-fg) 20%,transparent);border-top-color:var(--loader-accent);border-radius:50%;animation:al-spin 1s linear infinite}@keyframes al-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.al-spin{animation-duration:3s}}</style><app-container></app-container></body></html>
