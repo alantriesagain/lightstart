@@ -273,6 +273,7 @@
         "textarea": "components/form/textarea.js",
         "tile": "components/display/tile.js",
         "time": "components/form/time.js",
+        "timeline": "components/display/timeline.js",
         "title-bar": "components/app/title-bar.js",
         "toast": "components/feedback/toast.js",
         "toc": "components/navigation/toc.js",

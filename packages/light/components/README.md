@@ -1,6 +1,6 @@
 # light's components
 
-131 web components in nine categories, with the mixins, libs and two stores they are built from. They are part of `@bootstrapp/light` and depend on nothing else: a component reads its host through light (`env`, `navigation`, `translate`, `trackWork`, `@bootstrapp/light/theme`).
+132 web components in nine categories, with the mixins, libs and two stores they are built from. They are part of `@bootstrapp/light` and depend on nothing else: a component reads its host through light (`env`, `navigation`, `translate`, `trackWork`, `@bootstrapp/light/theme`).
 
 ```html
 <lc-card>
@@ -51,7 +51,7 @@ Components load themselves. There is no import step and no registration call: th
 | Category | Components |
 |---|---|
 | **form** (25) | auth-form, checkbox, color-picker, day-strip, file-upload, form, icon-picker, image-crop, input, join, label, month-picker, number-input, radio, radio-group, rating, ruler, search, segmented, select, slider, switch, textarea, time, week-hours |
-| **display** (35) | avatar, avatar-group, badge, bar-chart, button, calendar, circle, code-block, comment, data-table, editable, example, flow, icon, image, kanban, kbd, line-chart, link, link-preview, list, list-item, list-row, markdown, media-card, palette, pattern, pie-chart, sparkline, stat, story-circle, table, tag, text, tile |
+| **display** (36) | avatar, avatar-group, badge, bar-chart, button, calendar, circle, code-block, comment, data-table, editable, example, flow, icon, image, kanban, kbd, line-chart, link, link-preview, list, list-item, list-row, markdown, media-card, palette, pattern, pie-chart, sparkline, stat, story-circle, table, tag, text, tile, timeline |
 | **layout** (11) | card, container, divider, flex, grid, page, panel, prose, section, split-pane, toolbar |
 | **navigation** (14) | accordion, breadcrumbs, menu, nav-item, nav-tree, navbar, pagination, sidebar, sidebar-section, tabs, toc, tree, tree-item, wizard |
 | **overlay** (10) | alert-dialog, bottom-sheet, command-palette, context-menu, drawer, dropdown, float-panel, modal, popover, tooltip |
@@ -212,6 +212,7 @@ Pure modules: no `$APP`, no DOM, each tested under `node --test`.
 | `utils/breakpoints.js` | the breakpoint table and its media queries |
 | `utils/scale.js` | `compactNumber(value)` for a tick label (`1.2K`), `niceMax(max, intervals)` for a round top of a value axis |
 | `utils/time-ago.js` | `timeAgo(iso, locale, now)`, a timestamp as "2 hours ago" in the reader's language |
+| `utils/day-groups.js` | `readAt`, `dayKeyOf`, `groupByDay`, `dayWords`: dated entries as the reader's day groups, with the day's words from `Intl` |
 | `utils/highlight.js` | `highlightLines(code, language)`, plain lines until `configureHighlight({ lines })` hands a tokenizer in |
 | `overlay/anchor.js` | `anchorPosition({ trigger, floating, side, align, offset, viewport })`, clamped into the viewport |
 | `overlay/detents.js` | `resolveStops`, `classify`, `releaseVelocity`, `rubber` for a draggable sheet |
@@ -374,6 +375,7 @@ A page without the framework defines these too, one level deep; follow the table
 | `lc-textarea` | `lc-label` |
 | `lc-tile` | `lc-icon` |
 | `lc-time` |  |
+| `lc-timeline` | `lc-icon`, `lc-link` |
 | `lc-title-bar` | `lc-icon` |
 | `lc-toast` | `lc-icon` |
 | `lc-toc` |  |

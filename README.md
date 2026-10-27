@@ -3,7 +3,7 @@
 A small runtime for light-DOM web components. A component is a definition object
 with reactive props, or a class with signal fields; both become standard custom
 elements. A tagged-template renderer, signals, typed props, controllers, models,
-a theme engine and a library of 131 components sit on top, and the same code runs
+a theme engine and a library of 132 components sit on top, and the same code runs
 in a browser, in server-side prerendering and natively through
 [scriptc](https://github.com/vercel-labs/scriptc) — the terminal target compiles
 to a static binary with no JavaScript engine inside.
