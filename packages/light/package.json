@@ -242,6 +242,7 @@
         "radio": "components/form/radio.js",
         "radio-group": "components/form/radio-group.js",
         "rating": "components/form/rating.js",
+        "ruler": "components/form/ruler.js",
         "scroller": "components/app/scroller.js",
         "search": "components/form/search.js",
         "section": "components/layout/section.js",
