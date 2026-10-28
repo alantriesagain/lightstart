@@ -72,9 +72,10 @@ from its own demo, in any skin.
 | Folder | Holds |
 |---|---|
 | `packages/light/` | `@lightstart/light`: the runtime and the `light` command, with [its documentation](packages/light/README.md) |
+| `packages/server/` | `@lightstart/server`: a small HTTP server core, routes, middleware, hooks and plugins over one `Context` and `Reply`, run on node, natively by scriptc, on Fetch runtimes and on Lambda ([README](packages/server/README.md)); an optional peer of `@lightstart/light`, which `light test`, `light serve` and the desktop shell serve with |
 | `packages/native/`, `packages/tui/` | The workspace packages native apps share, and `light-native`, their tooling ([README](packages/README.md)) |
 | `examples/` | Pages and apps on light alone: `starter`, `todomvc`, `indexeddb-explorer`, `grand-octave`, the five guided pages (`01-basic-counter.html` … `05-plugin-system.html`), and `tasks`, the terminal reference app ([README](examples/tasks/README.md)) |
-| `benchmarks/` | The view engine and renderer under node, natively and in Chromium ([README](benchmarks/README.md)) |
+| `benchmarks/` | The view engine and renderer under node, natively and in Chromium ([README](benchmarks/README.md)); `benchmarks/server/`, the server against bare `node:http` on both engines ([README](benchmarks/server/README.md)) |
 | `website/` | The catalogue site, a Bootstrapp app |
 
 ## Develop
@@ -90,11 +91,13 @@ npx light serve  # serve the repository; open /examples/…
 ```
 
 `pnpm verify` passes only at zero errors; beyond the package's gates it covers
-the tasks app's coverage and baked classes and the workspace packages' checks.
+the tasks app's coverage and baked classes and the workspace packages' checks,
+`@lightstart/server` among them: its tests under node and natively, and its
+coverage gate.
 
 The Bootstrapp monorepo consumes this repository in place: its `light/` is a
-symlink to a checkout beside it, its workspace lists `light/packages/light`, and
-its `projects/light` links to `website/`.
+symlink to a checkout beside it, its workspace lists `light/packages/light` and
+`light/packages/server`, and its `projects/light` links to `website/`.
 
 ## License
 
