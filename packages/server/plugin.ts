@@ -21,29 +21,39 @@ export abstract class Plugin {
   abstract setup(app: App): void;
 }
 
-/** `plugins` in the order their requirements allow, else the order given; throws on a missing requirement or a loop. */
+/**
+ * `plugins` in the order their requirements allow, else the order given; throws on a missing
+ * requirement or a loop. The same plugin may be added more than once (two static folders); a
+ * requirement is met once every plugin of that id is set up.
+ */
 export const ordered = (plugins: Plugin[]): Plugin[] => {
-  const out: Plugin[] = [];
   const ids: string[] = [];
   for (const p of plugins) ids.push(p.id);
   for (const p of plugins)
     for (const r of p.requires) if (ids.indexOf(r) < 0) throw new Error("plugin " + p.id + " requires " + r + ", which was not added");
-  const done: string[] = [];
+  const out: Plugin[] = [];
+  const started: boolean[] = [];
+  for (let i = 0; i < plugins.length; i++) started.push(false);
+  const met = (id: string): boolean => {
+    for (let i = 0; i < plugins.length; i++) if (ids[i] === id && !started[i]) return false;
+    return true;
+  };
   while (out.length < plugins.length) {
     let progressed = false;
-    for (const p of plugins) {
-      if (done.indexOf(p.id) >= 0) continue;
+    for (let i = 0; i < plugins.length; i++) {
+      if (started[i]) continue;
+      const p = plugins[i]!;
       let ready = true;
-      for (const r of p.requires) if (done.indexOf(r) < 0) ready = false;
+      for (const r of p.requires) if (!met(r)) ready = false;
       if (ready) {
         out.push(p);
-        done.push(p.id);
+        started[i] = true;
         progressed = true;
       }
     }
     if (!progressed) {
       const stuck: string[] = [];
-      for (const p of plugins) if (done.indexOf(p.id) < 0) stuck.push(p.id);
+      for (let i = 0; i < plugins.length; i++) if (!started[i]) stuck.push(ids[i]!);
       throw new Error("plugins " + stuck.join(", ") + " require each other");
     }
   }

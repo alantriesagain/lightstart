@@ -25,6 +25,7 @@
     "@lightstart/light": "workspace:*"
   },
   "devDependencies": {
+    "@lightstart/server": "workspace:*",
     "@types/node": "^26.6.5",
     "eslint": "^9.17.0",
     "playwright": "^1.58.2",

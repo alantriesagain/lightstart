@@ -12,6 +12,9 @@ importers:
         specifier: workspace:*
         version: link:packages/light
     devDependencies:
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:packages/server
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -30,6 +33,9 @@ importers:
 
   packages/light:
     devDependencies:
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
       '@stylistic/eslint-plugin':
         specifier: ^2.13.0
         version: 2.13.0(eslint@9.39.5)(typescript@6.0.3)
@@ -135,6 +141,9 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/tui/kernel:
     dependencies:

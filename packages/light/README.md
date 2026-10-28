@@ -362,7 +362,11 @@ once.
 Tests use `node:test` and `node:assert/strict`. A test that needs no DOM runs
 under `node --test`; one that does runs in a real browser with
 `npx light test <files...>`. The same specifiers resolve to light's browser
-implementation there. See [test/README.md](test/README.md).
+implementation there. See [test/README.md](test/README.md). `light test`,
+`light serve` and the desktop shell serve their pages with
+[`@lightstart/server`](../server/README.md), an optional peer a project that
+uses them installs (`npm i -D @lightstart/server`); a project that does not
+never downloads it.
 
 `npx light check [dir]` checks component definitions against light's
 conventions: definitions go through `defineComponent`, props are declared under

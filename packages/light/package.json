@@ -134,6 +134,7 @@
     "verify": "npm run typecheck && npm run typecheck:native && npm run typecheck:desktop && npm run typecheck:any && npm run coverage:native && npm run coverage:desktop && npm run check && npm test && npm run test:native && npm run test:desktop"
   },
   "devDependencies": {
+    "@lightstart/server": "workspace:*",
     "@stylistic/eslint-plugin": "^2.13.0",
     "@types/node": "^26.6.5",
     "eslint": "^9.17.0",
@@ -146,6 +147,7 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
+    "@lightstart/server": "^0.1.0",
     "@stylistic/eslint-plugin": "^2.13.0",
     "eslint": "^9.17.0",
     "eslint-plugin-lit": "^2.3.1",
@@ -153,6 +155,9 @@
     "typescript": "^6.0.3"
   },
   "peerDependenciesMeta": {
+    "@lightstart/server": {
+      "optional": true
+    },
     "@stylistic/eslint-plugin": {
       "optional": true
     },

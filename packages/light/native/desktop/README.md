@@ -226,7 +226,7 @@ its `exports`, and the prefix `@lightstart/light/` at them.
 | `window-host.js` | The script behind `window.__desktopWindow`: the window's state and the calls a title bar makes. |
 | `frameless-check.js` | The interactive check of the frameless window (moves the real pointer; not in `verify`). |
 | `host.js` | `DesktopApp`, `Route`, `Listener`, the narrowing helpers. |
-| `server.js` | The loopback asset server. |
+| `server.js` | The loopback asset server, on `@lightstart/server` (an optional peer of light a desktop app installs). |
 | `client.js` | `connect()` for the page. |
 | `init.js` | The script installed into every page load. |
 | `types.ts` | `Contract`, `Client`, `Events`, `Desktop`, `Handler`, `DesktopOptions`; re-exports the runtime. |
@@ -289,5 +289,5 @@ of its own:
   replies stall until it returns. Dialogs are the non-modal kind (`GtkFileChooserNative`,
   pumped like everything else); the drag stall is the same quirk Electron has on Windows.
 - The pump is a fixed wakeup every `pumpMs` (8 ms) whether or not anything is pending; an app
-  that idles for long may raise it. Large synchronous reads in the asset server block the loop
-  for their duration; pages are small, downloads are not.
+  that idles for long may raise it. The asset server reads files asynchronously and streams
+  the large ones, so a download does not hold the loop.

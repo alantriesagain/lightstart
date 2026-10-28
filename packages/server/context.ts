@@ -204,7 +204,7 @@ export class Context {
     const pairs = this.incoming.headerPairs();
     for (let i = 0; i + 1 < pairs.length; i += 2) headers.append(pairs[i]!, pairs[i + 1]!);
     if (this.method === "GET" || this.method === "HEAD") return new Request(this.url, { method: this.method, headers, signal: this.signal });
-    const body = await this.bytes();
+    const body = new Uint8Array(await this.bytes());
     return new Request(this.url, { method: this.method, headers, body, signal: this.signal });
   }
 }

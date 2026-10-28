@@ -1,13 +1,14 @@
 import fs from "node:fs";
-import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { App, html } from "@lightstart/server";
+import { serve as listen } from "@lightstart/server/node";
+import { Static } from "@lightstart/server/static";
 import { stage } from "../packages/light/scripts/pack.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..", "packages", "light");
 const PAGES = path.join(HERE, "pages");
-const TYPES = { ".js": "text/javascript", ".html": "text/html", ".json": "application/json", ".css": "text/css" };
 
 /**
  * Stage the package and map its exports, and nothing else, so a page loads
@@ -18,41 +19,39 @@ export const importMap = () => {
   const { manifest } = stage();
   /** @type {Record<string, string>} */
   const imports = {};
-  for (const [key, target] of Object.entries(manifest.exports))
-    if (typeof target !== "string") imports[key === "." ? manifest.name : `${manifest.name}/${key.slice(2)}`] = `/dist/${target.default.slice(2)}`;
+  for (const [key, target] of Object.entries(manifest.exports)) {
+    if (key.includes("*")) continue;
+    const entry = typeof target === "string" ? target : target.default;
+    imports[key === "." ? manifest.name : `${manifest.name}/${key.slice(2)}`] = `/dist/${entry.slice(2)}`;
+  }
   return { imports };
 };
 
 /**
  * Serve the package folder, and the benchmark pages under `/bench/`, with the
- * importmap injected where a page carries `<!--importmap-->`.
+ * importmap injected where a page carries `<!--importmap-->`. Answers the node
+ * server, which `ab.js` reads the port of and closes, as it does the one an
+ * older tree's copy of this file answers.
  * @param {number} [port]
- * @returns {Promise<http.Server>}
+ * @returns {Promise<import("node:http").Server>}
  */
-export const serve = (port = 0) =>
-  new Promise((resolve) => {
-    const map = `<script type="importmap">${JSON.stringify(importMap())}</script>`;
-    const server = http.createServer((req, res) => {
-      const { pathname } = new URL(req.url ?? "/", "http://localhost");
-      const file = pathname.startsWith("/bench/") ? path.join(PAGES, pathname.slice(7)) : path.join(ROOT, pathname);
-      if (!file.startsWith(ROOT)) {
-        res.writeHead(403);
-        res.end();
-        return;
-      }
-      fs.readFile(file, (error, data) => {
-        if (error) {
-          res.writeHead(404);
-          res.end();
-          return;
-        }
-        const body = file.endsWith(".html") ? String(data).replace("<!--importmap-->", map) : data;
-        res.writeHead(200, { "content-type": TYPES[/** @type {keyof typeof TYPES} */ (path.extname(file))] ?? "application/octet-stream", "cache-control": "no-store" });
-        res.end(body);
-      });
-    });
-    server.listen(port, "127.0.0.1", () => resolve(server));
-  });
+export const serve = async (port = 0) => {
+  const map = `<script type="importmap">${JSON.stringify(importMap())}</script>`;
+  const pages = new Static({ root: PAGES, prefix: "/bench", cacheControl: "no-store" });
+  const files = new Static({ root: ROOT, cacheControl: "no-store" });
+  /**
+   * @param {Static} folder
+   * @param {import("@lightstart/server").Context} c
+   */
+  const answer = async (folder, c) => {
+    const found = await folder.find(c.param("*") ?? "");
+    if (found === null) return html("", 404);
+    if (found.path.endsWith(".html")) return html(fs.readFileSync(found.path, "utf8").replace("<!--importmap-->", map)).header("cache-control", "no-store");
+    return folder.reply(c, found);
+  };
+  const app = new App().get("/bench/*", (c) => answer(pages, c)).get("/*", (c) => answer(files, c));
+  return (await listen(app, { port, host: "127.0.0.1" })).server;
+};
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const server = await serve(Number(process.argv[2] ?? 4600));

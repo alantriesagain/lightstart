@@ -3,45 +3,29 @@
  * custom URL scheme, so the backend serves `web/` over HTTP on 127.0.0.1 at a port the system
  * picks, under a path prefix only this launch knows, with light's own files under `light/` and
  * an import map injected into index.html. Nothing is cached, nothing is listed, and a request
- * from any other host name or outside the prefix is refused.
+ * from any other host name, with another method or outside the prefix is refused. It runs on
+ * `@lightstart/server` (an optional peer a desktop app installs): two static folders and the
+ * page's own route, behind one hook that refuses what is not the webview's.
  */
 import { randomBytes } from "node:crypto";
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { createServer } from "node:http";
-import { extname, join, normalize } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { App, html, text } from "@lightstart/server";
+import { serve } from "@lightstart/server/node";
+import { Static } from "@lightstart/server/static";
 
-/** @type {Map<string, string>} */
-const TYPES = new Map([
-  [".html", "text/html; charset=utf-8"],
-  [".js", "text/javascript; charset=utf-8"],
-  [".mjs", "text/javascript; charset=utf-8"],
-  [".css", "text/css; charset=utf-8"],
-  [".json", "application/json; charset=utf-8"],
-  [".svg", "image/svg+xml"],
-  [".png", "image/png"],
-  [".jpg", "image/jpeg"],
-  [".jpeg", "image/jpeg"],
-  [".gif", "image/gif"],
-  [".ico", "image/x-icon"],
-  [".webp", "image/webp"],
-  [".woff", "font/woff"],
-  [".woff2", "font/woff2"],
-  [".ttf", "font/ttf"],
-  [".txt", "text/plain; charset=utf-8"],
-  [".map", "application/json; charset=utf-8"],
-  [".wasm", "application/wasm"],
-]);
+/** @import { Reply } from "@lightstart/server" */
+/** @import { NodeServer } from "@lightstart/server/node" */
 
 /** The handle `createAssetServer` answers: the port and token the URL needs, and a way to stop. */
 export class AssetServer {
-  /**
-   * @param {string} token
-   * @param {import("node:http").Server} server
-   */
-  constructor(token, server) {
+  /** @param {string} token */
+  constructor(token) {
     this.token = token;
-    this.server = server;
     this.port = 0;
+    /** @type {NodeServer | null} */
+    this.node = null;
+    this.closed = false;
   }
 
   /** @param {string} path a path inside the served tree, such as "index.html" */
@@ -50,7 +34,8 @@ export class AssetServer {
   }
 
   close() {
-    this.server.close();
+    this.closed = true;
+    if (this.node !== null) this.node.close();
   }
 }
 
@@ -84,46 +69,31 @@ const importMapTag = (webDir, prefix) => {
 export const createAssetServer = (webDir, lightDir, listening) => {
   const token = randomBytes(16).toString("hex");
   const prefix = "/" + token + "/";
-  const server = createServer((req, res) => {
-    const url = req.url ?? "";
-    const host = req.headers.host ?? "";
-    if ((req.method !== "GET" && req.method !== "HEAD") || !url.startsWith(prefix) || !host.startsWith("127.0.0.1:")) {
-      res.writeHead(404, { "Content-Type": "text/plain" });
-      res.end("not found");
-      return;
-    }
-    const query = url.indexOf("?");
-    const rest = (query >= 0 ? url.slice(0, query) : url).slice(prefix.length);
-    const inLight = rest.startsWith("light/");
-    const root = inLight ? lightDir : webDir;
-    const relative = normalize(decodeURIComponent(inLight ? rest.slice(6) : rest === "" ? "index.html" : rest));
-    if (relative.startsWith("..") || relative.startsWith("/")) {
-      res.writeHead(404, { "Content-Type": "text/plain" });
-      res.end("not found");
-      return;
-    }
-    const file = join(root, relative);
-    if (!existsSync(file) || !statSync(file).isFile()) {
-      res.writeHead(404, { "Content-Type": "text/plain" });
-      res.end("not found");
-      return;
-    }
-    const type = TYPES.get(extname(file)) ?? "application/octet-stream";
-    if (!inLight && relative === "index.html") {
-      let html = readFileSync(file, "utf8");
-      const tag = importMapTag(webDir, prefix);
-      if (tag.length > 0) html = html.includes("<!--importmap-->") ? html.replace("<!--importmap-->", tag) : html.replace("</head>", tag + "</head>");
-      res.writeHead(200, { "Content-Type": type, "Cache-Control": "no-store" });
-      res.end(html);
-      return;
-    }
-    res.writeHead(200, { "Content-Type": type, "Cache-Control": "no-store" });
-    res.end(readFileSync(file));
-  });
-  const handle = new AssetServer(token, server);
-  server.listen(0, "127.0.0.1", () => {
-    handle.port = /** @type {import("node:net").AddressInfo} */ (server.address()).port;
-    listening(handle);
+  /** @type {() => Reply} */
+  const page = () => {
+    const file = join(webDir, "index.html");
+    if (!existsSync(file)) return text("not found", 404);
+    let body = readFileSync(file, "utf8");
+    const tag = importMapTag(webDir, prefix);
+    if (tag.length > 0) body = body.includes("<!--importmap-->") ? body.replace("<!--importmap-->", tag) : body.replace("</head>", tag + "</head>");
+    return html(body).header("cache-control", "no-store");
+  };
+  const app = new App()
+    .onRequest((c) => {
+      const host = c.header("host") ?? "";
+      if ((c.method !== "GET" && c.method !== "HEAD") || !c.path.startsWith(prefix) || !host.startsWith("127.0.0.1:")) return text("not found", 404);
+      return null;
+    })
+    .get(prefix, page)
+    .get(prefix + "index.html", page)
+    .plugin(new Static({ root: lightDir, prefix: prefix + "light", cacheControl: "no-store" }))
+    .plugin(new Static({ root: webDir, prefix: "/" + token, cacheControl: "no-store" }));
+  const handle = new AssetServer(token);
+  serve(app, { port: 0, host: "127.0.0.1" }).then((node) => {
+    handle.node = node;
+    handle.port = node.port;
+    if (handle.closed) node.close();
+    else listening(handle);
   });
   return handle;
 };

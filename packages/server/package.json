@@ -25,6 +25,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "scripts": {
+    "pack": "node scripts/pack.js"
+  },
   "exports": {
     ".": "./index.ts",
     "./node": "./node/index.ts",
@@ -43,6 +46,7 @@
   },
   "devDependencies": {
     "@light/test": "workspace:*",
-    "@types/node": "^26.6.5"
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
   }
 }

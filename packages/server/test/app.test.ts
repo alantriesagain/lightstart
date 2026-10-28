@@ -48,6 +48,19 @@ class Recorder extends Plugin {
   }
 }
 
+class Recorder2 extends Plugin {
+  readonly journal: Journal;
+
+  constructor(id: string, journal: Journal) {
+    super(id, []);
+    this.journal = journal;
+  }
+
+  setup(): void {
+    this.journal.lines.push(this.id + "2");
+  }
+}
+
 const USER = new Key<string>("user");
 const COUNT = new Key<number>("count");
 
@@ -119,6 +132,14 @@ const main = async (): Promise<void> => {
     .plugin(new Recorder("b", ["a"], setups));
   eq("a plugin's route answers", await bodyOf(await request(plugged, "GET", "/c")), "c");
   eq("plugins are set up after what they require", setups.lines.join(" "), "a b c");
+  const twice = new Journal();
+  const doubled = new App()
+    .plugin(new Recorder("after", ["x"], twice))
+    .plugin(new Recorder("x", [], twice))
+    .plugin(new Recorder("y", [], twice));
+  doubled.plugin(new Recorder2("x", twice));
+  doubled.build();
+  eq("the same plugin twice is set up twice, and what requires it after both", twice.lines.join(" "), "x y x2 after");
   throws("a missing requirement refuses the build", () => {
     new App().plugin(new Recorder("x", ["y"], setups)).build();
   }, "plugin x requires y, which was not added");

@@ -3,20 +3,20 @@
  * A static server for a package folder with a runner page: the package and
  * the packages it declares resolve through an importmap built from their
  * `exports`, and `node:test`, `node:assert` and `node:assert/strict` resolve
- * to the shims beside this module.
+ * to the shims beside this module. It runs on `@lightstart/server` (an optional
+ * peer `light test` and `light serve` need): the runner page's route, and every
+ * other path through the static plugin's guard and lookup, TypeScript stripped
+ * as it goes out.
  */
 
-import { existsSync, readFileSync, statSync } from "node:fs";
-import http from "node:http";
+import { existsSync, readFileSync } from "node:fs";
 import { stripTypeScriptTypes } from "node:module";
 import path from "node:path";
+import { App, html, text } from "@lightstart/server";
+import { serve as listen } from "@lightstart/server/node";
+import { Static } from "@lightstart/server/static";
 import { asPackageJson } from "../check/walk.js";
 import { runnerPage } from "./page.js";
-
-const TYPES = /** @type {Record<string, string>} */ ({
-  ".js": "text/javascript", ".mjs": "text/javascript", ".ts": "text/javascript", ".html": "text/html", ".json": "application/json",
-  ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".woff2": "font/woff2", ".txt": "text/plain",
-});
 
 /**
  * A TypeScript module as the JavaScript a browser runs: node blanks the
@@ -78,38 +78,27 @@ export const RUNNER_PATH = "/__light/runner";
 
 /**
  * Serve `root` on `port` (0 picks a free one). `RUNNER_PATH?file=<url>` is the
- * runner page for one test file.
+ * runner page for one test file; a folder answers its `index.html`.
  * @param {string} root
  * @param {number} [port]
- * @returns {Promise<{ server: http.Server, url: string }>}
+ * @returns {Promise<{ server: import("node:http").Server, url: string }>}
  */
-export const serve = (root, port = 0) =>
-  new Promise((resolve) => {
-    const { imports, lightDir } = importmapFor(root);
-    const harnessUrl = `/${path.relative(root, path.join(lightDir, "test/harness.js")).split(path.sep).join("/")}`;
-    const reportUrl = `/${path.relative(root, path.join(lightDir, "test/report.js")).split(path.sep).join("/")}`;
-    const server = http.createServer((req, res) => {
-      const { pathname, searchParams } = new URL(req.url ?? "/", "http://localhost");
-      if (pathname === RUNNER_PATH) {
-        res.writeHead(200, { "content-type": "text/html", "cache-control": "no-store" });
-        res.end(runnerPage({ file: searchParams.get("file") ?? "", importmap: imports, harnessUrl, reportUrl }));
-        return;
-      }
-      const asked = path.join(root, decodeURIComponent(pathname));
-      const file = existsSync(asked) && statSync(asked).isDirectory() ? path.join(asked, "index.html") : asked;
-      if (!file.startsWith(root) || !existsSync(file)) {
-        res.writeHead(404);
-        res.end();
-        return;
-      }
-      res.writeHead(200, { "content-type": TYPES[path.extname(file)] ?? "application/octet-stream", "cache-control": "no-store" });
-      res.end(file.endsWith(".ts") && !file.endsWith(".d.ts") ? stripped(file) : readFileSync(file));
+export const serve = async (root, port = 0) => {
+  const { imports, lightDir } = importmapFor(root);
+  const harnessUrl = `/${path.relative(root, path.join(lightDir, "test/harness.js")).split(path.sep).join("/")}`;
+  const reportUrl = `/${path.relative(root, path.join(lightDir, "test/report.js")).split(path.sep).join("/")}`;
+  const files = new Static({ root, dotfiles: true, cacheControl: "no-store" });
+  const app = new App()
+    .get(RUNNER_PATH, (c) => html(runnerPage({ file: c.query("file") ?? "", importmap: imports, harnessUrl, reportUrl })).header("cache-control", "no-store"))
+    .get("/*", async (c) => {
+      const found = await files.find(c.param("*") ?? "");
+      if (found === null) return text("", 404);
+      if (found.path.endsWith(".ts") && !found.path.endsWith(".d.ts")) return text(stripped(found.path)).header("content-type", "text/javascript; charset=utf-8").header("cache-control", "no-store");
+      return files.reply(c, found);
     });
-    server.listen(port, "127.0.0.1", () => {
-      const address = /** @type {import("node:net").AddressInfo} */ (server.address());
-      resolve({ server, url: `http://127.0.0.1:${address.port}` });
-    });
-  });
+  const node = await listen(app, { port, host: "127.0.0.1" });
+  return { server: node.server, url: `http://127.0.0.1:${node.port}` };
+};
 
 /**
  * `light serve [dir] [--port <n>]`: serve a folder the way the test runner

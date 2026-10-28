@@ -79,4 +79,8 @@ Throw `new HttpError(status, message)` to answer `{ "error": message }` with tha
 
 ## scriptc
 
+In the workspace the exports name the TypeScript sources, which scriptc compiles as program source. `npm run pack` stages what npm gets into `dist/`: each module as JavaScript (types stripped in place, so lines match) with its `.d.ts`, since node strips no types inside `node_modules`.
+
+`@lightstart/light` lists this package as an optional peer: `light test`, `light serve` and its desktop shell serve their pages with it, and a project that uses none of them never installs it.
+
 The sources follow the rules light's native core keeps (`packages/light/native/probes/README.md`): TypeScript with erasable syntax, `unknown` narrowed by `typeof` and `instanceof`, identity in classes, no `Map` of functions, no write by a computed string key. `benchmarks/server/` measures the package against bare `node:http` and against a Fetch bridge, under node and natively.
