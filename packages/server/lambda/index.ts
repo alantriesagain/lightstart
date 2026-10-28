@@ -87,16 +87,16 @@ export class LambdaIncoming extends Incoming {
     return Buffer.from(body, this.event.isBase64Encoded === true ? "base64" : "utf8");
   }
 
-  async text(limit: number): Promise<string> {
+  text(limit: number): Promise<string> {
     const body = this.body();
-    if (body.length > limit) throw tooLarge(limit);
-    return body.toString("utf8");
+    if (body.length > limit) return Promise.reject(tooLarge(limit));
+    return Promise.resolve(body.toString("utf8"));
   }
 
-  async bytes(limit: number): Promise<Uint8Array> {
+  bytes(limit: number): Promise<Uint8Array> {
     const body = this.body();
-    if (body.length > limit) throw tooLarge(limit);
-    return body;
+    if (body.length > limit) return Promise.reject(tooLarge(limit));
+    return Promise.resolve(body);
   }
 
   remoteAddress(): string {
@@ -123,8 +123,9 @@ export class LambdaIncoming extends Incoming {
 class Collector extends Writer {
   readonly chunks: Buffer[] = [];
 
-  async write(chunk: string | Uint8Array): Promise<void> {
+  write(chunk: string | Uint8Array): Promise<void> {
     this.chunks.push(typeof chunk === "string" ? Buffer.from(chunk, "utf8") : Buffer.from(chunk));
+    return Promise.resolve();
   }
 }
 
@@ -149,10 +150,11 @@ export const toResult = async (reply: Reply, method: string): Promise<LambdaResu
   const cookies: string[] = [];
   const names: string[] = [];
   const values: string[] = [];
-  if (reply.response !== null) for (const [name, value] of reply.response.headers) {
-    names.push(name);
-    values.push(value);
-  }
+  if (reply.response !== null)
+    reply.response.headers.forEach((value: string, name: string) => {
+      names.push(name);
+      values.push(value);
+    });
   for (let i = 0; i < reply.headers.names.length; i++) {
     names.push(reply.headers.names[i]!);
     values.push(reply.headers.values[i]!);

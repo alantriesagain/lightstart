@@ -20,6 +20,8 @@ export interface MemoryInit {
   env?: unknown;
 }
 
+const tooLarge = (limit: number): HttpError => new HttpError(413, "the body is larger than " + String(limit) + " bytes");
+
 export class MemoryIncoming extends Incoming {
   private readonly verb: string;
   private readonly url: string;
@@ -60,15 +62,15 @@ export class MemoryIncoming extends Incoming {
     return this.headers.flat();
   }
 
-  async text(limit: number): Promise<string> {
-    if (new TextEncoder().encode(this.body).length > limit) throw new HttpError(413, "the body is larger than " + String(limit) + " bytes");
-    return this.body;
+  text(limit: number): Promise<string> {
+    if (new TextEncoder().encode(this.body).length > limit) return Promise.reject(tooLarge(limit));
+    return Promise.resolve(this.body);
   }
 
-  async bytes(limit: number): Promise<Uint8Array> {
+  bytes(limit: number): Promise<Uint8Array> {
     const body = new TextEncoder().encode(this.body);
-    if (body.length > limit) throw new HttpError(413, "the body is larger than " + String(limit) + " bytes");
-    return body;
+    if (body.length > limit) return Promise.reject(tooLarge(limit));
+    return Promise.resolve(body);
   }
 
   remoteAddress(): string {
@@ -103,8 +105,9 @@ export const request = async (app: App, method: string, target: string, init: Me
 class CollectingWriter extends Writer {
   readonly chunks: string[] = [];
 
-  async write(chunk: string | Uint8Array): Promise<void> {
+  write(chunk: string | Uint8Array): Promise<void> {
     this.chunks.push(typeof chunk === "string" ? chunk : new TextDecoder().decode(chunk));
+    return Promise.resolve();
   }
 }
 

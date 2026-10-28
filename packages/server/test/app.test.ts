@@ -56,7 +56,7 @@ class Recorder2 extends Plugin {
     this.journal = journal;
   }
 
-  setup(): void {
+  setup(_app: App): void {
     this.journal.lines.push(this.id + "2");
   }
 }

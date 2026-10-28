@@ -74,7 +74,7 @@ const decoded = (rest: string): string | null => {
 };
 
 const fileBody = (path: string) => (out: Writer): Promise<void> =>
-  new Promise<void>((done: () => void, failed: (error: unknown) => void) => {
+  new Promise<void>((done: () => void, failed: (reason: Error) => void) => {
     const source = createReadStream(path);
     source.on("data", (chunk: Buffer) => {
       source.pause();

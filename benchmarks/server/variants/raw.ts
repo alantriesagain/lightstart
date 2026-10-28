@@ -1,5 +1,6 @@
-// From vercel-labs/scriptc, benchmarks/runtime/workloads/http-api.ts (Apache-2.0), unchanged: the
-// baseline every variant here answers byte for byte.
+// From vercel-labs/scriptc, benchmarks/runtime/workloads/http-api.ts (Apache-2.0), unchanged but
+// for the @ts-expect-error @types/node needs on the port read (scriptc's own repository builds it
+// against its bundled declarations): the baseline every variant here answers byte for byte.
 // A small JSON API server: routing, query parsing, a seeded product catalog,
 // per-cart mutable state, typed JSON request bodies, conditional GETs, and
 // request/response header handling. Driven by clients/http-load.mjs, which
@@ -295,5 +296,6 @@ const server = createServer((req, res) => {
 });
 
 server.listen(0, "127.0.0.1", () => {
+  /* @ts-expect-error */
   process.stderr.write("PORT " + server.address().port + "\n");
 });

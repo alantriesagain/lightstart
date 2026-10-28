@@ -73,7 +73,7 @@ const main = async (): Promise<void> => {
   const platform = new Platform();
   await (await handler(new Request("https://example.com/later", { method: "POST" }), {}, platform)).text();
   ok("work goes to the platform's waitUntil", platform.work.length === 1);
-  await Promise.all(platform.work);
+  for (const work of platform.work) await work;
   eq("and runs there", journal.lines.join(","), "done later");
 
   eq("a JSON body is read", await (await handler(new Request("https://example.com/echo", { method: "POST", body: "{\"a\":[1,2]}" }))).text(), "{\"got\":{\"a\":[1,2]}}");

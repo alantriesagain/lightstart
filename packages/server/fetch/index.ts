@@ -96,15 +96,15 @@ export class FetchIncoming extends Incoming {
 
   headerPairs(): string[] {
     const out: string[] = [];
-    for (const [name, value] of this.request.headers) {
+    this.request.headers.forEach((value: string, name: string) => {
       out.push(name);
       out.push(value);
-    }
+    });
     return out;
   }
 
-  async text(limit: number): Promise<string> {
-    return new TextDecoder().decode(await readAll(this.request, limit));
+  text(limit: number): Promise<string> {
+    return readAll(this.request, limit).then((body: Uint8Array) => new TextDecoder().decode(body));
   }
 
   bytes(limit: number): Promise<Uint8Array> {
@@ -141,17 +141,21 @@ export class FetchIncoming extends Incoming {
 }
 
 class StreamWriter extends Writer {
-  private readonly controller: ReadableStreamDefaultController<Uint8Array>;
+  private readonly deliver: (chunk: Uint8Array) => void;
   private readonly encoder = new TextEncoder();
 
-  constructor(controller: ReadableStreamDefaultController<Uint8Array>) {
+  constructor(deliver: (chunk: Uint8Array) => void) {
     super();
-    this.controller = controller;
+    this.deliver = deliver;
   }
 
-  async write(chunk: string | Uint8Array): Promise<void> {
-    if (this.closed) return;
-    this.controller.enqueue(typeof chunk === "string" ? this.encoder.encode(chunk) : chunk);
+  write(chunk: string | Uint8Array): Promise<void> {
+    if (!this.closed) this.deliver(typeof chunk === "string" ? this.encoder.encode(chunk) : chunk);
+    return Promise.resolve();
+  }
+
+  stop(): void {
+    this.closed = true;
   }
 }
 
@@ -173,7 +177,7 @@ export const toResponse = (reply: Reply, method: string): Response => {
   const writers: StreamWriter[] = [];
   const source = new ReadableStream<Uint8Array>({
     start(controller: ReadableStreamDefaultController<Uint8Array>): void {
-      const writer = new StreamWriter(controller);
+      const writer = new StreamWriter((chunk: Uint8Array) => controller.enqueue(chunk));
       writers.push(writer);
       body(writer).then(
         () => {
@@ -185,7 +189,7 @@ export const toResponse = (reply: Reply, method: string): Response => {
       );
     },
     cancel(): void {
-      for (const writer of writers) writer.closed = true;
+      for (const writer of writers) writer.stop();
     },
   });
   return new Response(source, init);

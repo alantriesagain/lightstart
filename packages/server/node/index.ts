@@ -36,7 +36,8 @@ const failed = (app: App, res: ServerResponse, error: unknown): void => {
     res.destroy();
     return;
   }
-  res.writeHead(500, ["content-type", "text/plain; charset=utf-8", "content-length", "14"]);
+  const head: string[] = ["content-type", "text/plain; charset=utf-8", "content-length", "14"];
+  res.writeHead(500, head);
   res.end("internal error");
 };
 
@@ -105,10 +106,12 @@ export class NodeServer extends WorkTracker {
 const listening = (node: NodeServer, options: ServeOptions): Promise<void> =>
   new Promise((resolve: () => void, reject: (error: Error) => void) => {
     const server = node.server;
-    const failedToListen = (error: Error): void => reject(error);
-    server.once("error", failedToListen);
+    let listened = false;
+    server.once("error", (error: Error) => {
+      if (!listened) reject(error);
+    });
     const ready = (): void => {
-      server.off("error", failedToListen);
+      listened = true;
       if (options.path === undefined) {
         /* @ts-expect-error */
         node.port = server.address().port;

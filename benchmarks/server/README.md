@@ -14,16 +14,19 @@ node benchmarks/server/run.js [--rounds 3] [--engines node,native] [--variants r
 
 Every contender must answer the same digest (status, content type, cache control, ETag, request id and body of every response) and print the same totals as the first one, or the run fails. `--engines native` builds each variant with light's scriptc (`packages/light/native/scriptc.js`) into `out/`.
 
-`raw.ts` and `load.mjs` are copied unchanged from [vercel-labs/scriptc](https://github.com/vercel-labs/scriptc) (`benchmarks/runtime/`, Apache-2.0).
+`raw.ts` and `load.mjs` come from [vercel-labs/scriptc](https://github.com/vercel-labs/scriptc) (`benchmarks/runtime/`, Apache-2.0), unchanged but for the `@ts-expect-error` `raw.ts` needs under `@types/node`.
 
 ## Results
 
-Node v25.3.0, Linux x64, load average about 4, 3 rounds of 40,000 measured requests, medians:
+Linux x64, node v25.3.0 and scriptc (the fork's `light-integration`, v0.4.5), load average about 2, 3 rounds of 40,000 measured requests, medians:
 
 | Contender | req/s | p50 ms | p99 ms | vs raw node |
 |---|---:|---:|---:|---:|
-| raw node | 15315 | 4.0 | 8.1 | 1.00x |
-| bridge node | 7567 | 8.2 | 15.9 | 0.49x |
-| light node | 14672 | 4.2 | 8.9 | 0.96x |
+| raw node | 25791 | 2.3 | 4.5 | 1.00x |
+| raw native | 77645 | 0.7 | 1.7 | 3.01x |
+| bridge node | 12981 | 4.6 | 8.6 | 0.50x |
+| bridge native | 32994 | 1.8 | 4.1 | 1.28x |
+| light node | 24085 | 2.5 | 4.8 | 0.93x |
+| light native | 52954 | 1.1 | 2.6 | 2.05x |
 
-A `Request` and a `Response` per request halve the throughput under node, which is why the package's core has its own `Context` and `Reply` and an adapter reads and writes the platform's own objects. Native numbers are pending a scriptc build of the fork.
+A `Request` and a `Response` per request halve the throughput on both engines, which is why the package's core has its own `Context` and `Reply` and an adapter reads and writes the platform's own objects. Natively the package answers twice node's rate, and 0.68x of the hand-written native server: its per-request work weighs more there than under node (`packages/server/probes/README.md`).

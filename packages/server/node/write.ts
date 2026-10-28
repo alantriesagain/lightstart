@@ -1,9 +1,12 @@
 /**
  * @file A `Reply` written out through a node `ServerResponse`, in one `writeHead` with the headers
  * as a flat list (so every `set-cookie` is its own line). A whole body gets its `content-length`
- * and goes out with `end`; a streamed one goes out chunked, each write waiting for `drain` when
- * node's buffer is full, and stops once the client has gone; a Fetch `Response` is copied out
- * the same way, its body read chunk by chunk. A HEAD, a 204, a 304 and a 1xx carry no body.
+ * and goes out with `end`; a streamed one goes out chunked and stops once the client has gone; a
+ * Fetch `Response` is copied out the same way, its body read chunk by chunk. A HEAD, a 204, a 304
+ * and a 1xx carry no body. A write waits while the socket's buffer is full, polling
+ * `writableNeedDrain` rather than listening for `drain`, since scriptc lowers neither a response's
+ * `drain` nor removing a listener and a listener per wait would pile up on a keep-alive socket;
+ * natively the runtime buffers a response's writes itself and the socket never reports full.
  */
 import type { ServerResponse } from "node:http";
 import { HeaderList } from "../headers.ts";
@@ -11,30 +14,33 @@ import { Reply, Writer } from "../reply.ts";
 
 const bodiless = (method: string, status: number): boolean => method === "HEAD" || status === 204 || status === 304 || (status >= 100 && status < 200);
 
+const tick = (): Promise<void> =>
+  new Promise<void>((resolve: () => void) => {
+    setTimeout(resolve, 2);
+  });
+
 export class NodeWriter extends Writer {
   private readonly res: ServerResponse;
 
   constructor(res: ServerResponse) {
     super();
     this.res = res;
-    res.on("close", () => {
+    res.once("close", () => {
       this.closed = true;
     });
   }
 
   write(chunk: string | Uint8Array): Promise<void> {
     if (this.closed) return Promise.resolve();
-    if (this.res.write(chunk)) return Promise.resolve();
-    const res = this.res;
-    return new Promise((resolve: () => void) => {
-      const done = (): void => {
-        res.off("drain", done);
-        res.off("close", done);
-        resolve();
-      };
-      res.on("drain", done);
-      res.on("close", done);
-    });
+    if (typeof chunk === "string") this.res.write(chunk);
+    else this.res.write(chunk);
+    return this.settle();
+  }
+
+  /** Resolves once the socket's buffer has room again, or the client has gone. */
+  private async settle(): Promise<void> {
+    const socket = this.res.socket;
+    while (!this.closed && socket !== null && socket.writableNeedDrain) await tick();
   }
 }
 
@@ -50,7 +56,9 @@ const streamOut = async (res: ServerResponse, status: number, headers: HeaderLis
 
 const responseOut = async (res: ServerResponse, response: Response, method: string): Promise<void> => {
   const headers = new HeaderList();
-  for (const [name, value] of response.headers) headers.append(name, value);
+  response.headers.forEach((value: string, name: string) => {
+    headers.append(name, value);
+  });
   const source = response.body;
   if (source === null || bodiless(method, response.status)) {
     res.writeHead(response.status, headers.flat());

@@ -54,10 +54,10 @@ class Mount {
 
 const joined = (prefix: string, pattern: string): string => (prefix === "" ? pattern : pattern === "/" ? prefix : prefix + pattern);
 
-const answer = (result: Reply | Promise<Reply>): Promise<Reply> => (result instanceof Reply ? Promise.resolve(result) : result);
+const last = async (c: Context, route: Route): Promise<Reply> => await route.handlerFn(c);
 
 const run = (c: Context, route: Route, i: number): Promise<Reply> => {
-  if (i === route.chain.length) return answer(route.handlerFn(c));
+  if (i === route.chain.length) return last(c, route);
   const middleware = route.chain[i]!;
   return middleware(c, () => run(c, route, i + 1));
 };
@@ -229,8 +229,7 @@ export class App {
         if (allow.length === 0) return null;
         return this.finish(c, fail("method " + c.method + " not allowed", 405).header("allow", allow.join(", ")));
       }
-      const result = route.chain.length === 0 ? route.handlerFn(c) : run(c, route, 0);
-      const reply = result instanceof Reply ? result : await result;
+      const reply = await (route.chain.length === 0 ? route.handlerFn(c) : run(c, route, 0));
       return this.finish(c, reply);
     } catch (error) {
       return this.finish(c, this.fault(c, error));
@@ -242,8 +241,7 @@ export class App {
     const reply = await this.handle(c);
     if (reply !== null) return reply;
     try {
-      const result = this.notFoundFn(c);
-      return this.finish(c, result instanceof Reply ? result : await result);
+      return this.finish(c, await this.notFoundFn(c));
     } catch (error) {
       return this.finish(c, this.fault(c, error));
     }

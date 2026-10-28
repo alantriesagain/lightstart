@@ -3,7 +3,7 @@
  * by name; the body is read only when a handler asks, refused with a 413 as soon as its declared
  * length or the bytes received pass the limit (the rest is drained, not kept, so the 413 still
  * reaches the client); the abort signal is made at the first ask and fires when the response
- * closes before it finished. The `data` listener types its chunk `Buffer` in TypeScript syntax,
+ * closes before it finished, at once when that happened before the ask. The `data` listener types its chunk `Buffer` in TypeScript syntax,
  * the form scriptc lowers.
  */
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -18,7 +18,7 @@ export abstract class WorkTracker {
 const tooLarge = (limit: number): HttpError => new HttpError(413, "the body is larger than " + String(limit) + " bytes");
 
 const readBody = (req: IncomingMessage, limit: number): Promise<Buffer> =>
-  new Promise((resolve: (body: Buffer) => void, reject: (error: unknown) => void) => {
+  new Promise((resolve: (body: Buffer) => void, reject: (reason: Error) => void) => {
     const declared = req.headers["content-length"];
     if (declared !== undefined && Number(declared) > limit) {
       req.resume();
@@ -52,12 +52,18 @@ export class NodeIncoming extends Incoming {
   readonly res: ServerResponse;
   private readonly tracker: WorkTracker;
   private controller: AbortController | null = null;
+  private gone = false;
 
   constructor(req: IncomingMessage, res: ServerResponse, tracker: WorkTracker) {
     super();
     this.req = req;
     this.res = res;
     this.tracker = tracker;
+    res.once("close", () => {
+      if (res.writableFinished) return;
+      this.gone = true;
+      if (this.controller !== null) this.controller.abort();
+    });
   }
 
   method(): string {
@@ -85,12 +91,11 @@ export class NodeIncoming extends Incoming {
     return out;
   }
 
-  async text(limit: number): Promise<string> {
-    const body = await readBody(this.req, limit);
-    return body.toString("utf8");
+  text(limit: number): Promise<string> {
+    return readBody(this.req, limit).then((body: Buffer) => body.toString("utf8"));
   }
 
-  async bytes(limit: number): Promise<Uint8Array> {
+  bytes(limit: number): Promise<Uint8Array> {
     return readBody(this.req, limit);
   }
 
@@ -106,12 +111,7 @@ export class NodeIncoming extends Incoming {
     if (this.controller !== null) return this.controller.signal;
     const controller = new AbortController();
     this.controller = controller;
-    const res = this.res;
-    if (res.destroyed && !res.writableFinished) controller.abort();
-    else
-      res.on("close", () => {
-        if (!res.writableFinished) controller.abort();
-      });
+    if (this.gone) controller.abort();
     return controller.signal;
   }
 
