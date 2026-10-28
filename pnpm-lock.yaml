@@ -127,6 +127,15 @@ importers:
         specifier: ^26.6.5
         version: 26.6.5
 
+  packages/server:
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../tui/test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
   packages/tui/kernel:
     dependencies:
       '@light/lib':

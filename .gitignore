@@ -9,3 +9,4 @@ benchmarks/noise.local.json
 **/native/out/
 .scriptc/
 *.ll
+benchmarks/server/out/

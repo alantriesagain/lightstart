@@ -3,3 +3,4 @@ packages:
   - 'packages/native/*'
   - 'packages/tui/*'
   - 'packages/lightstart'
+  - 'packages/server'

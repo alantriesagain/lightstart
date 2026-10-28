@@ -1,0 +1,109 @@
+/**
+ * @file A `Reply` written out through a node `ServerResponse`, in one `writeHead` with the headers
+ * as a flat list (so every `set-cookie` is its own line). A whole body gets its `content-length`
+ * and goes out with `end`; a streamed one goes out chunked, each write waiting for `drain` when
+ * node's buffer is full, and stops once the client has gone; a Fetch `Response` is copied out
+ * the same way, its body read chunk by chunk. A HEAD, a 204, a 304 and a 1xx carry no body.
+ */
+import type { ServerResponse } from "node:http";
+import { HeaderList } from "../headers.ts";
+import { Reply, Writer } from "../reply.ts";
+
+const bodiless = (method: string, status: number): boolean => method === "HEAD" || status === 204 || status === 304 || (status >= 100 && status < 200);
+
+export class NodeWriter extends Writer {
+  private readonly res: ServerResponse;
+
+  constructor(res: ServerResponse) {
+    super();
+    this.res = res;
+    res.on("close", () => {
+      this.closed = true;
+    });
+  }
+
+  write(chunk: string | Uint8Array): Promise<void> {
+    if (this.closed) return Promise.resolve();
+    if (this.res.write(chunk)) return Promise.resolve();
+    const res = this.res;
+    return new Promise((resolve: () => void) => {
+      const done = (): void => {
+        res.off("drain", done);
+        res.off("close", done);
+        resolve();
+      };
+      res.on("drain", done);
+      res.on("close", done);
+    });
+  }
+}
+
+const streamOut = async (res: ServerResponse, status: number, headers: HeaderList, body: (out: Writer) => Promise<void>): Promise<void> => {
+  res.writeHead(status, headers.flat());
+  const writer = new NodeWriter(res);
+  try {
+    await body(writer);
+  } finally {
+    if (!writer.closed) res.end();
+  }
+};
+
+const responseOut = async (res: ServerResponse, response: Response, method: string): Promise<void> => {
+  const headers = new HeaderList();
+  for (const [name, value] of response.headers) headers.append(name, value);
+  const source = response.body;
+  if (source === null || bodiless(method, response.status)) {
+    res.writeHead(response.status, headers.flat());
+    res.end();
+    return;
+  }
+  const reader = source.getReader();
+  res.writeHead(response.status, headers.flat());
+  const writer = new NodeWriter(res);
+  try {
+    for (;;) {
+      const next = await reader.read();
+      if (next.done) break;
+      if (writer.closed) {
+        await reader.cancel();
+        break;
+      }
+      await writer.write(next.value);
+    }
+  } finally {
+    if (!writer.closed) res.end();
+  }
+};
+
+/** Writes `reply` as the answer to a request made with `method`. */
+export const writeReply = async (res: ServerResponse, reply: Reply, method: string): Promise<void> => {
+  if (reply.response !== null) return responseOut(res, reply.response, method);
+  const status = reply.status;
+  const headers = reply.headers;
+  const none = bodiless(method, status);
+  if (reply.stream !== null) {
+    if (none) {
+      res.writeHead(status, headers.flat());
+      res.end();
+      return;
+    }
+    return streamOut(res, status, headers, reply.stream);
+  }
+  if (reply.text !== null) {
+    headers.default("content-length", String(Buffer.byteLength(reply.text)));
+    res.writeHead(status, headers.flat());
+    if (none) res.end();
+    else res.end(reply.text);
+    return;
+  }
+  if (reply.bytes !== null) {
+    headers.default("content-length", String(reply.bytes.length));
+    res.writeHead(status, headers.flat());
+    if (none) res.end();
+    else res.end(reply.bytes);
+    return;
+  }
+  if (status !== 204 && status !== 304 && status >= 200) headers.default("content-length", "0");
+  res.writeHead(status, headers.flat());
+  res.end();
+};

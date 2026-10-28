@@ -1,0 +1,48 @@
+{
+  "name": "@lightstart/server",
+  "version": "0.1.0",
+  "description": "A small HTTP server core: routes, middleware, hooks and plugins over one Context and Reply, run by adapters for node, scriptc native binaries and fetch runtimes.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/server"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "http",
+    "server",
+    "router",
+    "middleware",
+    "fetch",
+    "workers",
+    "scriptc"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./node": "./node/index.ts",
+    "./fetch": "./fetch/index.ts",
+    "./lambda": "./lambda/index.ts",
+    "./memory": "./memory/index.ts",
+    "./cors": "./plugins/cors.ts",
+    "./proxy": "./plugins/proxy.ts",
+    "./static": "./plugins/static.ts",
+    "./mime": "./plugins/mime.ts",
+    "./request-id": "./plugins/request-id.ts",
+    "./health": "./plugins/health.ts",
+    "./body-limit": "./plugins/body-limit.ts",
+    "./access-log": "./plugins/access-log.ts",
+    "./*": "./*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  }
+}
