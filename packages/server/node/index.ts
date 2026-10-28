@@ -14,7 +14,7 @@ import { NodeIncoming, WorkTracker } from "./incoming.ts";
 import { writeReply } from "./write.ts";
 import type { App } from "../app.ts";
 
-export { NodeIncoming } from "./incoming.ts";
+export { NodeIncoming, WorkTracker } from "./incoming.ts";
 export { NodeWriter, writeReply } from "./write.ts";
 
 export interface ServeOptions {
