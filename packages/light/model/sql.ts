@@ -219,18 +219,21 @@ export class SqlWriter {
   readonly db: SqlDatabase;
   readonly models: Record<string, ModelSchema>;
   readonly store: Store;
+  private readonly schemas: Map<string, ModelSchema>;
   private readonly announce: ((event: string, data: unknown) => void) | null;
 
   constructor(config: SqlWriterConfig) {
     this.db = config.db;
     this.models = config.models;
     this.store = config.store;
+    this.schemas = new Map(Object.entries(config.models));
     this.announce = config.changes ?? null;
   }
 
   private schemaOf(model: string): ModelSchema {
-    if (!(model in this.models)) throw new Error(`no model "${model}"`);
-    return this.models[model]!;
+    const schema = this.schemas.get(model);
+    if (schema === undefined) throw new Error(`no model "${model}"`);
+    return schema;
   }
 
   private hook(model: string, name: keyof ModelHooks, row: Row | null, ctx: HookContext): unknown {
