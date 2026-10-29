@@ -55,6 +55,8 @@ export const runSuite = (open: (options?: { cacheStatements?: number }) => SqlDa
   eq("an unsafe integer is text", String(encoded["big"]), "9007199254740993");
   eq("small floats look like JavaScript", db.prepare("SELECT 0.00001 AS small, 1e20 AS wide, -0.0 AS zero").json(), '[{"small":0.00001,"wide":100000000000000000000,"zero":0}]');
   eq("non-finite floats are null", db.prepare("SELECT 1e999 AS v").json(), '[{"v":null}]');
+  eq("a duplicate column keeps its last value", db.prepare("SELECT 1 AS a, 2 AS a").json(), '[{"a":2}]');
+  eq("control characters escape", db.prepare("SELECT char(1) AS c").json(), '[{"c":"\\u0001"}]');
 
   eqn("a transaction answers its body", db.transaction(() => 7), 7);
   throws("a thenable transaction body is refused", () => { db.transaction(() => Promise.resolve()); }, "synchronous");

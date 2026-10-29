@@ -29,6 +29,7 @@ typedef struct {
   char *row;
   size_t row_len;
   int row_null;
+  uint32_t call_id;
 } shim_statement;
 
 static shim_statement *as_statement(void *handle) {
@@ -144,6 +145,7 @@ void *sqlite_shim_prepare(void *handle, const char *sql, size_t len) {
   statement->row = NULL;
   statement->row_len = 0;
   statement->row_null = 0;
+  statement->call_id = 0;
   return (void *)statement;
 }
 
@@ -324,6 +326,8 @@ static int append_value(buffer *b, sqlite3_stmt *statement, int column) {
   return 1;
 }
 
+static int append_object(buffer *b, sqlite3_stmt *statement);
+
 int64_t sqlite_shim_json(void *handle, unsigned char *out, size_t cap) {
   shim_statement *statement = as_statement(handle);
   if (statement->json == NULL) {
@@ -339,16 +343,7 @@ int64_t sqlite_shim_json(void *handle, unsigned char *out, size_t cap) {
         return -2;
       }
       if (row++ > 0) buffer_char(&b, ',');
-      buffer_char(&b, '{');
-      int columns = sqlite3_column_count(statement->stmt);
-      for (int i = 0; i < columns; i++) {
-        if (i > 0) buffer_char(&b, ',');
-        const char *name = sqlite3_column_name(statement->stmt, i);
-        buffer_escaped(&b, (const unsigned char *)name, (int)strlen(name));
-        buffer_char(&b, ':');
-        append_value(&b, statement->stmt, i);
-      }
-      buffer_char(&b, '}');
+      append_object(&b, statement->stmt);
       if (b.failed) {
         free(b.data);
         return -2;
@@ -368,11 +363,20 @@ int64_t sqlite_shim_json(void *handle, unsigned char *out, size_t cap) {
   return (int64_t)statement->json_len;
 }
 
+static int duplicate_later(sqlite3_stmt *statement, int column) {
+  const char *name = sqlite3_column_name(statement, column);
+  int columns = sqlite3_column_count(statement);
+  for (int i = column + 1; i < columns; i++) if (strcmp(name, sqlite3_column_name(statement, i)) == 0) return 1;
+  return 0;
+}
+
 static int append_object(buffer *b, sqlite3_stmt *statement) {
   buffer_char(b, '{');
   int columns = sqlite3_column_count(statement);
+  int written = 0;
   for (int i = 0; i < columns; i++) {
-    if (i > 0) buffer_char(b, ',');
+    if (duplicate_later(statement, i)) continue;
+    if (written++ > 0) buffer_char(b, ',');
     const char *name = sqlite3_column_name(statement, i);
     buffer_escaped(b, (const unsigned char *)name, (int)strlen(name));
     buffer_char(b, ':');
@@ -380,6 +384,60 @@ static int append_object(buffer *b, sqlite3_stmt *statement) {
   }
   buffer_char(b, '}');
   return !b->failed;
+}
+
+static int64_t copy_row(shim_statement *statement, unsigned char *out, size_t cap) {
+  size_t needed = statement->row_len + 1;
+  if (cap < needed) return -(int64_t)needed;
+  memcpy(out, statement->row, statement->row_len);
+  return (int64_t)statement->row_len;
+}
+
+static int build_row(shim_statement *statement) {
+  int rc = sqlite3_step(statement->stmt);
+  if (rc == SQLITE_DONE) {
+    statement->row = (char *)malloc(5);
+    if (statement->row == NULL) return 0;
+    memcpy(statement->row, "null", 4);
+    statement->row_len = 4;
+    statement->row_null = 1;
+    return 1;
+  }
+  if (rc != SQLITE_ROW) return 0;
+  buffer b = { NULL, 0, 0, 0 };
+  if (!append_object(&b, statement->stmt)) {
+    free(b.data);
+    return 0;
+  }
+  statement->row = b.data;
+  statement->row_len = b.len;
+  return 1;
+}
+
+int64_t sqlite_shim_get_text(void *handle, const char *value, size_t len, uint32_t call, unsigned char *out, size_t cap) {
+  shim_statement *statement = as_statement(handle);
+  if (statement->row == NULL || statement->call_id != call) {
+    invalidate(statement);
+    sqlite3_reset(statement->stmt);
+    sqlite3_clear_bindings(statement->stmt);
+    if (sqlite3_bind_text(statement->stmt, 1, value, (int)len, SQLITE_TRANSIENT) != SQLITE_OK) return -2;
+    if (!build_row(statement)) return -2;
+    statement->call_id = call;
+  }
+  return copy_row(statement, out, cap);
+}
+
+int64_t sqlite_shim_get_int(void *handle, int64_t value, uint32_t call, unsigned char *out, size_t cap) {
+  shim_statement *statement = as_statement(handle);
+  if (statement->row == NULL || statement->call_id != call) {
+    invalidate(statement);
+    sqlite3_reset(statement->stmt);
+    sqlite3_clear_bindings(statement->stmt);
+    if (sqlite3_bind_int64(statement->stmt, 1, (sqlite3_int64)value) != SQLITE_OK) return -2;
+    if (!build_row(statement)) return -2;
+    statement->call_id = call;
+  }
+  return copy_row(statement, out, cap);
 }
 
 int64_t sqlite_shim_row(void *handle, unsigned char *out, size_t cap) {

@@ -25,6 +25,8 @@ declare function sqlite_shim_ready(statement: bigint): number;
 declare function sqlite_shim_reset(statement: bigint): number;
 declare function sqlite_shim_json(statement: bigint, buffer: Uint8Array): bigint;
 declare function sqlite_shim_row(statement: bigint, buffer: Uint8Array): bigint;
+declare function sqlite_shim_get_text(statement: bigint, value: string, call: number, buffer: Uint8Array): bigint;
+declare function sqlite_shim_get_int(statement: bigint, value: bigint, call: number, buffer: Uint8Array): bigint;
 declare function sqlite_shim_readonly(statement: bigint): number;
 declare function sqlite_shim_columns(statement: bigint): number;
 declare function sqlite_shim_run(statement: bigint): number;
@@ -85,6 +87,7 @@ export class Statement implements SqlStatement {
   readonly reader: boolean;
   readonly columns: number;
   private readonly buffer: { bytes: Uint8Array };
+  private call: number;
   private closed: boolean;
 
   constructor(db: bigint, handle: bigint, buffer: { bytes: Uint8Array }) {
@@ -93,6 +96,7 @@ export class Statement implements SqlStatement {
     this.reader = sqlite_shim_readonly(handle) === 1;
     this.columns = sqlite_shim_columns(handle);
     this.buffer = buffer;
+    this.call = 0;
     this.closed = false;
   }
 
@@ -102,6 +106,23 @@ export class Statement implements SqlStatement {
 
   get(params?: SqlParams): Record<string, unknown> | null {
     if (this.closed) throw new Error("sqlite: statement is closed");
+    if (Array.isArray(params) && params.length === 1) {
+      const value = params[0];
+      if (typeof value === "string" || typeof value === "number" || typeof value === "bigint") {
+        const call = this.call++ >>> 0;
+        const text = typeof value === "string";
+        for (;;) {
+          const length = text ? sqlite_shim_get_text(this.handle, value as string, call, this.buffer.bytes) : sqlite_shim_get_int(this.handle, BigInt(value as number | bigint), call, this.buffer.bytes);
+          if (length === BigInt(JSON_NEED)) throw new Error(`sqlite: ${messageOf(this.db)}`);
+          if (length < 0) {
+            this.buffer.bytes = new Uint8Array(Number(-length));
+            continue;
+          }
+          const result = decoder.decode(this.buffer.bytes.subarray(0, Number(length)));
+          return result === "null" ? null : JSON.parse(result) as Record<string, unknown>;
+        }
+      }
+    }
     bindParams(this.handle, params);
     for (;;) {
       const length = sqlite_shim_row(this.handle, this.buffer.bytes);

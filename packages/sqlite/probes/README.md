@@ -17,16 +17,16 @@ A representative run on a 2026 Linux laptop:
 
 ```
 node:sqlite
-point read                      515464 ops/s
-100-row json                     12658 ops/s
-insert in its transaction       294118 ops/s
-100 inserts in one transaction    5814 ops/s
+point read                      505051 ops/s
+100-row json                      7003 ops/s
+insert in its transaction       285714 ops/s
+100 inserts in one transaction    5747 ops/s
 
 native shim
-point read                      393701 ops/s
-100-row json                     17730 ops/s
-insert in its transaction       263158 ops/s
-100 inserts in one transaction    4695 ops/s
+point read                      534759 ops/s
+100-row json                     33223 ops/s
+insert in its transaction       238095 ops/s
+100 inserts in one transaction    4329 ops/s
 ```
 
 The native shim's `json()` is one FFI call that builds the array in C; the node
