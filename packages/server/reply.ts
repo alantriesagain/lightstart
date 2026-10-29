@@ -28,6 +28,8 @@ export class Reply {
   bytes: Uint8Array | null = null;
   stream: StreamBody | null = null;
   response: Response | null = null;
+  /** The handler wrote the response itself, through the platform's own objects: the adapter writes nothing (`handled()`). */
+  written = false;
 
   constructor(status: number) {
     this.status = status;
@@ -133,6 +135,18 @@ export const sse = (body: (events: EventSink) => Promise<void>): Reply => {
   const reply = stream((out: Writer) => body(new EventSink(out)), "text/event-stream; charset=utf-8");
   reply.headers.append("cache-control", "no-cache");
   reply.headers.append("x-accel-buffering", "no");
+  return reply;
+};
+
+/**
+ * A reply the handler already wrote through the platform's own objects (node's
+ * `ServerResponse`, reached through `NodeIncoming`), so the adapter writes
+ * nothing: how an app hosts a handler written against the platform rather than
+ * against `Reply`. Only the node adapter can honour it.
+ */
+export const handled = (): Reply => {
+  const reply = new Reply(200);
+  reply.written = true;
   return reply;
 };
 

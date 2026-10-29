@@ -85,6 +85,7 @@ const responseOut = async (res: ServerResponse, response: Response, method: stri
 
 /** Writes `reply` as the answer to a request made with `method`. */
 export const writeReply = async (res: ServerResponse, reply: Reply, method: string): Promise<void> => {
+  if (reply.written) return;
   if (reply.response !== null) return responseOut(res, reply.response, method);
   const status = reply.status;
   const headers = reply.headers;

@@ -67,6 +67,11 @@ const main = async (): Promise<void> => {
   eqn("a dotfile is refused", (await request(site, "GET", "/.env")).status, 404);
   eqn("and a dot folder", (await request(site, "GET", "/.git/config")).status, 404);
 
+  const plain = new App().plugin(new Static({ root, precompressed: false, typeOf: (path: string) => (path.endsWith(".js") ? "application/x-from-host" : "text/x-other") }));
+  const asIs = await request(plain, "GET", "/app.js", { headers: { "accept-encoding": "br" } });
+  eq("precompressed: false serves the file as it is", (asIs.headers.get("content-encoding") ?? "none") + " " + (await bodyOf(asIs)), "none export const x = 1;");
+  eq("typeOf names the type", asIs.headers.get("content-type") ?? "", "application/x-from-host");
+
   const assets = new App().plugin(new Static({ root, prefix: "/assets" }));
   eq("under a prefix", await bodyOf(await request(assets, "GET", "/assets/app.js")), "export const x = 1;");
   eqn("and nothing outside it", (await request(assets, "GET", "/app.js")).status, 404);

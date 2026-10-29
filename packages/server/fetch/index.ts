@@ -163,6 +163,7 @@ const bodiless = (method: string, status: number): boolean => method === "HEAD" 
 
 /** `reply` as the `Response` to a request made with `method`. */
 export const toResponse = (reply: Reply, method: string): Response => {
+  if (reply.written) throw new Error("a handled() reply was written through node's objects; a Fetch runtime has none");
   if (reply.response !== null) return reply.response;
   const headers = new Headers();
   const names = reply.headers.names;

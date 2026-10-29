@@ -51,6 +51,8 @@ A pattern is `/`-separated segments: a literal, a `:name` parameter (one non-emp
 
 A handler answers a `Reply`, or a promise of one: `json(data, status)`, `text`, `html`, `bytes(body, type)`, `empty(status)`, `redirect(location)`, `fail(message, status)`, `stream(async (out) => { await out.write(chunk) }, type)`, or `respond(response)` for a Fetch `Response`. `reply.header(name, value)` sets a header and answers the reply. `reply.headers` keeps repeated names, so two `set-cookie` headers stay two.
 
+`handled()` is the reply of a handler that wrote the response itself through node's own objects (`c.incoming`, a `NodeIncoming`, holds `req` and `res`): the node adapter writes nothing. It is how an app hosts a handler written against `node:http` rather than against `Reply`; the other adapters refuse it.
+
 Throw `new HttpError(status, message)` to answer `{ "error": message }` with that status; anything else thrown is logged and answers 500.
 
 `sse(async (events) => { await events.send(data, event, id) })` is an event stream: never cached, and marked `x-accel-buffering: no` so nginx in front sends each event when it is written.
@@ -61,7 +63,7 @@ Throw `new HttpError(status, message)` to answer `{ "error": message }` with tha
 |---|---|
 | `@lightstart/server/cors` | `new Cors({ origins, allow?, prefix?, methods?, headers?, expose?, credentials?, maxAge? })`: preflights answered before routing, the grant on every reply to an allowed origin |
 | `@lightstart/server/proxy` | `new TrustProxy({ trust: ["10.0.0.0/8"] \| true })`: `Forwarded` / `X-Forwarded-*` from a trusted peer become `c.protocol`, `c.host`, `c.ip`; anyone else's are ignored; the client is the rightmost address that is not a trusted proxy |
-| `@lightstart/server/static` | `new Static({ root, prefix?, index?, spa?, dotfiles?, cacheControl?, streamAbove? })`: files from a folder (node and native). Path guard, index and `.html` lookup, a single-page fallback, ETag and `last-modified` with 304s, `.br`/`.gz` neighbours, large files streamed |
+| `@lightstart/server/static` | `new Static({ root, prefix?, index?, spa?, dotfiles?, cacheControl?, streamAbove?, typeOf?, precompressed? })`: files from a folder (node and native). Path guard, index and `.html` lookup, a single-page fallback, ETag and `last-modified` with 304s, `.br`/`.gz` neighbours (unless `precompressed: false`), large files streamed; `typeOf` replaces the MIME table |
 | `@lightstart/server/request-id` | `new RequestId()`: a plausible incoming `x-request-id` kept, else a UUID; `c.get(REQUEST_ID)`, and sent back on every reply |
 | `@lightstart/server/health` | `new Health({ path?, check? })`: `{ "ok": true }`, or a 503 when the check fails |
 | `@lightstart/server/body-limit` | `new BodyLimit(bytes)` for every request, `limit(bytes)` as a route's own middleware |

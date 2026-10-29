@@ -33,7 +33,8 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 | `writeReply(res, reply, method)` and `respond(response)` | `@bootstrapp/serve`'s `fromFetchResponse`, under every dev route that answers a `Response` |
 | `NodeIncoming`, `WorkTracker` | bootstrapp's dev endpoints route, which counts a request's `waitUntil` work itself |
 | `FetchIncoming`, `toResponse` | bootstrapp's `answer()` in Pages Functions |
-| `Static.find`, `Static.reply` | light's `test/serve.js` (TypeScript stripped as it goes out) and `benchmarks/serve.js` |
+| `Static.find`, `Static.reply`, its `typeOf` and `precompressed` options | light's `test/serve.js` (TypeScript stripped as it goes out), `benchmarks/serve.js`, and `@bootstrapp/serve`'s deployed-build mirror (the `mime` package's types, the build served as it is) |
+| `handled()` and `NodeIncoming.req`/`res` | the deployed-build mirror, which runs bootstrapp's node-style package routes behind the build |
 | `serve()` resolving a `NodeServer` whose `server` is node's `http.Server` | light's `test/serve.js` and `benchmarks/serve.js` answer that server, and `benchmarks/ab.js` reads it from two trees |
 
 ## Gates

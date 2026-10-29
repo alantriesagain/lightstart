@@ -7,7 +7,7 @@
  * path with `.html` added, then, for a path with no extension, the `spa` file when one is named;
  * anything else is a 404. A file answers with its type, a weak ETag and
  * `last-modified` (a matching `if-none-match` or `if-modified-since` is a 304), the configured
- * `cache-control`, and its `.br` or `.gz` neighbour when the client accepts it. A small file is read
+ * `cache-control`, and (unless turned off) its `.br` or `.gz` neighbour when the client accepts it. A small file is read
  * whole; a large one is streamed, paused while the client's side of the socket is full.
  */
 import { createReadStream } from "node:fs";
@@ -34,6 +34,10 @@ export interface StaticOptions {
   cacheControl?: string;
   /** Files larger than this many bytes are streamed instead of read whole; 256 KiB by default. */
   streamAbove?: number;
+  /** The content type of a file, `mimeOf` by default: a host with a fuller table (the `mime` package) hands its own. */
+  typeOf?: (path: string) => string;
+  /** Answer with a file's `.br` or `.gz` neighbour when the client accepts it; true by default. A host that serves a build as it is turns it off. */
+  precompressed?: boolean;
 }
 
 class Found {
@@ -148,8 +152,9 @@ export class Static extends Plugin {
         if (!Number.isNaN(at) && modified.getTime() <= at) return fresh(empty(304));
       }
     }
-    const type = mimeOf(found.path);
-    const accepts = c.header("accept-encoding") ?? "";
+    const typeOf = this.options.typeOf;
+    const type = typeOf === undefined ? mimeOf(found.path) : typeOf(found.path);
+    const accepts = this.options.precompressed === false ? "" : (c.header("accept-encoding") ?? "");
     let file = found;
     let encoding = "";
     if (accepts.indexOf("br") >= 0) {

@@ -12,5 +12,5 @@ export { Incoming } from "./incoming.ts";
 export { Key } from "./key.ts";
 export { Logger, MemoryLogger } from "./logger.ts";
 export { Plugin } from "./plugin.ts";
-export { EventSink, Reply, Writer, bytes, empty, fail, html, json, redirect, respond, sse, stream, text, type StreamBody } from "./reply.ts";
+export { EventSink, Reply, Writer, bytes, empty, fail, handled, html, json, redirect, respond, sse, stream, text, type StreamBody } from "./reply.ts";
 export { ALL, Route, Router, patternProblem, type Handler, type Middleware, type Next } from "./router.ts";
