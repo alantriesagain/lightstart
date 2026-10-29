@@ -1,5 +1,7 @@
 import { html } from "@lightstart/light/html";
+/** @import { TimelineEntry } from "../types.ts" */
 
+/** @param {number} hours */
 const ago = (hours) => new Date(Date.now() - hours * 3600e3).toISOString();
 
 const TEN_MINUTES_AGO = ago(1 / 6);
@@ -38,9 +40,11 @@ const DATED = [
   { at: FOUR_DAYS_AGO, title: "Draft saved" },
 ];
 
+/** @type {Record<string, string>} */
 const STATUS = { success: "Live", warning: "Scheduled", danger: "Failed" };
 
-const status = (entry) => html`<lc-badge variant=${entry.variant}>${STATUS[entry.variant]}</lc-badge>`;
+/** @param {TimelineEntry} entry */
+const status = (entry) => html`<lc-badge variant=${entry.variant}>${STATUS[entry.variant ?? ""]}</lc-badge>`;
 
 export default {
   description: "What happened and when, grouped under a heading per day with a marker for each entry.",
