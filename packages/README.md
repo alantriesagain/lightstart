@@ -17,6 +17,7 @@ What native apps of a kind share, as workspace packages on light's native target
 | `tui/test` | What a member's tests share: the assertions that print what they check, and a headless screen for a light view. |
 | `tui/kernel` | The plugin kernel of a native app: plugins ordered by what they require, slash commands, named actions with default keys, layered keymaps, payload-less hooks, settings and kept state. |
 | `tui/ui` | What the terminal views of the packages share: the palette the process draws with, durations as the views write them, word wrap over styled runs, the windowed list in the palette's colors, and the clipboard. |
+| `sqlite` | A synchronous SQLite driver over node:sqlite or a native shim, with JSON built in C. |
 | `tui/markdown` | Markdown as terminal lines: a line of prose to styled runs (emphasis, code, links, headings, lists, code blocks colored by the tokenizers) and a table laid out in columns. |
 
 A package never imports one after it in that order, nor an app. `lib` and `highlight` reach nothing of light; `kernel` reaches only the type of a key event.

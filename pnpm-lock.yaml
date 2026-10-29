@@ -36,6 +36,9 @@ importers:
       '@lightstart/server':
         specifier: workspace:*
         version: link:../server
+      '@lightstart/sqlite':
+        specifier: workspace:*
+        version: link:../sqlite
       '@stylistic/eslint-plugin':
         specifier: ^2.13.0
         version: 2.13.0(eslint@9.39.5)(typescript@6.0.3)
@@ -134,6 +137,18 @@ importers:
         version: 26.6.5
 
   packages/server:
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../tui/test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/sqlite:
     devDependencies:
       '@light/test':
         specifier: workspace:*

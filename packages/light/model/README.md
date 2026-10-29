@@ -13,6 +13,8 @@ Each entry loads only its own code; nothing is a barrel.
 | `@lightstart/light/model/adapter` | the storage SPI: `registerStorageAdapter`, `createAdapter`, `registerAdapterDecorator`, `validateRow`, the query helpers |
 | `@lightstart/light/model/indexeddb` | the IndexedDB adapter |
 | `@lightstart/light/model/jsonl` | the JSON Lines adapter: a file per model, through the IO its host hands it |
+| `@lightstart/light/model/sql` | the SQLite adapter: the model schema as tables, reads and writes as parameterized SQL, over an injected `@lightstart/sqlite` driver |
+| `@lightstart/light/model/sql-builder` | the SQL generator: DDL, additive columns, indexes, where/order and CRUD |
 | `@lightstart/light/model/binder` | `modelQuery`, `bindModelQuery`, `modelBinder` |
 | `@lightstart/light/model/slug` | `slugify`, `slugHooks` |
 | `@lightstart/light/model/events` | the event names the model emits |
@@ -182,6 +184,21 @@ await db.init();
 ```
 
 `examples/tasks/` is a terminal app over it.
+
+The SQL adapter is the same store pipeline over one SQLite database. The schema makes the table (`id`, `created`, `updated`, JSON fields as text, booleans as integers, `index`/`unique` and `$indexes` as indexes); `applySchema` is additive, so a new field becomes `ALTER TABLE ... ADD COLUMN` and a destructive change belongs in an explicit migration. Reads translate `where`, `order`, `limit` and `fields` to SQL, with `has`/`has all` through `json_each`; writes go through the same hooks, defaults and validation as every adapter.
+
+```javascript
+import { createAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
+import SqlAdapter from "@lightstart/light/model/sql";
+import { Database } from "@lightstart/sqlite/node";
+
+registerStorageAdapter("sql", SqlAdapter);
+const db = Database.open("app.db");
+const sql = createAdapter("sql", { name: "app", db, models });
+await sql.init();
+```
+
+`openSql({ name, db, models })` registers the adapter, applies the schema, builds the store and binds the model request in one call.
 
 ### Decorators and the shadow
 

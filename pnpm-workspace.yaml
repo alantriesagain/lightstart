@@ -4,3 +4,4 @@ packages:
   - 'packages/tui/*'
   - 'packages/lightstart'
   - 'packages/server'
+  - 'packages/sqlite'

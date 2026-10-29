@@ -1,0 +1,40 @@
+{
+  "name": "@lightstart/sqlite",
+  "version": "0.1.0",
+  "description": "One synchronous SQLite driver in classes, over node:sqlite or a native shim: prepare, bind, step and run; JSON answers built in C; transactions with savepoints; a statement cache.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/sqlite"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "sqlite",
+    "database",
+    "scriptc"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./node": "./node.ts",
+    "./native": "./native.ts",
+    "./*": "./*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  },
+  "native": {
+    "prepare": [
+      "node native/build.js"
+    ]
+  }
+}

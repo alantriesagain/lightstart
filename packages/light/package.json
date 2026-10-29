@@ -101,6 +101,8 @@
     "./model/adapter": "./model/adapter.ts",
     "./model/indexeddb": "./model/indexeddb.ts",
     "./model/jsonl": "./model/jsonl.ts",
+    "./model/sql": "./model/sql.ts",
+    "./model/sql-builder": "./model/sql-builder.ts",
     "./model/binder": "./model/binder.ts",
     "./model/slug": "./model/slug.ts",
     "./model/events": "./model/events.ts",
@@ -135,6 +137,7 @@
   },
   "devDependencies": {
     "@lightstart/server": "workspace:*",
+    "@lightstart/sqlite": "workspace:*",
     "@stylistic/eslint-plugin": "^2.13.0",
     "@types/node": "^26.6.5",
     "eslint": "^9.17.0",
@@ -148,6 +151,7 @@
   },
   "peerDependencies": {
     "@lightstart/server": "^0.1.0",
+    "@lightstart/sqlite": "^0.1.0",
     "@stylistic/eslint-plugin": "^2.13.0",
     "eslint": "^9.17.0",
     "eslint-plugin-lit": "^2.3.1",
@@ -156,6 +160,9 @@
   },
   "peerDependenciesMeta": {
     "@lightstart/server": {
+      "optional": true
+    },
+    "@lightstart/sqlite": {
       "optional": true
     },
     "@stylistic/eslint-plugin": {
