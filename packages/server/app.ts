@@ -9,8 +9,8 @@
  * health check, a refusal), then its route's chain, then the `onReply` hooks over whatever
  * answered (headers a plugin adds to every reply, a log line). A thrown `HttpError` answers its
  * status; anything else thrown is logged and answers 500. `handle` answers null for a path no
- * route matches, so a host can try what sits behind the app; `dispatch` answers the not-found
- * handler's reply instead, which is what an adapter calls.
+ * route matches, or one whose route answered `pass()`, so a host can try what sits behind the
+ * app; `dispatch` answers the not-found handler's reply instead, which is what an adapter calls.
  */
 import { Context } from "./context.ts";
 import { HttpError } from "./errors.ts";
@@ -230,6 +230,7 @@ export class App {
         return this.finish(c, fail("method " + c.method + " not allowed", 405).header("allow", allow.join(", ")));
       }
       const reply = await (route.chain.length === 0 ? route.handlerFn(c) : run(c, route, 0));
+      if (reply.passed) return null;
       return this.finish(c, reply);
     } catch (error) {
       return this.finish(c, this.fault(c, error));

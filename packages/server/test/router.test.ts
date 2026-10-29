@@ -10,7 +10,7 @@
  */
 import { App } from "../app.ts";
 import { Context } from "../context.ts";
-import { Reply, text } from "../reply.ts";
+import { Reply, pass, text } from "../reply.ts";
 import { MemoryIncoming, bodyOf, request } from "../memory/index.ts";
 import { done, eq, eqn, ok, throws } from "@light/test/assert.ts";
 
@@ -62,6 +62,11 @@ const main = async (): Promise<void> => {
   const missing = await request(unmatched, "GET", "/unknown");
   eqn("dispatch answers 404 then", missing.status, 404);
   eq("with the path in the message", await bodyOf(missing), "{\"error\":\"no route for GET /unknown\"}");
+
+  const declining = new App().get("/models/:name", (c: Context): Reply => (c.param("name") === "known" ? text("a model") : pass()));
+  eq("a route answers what it serves", await answer(declining, "GET", "/models/known"), "200 a model");
+  ok("pass() makes handle answer null, as for a path nothing matches", (await declining.handle(new Context(new MemoryIncoming("GET", "/models/other", {})))) === null);
+  eqn("and dispatch the not-found reply", (await request(declining, "GET", "/models/other")).status, 404);
 
   const methods = new App().get("/thing", named("read")).put("/thing", named("write"));
   eq("routes by method on one path", await answer(methods, "PUT", "/thing"), "200 write");

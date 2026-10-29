@@ -30,6 +30,8 @@ export class Reply {
   response: Response | null = null;
   /** The handler wrote the response itself, through the platform's own objects: the adapter writes nothing (`handled()`). */
   written = false;
+  /** The route declined the request after its pattern matched: the app answers null, as for a path nothing matches (`pass()`). */
+  passed = false;
 
   constructor(status: number) {
     this.status = status;
@@ -147,6 +149,18 @@ export const sse = (body: (events: EventSink) => Promise<void>): Reply => {
 export const handled = (): Reply => {
   const reply = new Reply(200);
   reply.written = true;
+  return reply;
+};
+
+/**
+ * A route declining a request its pattern matched, because what it serves is
+ * decided per request (a model that may not exist, a file that may not be
+ * there): `app.handle` answers null, so a host tries what sits behind the app,
+ * and `app.dispatch` answers the not-found reply.
+ */
+export const pass = (): Reply => {
+  const reply = new Reply(404);
+  reply.passed = true;
   return reply;
 };
 

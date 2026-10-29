@@ -51,6 +51,8 @@ A pattern is `/`-separated segments: a literal, a `:name` parameter (one non-emp
 
 A handler answers a `Reply`, or a promise of one: `json(data, status)`, `text`, `html`, `bytes(body, type)`, `empty(status)`, `redirect(location)`, `fail(message, status)`, `stream(async (out) => { await out.write(chunk) }, type)`, or `respond(response)` for a Fetch `Response`. `reply.header(name, value)` sets a header and answers the reply. `reply.headers` keeps repeated names, so two `set-cookie` headers stay two.
 
+`pass()` is the reply of a route that matched but declines the request (what it serves is decided per request): `app.handle` answers null, so a host tries what sits behind the app.
+
 `handled()` is the reply of a handler that wrote the response itself through node's own objects (`c.incoming`, a `NodeIncoming`, holds `req` and `res`): the node adapter writes nothing. It is how an app hosts a handler written against `node:http` rather than against `Reply`; the other adapters refuse it.
 
 Throw `new HttpError(status, message)` to answer `{ "error": message }` with that status; anything else thrown is logged and answers 500.
