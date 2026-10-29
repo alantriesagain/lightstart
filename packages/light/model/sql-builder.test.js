@@ -96,13 +96,25 @@ describe("an honest query still builds", () => {
       { n: { ">=": 2 } }, { n: { "!=": 1 } }, { n: { "=": null } }, { n: null },
       { s: { like: "Al" } }, { s: { ilike: "AL" } }, { s: { like: "a" } },
       { tags: { has: "y" } }, { tags: { "has all": ["x", "y"] } },
-      { tags: { in: ["x"] } }, { n: { "not in": [2] } },
+      { tags: { in: ["x"] } }, { tags: { "not in": ["x"] } }, { n: { "not in": [2] } },
+      { n: { in: [1, null] } }, { n: { "not in": [null] } }, { s: { "not in": ["beta"] } }, { id: { in: ["a", "c"] } },
     ];
+    const arrays = new Set(["tags"]);
     for (const where of cases) {
       const expected = rows.filter((row) => matchesWhere(row, where)).map((row) => row.id).sort();
-      const actual = db.prepare(buildSelectSQL("t", { where, order: "id" }).sql).all(buildSelectSQL("t", { where, order: "id" }).params).map((row) => row.id);
+      const query = buildSelectSQL("t", { where, order: "id", arrays });
+      const actual = db.prepare(query.sql).all(query.params).map((row) => row.id);
       assert.deepEqual(actual, expected, JSON.stringify(where));
     }
+    db.close();
+  });
+
+  it("answers in on a scalar field through its index", () => {
+    const db = Database.open(":memory:");
+    db.exec("CREATE TABLE t (id TEXT PRIMARY KEY, tags TEXT)");
+    const query = buildSelectSQL("t", { where: { id: { in: ["a", "b"] } }, arrays: new Set(["tags"]) });
+    const plan = db.prepare(`EXPLAIN QUERY PLAN ${query.sql}`).all(query.params).map((row) => String(row.detail)).join(" | ");
+    assert.match(plan, /SEARCH t USING/);
     db.close();
   });
 

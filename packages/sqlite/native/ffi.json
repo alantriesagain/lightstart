@@ -146,14 +146,6 @@
       "returns": "i64"
     },
     {
-      "name": "sqlite_shim_readonly",
-      "symbol": "sqlite_shim_readonly",
-      "params": [
-        "pointer"
-      ],
-      "returns": "i32"
-    },
-    {
       "name": "sqlite_shim_columns",
       "symbol": "sqlite_shim_columns",
       "params": [
@@ -176,7 +168,6 @@
       "params": [
         "pointer",
         "string",
-        "u32",
         "mutable-bytes"
       ],
       "returns": "i64"
@@ -187,7 +178,6 @@
       "params": [
         "pointer",
         "i64",
-        "u32",
         "mutable-bytes"
       ],
       "returns": "i64"

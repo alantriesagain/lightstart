@@ -23,7 +23,7 @@ export interface SqlStatement {
   run(params?: SqlParams): SqlRunResult;
   /** The whole result as one JSON array of objects, built by the engine where it can be. */
   json(params?: SqlParams): string;
-  readonly reader: boolean;
+  /** How many columns a step answers: more than zero for a query or a write with `RETURNING`. */
   readonly columns: number;
   close(): void;
 }

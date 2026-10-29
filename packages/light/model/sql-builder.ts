@@ -61,6 +61,8 @@ export interface SqlQueryOptions {
   fields?: string[] | null;
   groupBy?: string;
   total?: boolean;
+  /** The model's array fields, where `in` and `not in` mean intersects and disjoint; every other field compares as a scalar, through its index. */
+  arrays?: Set<string> | null;
   [extra: string]: unknown;
 }
 
@@ -90,6 +92,16 @@ export function getJsonFields(schema: SqlSchema | undefined): Set<string> {
     if (name.startsWith("$")) continue;
     const def = raw as Record<string, unknown>;
     if (def["$type"] === "array" || def["$type"] === "object") fields.add(name);
+  }
+  return fields;
+}
+
+/** The fields that hold a JSON array. */
+export function getArrayFields(schema: SqlSchema | undefined): Set<string> {
+  const fields = new Set<string>();
+  for (const [name, raw] of Object.entries(schema ?? {})) {
+    if (name.startsWith("$")) continue;
+    if ((raw as Record<string, unknown>)["$type"] === "array") fields.add(name);
   }
   return fields;
 }
@@ -178,8 +190,13 @@ const jsonArrayHas = (field: string, wanted: unknown[], all: boolean): SqlQuery 
   };
 };
 
-/** A where clause as SQLite SQL, every value bound. */
-export function buildWhereClause(where: Record<string, unknown> | null | undefined): SqlQuery {
+/**
+ * A where clause as SQLite SQL, every value bound. `arrays` names the fields
+ * that hold a JSON array, the only ones `in` and `not in` read through
+ * `json_each`; on any other field they are a plain `IN`, which an index
+ * answers. A `null` in the list matches a null column, as it does in memory.
+ */
+export function buildWhereClause(where: Record<string, unknown> | null | undefined, arrays: Set<string> | null = null): SqlQuery {
   if (!where || Object.keys(where).length === 0) return { sql: "", params: [] };
 
   const conditions: string[] = [];
@@ -227,19 +244,15 @@ export function buildWhereClause(where: Record<string, unknown> | null | undefin
           break;
         case "in":
         case "not in": {
-          const list = Array.isArray(expected) ? expected : [];
-          if (list.length === 0) {
-            conditions.push(operator === "in" ? "0" : "1");
-            break;
-          }
-          const placeholders = list.map(() => "?").join(", ");
-          const scalar = `${quoted} IN (${placeholders})`;
-          const array = `EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(CAST(${quoted} AS TEXT)) THEN CAST(${quoted} AS TEXT) ELSE '[]' END) WHERE value IN (${placeholders}))`;
-          const hasNull = list.includes(null);
-          const nullClause = operator === "in" ? (hasNull ? ` OR ${quoted} IS NULL` : "") : (hasNull ? "" : ` OR ${quoted} IS NULL`);
-          conditions.push(operator === "in" ? `(${scalar} OR ${array}${nullClause})` : `NOT (${scalar} OR ${array})${nullClause}`);
-          pushAll(params, list);
-          pushAll(params, list);
+          const list: unknown[] = Array.isArray(expected) ? expected : [];
+          const values = list.filter((entry: unknown) => entry !== null);
+          const hasNull = values.length < list.length;
+          const placeholders = values.map(() => "?").join(", ");
+          const array = arrays !== null && arrays.has(field);
+          const matches = values.length === 0 ? "0" : array ? `EXISTS (SELECT 1 FROM json_each(${quoted}) WHERE value IN (${placeholders}))` : `${quoted} IN (${placeholders})`;
+          if (operator === "in") conditions.push(hasNull ? `(${matches} OR ${quoted} IS NULL)` : matches);
+          else conditions.push(hasNull ? `(${quoted} IS NOT NULL AND NOT ${matches})` : `(${quoted} IS NULL OR NOT ${matches})`);
+          pushAll(params, values);
           break;
         }
         case "like":
@@ -289,7 +302,7 @@ export function buildSelectSQL(model: string, options: SqlQueryOptions = {}): Sq
   const { where, order, limit, offset, fields } = options;
   let sql = `SELECT ${selectFields(fields)} FROM ${quoteIdent(model)}`;
   const params: unknown[] = [];
-  const clause = buildWhereClause(where);
+  const clause = buildWhereClause(where, options.arrays ?? null);
   if (clause.sql !== "") {
     sql += ` WHERE ${clause.sql}`;
     pushAll(params, clause.params);
@@ -345,7 +358,7 @@ export function buildDeleteSQL(model: string, id: string | number): SqlQuery {
 
 /** A count over the same where. */
 export function buildCountSQL(model: string, options: SqlQueryOptions = {}): SqlQuery {
-  const clause = buildWhereClause(options.where);
+  const clause = buildWhereClause(options.where, options.arrays ?? null);
   return {
     sql: `SELECT COUNT(*) AS count FROM ${quoteIdent(model)}${clause.sql === "" ? "" : ` WHERE ${clause.sql}`}`,
     params: clause.params,
@@ -405,6 +418,7 @@ export default {
   buildSelectSQL,
   buildUpdateSQL,
   buildWhereClause,
+  getArrayFields,
   getBooleanFields,
   getJsonFields,
   quoteIdent,

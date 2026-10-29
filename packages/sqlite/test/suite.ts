@@ -31,7 +31,6 @@ export const runSuite = (open: (options?: { cacheStatements?: number }) => SqlDa
 
   const edit = db.prepare("UPDATE note SET title = ? WHERE id = ?");
   eqn("an update reports its changes", edit.run(["two!", "b"]).changes, 1);
-  eqn("a select reports no changes", db.prepare("SELECT 1 AS one").run().changes, 0);
   eqn("a delete reports none for a missing row", db.prepare("DELETE FROM note WHERE id = ?").run(["zz"]).changes, 0);
 
 
@@ -65,10 +64,30 @@ export const runSuite = (open: (options?: { cacheStatements?: number }) => SqlDa
 
   eq("prepare answers the cached statement", String(db.prepare("SELECT 1 AS one") === db.prepare("SELECT 1 AS one")), "true");
   const evicting = open({ cacheStatements: 1 });
-  const kept = evicting.prepare("SELECT 1 AS v");
+  const kept = evicting.prepare("SELECT ? AS v");
   evicting.prepare("SELECT 2 AS v");
-  eqn("an evicted statement is still usable", Number(kept.get()?.v ?? 0), 1);
+  eqn("an evicted statement is still usable", Number(kept.get([1])?.v ?? 0), 1);
+  evicting.prepare("SELECT 3 AS v");
+  evicting.prepare("SELECT 2 AS v").get();
+  eqn("and again after the cache turned over twice", Number(kept.get([4])?.v ?? 0), 4);
   evicting.close();
+  throws("a closed database refuses its statements", () => kept.get([1]), "closed");
+
+  db.exec("CREATE TABLE reads (id TEXT PRIMARY KEY, n REAL, data BLOB, big INTEGER)");
+  db.prepare("INSERT INTO reads (id, n, data, big) VALUES (?, ?, ?, ?)").run(["r", 1.5, new Uint8Array([1, 2, 3]), 9007199254740993n]);
+  eq("get binds a float as a float", String(db.prepare("SELECT id FROM reads WHERE n = ?").get([1.5])?.id), "r");
+  eq("get with a bigint", String(db.prepare("SELECT id FROM reads WHERE big = ?").get([9007199254740993n])?.id), "r");
+  const values = db.prepare("SELECT data, big FROM reads").all()[0]!;
+  eq("all answers a blob as base64, as json does", String(values["data"]), "AQID");
+  eq("and an unsafe integer as its text", String(values["big"]), "9007199254740993");
+  db.exec("CREATE TABLE scratch (id TEXT)");
+  db.prepare("INSERT INTO scratch (id) VALUES ('x'), ('y')").run();
+  db.prepare("SELECT id FROM scratch").get();
+  db.prepare("SELECT id FROM scratch WHERE id = ?").get(["x"]);
+  db.exec("DROP TABLE scratch");
+  ok("a get leaves no cursor open, so the table drops", true);
+  eqn("a write with RETURNING reports its change", db.prepare("INSERT INTO reads (id) VALUES (?) RETURNING id").run(["s"]).changes, 1);
+  throws("a failed run names its constraint", () => db.prepare("INSERT INTO reads (id) VALUES (?)").run(["s"]), "UNIQUE");
   eq("json of a scalar", db.prepare("SELECT 1 AS one").json(), '[{"one":1}]');
   eq("json writes numbers as JavaScript does", db.prepare("SELECT 0.1 AS f, 0.3333333333333333 AS t").json(), '[{"f":0.1,"t":0.3333333333333333}]');
   eq("json escapes text", db.prepare("SELECT 'a\"b' AS x").json(), '[{"x":"a\\\"b"}]');

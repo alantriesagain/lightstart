@@ -29,7 +29,6 @@ typedef struct {
   char *row;
   size_t row_len;
   int row_null;
-  uint32_t call_id;
 } shim_statement;
 
 static shim_statement *as_statement(void *handle) {
@@ -114,7 +113,7 @@ void *sqlite_shim_open(const char *path, size_t len, int read_only) {
 }
 
 void sqlite_shim_close(void *handle) {
-  if (handle != NULL) sqlite3_close((sqlite3 *)handle);
+  if (handle != NULL) sqlite3_close_v2((sqlite3 *)handle);
 }
 
 int sqlite_shim_errmsg(void *handle, unsigned char *out, size_t cap) {
@@ -145,7 +144,6 @@ void *sqlite_shim_prepare(void *handle, const char *sql, size_t len) {
   statement->row = NULL;
   statement->row_len = 0;
   statement->row_null = 0;
-  statement->call_id = 0;
   return (void *)statement;
 }
 
@@ -222,10 +220,6 @@ int sqlite_shim_reset(void *handle) {
   shim_statement *statement = as_statement(handle);
   invalidate(statement);
   return sqlite3_reset(statement->stmt);
-}
-
-int sqlite_shim_readonly(void *handle) {
-  return sqlite3_stmt_readonly(as_statement(handle)->stmt);
 }
 
 int sqlite_shim_columns(void *handle) {
@@ -393,9 +387,12 @@ static int64_t copy_row(shim_statement *statement, unsigned char *out, size_t ca
   return (int64_t)statement->row_len;
 }
 
+/* Step once and keep the first row (or `null`) as JSON; the statement is reset
+ * at once, so a read leaves no cursor open to pin a snapshot or lock a table. */
 static int build_row(shim_statement *statement) {
   int rc = sqlite3_step(statement->stmt);
   if (rc == SQLITE_DONE) {
+    sqlite3_reset(statement->stmt);
     statement->row = (char *)malloc(5);
     if (statement->row == NULL) return 0;
     memcpy(statement->row, "null", 4);
@@ -407,71 +404,51 @@ static int build_row(shim_statement *statement) {
   buffer b = { NULL, 0, 0, 0 };
   if (!append_object(&b, statement->stmt)) {
     free(b.data);
+    sqlite3_reset(statement->stmt);
     return 0;
   }
+  sqlite3_reset(statement->stmt);
   statement->row = b.data;
   statement->row_len = b.len;
   return 1;
 }
 
-int64_t sqlite_shim_get_text(void *handle, const char *value, size_t len, uint32_t call, unsigned char *out, size_t cap) {
+int64_t sqlite_shim_get_text(void *handle, const char *value, size_t len, unsigned char *out, size_t cap) {
   shim_statement *statement = as_statement(handle);
-  if (statement->row == NULL || statement->call_id != call) {
-    invalidate(statement);
-    sqlite3_reset(statement->stmt);
-    sqlite3_clear_bindings(statement->stmt);
-    if (sqlite3_bind_text(statement->stmt, 1, value, (int)len, SQLITE_TRANSIENT) != SQLITE_OK) return -2;
-    if (!build_row(statement)) return -2;
-    statement->call_id = call;
-  }
+  invalidate(statement);
+  sqlite3_reset(statement->stmt);
+  sqlite3_clear_bindings(statement->stmt);
+  if (sqlite3_bind_text(statement->stmt, 1, value, (int)len, SQLITE_TRANSIENT) != SQLITE_OK) return -2;
+  if (!build_row(statement)) return -2;
   return copy_row(statement, out, cap);
 }
 
-int64_t sqlite_shim_get_int(void *handle, int64_t value, uint32_t call, unsigned char *out, size_t cap) {
+int64_t sqlite_shim_get_int(void *handle, int64_t value, unsigned char *out, size_t cap) {
   shim_statement *statement = as_statement(handle);
-  if (statement->row == NULL || statement->call_id != call) {
-    invalidate(statement);
-    sqlite3_reset(statement->stmt);
-    sqlite3_clear_bindings(statement->stmt);
-    if (sqlite3_bind_int64(statement->stmt, 1, (sqlite3_int64)value) != SQLITE_OK) return -2;
-    if (!build_row(statement)) return -2;
-    statement->call_id = call;
-  }
+  invalidate(statement);
+  sqlite3_reset(statement->stmt);
+  sqlite3_clear_bindings(statement->stmt);
+  if (sqlite3_bind_int64(statement->stmt, 1, (sqlite3_int64)value) != SQLITE_OK) return -2;
+  if (!build_row(statement)) return -2;
   return copy_row(statement, out, cap);
 }
 
+/* The first row of the bound statement; a second call after a short buffer
+ * copies the row it kept instead of stepping again. */
 int64_t sqlite_shim_row(void *handle, unsigned char *out, size_t cap) {
   shim_statement *statement = as_statement(handle);
-  if (statement->row == NULL) {
-    int rc = sqlite3_step(statement->stmt);
-    if (rc == SQLITE_DONE) {
-      statement->row = (char *)malloc(5);
-      if (statement->row == NULL) return -2;
-      memcpy(statement->row, "null", 4);
-      statement->row_len = 4;
-      statement->row_null = 1;
-    } else if (rc != SQLITE_ROW) {
-      return -2;
-    } else {
-      buffer b = { NULL, 0, 0, 0 };
-      if (!append_object(&b, statement->stmt)) {
-        free(b.data);
-        return -2;
-      }
-      statement->row = b.data;
-      statement->row_len = b.len;
-    }
-  }
-  size_t needed = statement->row_len + 1;
-  if (cap < needed) return -(int64_t)needed;
-  memcpy(out, statement->row, statement->row_len);
-  return (int64_t)statement->row_len;
+  if (statement->row == NULL && !build_row(statement)) return -2;
+  return copy_row(statement, out, cap);
 }
 
+/* Step once, then reset: a write (an `INSERT … RETURNING` included) makes
+ * every change on its first step, and the reset leaves no cursor open. */
 int sqlite_shim_run(void *handle) {
   shim_statement *statement = as_statement(handle);
   invalidate(statement);
-  return sqlite3_step(statement->stmt);
+  int rc = sqlite3_step(statement->stmt);
+  sqlite3_reset(statement->stmt);
+  return rc;
 }
 
 int64_t sqlite_shim_changes(void *handle) {

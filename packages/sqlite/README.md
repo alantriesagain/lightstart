@@ -25,8 +25,11 @@ db.close();
 
 ## A database
 
-- `prepare(sql)` answers a cached `Statement`; the least recently prepared is
-  finalized when the cache passes `cacheStatements` (128 by default).
+- `prepare(sql)` answers a cached `Statement`; past `cacheStatements` (128 by
+  default) the least recently used handle is finalized. A statement held past
+  its eviction still works: its next call prepares it again and puts it back
+  in the cache, so the live handles stay bounded however much SQL a program
+  makes.
 - `exec(sql)` runs one or more statements with no parameters.
 - `transaction(fn)` runs `fn` inside `BEGIN IMMEDIATE`; a call made inside
   another gets its own `SAVEPOINT`, so an inner failure rolls back alone.
@@ -45,13 +48,20 @@ while the writer thread keeps the only writable connection.
 ## A statement
 
 - `all(params)` answers row objects; `get(params)` answers the first or null
-  (natively one row built in C, without materialising the whole result).
-- `run(params)` answers `{ changes, lastId }`; a reader reports `changes: 0`.
+  (natively one row built in C, and the statement reset at once, so a read
+  leaves no cursor open).
+- `run(params)` answers `{ changes, lastId }`: SQLite's count of the rows the
+  connection's latest write changed, so read it after a write.
 - `json(params)` answers the whole result as one JSON string. The native
   driver builds it in C, keeps it on the statement for a short-buffer recopy,
-  and never runs a statement twice. Blobs are base64, integers outside the
-  safe range are decimal text, and floats use JavaScript's formatting.
+  and never runs a statement twice.
+- `columns` is how many columns a step answers: more than zero for a query or
+  a write with `RETURNING`.
 - `close()` finalizes the statement.
+
+Both drivers answer the same values from `all`, `get` and `json`: an integer
+is a number while it is safe and its decimal text past that, a blob is its
+base64 text, and a float is written as JavaScript writes it.
 
 Parameters are positional (`["a", 1]`) or named without the prefix
 (`{ id: "a", n: 1 }` binds `:id` and `:n`). A boolean is `1` or `0`, an array

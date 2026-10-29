@@ -32,53 +32,60 @@ const bindings = (params: SqlParams | undefined): Array<string | number | bigint
   return named;
 };
 
+const MAX_SAFE = BigInt(Number.MAX_SAFE_INTEGER);
+const MIN_SAFE = BigInt(Number.MIN_SAFE_INTEGER);
+
+/**
+ * A row as the native driver answers it, changed in place: an integer is a
+ * number while it is safe and its digits as text past that, and a blob is its
+ * base64 text. Integers are read as bigints, so none is rounded first.
+ */
+const asNative = (row: Record<string, unknown>): Record<string, unknown> => {
+  for (const key in row) {
+    const value = row[key];
+    if (typeof value === "bigint") row[key] = value <= MAX_SAFE && value >= MIN_SAFE ? Number(value) : String(value);
+    else if (value instanceof Uint8Array) row[key] = Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString("base64");
+  }
+  return row;
+};
+
 /** One prepared statement on node's engine. */
 export class Statement implements SqlStatement {
   private readonly statement: ReturnType<DatabaseSync["prepare"]>;
-  readonly reader: boolean;
+  private readonly owner: Database;
   readonly columns: number;
 
-  constructor(statement: ReturnType<DatabaseSync["prepare"]>) {
+  constructor(owner: Database, statement: ReturnType<DatabaseSync["prepare"]>) {
+    this.owner = owner;
     this.statement = statement;
     this.columns = statement.columns().length;
-    this.reader = this.columns > 0;
+    statement.setReadBigInts(true);
   }
 
   all(params?: SqlParams): Record<string, unknown>[] {
+    if (!this.owner.open) throw new Error("sqlite: database is closed");
     const bound = bindings(params);
-    const rows = Array.isArray(bound) ? this.statement.all(...bound) : this.statement.all(bound);
-    return rows as Record<string, unknown>[];
+    const rows = (Array.isArray(bound) ? this.statement.all(...bound) : this.statement.all(bound)) as Record<string, unknown>[];
+    for (const row of rows) asNative(row);
+    return rows;
   }
 
   get(params?: SqlParams): Record<string, unknown> | null {
+    if (!this.owner.open) throw new Error("sqlite: database is closed");
     const bound = bindings(params);
-    const row = Array.isArray(bound) ? this.statement.get(...bound) : this.statement.get(bound);
-    return (row as Record<string, unknown> | undefined) ?? null;
+    const row = (Array.isArray(bound) ? this.statement.get(...bound) : this.statement.get(bound)) as Record<string, unknown> | undefined;
+    return row === undefined ? null : asNative(row);
   }
 
   run(params?: SqlParams): SqlRunResult {
+    if (!this.owner.open) throw new Error("sqlite: database is closed");
     const bound = bindings(params);
     const result = Array.isArray(bound) ? this.statement.run(...bound) : this.statement.run(bound);
-    return { changes: this.reader ? 0 : Number(result.changes), lastId: normalizeId(result.lastInsertRowid) };
+    return { changes: Number(result.changes), lastId: normalizeId(result.lastInsertRowid) };
   }
 
   json(params?: SqlParams): string {
-    this.statement.setReadBigInts(true);
-    let rows: Record<string, unknown>[];
-    try {
-      rows = this.all(params);
-    } finally {
-      this.statement.setReadBigInts(false);
-    }
-    return JSON.stringify(rows.map((row) => {
-      const out: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(row)) {
-        if (value instanceof Uint8Array) out[key] = Buffer.from(value).toString("base64");
-        else if (typeof value === "bigint") out[key] = value <= BigInt(Number.MAX_SAFE_INTEGER) && value >= BigInt(Number.MIN_SAFE_INTEGER) ? Number(value) : String(value);
-        else out[key] = value;
-      }
-      return out;
-    }));
+    return JSON.stringify(this.all(params));
   }
 
   close(): void {}
@@ -121,7 +128,7 @@ export class Database implements SqlDatabase {
       this.cache.set(sql, cached);
       return cached;
     }
-    const statement = new Statement(this.database.prepare(sql));
+    const statement = new Statement(this, this.database.prepare(sql));
     this.cache.set(sql, statement);
     while (this.cache.size > this.maxStatements) {
       const oldest = this.cache.keys().next();

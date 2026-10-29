@@ -6,27 +6,26 @@
 
 ```bash
 node probes/bench-node.ts
-scriptc-dev run --ffi native/ffi.json probes/bench-native.ts
+scriptc-dev run --optimization release --ffi native/ffi.json probes/bench-native.ts
 ```
 
-Both drivers are also held to identical output by
-`test/driver.test.ts` (native over the archive, node over
-`native/sqlite-node.mjs`).
+Both drivers answer the same values; the shared `test/suite.ts` holds them to
+it, under node over `node.ts` and natively over the C shim.
 
 A representative run on a 2026 Linux laptop:
 
 ```
 node:sqlite
-point read                      505051 ops/s
-100-row json                      7003 ops/s
-insert in its transaction       285714 ops/s
-100 inserts in one transaction    5747 ops/s
+point read                      515464 ops/s
+100-row json                     10627 ops/s
+insert in its transaction       270270 ops/s
+100 inserts in one transaction    5814 ops/s
 
-native shim
-point read                      534759 ops/s
-100-row json                     33223 ops/s
-insert in its transaction       238095 ops/s
-100 inserts in one transaction    4329 ops/s
+native shim (release)
+point read                      636943 ops/s
+100-row json                     38911 ops/s
+insert in its transaction       270270 ops/s
+100 inserts in one transaction    4762 ops/s
 ```
 
 The native shim's `json()` is one FFI call that builds the array in C; the node

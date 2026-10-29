@@ -25,9 +25,8 @@ declare function sqlite_shim_ready(statement: bigint): number;
 declare function sqlite_shim_reset(statement: bigint): number;
 declare function sqlite_shim_json(statement: bigint, buffer: Uint8Array): bigint;
 declare function sqlite_shim_row(statement: bigint, buffer: Uint8Array): bigint;
-declare function sqlite_shim_get_text(statement: bigint, value: string, call: number, buffer: Uint8Array): bigint;
-declare function sqlite_shim_get_int(statement: bigint, value: bigint, call: number, buffer: Uint8Array): bigint;
-declare function sqlite_shim_readonly(statement: bigint): number;
+declare function sqlite_shim_get_text(statement: bigint, value: string, buffer: Uint8Array): bigint;
+declare function sqlite_shim_get_int(statement: bigint, value: bigint, buffer: Uint8Array): bigint;
 declare function sqlite_shim_columns(statement: bigint): number;
 declare function sqlite_shim_run(statement: bigint): number;
 declare function sqlite_shim_changes(db: bigint): bigint;
@@ -80,24 +79,46 @@ const bindParams = (statement: bigint, params: SqlParams | undefined): void => {
   }
 };
 
-/** One prepared statement over the shim. */
-export class Statement implements SqlStatement {
-  private readonly db: bigint;
-  readonly handle: bigint;
-  readonly reader: boolean;
-  readonly columns: number;
-  private readonly buffer: { bytes: Uint8Array };
-  private call: number;
-  private closed: boolean;
+/** The JSON the shim wrote into the buffer, or null when the buffer was short and has grown to the size it needs. */
+const readInto = (db: bigint, holder: { bytes: Uint8Array }, length: bigint): string | null => {
+  if (length === BigInt(JSON_NEED)) throw new Error(`sqlite: ${messageOf(db)}`);
+  if (length < 0) {
+    holder.bytes = new Uint8Array(Number(-length));
+    return null;
+  }
+  return decoder.decode(holder.bytes.subarray(0, Number(length)));
+};
 
-  constructor(db: bigint, handle: bigint, buffer: { bytes: Uint8Array }) {
-    this.db = db;
+/**
+ * One prepared statement over the shim. The database's cache owns its handle:
+ * when the statement is evicted the handle is finalized, and the next call
+ * prepares it again, so a caller may hold a statement for as long as the
+ * database is open while the live handles stay bounded by the cache.
+ */
+export class Statement implements SqlStatement {
+  readonly sql: string;
+  private readonly owner: Database;
+  private handle: bigint;
+  readonly columns: number;
+
+  constructor(owner: Database, sql: string, handle: bigint) {
+    this.owner = owner;
+    this.sql = sql;
     this.handle = handle;
-    this.reader = sqlite_shim_readonly(handle) === 1;
     this.columns = sqlite_shim_columns(handle);
-    this.buffer = buffer;
-    this.call = 0;
-    this.closed = false;
+  }
+
+  /** The live handle, prepared again if the cache evicted it. */
+  private live(): bigint {
+    if (this.handle === 0n) this.handle = this.owner.revive(this);
+    return this.handle;
+  }
+
+  /** Finalize the handle; the statement stays usable and prepares again when called. */
+  release(): void {
+    if (this.handle === 0n) return;
+    sqlite_shim_finalize(this.handle);
+    this.handle = 0n;
   }
 
   all(params?: SqlParams): Record<string, unknown>[] {
@@ -105,91 +126,68 @@ export class Statement implements SqlStatement {
   }
 
   get(params?: SqlParams): Record<string, unknown> | null {
-    if (this.closed) throw new Error("sqlite: statement is closed");
-    if (Array.isArray(params) && params.length === 1) {
-      const value = params[0];
-      if (typeof value === "string" || typeof value === "number" || typeof value === "bigint") {
-        const call = this.call++ >>> 0;
-        const text = typeof value === "string";
-        for (;;) {
-          const length = text ? sqlite_shim_get_text(this.handle, value as string, call, this.buffer.bytes) : sqlite_shim_get_int(this.handle, BigInt(value as number | bigint), call, this.buffer.bytes);
-          if (length === BigInt(JSON_NEED)) throw new Error(`sqlite: ${messageOf(this.db)}`);
-          if (length < 0) {
-            this.buffer.bytes = new Uint8Array(Number(-length));
-            continue;
-          }
-          const result = decoder.decode(this.buffer.bytes.subarray(0, Number(length)));
-          return result === "null" ? null : JSON.parse(result) as Record<string, unknown>;
-        }
-      }
+    const handle = this.live();
+    const buffer = this.owner.buffer;
+    let length: bigint;
+    const value = Array.isArray(params) && params.length === 1 ? params[0] : undefined;
+    if (typeof value === "string") length = sqlite_shim_get_text(handle, value, buffer.bytes);
+    else if (typeof value === "bigint" || (typeof value === "number" && Number.isSafeInteger(value))) length = sqlite_shim_get_int(handle, BigInt(value), buffer.bytes);
+    else {
+      bindParams(handle, params);
+      length = sqlite_shim_row(handle, buffer.bytes);
     }
-    bindParams(this.handle, params);
     for (;;) {
-      const length = sqlite_shim_row(this.handle, this.buffer.bytes);
-      if (length === BigInt(JSON_NEED)) {
-        sqlite_shim_reset(this.handle);
-        throw new Error(`sqlite: ${messageOf(this.db)}`);
-      }
-      if (length < 0) {
-        this.buffer.bytes = new Uint8Array(Number(-length));
-        continue;
-      }
-      const text = decoder.decode(this.buffer.bytes.subarray(0, Number(length)));
-      return text === "null" ? null : JSON.parse(text) as Record<string, unknown>;
+      const text = readInto(this.owner.handle, buffer, length);
+      if (text !== null) return text === "null" ? null : JSON.parse(text) as Record<string, unknown>;
+      length = sqlite_shim_row(handle, buffer.bytes);
     }
   }
 
   run(params?: SqlParams): SqlRunResult {
-    if (this.closed) throw new Error("sqlite: statement is closed");
-    bindParams(this.handle, params);
-    const code = sqlite_shim_run(this.handle);
-    if (code !== SQLITE_DONE && code !== SQLITE_ROW) throw new Error(`sqlite: ${messageOf(this.db)}`);
-    const lastId = sqlite_shim_last_id(this.db);
-    return { changes: this.reader ? 0 : Number(sqlite_shim_changes(this.db)), lastId: lastId <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(lastId) : lastId };
+    const handle = this.live();
+    bindParams(handle, params);
+    const code = sqlite_shim_run(handle);
+    const db = this.owner.handle;
+    if (code !== SQLITE_DONE && code !== SQLITE_ROW) throw new Error(`sqlite: ${messageOf(db)}`);
+    const lastId = sqlite_shim_last_id(db);
+    return { changes: Number(sqlite_shim_changes(db)), lastId: lastId <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(lastId) : lastId };
   }
 
   json(params?: SqlParams): string {
-    if (this.closed) throw new Error("sqlite: statement is closed");
-    bindParams(this.handle, params);
+    const handle = this.live();
+    const buffer = this.owner.buffer;
+    bindParams(handle, params);
     for (;;) {
-      const length = sqlite_shim_json(this.handle, this.buffer.bytes);
-      if (length === BigInt(JSON_NEED)) {
-        sqlite_shim_reset(this.handle);
-        throw new Error(`sqlite: ${messageOf(this.db)}`);
-      }
-      if (length < 0) {
-        this.buffer.bytes = new Uint8Array(Number(-length));
-        continue;
-      }
-      return decoder.decode(this.buffer.bytes.subarray(0, Number(length)));
+      const length = sqlite_shim_json(handle, buffer.bytes);
+      if (length === BigInt(JSON_NEED)) sqlite_shim_reset(handle);
+      const text = readInto(this.owner.handle, buffer, length);
+      if (text !== null) return text;
     }
   }
 
+  /** Drop the statement from its database's cache and finalize it. */
   close(): void {
-    if (this.closed) return;
-    this.closed = true;
-    sqlite_shim_finalize(this.handle);
+    this.owner.forget(this);
   }
 }
 
 /** One database file (or `:memory:`) over the shim. */
 export class Database implements SqlDatabase {
   readonly path: string;
-  private readonly db: bigint;
+  readonly handle: bigint;
+  /** The JSON buffer every statement of this database writes into; it only grows. */
+  readonly buffer: { bytes: Uint8Array };
   private readonly cache: Map<string, Statement>;
-  private readonly statements: Set<Statement>;
   private readonly maxStatements: number;
-  private readonly buffer: { bytes: Uint8Array };
   private depth: number;
   private active: boolean;
 
-  private constructor(path: string, db: bigint, maxStatements: number) {
+  private constructor(path: string, handle: bigint, maxStatements: number) {
     this.path = path;
-    this.db = db;
-    this.cache = new Map();
-    this.statements = new Set();
-    this.maxStatements = maxStatements;
+    this.handle = handle;
     this.buffer = { bytes: new Uint8Array(GROW_START) };
+    this.cache = new Map();
+    this.maxStatements = Math.max(1, maxStatements);
     this.depth = 0;
     this.active = true;
   }
@@ -207,6 +205,25 @@ export class Database implements SqlDatabase {
     return this.active;
   }
 
+  private compile(sql: string): bigint {
+    if (!this.active) throw new Error("sqlite: database is closed");
+    const handle = sqlite_shim_prepare(this.handle, sql);
+    if (handle === 0n) throw new Error(`sqlite: ${messageOf(this.handle)}`);
+    return handle;
+  }
+
+  /** Put `statement` at the cache's newest end, finalizing the oldest past the limit. */
+  private admit(statement: Statement): void {
+    this.cache.set(statement.sql, statement);
+    while (this.cache.size > this.maxStatements) {
+      const oldest = this.cache.keys().next();
+      if (oldest.done === true) break;
+      const stale = this.cache.get(oldest.value);
+      this.cache.delete(oldest.value);
+      if (stale !== undefined) stale.release();
+    }
+  }
+
   prepare(sql: string): Statement {
     const cached = this.cache.get(sql);
     if (cached !== undefined) {
@@ -214,22 +231,31 @@ export class Database implements SqlDatabase {
       this.cache.set(sql, cached);
       return cached;
     }
-    const handle = sqlite_shim_prepare(this.db, sql);
-    if (handle === 0n) throw new Error(`sqlite: ${messageOf(this.db)}`);
-    const statement = new Statement(this.db, handle, this.buffer);
-    this.statements.add(statement);
-    this.cache.set(sql, statement);
-    while (this.cache.size > this.maxStatements) {
-      const oldest = this.cache.keys().next();
-      if (oldest.done === true) break;
-      this.cache.delete(oldest.value);
-    }
+    const statement = new Statement(this, sql, this.compile(sql));
+    this.admit(statement);
     return statement;
   }
 
+  /** A fresh handle for a statement the cache evicted, and its place back in the cache. */
+  revive(statement: Statement): bigint {
+    const handle = this.compile(statement.sql);
+    const holder = this.cache.get(statement.sql);
+    if (holder !== undefined && holder !== statement) holder.release();
+    this.cache.delete(statement.sql);
+    this.admit(statement);
+    return handle;
+  }
+
+  /** Drop `statement` from the cache and finalize its handle. */
+  forget(statement: Statement): void {
+    if (this.cache.get(statement.sql) === statement) this.cache.delete(statement.sql);
+    statement.release();
+  }
+
   exec(sql: string): void {
-    const code = sqlite_shim_exec(this.db, sql);
-    if (code !== 0) throw new Error(`sqlite: ${messageOf(this.db)}`);
+    if (!this.active) throw new Error("sqlite: database is closed");
+    const code = sqlite_shim_exec(this.handle, sql);
+    if (code !== 0) throw new Error(`sqlite: ${messageOf(this.handle)}`);
   }
 
   transaction<T>(fn: () => T): T {
@@ -255,10 +281,9 @@ export class Database implements SqlDatabase {
 
   close(): void {
     if (!this.active) return;
-    this.active = false;
-    for (const statement of this.statements) statement.close();
+    for (const statement of this.cache.values()) statement.release();
     this.cache.clear();
-    this.statements.clear();
-    sqlite_shim_close(this.db);
+    this.active = false;
+    sqlite_shim_close(this.handle);
   }
 }
