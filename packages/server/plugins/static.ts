@@ -80,7 +80,7 @@ const decoded = (rest: string): string | null => {
 const fileBody = (path: string) => (out: Writer): Promise<void> =>
   new Promise<void>((done: () => void, failed: (reason: Error) => void) => {
     const source = createReadStream(path);
-    source.on("data", (chunk: Buffer) => {
+    source.on("data", (chunk: string | Buffer) => {
       source.pause();
       out.write(chunk).then(() => {
         if (out.closed) source.destroy();
