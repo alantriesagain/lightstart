@@ -11,8 +11,7 @@
 import { App } from "../app.ts";
 import { Context } from "../context.ts";
 import { MemoryLogger } from "../logger.ts";
-import { Reply, empty, handled, json, respond, sse, stream, text } from "../reply.ts";
-import { NodeIncoming } from "../node/index.ts";
+import { Reply, empty, json, respond, sse, stream, text } from "../reply.ts";
 import { serve } from "../node/index.ts";
 import { done, eq, ok } from "@light/test/assert.ts";
 
@@ -83,14 +82,6 @@ const main = async (): Promise<void> => {
         await events.send("two\nlines");
       }),
     )
-    .get("/raw", (c: Context): Reply => {
-      const incoming = c.incoming;
-      if (!(incoming instanceof NodeIncoming)) return text("not node", 500);
-      const head: string[] = ["content-type", "text/plain", "x-raw", "yes"];
-      incoming.res.writeHead(203, head);
-      incoming.res.end("written by hand");
-      return handled();
-    })
     .get("/ip", (c: Context) => text(c.ip))
     .post("/later", (c: Context) => {
       c.waitUntil(later(100).then(() => {
@@ -159,8 +150,6 @@ const main = async (): Promise<void> => {
   eq("an event stream, unbuffered for a proxy", (events.headers.get("content-type") ?? "") + " " + (events.headers.get("x-accel-buffering") ?? ""), "text/event-stream; charset=utf-8 no");
   eq("its events framed", await events.text(), "id: 1\nevent: greeting\ndata: hello\n\n: keep-alive\n\ndata: two\ndata: lines\n\n");
 
-  const raw = await fetch(base + "/raw");
-  eq("a handled() reply leaves the response to the handler that wrote it", String(raw.status) + " " + (raw.headers.get("x-raw") ?? "") + " " + (await raw.text()), "203 yes written by hand");
 
   eq("the peer's address", await (await fetch(base + "/ip")).text(), "127.0.0.1");
 

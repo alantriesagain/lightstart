@@ -147,7 +147,6 @@ const bodyOf = async (reply: Reply): Promise<Buffer | string> => {
 
 /** `reply` as Lambda's result object. */
 export const toResult = async (reply: Reply, method: string): Promise<LambdaResult> => {
-  if (reply.written) throw new Error("a handled() reply was written through node's objects; Lambda has none");
   if (reply.channel !== null) return toResult(unaccepted(), method);
   const headers: Record<string, string> = {};
   const cookies: string[] = [];

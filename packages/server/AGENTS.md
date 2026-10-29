@@ -35,7 +35,7 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 | `NodeIncoming`, `WorkTracker` | bootstrapp's dev endpoints route, which counts a request's `waitUntil` work itself |
 | `FetchIncoming`, `toResponse` | bootstrapp's `answer()` in Pages Functions |
 | `Static.find`, `Static.reply`, its `typeOf` and `precompressed` options | light's `test/serve.js` (TypeScript stripped as it goes out), `benchmarks/serve.js`, and `@bootstrapp/serve`'s deployed-build mirror (the `mime` package's types, the build served as it is) |
-| `handled()` and `NodeIncoming.req`/`res` | the deployed-build mirror, which runs bootstrapp's node-style package routes behind the build |
+| `NodeIncoming.req`/`res` | `@bootstrapp/serve`, whose route requests carry the path with the project's `basePath` stripped, and its deployed-build mirror, which sets the routes' CORS grant on the response |
 | `Sockets.answer(app, new UpgradeIncoming(req, socket), head)` answering false for a path no route matches, the connection untouched; `MessageIncoming` as what `NodeIncoming` and `UpgradeIncoming` share | `@bootstrapp/serve`, which tries each package route's app on an upgrade and hands the rest to its HMR socket server |
 | `serve()` resolving a `NodeServer` whose `server` is node's `http.Server` | light's `test/serve.js` and `benchmarks/serve.js` answer that server, and `benchmarks/ab.js` reads it from two trees |
 
