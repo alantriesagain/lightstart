@@ -13,6 +13,8 @@ What scriptc (the fork's `light-integration`, v0.4.5) accepts and does for this 
 | Iterating a `Headers` has no lowering; `headers.forEach((value, name) => …)` compiles and visits every `set-cookie` on its own | Adapters read Fetch headers with `forEach` |
 | A class field typed `ReadableStreamDefaultController<…>` is refused | The fetch adapter's stream writer holds a `deliver` function instead |
 | A Promise executor's reject must be typed `(reason: Error) => void` | Every executor here types it so |
+| An `upgrade` listener is lowered only as `(req: IncomingMessage, socket: Socket, head: Buffer)` with `net.Socket`, not node's declared `Duplex`; with it the handshake, `createHash("sha1")`, `Buffer` framing and a socket's `end` all compile and behave as under node | `node/socket.ts` types the connection `net.Socket` and speaks RFC 6455 itself, natively too |
+| A socket an `http.Server` upgraded is half-open: the client's FIN does not end it | The websocket ends its side on `end`, or `close()` would wait for it forever |
 | `Promise.all` over `Promise<unknown>[]` has no lowering | A test awaits such a list in a loop |
 | An override's parameters must match the base's exactly | `setup(_app: App)` in a test plugin with nothing to set up |
 

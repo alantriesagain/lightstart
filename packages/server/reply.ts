@@ -3,10 +3,12 @@
  * of its own so an adapter reads the one that is set without narrowing a union. `text` and `bytes`
  * are whole bodies an adapter frames with a `content-length`; `stream` is written chunk by chunk
  * through a `Writer` (node's `res.write`, a `ReadableStream` on fetch runtimes); `response` is a
- * Fetch `Response` a fetch adapter passes on untouched and the node adapter copies out. The
+ * Fetch `Response` a fetch adapter passes on untouched and the node adapter copies out; `channel`
+ * is the websocket an `upgrade` accepts (`socket.ts`). The
  * builders below are how a handler makes one: `return json({ ok: true })`.
  */
 import { HeaderList } from "./headers.ts";
+import type { Channel } from "./socket.ts";
 
 /**
  * Where a streamed body goes. `write` resolves once the chunk may be followed by the next (node's
@@ -28,6 +30,8 @@ export class Reply {
   bytes: Uint8Array | null = null;
   stream: StreamBody | null = null;
   response: Response | null = null;
+  /** The websocket the request becomes, where the adapter takes one (`upgrade(c, channel)`). */
+  channel: Channel | null = null;
   /** The handler wrote the response itself, through the platform's own objects: the adapter writes nothing (`handled()`). */
   written = false;
   /** The route declined the request after its pattern matched: the app answers null, as for a path nothing matches (`pass()`). */

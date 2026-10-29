@@ -20,10 +20,10 @@ const server = await serve(app, { port: 3000, signals: true });
 | Entry | What it is |
 |---|---|
 | `@lightstart/server` | The core, runtime-neutral: `App`, `Context`, `Reply` and its builders, `HeaderList`, `Router`, `Plugin`, `Key`, `HttpError`, `Logger`, and `Incoming`, the seam an adapter fills |
-| `@lightstart/server/node` | `serve(app, options)`: node and scriptc native. Lazy bodies with a limit, streamed replies with backpressure, abort on client disconnect, graceful `close()` |
+| `@lightstart/server/node` | `serve(app, options)`: node and scriptc native. Lazy bodies with a limit, streamed replies with backpressure, abort on client disconnect, graceful `close()`, websockets with `sockets` |
 | `@lightstart/server/fetch` | `toFetch(app, options)`: a `(request, env?, ctx?) => Promise<Response>` handler for Cloudflare Workers and Pages, Bun, Deno and any Fetch host. Work given to `waitUntil` goes to the platform's |
 | `@lightstart/server/lambda` | `toLambda(app)`: a handler for API Gateway HTTP APIs and Lambda function URLs (the 2.0 event). Base64 bodies both ways, every `set-cookie` in `cookies`, `waitUntil` work awaited before returning. It reaches only the core's public entry, as an adapter from another package would |
-| `@lightstart/server/memory` | `request(app, method, target, init)` and `bodyOf(reply)`: an app driven without a socket, for tests |
+| `@lightstart/server/memory` | `request(app, method, target, init)` and `bodyOf(reply)`: an app driven without a socket, for tests; `connect(app, target, init)` for a websocket route |
 
 ```ts
 // Cloudflare Workers
@@ -58,6 +58,26 @@ A handler answers a `Reply`, or a promise of one: `json(data, status)`, `text`, 
 Throw `new HttpError(status, message)` to answer `{ "error": message }` with that status; anything else thrown is logged and answers 500.
 
 `sse(async (events) => { await events.send(data, event, id) })` is an event stream: never cached, and marked `x-accel-buffering: no` so nginx in front sends each event when it is written.
+
+## Websockets
+
+A route accepts a websocket by answering `upgrade(c, channel)`. The upgrade is a request like any other until then: it runs the app's hooks and middleware (an auth guard refuses it with its own reply), and `pass()` falls through. A plain request to the route is a 426.
+
+```ts
+import { Channel, upgrade, type Socket } from "@lightstart/server";
+
+class Echo extends Channel {
+  override open(socket: Socket) { socket.send("hello"); }
+  override message(socket: Socket, text: string) { socket.send(text); }
+  override binary(socket: Socket, data: Uint8Array) { socket.send(data); }
+  override close(_socket: Socket, code: number, reason: string) {}
+}
+
+const app = new App().get("/ws", (c) => upgrade(c, new Echo()));
+await serve(app, { port: 3000, sockets: { idle: 30000, maxMessage: 1048576 } });
+```
+
+The node adapter speaks RFC 6455 itself, under node and natively: fragmented messages, pings answered, at most `maxMessage` bytes a message (closed 1009 past it), every socket pinged each `idle` ms and dropped when it answered nothing since the last ping, `close()` closing the open ones 1001. A server built elsewhere takes upgrades with `acceptUpgrades(server, app)`, or answers each one itself with `sockets.answer(app, new UpgradeIncoming(req, socket), head)`, false when no route matches, the connection left for whatever else listens. The fetch and Lambda adapters take no websockets yet and answer an `upgrade` with 501.
 
 ## Plugins
 

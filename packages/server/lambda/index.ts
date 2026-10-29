@@ -6,9 +6,10 @@
  * body collected first, every `set-cookie` in `cookies`. Lambda freezes the process once the
  * handler returns, so the work handed to `waitUntil` is awaited before the result goes back. It
  * reaches nothing of the core but its public entry, which is all an adapter of another package
- * needs; it runs on Lambda's node runtime and uses node's `Buffer` for base64.
+ * needs; it runs on Lambda's node runtime and uses node's `Buffer` for base64. An `upgrade`
+ * reply is answered 501: API Gateway's websocket APIs send another kind of event.
  */
-import { Context, HttpError, Incoming, Reply, Writer, type App } from "../index.ts";
+import { Context, HttpError, Incoming, Reply, Writer, unaccepted, type App } from "../index.ts";
 
 /** The version 2.0 event API Gateway and function URLs send. */
 export interface LambdaEvent {
@@ -147,6 +148,7 @@ const bodyOf = async (reply: Reply): Promise<Buffer | string> => {
 /** `reply` as Lambda's result object. */
 export const toResult = async (reply: Reply, method: string): Promise<LambdaResult> => {
   if (reply.written) throw new Error("a handled() reply was written through node's objects; Lambda has none");
+  if (reply.channel !== null) return toResult(unaccepted(), method);
   const headers: Record<string, string> = {};
   const cookies: string[] = [];
   const names: string[] = [];

@@ -47,23 +47,27 @@ const readBody = (req: IncomingMessage, limit: number): Promise<Buffer> =>
     });
   });
 
-export class NodeIncoming extends Incoming {
+/**
+ * A request read off node's `IncomingMessage`, whichever way it arrived: with a response to write
+ * (`NodeIncoming`) or as an upgrade on a bare connection (`UpgradeIncoming` in `socket.ts`). A
+ * subclass calls `left()` once the client has gone.
+ */
+export class MessageIncoming extends Incoming {
   readonly req: IncomingMessage;
-  readonly res: ServerResponse;
   private readonly tracker: WorkTracker;
   private controller: AbortController | null = null;
   private gone = false;
 
-  constructor(req: IncomingMessage, res: ServerResponse, tracker: WorkTracker) {
+  constructor(req: IncomingMessage, tracker: WorkTracker) {
     super();
     this.req = req;
-    this.res = res;
     this.tracker = tracker;
-    res.once("close", () => {
-      if (res.writableFinished) return;
-      this.gone = true;
-      if (this.controller !== null) this.controller.abort();
-    });
+  }
+
+  /** The client went away: the signal aborts now, or at once when it is asked for later. */
+  protected left(): void {
+    this.gone = true;
+    if (this.controller !== null) this.controller.abort();
   }
 
   method(): string {
@@ -117,5 +121,18 @@ export class NodeIncoming extends Incoming {
 
   waitUntil(work: Promise<void>): void {
     this.tracker.track(work);
+  }
+}
+
+/** A request with node's `ServerResponse` to answer it through. */
+export class NodeIncoming extends MessageIncoming {
+  readonly res: ServerResponse;
+
+  constructor(req: IncomingMessage, res: ServerResponse, tracker: WorkTracker) {
+    super(req, tracker);
+    this.res = res;
+    res.once("close", () => {
+      if (!res.writableFinished) this.left();
+    });
   }
 }

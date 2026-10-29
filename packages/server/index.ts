@@ -13,4 +13,5 @@ export { Key } from "./key.ts";
 export { Logger, MemoryLogger } from "./logger.ts";
 export { Plugin } from "./plugin.ts";
 export { EventSink, Reply, Writer, bytes, empty, fail, handled, html, json, pass, redirect, respond, sse, stream, text, type StreamBody } from "./reply.ts";
+export { Channel, Socket, unaccepted, upgrade, upgrading } from "./socket.ts";
 export { ALL, Route, Router, patternProblem, type Handler, type Middleware, type Next } from "./router.ts";

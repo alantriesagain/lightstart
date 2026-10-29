@@ -7,12 +7,14 @@
  * the original `Request` handed back to a handler that wants one. Work given to `waitUntil` goes to
  * the platform's (a Worker's `ctx.waitUntil`, which keeps it alive after the reply) and otherwise
  * runs on its own. A reply becomes a `Response`: a whole body as it is, a streamed one through a
- * `ReadableStream`, a `Response` the handler made passed on untouched.
+ * `ReadableStream`, a `Response` the handler made passed on untouched. Websockets are not taken
+ * here yet (each runtime upgrades its own way): an `upgrade` reply is answered 501.
  */
 import { Context } from "../context.ts";
 import { HttpError } from "../errors.ts";
 import { Incoming } from "../incoming.ts";
 import { Reply, Writer } from "../reply.ts";
+import { unaccepted } from "../socket.ts";
 import type { App } from "../app.ts";
 
 /** The slice of a platform's per-request context the adapter uses: a Worker's `ExecutionContext`. */
@@ -165,6 +167,7 @@ const bodiless = (method: string, status: number): boolean => method === "HEAD" 
 export const toResponse = (reply: Reply, method: string): Response => {
   if (reply.written) throw new Error("a handled() reply was written through node's objects; a Fetch runtime has none");
   if (reply.response !== null) return reply.response;
+  if (reply.channel !== null) return toResponse(unaccepted(), method);
   const headers = new Headers();
   const names = reply.headers.names;
   const values = reply.headers.values;

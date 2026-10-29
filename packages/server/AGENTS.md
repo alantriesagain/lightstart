@@ -6,8 +6,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Where | What |
 |---|---|
-| `app.ts`, `context.ts`, `reply.ts`, `headers.ts`, `router.ts`, `plugin.ts`, `key.ts`, `logger.ts`, `errors.ts`, `incoming.ts` | The core: runtime-neutral, imports nothing outside the package, compiled fully statically by scriptc |
-| `node/`, `fetch/`, `lambda/`, `memory/` | The adapters, each a subclass of `Incoming` and a writer of `Reply`. `node/` is node and scriptc native alike; `lambda/` is node only (`Buffer`) |
+| `app.ts`, `context.ts`, `reply.ts`, `socket.ts`, `headers.ts`, `router.ts`, `plugin.ts`, `key.ts`, `logger.ts`, `errors.ts`, `incoming.ts` | The core: runtime-neutral, imports nothing outside the package, compiled fully statically by scriptc |
+| `node/`, `fetch/`, `lambda/`, `memory/` | The adapters, each a subclass of `Incoming` and a writer of `Reply`. `node/` is node and scriptc native alike, websockets (`node/socket.ts`) included; `lambda/` runs on node's runtime (`Buffer`) |
 | `plugins/` | The built-in plugins; `static.ts` reads the disk (`node:fs`), `mime.ts` and the rest are runtime-neutral |
 | `test/` | Plain scripts on `@light/test/assert.ts`, run under node and natively, the outputs equal |
 | `probes/` | What scriptc refused and what each became (`probes/README.md`), and `backpressure.ts` |
@@ -22,6 +22,7 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 - No `async` method overrides another: an abstract method answering a promise is implemented as a plain method (`Incoming.text`, `Writer.write`).
 - Never `instanceof` on `Reply | Promise<Reply>`: `await` it.
 - No write by a computed string key; empty arrays and maps are typed where they are declared.
+- An `upgrade` listener's parameters are typed `(req: IncomingMessage, socket: net.Socket, head: Buffer)`, the shape scriptc lowers (node's types say `Duplex`).
 - On `node:http`: `res.write` takes a narrowed chunk and is called as a statement; no `off`, `removeListener`, `drain`, `writableNeedDrain` on a response, nor `destroyed`; `writeHead` takes a `string[]` value, never a literal; a Fetch `Headers` is read with `forEach`; a Promise executor types its reject `(reason: Error) => void`.
 - Comments: a JSDoc module header and JSDoc on exported symbols, nothing else (light's comment rule).
 
@@ -35,6 +36,7 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 | `FetchIncoming`, `toResponse` | bootstrapp's `answer()` in Pages Functions |
 | `Static.find`, `Static.reply`, its `typeOf` and `precompressed` options | light's `test/serve.js` (TypeScript stripped as it goes out), `benchmarks/serve.js`, and `@bootstrapp/serve`'s deployed-build mirror (the `mime` package's types, the build served as it is) |
 | `handled()` and `NodeIncoming.req`/`res` | the deployed-build mirror, which runs bootstrapp's node-style package routes behind the build |
+| `Sockets.answer(app, new UpgradeIncoming(req, socket), head)` answering false for a path no route matches, the connection untouched; `MessageIncoming` as what `NodeIncoming` and `UpgradeIncoming` share | `@bootstrapp/serve`, which tries each package route's app on an upgrade and hands the rest to its HMR socket server |
 | `serve()` resolving a `NodeServer` whose `server` is node's `http.Server` | light's `test/serve.js` and `benchmarks/serve.js` answer that server, and `benchmarks/ab.js` reads it from two trees |
 
 ## Gates
@@ -53,5 +55,6 @@ node benchmarks/server/run.js --engines node,native                        # eve
 
 ## Known limits
 
+- Websockets: no `permessage-deflate`, no subprotocol negotiation of its own (a route sets `sec-websocket-protocol` on its `upgrade` reply), and text is not checked for valid UTF-8. The fetch and Lambda adapters answer an `upgrade` with 501.
 - Natively a response has no backpressure: scriptc's runtime buffers its writes and never reports a full socket, so a slow client of a large stream holds it in memory. Under node the writer pauses (`node/write.ts`).
 - `@lightstart/light` lists the package as an optional peer at `^0.1.0`; a release that breaks it moves both.

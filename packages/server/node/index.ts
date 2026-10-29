@@ -5,16 +5,20 @@
  * lets the open connections finish (dropping them once `grace` runs out) and waits for that work;
  * with `signals`, a SIGTERM or SIGINT closes the server that way and exits. A handler that throws
  * past the app's error handler, or a reply that cannot be written, ends that response with a bare
- * 500 or drops the connection once the headers are out.
+ * 500 or drops the connection once the headers are out. With `sockets`, an upgrade request goes to
+ * the app too, and a route's `upgrade(c, channel)` becomes a websocket (`socket.ts`); `close()`
+ * closes the open ones 1001 first.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { Context } from "../context.ts";
 import { Reply } from "../reply.ts";
 import { NodeIncoming, WorkTracker } from "./incoming.ts";
+import { Sockets, acceptUpgrades, type SocketOptions } from "./socket.ts";
 import { writeReply } from "./write.ts";
 import type { App } from "../app.ts";
 
-export { NodeIncoming, WorkTracker } from "./incoming.ts";
+export { MessageIncoming, NodeIncoming, WorkTracker } from "./incoming.ts";
+export { NodeSocket, Sockets, UpgradeIncoming, acceptUpgrades, type SocketOptions } from "./socket.ts";
 export { NodeWriter, writeReply } from "./write.ts";
 
 export interface ServeOptions {
@@ -28,6 +32,8 @@ export interface ServeOptions {
   signals?: boolean;
   /** Milliseconds `close()` waits for open connections and pending work, 10 seconds by default. */
   grace?: number;
+  /** Take websockets: upgrade requests go to the app, with these limits (`{}` for the defaults). */
+  sockets?: SocketOptions;
 }
 
 const failed = (app: App, res: ServerResponse, error: unknown): void => {
@@ -46,6 +52,8 @@ export class NodeServer extends WorkTracker {
   readonly server: Server;
   /** The port it listens on, 0 on a Unix socket. */
   port = 0;
+  /** The websockets it accepted, null unless it takes them. */
+  sockets: Sockets | null = null;
   private readonly grace: number;
   private pending = 0;
   private drained: (() => void) | null = null;
@@ -79,6 +87,7 @@ export class NodeServer extends WorkTracker {
   /** Stops accepting, waits for open connections and pending work (at most `grace` ms), and resolves once closed. */
   close(): Promise<void> {
     if (this.closing !== null) return this.closing;
+    if (this.sockets !== null) this.sockets.close();
     const server = this.server;
     const grace = this.grace;
     const closed = new Promise<void>((resolve: () => void) => {
@@ -127,6 +136,7 @@ const listening = (node: NodeServer, options: ServeOptions): Promise<void> =>
 export const serve = async (app: App, options: ServeOptions = {}): Promise<NodeServer> => {
   app.build();
   const node = new NodeServer(app, options.grace ?? 10000);
+  if (options.sockets !== undefined) node.sockets = acceptUpgrades(node.server, app, new Sockets(options.sockets, node));
   await listening(node, options);
   if (options.signals === true) {
     const stop = (): void => {

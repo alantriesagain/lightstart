@@ -6,11 +6,14 @@
  * and a 1xx carry no body. A write waits while the socket's buffer is full, polling
  * `writableNeedDrain` rather than listening for `drain`, since scriptc lowers neither a response's
  * `drain` nor removing a listener and a listener per wait would pile up on a keep-alive socket;
- * natively the runtime buffers a response's writes itself and the socket never reports full.
+ * natively the runtime buffers a response's writes itself and the socket never reports full. A
+ * websocket is accepted on the server's `upgrade` event (`socket.ts`), never here: an `upgrade`
+ * reply that reaches a response is answered 501.
  */
 import type { ServerResponse } from "node:http";
 import { HeaderList } from "../headers.ts";
 import { Reply, Writer } from "../reply.ts";
+import { unaccepted } from "../socket.ts";
 
 const bodiless = (method: string, status: number): boolean => method === "HEAD" || status === 204 || status === 304 || (status >= 100 && status < 200);
 
@@ -86,6 +89,7 @@ const responseOut = async (res: ServerResponse, response: Response, method: stri
 /** Writes `reply` as the answer to a request made with `method`. */
 export const writeReply = async (res: ServerResponse, reply: Reply, method: string): Promise<void> => {
   if (reply.written) return;
+  if (reply.channel !== null) return writeReply(res, unaccepted(), method);
   if (reply.response !== null) return responseOut(res, reply.response, method);
   const status = reply.status;
   const headers = reply.headers;
