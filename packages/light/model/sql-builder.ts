@@ -235,13 +235,13 @@ export function buildWhereClause(where: WhereClause | null | undefined): SqlQuer
   return { sql: conditions.join(" AND "), params };
 }
 
-const orderOf = (order: QueryOptions["order"]): OrderSpec[] => {
-  if (order === undefined) return [];
+const orderOf = (order: QueryOptions["order"] | null): OrderSpec[] => {
+  if (order === undefined || order === null) return [];
   return typeof order === "string" ? parseOrder(order) : order;
 };
 
-const selectFields = (fields: string[] | undefined): string => {
-  if (fields === undefined || fields.length === 0) return "*";
+const selectFields = (fields: string[] | null | undefined): string => {
+  if (fields === undefined || fields === null || fields.length === 0) return "*";
   return fields.map(quoteIdent).join(", ");
 };
 
@@ -257,10 +257,10 @@ export function buildSelectSQL(model: string, options: QueryOptions = {}): SqlQu
   }
   const parts = orderOf(order);
   if (parts.length > 0) sql += ` ORDER BY ${parts.map((part) => `${quoteIdent(part.field)} ${String(part.direction).toUpperCase() === "DESC" ? "DESC" : "ASC"}`).join(", ")}`;
-  if (limit !== undefined) {
+  if (limit !== undefined && limit !== null) {
     sql += " LIMIT ?";
     params.push(limit);
-    if (offset !== undefined) {
+    if (offset !== undefined && offset !== null) {
       sql += " OFFSET ?";
       params.push(offset);
     }
