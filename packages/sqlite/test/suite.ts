@@ -87,6 +87,9 @@ export const runSuite = (open: (options?: { cacheStatements?: number }) => SqlDa
   db.exec("DROP TABLE scratch");
   ok("a get leaves no cursor open, so the table drops", true);
   eqn("a write with RETURNING reports its change", db.prepare("INSERT INTO reads (id) VALUES (?) RETURNING id").run(["s"]).changes, 1);
+  db.exec("CREATE TABLE ids (id INTEGER PRIMARY KEY)");
+  eqn("a run answers the last rowid", Number(db.prepare("INSERT INTO ids (id) VALUES (?)").run([41]).lastId), 41);
+  eq("and a bigint past the safe range", String(db.prepare("INSERT INTO ids (id) VALUES (?)").run([9007199254740993n]).lastId), "9007199254740993");
   throws("a failed run names its constraint", () => db.prepare("INSERT INTO reads (id) VALUES (?)").run(["s"]), "UNIQUE");
   eq("json of a scalar", db.prepare("SELECT 1 AS one").json(), '[{"one":1}]');
   eq("json writes numbers as JavaScript does", db.prepare("SELECT 0.1 AS f, 0.3333333333333333 AS t").json(), '[{"f":0.1,"t":0.3333333333333333}]');

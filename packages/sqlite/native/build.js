@@ -37,9 +37,7 @@ const FUNCTIONS = [
   { name: "sqlite_shim_row", symbol: "sqlite_shim_row", params: ["pointer", "mutable-bytes"], returns: "i64" },
   { name: "sqlite_shim_get_text", symbol: "sqlite_shim_get_text", params: ["pointer", "string", "mutable-bytes"], returns: "i64" },
   { name: "sqlite_shim_get_int", symbol: "sqlite_shim_get_int", params: ["pointer", "i64", "mutable-bytes"], returns: "i64" },
-  { name: "sqlite_shim_run", symbol: "sqlite_shim_run", params: ["pointer"], returns: "i32" },
-  { name: "sqlite_shim_changes", symbol: "sqlite_shim_changes", params: ["pointer"], returns: "i64" },
-  { name: "sqlite_shim_last_id", symbol: "sqlite_shim_last_id", params: ["pointer"], returns: "i64" },
+  { name: "sqlite_shim_run", symbol: "sqlite_shim_run", params: ["pointer", "mutable-bytes"], returns: "i32" },
   { name: "sqlite_shim_exec", symbol: "sqlite_shim_exec", params: ["pointer", "string"], returns: "i32" },
 ];
 

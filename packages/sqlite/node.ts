@@ -144,20 +144,25 @@ export class Database implements SqlDatabase {
     this.database.exec(sql);
   }
 
+  /** Run one of the transaction statements through the cache, so a transaction parses no SQL. */
+  private control(sql: string): void {
+    this.prepare(sql).run();
+  }
+
   transaction<T>(fn: () => T): T {
     const nested = this.depth > 0;
     const name = `sp_${this.depth}`;
-    this.database.exec(nested ? `SAVEPOINT ${name}` : "BEGIN IMMEDIATE");
+    this.control(nested ? `SAVEPOINT ${name}` : "BEGIN IMMEDIATE");
     this.depth += 1;
     try {
       const value = fn();
       if (isThenable(value)) throw new Error("sqlite: a transaction body must be synchronous");
-      this.database.exec(nested ? `RELEASE ${name}` : "COMMIT");
+      this.control(nested ? `RELEASE ${name}` : "COMMIT");
       return value;
     } catch (error) {
       try {
-        this.database.exec(nested ? `ROLLBACK TO ${name}` : "ROLLBACK");
-        if (nested) this.database.exec(`RELEASE ${name}`);
+        this.control(nested ? `ROLLBACK TO ${name}` : "ROLLBACK");
+        if (nested) this.control(`RELEASE ${name}`);
       } catch {}
       throw error;
     } finally {

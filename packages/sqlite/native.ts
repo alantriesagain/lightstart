@@ -28,9 +28,7 @@ declare function sqlite_shim_row(statement: bigint, buffer: Uint8Array): bigint;
 declare function sqlite_shim_get_text(statement: bigint, value: string, buffer: Uint8Array): bigint;
 declare function sqlite_shim_get_int(statement: bigint, value: bigint, buffer: Uint8Array): bigint;
 declare function sqlite_shim_columns(statement: bigint): number;
-declare function sqlite_shim_run(statement: bigint): number;
-declare function sqlite_shim_changes(db: bigint): bigint;
-declare function sqlite_shim_last_id(db: bigint): bigint;
+declare function sqlite_shim_run(statement: bigint, out: Uint8Array): number;
 declare function sqlite_shim_exec(db: bigint, sql: string): number;
 
 const SQLITE_ROW = 100;
@@ -67,7 +65,7 @@ const bindParams = (statement: bigint, params: SqlParams | undefined): void => {
   sqlite_shim_ready(statement);
   if (params === undefined) return;
   if (Array.isArray(params)) {
-    for (const [index, value] of params.entries()) bindOne(statement, index + 1, value);
+    for (let index = 0; index < params.length; index++) bindOne(statement, index + 1, params[index]);
     return;
   }
   for (const [key, value] of Object.entries(params)) {
@@ -77,6 +75,16 @@ const bindParams = (statement: bigint, params: SqlParams | undefined): void => {
     if (index === 0) throw new Error(`sqlite: no parameter named "${key}"`);
     bindOne(statement, index, value);
   }
+};
+
+/** The little-endian int64 at `at` in `bytes`: a number while it is safe, else a bigint. */
+const int64At = (bytes: Uint8Array, at: number): number | bigint => {
+  const low = (bytes[at]! | (bytes[at + 1]! << 8) | (bytes[at + 2]! << 16)) + bytes[at + 3]! * 16777216;
+  const high = (bytes[at + 4]! | (bytes[at + 5]! << 8) | (bytes[at + 6]! << 16)) + bytes[at + 7]! * 16777216;
+  if (high < 2097152) return high * 4294967296 + low;
+  let value = 0n;
+  for (let i = 7; i >= 0; i--) value = (value << 8n) | BigInt(bytes[at + i]!);
+  return value >= 9223372036854775808n ? value - 18446744073709551616n : value;
 };
 
 /** The JSON the shim wrote into the buffer, or null when the buffer was short and has grown to the size it needs. */
@@ -146,11 +154,10 @@ export class Statement implements SqlStatement {
   run(params?: SqlParams): SqlRunResult {
     const handle = this.live();
     bindParams(handle, params);
-    const code = sqlite_shim_run(handle);
-    const db = this.owner.handle;
-    if (code !== SQLITE_DONE && code !== SQLITE_ROW) throw new Error(`sqlite: ${messageOf(db)}`);
-    const lastId = sqlite_shim_last_id(db);
-    return { changes: Number(sqlite_shim_changes(db)), lastId: lastId <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(lastId) : lastId };
+    const out = this.owner.counts;
+    const code = sqlite_shim_run(handle, out);
+    if (code !== SQLITE_DONE && code !== SQLITE_ROW) throw new Error(`sqlite: ${messageOf(this.owner.handle)}`);
+    return { changes: Number(int64At(out, 0)), lastId: int64At(out, 8) };
   }
 
   json(params?: SqlParams): string {
@@ -177,6 +184,8 @@ export class Database implements SqlDatabase {
   readonly handle: bigint;
   /** The JSON buffer every statement of this database writes into; it only grows. */
   readonly buffer: { bytes: Uint8Array };
+  /** Where a run's changes and last rowid come back. */
+  readonly counts: Uint8Array;
   private readonly cache: Map<string, Statement>;
   private readonly maxStatements: number;
   private depth: number;
@@ -186,6 +195,7 @@ export class Database implements SqlDatabase {
     this.path = path;
     this.handle = handle;
     this.buffer = { bytes: new Uint8Array(GROW_START) };
+    this.counts = new Uint8Array(16);
     this.cache = new Map();
     this.maxStatements = Math.max(1, maxStatements);
     this.depth = 0;
@@ -258,20 +268,25 @@ export class Database implements SqlDatabase {
     if (code !== 0) throw new Error(`sqlite: ${messageOf(this.handle)}`);
   }
 
+  /** Run one of the transaction statements through the cache, so a transaction parses no SQL. */
+  private control(sql: string): void {
+    this.prepare(sql).run();
+  }
+
   transaction<T>(fn: () => T): T {
     const nested = this.depth > 0;
     const name = `sp_${this.depth}`;
-    this.exec(nested ? `SAVEPOINT ${name}` : "BEGIN IMMEDIATE");
+    this.control(nested ? `SAVEPOINT ${name}` : "BEGIN IMMEDIATE");
     this.depth += 1;
     try {
       const value = fn();
       if (isThenable(value)) throw new Error("sqlite: a transaction body must be synchronous");
-      this.exec(nested ? `RELEASE ${name}` : "COMMIT");
+      this.control(nested ? `RELEASE ${name}` : "COMMIT");
       return value;
     } catch (error) {
       try {
-        this.exec(nested ? `ROLLBACK TO ${name}` : "ROLLBACK");
-        if (nested) this.exec(`RELEASE ${name}`);
+        this.control(nested ? `ROLLBACK TO ${name}` : "ROLLBACK");
+        if (nested) this.control(`RELEASE ${name}`);
       } catch {}
       throw error;
     } finally {

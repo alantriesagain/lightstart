@@ -442,12 +442,22 @@ int64_t sqlite_shim_row(void *handle, unsigned char *out, size_t cap) {
 }
 
 /* Step once, then reset: a write (an `INSERT … RETURNING` included) makes
- * every change on its first step, and the reset leaves no cursor open. */
-int sqlite_shim_run(void *handle) {
+ * every change on its first step, and the reset leaves no cursor open. The
+ * connection's changes and last rowid go into `out` as two little-endian
+ * int64s, so a run is one call. */
+int sqlite_shim_run(void *handle, unsigned char *out, size_t cap) {
   shim_statement *statement = as_statement(handle);
   invalidate(statement);
   int rc = sqlite3_step(statement->stmt);
   sqlite3_reset(statement->stmt);
+  if (cap >= 16) {
+    sqlite3 *db = sqlite3_db_handle(statement->stmt);
+    int64_t values[2] = { (int64_t)sqlite3_changes64(db), (int64_t)sqlite3_last_insert_rowid(db) };
+    for (int v = 0; v < 2; v++) {
+      uint64_t bits = (uint64_t)values[v];
+      for (int i = 0; i < 8; i++) out[v * 8 + i] = (unsigned char)((bits >> (8 * i)) & 0xff);
+    }
+  }
   return rc;
 }
 
