@@ -30,13 +30,13 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 
 | Contract | Who relies on it |
 |---|---|
-| `app.handle(c)` answers null for a path no route matches (a 405 when one does under another method) | bootstrapp's endpoints app (`@bootstrapp/cloudflare/pages/endpoints.js`) and its dev route, which fall through on null |
-| `writeReply(res, reply, method)` and `respond(response)` | `@bootstrapp/serve`'s `fromFetchResponse`, under every dev route that answers a `Response` |
-| `NodeIncoming`, `WorkTracker` | bootstrapp's dev endpoints route, which counts a request's `waitUntil` work itself |
+| `app.handle(c)` answers null for a path no route matches, or one its route answered `pass()` to (a 405 when one matches under another method) | `@bootstrapp/serve`, which tries each route file's app in turn, and bootstrapp's endpoints app (`@bootstrapp/cloudflare/pages/endpoints.js`) with its dev route |
+| `writeReply(res, reply, method)` and `respond(response)` | `@bootstrapp/serve`, which writes every answer through them, a server module's `Response` included |
+| `NodeIncoming`, `WorkTracker` | `@bootstrapp/serve`, which finishes a route's `waitUntil` work before writing its answer |
 | `FetchIncoming`, `toResponse` | bootstrapp's `answer()` in Pages Functions |
 | `Static.find`, `Static.reply`, its `typeOf` and `precompressed` options | light's `test/serve.js` (TypeScript stripped as it goes out), `benchmarks/serve.js`, and `@bootstrapp/serve`'s deployed-build mirror (the `mime` package's types, the build served as it is) |
 | `NodeIncoming.req`/`res` | `@bootstrapp/serve`, whose route requests carry the path with the project's `basePath` stripped, and its deployed-build mirror, which sets the routes' CORS grant on the response |
-| `Sockets.answer(app, new UpgradeIncoming(req, socket), head)` answering false for a path no route matches, the connection untouched; `MessageIncoming` as what `NodeIncoming` and `UpgradeIncoming` share | `@bootstrapp/serve`, which tries each package route's app on an upgrade and hands the rest to its HMR socket server |
+| `Sockets.answer(app, new UpgradeIncoming(req, socket), head)` answering false for a path no route matches, the connection untouched; `Sockets.take(c, upgrade(c, channel), head)`; `MessageIncoming` as what `NodeIncoming` and `UpgradeIncoming` share | `@bootstrapp/serve`, which tries each route file's app on an upgrade and takes the rest as HMR clients |
 | `serve()` resolving a `NodeServer` whose `server` is node's `http.Server` | light's `test/serve.js` and `benchmarks/serve.js` answer that server, and `benchmarks/ab.js` reads it from two trees |
 
 ## Gates
@@ -51,7 +51,7 @@ node packages/native/cli/bin/light-native.js check --all
 node benchmarks/server/run.js --engines node,native                        # every contender's digest must match; read the ratios
 ```
 
-`pnpm verify` runs the first four with the workspace packages. A change to an adapter or to `Static` also reaches light's browser tests (`npm test` in `packages/light`, served by `test/serve.js`), widecode's desktop coverage (its backend compiles the desktop asset server), and in bootstrapp `packages/serve/src/http.test.ts` and `packages/cloudflare/pages/endpoints.test.js`.
+`pnpm verify` runs the first four with the workspace packages. A change to an adapter or to `Static` also reaches light's browser tests (`npm test` in `packages/light`, served by `test/serve.js`), widecode's desktop coverage (its backend compiles the desktop asset server), and in bootstrapp `packages/serve/src/request.test.ts`, `packages/p2p` (its relay and signalers' fake servers run on the node adapter) and `packages/cloudflare/pages/endpoints.test.js`.
 
 ## Known limits
 
