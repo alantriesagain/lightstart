@@ -37,6 +37,11 @@ db.close();
 `journalMode`, `synchronous`, `foreignKeys`, `busyTimeout`, `cacheSize`,
 `mmapSize` and `cacheStatements` override them.
 
+`Database.open(path, { readOnly: true })` makes a reader: it sees the writer's
+committed rows and refuses a write. WAL lets several readers run beside the
+one writer, so each worker thread of a native server can open its own reader
+while the writer thread keeps the only writable connection.
+
 ## A statement
 
 - `all(params)` answers row objects; `get(params)` answers the first or null.
