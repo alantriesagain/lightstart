@@ -7,7 +7,7 @@
 
 import { parseOrder } from "./query-builder.ts";
 
-import type { ModelSchema, OrderSpec, QueryOptions, WhereClause } from "./types.ts";
+import type { ModelSchema, OrderSpec } from "./types.ts";
 
 const IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -47,6 +47,21 @@ export interface SqlQuery {
   params: unknown[];
 }
 
+/** A schema as the generator reads it: a field name to its descriptor, `$` keys included. */
+export type SqlSchema = Record<string, unknown>;
+
+/** What a read may pass, including the nulls a D1 caller sends for an absent option. */
+export interface SqlQueryOptions {
+  where?: Record<string, unknown> | null;
+  order?: string | OrderSpec[] | null;
+  limit?: number | null;
+  offset?: number | null;
+  fields?: string[] | null;
+  groupBy?: string;
+  total?: boolean;
+  [extra: string]: unknown;
+}
+
 /** A bare column or table name, quoted only when it is a SQLite keyword. */
 export function quoteIdent(name: string): string {
   const ident = String(name);
@@ -67,7 +82,7 @@ const TYPE_MAP: Record<string, string> = {
 const sqliteType = (field: Record<string, unknown>): string => TYPE_MAP[String(field["$type"] ?? "")] ?? "TEXT";
 
 /** The fields whose value is written as JSON text. */
-export function getJsonFields(schema: ModelSchema | undefined): Set<string> {
+export function getJsonFields(schema: SqlSchema | undefined): Set<string> {
   const fields = new Set<string>();
   for (const [name, raw] of Object.entries(schema ?? {})) {
     if (name.startsWith("$")) continue;
@@ -78,7 +93,7 @@ export function getJsonFields(schema: ModelSchema | undefined): Set<string> {
 }
 
 /** The fields stored as SQLite's 1 or 0. */
-export function getBooleanFields(schema: ModelSchema | undefined): Set<string> {
+export function getBooleanFields(schema: SqlSchema | undefined): Set<string> {
   const fields = new Set<string>();
   for (const [name, raw] of Object.entries(schema ?? {})) {
     if (name.startsWith("$")) continue;
@@ -89,7 +104,7 @@ export function getBooleanFields(schema: ModelSchema | undefined): Set<string> {
 }
 
 /** Whether a model's id is a number, which SQLite assigns when the row has none. */
-export const numericId = (schema: ModelSchema | undefined): boolean => (schema?.id as Record<string, unknown> | undefined)?.["$type"] === "number";
+export const numericId = (schema: SqlSchema | undefined): boolean => (schema?.id as Record<string, unknown> | undefined)?.["$type"] === "number";
 
 const columnDef = (field: string, raw: unknown, options: { notNull?: boolean } = { notNull: true }): string => {
   const def = raw as Record<string, unknown>;
@@ -104,12 +119,12 @@ const columnDef = (field: string, raw: unknown, options: { notNull?: boolean } =
   return `${column} DEFAULT '${JSON.stringify(value).replace(/'/g, "''")}'`;
 };
 
-const declaredColumns = (schema: ModelSchema): Array<[string, unknown]> => Object.entries(schema)
+const declaredColumns = (schema: SqlSchema): Array<[string, unknown]> => Object.entries(schema)
   .filter(([field]) => field !== "id" && !field.startsWith("$"))
   .map(([field, def]): [string, unknown] => [field, def]);
 
 /** `CREATE TABLE IF NOT EXISTS`, its id typed by the schema. */
-export function buildCreateTableSQL(model: string, schema: ModelSchema): string {
+export function buildCreateTableSQL(model: string, schema: SqlSchema): string {
   const columns = [numericId(schema) ? "id INTEGER PRIMARY KEY" : "id TEXT PRIMARY KEY"];
   for (const [field, def] of declaredColumns(schema)) columns.push(columnDef(field, def));
   columns.push("created TEXT DEFAULT (datetime('now'))");
@@ -118,7 +133,7 @@ export function buildCreateTableSQL(model: string, schema: ModelSchema): string 
 }
 
 /** Only the columns a live table is missing; an added column is never `NOT NULL`. */
-export function buildAddColumnSQL(model: string, schema: ModelSchema, existing: string[]): string[] {
+export function buildAddColumnSQL(model: string, schema: SqlSchema, existing: string[]): string[] {
   const have = new Set(existing);
   return declaredColumns(schema)
     .filter(([field]) => !have.has(field))
@@ -126,7 +141,7 @@ export function buildAddColumnSQL(model: string, schema: ModelSchema, existing: 
 }
 
 /** Per-field indexes plus the schema's composite `$indexes`. */
-export function buildCreateIndexSQL(model: string, schema: ModelSchema, indexes: SqlIndexDefinition[] = (schema.$indexes as unknown as SqlIndexDefinition[] | undefined) ?? []): string[] {
+export function buildCreateIndexSQL(model: string, schema: SqlSchema, indexes: SqlIndexDefinition[] = (schema.$indexes as unknown as SqlIndexDefinition[] | undefined) ?? []): string[] {
   const statements: string[] = [];
   for (const [field, raw] of Object.entries(schema)) {
     if (field.startsWith("$") || field === "id") continue;
@@ -155,7 +170,7 @@ const jsonArrayHas = (field: string, wanted: unknown[], all: boolean): SqlQuery 
 };
 
 /** A where clause as SQLite SQL, every value bound. */
-export function buildWhereClause(where: WhereClause | null | undefined): SqlQuery {
+export function buildWhereClause(where: Record<string, unknown> | null | undefined): SqlQuery {
   if (!where || Object.keys(where).length === 0) return { sql: "", params: [] };
 
   const conditions: string[] = [];
@@ -235,7 +250,7 @@ export function buildWhereClause(where: WhereClause | null | undefined): SqlQuer
   return { sql: conditions.join(" AND "), params };
 }
 
-const orderOf = (order: QueryOptions["order"] | null): OrderSpec[] => {
+const orderOf = (order: string | OrderSpec[] | null | undefined): OrderSpec[] => {
   if (order === undefined || order === null) return [];
   return typeof order === "string" ? parseOrder(order) : order;
 };
@@ -246,7 +261,7 @@ const selectFields = (fields: string[] | null | undefined): string => {
 };
 
 /** A select over `model`, with `where`, `order`, `limit`, `offset` and `fields`. */
-export function buildSelectSQL(model: string, options: QueryOptions = {}): SqlQuery {
+export function buildSelectSQL(model: string, options: SqlQueryOptions = {}): SqlQuery {
   const { where, order, limit, offset, fields } = options;
   let sql = `SELECT ${selectFields(fields)} FROM ${quoteIdent(model)}`;
   const params: unknown[] = [];
@@ -302,7 +317,7 @@ export function buildDeleteSQL(model: string, id: string | number): SqlQuery {
 }
 
 /** A count over the same where. */
-export function buildCountSQL(model: string, options: QueryOptions = {}): SqlQuery {
+export function buildCountSQL(model: string, options: SqlQueryOptions = {}): SqlQuery {
   const clause = buildWhereClause(options.where);
   return {
     sql: `SELECT COUNT(*) AS count FROM ${quoteIdent(model)}${clause.sql === "" ? "" : ` WHERE ${clause.sql}`}`,
