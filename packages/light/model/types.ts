@@ -76,6 +76,8 @@ export interface HookContext {
   operation: "add" | "edit" | "remove";
   id?: unknown;
   importing?: boolean;
+  /** Who asked for the write, when a server knows: a backend's signed-in user. */
+  user?: unknown;
 }
 
 /**

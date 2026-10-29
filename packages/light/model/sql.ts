@@ -10,7 +10,10 @@
  */
 
 import { configureModel, modelBus } from "./config.ts";
+import { MODEL_CHANGED } from "./events.ts";
 import { createAdapter, hasAdapter, registerStorageAdapter } from "./factory.ts";
+import { needsUpload } from "./file-storage.ts";
+import { forStorage, prepareAddRow, prepareEditRow, withId, withoutImmutable } from "./pipeline.ts";
 import { buildQueryResult, validateQueryOptions } from "./query-builder.ts";
 import { createStore, storeRequest } from "./store.ts";
 import {
@@ -19,7 +22,7 @@ import {
 } from "./sql-builder.ts";
 
 import type { SqlDatabase } from "@lightstart/sqlite";
-import type { ModelApi, ModelSchema, QueryOptions, QueryPage, Row, StorageAdapter, Store, WhereClause, WriteOptions } from "./types.ts";
+import type { HookContext, ModelApi, ModelHooks, ModelSchema, QueryOptions, QueryPage, Row, StorageAdapter, Store, WhereClause, WriteOptions } from "./types.ts";
 
 const OPERATORS: string[] = [">", ">=", "<", "<=", "!=", "<>", "=", "in", "not in", "has", "has all", "like", "ilike", "is null", "is not null"];
 
@@ -78,19 +81,21 @@ const selectOne = (db: SqlDatabase, model: string, id: string | number, schema: 
   return row === null ? null : decodeRow(schema, row);
 };
 
-const insertRow = (adapter: SqlStorage, model: string, row: Row): Row => {
-  const schema = adapter.models[model];
+const insertRow = (db: SqlDatabase, schema: ModelSchema | undefined, model: string, row: Row): Row => {
   const query = buildInsertSQL(model, row, getJsonFields(schema));
-  const rows = JSON.parse(adapter.db.prepare(`${query.sql} RETURNING *`).json(query.params)) as Row[];
+  const rows = JSON.parse(db.prepare(`${query.sql} RETURNING *`).json(query.params)) as Row[];
   return rows.length === 0 ? copy(row) : decodeRow(schema, rows[0]!);
 };
 
-const updateRow = (adapter: SqlStorage, model: string, row: Row, options: WriteOptions | undefined): Row => {
-  const schema = adapter.models[model];
-  const data = options?.patch ?? row;
-  const query = buildUpdateSQL(model, row.id as string | number, data, getJsonFields(schema));
-  const rows = JSON.parse(adapter.db.prepare(`${query.sql} RETURNING *`).json(query.params)) as Row[];
-  return rows.length === 0 ? copy(row) : decodeRow(schema, rows[0]!);
+const updateRow = (db: SqlDatabase, schema: ModelSchema | undefined, model: string, id: string | number, data: Row): Row | null => {
+  const query = buildUpdateSQL(model, id, data, getJsonFields(schema));
+  const rows = JSON.parse(db.prepare(`${query.sql} RETURNING *`).json(query.params)) as Row[];
+  return rows.length === 0 ? null : decodeRow(schema, rows[0]!);
+};
+
+const deleteRow = (db: SqlDatabase, model: string, id: string | number): boolean => {
+  const query = buildDeleteSQL(model, id);
+  return db.prepare(query.sql).run(query.params).changes > 0;
 };
 
 const whereCount = (db: SqlDatabase, model: string, schema: ModelSchema | undefined, where: WhereClause | undefined): number => {
@@ -134,23 +139,23 @@ const SqlAdapter: StorageAdapter = {
   async insertMany(this: SqlStorage, model: string, rows: Row[]): Promise<Row[]> {
     const stored: Row[] = [];
     this.db.transaction(() => {
-      for (const row of rows) stored.push(insertRow(this, model, row));
+      for (const row of rows) stored.push(insertRow(this.db, this.models[model], model, row));
       return 0;
     });
     return stored;
   },
 
   async insert(this: SqlStorage, model: string, row: Row): Promise<Row> {
-    return insertRow(this, model, row);
+    return insertRow(this.db, this.models[model], model, row);
   },
 
   async update(this: SqlStorage, model: string, row: Row, options?: WriteOptions): Promise<Row> {
-    return updateRow(this, model, row, options);
+    const id = row.id as string | number;
+    return updateRow(this.db, this.models[model], model, id, options?.patch ?? row) ?? copy(row);
   },
 
   async delete(this: SqlStorage, model: string, id: string | number): Promise<boolean> {
-    const query = buildDeleteSQL(model, id);
-    return this.db.prepare(query.sql).run(query.params).changes > 0;
+    return deleteRow(this.db, model, id);
   },
 
   async count(this: SqlStorage, model: string, where: WhereClause | undefined): Promise<number> {
@@ -177,6 +182,132 @@ const SqlAdapter: StorageAdapter = {
 };
 
 export default SqlAdapter;
+
+/** What a synchronous write takes besides its row. */
+export interface SyncWriteOptions {
+  /** Who asked for the write; the hooks read it as `ctx.user`. */
+  user?: unknown;
+  /** Applied after the before hook: to the row of an add, to the changes of an edit (an owner stamp, a field a caller may not set). */
+  shape?: (row: Row) => Row;
+  /** Where the change event and the after hooks go: at once, unless a caller holds them until its transaction commits. */
+  defer?: (work: () => void) => void;
+  /** The stored row an edit or a remove already read, so it is not read again. */
+  current?: Row | null;
+}
+
+/** What a `SqlWriter` writes through: the database, the schemas, the store its hooks see, and where `model:changed` goes. */
+export interface SqlWriterConfig {
+  db: SqlDatabase;
+  models: Record<string, ModelSchema>;
+  store: Store;
+  changes?: ((event: string, data: unknown) => void) | null;
+}
+
+const runNow = (work: () => void): void => {
+  work();
+};
+
+/**
+ * The store's write pipeline, synchronous, over one SQLite database: the
+ * before hook, the id, relations reduced, defaults, validation, the write,
+ * then `model:changed` and the after hook. It runs inside a caller's
+ * transaction, so a hook must answer at once (a promise is refused), and a
+ * row whose file would be uploaded is refused too; the async store does both.
+ * The SQL adapter's reads see what it writes, since both use one database.
+ */
+export class SqlWriter {
+  readonly db: SqlDatabase;
+  readonly models: Record<string, ModelSchema>;
+  readonly store: Store;
+  private readonly announce: ((event: string, data: unknown) => void) | null;
+
+  constructor(config: SqlWriterConfig) {
+    this.db = config.db;
+    this.models = config.models;
+    this.store = config.store;
+    this.announce = config.changes ?? null;
+  }
+
+  private schemaOf(model: string): ModelSchema {
+    if (!(model in this.models)) throw new Error(`no model "${model}"`);
+    return this.models[model]!;
+  }
+
+  private hook(model: string, name: keyof ModelHooks, row: Row | null, ctx: HookContext): unknown {
+    const fn = this.schemaOf(model).$hooks?.[name];
+    if (fn === undefined || fn === null) return undefined;
+    if (typeof fn !== "function") throw new TypeError(`$hooks.${name} is not a function`);
+    const out: unknown = (fn as (row: Row | null, ctx: HookContext) => unknown)(row, ctx);
+    if (out !== null && typeof out === "object" && typeof (out as { then?: unknown }).then === "function") throw new Error(`$hooks.${name} of "${model}" must answer at once in a synchronous write`);
+    return out;
+  }
+
+  private context(model: string, operation: HookContext["operation"], id: unknown, user: unknown): HookContext {
+    const ctx: HookContext = { model, store: this.store, operation };
+    if (id !== undefined) ctx.id = id;
+    if (user !== undefined) ctx.user = user;
+    return ctx;
+  }
+
+  private changed(model: string, action: "add" | "edit" | "remove", row: Row): void {
+    const announce = this.announce;
+    if (announce !== null) announce(MODEL_CHANGED, { model, action, row });
+  }
+
+  /** The stored row, decoded, or null. */
+  get(model: string, id: string | number): Row | null {
+    return selectOne(this.db, model, id, this.schemaOf(model));
+  }
+
+  add(model: string, data: Row, options: SyncWriteOptions = {}): Row {
+    const schema = this.schemaOf(model);
+    const ctx = this.context(model, "add", undefined, options.user);
+    const hooked = this.hook(model, "beforeAdd", copy(data), ctx);
+    let row = hooked === undefined || hooked === null ? copy(data) : (hooked as Row);
+    if (options.shape !== undefined) row = options.shape(row);
+    row = prepareAddRow(this.models, model, withId(schema, row));
+    if (needsUpload(schema, row)) throw new Error(`"${model}" has a file to upload, which a synchronous write cannot wait for`);
+    const stored = insertRow(this.db, schema, model, row);
+    const defer = options.defer ?? runNow;
+    defer(() => this.changed(model, "add", stored));
+    defer(() => { this.hook(model, "afterAdd", stored, ctx); });
+    return stored;
+  }
+
+  edit(model: string, id: string | number, patch: Row, options: SyncWriteOptions = {}): Row {
+    const schema = this.schemaOf(model);
+    const ctx = this.context(model, "edit", id, options.user);
+    const reduced = forStorage(schema, withoutImmutable(schema, patch));
+    const asked = Object.fromEntries([...Object.entries(reduced), ["id", id]]);
+    const hooked = this.hook(model, "beforeEdit", asked, ctx);
+    let changes = hooked === undefined || hooked === null ? asked : (hooked as Row);
+    if (options.shape !== undefined) changes = options.shape(changes);
+    const current = options.current ?? this.get(model, id);
+    if (current === null) throw new Error(`Record ${id} not found in model "${model}"`);
+    const row = prepareEditRow(this.models, model, current, changes, id);
+    if (needsUpload(schema, row)) throw new Error(`"${model}" has a file to upload, which a synchronous write cannot wait for`);
+    const patchOnly = Object.fromEntries(Object.entries(changes).filter(([field]) => field !== "id"));
+    const stored = updateRow(this.db, schema, model, id, patchOnly) ?? row;
+    const defer = options.defer ?? runNow;
+    defer(() => this.changed(model, "edit", stored));
+    defer(() => { this.hook(model, "afterEdit", stored, ctx); });
+    return stored;
+  }
+
+  /** Remove a row; false when it was not there or `beforeRemove` answered false. */
+  remove(model: string, id: string | number, options: SyncWriteOptions = {}): boolean {
+    const schema = this.schemaOf(model);
+    const ctx = this.context(model, "remove", id, options.user);
+    const hooks = schema.$hooks;
+    const current = options.current !== undefined ? options.current : hooks?.beforeRemove || hooks?.afterRemove ? this.get(model, id) : null;
+    if (this.hook(model, "beforeRemove", current, ctx) === false) return false;
+    if (!deleteRow(this.db, model, id)) return false;
+    const defer = options.defer ?? runNow;
+    defer(() => this.changed(model, "remove", current ?? { id }));
+    defer(() => { this.hook(model, "afterRemove", current, ctx); });
+    return true;
+  }
+}
 
 /** What `openSql` takes: the database's name, the driver, and the models it holds. */
 export interface SqlOpen {

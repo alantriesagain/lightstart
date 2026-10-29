@@ -200,6 +200,8 @@ await sql.init();
 
 `openSql({ name, db, models })` registers the adapter, applies the schema, builds the store and binds the model request in one call.
 
+`new SqlWriter({ db, models, store, changes })` is the same write pipeline, synchronous, for code that writes inside one SQLite transaction (a backend procedure): `add`, `edit` and `remove` run the before hook, the id, relation reduction, defaults, validation, the write, then `model:changed` (through `changes`) and the after hook, and answer at once. A hook must answer at once there, and a row with a file to upload is refused, since neither can be waited for inside a transaction. Each call takes `{ user, shape, defer, current }`: `user` reaches the hooks as `ctx.user`, `shape` changes the row of an add or the changes of an edit after the before hook (an owner stamp), `defer` holds the change event and the after hook until the caller's commit, and `current` is the stored row a caller already read. The steps both pipelines share are in `model/pipeline.ts`.
+
 ### Decorators and the shadow
 
 A package may wrap the adapter of every model whose schema declares a directive of its own:

@@ -7,9 +7,9 @@
  */
 import { defineModel } from "@lightstart/light/model";
 import type { ModelSchema } from "@lightstart/light/model";
-import { openSql } from "@lightstart/light/model/sql";
+import { SqlWriter, openSql } from "@lightstart/light/model/sql";
 import { Database } from "../native.ts";
-import { done, eq, eqn } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@light/test/assert.ts";
 
 const note = defineModel("note", {
   title: { $type: "string", required: true, attribute: true, persist: true },
@@ -18,13 +18,22 @@ const note = defineModel("note", {
 } as ModelSchema);
 
 const main = async (): Promise<void> => {
-  const store = await openSql({ name: "test", db: Database.open(":memory:"), models: [note] });
+  const db = Database.open(":memory:");
+  const store = await openSql({ name: "test", db, models: [note] });
   const one = await note.add({ title: "one", tags: ["a", "b"] });
   await note.add({ title: "two", tags: ["b"] });
   eq("the store reads its row back", String((await note.get(one.id))?.title), "one");
   eqn("getAll answers both rows", (await note.getAll({})).length, 2);
   eqn("has reads a JSON array", (await note.getAll({ where: { tags: { has: "a" } } })).length, 1);
   eqn("count follows the same where", await note.count({ where: { tags: { "has all": ["a", "b"] } } }), 1);
+  const changes: string[] = [];
+  const writer = new SqlWriter({ db, models: store.models, store, changes: (event: string) => { changes.push(event); } });
+  const written = writer.add("note", { title: "three", tags: ["c"] });
+  eq("the writer runs the pipeline at once", String(written["done"]), "false");
+  eq("and the store reads its row", String((await note.get(String(written.id)))?.title), "three");
+  eq("an edit merges over the stored row", JSON.stringify(writer.edit("note", String(written.id), { done: true })["tags"]), '["c"]');
+  ok("a remove answers true", writer.remove("note", String(written.id)));
+  eqn("and every write announced its change", changes.length, 3);
   await store.close();
   done();
 };

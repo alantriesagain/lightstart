@@ -64,3 +64,19 @@ export const uploadFiles = async (schema: ModelSchema | undefined, model: string
   }
   return Object.fromEntries([...Object.entries(row), ...uploaded]);
 };
+
+/**
+ * Whether a row holds a `T.file()` / `T.files()` value the registered storage
+ * would upload: a writer that cannot wait for an upload refuses such a row.
+ */
+export const needsUpload = (schema: ModelSchema | undefined, row: Row): boolean => {
+  if (!storage || !schema) return false;
+  for (const field of Object.keys(schema)) {
+    if (field.startsWith("$")) continue;
+    const kind = (schemaField(schema, field) as ModelField).fieldType;
+    const value = row[field];
+    const items: unknown[] = kind === "file" ? [value] : kind === "files" && Array.isArray(value) ? value : [];
+    for (const item of items) if (isDataUrl(item) || (typeof Blob !== "undefined" && item instanceof Blob)) return true;
+  }
+  return false;
+};
