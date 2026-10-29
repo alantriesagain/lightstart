@@ -7,6 +7,8 @@
 
 import { parseOrder } from "./query-builder.ts";
 
+import type { SqlDatabase } from "@lightstart/sqlite";
+
 import type { ModelSchema, OrderSpec } from "./types.ts";
 
 const IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -111,9 +113,9 @@ const columnDef = (field: string, raw: unknown, options: { notNull?: boolean } =
   let column = `${quoteIdent(field)} ${sqliteType(def)}`;
   if (def["required"] === true && options.notNull !== false) column += " NOT NULL";
   const value = def["defaultValue"];
-  if (value === undefined) return column;
+  if (value === undefined || typeof value === "function") return column;
   if (typeof value === "boolean") return `${column} DEFAULT ${value ? 1 : 0}`;
-  if (typeof value === "number") return `${column} DEFAULT ${value}`;
+  if (typeof value === "number") return Number.isFinite(value) ? `${column} DEFAULT ${value}` : column;
   if (typeof value === "string") return `${column} DEFAULT '${value.replace(/'/g, "''")}'`;
   if (value === null) return `${column} DEFAULT NULL`;
   return `${column} DEFAULT '${JSON.stringify(value).replace(/'/g, "''")}'`;
@@ -121,7 +123,10 @@ const columnDef = (field: string, raw: unknown, options: { notNull?: boolean } =
 
 const declaredColumns = (schema: SqlSchema): Array<[string, unknown]> => Object.entries(schema)
   .filter(([field]) => field !== "id" && !field.startsWith("$"))
-  .map(([field, def]): [string, unknown] => [field, def]);
+  .map(([field, def]): [string, unknown] => {
+    if (field === "created" || field === "updated") throw new TypeError(`"${field}" is a column the generator owns; rename the field`);
+    return [field, def];
+  });
 
 /** `CREATE TABLE IF NOT EXISTS`, its id typed by the schema. */
 export function buildCreateTableSQL(model: string, schema: SqlSchema): string {
@@ -148,7 +153,7 @@ export function buildCreateIndexSQL(model: string, schema: SqlSchema, indexes: S
     const def = raw as Record<string, unknown>;
     if (def["index"] === true || def["unique"] === true) {
       const unique = def["unique"] === true ? "UNIQUE " : "";
-      statements.push(`CREATE ${unique}INDEX IF NOT EXISTS idx_${quoteIdent(model)}_${quoteIdent(field)} ON ${quoteIdent(model)}(${quoteIdent(field)});`);
+      statements.push(`CREATE ${unique}INDEX IF NOT EXISTS ${quoteIdent(`idx_${model}_${field}`)} ON ${quoteIdent(model)}(${quoteIdent(field)});`);
     }
   }
   for (const spec of indexes) {
@@ -159,6 +164,10 @@ export function buildCreateIndexSQL(model: string, schema: SqlSchema, indexes: S
   }
   return statements;
 }
+
+const pushAll = (target: unknown[], values: unknown[]): void => {
+  for (const value of values) target.push(value);
+};
 
 const jsonArrayHas = (field: string, wanted: unknown[], all: boolean): SqlQuery => {
   const quoted = quoteIdent(field);
@@ -188,7 +197,7 @@ export function buildWhereClause(where: Record<string, unknown> | null | undefin
         continue;
       }
       conditions.push(`${quoted} IN (${value.map(() => "?").join(", ")})`);
-      params.push(...value);
+      pushAll(params, value);
       continue;
     }
     if (typeof value !== "object") {
@@ -204,10 +213,16 @@ export function buildWhereClause(where: Record<string, unknown> | null | undefin
         case ">=":
         case "<":
         case "<=":
+          conditions.push(`${quoted} ${operator} ?`);
+          params.push(expected);
+          break;
+        case "=":
+          conditions.push(`${quoted} IS ?`);
+          params.push(expected);
+          break;
         case "!=":
         case "<>":
-        case "=":
-          conditions.push(`${quoted} ${operator} ?`);
+          conditions.push(`${quoted} IS NOT ?`);
           params.push(expected);
           break;
         case "in":
@@ -217,14 +232,23 @@ export function buildWhereClause(where: Record<string, unknown> | null | undefin
             conditions.push(operator === "in" ? "0" : "1");
             break;
           }
-          conditions.push(`${quoted} ${operator === "in" ? "IN" : "NOT IN"} (${list.map(() => "?").join(", ")})`);
-          params.push(...list);
+          const placeholders = list.map(() => "?").join(", ");
+          const scalar = `${quoted} IN (${placeholders})`;
+          const array = `EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(CAST(${quoted} AS TEXT)) THEN CAST(${quoted} AS TEXT) ELSE '[]' END) WHERE value IN (${placeholders}))`;
+          const hasNull = list.includes(null);
+          const nullClause = operator === "in" ? (hasNull ? ` OR ${quoted} IS NULL` : "") : (hasNull ? "" : ` OR ${quoted} IS NULL`);
+          conditions.push(operator === "in" ? `(${scalar} OR ${array}${nullClause})` : `NOT (${scalar} OR ${array})${nullClause}`);
+          pushAll(params, list);
+          pushAll(params, list);
           break;
         }
         case "like":
+          conditions.push(`${quoted} GLOB ?`);
+          params.push(`*${String(expected).replace(/[*?\[\]]/g, "\\$&")}*`);
+          break;
         case "ilike":
-          conditions.push(`${quoted} LIKE ?${operator === "ilike" ? " COLLATE NOCASE" : ""}`);
-          params.push(expected);
+          conditions.push(`${quoted} LIKE ? ESCAPE '\\'`);
+          params.push(`%${String(expected).replace(/[%_\\]/g, "\\$&")}%`);
           break;
         case "is null":
           conditions.push(`${quoted} IS NULL`);
@@ -237,7 +261,7 @@ export function buildWhereClause(where: Record<string, unknown> | null | undefin
           const wanted = Array.isArray(expected) ? expected : [expected];
           const found = jsonArrayHas(field, wanted, operator === "has all");
           conditions.push(found.sql);
-          params.push(...found.params);
+          pushAll(params, found.params);
           break;
         }
         default:
@@ -268,7 +292,7 @@ export function buildSelectSQL(model: string, options: SqlQueryOptions = {}): Sq
   const clause = buildWhereClause(where);
   if (clause.sql !== "") {
     sql += ` WHERE ${clause.sql}`;
-    params.push(...clause.params);
+    pushAll(params, clause.params);
   }
   const parts = orderOf(order);
   if (parts.length > 0) sql += ` ORDER BY ${parts.map((part) => `${quoteIdent(part.field)} ${String(part.direction).toUpperCase() === "DESC" ? "DESC" : "ASC"}`).join(", ")}`;
@@ -279,6 +303,9 @@ export function buildSelectSQL(model: string, options: SqlQueryOptions = {}): Sq
       sql += " OFFSET ?";
       params.push(offset);
     }
+  } else if (offset !== undefined && offset !== null) {
+    sql += " LIMIT -1 OFFSET ?";
+    params.push(offset);
   }
   return { sql, params };
 }
@@ -326,7 +353,7 @@ export function buildCountSQL(model: string, options: SqlQueryOptions = {}): Sql
 }
 
 /** The live column names of a table. */
-export function tableColumns(db: { prepare(sql: string): { all(params?: unknown[]): Record<string, unknown>[] } }, model: string): string[] {
+export function tableColumns(db: SqlDatabase, model: string): string[] {
   return db.prepare(`PRAGMA table_info(${quoteIdent(model)})`).all().map((row) => String(row["name"]));
 }
 
@@ -334,7 +361,7 @@ export function tableColumns(db: { prepare(sql: string): { all(params?: unknown[
  * Apply a schema additively: create a missing table, add missing columns, and
  * create indexes. A destructive change belongs in an explicit migration.
  */
-export function applySchema(db: { prepare(sql: string): { all(params?: unknown[]): Record<string, unknown>[] }, exec(sql: string): void }, models: Record<string, ModelSchema>): void {
+export function applySchema(db: SqlDatabase, models: Record<string, ModelSchema>): void {
   for (const [model, schema] of Object.entries(models)) {
     if (model.startsWith("$")) continue;
     db.exec(buildCreateTableSQL(model, schema));
@@ -353,7 +380,7 @@ export interface SqlMigration {
  * Run the migrations a database has not recorded in `_migrations`, each in
  * one transaction. The table is created here, so the first run needs nothing.
  */
-export function applyMigrations(db: { prepare(sql: string): { all(params?: unknown[]): Record<string, unknown>[], run(params?: unknown[]): unknown }, exec(sql: string): void, transaction(fn: () => void): void }, migrations: SqlMigration[]): void {
+export function applyMigrations(db: SqlDatabase, migrations: SqlMigration[]): void {
   db.exec("CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied TEXT NOT NULL DEFAULT (datetime('now')))");
   const applied = new Set(db.prepare("SELECT name FROM _migrations").all().map((row) => String(row["name"])));
   for (const migration of migrations) {
@@ -361,6 +388,7 @@ export function applyMigrations(db: { prepare(sql: string): { all(params?: unkno
     db.transaction(() => {
       for (const sql of Array.isArray(migration.sql) ? migration.sql : [migration.sql]) db.exec(sql);
       db.prepare("INSERT INTO _migrations (name) VALUES (?)").run([migration.name]);
+      return 0;
     });
   }
 }

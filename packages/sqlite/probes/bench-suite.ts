@@ -19,6 +19,7 @@ export const runBench = (name: string, open: () => SqlDatabase): void => {
   const insert = db.prepare("INSERT INTO note (id, n, tags) VALUES (?, ?, ?)");
   db.transaction(() => {
     for (let index = 0; index < 1000; index++) insert.run([`r${index}`, index, '["a","b"]']);
+    return 0;
   });
   const point = db.prepare("SELECT * FROM note WHERE id = ?");
   const page = db.prepare("SELECT * FROM note LIMIT 100");
@@ -27,11 +28,15 @@ export const runBench = (name: string, open: () => SqlDatabase): void => {
   time("point read", 100000, () => { point.get(["r500"]); });
   time("100-row json", 10000, () => { page.json(); });
   time("insert in its transaction", 10000, (index) => {
-    db.transaction(() => { one.run([`t${index}`, index, "[]"]); });
+    db.transaction(() => {
+      one.run([`t${index}`, index, "[]"]);
+      return 0;
+    });
   });
   time("100 inserts in one transaction", 1000, (index) => {
     db.transaction(() => {
       for (let at = 0; at < 100; at++) one.run([`g${index}-${at}`, at, "[]"]);
+      return 0;
     });
   });
   db.close();

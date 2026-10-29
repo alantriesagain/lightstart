@@ -6,7 +6,7 @@
  */
 
 import { DatabaseSync } from "node:sqlite";
-import { DEFAULT_STATEMENT_CACHE, openPragmas } from "./index.ts";
+import { DEFAULT_STATEMENT_CACHE, isThenable, openPragmas } from "./index.ts";
 
 import type { OpenOptions, SqlDatabase, SqlParams, SqlRunResult, SqlStatement } from "./index.ts";
 
@@ -14,7 +14,8 @@ import type { OpenOptions, SqlDatabase, SqlParams, SqlRunResult, SqlStatement } 
 export const toNodeValue = (value: unknown): string | number | bigint | null | Uint8Array => {
   if (value === undefined || value === null) return null;
   if (typeof value === "boolean") return value ? 1 : 0;
-  if (typeof value === "string" || typeof value === "number" || typeof value === "bigint" || value instanceof Uint8Array) return value;
+  if (typeof value === "number") return Number.isSafeInteger(value) ? BigInt(value) : value;
+  if (typeof value === "string" || typeof value === "bigint" || value instanceof Uint8Array) return value;
   return JSON.stringify(value);
 };
 
@@ -34,9 +35,13 @@ const bindings = (params: SqlParams | undefined): Array<string | number | bigint
 /** One prepared statement on node's engine. */
 export class Statement implements SqlStatement {
   private readonly statement: ReturnType<DatabaseSync["prepare"]>;
+  readonly reader: boolean;
+  readonly columns: number;
 
   constructor(statement: ReturnType<DatabaseSync["prepare"]>) {
     this.statement = statement;
+    this.columns = statement.columns().length;
+    this.reader = this.columns > 0;
   }
 
   all(params?: SqlParams): Record<string, unknown>[] {
@@ -54,11 +59,26 @@ export class Statement implements SqlStatement {
   run(params?: SqlParams): SqlRunResult {
     const bound = bindings(params);
     const result = Array.isArray(bound) ? this.statement.run(...bound) : this.statement.run(bound);
-    return { changes: Number(result.changes), lastId: normalizeId(result.lastInsertRowid) };
+    return { changes: this.reader ? 0 : Number(result.changes), lastId: normalizeId(result.lastInsertRowid) };
   }
 
   json(params?: SqlParams): string {
-    return JSON.stringify(this.all(params));
+    this.statement.setReadBigInts(true);
+    let rows: Record<string, unknown>[];
+    try {
+      rows = this.all(params);
+    } finally {
+      this.statement.setReadBigInts(false);
+    }
+    return JSON.stringify(rows.map((row) => {
+      const out: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(row)) {
+        if (value instanceof Uint8Array) out[key] = Buffer.from(value).toString("base64");
+        else if (typeof value === "bigint") out[key] = value <= BigInt(Number.MAX_SAFE_INTEGER) && value >= BigInt(Number.MIN_SAFE_INTEGER) ? Number(value) : String(value);
+        else out[key] = value;
+      }
+      return out;
+    }));
   }
 
   close(): void {}
@@ -117,25 +137,24 @@ export class Database implements SqlDatabase {
     this.database.exec(sql);
   }
 
-  transaction(fn: () => void): void {
+  transaction<T>(fn: () => T): T {
     const nested = this.depth > 0;
     const name = `sp_${this.depth}`;
     this.database.exec(nested ? `SAVEPOINT ${name}` : "BEGIN IMMEDIATE");
     this.depth += 1;
     try {
       const value = fn();
-      this.depth -= 1;
+      if (isThenable(value)) throw new Error("sqlite: a transaction body must be synchronous");
       this.database.exec(nested ? `RELEASE ${name}` : "COMMIT");
       return value;
     } catch (error) {
-      this.depth -= 1;
       try {
         this.database.exec(nested ? `ROLLBACK TO ${name}` : "ROLLBACK");
         if (nested) this.database.exec(`RELEASE ${name}`);
-      } catch {
-        this.depth = 0;
-      }
+      } catch {}
       throw error;
+    } finally {
+      this.depth -= 1;
     }
   }
 

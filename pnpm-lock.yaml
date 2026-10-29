@@ -153,6 +153,9 @@ importers:
       '@light/test':
         specifier: workspace:*
         version: link:../tui/test
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5

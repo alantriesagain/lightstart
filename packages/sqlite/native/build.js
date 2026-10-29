@@ -25,12 +25,17 @@ const FUNCTIONS = [
   { name: "sqlite_shim_bind_null", symbol: "sqlite_shim_bind_null", params: ["pointer", "i32"], returns: "i32" },
   { name: "sqlite_shim_bind_double", symbol: "sqlite_shim_bind_double", params: ["pointer", "i32", "f64"], returns: "i32" },
   { name: "sqlite_shim_bind_int", symbol: "sqlite_shim_bind_int", params: ["pointer", "i32", "i64"], returns: "i32" },
+  { name: "sqlite_shim_bind_int32", symbol: "sqlite_shim_bind_int32", params: ["pointer", "i32", "i32"], returns: "i32" },
   { name: "sqlite_shim_bind_text", symbol: "sqlite_shim_bind_text", params: ["pointer", "i32", "string"], returns: "i32" },
   { name: "sqlite_shim_bind_blob", symbol: "sqlite_shim_bind_blob", params: ["pointer", "i32", "bytes"], returns: "i32" },
   { name: "sqlite_shim_bind_index", symbol: "sqlite_shim_bind_index", params: ["pointer", "string"], returns: "i32" },
   { name: "sqlite_shim_clear_bindings", symbol: "sqlite_shim_clear_bindings", params: ["pointer"], returns: "i32" },
+  { name: "sqlite_shim_ready", symbol: "sqlite_shim_ready", params: ["pointer"], returns: "i32" },
   { name: "sqlite_shim_reset", symbol: "sqlite_shim_reset", params: ["pointer"], returns: "i32" },
   { name: "sqlite_shim_json", symbol: "sqlite_shim_json", params: ["pointer", "mutable-bytes"], returns: "i64" },
+  { name: "sqlite_shim_readonly", symbol: "sqlite_shim_readonly", params: ["pointer"], returns: "i32" },
+  { name: "sqlite_shim_columns", symbol: "sqlite_shim_columns", params: ["pointer"], returns: "i32" },
+  { name: "sqlite_shim_row", symbol: "sqlite_shim_row", params: ["pointer", "mutable-bytes"], returns: "i64" },
   { name: "sqlite_shim_run", symbol: "sqlite_shim_run", params: ["pointer"], returns: "i32" },
   { name: "sqlite_shim_changes", symbol: "sqlite_shim_changes", params: ["pointer"], returns: "i64" },
   { name: "sqlite_shim_last_id", symbol: "sqlite_shim_last_id", params: ["pointer"], returns: "i64" },
@@ -53,7 +58,18 @@ const current = existsSync(archive) && existsSync(join(here, "ffi.json")) &&
 
 if (!current) {
   mkdirSync(out, { recursive: true });
-  const flags = ["-O2", "-fPIC", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_FOREIGN_KEYS=1", "-I" + join(here, "vendor")];
+  const flags = [
+    "-O2", "-fPIC",
+    "-DSQLITE_THREADSAFE=2",
+    "-DSQLITE_DEFAULT_MEMSTATUS=0",
+    "-DSQLITE_DQS=0",
+    "-DSQLITE_OMIT_DEPRECATED",
+    "-DSQLITE_OMIT_SHARED_CACHE",
+    "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS",
+    "-DSQLITE_USE_ALLOCA",
+    "-DSQLITE_DEFAULT_FOREIGN_KEYS=1",
+    "-I" + join(here, "vendor"),
+  ];
   run("cc", [...flags, "-c", source, "-o", join(out, "sqlite3.o")]);
   run("cc", [...flags, "-c", shim, "-o", join(out, "shim.o")]);
   run("ar", ["rcs", archive, join(out, "sqlite3.o"), join(out, "shim.o")]);

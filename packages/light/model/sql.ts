@@ -14,8 +14,8 @@ import { createAdapter, hasAdapter, registerStorageAdapter } from "./factory.ts"
 import { buildQueryResult, validateQueryOptions } from "./query-builder.ts";
 import { createStore, storeRequest } from "./store.ts";
 import {
-  applySchema, buildCountSQL, buildDeleteSQL, buildInsertSQL, buildSelectSQL, buildUpdateSQL,
-  getBooleanFields, getJsonFields, numericId, quoteIdent,
+  applySchema, buildCountSQL, buildDeleteSQL, buildInsertSQL, buildSelectSQL, buildUpdateSQL, buildWhereClause,
+  getBooleanFields, getJsonFields, quoteIdent,
 } from "./sql-builder.ts";
 
 import type { SqlDatabase } from "@lightstart/sqlite";
@@ -31,44 +31,46 @@ export type SqlStorage = StorageAdapter & {
 
 const copy = (row: Row): Row => Object.fromEntries(Object.entries(row));
 
-const decode = (schema: ModelSchema | undefined, row: Row): Row => {
-  const json = getJsonFields(schema);
-  const booleans = getBooleanFields(schema);
-  const decoded: Row = copy(row);
-  for (const field of json) {
-    const value = decoded[field];
-    if (typeof value === "string" && value !== "") decoded[field] = JSON.parse(value);
-  }
-  for (const field of booleans) {
-    const value = decoded[field];
-    if (value !== null && value !== undefined) decoded[field] = Boolean(Number(value));
-  }
-  return decoded;
+const fieldSets = new Map<string, { json: Set<string>, booleans: Set<string> }>();
+
+const setsOf = (model: string, schema: ModelSchema | undefined): { json: Set<string>, booleans: Set<string> } => {
+  const known = fieldSets.get(model);
+  if (known !== undefined) return known;
+  const found = { json: getJsonFields(schema), booleans: getBooleanFields(schema) };
+  fieldSets.set(model, found);
+  return found;
+};
+
+/** Decode one stored row: JSON text back to its value, booleans back to true or false. */
+export const decodeRow = (model: string, schema: ModelSchema | undefined, row: Row): Row => {
+  const { json, booleans } = setsOf(model, schema);
+  const entries = Object.entries(row).map(([field, value]): [string, unknown] => {
+    if (json.has(field) && typeof value === "string" && value !== "") return [field, JSON.parse(value)];
+    if (booleans.has(field) && value !== null && value !== undefined) return [field, Boolean(Number(value))];
+    return [field, value];
+  });
+  return Object.fromEntries(entries);
 };
 
 const selectOne = (db: SqlDatabase, model: string, id: string | number, schema: ModelSchema | undefined): Row | null => {
   const query = buildSelectSQL(model, { where: { id } });
   const row = db.prepare(query.sql).get(query.params);
-  return row === null ? null : decode(schema, row);
+  return row === null ? null : decodeRow(model, schema, row);
 };
 
 const insertRow = (adapter: SqlStorage, model: string, row: Row): Row => {
   const schema = adapter.models[model];
   const query = buildInsertSQL(model, row, getJsonFields(schema));
-  const result = adapter.db.prepare(query.sql).run(query.params);
-  const assigned = typeof result.lastId === "bigint" ? Number(result.lastId) : result.lastId;
-  const id = row.id ?? (numericId(schema) ? assigned : null);
-  const stored = id === null ? null : selectOne(adapter.db, model, id, schema);
-  return stored === null ? copy(row) : stored;
+  const rows = JSON.parse(adapter.db.prepare(`${query.sql} RETURNING *`).json(query.params)) as Row[];
+  return rows.length === 0 ? copy(row) : decodeRow(model, schema, rows[0]!);
 };
 
 const updateRow = (adapter: SqlStorage, model: string, row: Row, options: WriteOptions | undefined): Row => {
   const schema = adapter.models[model];
   const data = options?.patch ?? row;
   const query = buildUpdateSQL(model, row.id as string | number, data, getJsonFields(schema));
-  adapter.db.prepare(query.sql).run(query.params);
-  const stored = selectOne(adapter.db, model, row.id as string | number, schema);
-  return stored === null ? copy(row) : stored;
+  const rows = JSON.parse(adapter.db.prepare(`${query.sql} RETURNING *`).json(query.params)) as Row[];
+  return rows.length === 0 ? copy(row) : decodeRow(model, schema, rows[0]!);
 };
 
 const whereCount = (db: SqlDatabase, model: string, where: WhereClause | undefined): number => {
@@ -92,13 +94,19 @@ const SqlAdapter: StorageAdapter = {
     const schema = this.models[model];
     if (options.groupBy !== undefined) {
       const all = buildSelectSQL(model, { where: options.where, order: options.order });
-      const rows = this.db.prepare(all.sql).all(all.params).map((row) => decode(schema, row));
+      const rows = this.db.prepare(all.sql).all(all.params).map((row) => decodeRow(model, schema, row));
       const result = buildQueryResult(rows, options);
       return { rows: result.items, total: result.total };
     }
-    const selection: QueryOptions = options.fields === undefined || options.fields.includes("id") ? options : { ...options, fields: [...options.fields, "id"] };
+    let selection: QueryOptions = options;
+    if (options.fields !== undefined && !options.fields.includes("id")) {
+      const fields: string[] = [];
+      for (const field of options.fields) fields.push(String(field));
+      fields.push("id");
+      selection = { where: options.where, order: options.order, limit: options.limit, offset: options.offset, groupBy: options.groupBy, total: options.total, fields };
+    }
     const query = buildSelectSQL(model, selection);
-    const rows = this.db.prepare(query.sql).all(query.params).map((row) => decode(schema, row));
+    const rows = this.db.prepare(query.sql).all(query.params).map((row) => decodeRow(model, schema, row));
     const total = options.total === false ? rows.length : whereCount(this.db, model, options.where);
     return { rows, total };
   },
@@ -107,6 +115,7 @@ const SqlAdapter: StorageAdapter = {
     const stored: Row[] = [];
     this.db.transaction(() => {
       for (const row of rows) stored.push(insertRow(this, model, row));
+      return 0;
     });
     return stored;
   },
@@ -129,7 +138,9 @@ const SqlAdapter: StorageAdapter = {
   },
 
   async exists(this: SqlStorage, model: string, where: WhereClause | undefined): Promise<boolean> {
-    return whereCount(this.db, model, where) > 0;
+    const clause = buildWhereClause(where);
+    const sql = `SELECT EXISTS(SELECT 1 FROM ${quoteIdent(model)}${clause.sql === "" ? "" : ` WHERE ${clause.sql}`}) AS found`;
+    return Number(this.db.prepare(sql).get(clause.params)?.["found"] ?? 0) === 1;
   },
 
   async truncate(this: SqlStorage, model: string): Promise<void> {

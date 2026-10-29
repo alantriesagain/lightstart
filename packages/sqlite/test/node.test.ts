@@ -6,4 +6,4 @@
 import { Database } from "../node.ts";
 import { runSuite } from "./suite.ts";
 
-runSuite(() => Database.open(":memory:"));
+runSuite((options) => Database.open(":memory:", options));

@@ -4,6 +4,8 @@ import {
   buildAddColumnSQL, buildCountSQL, buildCreateIndexSQL, buildCreateTableSQL, buildSelectSQL,
   buildWhereClause, quoteIdent,
 } from "./sql-builder.ts";
+import { matchesWhere } from "./query-builder.ts";
+import { Database } from "@lightstart/sqlite/node";
 
 describe("quoteIdent", () => {
   it("passes a plain column through and quotes one that collides with a keyword", () => {
@@ -69,12 +71,39 @@ describe("an honest query still builds", () => {
 
   it("keeps the operators it supports", () => {
     assert.equal(buildWhereClause({ n: { ">=": 3 } }).sql, "n >= ?");
-    assert.equal(buildWhereClause({ s: { like: "a%" } }).sql.toLowerCase(), "s like ?");
+    assert.equal(buildWhereClause({ s: { like: "a%" } }).sql, "s GLOB ?");
+    assert.deepEqual(buildWhereClause({ s: { like: "a%" } }).params, ["*a%*"]);
+    assert.equal(buildWhereClause({ s: { ilike: "a%" } }).sql, "s LIKE ? ESCAPE '\\'");
+    assert.deepEqual(buildWhereClause({ s: { ilike: "a%" } }).params, ["%a\\%%"]);
     assert.equal(buildWhereClause({ s: null }).sql, "s IS NULL");
   });
 
   it("reads -field and a comma list as order", () => {
     assert.equal(buildSelectSQL("t", { order: "-created,title" }).sql, "SELECT * FROM t ORDER BY created DESC, title ASC");
+  });
+
+  it("matches the in-memory matcher", () => {
+    const rows = [
+      { id: "a", n: 1, s: "Alpha", tags: ["x", "y"] },
+      { id: "b", n: 2, s: "beta", tags: ["y"] },
+      { id: "c", n: null, s: null, tags: [] },
+    ];
+    const db = Database.open(":memory:");
+    db.exec("CREATE TABLE t (id TEXT PRIMARY KEY, n INTEGER, s TEXT, tags TEXT)");
+    const insert = db.prepare("INSERT INTO t (id, n, s, tags) VALUES (?, ?, ?, ?)");
+    for (const row of rows) insert.run([row.id, row.n, row.s, JSON.stringify(row.tags)]);
+    const cases = [
+      { n: { ">=": 2 } }, { n: { "!=": 1 } }, { n: { "=": null } }, { n: null },
+      { s: { like: "Al" } }, { s: { ilike: "AL" } }, { s: { like: "a" } },
+      { tags: { has: "y" } }, { tags: { "has all": ["x", "y"] } },
+      { tags: { in: ["x"] } }, { n: { "not in": [2] } },
+    ];
+    for (const where of cases) {
+      const expected = rows.filter((row) => matchesWhere(row, where)).map((row) => row.id).sort();
+      const actual = db.prepare(buildSelectSQL("t", { where, order: "id" }).sql).all(buildSelectSQL("t", { where, order: "id" }).params).map((row) => row.id);
+      assert.deepEqual(actual, expected, JSON.stringify(where));
+    }
+    db.close();
   });
 
   it("has and has all search a JSON array", () => {
@@ -112,8 +141,26 @@ describe("buildCreateIndexSQL: composite indexes", () => {
     assert.match(sql[1], /idx_t_a_b/);
   });
 
+  it("builds a reserved model's index name without embedding quotes", () => {
+    const [sql] = buildCreateIndexSQL("order", { group: { index: true } });
+    assert.equal(sql, 'CREATE INDEX IF NOT EXISTS idx_order_group ON "order"("group");');
+  });
+
   it("rejects an identifier that is not a bare name", () => {
     assert.throws(() => buildCreateIndexSQL("t", {}, [{ fields: ["a); DROP TABLE t; --"] }]));
+  });
+});
+
+describe("pagination and schema guards", () => {
+  it("keeps an offset without a limit", () => {
+    assert.equal(buildSelectSQL("t", { offset: 5 }).sql, "SELECT * FROM t LIMIT -1 OFFSET ?");
+  });
+
+  it("skips a function or non-finite default and refuses an owned column", () => {
+    const sql = buildCreateTableSQL("t", { a: { $type: "string", defaultValue: () => "x" }, b: { $type: "number", defaultValue: Infinity } });
+    assert.equal(sql.includes("DEFAULT 'x'"), false);
+    assert.equal(sql.includes("Infinity"), false);
+    assert.throws(() => buildCreateTableSQL("t", { created: { $type: "string" } }), /generator owns/);
   });
 });
 

@@ -18,7 +18,7 @@ export { onChange } from "./changes.ts";
 export { ValidationError } from "./validate.ts";
 import { modelRequest } from "./config.ts";
 
-export { configureModel, modelBus, modelRequest } from "./config.ts";
+export { configureModel, modelBus, modelRequest, newId } from "./config.ts";
 
 import type { ClientWriteOptions, FacetResult, ModelApi, ModelPayload, ModelSchema, QueryOptions, QueryPage, Row, RowOf } from "./types.ts";
 

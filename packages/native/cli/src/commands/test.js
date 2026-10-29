@@ -4,13 +4,14 @@
  * outputs must match byte for byte. A test whose first line is `// ffi: <manifest>` runs natively
  * with that manifest and under node with the manifest folder's node stand-in preloaded; one whose
  * first line is `// node-only` runs under node alone (it walks the file system or the repository).
+ * One marked `// native-only` on its first two lines runs under scriptc alone.
  * Tests run with the member's folder as the working directory, $JOBS at a time (default 4), built
  * with scriptc's dev optimization unless --opt release; at dev, speed checks get room through
  * TEST_TIME_SCALE (the members' assert helpers read it). Results print in file order.
  */
 import { existsSync, readdirSync } from "node:fs";
 import { basename, join, relative } from "node:path";
-import { ffiHeader, nodeOnly, nodePreload, resolveFfi } from "../ffi.js";
+import { ffiHeader, nativeOnly, nodeOnly, nodePreload, resolveFfi } from "../ffi.js";
 import { prepare } from "../prepare.js";
 import { capture, pool } from "../run.js";
 import { scriptcPath } from "@lightstart/light/native/scriptc.js";
@@ -106,14 +107,19 @@ export const run = async (args, root) => {
   const env = { ...process.env };
   if (opt === "dev" && env["TEST_TIME_SCALE"] === undefined) env["TEST_TIME_SCALE"] = "4";
   const start = Date.now();
-  const results = await pool(tests, jobs, async (t) => {
+  const runnable = nodeOnlyRun ? tests.filter((t) => !nativeOnly(t.path)) : tests;
+  const results = await pool(runnable, jobs, async (t) => {
     const header = ffiHeader(t.path);
     const manifest = header === null ? null : resolveFfi(t.member, header);
-    const preload = manifest === null ? null : nodePreload(manifest);
-    const nodeArgs = ["--no-warnings"];
-    if (preload !== null) nodeArgs.push("--import", preload);
-    nodeArgs.push(t.path);
-    const node = await capture("node", nodeArgs, { cwd: t.member.dir, env });
+    const onlyNative = nativeOnly(t.path);
+    let node = null;
+    if (!onlyNative) {
+      const preload = manifest === null ? null : nodePreload(manifest);
+      const nodeArgs = ["--no-warnings"];
+      if (preload !== null) nodeArgs.push("--import", preload);
+      nodeArgs.push(t.path);
+      node = await capture("node", nodeArgs, { cwd: t.member.dir, env });
+    }
     if (nodeOnlyRun || nodeOnly(t.path)) return { t, node, native: null };
     const nativeArgs = ["run", "--optimization", opt];
     if (manifest !== null) nativeArgs.push("--ffi", manifest);
@@ -123,18 +129,20 @@ export const run = async (args, root) => {
   });
   let status = 0;
   for (const { t, node, native } of results) {
-    const failed = node.code !== 0 || (native !== null && (native.code !== 0 || native.out !== node.out));
+    const failed = (node !== null && node.code !== 0) || (native !== null && (native.code !== 0 || (node !== null && native.out !== node.out)));
     if (failed) {
       status = 1;
-      console.log("FAIL " + t.label + " (node=" + String(node.code) + (native === null ? "" : " scriptc=" + String(native.code)) + ")");
-      console.log("--- node");
-      process.stdout.write(node.out);
+      console.log("FAIL " + t.label + " (" + (node === null ? "scriptc=" + String(native?.code) : "node=" + String(node.code) + (native === null ? "" : " scriptc=" + String(native.code))) + ")");
+      if (node !== null) {
+        console.log("--- node");
+        process.stdout.write(node.out);
+      }
       if (native !== null) {
         console.log("--- scriptc");
         process.stdout.write(native.out);
       }
-    } else console.log("PASS " + t.label + (native === null ? " (node only)" : ""));
+    } else console.log("PASS " + t.label + (native === null ? " (node only)" : node === null ? " (native only)" : ""));
   }
-  console.log(String(tests.length) + " tests in " + String(Math.round((Date.now() - start) / 1000)) + " s, " + String(jobs) + " at a time, " + (nodeOnlyRun ? "node only" : opt + " builds"));
+  console.log(String(results.length) + " tests in " + String(Math.round((Date.now() - start) / 1000)) + " s, " + String(jobs) + " at a time, " + (nodeOnlyRun ? "node only" : opt + " builds"));
   return status;
 };

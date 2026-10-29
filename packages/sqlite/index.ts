@@ -23,6 +23,8 @@ export interface SqlStatement {
   run(params?: SqlParams): SqlRunResult;
   /** The whole result as one JSON array of objects, built by the engine where it can be. */
   json(params?: SqlParams): string;
+  readonly reader: boolean;
+  readonly columns: number;
   close(): void;
 }
 
@@ -33,9 +35,13 @@ export interface SqlDatabase {
   prepare(sql: string): SqlStatement;
   exec(sql: string): void;
   /** Run `fn` inside `BEGIN IMMEDIATE`; a call made inside another gets its own savepoint. */
-  transaction(fn: () => void): void;
+  transaction<T>(fn: () => T): T;
   close(): void;
 }
+
+/** Whether a callback answered a promise, which a transaction refuses. */
+export const isThenable = (value: unknown): boolean =>
+  value !== null && (typeof value === "object" || typeof value === "function") && typeof (value as { then?: unknown }).then === "function";
 
 /** How a database is opened. Every pragma has a safe default; a writable database keeps them unless told otherwise. */
 export interface OpenOptions {

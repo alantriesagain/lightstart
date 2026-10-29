@@ -4,7 +4,7 @@
  * text built in C, so `json()` costs one FFI call and builds no row objects.
  */
 
-import { DEFAULT_STATEMENT_CACHE, openPragmas } from "./index.ts";
+import { DEFAULT_STATEMENT_CACHE, isThenable, openPragmas } from "./index.ts";
 
 import type { OpenOptions, SqlDatabase, SqlParams, SqlRunResult, SqlStatement } from "./index.ts";
 
@@ -16,12 +16,17 @@ declare function sqlite_shim_finalize(statement: bigint): number;
 declare function sqlite_shim_bind_null(statement: bigint, index: number): number;
 declare function sqlite_shim_bind_double(statement: bigint, index: number, value: number): number;
 declare function sqlite_shim_bind_int(statement: bigint, index: number, value: bigint): number;
+declare function sqlite_shim_bind_int32(statement: bigint, index: number, value: number): number;
 declare function sqlite_shim_bind_text(statement: bigint, index: number, value: string): number;
 declare function sqlite_shim_bind_blob(statement: bigint, index: number, value: Uint8Array): number;
 declare function sqlite_shim_bind_index(statement: bigint, name: string): number;
 declare function sqlite_shim_clear_bindings(statement: bigint): number;
+declare function sqlite_shim_ready(statement: bigint): number;
 declare function sqlite_shim_reset(statement: bigint): number;
 declare function sqlite_shim_json(statement: bigint, buffer: Uint8Array): bigint;
+declare function sqlite_shim_row(statement: bigint, buffer: Uint8Array): bigint;
+declare function sqlite_shim_readonly(statement: bigint): number;
+declare function sqlite_shim_columns(statement: bigint): number;
 declare function sqlite_shim_run(statement: bigint): number;
 declare function sqlite_shim_changes(db: bigint): bigint;
 declare function sqlite_shim_last_id(db: bigint): bigint;
@@ -50,7 +55,7 @@ const bindOne = (statement: bigint, index: number, value: unknown): void => {
   if (value === undefined || value === null) code = sqlite_shim_bind_null(statement, index);
   else if (typeof value === "boolean") code = sqlite_shim_bind_int(statement, index, value ? 1n : 0n);
   else if (typeof value === "bigint") code = sqlite_shim_bind_int(statement, index, value);
-  else if (typeof value === "number") code = Number.isSafeInteger(value) ? sqlite_shim_bind_int(statement, index, BigInt(value)) : sqlite_shim_bind_double(statement, index, value);
+  else if (typeof value === "number") code = Number.isSafeInteger(value) ? (value >= -2147483648 && value <= 2147483647 ? sqlite_shim_bind_int32(statement, index, value) : sqlite_shim_bind_int(statement, index, BigInt(value))) : sqlite_shim_bind_double(statement, index, value);
   else if (value instanceof Uint8Array) code = sqlite_shim_bind_blob(statement, index, value);
   else if (typeof value === "string") code = sqlite_shim_bind_text(statement, index, value);
   else code = sqlite_shim_bind_text(statement, index, JSON.stringify(value));
@@ -58,8 +63,7 @@ const bindOne = (statement: bigint, index: number, value: unknown): void => {
 };
 
 const bindParams = (statement: bigint, params: SqlParams | undefined): void => {
-  sqlite_shim_reset(statement);
-  sqlite_shim_clear_bindings(statement);
+  sqlite_shim_ready(statement);
   if (params === undefined) return;
   if (Array.isArray(params)) {
     for (const [index, value] of params.entries()) bindOne(statement, index + 1, value);
@@ -78,11 +82,17 @@ const bindParams = (statement: bigint, params: SqlParams | undefined): void => {
 export class Statement implements SqlStatement {
   private readonly db: bigint;
   readonly handle: bigint;
+  readonly reader: boolean;
+  readonly columns: number;
+  private readonly buffer: { bytes: Uint8Array };
   private closed: boolean;
 
-  constructor(db: bigint, handle: bigint) {
+  constructor(db: bigint, handle: bigint, buffer: { bytes: Uint8Array }) {
     this.db = db;
     this.handle = handle;
+    this.reader = sqlite_shim_readonly(handle) === 1;
+    this.columns = sqlite_shim_columns(handle);
+    this.buffer = buffer;
     this.closed = false;
   }
 
@@ -91,38 +101,46 @@ export class Statement implements SqlStatement {
   }
 
   get(params?: SqlParams): Record<string, unknown> | null {
-    const rows = this.all(params);
-    return rows.length > 0 ? rows[0] : null;
+    if (this.closed) throw new Error("sqlite: statement is closed");
+    bindParams(this.handle, params);
+    for (;;) {
+      const length = sqlite_shim_row(this.handle, this.buffer.bytes);
+      if (length === BigInt(JSON_NEED)) {
+        sqlite_shim_reset(this.handle);
+        throw new Error(`sqlite: ${messageOf(this.db)}`);
+      }
+      if (length < 0) {
+        this.buffer.bytes = new Uint8Array(Number(-length));
+        continue;
+      }
+      const text = decoder.decode(this.buffer.bytes.subarray(0, Number(length)));
+      return text === "null" ? null : JSON.parse(text) as Record<string, unknown>;
+    }
   }
 
   run(params?: SqlParams): SqlRunResult {
     if (this.closed) throw new Error("sqlite: statement is closed");
     bindParams(this.handle, params);
     const code = sqlite_shim_run(this.handle);
-    sqlite_shim_reset(this.handle);
-    sqlite_shim_clear_bindings(this.handle);
     if (code !== SQLITE_DONE && code !== SQLITE_ROW) throw new Error(`sqlite: ${messageOf(this.db)}`);
     const lastId = sqlite_shim_last_id(this.db);
-    return { changes: Number(sqlite_shim_changes(this.db)), lastId: lastId <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(lastId) : lastId };
+    return { changes: this.reader ? 0 : Number(sqlite_shim_changes(this.db)), lastId: lastId <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(lastId) : lastId };
   }
 
   json(params?: SqlParams): string {
     if (this.closed) throw new Error("sqlite: statement is closed");
     bindParams(this.handle, params);
-    sqlite_shim_reset(this.handle);
-    let size = GROW_START;
     for (;;) {
-      const buffer = new Uint8Array(size);
-      const length = sqlite_shim_json(this.handle, buffer);
+      const length = sqlite_shim_json(this.handle, this.buffer.bytes);
       if (length === BigInt(JSON_NEED)) {
         sqlite_shim_reset(this.handle);
         throw new Error(`sqlite: ${messageOf(this.db)}`);
       }
       if (length < 0) {
-        size = Number(-length);
+        this.buffer.bytes = new Uint8Array(Number(-length));
         continue;
       }
-      return decoder.decode(buffer.subarray(0, Number(length)));
+      return decoder.decode(this.buffer.bytes.subarray(0, Number(length)));
     }
   }
 
@@ -138,7 +156,9 @@ export class Database implements SqlDatabase {
   readonly path: string;
   private readonly db: bigint;
   private readonly cache: Map<string, Statement>;
+  private readonly statements: Set<Statement>;
   private readonly maxStatements: number;
+  private readonly buffer: { bytes: Uint8Array };
   private depth: number;
   private active: boolean;
 
@@ -146,7 +166,9 @@ export class Database implements SqlDatabase {
     this.path = path;
     this.db = db;
     this.cache = new Map();
+    this.statements = new Set();
     this.maxStatements = maxStatements;
+    this.buffer = { bytes: new Uint8Array(GROW_START) };
     this.depth = 0;
     this.active = true;
   }
@@ -173,14 +195,13 @@ export class Database implements SqlDatabase {
     }
     const handle = sqlite_shim_prepare(this.db, sql);
     if (handle === 0n) throw new Error(`sqlite: ${messageOf(this.db)}`);
-    const statement = new Statement(this.db, handle);
+    const statement = new Statement(this.db, handle, this.buffer);
+    this.statements.add(statement);
     this.cache.set(sql, statement);
     while (this.cache.size > this.maxStatements) {
       const oldest = this.cache.keys().next();
       if (oldest.done === true) break;
-      const stale = this.cache.get(oldest.value);
       this.cache.delete(oldest.value);
-      if (stale !== undefined) stale.close();
     }
     return statement;
   }
@@ -190,32 +211,33 @@ export class Database implements SqlDatabase {
     if (code !== 0) throw new Error(`sqlite: ${messageOf(this.db)}`);
   }
 
-  transaction(fn: () => void): void {
+  transaction<T>(fn: () => T): T {
     const nested = this.depth > 0;
     const name = `sp_${this.depth}`;
     this.exec(nested ? `SAVEPOINT ${name}` : "BEGIN IMMEDIATE");
     this.depth += 1;
     try {
-      fn();
-      this.depth -= 1;
+      const value = fn();
+      if (isThenable(value)) throw new Error("sqlite: a transaction body must be synchronous");
       this.exec(nested ? `RELEASE ${name}` : "COMMIT");
+      return value;
     } catch (error) {
-      this.depth -= 1;
       try {
         this.exec(nested ? `ROLLBACK TO ${name}` : "ROLLBACK");
         if (nested) this.exec(`RELEASE ${name}`);
-      } catch {
-        this.depth = 0;
-      }
+      } catch {}
       throw error;
+    } finally {
+      this.depth -= 1;
     }
   }
 
   close(): void {
     if (!this.active) return;
     this.active = false;
-    for (const statement of this.cache.values()) statement.close();
+    for (const statement of this.statements) statement.close();
     this.cache.clear();
+    this.statements.clear();
     sqlite_shim_close(this.db);
   }
 }

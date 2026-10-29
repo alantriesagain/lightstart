@@ -74,6 +74,16 @@
       "returns": "i32"
     },
     {
+      "name": "sqlite_shim_bind_int32",
+      "symbol": "sqlite_shim_bind_int32",
+      "params": [
+        "pointer",
+        "i32",
+        "i32"
+      ],
+      "returns": "i32"
+    },
+    {
       "name": "sqlite_shim_bind_text",
       "symbol": "sqlite_shim_bind_text",
       "params": [
@@ -111,6 +121,14 @@
       "returns": "i32"
     },
     {
+      "name": "sqlite_shim_ready",
+      "symbol": "sqlite_shim_ready",
+      "params": [
+        "pointer"
+      ],
+      "returns": "i32"
+    },
+    {
       "name": "sqlite_shim_reset",
       "symbol": "sqlite_shim_reset",
       "params": [
@@ -121,6 +139,31 @@
     {
       "name": "sqlite_shim_json",
       "symbol": "sqlite_shim_json",
+      "params": [
+        "pointer",
+        "mutable-bytes"
+      ],
+      "returns": "i64"
+    },
+    {
+      "name": "sqlite_shim_readonly",
+      "symbol": "sqlite_shim_readonly",
+      "params": [
+        "pointer"
+      ],
+      "returns": "i32"
+    },
+    {
+      "name": "sqlite_shim_columns",
+      "symbol": "sqlite_shim_columns",
+      "params": [
+        "pointer"
+      ],
+      "returns": "i32"
+    },
+    {
+      "name": "sqlite_shim_row",
+      "symbol": "sqlite_shim_row",
       "params": [
         "pointer",
         "mutable-bytes"

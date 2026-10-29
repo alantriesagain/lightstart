@@ -28,6 +28,14 @@ export const ffiHeader = (file) => {
 export const nodeOnly = (file) => /^\/\/ node-only\b/.test(readFileSync(file, "utf8").split("\n", 1)[0]);
 
 /**
+ * Whether a source marks itself native-only (`// native-only`, on its first or
+ * second line, beside an `// ffi:` header).
+ * @param {string} file
+ * @returns {boolean}
+ */
+export const nativeOnly = (file) => readFileSync(file, "utf8").split("\n", 2).some((line) => /^\/\/ native-only\b/.test(line));
+
+/**
  * The manifest `spec` names from `member`, absolute and real.
  * @param {Member} member
  * @param {string} spec

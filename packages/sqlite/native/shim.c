@@ -2,8 +2,9 @@
  * The native edge of @lightstart/sqlite: a small synchronous API over one
  * SQLite connection. FFI cannot return strings or bytes, so a JSON result is
  * built here and written into the caller's buffer; the answer is its length,
- * or minus the size it needs when the buffer is short. A statement and a
- * database are opaque handles.
+ * or minus the size it needs when the buffer is short. A result is kept on the
+ * statement, so a short buffer copies it out instead of running the statement
+ * again. A statement and a database are opaque handles.
  */
 
 #include "sqlite3.h"
@@ -20,6 +21,29 @@ typedef struct {
   size_t cap;
   int failed;
 } buffer;
+
+typedef struct {
+  sqlite3_stmt *stmt;
+  char *json;
+  size_t json_len;
+  char *row;
+  size_t row_len;
+  int row_null;
+} shim_statement;
+
+static shim_statement *as_statement(void *handle) {
+  return (shim_statement *)handle;
+}
+
+static void invalidate(shim_statement *statement) {
+  if (statement->json != NULL) free(statement->json);
+  statement->json = NULL;
+  statement->json_len = 0;
+  if (statement->row != NULL) free(statement->row);
+  statement->row = NULL;
+  statement->row_len = 0;
+  statement->row_null = 0;
+}
 
 static int buffer_grow(buffer *b, size_t need) {
   if (b->failed) return 0;
@@ -78,7 +102,7 @@ void *sqlite_shim_open(const char *path, size_t len, int read_only) {
   memcpy(copy, path, len);
   copy[len] = '\0';
   int flags = read_only ? SQLITE_OPEN_READONLY : (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
-  int rc = sqlite3_open_v2(copy, &db, flags | SQLITE_OPEN_FULLMUTEX, NULL);
+  int rc = sqlite3_open_v2(copy, &db, flags | SQLITE_OPEN_NOMUTEX, NULL);
   free(copy);
   if (rc != SQLITE_OK) {
     if (db != NULL) sqlite3_close(db);
@@ -103,59 +127,166 @@ int sqlite_shim_errmsg(void *handle, unsigned char *out, size_t cap) {
 }
 
 void *sqlite_shim_prepare(void *handle, const char *sql, size_t len) {
-  sqlite3_stmt *statement = NULL;
-  int rc = sqlite3_prepare_v2((sqlite3 *)handle, sql, (int)len, &statement, NULL);
+  sqlite3_stmt *raw = NULL;
+  int rc = sqlite3_prepare_v2((sqlite3 *)handle, sql, (int)len, &raw, NULL);
   if (rc != SQLITE_OK) {
-    if (statement != NULL) sqlite3_finalize(statement);
+    if (raw != NULL) sqlite3_finalize(raw);
     return NULL;
   }
+  shim_statement *statement = (shim_statement *)malloc(sizeof(shim_statement));
+  if (statement == NULL) {
+    sqlite3_finalize(raw);
+    return NULL;
+  }
+  statement->stmt = raw;
+  statement->json = NULL;
+  statement->json_len = 0;
+  statement->row = NULL;
+  statement->row_len = 0;
+  statement->row_null = 0;
   return (void *)statement;
 }
 
-int sqlite_shim_finalize(void *statement) {
-  return sqlite3_finalize((sqlite3_stmt *)statement);
+int sqlite_shim_finalize(void *handle) {
+  if (handle == NULL) return SQLITE_OK;
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  int rc = sqlite3_finalize(statement->stmt);
+  free(statement);
+  return rc;
 }
 
-int sqlite_shim_bind_null(void *statement, int index) {
-  return sqlite3_bind_null((sqlite3_stmt *)statement, index);
+int sqlite_shim_bind_null(void *handle, int index) {
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  return sqlite3_bind_null(statement->stmt, index);
 }
 
-int sqlite_shim_bind_double(void *statement, int index, double value) {
-  return sqlite3_bind_double((sqlite3_stmt *)statement, index, value);
+int sqlite_shim_bind_double(void *handle, int index, double value) {
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  return sqlite3_bind_double(statement->stmt, index, value);
 }
 
-int sqlite_shim_bind_int(void *statement, int index, int64_t value) {
-  return sqlite3_bind_int64((sqlite3_stmt *)statement, index, (sqlite3_int64)value);
+int sqlite_shim_bind_int(void *handle, int index, int64_t value) {
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  return sqlite3_bind_int64(statement->stmt, index, (sqlite3_int64)value);
 }
 
-int sqlite_shim_bind_text(void *statement, int index, const char *value, size_t len) {
-  return sqlite3_bind_text((sqlite3_stmt *)statement, index, value, (int)len, SQLITE_TRANSIENT);
+int sqlite_shim_bind_int32(void *handle, int index, int32_t value) {
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  return sqlite3_bind_int(statement->stmt, index, value);
 }
 
-int sqlite_shim_bind_blob(void *statement, int index, const unsigned char *value, size_t len) {
-  return sqlite3_bind_blob((sqlite3_stmt *)statement, index, value, (int)len, SQLITE_TRANSIENT);
+int sqlite_shim_bind_text(void *handle, int index, const char *value, size_t len) {
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  return sqlite3_bind_text(statement->stmt, index, value, (int)len, SQLITE_TRANSIENT);
 }
 
-int sqlite_shim_bind_index(void *statement, const char *name, size_t len) {
+int sqlite_shim_bind_blob(void *handle, int index, const unsigned char *value, size_t len) {
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  return sqlite3_bind_blob(statement->stmt, index, value, (int)len, SQLITE_TRANSIENT);
+}
+
+int sqlite_shim_bind_index(void *handle, const char *name, size_t len) {
+  shim_statement *statement = as_statement(handle);
   char *copy = (char *)malloc(len + 1);
   if (copy == NULL) return 0;
   memcpy(copy, name, len);
   copy[len] = '\0';
-  int index = sqlite3_bind_parameter_index((sqlite3_stmt *)statement, copy);
+  int index = sqlite3_bind_parameter_index(statement->stmt, copy);
   free(copy);
   return index;
 }
 
-int sqlite_shim_clear_bindings(void *statement) {
-  return sqlite3_clear_bindings((sqlite3_stmt *)statement);
+int sqlite_shim_clear_bindings(void *handle) {
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  return sqlite3_clear_bindings(statement->stmt);
 }
 
-int sqlite_shim_reset(void *statement) {
-  return sqlite3_reset((sqlite3_stmt *)statement);
+int sqlite_shim_ready(void *handle) {
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  sqlite3_reset(statement->stmt);
+  return sqlite3_clear_bindings(statement->stmt);
 }
 
-int sqlite_shim_step(void *statement) {
-  return sqlite3_step((sqlite3_stmt *)statement);
+int sqlite_shim_reset(void *handle) {
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  return sqlite3_reset(statement->stmt);
+}
+
+int sqlite_shim_readonly(void *handle) {
+  return sqlite3_stmt_readonly(as_statement(handle)->stmt);
+}
+
+int sqlite_shim_columns(void *handle) {
+  return sqlite3_column_count(as_statement(handle)->stmt);
+}
+
+int sqlite_shim_step(void *handle) {
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  return sqlite3_step(statement->stmt);
+}
+
+static void buffer_base64(buffer *b, const unsigned char *data, int len) {
+  static const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  buffer_char(b, '"');
+  for (int i = 0; i < len; i += 3) {
+    unsigned int value = (unsigned int)data[i] << 16;
+    if (i + 1 < len) value |= (unsigned int)data[i + 1] << 8;
+    if (i + 2 < len) value |= (unsigned int)data[i + 2];
+    buffer_char(b, alphabet[(value >> 18) & 0x3f]);
+    buffer_char(b, alphabet[(value >> 12) & 0x3f]);
+    buffer_char(b, i + 1 < len ? alphabet[(value >> 6) & 0x3f] : '=');
+    buffer_char(b, i + 2 < len ? alphabet[value & 0x3f] : '=');
+  }
+  buffer_char(b, '"');
+}
+
+static void format_double(buffer *b, double value) {
+  if (isnan(value) || isinf(value)) {
+    buffer_text(b, "null");
+    return;
+  }
+  if (value == 0) {
+    buffer_text(b, "0");
+    return;
+  }
+  char text[64];
+  int precision = 1;
+  for (; precision <= 17; precision++) {
+    snprintf(text, sizeof(text), "%.*g", precision, value);
+    if (strtod(text, NULL) == value) break;
+  }
+  char *exponent = strchr(text, 'e');
+  if (exponent != NULL) {
+    int exp = (int)strtol(exponent + 1, NULL, 10);
+    if (exp >= -6 && exp <= 20) {
+      int decimals = precision - 1 - exp;
+      if (decimals < 0) decimals = 0;
+      if (decimals > 30) decimals = 30;
+      snprintf(text, sizeof(text), "%.*f", decimals, value);
+      char *dot = strchr(text, '.');
+      if (dot != NULL) {
+        char *end = text + strlen(text) - 1;
+        while (end > dot && *end == '0') *end-- = '\0';
+        if (end == dot) *end = '\0';
+      }
+    } else {
+      char *digits = exponent + 1;
+      if (*digits == '+' || *digits == '-') digits++;
+      while (digits[0] == '0' && digits[1] >= '0' && digits[1] <= '9') memmove(digits, digits + 1, strlen(digits));
+    }
+  }
+  buffer_text(b, text);
 }
 
 static int append_value(buffer *b, sqlite3_stmt *statement, int column) {
@@ -165,29 +296,26 @@ static int append_value(buffer *b, sqlite3_stmt *statement, int column) {
     return 1;
   }
   if (type == SQLITE_INTEGER) {
+    int64_t value = (int64_t)sqlite3_column_int64(statement, column);
     char text[32];
-    sqlite3_snprintf(sizeof(text), text, "%lld", (long long)sqlite3_column_int64(statement, column));
-    buffer_text(b, text);
+    if (value <= 9007199254740991LL && value >= -9007199254740991LL) {
+      sqlite3_snprintf(sizeof(text), text, "%lld", (long long)value);
+      buffer_text(b, text);
+    } else {
+      buffer_char(b, '"');
+      sqlite3_snprintf(sizeof(text), text, "%lld", (long long)value);
+      buffer_text(b, text);
+      buffer_char(b, '"');
+    }
     return 1;
   }
   if (type == SQLITE_FLOAT) {
-    double value = sqlite3_column_double(statement, column);
-    if (isnan(value) || isinf(value)) {
-      buffer_text(b, "null");
-      return 1;
-    }
-    char text[64];
-    for (int precision = 1; precision <= 17; precision++) {
-      snprintf(text, sizeof(text), "%.*g", precision, value);
-      if (strtod(text, NULL) == value) break;
-    }
-    char *exponent = strchr(text, 'e');
-    if (exponent != NULL) {
-      char *digits = exponent + 1;
-      if (*digits == '+' || *digits == '-') digits++;
-      while (digits[0] == '0' && digits[1] >= '0' && digits[1] <= '9') memmove(digits, digits + 1, strlen(digits));
-    }
-    buffer_text(b, text);
+    format_double(b, sqlite3_column_double(statement, column));
+    return 1;
+  }
+  if (type == SQLITE_BLOB) {
+    const unsigned char *data = (const unsigned char *)sqlite3_column_blob(statement, column);
+    buffer_base64(b, data == NULL ? (const unsigned char *)"" : data, sqlite3_column_bytes(statement, column));
     return 1;
   }
   const unsigned char *text = sqlite3_column_text(statement, column);
@@ -197,55 +325,95 @@ static int append_value(buffer *b, sqlite3_stmt *statement, int column) {
 }
 
 int64_t sqlite_shim_json(void *handle, unsigned char *out, size_t cap) {
-  sqlite3_stmt *statement = (sqlite3_stmt *)handle;
-  sqlite3_reset(statement);
-  buffer b = { NULL, 0, 0, 0 };
-  buffer_char(&b, '[');
-  int row = 0;
-  int rc = SQLITE_OK;
-  for (;;) {
-    rc = sqlite3_step(statement);
-    if (rc == SQLITE_DONE) break;
-    if (rc != SQLITE_ROW) {
-      free(b.data);
-      return -2;
+  shim_statement *statement = as_statement(handle);
+  if (statement->json == NULL) {
+    buffer b = { NULL, 0, 0, 0 };
+    buffer_char(&b, '[');
+    int row = 0;
+    int rc = SQLITE_OK;
+    for (;;) {
+      rc = sqlite3_step(statement->stmt);
+      if (rc == SQLITE_DONE) break;
+      if (rc != SQLITE_ROW) {
+        free(b.data);
+        return -2;
+      }
+      if (row++ > 0) buffer_char(&b, ',');
+      buffer_char(&b, '{');
+      int columns = sqlite3_column_count(statement->stmt);
+      for (int i = 0; i < columns; i++) {
+        if (i > 0) buffer_char(&b, ',');
+        const char *name = sqlite3_column_name(statement->stmt, i);
+        buffer_escaped(&b, (const unsigned char *)name, (int)strlen(name));
+        buffer_char(&b, ':');
+        append_value(&b, statement->stmt, i);
+      }
+      buffer_char(&b, '}');
+      if (b.failed) {
+        free(b.data);
+        return -2;
+      }
     }
-    if (row++ > 0) buffer_char(&b, ',');
-    buffer_char(&b, '{');
-    int columns = sqlite3_column_count(statement);
-    for (int i = 0; i < columns; i++) {
-      if (i > 0) buffer_char(&b, ',');
-      const char *name = sqlite3_column_name(statement, i);
-      buffer_escaped(&b, (const unsigned char *)name, (int)strlen(name));
-      buffer_char(&b, ':');
-      append_value(&b, statement, i);
-    }
-    buffer_char(&b, '}');
+    buffer_char(&b, ']');
     if (b.failed) {
       free(b.data);
       return -2;
     }
+    statement->json = b.data;
+    statement->json_len = b.len;
   }
-  buffer_char(&b, ']');
-  if (b.failed) {
-    free(b.data);
-    return -2;
+  size_t needed = statement->json_len + 1;
+  if (cap < needed) return -(int64_t)needed;
+  memcpy(out, statement->json, statement->json_len);
+  return (int64_t)statement->json_len;
+}
+
+static int append_object(buffer *b, sqlite3_stmt *statement) {
+  buffer_char(b, '{');
+  int columns = sqlite3_column_count(statement);
+  for (int i = 0; i < columns; i++) {
+    if (i > 0) buffer_char(b, ',');
+    const char *name = sqlite3_column_name(statement, i);
+    buffer_escaped(b, (const unsigned char *)name, (int)strlen(name));
+    buffer_char(b, ':');
+    append_value(b, statement, i);
   }
-  size_t needed = b.len + 1;
-  if (cap < needed) {
-    free(b.data);
-    return -(int64_t)needed;
+  buffer_char(b, '}');
+  return !b->failed;
+}
+
+int64_t sqlite_shim_row(void *handle, unsigned char *out, size_t cap) {
+  shim_statement *statement = as_statement(handle);
+  if (statement->row == NULL) {
+    int rc = sqlite3_step(statement->stmt);
+    if (rc == SQLITE_DONE) {
+      statement->row = (char *)malloc(5);
+      if (statement->row == NULL) return -2;
+      memcpy(statement->row, "null", 4);
+      statement->row_len = 4;
+      statement->row_null = 1;
+    } else if (rc != SQLITE_ROW) {
+      return -2;
+    } else {
+      buffer b = { NULL, 0, 0, 0 };
+      if (!append_object(&b, statement->stmt)) {
+        free(b.data);
+        return -2;
+      }
+      statement->row = b.data;
+      statement->row_len = b.len;
+    }
   }
-  memcpy(out, b.data, b.len);
-  size_t len = b.len;
-  free(b.data);
-  return (int64_t)len;
+  size_t needed = statement->row_len + 1;
+  if (cap < needed) return -(int64_t)needed;
+  memcpy(out, statement->row, statement->row_len);
+  return (int64_t)statement->row_len;
 }
 
 int sqlite_shim_run(void *handle) {
-  sqlite3_stmt *statement = (sqlite3_stmt *)handle;
-  sqlite3_reset(statement);
-  return sqlite3_step(statement);
+  shim_statement *statement = as_statement(handle);
+  invalidate(statement);
+  return sqlite3_step(statement->stmt);
 }
 
 int64_t sqlite_shim_changes(void *handle) {

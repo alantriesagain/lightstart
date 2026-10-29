@@ -44,10 +44,13 @@ while the writer thread keeps the only writable connection.
 
 ## A statement
 
-- `all(params)` answers row objects; `get(params)` answers the first or null.
-- `run(params)` answers `{ changes, lastId }`.
+- `all(params)` answers row objects; `get(params)` answers the first or null
+  (natively one row built in C, without materialising the whole result).
+- `run(params)` answers `{ changes, lastId }`; a reader reports `changes: 0`.
 - `json(params)` answers the whole result as one JSON string. The native
-  driver builds it in C, so a read costs one FFI call and no row objects.
+  driver builds it in C, keeps it on the statement for a short-buffer recopy,
+  and never runs a statement twice. Blobs are base64, integers outside the
+  safe range are decimal text, and floats use JavaScript's formatting.
 - `close()` finalizes the statement.
 
 Parameters are positional (`["a", 1]`) or named without the prefix
@@ -60,9 +63,9 @@ or object is JSON text, `undefined` is null, and a `Uint8Array` is a blob.
 and `native/shim.c` into `native/out/libsqlite.a`, then writes
 `native/ffi.json`. It is the package's prepare step. The shim writes JSON into
 a caller buffer and answers its length, or minus the size it needs, because
-FFI cannot return strings. A test whose first line is
-`// ffi: native/ffi.json` runs natively over the archive and under node over
-`native/sqlite-node.mjs`.
+FFI cannot return strings. The shared suite runs under node over `node.ts` (`test/node.test.ts`) and over
+the C shim in `test/native.test.ts`, marked `// native-only` so node never
+imitates the native calls. There is no stand-in driver.
 
 ## Gates
 
