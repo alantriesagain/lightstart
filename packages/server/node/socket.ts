@@ -50,6 +50,9 @@ export class UpgradeIncoming extends MessageIncoming {
     socket.once("close", () => {
       this.left();
     });
+    socket.on("error", (_error: Error) => {
+      socket.destroy();
+    });
   }
 
   override text(_limit: number): Promise<string> {
