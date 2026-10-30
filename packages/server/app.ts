@@ -221,7 +221,7 @@ export class App {
     try {
       for (const hook of this.requestHooks) {
         const early = hook(c);
-        if (early !== null) return this.finish(c, early);
+        if (early !== null) return early.passed ? null : this.finish(c, early);
       }
       const route = this.router.find(c);
       if (route === null) {

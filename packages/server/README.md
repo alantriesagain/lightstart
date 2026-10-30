@@ -51,7 +51,7 @@ A pattern is `/`-separated segments: a literal, a `:name` parameter (one non-emp
 
 A handler answers a `Reply`, or a promise of one: `json(data, status)`, `text`, `html`, `bytes(body, type)`, `empty(status)`, `redirect(location)`, `fail(message, status)`, `stream(async (out) => { await out.write(chunk) }, type)`, or `respond(response)` for a Fetch `Response`. `reply.header(name, value)` sets a header and answers the reply. `reply.headers` keeps repeated names, so two `set-cookie` headers stay two.
 
-`pass()` is the reply of a route that matched but declines the request (what it serves is decided per request): `app.handle` answers null, so a host tries what sits behind the app.
+`pass()` is the reply of a route that matched but declines the request (what it serves is decided per request): `app.handle` answers null, so a host tries what sits behind the app. An `onRequest` hook may answer it too, declining every request it picks (an app of pages that leaves websocket upgrades to the host).
 
 Throw `new HttpError(status, message)` to answer `{ "error": message }` with that status; anything else thrown is logged and answers 500.
 

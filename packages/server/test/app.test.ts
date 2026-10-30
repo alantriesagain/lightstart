@@ -17,7 +17,7 @@ import { HttpError } from "../errors.ts";
 import { Key } from "../key.ts";
 import { MemoryLogger } from "../logger.ts";
 import { Plugin } from "../plugin.ts";
-import { Reply, bytes, empty, fail, html, json, redirect, stream, text } from "../reply.ts";
+import { Reply, bytes, empty, fail, html, json, pass, redirect, stream, text } from "../reply.ts";
 import type { Next } from "../router.ts";
 import { MemoryIncoming, bodyOf, request } from "../memory/index.ts";
 import { done, eq, eqn, ok, throws } from "@light/test/assert.ts";
@@ -234,6 +234,9 @@ const main = async (): Promise<void> => {
     return json({ url: req.url, method: req.method, type: req.headers.get("content-type"), body: await req.text() });
   });
   eq("the request rebuilt as a Fetch Request", await bodyOf(await request(rebuilt, "POST", "/fetch?x=1", { headers: { host: "example.com", "content-type": "text/plain" }, body: "hi" })), "{\"url\":\"http://example.com/fetch?x=1\",\"method\":\"POST\",\"type\":\"text/plain\",\"body\":\"hi\"}");
+  const passing = new App().logTo(new MemoryLogger()).onRequest((c: Context) => (c.header("upgrade") !== null ? pass() : null)).get("/", () => text("page"));
+  ok("an onRequest hook's pass() falls through, as a route's does", (await passing.handle(new Context(new MemoryIncoming("GET", "/", { headers: { upgrade: "websocket" } })))) === null);
+  eq("and the hook's null lets the route answer", await bodyOf(await request(passing, "GET", "/")), "page");
   done();
 };
 
