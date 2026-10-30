@@ -9,6 +9,7 @@ transaction rules are the same in both runtimes.
 | `@lightstart/sqlite` | the shared types, `openPragmas` and the statement-cache default |
 | `@lightstart/sqlite/node` | `Database.open(path, options)` over `node:sqlite` |
 | `@lightstart/sqlite/native` | `Database.open(path, options)` over `native/shim.c` |
+| `@lightstart/sqlite/d1` | `d1Of(db)`: a binding shaped like Cloudflare D1's over an open database (`prepare().bind()`, `first`, `all`, `run`, a transactional `batch`), for code written against D1 |
 
 scriptc refuses `node:sqlite`, so the two drivers are separate modules; an app
 imports only the one its runtime has.

@@ -25,6 +25,7 @@
     ".": "./index.ts",
     "./node": "./node.ts",
     "./native": "./native.ts",
+    "./d1": "./d1.ts",
     "./*": "./*"
   },
   "devDependencies": {
