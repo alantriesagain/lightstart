@@ -7,6 +7,21 @@ The renderer on an in-memory tree: no document, no browser. Two uses: a server r
 | `node.js` | The tree: `MElement` (attributes, properties and listeners as maps), `MText`, `MComment`, `MFragment` (its children splice into the parent on insert), `MRoot` (what counts as connected), and the node operations |
 | `host.js` | `MarkupHost`: templates through the parser and `html/tokenizer.js`, clones into markup nodes, listeners held on the element with `dispatch` to fire them, frames as timeouts, errors to `onError` when set |
 | `serialize.js` | `serialize` (markup with the engine's marker comments, for a page to adopt), `markupOf` (without them, for a reader), `textContent` |
+| `render.js` | `renderToString(template, { markers })`: the template rendered on a markup host and serialized, the host in use before put back |
+
+A server renders a page with `renderToString` and the browser adopts it with the same template, keeping every served node:
+
+```js
+// server
+import { html } from "@lightstart/light/html";
+import { renderToString } from "@lightstart/light/markup";
+const page = (rows) => html`<ul>${rows.map((row) => html`<li>${row.title}</li>`)}</ul>`;
+const body = `<main id="page">${renderToString(page(rows))}</main>`;
+
+// browser, on a page that sets window.__PRERENDERED__ = true
+import { render } from "@lightstart/light/html";
+render(page(rows), document.getElementById("page"), { adopt: "bind" });
+```
 
 ```js
 import { configure, html, render } from "@lightstart/light/html/core.js";

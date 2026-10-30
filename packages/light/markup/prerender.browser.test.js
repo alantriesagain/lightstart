@@ -2,33 +2,20 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { configure, html, key, render } from "@lightstart/light/html";
 import { DomHost } from "@lightstart/light/dom/host.js";
-import { MRoot, MarkupHost, serialize } from "@lightstart/light/markup/index.js";
+import { renderToString } from "@lightstart/light/markup/index.js";
 import { effect, signal } from "@lightstart/light/signals";
 
 if (typeof document === "undefined")
   throw new Error("document is not defined; browser-only suite, run with --browser");
 
-/**
- * Render `template` on the markup host and answer the markup a server would
- * send, then put the browser host back.
- * @param {unknown} template
- */
-const prerender = (template) => {
-  configure({ host: new MarkupHost(), effect });
-  try {
-    const root = new MRoot();
-    render(template, root);
-    return serialize(root);
-  } finally {
-    configure({ host: new DomHost(), effect });
-  }
-};
+const prerender = renderToString;
 
 describe("light/markup prerender round trip", () => {
   /** @type {HTMLDivElement} */
   let container;
 
   beforeEach(() => {
+    configure({ host: new DomHost(), effect });
     container = document.createElement("div");
     document.body.appendChild(container);
   });

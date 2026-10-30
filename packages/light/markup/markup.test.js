@@ -96,3 +96,27 @@ describe("light/markup/serialize", () => {
     assert.equal(textContent(root), "x < y & z if (a < b) {}");
   });
 });
+
+describe("renderToString", () => {
+  it("renders a template with markers a page adopts, escaping its values", async () => {
+    const { html, key } = await import("../html/core.ts");
+    const { renderToString } = await import("./index.js");
+    const item = (row) => html`<li class=${row.done ? "done" : "open"}>${row.title}</li>`;
+    const page = (rows) => html`<section><h1>${"Tasks & more"}</h1><ul>${rows.map((row) => key(row.id, item(row)))}</ul></section>`;
+    const out = renderToString(page([{ id: "a", title: "<one>", done: true }, { id: "b", title: "two", done: false }]));
+    assert.match(out, /^<!--\$r-->/);
+    assert.ok(out.includes("Tasks &amp; more"));
+    assert.ok(out.includes('<li class="done"><!--$-->&lt;one&gt;<!--/--></li>'));
+    assert.ok(out.includes('<li class="open">'));
+    assert.equal(renderToString(page([]), { markers: false }), "<section><h1>Tasks &amp; more</h1><ul></ul></section>");
+  });
+
+  it("puts back the host that was in use", async () => {
+    const { currentHost, setHost, html } = await import("../html/core.ts");
+    const { renderToString } = await import("./index.js");
+    const before = new MarkupHost();
+    setHost(before);
+    renderToString(html`<p>x</p>`);
+    assert.equal(currentHost(), before);
+  });
+});
