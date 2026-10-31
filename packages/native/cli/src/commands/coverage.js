@@ -75,7 +75,7 @@ export const run = async (args, root) => {
   const at = args.indexOf("--jobs");
   const jobs = Number(at >= 0 ? (args[at + 1] ?? "4") : (process.env["JOBS"] ?? "4"));
   const targets = names.length > 0 ? names.map((n) => memberByName(root, n)) : members(root);
-  for (const m of targets) await prepare(root, m);
+  for (const m of targets) await prepare(root, m, "coverage");
   const scriptc = scriptcPath(root);
   const entries = entriesOf(root, targets, args.includes("--apps"));
   const start = Date.now();

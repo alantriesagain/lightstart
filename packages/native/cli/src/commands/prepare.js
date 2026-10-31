@@ -12,6 +12,6 @@ import { apps, memberByName } from "../workspace.js";
  */
 export const run = async (args, root) => {
   const targets = args.length > 0 ? args.map((a) => memberByName(root, a)) : apps(root);
-  for (const m of targets) await prepare(root, m);
+  for (const m of targets) await prepare(root, m, "prepare");
   return 0;
 };

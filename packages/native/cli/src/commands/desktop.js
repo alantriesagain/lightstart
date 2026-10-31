@@ -28,7 +28,7 @@ export const run = async (args, root) => {
   const binary = binaryOf(app);
   const out = join(app.dir, "dist");
   if (!rest.includes("--no-build")) {
-    await prepare(root, app);
+    await prepare(root, app, "desktop");
     const flags = ["build", entry, "--out", out, "--name", binary];
     if (typeof app.config.web === "string") flags.push("--web", app.config.web);
     for (const pkg of app.config.npmStatic ?? []) flags.push("--npm-static", pkg);

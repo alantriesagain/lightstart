@@ -73,7 +73,7 @@ export const run = async (args, root) => {
       }
       continue;
     }
-    await prepare(root, m);
+    await prepare(root, m, "typecheck");
     const r = await capture(tsc, ["-p", "tsconfig.json", "--pretty", "false"], { cwd: m.dir });
     const { own, foreign } = attribute(r.out, m);
     if (own.length > 0) {

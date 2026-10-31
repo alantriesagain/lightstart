@@ -33,7 +33,7 @@ export const binaryPath = (app) => join(app.dir, "dist", binaryOf(app));
 export const buildApp = async (root, app) => {
   const entry = app.config.entry;
   if (typeof entry !== "string") throw new Error(app.name + ": package.json has no native.entry");
-  await prepare(root, app);
+  await prepare(root, app, "build");
   const out = binaryPath(app);
   mkdirSync(dirname(out), { recursive: true });
   const flags = ["build", entry];

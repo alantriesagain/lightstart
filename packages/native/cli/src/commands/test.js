@@ -99,7 +99,7 @@ const flagValue = (flags, name, fallback) => {
  */
 export const run = async (args, root) => {
   const { targets, tests, flags } = selectTests(root, args);
-  for (const m of targets) await prepare(root, m);
+  for (const m of targets) await prepare(root, m, "test");
   const jobs = Number(flagValue(flags, "--jobs", process.env["JOBS"] ?? "4"));
   const opt = flagValue(flags, "--opt", process.env["OPT"] ?? "dev");
   const nodeOnlyRun = flags.includes("--node-only");

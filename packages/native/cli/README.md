@@ -24,7 +24,7 @@ The compiler is light's choice (`packages/light/native/scriptc.js`): `$SCRIPTC`,
 | `entry` | the app's entry, relative to the app (`src/main.ts`) |
 | `binary` | the binary's name (the folder's name by default) |
 | `ffi` | the FFI manifest the app links: a package path (`@light/plugins/native/ffi.json`, reached through the app's `node_modules`) or a path relative to the app |
-| `prepare` | shell lines run in the member's folder before a build, a test run, coverage or typecheck |
+| `prepare` | shell lines run in the member's folder before a build, a test run, coverage or typecheck, with `LIGHT_NATIVE_COMMAND` naming the command (`build`, `test`, `coverage`, `typecheck`, `desktop`, `prepare`), so a step can generate what a test run compiles apart from what a build does |
 | `selftests` | the selftest scenarios: `args`, `home` (files of a temp folder given through `homeEnv`), `live`, `wait`, `checks` (`[label, grep pattern]` pairs), `noProcessLeft`, `exitCode` (the code the app ends with, 0 by default) |
 | `web`, `selftest` | a desktop app's page folder and its selftest (`wait`, `checks`) |
 | `tooling` | a node-only package: no `.ts` exports, no native gate |
