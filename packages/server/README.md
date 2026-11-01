@@ -72,6 +72,8 @@ Throw `new HttpError(status, message)` to answer `{ "error": message }` with tha
 
 A GET or HEAD whose reply is 2xx and carries an `etag` is answered 304 when the request's `If-None-Match` matches it (a list, `*`, weak comparison), and one carrying `last-modified` when `If-Modified-Since` is not earlier and there is no `If-None-Match`. The 304 keeps `etag`, `cache-control`, `content-location`, `date`, `expires`, `vary` and `set-cookie`, and its body (a stream included) is never produced. It runs after the reply hooks, so an ETag a hook adds counts; a reply with neither header costs one pass over its header names.
 
+When the ETag is known before the work (a version stamp, a write counter), `fresh(c, etag)` says the client's copy is current, so the route answers 304 without producing the body: `if (fresh(c, etag)) return empty(304).header("etag", etag);`.
+
 `sse(async (events) => { await events.send(data, event, id) })` is an event stream: never cached, and marked `x-accel-buffering: no` so nginx in front sends each event when it is written.
 
 ## Websockets

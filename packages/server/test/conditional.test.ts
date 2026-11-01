@@ -10,7 +10,8 @@
  */
 import { App } from "../app.ts";
 import { Context } from "../context.ts";
-import { Reply, fail, stream, text } from "../reply.ts";
+import { fresh } from "../conditional.ts";
+import { Reply, empty, fail, stream, text } from "../reply.ts";
 import { bodyOf, request } from "../memory/index.ts";
 import { done, eq, eqn, ok } from "@light/test/assert.ts";
 
@@ -79,6 +80,20 @@ const main = async (): Promise<void> => {
     .get("/hooked", () => text("hook body"));
   eqn("an ETag an onReply hook adds is matched", (await request(hooked, "GET", "/hooked", { headers: { "if-none-match": "\"hook\"" } })).status, 304);
   ok("and a miss is still the body", (await bodyOf(await request(hooked, "GET", "/hooked"))) === "hook body");
+
+  let ran = 0;
+  const early = new App()
+    .get("/stamp", (c: Context): Reply => {
+      if (fresh(c, "\"s7\"")) return empty(304).header("etag", "\"s7\"");
+      ran++;
+      return text("body").header("etag", "\"s7\"");
+    })
+    .post("/stamp", (c: Context): Reply => text(fresh(c, "\"s7\"") ? "fresh" : "stale"));
+  eqn("fresh lets a route answer 304 first", (await request(early, "GET", "/stamp", { headers: { "if-none-match": "W/\"s7\", \"x\"" } })).status, 304);
+  eqn("without running its work", ran, 0);
+  eqn("a stale tag runs it", (await request(early, "GET", "/stamp", { headers: { "if-none-match": "\"s6\"" } })).status, 200);
+  eqn("once", ran, 1);
+  eq("fresh is false for a POST", await bodyOf(await request(early, "POST", "/stamp", { headers: { "if-none-match": "\"s7\"" } })), "stale");
 
   done();
 };

@@ -46,6 +46,16 @@ const notModified = (reply: Reply): Reply => {
   return reply;
 };
 
+/**
+ * Whether the request's `If-None-Match` already names `etag` (a GET or HEAD only), so a route can
+ * answer 304 before doing the work its reply would cost: `if (fresh(c, tag)) return empty(304).header("etag", tag)`.
+ */
+export const fresh = (c: Context, etag: string): boolean => {
+  if (c.method !== "GET" && c.method !== "HEAD") return false;
+  const match = c.header("if-none-match");
+  return match !== null && matches(match, etag);
+};
+
 /** Turns `reply` into a 304 when the request's validators say the client's copy is current, else answers it as it is. */
 export const conditional = (c: Context, reply: Reply): Reply => {
   if (c.method !== "GET" && c.method !== "HEAD") return reply;
