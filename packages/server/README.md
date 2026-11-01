@@ -126,6 +126,21 @@ Balanced `reusePort` is Linux-only. Where listening reports `ENOTSUP` or `EOPNOT
 
 State is per thread. Module state, caches and websocket registries belong to each worker, so a websocket is answered by the worker that accepted it and an in-memory cache is filled once per worker. What every worker needs to see goes over a `MessagePort`, or through a shared store such as a database: a server handle or an accepted socket does not transfer.
 
+## What belongs in front of it
+
+The package is an app server: it does what needs the app's knowledge (which routes change state, who the user is, what version the data is at, what a request may carry). What needs none of that is the job of the proxy or CDN in front, Caddy, nginx or Cloudflare, and is not added here:
+
+| In front (proxy, CDN) | Here (the app) |
+|---|---|
+| TLS, HTTP/2 and HTTP/3 | Cookies, sessions, the bearer token |
+| Compression of dynamic replies | Same-origin checks for writes and websockets |
+| Flood protection and connection limits per IP | Rate limits on the app's own keys (a user, an email, an account) |
+| Slow-client and idle timeouts | A timeout for a handler that hangs |
+| Large static files, ranges, caching | ETags known before the work, and 304s |
+| Balancing across machines | Validation, error mapping, CORS and security headers |
+
+`TrustProxy` makes `c.ip`, `c.protocol` and `c.host` the client's behind a proxy. On Cloudflare Workers and Pages, Cloudflare is the proxy, and what only an app can send there (security headers, CORS) comes from the app. A native binary exposed with nothing in front still serves correctly; it just does none of the left column.
+
 ## Plugins
 
 | Entry | Plugin |

@@ -62,15 +62,14 @@ What Express, Fastify and Hono provide (their installed sources read, and Fastif
 ### Phase C: route policies (middleware; state behind small interfaces)
 
 - **Validation.** `validate({ params?, query?, body? })` as route middleware. It coerces query and params from strings, checks the body, answers 400 `{ error, fields }`, and puts the typed values on the context (`c.get(BODY)`). Schemas are light's model field descriptors (`{ $type: "number" | "boolean" | "string" | "array" | "object", … }`, what bootstrapp's models and `validateRow` use), so one schema serves the database and the HTTP edge. The server carries its own small validator for that shape and imports nothing from light; a test holds the two to the same answers on the same descriptors. Under scriptc it cannot be Ajv (runtime code generation): interpreted first, generated from the same schemas later (Phase E).
-- **Rate limits.** `rateLimit({ window, max, key?, store? })` as route middleware, and the same as an app-wide plugin. Key defaults to `c.ip` (correct behind `TrustProxy`); a store interface (`hit(key, window) → { count, reset }`) with an in-memory default; bootstrapp supplies SQLite and D1 stores. Answers 429 with `Retry-After` and the `RateLimit-*` headers.
-- **Timeouts.** `timeout(ms)` as route middleware: 504 when the handler has not answered, and `c.signal` aborted so work that listens stops. Probe first: scriptc has no `AbortController`, so how `c.signal` is made natively decides how this works there.
+- **Rate limits for the app's own keys.** `rateLimit({ window, max, key?, store? })` as route middleware, and the same as an app-wide plugin, meant for what only the app can key: a user, an email, an account, a hashed address on one write. Flood protection per IP in front of everything is the proxy's or the CDN's (below). A store interface (`hit(key, window) → { count, reset }`) with an in-memory default; bootstrapp supplies SQLite and D1 stores. Answers 429 with `Retry-After` and the `RateLimit-*` headers.
+- **Timeouts for a handler that hangs.** `timeout(ms)` as route middleware: 504 when the handler has not answered, and `c.signal` aborted so work that listens stops (`AbortController` works natively). Slow clients and idle connections are the proxy's.
 - **Hashing seam.** A `Crypto`-like seam (HMAC, SHA-256) that the node adapter fills from `node:crypto` and the fetch adapter from WebCrypto; probe what scriptc lowers. It unlocks signed cookies and `AutoEtag`.
 
 ### Phase D: files and larger bodies
 
-- **`Static`**: a `transform(path, bytes)` hook (bootstrapp's dev server strips TS and rewrites the importmap), and `Range` requests (206, `Accept-Ranges`), so the dev server and R2-style file routes run on it.
+- **`Static`**: a `transform(path, bytes)` hook (bootstrapp's dev server strips TS and rewrites the importmap), so the dev server runs on it. `Range` requests only if a project serves media from the app itself.
 - **Multipart**: `c.formData()` within limits (`fileSize`, `files`, `parts`); streamed parts only if a project needs uploads larger than the limit.
-- **Compression** of dynamic replies: an opt-in plugin over a compression seam (node's zlib, `CompressionStream` behind fetch; natively per probe). Proxies usually do this; low priority.
 - **Safe redirects**: `redirect(c, target, { sameOrigin: true })` refusing an absolute target on another origin.
 
 ### Phase E: generated at build time
@@ -78,6 +77,9 @@ What Express, Fastify and Hono provide (their installed sources read, and Fastif
 Validators (and, if it pays, JSON serializers) generated from route schemas by a `prepare` step (`LIGHT_NATIVE_COMMAND`), the scriptc-friendly form of what Ajv and fast-json-stringify do at startup. Only after Phase C's interpreted validation shows where the time goes.
 
 ## Not in the server
+
+**What belongs in front of it.** The server does what needs the app's knowledge: which routes change state, who the user is, what version the data is at, what the schema says. What needs none of it belongs to the proxy or CDN in front (Caddy, nginx, Cloudflare), which does it better: TLS and HTTP/2 and 3, compression of dynamic replies, flood protection and connection limits per IP, slow-client and idle timeouts, large static files with ranges and caching, and balancing across machines. On Cloudflare's planes Cloudflare is that proxy, and what only an app can send there (security headers, CORS) comes from the app. The README says so, so none of the proxy's work is added here later.
+
 
 Sessions, JWT, OAuth and user models stay in `@bootstrapp/auth`; the server gives them `c.bearer()`, `c.cookie()` and `reply.cookie()`. Logging stays `AccessLog` and `RequestId`, which exist; bootstrapp adopts them.
 
