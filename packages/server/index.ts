@@ -4,7 +4,7 @@
  * `@lightstart/server/memory`, or a package of its own subclassing `Incoming`) turns a platform's
  * request into the context and writes the reply out.
  */
-export { App, type ErrorHandler, type ReplyHook, type RequestHook } from "./app.ts";
+export { App, type ErrorHandler, type ErrorMapper, type ReplyHook, type RequestHook } from "./app.ts";
 export { Context, DEFAULT_BODY_LIMIT } from "./context.ts";
 export { clearCookie, parseCookies, setCookie, type CookieOptions } from "./cookies.ts";
 export { HttpError } from "./errors.ts";

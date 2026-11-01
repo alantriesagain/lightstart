@@ -7,11 +7,15 @@
  *
  * A request runs the `onRequest` hooks first (any may answer, which ends it: a CORS preflight, a
  * health check, a refusal), then its route's chain, then the `onReply` hooks over whatever
- * answered (headers a plugin adds to every reply, a log line). A thrown `HttpError` answers its
- * status; anything else thrown is logged and answers 500. `handle` answers null for a path no
- * route matches, or one whose route answered `pass()`, so a host can try what sits behind the
- * app; `dispatch` answers the not-found handler's reply instead, which is what an adapter calls.
+ * answered (headers a plugin adds to every reply, a log line). A GET or HEAD that answers 2xx
+ * with a matching validator becomes a 304 after the hooks (`conditional.ts`). A thrown value
+ * passes the `mapError` mappers in order, then the `onError` handler, then the default: an
+ * `HttpError` answers its status and anything else is logged and answers 500. `handle` answers
+ * null for a path no route matches, or one whose route answered `pass()`, so a host can try what
+ * sits behind the app; `dispatch` answers the not-found handler's reply instead, which is what an
+ * adapter calls.
  */
+import { conditional } from "./conditional.ts";
 import { Context } from "./context.ts";
 import { HttpError } from "./errors.ts";
 import { Logger } from "./logger.ts";
@@ -27,6 +31,9 @@ export type ReplyHook = (c: Context, reply: Reply) => void;
 
 /** Turns what a handler threw into the reply. */
 export type ErrorHandler = (c: Context, error: unknown) => Reply;
+
+/** Answers a thrown value with a reply, or null to let the next mapper (then `onError`, then the default) try. */
+export type ErrorMapper = (c: Context, error: unknown) => Reply | null;
 
 class Declaration {
   readonly method: string;
@@ -82,6 +89,7 @@ export class App {
   private readonly replyHooks: ReplyHook[] = [];
   private readonly plugins: Plugin[] = [];
   private readonly mounts: Mount[] = [];
+  private readonly mappers: ErrorMapper[] = [];
   private errorFn: ErrorHandler | null = null;
   /** Where the app's own complaints go; `logTo` replaces it. */
   logger: Logger = new Logger();
@@ -150,6 +158,16 @@ export class App {
     return this;
   }
 
+  /**
+   * Adds a mapper tried, in the order added, before `onError` and the default when a handler, a
+   * middleware or a hook throws: the first reply it answers wins and null lets the next one try. A
+   * mapper that throws is logged and answers the default 500, as anything else unexpected does.
+   */
+  mapError(mapper: ErrorMapper): App {
+    this.mappers.push(mapper);
+    return this;
+  }
+
   logTo(logger: Logger): App {
     this.logger = logger;
     return this;
@@ -213,6 +231,15 @@ export class App {
   }
 
   private fault(c: Context, error: unknown): Reply {
+    try {
+      for (const mapper of this.mappers) {
+        const reply = mapper(c, error);
+        if (reply !== null) return reply;
+      }
+    } catch (failure) {
+      this.logger.error(c.method + " " + c.path, failure);
+      return fail("internal error", 500);
+    }
     if (this.errorFn !== null) return this.errorFn(c, error);
     if (error instanceof HttpError) return fail(error.message, error.status);
     this.logger.error(c.method + " " + c.path, error);
@@ -225,7 +252,7 @@ export class App {
     for (const hook of this.replyHooks) hook(c, reply);
     const after = reply.autoSecure;
     if (after !== null) settleSecure(reply, after, c.protocol);
-    return reply;
+    return conditional(c, reply);
   }
 
   /** The reply for `c`, or null when no route matches its path (a 405 when one does under another method). */
