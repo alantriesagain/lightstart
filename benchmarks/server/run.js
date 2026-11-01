@@ -2,15 +2,21 @@
  * @file The server benchmark: scriptc's http-api workload written six ways (`variants/raw.ts` on
  * bare `node:http`, `variants/bridge.ts` as a Fetch handler behind bootstrapp's node-to-Fetch
  * bridge, `variants/light.ts` on @lightstart/server, and `express.ts`, `fastify.ts` and `hono.ts`
- * on those frameworks), each run under node and, when a scriptc
+ * on those frameworks), and Fastify's two hello workloads (`hello/raw.ts`, `hello/light.ts` and the
+ * frameworks), each run under node and, when a scriptc
  * builds it, as a native binary. Every round starts each contender, reads `PORT <n>` from its
  * stderr, drives it with `load.mjs` (keep-alive connections, a seeded request sequence) and waits
  * for it to print its totals and exit. Every contender must answer the same digest and print the
  * same totals as raw under node; the report gives each one's median requests per second, p50 and
  * p99 latency, and its throughput against raw under node.
  *
- *   node benchmarks/server/run.js [--rounds 3] [--engines node,native] [--variants raw,bridge,light]
- *     [--connections 64] [--requests 40000] [--cpu] [--server-core 6] [--load-core 7]
+ *   node benchmarks/server/run.js [--workload http-api] [--rounds 3] [--engines node,native]
+ *     [--variants raw,bridge,light] [--connections 64] [--requests 40000] [--cpu]
+ *     [--server-core 6] [--load-core 7]
+ *
+ * With `--workload hello-get` or `hello-post` the contenders come from `hello/<variant>.ts` instead
+ * of `variants/`: Fastify's own benchmark routes (GET / answering `{"hello":"world"}`, or POST /
+ * echoing the same body), with the workload in the native binary's name and in the load client.
  *
  * With `--cpu`, each server is pinned to one core with `taskset` and the load client to another, and
  * the report adds the server's user+system CPU seconds, per request and per 10,000 requests (the
@@ -36,6 +42,9 @@ const option = (name, fallback) => {
   return at >= 0 && process.argv[at + 1] !== undefined ? process.argv[at + 1] : fallback;
 };
 
+const workload = option("workload", "http-api");
+const hello = workload === "hello-get" || workload === "hello-post";
+if (!hello && workload !== "http-api") throw new Error(`unknown workload ${workload}`);
 const rounds = Number(option("rounds", "3"));
 const engines = option("engines", "node").split(",");
 const variants = option("variants", "raw,bridge,light").split(",");
@@ -57,10 +66,10 @@ const contenders = () => {
   const scriptc = engines.includes("native") ? scriptcPath(ROOT) : "";
   if (scriptc !== "") mkdirSync(OUT, { recursive: true });
   for (const variant of variants) {
-    const source = path.join(HERE, "variants", variant + ".ts");
+    const source = path.join(HERE, hello ? "hello" : "variants", variant + ".ts");
     if (engines.includes("node")) out.push({ variant, engine: "node", label: variant + " node", cmd: process.execPath, args: ["--no-warnings", source] });
     if (scriptc !== "") {
-      const binary = path.join(OUT, variant);
+      const binary = path.join(OUT, hello ? workload + "-" + variant : variant);
       const built = spawnSync(scriptc, ["build", source, "-o", binary, "--no-keep-llvm"], { cwd: ROOT, encoding: "utf8" });
       if (built.status !== 0) {
         console.log(`${variant}: native build failed\n${built.stdout}${built.stderr}`);
@@ -93,7 +102,7 @@ const session = (c) =>
       const port = /PORT (\d+)/.exec(errors);
       if (port === null || started) return;
       started = true;
-      const loadArgs = [path.join(HERE, "load.mjs"), `--port=${port[1]}`, `--connections=${connections}`, "--threads=2", `--warmup=${warmup}`, `--requests=${measured}`];
+      const loadArgs = [path.join(HERE, "load.mjs"), `--port=${port[1]}`, `--connections=${connections}`, "--threads=2", `--warmup=${warmup}`, `--requests=${measured}`, `--workload=${workload}`];
       const load = cpu
         ? spawn("taskset", ["-c", loadCore, process.execPath, ...loadArgs], { stdio: ["ignore", "pipe", "pipe"] })
         : spawn(process.execPath, loadArgs, { stdio: ["ignore", "pipe", "pipe"] });
@@ -147,7 +156,8 @@ const main = async () => {
     }
   const reference = results.get("raw node");
   const base = reference === undefined || reference.length === 0 ? 0 : median(reference.map((b) => b.rps));
-  console.log(`\n${connections} connections, ${measured} measured requests, ${rounds} rounds, medians`);
+  console.log(`\n${workload} workload`);
+  console.log(`${connections} connections, ${measured} measured requests, ${rounds} rounds, medians`);
   if (cpu) {
     console.log(`\nservers pinned to core ${serverCore}, load client to core ${loadCore}\n`);
     console.log("| contender | req/s | CPU s | CPU us/req | CPU s/10k req | p50 ms | p99 ms | vs raw node |");

@@ -2,7 +2,7 @@
 /* Closed-loop HTTP/1.1 load client for the server workloads.
  *
  * Usage: node http-load.mjs --port=<n> [--connections=64] [--threads=2]
- *        [--warmup=4000] [--requests=40000]
+ *        [--warmup=4000] [--requests=40000] [--workload=http-api|hello-get|hello-post]
  *
  * The same client drives every server (Node and compiled), so differences in
  * the numbers come from the server. Each connection is a keep-alive socket
@@ -28,6 +28,18 @@ import { Worker, isMainThread, parentPort, workerData } from "node:worker_thread
 const HASHED_HEADERS = ["content-type", "cache-control", "etag", "x-request-id"];
 
 /* ── deterministic schedule ───────────────────────────────────────────── */
+/** Fastify's hello workload: every request is the same GET / or POST /. */
+function helloSchedule(conn, total, workload) {
+  const post = workload === "hello-post";
+  const list = [];
+  for (let k = 0; k < total; k++) {
+    const headers = { "x-request-id": `${conn}-${k}` };
+    if (post) headers["content-type"] = "application/json";
+    list.push(encode(post ? "POST" : "GET", "/", headers, post ? '{"hello":"world"}' : ""));
+  }
+  return list;
+}
+
 function lcg(seed) {
   let state = seed >>> 0;
   return () => {
@@ -141,7 +153,7 @@ function parseResponse(buf, method) {
 }
 
 /* ── one keep-alive connection ────────────────────────────────────────── */
-function runConnection(port, conn, requests, measuredFrom) {
+function runConnection(port, conn, requests, measuredFrom, workload) {
   return new Promise((resolve, reject) => {
     const hash = createHash("sha256");
     const statuses = new Map();
@@ -169,8 +181,13 @@ function runConnection(port, conn, requests, measuredFrom) {
       buf = Buffer.alloc(0);
       if (next >= measuredFrom) latencies.push(Number(process.hrtime.bigint() - sentAt) / 1e6);
       hash.update(`${response.status}\n`);
-      for (const name of HASHED_HEADERS)
-        hash.update(`${name}:${response.headers.get(name) ?? ""}\n`);
+      if (workload === "http-api") {
+        for (const name of HASHED_HEADERS)
+          hash.update(`${name}:${response.headers.get(name) ?? ""}\n`);
+      } else {
+        const type = (response.headers.get("content-type") ?? "").toLowerCase();
+        hash.update(`json:${type.startsWith("application/json")}\n`);
+      }
       hash.update(response.body);
       hash.update("\n");
       statuses.set(response.status, (statuses.get(response.status) ?? 0) + 1);
@@ -204,12 +221,20 @@ const pending = {
   },
 };
 
-async function runThread({ port, conns, warmupPer, measuredPer }) {
+async function runThread({ port, conns, warmupPer, measuredPer, workload }) {
   pending.expected = conns.length;
   const warm = new Promise((resolve) => (pending.onAllWarm = resolve));
   const results = Promise.all(
     conns.map((conn) =>
-      runConnection(port, conn, schedule(conn, warmupPer + measuredPer), warmupPer),
+      runConnection(
+        port,
+        conn,
+        workload === "http-api"
+          ? schedule(conn, warmupPer + measuredPer)
+          : helloSchedule(conn, warmupPer + measuredPer, workload),
+        warmupPer,
+        workload,
+      ),
     ),
   );
   results.catch(() => {});
@@ -241,10 +266,13 @@ async function main() {
       threads: { type: "string", default: "2" },
       warmup: { type: "string", default: "4000" },
       requests: { type: "string", default: "40000" },
+      workload: { type: "string", default: "http-api" },
     },
   });
   const port = Number(values.port);
   const connections = Number(values.connections);
+  const workload = values.workload;
+  if (!["http-api", "hello-get", "hello-post"].includes(workload)) throw new Error("invalid workload");
   const threads = Math.min(Number(values.threads), connections);
   // Every connection warms up with at least one request (which also opens it).
   const warmupPer = Math.max(1, Math.ceil(Number(values.warmup) / connections));
@@ -260,7 +288,7 @@ async function main() {
     const conns = [];
     for (let c = t; c < connections; c += threads) conns.push(c);
     return new Worker(new URL(import.meta.url), {
-      workerData: { port, conns, warmupPer, measuredPer },
+      workerData: { port, conns, warmupPer, measuredPer, workload },
     });
   });
   const messages = workers.map((worker) => {

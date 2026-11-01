@@ -14,7 +14,7 @@ scriptc's `http-api` workload (a JSON API with routing, query parsing, a seeded 
 Express, Fastify and Hono are devDependencies of `@light/benchmarks` (`benchmarks/package.json`), not of the repository. None of them builds natively: Express and Fastify call into node's own JavaScript, which scriptc reaches only through a libnode pack (SC8005), and scriptc's shim for `@hono/node-server` stops at a `write` it does not lower yet (SC2020).
 
 ```
-node benchmarks/server/run.js [--rounds 3] [--engines node,native] [--variants raw,bridge,light,express,fastify,hono]
+node benchmarks/server/run.js [--workload http-api] [--rounds 3] [--engines node,native] [--variants raw,bridge,light,express,fastify,hono]
   [--connections 64] [--requests 40000] [--cpu] [--server-core 6] [--load-core 7]
 ```
 
@@ -22,7 +22,29 @@ Every contender must answer the same digest (status, content type, cache control
 
 `--cpu` pins each server to one core (`--server-core`, 6 by default) and the load client to another (`--load-core`, 7), and adds the server's user+system CPU seconds to the report, as seconds per request and per 10,000 requests (warm-up requests included, as the process's CPU includes them). Throughput on a shared machine moves about ±20% between rounds; CPU on a pinned core is the quieter yardstick.
 
-`raw.ts` and `load.mjs` come from [vercel-labs/scriptc](https://github.com/vercel-labs/scriptc) (`benchmarks/runtime/`, Apache-2.0), unchanged but for the `@ts-expect-error` `raw.ts` needs under `@types/node`.
+`raw.ts` and `load.mjs` come from [vercel-labs/scriptc](https://github.com/vercel-labs/scriptc) (`benchmarks/runtime/`, Apache-2.0), unchanged but for the `@ts-expect-error` `raw.ts` needs under `@types/node` and load.mjs's `--workload` flag (the hello schedules and their digest below).
+
+## Hello workloads
+
+`--workload hello-get` and `--workload hello-post` run Fastify's own benchmark routes ([fastify/benchmarks](https://github.com/fastify/benchmarks), the chart on fastify.dev) instead of scriptc's http-api. Each contender is one file in `hello/<variant>.ts` serving both routes: GET / answers `{"hello":"world"}`, and POST / with the JSON body `{"hello":"world"}` parses and echoes it back as JSON. Both count one request; POST /shutdown answers `{"bye":true}`, then the server prints `requests <n>` and exits. The workload decides the load client's request: hello-get is always GET /, hello-post always POST / with `content-type: application/json`. Native binaries are written as `out/<workload>-<variant>` so the workloads do not overwrite each other.
+
+The hello digest covers each response's status and body and only whether its content type starts with `application/json` (the frameworks differ in the `charset` suffix, which is idiomatic, not wrong); the http-api digest is unchanged. `load.mjs --workload=hello-get|hello-post` drives them directly.
+
+The client is scriptc's, not autocannon: one request in flight per keep-alive connection with no pipelining, versus autocannon's pipelining on fastify.dev, so the absolute numbers are not comparable with that chart even for the same route.
+
+Linux x64, node v25.3.0, scriptc v0.4.7, `--cpu` (load average 2.5 to 3.4), 3 rounds of 40,000 measured requests, medians; CPU µs per request:
+
+| Contender | hello-get | vs raw | hello-post | vs raw |
+|---|---:|---:|---:|---:|
+| raw node | 30.9 | 1.00x | 36.6 | 1.00x |
+| light node | 36.1 | 1.17x | 43.4 | 1.19x |
+| hono node | 34.1 | 1.10x | 49.1 | 1.34x |
+| fastify node | 42.3 | 1.37x | 47.7 | 1.30x |
+| express node | 51.4 | 1.66x | 66.8 | 1.83x |
+| raw native | 10.7 | 1.00x | 11.6 | 1.00x |
+| light native | 14.8 | 1.38x | 16.1 | 1.39x |
+
+With no work in the handler, a framework's own cost per request is all that differs: light's is about 5 µs under node and 4 µs natively, the same few microseconds the http-api workload shows, there spread over more work. Hono's node adapter answers a GET without building a full `Request`, which puts it under light there; a body puts it back above. The frameworks do not build natively (above).
 
 ## Results
 
