@@ -77,6 +77,36 @@ await serve(app, { port: 3000, sockets: { idle: 30000, maxMessage: 1048576 } });
 
 The node adapter speaks RFC 6455 itself, under node and natively: fragmented messages, pings answered, at most `maxMessage` bytes a message (closed 1009 past it), every socket pinged each `idle` ms and dropped when it answered nothing since the last ping, `close()` closing the open ones 1001. A server built elsewhere takes upgrades with `acceptUpgrades(server, app)`, or answers each one itself with `sockets.answer(app, new UpgradeIncoming(req, socket), head)`, false when no route matches, the connection left for whatever else listens. The fetch and Lambda adapters take no websockets yet and answer an `upgrade` with 501.
 
+## Several cores
+
+`serveThreads` runs one app on several workers, each listening on the same explicit port with the kernel's balanced `reusePort`. The primary does not listen: it spawns the workers, waits for each one's `listening`, and `close()` asks each to close, waits `grace` (10 seconds by default) and terminates a straggler. With `signals: true` a SIGTERM or SIGINT closes it that way.
+
+```ts
+// main.ts
+import { Worker } from "node:worker_threads";
+import { serveThreads } from "@lightstart/server/node";
+
+const server = await serveThreads({
+  port: 3000,
+  threads: 4,
+  spawn: () => new Worker(new URL("./worker.ts", import.meta.url)),
+  signals: true,
+});
+```
+
+```ts
+// worker.ts
+import { serveWorker } from "@lightstart/server/node";
+
+await serveWorker(app);
+```
+
+The spawn has to be written in the app's own module: scriptc resolves `new Worker(new URL("./worker.ts", import.meta.url))` at build time, and a URL passed into a library is refused (SC2020). `serveWorker` reads the port, host, sockets and grace from its own options, `workerData`, or the primary's message, so `serveWorker(app, { port: 3000 })` works too. Every worker answers its share of the requests; none is special.
+
+Balanced `reusePort` is Linux-only. Where listening reports `ENOTSUP` or `EOPNOTSUPP` (as on macOS), `serveThreads` warns and serves on one worker without it.
+
+State is per thread. Module state, caches and websocket registries belong to each worker, so a websocket is answered by the worker that accepted it and an in-memory cache is filled once per worker. What every worker needs to see goes over a `MessagePort`, or through a shared store such as a database: a server handle or an accepted socket does not transfer.
+
 ## Plugins
 
 | Entry | Plugin |

@@ -20,6 +20,7 @@ import type { App } from "../app.ts";
 export { MessageIncoming, NodeIncoming, WorkTracker } from "./incoming.ts";
 export { NodeSocket, Sockets, UpgradeIncoming, acceptUpgrades, type SocketOptions } from "./socket.ts";
 export { NodeWriter, writeReply } from "./write.ts";
+export { serveThreads, serveWorker, type ServeWorkerOptions, type ThreadsOptions, type ThreadsServer } from "./threads.ts";
 
 export interface ServeOptions {
   /** The port, 3000 by default; 0 lets the system pick one (read it back as `server.port`). */
@@ -28,6 +29,8 @@ export interface ServeOptions {
   host?: string;
   /** A Unix socket path to listen on instead of a port (Linux and macOS). */
   path?: string;
+  /** Let listeners share one explicit port through the kernel's balanced `SO_REUSEPORT` (Linux). */
+  reusePort?: boolean;
   /** Close and exit on SIGTERM and SIGINT. */
   signals?: boolean;
   /** Milliseconds `close()` waits for open connections and pending work, 10 seconds by default. */
@@ -128,12 +131,19 @@ const listening = (node: NodeServer, options: ServeOptions): Promise<void> =>
       resolve();
     };
     if (options.path !== undefined) server.listen(options.path, ready);
-    else if (options.host !== undefined) server.listen(options.port ?? 3000, options.host, ready);
+    else if (options.reusePort === true) {
+      if (options.host !== undefined) server.listen({ port: options.port !== undefined ? options.port : 3000, host: options.host, reusePort: true }, ready);
+      else server.listen({ port: options.port !== undefined ? options.port : 3000, reusePort: true }, ready);
+    } else if (options.host !== undefined) server.listen(options.port ?? 3000, options.host, ready);
     else server.listen(options.port ?? 3000, ready);
   });
 
 /** Listens with `app` and answers once listening. */
 export const serve = async (app: App, options: ServeOptions = {}): Promise<NodeServer> => {
+  if (options.reusePort === true) {
+    if (options.path !== undefined) throw new Error("reusePort cannot be used with path");
+    if (options.port === undefined || options.port === 0) throw new Error("reusePort needs an explicit port other than 0");
+  }
   app.build();
   const node = new NodeServer(app, options.grace ?? 10000);
   if (options.sockets !== undefined) node.sockets = acceptUpgrades(node.server, app, new Sockets(options.sockets, node));

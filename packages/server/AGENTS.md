@@ -25,6 +25,10 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 - An `upgrade` listener's parameters are typed `(req: IncomingMessage, socket: net.Socket, head: Buffer)`, the shape scriptc lowers (node's types say `Duplex`).
 - On `node:http`: `res.write` takes a narrowed chunk and is called as a statement; no `off`, `removeListener`, `drain`, `writableNeedDrain` on a response, nor `destroyed`; `writeHead` takes a `string[]` value, never a literal; a Fetch `Headers` is read with `forEach`; a Promise executor types its reject `(reason: Error) => void`.
 - Comments: a JSDoc module header and JSDoc on exported symbols, nothing else (light's comment rule).
+- Workers: the app writes the spawn, with `new Worker(new URL("./worker.ts", import.meta.url))` in its own module; scriptc resolves that URL at build time and refuses one passed into the library (SC2020). The primary (`serveThreads`) never listens; worker settings travel as plain record messages (a class instance loses its methods across threads).
+- A worker-side module must not end in `.test.ts`: the runner takes every `test/*.test.ts` as a test.
+- A record field named `host` collides with `Context.host` and makes that property dynamically dispatched (SC7001); the thread messages call it `hostName`. `server.listen({ host })` is refused when the host is typed `string | undefined` (SC2020), so the `reusePort` branch passes a defined host and has a no-host arm.
+- `reusePort` needs an explicit port other than 0 and is refused with `path`; it is Linux-only, and `serveThreads` falls back to one worker without it on `ENOTSUP`/`EOPNOTSUPP`.
 
 ## Contracts others depend on
 
@@ -38,6 +42,7 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 | `NodeIncoming.req`/`res` | `@bootstrapp/serve`, whose route requests carry the path with the project's `basePath` stripped, and its deployed-build mirror, which sets the routes' CORS grant on the response |
 | `Sockets.answer(app, new UpgradeIncoming(req, socket), head)` answering false for a path no route matches, the connection untouched; `Sockets.take(c, upgrade(c, channel), head)`; `MessageIncoming` as what `NodeIncoming` and `UpgradeIncoming` share | `@bootstrapp/serve`, which tries each route file's app on an upgrade and takes the rest as HMR clients |
 | `serve()` resolving a `NodeServer` whose `server` is node's `http.Server` | light's `test/serve.js` and `benchmarks/serve.js` answer that server, and `benchmarks/ab.js` reads it from two trees |
+| `serveThreads(options)` resolving a handle with `port`, `threads` and idempotent `close()`, the primary never listening; `serveWorker(app, options?)` reading settings from its options, `workerData` or the primary's `serve` message | apps that put several workers behind one `reusePort` port, and the thread tests |
 
 ## Gates
 
