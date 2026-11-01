@@ -88,6 +88,10 @@ export class MemoryIncoming extends Incoming {
     return this.controller.signal;
   }
 
+  override abort(_reason: string): void {
+    this.controller.abort();
+  }
+
   override env(): unknown {
     return this.bindings;
   }

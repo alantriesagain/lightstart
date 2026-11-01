@@ -40,6 +40,9 @@ export abstract class Incoming {
   /** Aborted when the client goes away before the reply is done. */
   abstract signal(): AbortSignal;
 
+  /** Stops the request's work early, as a timeout does; an adapter that cannot stop it leaves the default (the work runs on, its reply discarded). */
+  abort(_reason: string): void {}
+
   /** The platform's bindings: a Worker's `env`, null where there are none. */
   env(): unknown {
     return null;

@@ -76,6 +76,20 @@ When the ETag is known before the work (a version stamp, a write counter), `fres
 
 `sse(async (events) => { await events.send(data, event, id) })` is an event stream: never cached, and marked `x-accel-buffering: no` so nginx in front sends each event when it is written.
 
+## Validation
+
+`validate({ params?, query?, body? })` is a route's middleware, so routes that do not list it pay nothing. Its schemas are light's model field descriptors (`{ $type: "number", required: true }`, the shape `@lightstart/light`'s models and `validateRow` use, validated here without importing light): params and query arrive as strings and are coerced (numbers, `true`/`false`/`1`/`0`, arrays from repeated values, a comma list or JSON, objects from JSON); the body is `await c.json()`. Every failing field is collected into one 400, `{ "error": "invalid request", "fields": { "query.limit": "must be a number" } }`; on success the values are on the context as `Map`s: `c.get(BODY)`, `c.get(QUERY)`, `c.get(PARAMS)`. Supported: `string`, `number`, `boolean`, `array`, `object`, `required`, `defaultValue`, `validator`, the `email` and `url` formats; relationships are skipped and `enum`, `min`, `max` are carried but not enforced, as `validateRow` does. Unknown query names are ignored, unknown body keys kept.
+
+```ts
+app.get("/events", handler, [validate({ query: { limit: { $type: "number", defaultValue: 20 }, past: { $type: "boolean" } } })]);
+```
+
+## Timeouts and signed values
+
+`timeout(ms, message?)` is a route's middleware for a handler that hangs: past `ms` it answers 504 and aborts `c.signal`, so work that listens stops; work that does not runs on and its reply is dropped. Slow clients and idle connections are the proxy's (above).
+
+`Crypto` is the hashing seam (`hmacSha256` as base64url, `sha256` as hex, `safeEqual` in constant time, `randomToken`); `NodeCrypto` (`@lightstart/server/node`) fills it from `node:crypto`, under node and natively. `signCookieValue(crypto, secret, value)` answers `value.signature`, and `unsignCookieValue(crypto, secrets, signed)` the value or null, trying each secret so one can be rotated in: `[current, previous]`.
+
 ## Websockets
 
 A route accepts a websocket by answering `upgrade(c, channel)`. The upgrade is a request like any other until then: it runs the app's hooks and middleware (an auth guard refuses it with its own reply), and `pass()` falls through. A plain request to the route is a 426.
@@ -147,6 +161,7 @@ The package is an app server: it does what needs the app's knowledge (which rout
 |---|---|
 | `@lightstart/server/cors` | `new Cors({ origins, allow?, prefix?, methods?, headers?, expose?, credentials?, maxAge? })`: preflights answered before routing, the grant on every reply to an allowed origin |
 | `@lightstart/server/same-origin` | `new SameOrigin({ methods?, upgrades? })`: a cross-origin POST, PUT, PATCH or DELETE (the methods given), and a websocket upgrade unless `upgrades: false`, is answered 403 before routing, by `c.sameOrigin()`; safe methods pass unread. Registered, it cost nothing measurable natively on the hello workloads (within noise, about 0.5 µs a request) |
+| `@lightstart/server/rate-limit` | `rateLimit({ window, max, key?, store?, skip?, message? })` as a route's middleware, or `new RateLimit(options)` on every request: a fixed window per key (`c.ip` by default; meant for the app's own keys, a user, an email, an account), `RateLimit-Limit`, `-Remaining` and `-Reset` on each reply, a 429 with `Retry-After` past `max`. `MemoryRateStore` keeps at most `maxKeys` windows (10,000) and sweeps expired ones; a `RateStore` may answer a promise, for a shared store |
 | `@lightstart/server/security-headers` | `new SecurityHeaders(options)`: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `Cross-Origin-Opener-Policy: same-origin`, and `Strict-Transport-Security` on https replies; `csp` and `permissionsPolicy` only when given; each option takes `false`. Built once; a reply's own header wins; a route lists `noSecurityHeaders` to go without. Registered, it cost about 0.2 to 0.5 µs a request natively on hello-get (within noise) |
 | `@lightstart/server/proxy` | `new TrustProxy({ trust: ["10.0.0.0/8"] \| true })`: `Forwarded` / `X-Forwarded-*` from a trusted peer become `c.protocol`, `c.host`, `c.ip`; anyone else's are ignored; the client is the rightmost address that is not a trusted proxy |
 | `@lightstart/server/static` | `new Static({ root, prefix?, index?, spa?, dotfiles?, cacheControl?, streamAbove?, typeOf?, precompressed? })`: files from a folder (node and native). Path guard, index and `.html` lookup, a single-page fallback, ETag and `last-modified` with 304s, `.br`/`.gz` neighbours (unless `precompressed: false`), large files streamed; `typeOf` replaces the MIME table |

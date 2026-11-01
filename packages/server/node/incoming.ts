@@ -119,6 +119,10 @@ export class MessageIncoming extends Incoming {
     return controller.signal;
   }
 
+  override abort(_reason: string): void {
+    this.left();
+  }
+
   waitUntil(work: Promise<void>): void {
     this.tracker.track(work);
   }

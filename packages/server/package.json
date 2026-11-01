@@ -35,6 +35,7 @@
     "./lambda": "./lambda/index.ts",
     "./memory": "./memory/index.ts",
     "./cors": "./plugins/cors.ts",
+    "./rate-limit": "./plugins/rate-limit.ts",
     "./same-origin": "./plugins/same-origin.ts",
     "./security-headers": "./plugins/security-headers.ts",
     "./proxy": "./plugins/proxy.ts",

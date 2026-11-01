@@ -116,6 +116,10 @@ export class LambdaIncoming extends Incoming {
     return this.controller.signal;
   }
 
+  override abort(_reason: string): void {
+    this.controller.abort();
+  }
+
   waitUntil(work: Promise<void>): void {
     this.pending.push(work);
   }

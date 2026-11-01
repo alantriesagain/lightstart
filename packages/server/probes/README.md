@@ -1,6 +1,6 @@
 # Probes
 
-What scriptc (the fork's `light-integration`, v0.4.5) accepts and does for this package's shapes, and the decisions that came from it. `backpressure.ts` is the one kept as a program: run it with `node probes/backpressure.ts` and `scriptc-dev run probes/backpressure.ts` from this folder's package, so it sees `@types/node`.
+What scriptc (the fork's `light-integration`, v0.4.5) accepts and does for this package's shapes, and the decisions that came from it. `backpressure.ts`, `cancellation.ts`, `crypto-node.ts` and `crypto-web.ts` are kept as programs: run each with `node probes/<name>.ts`, and natively with `scriptc-dev build probes/<name>.ts -o /tmp/<name>` then `/tmp/<name>` from this folder's package, so it sees `@types/node`.
 
 | Finding | Decision |
 |---|---|
@@ -17,6 +17,9 @@ What scriptc (the fork's `light-integration`, v0.4.5) accepts and does for this 
 | A socket an `http.Server` upgraded is half-open: the client's FIN does not end it | The websocket ends its side on `end`, or `close()` would wait for it forever |
 | `Promise.all` over `Promise<unknown>[]` has no lowering | A test awaits such a list in a loop |
 | An override's parameters must match the base's exactly | `setup(_app: App)` in a test plugin with nothing to set up |
+| `probes/cancellation.ts`: `new AbortController()`, `abort()`, a signal's `aborted`, `reason` and `addEventListener`, a loop stopped by a timer's abort; `Promise.race` of two `setTimeout` promises; an inferred `setTimeout` handle passed to `clearTimeout` | PASS, identical to node: `AbortController` and its events exist natively (the belief that it is missing is wrong). A handle typed `unknown` fails SC0001 ("Argument of type 'unknown' is not assignable to parameter of type 'number \| Timeout \| null \| undefined'"); inferring it compiles | `timeout(ms)` keeps an inferred timer handle, races the chain against it, aborts `c.signal` and clears the timer; work that listens to the signal stops, work that does not runs on with its reply discarded |
+| `probes/crypto-node.ts`: `createHmac("sha256").update(…).digest("base64url"/"hex")`, `createHash("sha256")` over text and bytes, `timingSafeEqual`, `randomBytes`, `randomUUID`, `Buffer` base64url round trip | PASS, identical to node | The `Crypto` seam stays synchronous, and `node/crypto.ts` (`NodeCrypto`) is its node and native implementation |
+| `probes/crypto-web.ts`: `crypto.subtle.digest("SHA-256")`, `importKey`/`sign` for HMAC-SHA256, `getRandomValues`, `randomUUID` | PASS, identical to node; `crypto.subtle` is present natively too | WebCrypto's digest and sign are promises, so a fetch adapter filling the same seam needs an async seam; the node path stays synchronous |
 
 With these, every test compiles fully statically (`light-native coverage @lightstart/server`: 100% of statements, no slow path) and prints under scriptc exactly what it prints under node.
 

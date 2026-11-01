@@ -7,6 +7,7 @@
 export { App, type ErrorHandler, type ErrorMapper, type ReplyHook, type RequestHook } from "./app.ts";
 export { Context, DEFAULT_BODY_LIMIT } from "./context.ts";
 export { fresh } from "./conditional.ts";
+export { Crypto, signCookieValue, unsignCookieValue } from "./crypto.ts";
 export { clearCookie, parseCookies, setCookie, type CookieOptions } from "./cookies.ts";
 export { HttpError } from "./errors.ts";
 export { HeaderList } from "./headers.ts";
@@ -17,3 +18,5 @@ export { Plugin } from "./plugin.ts";
 export { EventSink, Reply, Writer, bytes, empty, fail, html, json, pass, redirect, respond, sse, stream, text, type StreamBody } from "./reply.ts";
 export { Channel, Socket, unaccepted, upgrade, upgrading } from "./socket.ts";
 export { ALL, Route, Router, patternProblem, type Handler, type Middleware, type Next } from "./router.ts";
+export { timeout } from "./timeout.ts";
+export { BODY, PARAMS, QUERY, validate, type FieldDescriptor, type FieldSchema, type ValidateSchemas } from "./validate.ts";

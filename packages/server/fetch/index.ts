@@ -65,6 +65,7 @@ export class FetchIncoming extends Incoming {
   private readonly scheme: string;
   private readonly authority: string;
   private readonly path: string;
+  private controller: AbortController | null = null;
 
   constructor(request: Request, bindings: unknown, platform: FetchPlatform | null, address: string) {
     super();
@@ -125,8 +126,21 @@ export class FetchIncoming extends Incoming {
     return this.scheme;
   }
 
+  private linked(): AbortController {
+    if (this.controller !== null) return this.controller;
+    const controller = new AbortController();
+    this.controller = controller;
+    if (this.request.signal.aborted) controller.abort();
+    else this.request.signal.addEventListener("abort", () => controller.abort());
+    return controller;
+  }
+
   signal(): AbortSignal {
-    return this.request.signal;
+    return this.linked().signal;
+  }
+
+  override abort(_reason: string): void {
+    this.linked().abort();
   }
 
   override env(): unknown {

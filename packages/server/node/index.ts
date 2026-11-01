@@ -19,6 +19,7 @@ import type { App } from "../app.ts";
 
 export { MessageIncoming, NodeIncoming, WorkTracker } from "./incoming.ts";
 export { NodeSocket, Sockets, UpgradeIncoming, acceptUpgrades, type SocketOptions } from "./socket.ts";
+export { NodeCrypto } from "./crypto.ts";
 export { NodeWriter, writeReply } from "./write.ts";
 export { serveThreads, serveWorker, type ServeWorkerOptions, type ThreadsOptions, type ThreadsServer } from "./threads.ts";
 
