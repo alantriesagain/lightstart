@@ -27,7 +27,7 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 - Comments: a JSDoc module header and JSDoc on exported symbols, nothing else (light's comment rule).
 - Workers: the app writes the spawn, with `new Worker(new URL("./worker.ts", import.meta.url))` in its own module; scriptc resolves that URL at build time and refuses one passed into the library (SC2020). The primary (`serveThreads`) never listens; worker settings travel as plain record messages (a class instance loses its methods across threads).
 - A worker-side module must not end in `.test.ts`: the runner takes every `test/*.test.ts` as a test.
-- A record field named `host` collides with `Context.host` and makes that property dynamically dispatched (SC7001); the thread messages call it `hostName`. `server.listen({ host })` is refused when the host is typed `string | undefined` (SC2020), so the `reusePort` branch passes a defined host and has a no-host arm.
+- A record field named `host` collides with `Context.host` and makes that property dynamically dispatched (SC6201); the thread messages call it `hostName`. `server.listen({ host })` is refused when the host is typed `string | undefined` (SC2020), so the `reusePort` branch passes a defined host and has a no-host arm.
 - `reusePort` needs an explicit port other than 0 and is refused with `path`; it is Linux-only, and `serveThreads` falls back to one worker without it on `ENOTSUP`/`EOPNOTSUPP`.
 
 ## Contracts others depend on
