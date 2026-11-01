@@ -34,6 +34,8 @@ export class Reply {
   channel: Channel | null = null;
   /** The route declined the request after its pattern matched: the app answers null, as for a path nothing matches (`pass()`). */
   passed = false;
+  /** Indices in `headers` of the `set-cookie` values whose `Secure` is settled when the app finishes the reply (`cookies.ts`). */
+  autoSecure: number[] | null = null;
 
   constructor(status: number) {
     this.status = status;

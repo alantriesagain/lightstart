@@ -64,6 +64,16 @@ const run = (c: Context, route: Route, i: number): Promise<Reply> => {
 
 const defaultNotFound: Handler = (c: Context): Reply => fail("no route for " + c.method + " " + c.path, 404);
 
+const settleSecure = (reply: Reply, indices: number[], protocol: string): void => {
+  reply.autoSecure = null;
+  if (protocol !== "https") return;
+  const values = reply.headers.values;
+  const names = reply.headers.names;
+  for (const index of indices) {
+    if (index < names.length && names[index] === "set-cookie") values[index] = values[index]! + "; Secure";
+  }
+};
+
 export class App {
   private readonly router = new Router();
   private readonly declarations: Declaration[] = [];
@@ -210,7 +220,11 @@ export class App {
   }
 
   private finish(c: Context, reply: Reply): Reply {
+    const before = reply.autoSecure;
+    if (before !== null) settleSecure(reply, before, c.protocol);
     for (const hook of this.replyHooks) hook(c, reply);
+    const after = reply.autoSecure;
+    if (after !== null) settleSecure(reply, after, c.protocol);
     return reply;
   }
 

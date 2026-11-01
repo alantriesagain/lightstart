@@ -43,6 +43,8 @@ What Express, Fastify and Hono provide (their installed sources read, and Fastif
 
 ### Phase A: reading the request (lazy accessors on `Context`)
 
+**Done.** Natively, medians of paired pinned rounds before and after: hello-get 19.77 → 19.55 µs a request, hello-post 21.82 → 21.36, and with `SameOrigin` registered 19.77 and 21.59: within noise.
+
 - **Cookies.** `c.cookie(name): string | null`, `c.cookies(): Map<string, string>`, parsed once on first call. Writing: `setCookie(reply, name, value, options)` and `clearCookie(reply, name, options)`, helpers beside `json` and `fail` that append to `reply.headers`, so several survive and `Reply` keeps its small API. Defaults: `Path=/`, `HttpOnly`, `SameSite=Lax`, `Secure` when the request came over https (`"auto"`, settled when the app finishes the reply, where the request is known). `maxAge` in seconds. `__Host-`/`__Secure-` prefixes checked. Signed cookies come later, on the hashing seam (Phase C).
 - **Bearer token.** `c.bearer(): string | null` from `Authorization: Bearer`. Sessions stay the app's.
 - **Same origin.** `c.sameOrigin(): boolean` (no `Origin` and no `Sec-Fetch-Site: cross-site` passes; an `Origin` must match `c.host`, which honours `TrustProxy`). And `new SameOrigin({ methods? })`, a plugin refusing a cross-origin unsafe method with 403 before routing; websocket upgrades included, since they run the hooks.

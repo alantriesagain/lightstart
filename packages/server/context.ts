@@ -5,8 +5,11 @@
  * and kept, the URL assembled from the protocol and the host, the Fetch `Request` built only for a
  * handler that wants one. The router writes the matched pattern and the path parameters; a
  * middleware hands values to the handler through `set` and `get` with a `Key`; a proxy plugin
- * replaces the protocol, the host and the address with what a trusted proxy forwarded.
+ * replaces the protocol, the host and the address with what a trusted proxy forwarded. Cookies,
+ * the bearer token, the same-origin check, the form body and the accepted type are parsed on their
+ * first call and kept for the rest of the request.
  */
+import { parseCookies } from "./cookies.ts";
 import { HttpError } from "./errors.ts";
 import { Incoming } from "./incoming.ts";
 import { Key, Slots } from "./key.ts";
@@ -25,6 +28,74 @@ const decode = (part: string): string => {
   }
 };
 
+const formDecode = (part: string): string => {
+  const plain = part.indexOf("+") < 0 ? part : part.replaceAll("+", " ");
+  if (plain.indexOf("%") < 0) return plain;
+  try {
+    return decodeURIComponent(plain);
+  } catch {
+    throw new HttpError(400, "malformed form body");
+  }
+};
+
+const digit = (code: number): boolean => code >= 48 && code <= 57;
+
+const validPort = (port: string): boolean => {
+  if (port === "") return false;
+  for (let i = 0; i < port.length; i++) if (!digit(port.charCodeAt(i))) return false;
+  return true;
+};
+
+const authorityOf = (origin: string): string | null => {
+  const split = origin.indexOf("://");
+  if (split <= 0) return null;
+  const scheme = origin.slice(0, split).toLowerCase();
+  if (scheme !== "http" && scheme !== "https") return null;
+  const rest = origin.slice(split + 3);
+  if (rest === "") return null;
+  if (rest.indexOf("/") >= 0 || rest.indexOf("?") >= 0 || rest.indexOf("#") >= 0 || rest.indexOf("@") >= 0) return null;
+  let host = rest;
+  let port = "";
+  if (rest.startsWith("[")) {
+    const end = rest.indexOf("]");
+    if (end < 0) return null;
+    host = rest.slice(0, end + 1);
+    const after = rest.slice(end + 1);
+    if (after !== "") {
+      if (!after.startsWith(":")) return null;
+      port = after.slice(1);
+      if (port === "") return null;
+    }
+  } else {
+    const colon = rest.lastIndexOf(":");
+    if (colon >= 0) {
+      host = rest.slice(0, colon);
+      port = rest.slice(colon + 1);
+      if (port === "") return null;
+    }
+    for (let i = 0; i < host.length; i++)
+      if (host[i] === "%") return null;
+  }
+  if (host === "") return null;
+  if (port !== "" && !validPort(port)) return null;
+  const lower = host.toLowerCase();
+  return port === "" ? lower : lower + ":" + port;
+};
+
+class AcceptRange {
+  readonly type: string;
+  readonly subtype: string;
+  readonly q: number;
+  readonly specific: number;
+
+  constructor(type: string, subtype: string, q: number, specific: number) {
+    this.type = type;
+    this.subtype = subtype;
+    this.q = q;
+    this.specific = specific;
+  }
+}
+
 export class Context {
   readonly incoming: Incoming;
   readonly method: string;
@@ -41,6 +112,12 @@ export class Context {
   paramValues: string[] = [];
   private queryNames: string[] | null = null;
   private queryValues: string[] = [];
+  private cookiesRead: Map<string, string> | null = null;
+  private bearerDone = false;
+  private bearerToken: string | null = null;
+  private sameOriginRead: boolean | null = null;
+  private formRead: Promise<Map<string, string[]>> | null = null;
+  private acceptRanges: AcceptRange[] | null = null;
   private readonly slots = new Slots();
   private textRead: Promise<string> | null = null;
   private bytesRead: Promise<Uint8Array> | null = null;
@@ -105,6 +182,169 @@ export class Context {
     }
     this.queryNames = names;
     return names;
+  }
+
+  /** The value of the cookie `name`, or null: the `Cookie` header parsed on the first call. */
+  cookie(name: string): string | null {
+    const all = this.cookies();
+    const value = all.get(name);
+    return value === undefined ? null : value;
+  }
+
+  /** Every cookie of the request, the first occurrence of a name winning; parsed once. */
+  cookies(): Map<string, string> {
+    if (this.cookiesRead === null) this.cookiesRead = parseCookies(this.header("cookie"));
+    return this.cookiesRead;
+  }
+
+  /** The token of an `Authorization: Bearer <token>` header, trimmed, or null. */
+  bearer(): string | null {
+    if (!this.bearerDone) {
+      this.bearerDone = true;
+      const header = this.header("authorization");
+      if (header !== null) {
+        let at = -1;
+        for (let i = 0; i < header.length; i++) {
+          const code = header.charCodeAt(i);
+          if (code === 32 || code === 9) {
+            at = i;
+            break;
+          }
+        }
+        if (at > 0 && header.slice(0, at).toLowerCase() === "bearer") {
+          const token = header.slice(at + 1).trim();
+          if (token !== "") this.bearerToken = token;
+        }
+      }
+    }
+    return this.bearerToken;
+  }
+
+  /** Whether the request is same-origin or came from no browser: `Sec-Fetch-Site`, then `Origin` against `host`. */
+  sameOrigin(): boolean {
+    if (this.sameOriginRead !== null) return this.sameOriginRead;
+    this.sameOriginRead = this.isSameOrigin();
+    return this.sameOriginRead;
+  }
+
+  private isSameOrigin(): boolean {
+    const site = this.header("sec-fetch-site");
+    if (site !== null) {
+      const value = site.trim().toLowerCase();
+      return value === "same-origin" || value === "none";
+    }
+    const origin = this.header("origin");
+    if (origin === null) return true;
+    const value = origin.trim();
+    if (value.toLowerCase() === "null") return false;
+    const authority = authorityOf(value);
+    return authority !== null && authority === this.host.toLowerCase();
+  }
+
+  /** The urlencoded form body, every value of a repeated name in order; read once, within `limit`. */
+  form(): Promise<Map<string, string[]>> {
+    if (this.formRead === null) this.formRead = this.readForm();
+    return this.formRead;
+  }
+
+  private async readForm(): Promise<Map<string, string[]>> {
+    const header = this.header("content-type");
+    if (header === null) throw new HttpError(415, "expected an application/x-www-form-urlencoded body");
+    const semi = header.indexOf(";");
+    const media = (semi < 0 ? header : header.slice(0, semi)).trim().toLowerCase();
+    if (media !== "application/x-www-form-urlencoded") throw new HttpError(415, "expected an application/x-www-form-urlencoded body");
+    const body = await this.text();
+    const out = new Map<string, string[]>();
+    let start = 0;
+    while (start < body.length) {
+      let end = body.indexOf("&", start);
+      if (end < 0) end = body.length;
+      if (end > start) {
+        const eq = body.indexOf("=", start);
+        let name: string;
+        let value: string;
+        if (eq < 0 || eq > end) {
+          name = formDecode(body.slice(start, end));
+          value = "";
+        } else {
+          name = formDecode(body.slice(start, eq));
+          value = formDecode(body.slice(eq + 1, end));
+        }
+        const values = out.get(name);
+        if (values === undefined) out.set(name, [value]);
+        else values.push(value);
+      }
+      start = end + 1;
+    }
+    return out;
+  }
+
+  /** The best of `types` for the `Accept` header, or null; the first type when there is no header. */
+  accepts(...types: string[]): string | null {
+    if (types.length === 0) return null;
+    if (this.header("accept") === null) return types[0]!;
+    const ranges = this.parsedAccept();
+    let best: string | null = null;
+    let bestQ = 0;
+    let bestSpecific = -1;
+    for (const candidate of types) {
+      const lower = candidate.trim().toLowerCase();
+      const slash = lower.indexOf("/");
+      if (slash <= 0 || slash === lower.length - 1) continue;
+      const type = lower.slice(0, slash);
+      const subtype = lower.slice(slash + 1);
+      let matchQ = 0;
+      let matchSpecific = -1;
+      for (const range of ranges) {
+        if ((range.type === "*" || range.type === type) && (range.subtype === "*" || range.subtype === subtype)) {
+          if (range.q > matchQ || (range.q === matchQ && range.specific > matchSpecific)) {
+            matchQ = range.q;
+            matchSpecific = range.specific;
+          }
+        }
+      }
+      if (matchQ <= 0) continue;
+      if (matchQ > bestQ || (matchQ === bestQ && matchSpecific > bestSpecific)) {
+        best = candidate;
+        bestQ = matchQ;
+        bestSpecific = matchSpecific;
+      }
+    }
+    return best;
+  }
+
+  private parsedAccept(): AcceptRange[] {
+    if (this.acceptRanges !== null) return this.acceptRanges;
+    const ranges: AcceptRange[] = [];
+    const header = this.header("accept");
+    if (header !== null) {
+      for (const item of header.split(",")) {
+        const parts = item.split(";");
+        const media = parts[0]!.trim().toLowerCase();
+        const slash = media.indexOf("/");
+        if (slash <= 0 || slash === media.length - 1) continue;
+        const type = media.slice(0, slash);
+        const subtype = media.slice(slash + 1);
+        if (type.indexOf("*") >= 0 && type !== "*") continue;
+        if (subtype.indexOf("*") >= 0 && subtype !== "*") continue;
+        if (type === "*" && subtype !== "*") continue;
+        let q = 1;
+        for (let i = 1; i < parts.length; i++) {
+          const parameter = parts[i]!.trim();
+          const eq = parameter.indexOf("=");
+          if (eq < 0) continue;
+          if (parameter.slice(0, eq).trim().toLowerCase() !== "q") continue;
+          const n = Number(parameter.slice(eq + 1).trim());
+          q = Number.isFinite(n) && n >= 0 && n <= 1 ? n : 0;
+        }
+        let specific = 2;
+        if (type === "*") specific = 0;
+        else if (subtype === "*") specific = 1;
+        ranges.push(new AcceptRange(type, subtype, q, specific));
+      }
+    }
+    this.acceptRanges = ranges;
+    return ranges;
   }
 
   /** "http" or "https": what the client asked for, a trusted proxy's word over the connection's. */

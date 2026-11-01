@@ -35,6 +35,7 @@
     "./lambda": "./lambda/index.ts",
     "./memory": "./memory/index.ts",
     "./cors": "./plugins/cors.ts",
+    "./same-origin": "./plugins/same-origin.ts",
     "./proxy": "./plugins/proxy.ts",
     "./static": "./plugins/static.ts",
     "./mime": "./plugins/mime.ts",

@@ -47,9 +47,24 @@ A pattern is `/`-separated segments: a literal, a `:name` parameter (one non-emp
 
 `c.method`, `c.path`, `c.search`, `c.param(name)`, `c.query(name)`, `c.queryAll(name)`, `c.header(name)`, `c.ip`, `c.protocol`, `c.host`, `c.url`, `c.signal`, `c.env`. The body is read once, when first asked for: `await c.text()`, `await c.bytes()`, `await c.json()` (`unknown` until narrowed; an empty or malformed body is a 400). A body larger than `c.limit` (1 MiB by default) is a 413. `await c.request()` is the request as a Fetch `Request`, built only when asked for.
 
+Read on their first call and kept for the rest of the request, so a request that never asks pays nothing for them:
+
+- `c.cookie(name)` and `c.cookies()`: the `Cookie` header (RFC 6265: one pair of quotes stripped, percent-decoded where it decodes, the first of a repeated name).
+- `c.bearer()`: the token of `Authorization: Bearer <token>`, or null.
+- `c.sameOrigin()`: whether a browser sent the request from this origin, or no browser sent it: `Sec-Fetch-Site` when present (`same-origin` or `none`), else `Origin` against `c.host` (which `TrustProxy` corrects); no `Origin` passes, `Origin: null` does not.
+- `await c.form()`: an `application/x-www-form-urlencoded` body as a `Map` of every value of each name, within `c.limit`; another content type is a 415, a malformed escape a 400.
+- `c.accepts("application/json", "text/html")`: the best of the types for `Accept` (q-values, wildcards, the more specific range first), the first when there is no `Accept`, null when none is acceptable.
+
 ## The reply
 
 A handler answers a `Reply`, or a promise of one: `json(data, status)`, `text`, `html`, `bytes(body, type)`, `empty(status)`, `redirect(location)`, `fail(message, status)`, `stream(async (out) => { await out.write(chunk) }, type)`, or `respond(response)` for a Fetch `Response`. `reply.header(name, value)` sets a header and answers the reply. `reply.headers` keeps repeated names, so two `set-cookie` headers stay two.
+
+`setCookie(reply, name, value, options)` and `clearCookie(reply, name, options)` add a `set-cookie` and answer the reply. The defaults are `Path=/`, `HttpOnly`, `SameSite=Lax`, and `secure: "auto"`: `Secure` when the request came over https, settled where the app finishes the reply (a reply written without an `App` leaves it off). The options are `maxAge` (seconds), `expires`, `path`, `domain`, `httpOnly`, `secure` (`true`, `false` or `"auto"`), `sameSite` (`"Strict"`, `"Lax"`, `"None"`) and `partitioned`. A name that is not an RFC 6265 token, a `__Host-` or `__Secure-` cookie without `Secure` (or `__Host-` with a domain or another path), and `SameSite=None` without `Secure` are refused with an error.
+
+```ts
+app.post("/login", async (c: Context) => setCookie(json({ ok: true }), "sid", await signIn(c), { maxAge: 60 * 60 * 24 * 30 }));
+app.get("/me", (c: Context) => json({ sid: c.cookie("sid") }));
+```
 
 `pass()` is the reply of a route that matched but declines the request (what it serves is decided per request): `app.handle` answers null, so a host tries what sits behind the app. An `onRequest` hook may answer it too, declining every request it picks (an app of pages that leaves websocket upgrades to the host).
 
@@ -112,6 +127,7 @@ State is per thread. Module state, caches and websocket registries belong to eac
 | Entry | Plugin |
 |---|---|
 | `@lightstart/server/cors` | `new Cors({ origins, allow?, prefix?, methods?, headers?, expose?, credentials?, maxAge? })`: preflights answered before routing, the grant on every reply to an allowed origin |
+| `@lightstart/server/same-origin` | `new SameOrigin({ methods?, upgrades? })`: a cross-origin POST, PUT, PATCH or DELETE (the methods given), and a websocket upgrade unless `upgrades: false`, is answered 403 before routing, by `c.sameOrigin()`; safe methods pass unread. Registered, it cost nothing measurable natively on the hello workloads (within noise, about 0.5 µs a request) |
 | `@lightstart/server/proxy` | `new TrustProxy({ trust: ["10.0.0.0/8"] \| true })`: `Forwarded` / `X-Forwarded-*` from a trusted peer become `c.protocol`, `c.host`, `c.ip`; anyone else's are ignored; the client is the rightmost address that is not a trusted proxy |
 | `@lightstart/server/static` | `new Static({ root, prefix?, index?, spa?, dotfiles?, cacheControl?, streamAbove?, typeOf?, precompressed? })`: files from a folder (node and native). Path guard, index and `.html` lookup, a single-page fallback, ETag and `last-modified` with 304s, `.br`/`.gz` neighbours (unless `precompressed: false`), large files streamed; `typeOf` replaces the MIME table |
 | `@lightstart/server/request-id` | `new RequestId()`: a plausible incoming `x-request-id` kept, else a UUID; `c.get(REQUEST_ID)`, and sent back on every reply |

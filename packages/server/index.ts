@@ -6,6 +6,7 @@
  */
 export { App, type ErrorHandler, type ReplyHook, type RequestHook } from "./app.ts";
 export { Context, DEFAULT_BODY_LIMIT } from "./context.ts";
+export { clearCookie, parseCookies, setCookie, type CookieOptions } from "./cookies.ts";
 export { HttpError } from "./errors.ts";
 export { HeaderList } from "./headers.ts";
 export { Incoming } from "./incoming.ts";
