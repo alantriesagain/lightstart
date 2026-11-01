@@ -32,17 +32,33 @@ The hello digest covers each response's status and body and only whether its con
 
 The client is scriptc's, not autocannon: one request in flight per keep-alive connection with no pipelining, versus autocannon's pipelining on fastify.dev, so the absolute numbers are not comparable with that chart even for the same route.
 
-Linux x64, node v25.3.0, scriptc v0.4.7, `--cpu` (load average 2.5 to 3.4), 3 rounds of 40,000 measured requests, medians; CPU µs per request:
+Linux x64, node v25.3.0, scriptc v0.4.7, `--cpu` (load average 2.5 to 3.4), 3 rounds of 40,000 measured requests, medians, fastest first; "vs raw" is CPU per request against raw on the same engine:
 
-| Contender | hello-get | vs raw | hello-post | vs raw |
-|---|---:|---:|---:|---:|
-| raw node | 30.9 | 1.00x | 36.6 | 1.00x |
-| light node | 36.1 | 1.17x | 43.4 | 1.19x |
-| hono node | 34.1 | 1.10x | 49.1 | 1.34x |
-| fastify node | 42.3 | 1.37x | 47.7 | 1.30x |
-| express node | 51.4 | 1.66x | 66.8 | 1.83x |
-| raw native | 10.7 | 1.00x | 11.6 | 1.00x |
-| light native | 14.8 | 1.38x | 16.1 | 1.39x |
+**hello-get**
+
+| Contender | req/s | CPU µs/req | vs raw |
+|---|---:|---:|---:|
+| raw native | 50790 | 10.7 | 1.00x |
+| light native | 47815 | 14.8 | 1.38x |
+| raw node | 34310 | 30.9 | 1.00x |
+| light node | 32216 | 36.1 | 1.17x |
+| hono node | 32156 | 34.1 | 1.10x |
+| fastify node | 26581 | 42.3 | 1.37x |
+| express node | 21602 | 51.4 | 1.66x |
+
+**hello-post**
+
+| Contender | req/s | CPU µs/req | vs raw |
+|---|---:|---:|---:|
+| raw native | 50739 | 11.6 | 1.00x |
+| light native | 49092 | 16.1 | 1.39x |
+| raw node | 29326 | 36.6 | 1.00x |
+| light node | 25984 | 43.4 | 1.19x |
+| fastify node | 23786 | 47.7 | 1.30x |
+| hono node | 22820 | 49.1 | 1.34x |
+| express node | 16609 | 66.8 | 1.83x |
+
+The load client, on one core, caps the native contenders' req/s, so natively CPU per request is the comparison.
 
 With no work in the handler, a framework's own cost per request is all that differs: light's is about 5 µs under node and 4 µs natively, the same few microseconds the http-api workload shows, there spread over more work. Hono's node adapter answers a GET without building a full `Request`, which puts it under light there; a body puts it back above. The frameworks do not build natively (above).
 
