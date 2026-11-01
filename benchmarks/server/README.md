@@ -10,9 +10,12 @@ scriptc's `http-api` workload (a JSON API with routing, query parsing, a seeded 
 
 ```
 node benchmarks/server/run.js [--rounds 3] [--engines node,native] [--variants raw,bridge,light]
+  [--connections 64] [--requests 40000] [--cpu] [--server-core 6] [--load-core 7]
 ```
 
 Every contender must answer the same digest (status, content type, cache control, ETag, request id and body of every response) and print the same totals as the first one, or the run fails. `--engines native` builds each variant with light's scriptc (`packages/light/native/scriptc.js`) into `out/`.
+
+`--cpu` pins each server to one core (`--server-core`, 6 by default) and the load client to another (`--load-core`, 7), and adds the server's user+system CPU seconds to the report, as seconds per request and per 10,000 requests (warm-up requests included, as the process's CPU includes them). Throughput on a shared machine moves about ±20% between rounds; CPU on a pinned core is the quieter yardstick.
 
 `raw.ts` and `load.mjs` come from [vercel-labs/scriptc](https://github.com/vercel-labs/scriptc) (`benchmarks/runtime/`, Apache-2.0), unchanged but for the `@ts-expect-error` `raw.ts` needs under `@types/node`.
 
