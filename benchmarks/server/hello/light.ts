@@ -1,8 +1,8 @@
 // Fastify's hello benchmark (fastify/benchmarks) on @lightstart/server and its node adapter: GET /
 // answers {"hello":"world"}, POST / echoes the parsed JSON body through c.json(), and POST
 // /shutdown prints the request count and exits.
-import { App, json, type Context } from "../../../packages/server/index.ts";
-import { serve, type NodeServer } from "../../../packages/server/node/index.ts";
+import { App, json, type Context } from "@lightstart/server";
+import { serve, type NodeServer } from "@lightstart/server/node";
 
 interface Hello {
   hello: string;

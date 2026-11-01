@@ -1,8 +1,8 @@
 // The http-api workload (variants/raw.ts) on @lightstart/server: the same catalog, carts and
 // responses byte for byte, the routing, the query, the headers and the replies through the
 // package's App, Context and Reply, served by its node adapter.
-import { App, Context, Reply, empty } from "../../../packages/server/index.ts";
-import { serve, type NodeServer } from "../../../packages/server/node/index.ts";
+import { App, Context, Reply, empty } from "@lightstart/server";
+import { serve, type NodeServer } from "@lightstart/server/node";
 
 interface Product {
   id: number;

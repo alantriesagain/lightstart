@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { App, html } from "@lightstart/server";
 import { serve as listen } from "@lightstart/server/node";
 import { Static } from "@lightstart/server/static";
-import { stage } from "../packages/light/scripts/pack.js";
+import { stage } from "@lightstart/light/scripts/pack.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..", "packages", "light");

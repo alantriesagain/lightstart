@@ -27,7 +27,7 @@ import { mkdirSync, readFileSync, unlinkSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { scriptcPath } from "../../packages/light/native/scriptc.js";
+import { scriptcPath } from "@lightstart/light/native/scriptc.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..", "..");

@@ -21,7 +21,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSy
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { scriptcPath } from "../packages/light/native/scriptc.js";
+import { scriptcPath } from "@lightstart/light/native/scriptc.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CANDIDATE = join(HERE, "..");

@@ -14,5 +14,8 @@
     "fastify": "^5.12.7",
     "hono": "^4.13.16",
     "playwright": "^1.58.2"
+  },
+  "native": {
+    "tooling": true
   }
 }
