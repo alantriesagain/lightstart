@@ -32,13 +32,4 @@ Linux x64, node v25.3.0 and scriptc (the fork's `light-integration`, v0.4.5), lo
 | light node | 24085 | 2.5 | 4.8 | 0.93x |
 | light native | 52954 | 1.1 | 2.6 | 2.05x |
 
-A `Request` and a `Response` per request halve the throughput on both engines, which is why the package's core has its own `Context` and `Reply` and an adapter reads and writes the platform's own objects. Natively the package answered twice node's rate but 0.68x of the hand-written native server, and a profile showed why: scriptc's `writeHead` sends the head at once, so each response took two `sendto` calls where raw's took one `sendmsg`. The node adapter now sets a whole body's head with `setHeader` natively (`packages/server/node/write.ts`), and `--cpu` (3 rounds, load average about 10, so ratios rather than absolutes) gives:
-
-| Contender | CPU µs/req | vs raw, same engine |
-|---|---:|---:|
-| raw node | 67.5 | 1.00x |
-| light node | 68.4 | 1.01x |
-| raw native | 23.6 | 1.00x |
-| light native | 27.3 | 1.15x |
-
-Light native's throughput in that run matched raw native's (28.0k vs 27.8k req/s).
+A `Request` and a `Response` per request halve the throughput on both engines, which is why the package's core has its own `Context` and `Reply` and an adapter reads and writes the platform's own objects. Natively the package answers twice node's rate, and 0.68x of the hand-written native server: its per-request work weighs more there than under node (`packages/server/probes/README.md`).

@@ -23,7 +23,7 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 - Never `instanceof` on `Reply | Promise<Reply>`: `await` it.
 - No write by a computed string key; empty arrays and maps are typed where they are declared.
 - An `upgrade` listener's parameters are typed `(req: IncomingMessage, socket: net.Socket, head: Buffer)`, the shape scriptc lowers (node's types say `Duplex`).
-- On `node:http`: `res.write` takes a narrowed chunk and is called as a statement; no `off`, `removeListener`, `drain`, `writableNeedDrain` on a response, nor `destroyed`; `writeHead` takes a `string[]` value, never a literal, and natively sends the head at once, so a whole body's head is set with `statusCode` and `setHeader` there (`node/write.ts`, one syscall a response); a Fetch `Headers` is read with `forEach`; a Promise executor types its reject `(reason: Error) => void`.
+- On `node:http`: `res.write` takes a narrowed chunk and is called as a statement; no `off`, `removeListener`, `drain`, `writableNeedDrain` on a response, nor `destroyed`; `writeHead` takes a `string[]` value, never a literal; a Fetch `Headers` is read with `forEach`; a Promise executor types its reject `(reason: Error) => void`.
 - Comments: a JSDoc module header and JSDoc on exported symbols, nothing else (light's comment rule).
 - Workers: the app writes the spawn, with `new Worker(new URL("./worker.ts", import.meta.url))` in its own module; scriptc resolves that URL at build time and refuses one passed into the library (SC2020). The primary (`serveThreads`) never listens; worker settings travel as plain record messages (a class instance loses its methods across threads).
 - A worker-side module must not end in `.test.ts`: the runner takes every `test/*.test.ts` as a test.
