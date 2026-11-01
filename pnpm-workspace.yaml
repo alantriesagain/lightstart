@@ -5,3 +5,4 @@ packages:
   - 'packages/lightstart'
   - 'packages/server'
   - 'packages/sqlite'
+  - 'benchmarks'

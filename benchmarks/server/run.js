@@ -1,7 +1,8 @@
 /**
- * @file The server benchmark: scriptc's http-api workload written three ways (`variants/raw.ts` on
+ * @file The server benchmark: scriptc's http-api workload written six ways (`variants/raw.ts` on
  * bare `node:http`, `variants/bridge.ts` as a Fetch handler behind bootstrapp's node-to-Fetch
- * bridge, `variants/light.ts` on @lightstart/server), each run under node and, when a scriptc
+ * bridge, `variants/light.ts` on @lightstart/server, and `express.ts`, `fastify.ts` and `hono.ts`
+ * on those frameworks), each run under node and, when a scriptc
  * builds it, as a native binary. Every round starts each contender, reads `PORT <n>` from its
  * stderr, drives it with `load.mjs` (keep-alive connections, a seeded request sequence) and waits
  * for it to print its totals and exit. Every contender must answer the same digest and print the

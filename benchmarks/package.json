@@ -1,0 +1,18 @@
+{
+  "name": "@light/benchmarks",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "light's benchmarks: the page benchmarks in a browser, and the server benchmark, which runs scriptc's http-api workload on raw node:http, @lightstart/server, Express, Fastify and Hono, under node and as native binaries.",
+  "devDependencies": {
+    "@hono/node-server": "^2.1.5",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/server": "workspace:*",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "express": "^5.3.0",
+    "fastify": "^5.12.7",
+    "hono": "^4.13.16",
+    "playwright": "^1.58.2"
+  }
+}
