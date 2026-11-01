@@ -17,7 +17,9 @@ What Express, Fastify and Hono provide (their installed sources read, and Fastif
 
    A plugin's per-request work is prepared at build time: fixed header lists computed once, nothing re-derived per request.
 2. **The core stays what it is**: runtime-neutral, importing nothing outside the package, compiled fully statically by scriptc, the same under node, natively, behind `toFetch` and in memory. A feature that needs the platform (hashing, compression) takes it through a small seam an adapter fills, never a `node:` import in the core.
-3. **Proven unused-is-free.** `benchmarks/server --workload hello-get --cpu` is run before and after each phase with every new plugin registered but unused by the route; CPU per request may not move beyond noise.
+3. **Measured on the hello workload.** Paired, pinned rounds (`benchmarks/server --workload hello-get --cpu`, 5 rounds, medians) before and after each phase:
+   - what a route does not use (an accessor not called, middleware not listed) may not move CPU per request beyond noise: the median within 5% of the commit before;
+   - a registered plugin runs on every request by design, so its cost per request is measured and written in the README beside it (for example "SecurityHeaders: +0.4 µs"), for an app to weigh before registering it.
 4. **Bootstrapp deletes code.** Each feature is done when bootstrapp's copy is gone (the inventory below names the files).
 5. **Every feature is tested under node and natively** (the package's test gate), and in memory and behind `toFetch` where it touches the request or the reply.
 
