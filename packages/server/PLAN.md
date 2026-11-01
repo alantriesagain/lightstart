@@ -4,6 +4,8 @@ Four items, from a stale `light/server` draft that redesigned this package. Each
 
 ## 1. Native throughput: profile, then fix
 
+**Done.** The profile and `strace` found one syscall: scriptc's `writeHead` sends the head at once, so every response went out in two `sendto` calls where raw's went in one `sendmsg`. With the head set by `setHeader` natively, light spends 1.15x raw's CPU per request natively (was 1.44x) and 1.01x under node; its throughput matched raw's. A synchronous handler path measured within noise and was left out. What follows is the plan as it was.
+
 Where it stands, measured:
 
 - `benchmarks/server` natively: light 44.6k req/s, raw `node:http` 64.1k (0.70x; the README's run had 0.68x). Under node light is 0.93x of raw.

@@ -9,6 +9,11 @@
  * natively the runtime buffers a response's writes itself and the socket never reports full. A
  * websocket is accepted on the server's `upgrade` event (`socket.ts`), never here: an `upgrade`
  * reply that reaches a response is answered 501.
+ *
+ * Natively (no `process.versions.v8`) a whole body's head is set with `statusCode` and `setHeader`
+ * rather than `writeHead`: scriptc's `writeHead` sends the head at once, so `end` sent the body in
+ * a second syscall, and a raw server's one `sendmsg` a response cost light two. Under node
+ * `writeHead` with the flat list waits for `end` anyway and is the cheaper call.
  */
 import type { ServerResponse } from "node:http";
 import { HeaderList } from "../headers.ts";
@@ -86,6 +91,28 @@ const responseOut = async (res: ServerResponse, response: Response, method: stri
   }
 };
 
+const native = process.versions.v8 === undefined;
+
+const headOn = (res: ServerResponse, status: number, headers: HeaderList): void => {
+  if (!native) {
+    res.writeHead(status, headers.flat());
+    return;
+  }
+  res.statusCode = status;
+  const names = headers.names;
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i]!;
+    if (names.indexOf(name) !== i) continue;
+    if (names.indexOf(name, i + 1) < 0) {
+      res.setHeader(name, headers.values[i]!);
+      continue;
+    }
+    const all: string[] = [];
+    for (let j = i; j < names.length; j++) if (names[j] === name) all.push(headers.values[j]!);
+    res.setHeader(name, all);
+  }
+};
+
 /** Writes `reply` as the answer to a request made with `method`. */
 export const writeReply = async (res: ServerResponse, reply: Reply, method: string): Promise<void> => {
   if (reply.channel !== null) return writeReply(res, unaccepted(), method);
@@ -103,14 +130,14 @@ export const writeReply = async (res: ServerResponse, reply: Reply, method: stri
   }
   if (reply.text !== null) {
     headers.default("content-length", String(Buffer.byteLength(reply.text)));
-    res.writeHead(status, headers.flat());
+    headOn(res, status, headers);
     if (none) res.end();
     else res.end(reply.text);
     return;
   }
   if (reply.bytes !== null) {
     headers.default("content-length", String(reply.bytes.length));
-    res.writeHead(status, headers.flat());
+    headOn(res, status, headers);
     if (none) res.end();
     else res.end(reply.bytes);
     return;
