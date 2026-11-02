@@ -112,6 +112,11 @@ static JSValue js_host(JSContext *ctx, JSValueConst this_val, int argc, JSValueC
   const char *name = JS_ToCStringLen(ctx, &name_len, argv[0]);
   if (name == NULL) return JS_EXCEPTION;
   const char *args = argc > 1 ? JS_ToCStringLen(ctx, &args_len, argv[1]) : NULL;
+  // An argument that could not be converted (out of memory) is the plugin's error, never an empty call.
+  if (argc > 1 && args == NULL) {
+    JS_FreeCString(ctx, name);
+    return JS_EXCEPTION;
+  }
   int d = ++w->depth;
   w->reply[d] = NULL;
   w->reply_len[d] = 0;
