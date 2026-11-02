@@ -39,6 +39,7 @@
       "default": "./dom/index.js"
     },
     "./markup": "./markup/index.js",
+    "./markup/core": "./markup/core.ts",
     "./native/tui": "./native/tui/index.ts",
     "./native/desktop": "./native/desktop/index.ts",
     "./html": {

@@ -17,7 +17,8 @@ let host = null;
  * @param {{ markers?: boolean }} [options] `markers: false` answers plain markup a page will not adopt
  * @returns {string}
  */
-export const renderToString = (template, { markers = true } = {}) => {
+export const renderToString = (template, options) => {
+  const markers = options?.markers ?? true;
   const previous = currentHost();
   if (host === null) host = new MarkupHost();
   setHost(host);
