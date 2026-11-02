@@ -152,6 +152,7 @@ The package is an app server: it does what needs the app's knowledge (which rout
 | Slow-client and idle timeouts | A timeout for a handler that hangs |
 | Large static files, ranges, caching | ETags known before the work, and 304s |
 | Balancing across machines | Validation, error mapping, CORS and security headers |
+| Moving file bytes: uploads straight to the bucket, downloads from its CDN | Deciding who may upload or read a file, and signing the short-lived URL for it |
 
 `TrustProxy` makes `c.ip`, `c.protocol` and `c.host` the client's behind a proxy. On Cloudflare Workers and Pages, Cloudflare is the proxy, and what only an app can send there (security headers, CORS) comes from the app. A native binary exposed with nothing in front still serves correctly; it just does none of the left column.
 

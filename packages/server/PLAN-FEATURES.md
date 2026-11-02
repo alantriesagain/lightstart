@@ -71,7 +71,7 @@ What Express, Fastify and Hono provide (their installed sources read, and Fastif
 ### Phase D: files and larger bodies
 
 - **`Static`**: a `transform(path, bytes)` hook (bootstrapp's dev server strips TS and rewrites the importmap), so the dev server runs on it. `Range` requests only if a project serves media from the app itself.
-- **Multipart**: `c.formData()` within limits (`fileSize`, `files`, `parts`); streamed parts only if a project needs uploads larger than the limit.
+- **Files through storage and the CDN, not the app.** The server runs behind proxies and CDNs, so file bytes do not pass through it: an upload is a short-lived presigned `PUT` URL to the bucket (S3-compatible, R2 included), issued after the app checks the user, the record that keeps the key arriving as JSON; a download is the bucket's CDN domain for public files, or a short-lived signed `GET` URL (or a redirect to one) for private ones. The signing is SigV4, HMAC-SHA256 over the `Crypto` seam, which works natively. Built when a project needs uploads; multipart bodies are not added.
 - **Safe redirects**: `redirect(c, target, { sameOrigin: true })` refusing an absolute target on another origin.
 
 ### Phase E: generated at build time
