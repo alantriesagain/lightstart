@@ -7,7 +7,8 @@
  * the original `Request` handed back to a handler that wants one. Work given to `waitUntil` goes to
  * the platform's (a Worker's `ctx.waitUntil`, which keeps it alive after the reply) and otherwise
  * runs on its own. A reply becomes a `Response`: a whole body as it is, a streamed one through a
- * `ReadableStream`, a `Response` the handler made passed on untouched. Websockets are not taken
+ * `ReadableStream`, a `Response` the handler made passed on as it is, with only the headers the
+ * reply gained (a plugin's CORS grant, security headers) added where it has none of its own. Websockets are not taken
  * here yet (each runtime upgrades its own way): an `upgrade` reply is answered 501.
  */
 import { Context } from "../context.ts";
@@ -177,9 +178,20 @@ class StreamWriter extends Writer {
 
 const bodiless = (method: string, status: number): boolean => method === "HEAD" || status === 204 || status === 304 || (status >= 100 && status < 200);
 
-/** `reply` as the `Response` to a request made with `method`. */
+const withReplyHeaders = (response: Response, reply: Reply): Response => {
+  const names = reply.headers.names;
+  if (names.length === 0) return response;
+  const headers = new Headers(response.headers);
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i]!;
+    if (name === "set-cookie" || !headers.has(name)) headers.append(name, reply.headers.values[i]!);
+  }
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: headers });
+};
+
+/** `reply` as the `Response` to a request made with `method`; a `Response` the handler made keeps its own headers and gains the reply's others (a plugin's CORS grant, security headers). */
 export const toResponse = (reply: Reply, method: string): Response => {
-  if (reply.response !== null) return reply.response;
+  if (reply.response !== null) return withReplyHeaders(reply.response, reply);
   if (reply.channel !== null) return toResponse(unaccepted(), method);
   const headers = new Headers();
   const names = reply.headers.names;

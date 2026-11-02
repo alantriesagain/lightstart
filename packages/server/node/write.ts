@@ -57,11 +57,15 @@ const streamOut = async (res: ServerResponse, status: number, headers: HeaderLis
   }
 };
 
-const responseOut = async (res: ServerResponse, response: Response, method: string): Promise<void> => {
+const responseOut = async (res: ServerResponse, response: Response, own: HeaderList, method: string): Promise<void> => {
   const headers = new HeaderList();
   response.headers.forEach((value: string, name: string) => {
     headers.append(name, value);
   });
+  for (let i = 0; i < own.names.length; i++) {
+    const name = own.names[i]!;
+    if (name === "set-cookie" || !headers.has(name)) headers.append(name, own.values[i]!);
+  }
   const source = response.body;
   if (source === null || bodiless(method, response.status)) {
     res.writeHead(response.status, headers.flat());
@@ -89,7 +93,7 @@ const responseOut = async (res: ServerResponse, response: Response, method: stri
 /** Writes `reply` as the answer to a request made with `method`. */
 export const writeReply = async (res: ServerResponse, reply: Reply, method: string): Promise<void> => {
   if (reply.channel !== null) return writeReply(res, unaccepted(), method);
-  if (reply.response !== null) return responseOut(res, reply.response, method);
+  if (reply.response !== null) return responseOut(res, reply.response, reply.headers, method);
   const status = reply.status;
   const headers = reply.headers;
   const none = bodiless(method, status);

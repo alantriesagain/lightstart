@@ -3,7 +3,8 @@
  * without a query; headers by name; the original `Request` handed back; the `env` and the address
  * the options name; work handed to the platform's `waitUntil`; a JSON body, and one over the limit
  * refused as it streams in; two `set-cookie` headers kept apart; a HEAD and a 204 with no body; a
- * streamed body read through the `Response`; a handler's own `Response` passed on untouched.
+ * streamed body read through the `Response`; a handler's own `Response` passed on untouched, and
+ * one a hook added headers to keeping its own and gaining the hook's.
  * Runs under node and natively; the outputs must be identical.
  */
 import { App } from "../app.ts";
@@ -54,8 +55,14 @@ const main = async (): Promise<void> => {
       }, "text/plain"),
     )
     .delete("/gone", () => empty())
-    .get("/passed", () => respond(passed));
+    .get("/passed", () => respond(passed))
+    .get("/passed-grant", () => respond(new Response("by hand", { status: 202, headers: { "x-hand": "own" } })));
   app.onReply((c: Context, reply: Reply): void => {
+    if (c.path === "/passed-grant") {
+      reply.headers.set("x-grant", "yes");
+      reply.headers.set("x-hand", "hook");
+      reply.headers.append("set-cookie", "g=1");
+    }
     if (c.path === "/cookies") {
       reply.headers.append("set-cookie", "a=1");
       reply.headers.append("set-cookie", "b=2");
@@ -89,6 +96,8 @@ const main = async (): Promise<void> => {
   eq("a streamed body reads through the Response", await (await handler(new Request("https://example.com/stream"))).text(), "one,two");
   const hand = await handler(new Request("https://example.com/passed"));
   ok("a handler's own Response is passed on untouched", hand === passed);
+  const granted = await handler(new Request("https://example.com/passed-grant"));
+  eq("a hook's headers reach a handler's own Response, its own header winning", String(granted.status) + " " + (granted.headers.get("x-grant") ?? "") + " " + (granted.headers.get("x-hand") ?? "") + " " + (granted.headers.get("set-cookie") ?? "") + " " + (await granted.text()), "202 yes own g=1 by hand");
   const missing = await handler(new Request("https://example.com/nope"));
   eq("a path no route matches is a 404", String(missing.status), "404");
   done();

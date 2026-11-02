@@ -90,6 +90,13 @@ const main = async (): Promise<void> => {
       return text("accepted", 202);
     });
 
+  app.onReply((c: Context, reply: Reply): void => {
+    if (c.path === "/fetch-style") {
+      reply.headers.set("x-grant", "yes");
+      reply.headers.set("x-kind", "hook");
+    }
+  });
+
   const server = await serve(app, { port: 0, host: "127.0.0.1" });
   const base = "http://127.0.0.1:" + String(server.port);
   ok("listens on a port the system picked", server.port > 0);
@@ -137,7 +144,7 @@ const main = async (): Promise<void> => {
   }
 
   const fetchStyle = await fetch(base + "/fetch-style");
-  eq("a Fetch Response is copied out", String(fetchStyle.status) + " " + (fetchStyle.headers.get("x-kind") ?? "") + " " + (await fetchStyle.text()), "201 fetch from a Response");
+  eq("a Fetch Response is copied out, a hook's headers added and its own winning", String(fetchStyle.status) + " " + (fetchStyle.headers.get("x-kind") ?? "") + " " + (fetchStyle.headers.get("x-grant") ?? "") + " " + (await fetchStyle.text()), "201 fetch yes from a Response");
 
   const controller = new AbortController();
   const aborting = await fetch(base + "/abort", { signal: controller.signal });
