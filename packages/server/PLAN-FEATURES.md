@@ -93,16 +93,24 @@ Sessions, JWT, OAuth and user models stay in `@bootstrapp/auth`; the server give
 - D: `serve/src/static.ts` onto `Static` with its transform.
 - F: the Worker and the plain Pages helpers (below).
 
-### Phase F: bootstrapp's Worker and Pages helpers on `@lightstart/server/fetch`
+### Phase F: bootstrapp's Cloudflare plane on `@lightstart/server/fetch`
 
-`packages/cloudflare/workers/api/*` and `framework/endpoints/*` (with the Pages runner and the generated dispatcher that embed them) answer with their own `Response` builders, CORS, security headers and parsing. They move onto an `App` served by `toFetch`, so CORS, `SecurityHeaders`, cookies, `validate` and the error shape have one implementation on every plane: the dev server, the SQLite server, Pages Functions and the Worker. The Worker's CRUD gains the column allowlist Pages' has. Done after A to C, which it consumes; each surface ported with its tests passing before and after, and the deployed Functions bundle checked with `wrangler pages functions build`.
+Mapped first (Worker, Pages helpers, generated dispatcher, `framework/endpoints`): Pages' declared endpoints already run on a light `App` but build its context by hand; Pages CRUD and the auth Function answer with their own `Response`s, CORS and errors; the Worker (`packages/cloudflare/workers/api`) has no tests, its CRUD lacks Pages' public projection, row cap, column check and policies, its 500s carry the thrown message, and only `projects/blog` configures it. **Decision: the Worker is retired**; Pages Functions are the one Cloudflare plane.
+
+1. **Pages dispatcher on `toFetch`.** `answer()` stops building `Context`/`FetchIncoming` by hand; it still answers null when no endpoint matches, so the dispatcher falls through to CRUD.
+2. **Pages CRUD and auth on the shared `App`.** Model routes and the auth Function mounted on one App with `Cors` (shell origins and `ALLOWED_ORIGINS`, credentials), `SecurityHeaders` and a `mapError` keeping the `{ error }` shape; the dispatcher's own preflight and `withCors` go.
+3. **The Worker retired.** Its file (R2) and metadata routes become Pages endpoints on the shared App; blog deploys Pages; `cf:deploy` deploys no Worker; `workers/api` and its `server-adapter.js` are deleted.
+4. **`framework/endpoints` collapsed.** `response.js` and `cors.js` become thin wrappers over light's (or go), keeping browser bundles free of the server.
+5. **Light's policies adopted.** meetup-rio's `perAddress` on `rateLimit` with a D1 store; `validate` where bodies are hand-checked; 304s for file and content routes.
+
+Each stage: its tests passing before and after, `wrangler pages functions build` compiling a project's vendored Functions offline, then a commit.
 
 ## Decisions
 
 1. **Validation schemas** are light's model field descriptors, validated by the server's own small validator (no import from light).
 2. **Cookies are written with helpers**, `setCookie(reply, …)` and `clearCookie(reply, …)`.
 3. **Security header defaults** are the safe set above, CSP and `Permissions-Policy` off unless configured.
-4. **Bootstrapp's Worker and Pages helpers move to `@lightstart/server/fetch`** in this plan (Phase F).
+4. **Bootstrapp's Cloudflare plane moves to `@lightstart/server/fetch`** in this plan (Phase F), and **the Worker is retired**: Pages Functions are the one Cloudflare plane.
 
 ## Order and gates
 
