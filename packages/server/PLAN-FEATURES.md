@@ -95,6 +95,8 @@ Sessions, JWT, OAuth and user models stay in `@bootstrapp/auth`; the server give
 
 ### Phase F: bootstrapp's Cloudflare plane on `@lightstart/server/fetch`
 
+**Done, but for what waits.** 1: nothing to port; `answer()` already used light's public fetch pieces. 2: Pages' model API on `crudApp` with `Cors`, `SecurityHeaders` and light's 500 (bootstrapp `68a0790e0`), after light let a handler's own `Response` gain the reply's headers (`d4c2a6f`). 3: the Worker and its deploy target retired (bootstrapp `05354e7e0`). 4: declared endpoints on `Cors` with `paths` (light `1553c46`, bootstrapp `f5a3a778e`); the framework's CORS helpers stay for the dev server's node pipeline, Instagram's Worker and the projects' auth Functions. 3b and 5 wait for a project that needs them.
+
 Mapped first (Worker, Pages helpers, generated dispatcher, `framework/endpoints`): Pages' declared endpoints already run on a light `App` but build its context by hand; Pages CRUD and the auth Function answer with their own `Response`s, CORS and errors; the Worker (`packages/cloudflare/workers/api`) has no tests, its CRUD lacks Pages' public projection, row cap, column check and policies, its 500s carry the thrown message, and only `projects/blog` configures it. **Decision: the Worker is retired**; Pages Functions are the one Cloudflare plane.
 
 1. **Pages dispatcher on `toFetch`.** `answer()` stops building `Context`/`FetchIncoming` by hand; it still answers null when no endpoint matches, so the dispatcher falls through to CRUD.
