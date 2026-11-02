@@ -9,7 +9,7 @@ transaction rules are the same in both runtimes.
 | `@lightstart/sqlite` | the shared types, `openPragmas` and the statement-cache default |
 | `@lightstart/sqlite/node` | `Database.open(path, options)` over `node:sqlite` |
 | `@lightstart/sqlite/native` | `Database.open(path, options)` over `native/shim.c` |
-| `@lightstart/sqlite/d1` | `d1Of(db)`: a binding shaped like Cloudflare D1's over an open database (`prepare().bind()`, `first`, `all`, `run`, a transactional `batch`), for code written against D1 |
+| `@lightstart/sqlite/d1` | `d1Of(db)`: a binding shaped like Cloudflare D1's over an open database (`prepare().bind()`, `first`, `raw`, `all`, `run`, `exec`, a transactional `batch`), for code written against D1 |
 
 scriptc refuses `node:sqlite`, so the two drivers are separate modules; an app
 imports only the one its runtime has.
@@ -67,6 +67,28 @@ base64 text, and a float is written as JavaScript writes it.
 Parameters are positional (`["a", 1]`) or named without the prefix
 (`{ id: "a", n: 1 }` binds `:id` and `:n`). A boolean is `1` or `0`, an array
 or object is JSON text, `undefined` is null, and a `Uint8Array` is a blob.
+
+## D1
+
+`d1Of(db)` presents an open database as a Cloudflare D1 binding:
+`prepare(sql).bind(...values)` answers a statement whose `first(column?)`,
+`raw({ columnNames })`, `all()` and `run()` are promises, `exec(sql)` answers
+`{ count, duration }`, and `batch(statements)` runs them in one transaction.
+
+- `first(column)` answers that column's value of the first row, or null when
+  there is no row. A missing column throws `D1_COLUMN_NOTFOUND`, as D1 does.
+- `raw()` answers arrays of values; `{ columnNames: true }` puts the column
+  names first. The names come from the first row, so an empty result has none.
+- `all()` and `run()` carry D1's `meta`: `changes`, `last_row_id`, a measured
+  `duration` in milliseconds, and `changed_db` (`changes > 0`). `rows_read` and
+  `rows_written` are left out because the driver does not count them cheaply.
+- `exec()` counts the SQL statements it runs, parsing semicolons outside quotes
+  and comments.
+
+D1 refuses explicit SQL transactions and caps a statement at 100,000 bytes and
+a query at 100 bound parameters. `d1Of(db, { strict: true })` refuses the same,
+throwing `D1_ERROR` messages through `prepare`, `bind` and `exec`; the default
+is permissive, so the local binding still accepts a `BEGIN`/`COMMIT` block.
 
 ## Native
 
