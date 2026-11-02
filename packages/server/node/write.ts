@@ -106,20 +106,20 @@ export const writeReply = async (res: ServerResponse, reply: Reply, method: stri
     return streamOut(res, status, headers, reply.stream);
   }
   if (reply.text !== null) {
-    headers.default("content-length", String(Buffer.byteLength(reply.text)));
+    headers.defaultLower("content-length", String(Buffer.byteLength(reply.text)));
     res.writeHead(status, headers.flat());
     if (none) res.end();
     else res.end(reply.text);
     return;
   }
   if (reply.bytes !== null) {
-    headers.default("content-length", String(reply.bytes.length));
+    headers.defaultLower("content-length", String(reply.bytes.length));
     res.writeHead(status, headers.flat());
     if (none) res.end();
     else res.end(reply.bytes);
     return;
   }
-  if (status !== 204 && status !== 304 && status >= 200) headers.default("content-length", "0");
+  if (status !== 204 && status !== 304 && status >= 200) headers.defaultLower("content-length", "0");
   res.writeHead(status, headers.flat());
   res.end();
 };

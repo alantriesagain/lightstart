@@ -51,7 +51,7 @@ export class Reply {
 /** A JSON body: `data` stringified, with `application/json`. `data` is a record or an array, never a class instance. */
 export const json = (data: unknown, status = 200): Reply => {
   const reply = new Reply(status);
-  reply.headers.append("content-type", "application/json; charset=utf-8");
+  reply.headers.appendLower("content-type", "application/json; charset=utf-8");
   reply.text = JSON.stringify(data);
   return reply;
 };
@@ -59,14 +59,14 @@ export const json = (data: unknown, status = 200): Reply => {
 /** `{ "error": message }` with `status` and `cache-control: no-store`: a refusal. */
 export const fail = (message: string, status: number): Reply => {
   const reply = json({ error: message }, status);
-  reply.headers.append("cache-control", "no-store");
+  reply.headers.appendLower("cache-control", "no-store");
   return reply;
 };
 
 /** A plain text body. */
 export const text = (body: string, status = 200): Reply => {
   const reply = new Reply(status);
-  reply.headers.append("content-type", "text/plain; charset=utf-8");
+  reply.headers.appendLower("content-type", "text/plain; charset=utf-8");
   reply.text = body;
   return reply;
 };
@@ -74,7 +74,7 @@ export const text = (body: string, status = 200): Reply => {
 /** An HTML body. */
 export const html = (body: string, status = 200): Reply => {
   const reply = new Reply(status);
-  reply.headers.append("content-type", "text/html; charset=utf-8");
+  reply.headers.appendLower("content-type", "text/html; charset=utf-8");
   reply.text = body;
   return reply;
 };
@@ -82,7 +82,7 @@ export const html = (body: string, status = 200): Reply => {
 /** A body of bytes with the content type given. */
 export const bytes = (body: Uint8Array, type: string, status = 200): Reply => {
   const reply = new Reply(status);
-  reply.headers.append("content-type", type);
+  reply.headers.appendLower("content-type", type);
   reply.bytes = body;
   return reply;
 };
@@ -93,14 +93,14 @@ export const empty = (status = 204): Reply => new Reply(status);
 /** A redirect to `location`, 302 unless told otherwise. */
 export const redirect = (location: string, status = 302): Reply => {
   const reply = new Reply(status);
-  reply.headers.append("location", location);
+  reply.headers.appendLower("location", location);
   return reply;
 };
 
 /** A streamed body of `type`: the adapter sends the headers, then whatever `body` writes, then ends. */
 export const stream = (body: StreamBody, type: string, status = 200): Reply => {
   const reply = new Reply(status);
-  reply.headers.append("content-type", type);
+  reply.headers.appendLower("content-type", type);
   reply.stream = body;
   return reply;
 };
@@ -139,8 +139,8 @@ export class EventSink {
  */
 export const sse = (body: (events: EventSink) => Promise<void>): Reply => {
   const reply = stream((out: Writer) => body(new EventSink(out)), "text/event-stream; charset=utf-8");
-  reply.headers.append("cache-control", "no-cache");
-  reply.headers.append("x-accel-buffering", "no");
+  reply.headers.appendLower("cache-control", "no-cache");
+  reply.headers.appendLower("x-accel-buffering", "no");
   return reply;
 };
 

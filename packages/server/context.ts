@@ -118,7 +118,7 @@ export class Context {
   private sameOriginRead: boolean | null = null;
   private formRead: Promise<Map<string, string[]>> | null = null;
   private acceptRanges: AcceptRange[] | null = null;
-  private readonly slots = new Slots();
+  private slots: Slots | null = null;
   private textRead: Promise<string> | null = null;
   private bytesRead: Promise<Uint8Array> | null = null;
   private forwardedProtocol = "";
@@ -414,11 +414,13 @@ export class Context {
 
   /** The value a middleware set for `key`, undefined when none did. */
   get<T>(key: Key<T>): T | undefined {
+    if (this.slots === null) return undefined;
     return this.slots.read(key.id) as T | undefined;
   }
 
   /** Sets the value of `key` for the rest of this request. */
   set<T>(key: Key<T>, value: T): void {
+    if (this.slots === null) this.slots = new Slots();
     this.slots.write(key.id, value);
   }
 

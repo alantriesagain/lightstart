@@ -11,25 +11,34 @@ export class HeaderList {
 
   /** Replaces every value of `name` with `value`. */
   set(name: string, value: string): void {
-    const key = name.toLowerCase();
-    this.delete(key);
-    this.names.push(key);
+    this.setLower(name.toLowerCase(), value);
+  }
+
+  private setLower(name: string, value: string): void {
+    this.deleteLower(name);
+    this.names.push(name);
     this.values.push(value);
   }
 
   /** Adds `value` after the values `name` already has. */
   append(name: string, value: string): void {
-    this.names.push(name.toLowerCase());
+    this.appendLower(name.toLowerCase(), value);
+  }
+
+  /** `append` for a name that is already lower-cased, as every one the package writes is. */
+  appendLower(name: string, value: string): void {
+    this.names.push(name);
     this.values.push(value);
   }
 
   /** Sets `name` only when it has no value yet. */
   default(name: string, value: string): void {
-    const key = name.toLowerCase();
-    if (this.names.indexOf(key) < 0) {
-      this.names.push(key);
-      this.values.push(value);
-    }
+    this.defaultLower(name.toLowerCase(), value);
+  }
+
+  /** `default` for a name that is already lower-cased. */
+  defaultLower(name: string, value: string): void {
+    if (this.names.indexOf(name) < 0) this.appendLower(name, value);
   }
 
   /** The values of `name` joined with ", ", or null when it has none. */
@@ -55,12 +64,16 @@ export class HeaderList {
 
   /** Removes every value of `name`. */
   delete(name: string): void {
-    const key = name.toLowerCase();
-    let at = this.names.indexOf(key);
+    this.deleteLower(name.toLowerCase());
+  }
+
+  private deleteLower(name: string): void {
+    let at = this.names.indexOf(name);
+    if (at < 0) return;
     while (at >= 0) {
       this.names.splice(at, 1);
       this.values.splice(at, 1);
-      at = this.names.indexOf(key, at);
+      at = this.names.indexOf(name, at);
     }
   }
 
