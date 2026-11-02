@@ -1,7 +1,7 @@
 /**
  * @file The plugins that need no files, through the memory adapter. CORS: a preflight answered
  * before routing, granting an allowed origin and nothing to another, the headers asked for echoed;
- * a real reply's grant with `Vary: Origin`; only under the prefix; "*" and credentials; an origin
+ * a real reply's grant with `Vary: Origin`; only under the prefix, and only on the paths `paths` keeps; "*" and credentials; an origin
  * an `allow` function admits. The proxy's trust: forwarded headers taken from a trusted peer and
  * ignored from any other, `Forwarded` over the `X-Forwarded-*` headers, the client the rightmost
  * address that is not a trusted proxy, an IPv4 range and a mapped IPv6 peer. A request id taken
@@ -53,6 +53,13 @@ const main = async (): Promise<void> => {
   eq("and the headers a script may read", real.headers.get("access-control-expose-headers") ?? "", "x-total");
   ok("outside the prefix nothing is granted", !(await request(api, "GET", "/page", { headers: { origin: "https://app.example" } })).headers.has("access-control-allow-origin"));
   eqn("a plain OPTIONS is no preflight", (await request(api, "OPTIONS", "/api/items", { headers: { origin: "https://app.example" } })).status, 405);
+  const narrowed = new App()
+    .plugin(new Cors({ origins: ["https://app.example"], paths: (path: string): boolean => path !== "/api/private" }))
+    .post("/api/items", () => json({ ok: true }, 201))
+    .post("/api/private", () => json({ ok: true }, 201));
+  eqn("paths narrows which preflights are answered", (await request(narrowed, "OPTIONS", "/api/items", preflight("https://app.example"))).status, 204);
+  eqn("a preflight to a path it leaves out routes as any request", (await request(narrowed, "OPTIONS", "/api/private", preflight("https://app.example"))).status, 405);
+  ok("and gets no grant", !(await request(narrowed, "POST", "/api/private", { headers: { origin: "https://app.example" } })).headers.has("access-control-allow-origin"));
 
   const open = new App().plugin(new Cors({ origins: "*" })).get("/x", () => text("x"));
   eq("\"*\" grants any origin as \"*\"", (await request(open, "GET", "/x", { headers: { origin: "https://a.example" } })).headers.get("access-control-allow-origin") ?? "", "*");

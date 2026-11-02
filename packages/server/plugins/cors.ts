@@ -20,6 +20,8 @@ export interface CorsOptions {
   allow?: (origin: string, c: Context) => boolean;
   /** Only paths under this prefix get CORS ("/api/"); every path by default. */
   prefix?: string;
+  /** Narrows the covered paths further, per path (the routes a table declared CORS for); a preflight to another path is not answered here and routes as any request. */
+  paths?: (path: string) => boolean;
   methods?: string[];
   /** The request headers a preflight allows; those the browser asked for by default. */
   headers?: string[];
@@ -52,7 +54,9 @@ export class Cors extends Plugin {
 
   private covers(c: Context): boolean {
     const prefix = this.options.prefix ?? "";
-    return prefix === "" || c.path.startsWith(prefix);
+    if (prefix !== "" && !c.path.startsWith(prefix)) return false;
+    const paths = this.options.paths;
+    return paths === undefined || paths(c.path);
   }
 
   private granted(reply: Reply, origin: string): void {
