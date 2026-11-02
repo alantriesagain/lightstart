@@ -8,7 +8,12 @@
  * anything else is a 404. A file answers with its type, a weak ETag and
  * `last-modified` (a matching `if-none-match` or `if-modified-since` is a 304), the configured
  * `cache-control`, and (unless turned off) its `.br` or `.gz` neighbour when the client accepts it. A small file is read
- * whole; a large one is streamed, paused while the client's side of the socket is full.
+ * whole; a large one is streamed, paused while the client's side of the socket is full. A `transform`
+ * may turn a file's bytes into another body and type (a TypeScript module into JavaScript); its
+ * ETag adds `transformVersion` to the file's size and mtime, so it changes when the caller's
+ * transform or its inputs do, while a 304 still needs no transform. A transformed file never uses
+ * a precompressed neighbour; one the transform declines is served exactly as without it, streamed
+ * when large.
  */
 import { createReadStream } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
@@ -18,6 +23,17 @@ import { Context } from "../context.ts";
 import { Plugin } from "../plugin.ts";
 import { Reply, Writer, bytes, empty, fail, stream } from "../reply.ts";
 import { extensionOf, mimeOf } from "./mime.ts";
+
+/** A file's bytes after its transform: the body to send and its content type. */
+export class Transformed {
+  readonly body: Uint8Array;
+  readonly type: string;
+
+  constructor(body: Uint8Array, type: string) {
+    this.body = body;
+    this.type = type;
+  }
+}
 
 export interface StaticOptions {
   /** The folder the files are in. */
@@ -38,6 +54,20 @@ export interface StaticOptions {
   typeOf?: (path: string) => string;
   /** Answer with a file's `.br` or `.gz` neighbour when the client accepts it; true by default. A host that serves a build as it is turns it off. */
   precompressed?: boolean;
+  /**
+   * Turns a file's bytes into the body sent instead, or null to send the file as it is. The path
+   * is the resolved file's; the body is read whole, so a transform that needs a large file sees it
+   * in memory. A non-null answer is sent as bytes, never through a `.br`/`.gz` neighbour.
+   */
+  transform?: (path: string, body: Uint8Array) => Transformed | null;
+  /** Which files the transform may change, asked before a file is read, so the others (images, media) are never read whole for it; every file when left out. */
+  transformable?: (path: string) => boolean;
+  /**
+   * What the transform's output depends on beyond the file's own size and mtime (its code, an
+   * importmap), as a string. It goes into every ETag as a hash while `transform` is set, so a
+   * change in it revalidates files whose source did not move.
+   */
+  transformVersion?: string;
 }
 
 class Found {
@@ -67,6 +97,16 @@ const folderAt = async (path: string): Promise<boolean> => {
   } catch {
     return false;
   }
+};
+
+/** A short stable hash of a transform's version, so an arbitrary string can sit in a weak ETag. */
+const versionHash = (version: string): string => {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < version.length; i++) {
+    hash ^= version.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16);
 };
 
 const decoded = (rest: string): string | null => {
@@ -133,7 +173,9 @@ export class Static extends Plugin {
 
   /** The reply for the found file: a 304 when the client's copy is current, else the file or its compressed neighbour. */
   async reply(c: Context, found: Found): Promise<Reply> {
-    const etag = "W/\"" + found.size.toString(16) + "-" + Math.floor(found.mtime).toString(16) + "\"";
+    const transform = this.options.transform;
+    const version = transform === undefined ? "" : "-" + versionHash(this.options.transformVersion ?? "0");
+    const etag = "W/\"" + found.size.toString(16) + "-" + Math.floor(found.mtime).toString(16) + version + "\"";
     const modified = new Date(Math.floor(found.mtime / 1000) * 1000);
     const cache = this.options.cacheControl ?? "no-cache";
     const fresh = (reply: Reply): Reply => {
@@ -154,6 +196,13 @@ export class Static extends Plugin {
     }
     const typeOf = this.options.typeOf;
     const type = typeOf === undefined ? mimeOf(found.path) : typeOf(found.path);
+    let raw: Uint8Array | null = null;
+    const transformable = this.options.transformable;
+    if (transform !== undefined && (transformable === undefined || transformable(found.path))) {
+      raw = await readFile(found.path);
+      const shape = transform(found.path, raw);
+      if (shape !== null) return fresh(bytes(shape.body, shape.type));
+    }
     const accepts = this.options.precompressed === false ? "" : (c.header("accept-encoding") ?? "");
     let file = found;
     let encoding = "";
@@ -171,7 +220,9 @@ export class Static extends Plugin {
         encoding = "gzip";
       }
     }
-    const reply = file.size > (this.options.streamAbove ?? 262144) ? stream(fileBody(file.path), type) : bytes(await readFile(file.path), type);
+    const streamed = file.size > (this.options.streamAbove ?? 262144);
+    const whole = streamed ? null : encoding === "" && raw !== null ? raw : await readFile(file.path);
+    const reply = whole === null ? stream(fileBody(file.path), type) : bytes(whole, type);
     if (encoding !== "") {
       reply.headers.set("content-encoding", encoding);
       reply.headers.append("vary", "Accept-Encoding");

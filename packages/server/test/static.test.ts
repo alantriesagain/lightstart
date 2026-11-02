@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { App } from "../app.ts";
 import { text } from "../reply.ts";
 import { bodyOf, request } from "../memory/index.ts";
-import { Static } from "../plugins/static.ts";
+import { Static, Transformed } from "../plugins/static.ts";
 import { done, eq, eqn, ok } from "@light/test/assert.ts";
 
 const root = mkdtempSync(join(tmpdir(), "light-static-"));
@@ -76,6 +76,52 @@ const main = async (): Promise<void> => {
   eq("under a prefix", await bodyOf(await request(assets, "GET", "/assets/app.js")), "export const x = 1;");
   eqn("and nothing outside it", (await request(assets, "GET", "/app.js")).status, 404);
   eqn("no spa fallback unless asked", (await request(assets, "GET", "/assets/settings")).status, 404);
+  writeFileSync(join(root, "mod.ts"), "export const n: number = 1;");
+  writeFileSync(join(root, "mod.ts.br"), "BROTLI");
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  const transform = (path: string, body: Uint8Array): Transformed | null =>
+    path.endsWith(".ts") ? new Transformed(encoder.encode("T:" + decoder.decode(body)), "application/x-js") : null;
+  const transformed = new App().plugin(new Static({ root, transform, transformVersion: "v1" }));
+
+  const ts = await request(transformed, "GET", "/mod.ts", { headers: { "accept-encoding": "br" } });
+  eq("a transform replaces the body and type", String(ts.status) + " " + (ts.headers.get("content-type") ?? "") + " " + (await bodyOf(ts)), "200 application/x-js T:export const n: number = 1;");
+  eq("and never its .br neighbour", ts.headers.get("content-encoding") ?? "none", "none");
+  const tsEtag = ts.headers.get("etag") ?? "";
+  ok("a transformed file has a weak ETag", tsEtag.startsWith("W/\""));
+  eqn("a matching if-none-match is a 304 for it", (await request(transformed, "GET", "/mod.ts", { headers: { "if-none-match": tsEtag } })).status, 304);
+  eqn("an old if-none-match is not", (await request(transformed, "GET", "/mod.ts", { headers: { "if-none-match": "W/\"0-0\"" } })).status, 200);
+
+  const sameSource = new App().plugin(new Static({ root, transform, transformVersion: "v2" }));
+  const v2 = (await request(sameSource, "GET", "/mod.ts")).headers.get("etag") ?? "";
+  ok("a changed transform version changes the ETag", v2 !== tsEtag);
+  eqn("so the old ETag revalidates to the file", (await request(sameSource, "GET", "/mod.ts", { headers: { "if-none-match": tsEtag } })).status, 200);
+
+  writeFileSync(join(root, "mod.ts"), "export const n: number = 22;");
+  const moved = (await request(transformed, "GET", "/mod.ts")).headers.get("etag") ?? "";
+  ok("a changed source changes the ETag", moved !== tsEtag);
+
+  const declined = await request(transformed, "GET", "/app.js", { headers: { "accept-encoding": "br" } });
+  eq("a file the transform declines still gets its .br neighbour", (declined.headers.get("content-encoding") ?? "") + " " + (await bodyOf(declined)), "br BROTLI");
+
+  const bigUntouched = await request(transformed, "GET", "/big.bin");
+  ok("a transform that declines a large file leaves it streamed", bigUntouched.stream !== null && bigUntouched.bytes === null);
+  eqn("with all of it", (await bodyOf(bigUntouched)).length, 300000);
+  let asked = 0;
+  const counted = (path: string, body: Uint8Array): Transformed | null => {
+    asked++;
+    return transform(path, body);
+  };
+  const narrowed = new App().plugin(new Static({ root, transform: counted, transformable: (path: string): boolean => path.endsWith(".ts"), transformVersion: "v1" }));
+  ok("transformable still lets the transform change what it covers", (await bodyOf(await request(narrowed, "GET", "/mod.ts"))).startsWith("T:"));
+  const notAsked = await request(narrowed, "GET", "/big.bin");
+  ok("a file it leaves out is never handed to the transform, and is streamed", asked === 1 && notAsked.stream !== null);
+
+  const all = new App().plugin(new Static({ root, transform: (_path: string, body: Uint8Array) => new Transformed(body, "application/x-all"), transformVersion: "v1" }));
+  const bigTransformed = await request(all, "GET", "/big.bin");
+  ok("a transform that takes a large file sends its answer whole", bigTransformed.stream === null && bigTransformed.bytes !== null);
+  eqn("all of the transformed bytes", (bigTransformed.bytes ?? new Uint8Array()).length, 300000);
+
   rmSync(root, { recursive: true, force: true });
   done();
 };
