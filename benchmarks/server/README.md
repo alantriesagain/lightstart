@@ -24,6 +24,10 @@ Every contender must answer the same digest (status, content type, cache control
 
 `raw.ts` and `load.mjs` come from [vercel-labs/scriptc](https://github.com/vercel-labs/scriptc) (`benchmarks/runtime/`, Apache-2.0), unchanged but for the `@ts-expect-error` `raw.ts` needs under `@types/node` and load.mjs's `--workload` flag (the hello schedules and their digest below).
 
+## A paired comparison
+
+`node benchmarks/server/pair.js <before> <after> [--workload hello-get] [--rounds 7]` judges a change to the server: each round runs the BEFORE binary then the AFTER one, each pinned to a core with the load client on another, and prints the server's CPU µs a request per round and the medians, with how many rounds AFTER was lower. Build BEFORE from a copy of the package as it was (`git archive HEAD packages/server | tar -x -C <dir>`) and AFTER from the working tree, each with a copy of a variant whose imports point at its own copy. On this machine two identical binaries differed by up to 9%, so run a control (the same binary twice) and read a change of a few percent as noise.
+
 ## Hello workloads
 
 `--workload hello-get` and `--workload hello-post` run Fastify's own benchmark routes ([fastify/benchmarks](https://github.com/fastify/benchmarks), the chart on fastify.dev) instead of scriptc's http-api. Each contender is one file in `hello/<variant>.ts` serving both routes: GET / answers `{"hello":"world"}`, and POST / with the JSON body `{"hello":"world"}` parses and echoes it back as JSON. Both count one request; POST /shutdown answers `{"bye":true}`, then the server prints `requests <n>` and exits. The workload decides the load client's request: hello-get is always GET /, hello-post always POST / with `content-type: application/json`. Native binaries are written as `out/<workload>-<variant>` so the workloads do not overwrite each other.
