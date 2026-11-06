@@ -123,7 +123,6 @@ async function restoreComponentMaps(buildDir, dev) {
   log(`restored component maps: ${Object.keys(maps).join(", ")}`);
 }
 
-
 /**
  * Walk the showcase's module graph from the component map, fetching each file
  * from the dev server (which strips types and resolves bare specifiers) and
@@ -148,7 +147,7 @@ async function mirrorModules(buildDir, dev) {
     queue.push(pathname);
   };
 
-  for (const [name, record] of Object.entries(dev.packages ?? {})) {
+  for (const [name, record] of Object.entries(dev.packages ?? {}))
     for (const paths of Object.values(/** @type {any} */ (record).components ?? {})) {
       if (!paths || typeof paths !== "object" || Array.isArray(paths)) continue;
       for (const file of Object.values(/** @type {any} */ (paths))) {
@@ -161,7 +160,6 @@ async function mirrorModules(buildDir, dev) {
         }
       }
     }
-  }
 
   let written = 0;
   while (queue.length) {
@@ -184,12 +182,12 @@ async function mirrorModules(buildDir, dev) {
         const specifier = match[2].replace(/\.m?ts$/, (ext) => ext.replace("ts", "js"));
         enqueue(new URL(specifier, `${origin}${pathname}`).pathname);
       }
-    } else if (/\.css$/.test(pathname)) {
+    } else if (/\.css$/.test(pathname))
       for (const match of body.matchAll(CSS_URL)) {
         const specifier = match[2] ?? match[4];
         if (specifier && !specifier.startsWith("data:") && !specifier.startsWith("http")) enqueue(new URL(specifier, `${origin}${pathname}`).pathname);
       }
-    }
+
     const out = pathname.endsWith(".ts") ? `${pathname.slice(0, -3)}.js` : pathname;
     const file = join(buildDir, out);
     await mkdir(dirname(file), { recursive: true });

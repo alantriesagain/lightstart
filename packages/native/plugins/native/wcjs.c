@@ -4,11 +4,13 @@
 // since FFI cannot return a string. A plugin calls the core through `__host(name, json)`, which
 // reaches the retained host callback; the core answers with `wcjs_reply` before that callback
 // returns (a stack, so a host call may itself call into JS and back). Each call from the core
-// into JS has a time budget, which the host's own time does not count against: past it the call
-// ends with status 2. A call made while another runs (from inside a host call) has a budget of its
-// own. The runtime has a memory limit; running out ends the call with an error. QuickJS measures
-// its stack from where a call came in on it, since the core may call from an async function's
-// fiber (512 KB in scriptc, its last 128 KB kept for the overflow guard), not only from the main
+// into JS has a budget of CPU time, and the host's own CPU time does not count against it: past
+// it the call ends with status 2. Time the process waits (swap, the scheduler, a blocked host
+// call) does not count, while an infinite loop does, since it spends CPU. A call made while
+// another runs (from inside a host call) has a budget of its own. The runtime has a memory limit;
+// running out ends the call with an error. QuickJS measures its stack from where a call came in
+// on it, since the core may call from an async function's fiber (512 KB in scriptc, its last
+// 128 KB kept for the overflow guard), not only from the main
 // stack: the first call, and one made during a host call from another stack (a hook fired inside
 // an async function), measure from where they are, and the host call puts the caller's limit back
 // when it returns. A plugin recursing past WCJS_STACK (about 230 calls deep, a QuickJS frame taking
@@ -25,7 +27,7 @@ typedef void (*wcjs_result_cb)(int32_t status, const uint8_t *text, size_t len, 
 
 #define WCJS_DEPTH 64
 #define WCJS_STACK (256 * 1024)
-/** The host time one call may exclude from its budget; past it, the budget runs. */
+/** The host CPU time one call may exclude from its budget; past it, the budget runs. */
 #define WCJS_HOST_MAX 5000
 
 typedef struct {
@@ -39,7 +41,7 @@ typedef struct {
   int entered;
   int32_t budget_ms;
   int64_t deadline_ms;
-  /** Host time excluded from this call's budget, and an unhandled rejection waiting to be reported. */
+  /** Host CPU time excluded from this call's budget, and an unhandled rejection waiting to be reported. */
   int64_t host_ms;
   char *rejection;
   int interrupted;
@@ -48,16 +50,16 @@ typedef struct {
   uintptr_t stack_limit;
 } wcjs;
 
-static int64_t now_ms(void) {
+static int64_t cpu_ms(void) {
   struct timespec ts;
-  clock_gettime(CLOCK_MONOTONIC, &ts);
+  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
   return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
 static int on_interrupt(JSRuntime *rt, void *opaque) {
   (void)rt;
   wcjs *w = (wcjs *)opaque;
-  if (w->deadline_ms > 0 && now_ms() > w->deadline_ms) {
+  if (w->deadline_ms > 0 && cpu_ms() > w->deadline_ms) {
     w->interrupted = 1;
     return 1;
   }
@@ -120,13 +122,13 @@ static JSValue js_host(JSContext *ctx, JSValueConst this_val, int argc, JSValueC
   int d = ++w->depth;
   w->reply[d] = NULL;
   w->reply_len[d] = 0;
-  // The host's time is not the plugin's: the deadline moves by as long as the host took.
-  int64_t started = now_ms();
+  // The host's CPU time is not the plugin's: the deadline moves by as long as the host took.
+  int64_t started = cpu_ms();
   uintptr_t top = w->stack_top, limit = w->stack_limit;
   int32_t status = w->host((const uint8_t *)name, name_len, (const uint8_t *)(args != NULL ? args : ""), args != NULL ? args_len : 0, w->host_context);
   if (w->stack_top != top) remeasure(w, top, limit);
   if (w->deadline_ms > 0) {
-    int64_t took = now_ms() - started;
+    int64_t took = cpu_ms() - started;
     int64_t room = WCJS_HOST_MAX - w->host_ms;
     if (room > 0) w->deadline_ms += took < room ? took : room;
     w->host_ms += took;
@@ -204,14 +206,14 @@ typedef struct {
   int interrupted;
 } wcjs_budget;
 
-/** A call into JS starts with a budget of its own: one made from inside a host call (a plugin running another's command) is that plugin's, and its caller's deadline moves by the host's time. */
+/** A call into JS starts with a budget of its own: one made from inside a host call (a plugin running another's command) is that plugin's, and its caller's deadline moves by the host's CPU time. */
 static wcjs_budget enter(wcjs *w) {
   wcjs_budget saved = {w->deadline_ms, w->host_ms, w->interrupted};
   uintptr_t sp = (uintptr_t)__builtin_frame_address(0);
   if (w->entered++ == 0 || sp > w->stack_top || sp < w->stack_limit) measure(w);
   w->interrupted = 0;
   w->host_ms = 0;
-  w->deadline_ms = w->budget_ms > 0 ? now_ms() + w->budget_ms : 0;
+  w->deadline_ms = w->budget_ms > 0 ? cpu_ms() + w->budget_ms : 0;
   return saved;
 }
 

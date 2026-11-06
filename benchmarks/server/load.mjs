@@ -1,25 +1,3 @@
-// From vercel-labs/scriptc, benchmarks/runtime/clients/http-load.mjs (Apache-2.0), unchanged.
-/* Closed-loop HTTP/1.1 load client for the server workloads.
- *
- * Usage: node http-load.mjs --port=<n> [--connections=64] [--threads=2]
- *        [--warmup=4000] [--requests=40000] [--workload=http-api|hello-get|hello-post]
- *
- * The same client drives every server (Node and compiled), so differences in
- * the numbers come from the server. Each connection is a keep-alive socket
- * that issues its own deterministic request sequence one request at a time
- * (no pipelining); requests are split evenly across connections, and the
- * connections are spread across worker threads so the client has CPU
- * headroom. Mutable server state (carts) is partitioned per connection, so
- * every response is a pure function of (connection, request index).
- *
- * Phases: connect + warmup requests (untimed) -> barrier -> measured requests.
- * The measured wall time spans from releasing the barrier until the last
- * connection finishes; per-request latency is sampled in the measured phase.
- *
- * stdout (compared byte-for-byte between servers): request and status counts
- * plus a digest over every response's status, selected headers, and body.
- * stderr: one `BENCH {json}` line with timing; nothing else on success.
- * Finally sends POST /shutdown so the server prints its totals and exits. */
 import { createHash } from "node:crypto";
 import { connect } from "node:net";
 import { parseArgs } from "node:util";
@@ -27,8 +5,6 @@ import { Worker, isMainThread, parentPort, workerData } from "node:worker_thread
 
 const HASHED_HEADERS = ["content-type", "cache-control", "etag", "x-request-id"];
 
-/* ── deterministic schedule ───────────────────────────────────────────── */
-/** Fastify's hello workload: every request is the same GET / or POST /. */
 function helloSchedule(conn, total, workload) {
   const post = workload === "hello-post";
   const list = [];
@@ -49,7 +25,6 @@ function lcg(seed) {
 }
 const categories = ["books", "games", "garden", "kitchen", "music", "outdoor", "tools", "toys"];
 
-/** The request list of one connection: [method, path, headers, body]. */
 function schedule(conn, total) {
   const random = lcg(0x9e3779b9 ^ Math.imul(conn + 1, 2654435761));
   const list = [];
@@ -110,8 +85,6 @@ function encode(method, path, headers, body) {
   return Buffer.from(head + "\r\n" + body);
 }
 
-/* ── response parsing ─────────────────────────────────────────────────── */
-/** Parses one complete response from `buf`, or returns null if incomplete. */
 function parseResponse(buf, method) {
   const end = buf.indexOf("\r\n\r\n");
   if (end < 0) return null;
@@ -133,7 +106,6 @@ function parseResponse(buf, method) {
       if (lineEnd < 0) return null;
       const size = parseInt(buf.toString("latin1", offset, lineEnd), 16);
       if (size === 0) {
-        // No trailers are expected: the terminator is "0\r\n\r\n".
         if (buf.length < lineEnd + 4) return null;
         offset = lineEnd + 4;
         break;
@@ -152,7 +124,6 @@ function parseResponse(buf, method) {
   return { status, headers, body, consumed: offset };
 }
 
-/* ── one keep-alive connection ────────────────────────────────────────── */
 function runConnection(port, conn, requests, measuredFrom, workload) {
   return new Promise((resolve, reject) => {
     const hash = createHash("sha256");
@@ -181,10 +152,10 @@ function runConnection(port, conn, requests, measuredFrom, workload) {
       buf = Buffer.alloc(0);
       if (next >= measuredFrom) latencies.push(Number(process.hrtime.bigint() - sentAt) / 1e6);
       hash.update(`${response.status}\n`);
-      if (workload === "http-api") {
+      if (workload === "http-api")
         for (const name of HASHED_HEADERS)
           hash.update(`${name}:${response.headers.get(name) ?? ""}\n`);
-      } else {
+       else {
         const type = (response.headers.get("content-type") ?? "").toLowerCase();
         hash.update(`json:${type.startsWith("application/json")}\n`);
       }
@@ -207,7 +178,6 @@ function runConnection(port, conn, requests, measuredFrom, workload) {
   });
 }
 
-/* Barrier bookkeeping shared by all connections of one thread. */
 const pending = {
   waiting: [],
   expected: 0,
@@ -241,7 +211,6 @@ async function runThread({ port, conns, warmupPer, measuredPer, workload }) {
   return { warm, results };
 }
 
-/* ── worker ───────────────────────────────────────────────────────────── */
 if (!isMainThread) {
   const { warm, results } = await runThread(workerData);
   await warm;
@@ -254,9 +223,8 @@ if (!isMainThread) {
       parentPort.postMessage({ type: "error", message: String(error?.stack ?? error) });
     }
   });
-} else {
+} else
   await main();
-}
 
 async function main() {
   const { values } = parseArgs({
@@ -274,7 +242,6 @@ async function main() {
   const workload = values.workload;
   if (!["http-api", "hello-get", "hello-post"].includes(workload)) throw new Error("invalid workload");
   const threads = Math.min(Number(values.threads), connections);
-  // Every connection warms up with at least one request (which also opens it).
   const warmupPer = Math.max(1, Math.ceil(Number(values.warmup) / connections));
   const measuredPer = Math.ceil(Number(values.requests) / connections);
   if (!(port > 0) || !(connections > 0) || !(threads > 0) || !(measuredPer > 0))
@@ -303,7 +270,6 @@ async function main() {
       queue.length > 0 ? Promise.resolve(queue.shift()) : new Promise((r) => (wake = r));
   });
   for (const next of messages) await next();
-  // cpuUsage covers every thread of the client process.
   const cpuStart = process.cpuUsage();
   const start = process.hrtime.bigint();
   for (const worker of workers) worker.postMessage("go");

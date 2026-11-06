@@ -176,9 +176,9 @@ const main = async () => {
       const perRequest = (seconds * 1e6) / served;
       const per10k = (seconds * 1e4) / served;
       console.log(`| ${c.label} | ${rps} | ${seconds.toFixed(3)} | ${perRequest.toFixed(2)} | ${per10k.toFixed(4)} | ${median(runs.map((b) => b.p50_ms))} | ${median(runs.map((b) => b.p99_ms))} | ${ratio} |`);
-    } else {
+    } else
       console.log(`| ${c.label} | ${rps} | ${median(runs.map((b) => b.p50_ms))} | ${median(runs.map((b) => b.p99_ms))} | ${ratio} |`);
-    }
+
   }
   if (diverged > 0) {
     console.log(`\n${diverged} runs diverged`);
