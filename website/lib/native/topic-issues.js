@@ -58,7 +58,7 @@ export default {
         },
         {
           kind: "text",
-          text: "The fork's tests also found three cases upstream's versions do not handle, to report upstream: fields typed `(object | null)[]`, method reads through a non-generic base type, and literal keys under `as string`. `census-report` used to report SC7001, which scriptc's contracts checker already uses, so it now reports SC6201 in the SC62xx band beside the SC61xx performance notes.",
+          text: "The fork's tests also found three cases upstream's versions do not handle, to report upstream: fields typed `(object | null)[]`, method reads through a non-generic base type, and literal keys under `as string`. `census-report` used to report SC7001, which scriptc's contracts checker already uses, and then SC6201, which upstream later took for start-up failures, so it now reports SC6901.",
         },
       ],
     },

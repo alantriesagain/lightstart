@@ -35,7 +35,7 @@ const report = (diagnostics, counts = {}) => ({
   diagnostics,
 });
 
-const slowPath = diagnostic({ code: "SC6201", category: "slow-path", severity: "warning", message: "this write's key can name any property", hint: "type the key as a number", group: "SC6201-bbbb" });
+const slowPath = diagnostic({ code: "SC6901", category: "slow-path", severity: "warning", message: "this write's key can name any property", hint: "type the key as a number", group: "SC6901-bbbb" });
 const divergence = diagnostic({ code: "SC6001", category: "divergence", severity: "warning", group: "SC6001-cccc" });
 const deferred = diagnostic({ scope: "deferred", group: "SC1090-dddd" });
 
@@ -50,7 +50,7 @@ describe("the native coverage gate", () => {
     for (const allowDynamic of [false, true]) {
       const result = gate(classify(report([diagnostic({}), slowPath])), { allowDynamic });
       assert.equal(result.pass, false);
-      assert.deepEqual(result.failures.map((d) => d.code), ["SC1090", "SC6201"]);
+      assert.deepEqual(result.failures.map((d) => d.code), ["SC1090", "SC6901"]);
     }
   });
 
@@ -112,6 +112,6 @@ describe("the native coverage gate", () => {
   });
 
   it("prints a finding as file:line:col, code and message, then its hint", () => {
-    assert.equal(formatDiagnostic(slowPath, "/repo"), "html/parts.ts:10:3 SC6201 this write's key can name any property\n    hint: type the key as a number");
+    assert.equal(formatDiagnostic(slowPath, "/repo"), "html/parts.ts:10:3 SC6901 this write's key can name any property\n    hint: type the key as a number");
   });
 });
