@@ -67,6 +67,7 @@ export interface Define {
   <D extends Record<string, unknown>, M extends readonly Record<string, unknown>[] | [] = [], P extends PropertyDeclarations = {}, E extends Record<string, TypeDefinition> = {}>(
     definition: Definition<D, M, P, E> & { tag: string },
   ): Defined<D>;
+  (definition: ComponentDefinition & { tag: string }): ViewConstructor | Promise<ViewConstructor>;
 }
 
 /**
