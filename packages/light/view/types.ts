@@ -2,7 +2,7 @@
  * @lightstart/light: the view engine's public type declarations.
  */
 
-import type { PropertyDeclaration, PropertyDeclarations, PropsToThis, TypeDefinition } from "../types/types.ts";
+import type { DeclaredTypeDefinition, PropertyDeclaration, PropertyDeclarations, PropsToThis, TypeDefinition } from "../types/types.ts";
 import type View from "./index.js";
 
 export type { PropertyDeclarations, PropsToThis, PropertyValue } from "../types/types.ts";
@@ -92,6 +92,34 @@ export type TypedEmit<E> = <K extends string>(
     ? E[K] extends TypeDefinition<infer V> ? V : unknown
     : unknown,
 ) => CustomEvent;
+
+/**
+ * The `detail` an event descriptor declares: for a descriptor that holds a
+ * schema (`T.object({ value: T.string() })`), one field per schema key with
+ * that descriptor's value type; otherwise the descriptor's value type; for
+ * anything else, `unknown`.
+ */
+export type DetailOf<T> = T extends DeclaredTypeDefinition<infer V, infer S>
+  ? [S] extends [Record<string, TypeDefinition>]
+    ? { [K in keyof S]: S[K] extends TypeDefinition<infer F> ? F : unknown }
+    : V
+  : T extends TypeDefinition<infer V> ? V : unknown;
+
+/** The events a definition declares, its mixins' included. */
+type EventsOfDefinition<Def> = Def extends { events?: infer E; mixins?: infer M }
+  ? (E extends undefined ? {} : E) & MixinEvents<M>
+  : {};
+
+/**
+ * The event a listener receives for `K` from the component `Def` defines (the
+ * type `defineComponent` answers): a `CustomEvent` whose `detail` is
+ * `DetailOf` the declared descriptor, or `unknown` when `K` is not declared.
+ *
+ *   (e: ComponentEvent<typeof segmented, "change">) => e.detail.value // string
+ */
+export type ComponentEvent<Def, K extends string> = CustomEvent<
+  K extends keyof EventsOfDefinition<Def> ? DetailOf<EventsOfDefinition<Def>[K]> : unknown
+>;
 
 /** Method-style so the parameter compares bivariantly: a delegated listener may declare the DOM event it receives. */
 interface ViewEventListenerSignature {
