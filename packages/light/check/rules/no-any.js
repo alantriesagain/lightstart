@@ -2,7 +2,7 @@ import { defineRule } from "../define.js";
 import { anyOffsets, suppressionOffsets } from "../parse/any.js";
 import { isSource, isTestFile, parse, reportSites } from "../perf.js";
 import { symbolOf } from "../parse/symbols.js";
-import * as ts from "typescript";
+import ts from "../parse/typescript.js";
 
 /** @import { ProjectModel } from "../types.ts" */
 /** @import { Site } from "../perf.js" */

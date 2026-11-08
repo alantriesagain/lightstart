@@ -4,7 +4,7 @@
  * survives line moves, for the allowlists in the project's check config.
  */
 
-import * as ts from "typescript";
+import ts from "./typescript.js";
 
 /** @import { Node } from "typescript" */
 

@@ -1,10 +1,12 @@
-import ts from "typescript";
+import ts from "../parse/typescript.js";
 import { defineRule } from "../define.js";
 import { nameOf } from "../parse/ast.js";
 
+/** @import { ArrowFunction, Expression, FunctionExpression, MethodDeclaration, Node, ObjectLiteralElementLike } from "typescript" */
+
 const HOOKS = new Set(["connected", "disconnected"]);
 
-/** @param {ts.ObjectLiteralElementLike} member */
+/** @param {ObjectLiteralElementLike} member */
 const functionOf = (member) => {
   if (ts.isMethodDeclaration(member)) return member;
   if (ts.isPropertyAssignment(member) && (ts.isFunctionExpression(member.initializer) || ts.isArrowFunction(member.initializer)))
@@ -12,27 +14,27 @@ const functionOf = (member) => {
   return null;
 };
 
-/** @param {ts.MethodDeclaration | ts.FunctionExpression | ts.ArrowFunction} fn */
+/** @param {MethodDeclaration | FunctionExpression | ArrowFunction} fn */
 const isAsync = (fn) => Boolean(fn.modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword));
 
-/** @param {ts.Node} node */
+/** @param {Node} node */
 const isFunctionLike = (node) =>
   ts.isFunctionExpression(node) || ts.isArrowFunction(node) || ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node);
 
 /**
  * Whether a call is handed straight to `trackWork(...)`, which counts it with
  * the host without holding `$ready` for it.
- * @param {ts.Node} node
+ * @param {Node} node
  */
 const isHandedToTrackWork = (node) => {
   const call = node.parent;
-  return !!call && ts.isCallExpression(call) && call.arguments.includes(/** @type {ts.Expression} */ (node))
+  return !!call && ts.isCallExpression(call) && call.arguments.includes(/** @type {Expression} */ (node))
     && ts.isIdentifier(call.expression) && call.expression.text === "trackWork";
 };
 
 /**
- * @param {ts.Node} node
- * @param {ts.Node} stop
+ * @param {Node} node
+ * @param {Node} stop
  */
 const isTracked = (node, stop) => {
   if (isHandedToTrackWork(node)) return true;
@@ -42,13 +44,13 @@ const isTracked = (node, stop) => {
 };
 
 /**
- * @param {ts.MethodDeclaration | ts.FunctionExpression | ts.ArrowFunction} fn
+ * @param {MethodDeclaration | FunctionExpression | ArrowFunction} fn
  * @param {Set<string>} asyncMethods
  */
 const droppedCalls = (fn, asyncMethods) => {
   /** @type {string[]} */
   const dropped = [];
-  const walk = (/** @type {ts.Node} */ node) => {
+  const walk = (/** @type {Node} */ node) => {
     if (node !== fn && isFunctionLike(node)) return;
     if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
       const { expression, name } = node.expression;

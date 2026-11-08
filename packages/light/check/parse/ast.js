@@ -3,7 +3,7 @@
  * export, and the shape of a `T.*()` property declaration.
  */
 
-import * as ts from "typescript";
+import ts from "./typescript.js";
 
 /** @import { Expression, Node, ObjectLiteralExpression, SourceFile } from "typescript" */
 

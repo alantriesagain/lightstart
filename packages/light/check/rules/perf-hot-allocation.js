@@ -1,4 +1,4 @@
-import * as ts from "typescript";
+import ts from "../parse/typescript.js";
 import { defineRule } from "../define.js";
 import { parse, PERF_GATE, perfConfig, reportSites, siteAt } from "../perf.js";
 import { symbolOf } from "../parse/symbols.js";

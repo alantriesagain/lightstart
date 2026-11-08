@@ -5,7 +5,7 @@
  * comments that switch type checking off (`@ts-ignore`, `@ts-nocheck`).
  */
 
-import * as ts from "typescript";
+import ts from "./typescript.js";
 
 /** @import { Node, SourceFile } from "typescript" */
 

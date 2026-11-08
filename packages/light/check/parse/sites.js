@@ -6,10 +6,10 @@
  * props and a definition; a tag, props and a render function.
  */
 
-import * as ts from "typescript";
+import ts from "./typescript.js";
 import { defaultExportExpression, defaultImportBinding, resolveLocal, unwrapParens, unwrapToLiteral } from "./ast.js";
 
-/** @import { Expression, Node, SourceFile } from "typescript" */
+/** @import { CallExpression, Expression, Node, SourceFile } from "typescript" */
 /** @import { Site } from "../types.ts" */
 
 const DEFINERS = new Set(["defineComponent", "defineMixin"]);
@@ -37,7 +37,7 @@ const isDirectDefinition = (expr) => {
 const isFunction = (node) => !!node && (ts.isArrowFunction(node) || ts.isFunctionExpression(node));
 
 /**
- * @param {ts.CallExpression} call
+ * @param {CallExpression} call
  * @param {SourceFile} sf
  * @returns {Site | null}
  */
