@@ -2,6 +2,8 @@
  * @lightstart/components: public type declarations.
  */
 
+export type { LightElements } from "./elements.ts";
+
 export type Prop<V> = import("@lightstart/light/types").TypeDefinition<V>;
 
 /** Anything a component may place in a template: what a caller-supplied render callback returns. */

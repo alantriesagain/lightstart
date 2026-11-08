@@ -34,6 +34,16 @@ export type ComponentThis<D, M, P, E> = PropsToThis<P & Omit<MixinProps<M>, keyo
  */
 export type ElementOf<M, P, E> = ComponentThis<{}, M, P, E>;
 
+/**
+ * The element a page holds for a component, read from the type
+ * `defineComponent` answers for its definition: the props as values, own and
+ * from mixins, the definition's and the mixins' members, and the engine's.
+ * `never` for anything that is not a definition.
+ */
+export type ComponentElement<Def> = Def extends Record<string, unknown> & { props?: infer P; events?: infer E; mixins?: infer M }
+  ? ComponentThis<Def, M, P, E>
+  : never;
+
 /** A component definition as `defineComponent` and `View.define` accept it, `this` typed inside its methods. */
 export type Definition<D, M, P, E> = D & { props?: P; events?: E; mixins?: M } & ThisType<ComponentThis<D, M, P, E>>;
 
