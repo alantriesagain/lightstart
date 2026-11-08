@@ -1,4 +1,4 @@
-import * as ts from "typescript";
+import ts from "../parse/typescript.js";
 import { defineRule } from "../define.js";
 import { filesIn, parse, PERF_GATE, perfConfig, reportSites, siteAt } from "../perf.js";
 

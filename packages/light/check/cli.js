@@ -4,15 +4,18 @@
  * The project is the nearest directory up from `dir` holding a package.json
  * (or `--root`); a `dir` inside it narrows the pass to that directory and
  * reads it as a directory of components. The rules are light's own and the
- * project's `check/rules/`. Reading a definition needs the TypeScript
- * compiler, which the project installs.
+ * project's `check/rules/`; one of light's own that fails to load fails the
+ * run. Reading a definition needs the TypeScript 6 compiler API, which the
+ * project installs: `typescript` 6, or `@typescript/typescript6` beside
+ * TypeScript 7.
  */
 
 import { statSync } from "node:fs";
 import path from "node:path";
 
 const USAGE = "Usage: light check [--root <dir>] [--rule <id>] [--json] [dir]";
-export const TYPESCRIPT_HINT = "light check reads component definitions with TypeScript.\n  Install it where you are running from:  npm i -D typescript";
+const LIGHT_RULE_FAILED = /^rule light\/\S+ failed to load: /;
+export const TYPESCRIPT_HINT = "light check reads component definitions with the TypeScript 6 compiler API: typescript 6, or @typescript/typescript6 beside TypeScript 7.\n  Install it where you are running from:  npm i -D @typescript/typescript6";
 /** @param {string} p */
 const isDir = (p) => {
   try {
@@ -46,7 +49,7 @@ export const check = async (argv) => {
     return false;
   }
   try {
-    await import("typescript");
+    await import("./parse/typescript.js");
   } catch {
     console.error(TYPESCRIPT_HINT);
     return false;
@@ -60,6 +63,11 @@ export const check = async (argv) => {
   root ??= projectRoot(dir) ?? dir;
   const { context, sources } = openProject(root, dir);
   const { rules, warnings } = await loadRules(sources);
+  const failed = warnings.filter((warning) => LIGHT_RULE_FAILED.test(warning));
+  if (failed.length) {
+    for (const warning of failed) console.log(`[check] ${warning}`);
+    return false;
+  }
   const result = await runRules({ context, rules, ruleFilter: rule });
   result.configWarnings.unshift(...warnings);
   if (json) {

@@ -3,17 +3,18 @@
  * default export, an exported or local const, or a call anywhere else.
  */
 
-import * as ts from "typescript";
+import ts from "./typescript.js";
 import { hasNonNullDefault, mixinBindings, nameOf, sourceFile, unwrapParens, unwrapToLiteral } from "./ast.js";
 
+/** @import { Node, ObjectLiteralElementLike, ObjectLiteralExpression, PropertyAssignment, SourceFile } from "typescript" */
 /** @import { ControllerProperty, MemberInfo, ParsedController, SyncEntryInfo } from "../types.ts" */
 
 /**
  * One entry of a definition's `sync` block: the short form `prop: target` or
  * the long form `prop: { to, key?, ... }`.
- * @param {ts.PropertyAssignment} entry
+ * @param {PropertyAssignment} entry
  * @param {string} prop
- * @param {ts.SourceFile} sf
+ * @param {SourceFile} sf
  * @returns {SyncEntryInfo}
  */
 const syncEntryOf = (entry, prop, sf) => {
@@ -41,7 +42,7 @@ const syncEntryOf = (entry, prop, sf) => {
 };
 
 /**
- * @param {ts.ObjectLiteralElementLike} m
+ * @param {ObjectLiteralElementLike} m
  * @returns {MemberInfo["kind"]}
  */
 const memberKind = (m) => {
@@ -50,9 +51,9 @@ const memberKind = (m) => {
 };
 
 /**
- * @param {ts.ObjectLiteralExpression} literal
+ * @param {ObjectLiteralExpression} literal
  * @param {number} offset
- * @param {ts.SourceFile} sf
+ * @param {SourceFile} sf
  * @returns {ParsedController}
  */
 const readDefinition = (literal, offset, sf) => {
@@ -112,7 +113,7 @@ export const parseControllerSources = (source, filename) => {
   const sf = sourceFile(source, filename);
   /** @type {ParsedController[]} */
   const out = [];
-  const visit = (/** @type {ts.Node} */ node) => {
+  const visit = (/** @type {Node} */ node) => {
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "defineController" && node.arguments.length) {
       const literal = unwrapToLiteral(node.arguments[0]);
       if (literal) out.push(readDefinition(literal, node.getStart(sf), sf));

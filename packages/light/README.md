@@ -379,6 +379,12 @@ through the component's tag. It reads templates as trees, including `<script
 type="module">` blocks in pages. Findings are reported at their file, line and
 column; `--rule <id>` runs one rule and `--json` prints the result.
 
+The checker reads definitions with the TypeScript 6 compiler API, which
+TypeScript 7's `typescript` no longer exports. Under TypeScript 7, install
+`@typescript/typescript6` beside it (`npm i -D @typescript/typescript6`); the
+checker reads the API from there. A rule of light's own that cannot load fails
+the run.
+
 `@lightstart/light/eslint` provides `light/check-errors` and
 `light/check-warnings` inside ESLint, plus the style rules light uses.
 `@lightstart/light/eslint/recommended.js` combines them into one flat config:

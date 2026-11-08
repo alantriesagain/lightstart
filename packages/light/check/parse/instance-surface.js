@@ -7,9 +7,11 @@
  */
 
 import path from "node:path";
-import * as ts from "typescript";
+import ts from "./typescript.js";
 import { exportedInitializer, mixinBindings, nameOf, sourceFile, unwrapToLiteral } from "./ast.js";
 import { definitionOf, parseComponentSources } from "./component.js";
+
+/** @import { Node, ObjectLiteralExpression, PropertyAccessExpression, SourceFile } from "typescript" */
 
 const ASSIGN_OPS = new Set([
   ts.SyntaxKind.EqualsToken,
@@ -23,20 +25,20 @@ const ASSIGN_OPS = new Set([
 /**
  * `this.<name>` fields reached inside `literal` that are neither in `declared`
  * nor `$`-prefixed nor excused by `skip`, once per name at its first reach.
- * @param {{ literal: ts.ObjectLiteralExpression, sf: ts.SourceFile, declared: Set<string>, skip?: (name: string) => boolean }} opts
+ * @param {{ literal: ObjectLiteralExpression, sf: SourceFile, declared: Set<string>, skip?: (name: string) => boolean }} opts
  * @returns {Array<{ name: string, offset: number }>}
  */
 export const findUndeclaredInstanceFields = ({ literal, sf, declared, skip = () => false }) => {
   /** @type {Map<string, number>} */
   const accessed = new Map();
-  /** @param {ts.Node} node @returns {node is ts.PropertyAccessExpression} */
+  /** @param {Node} node @returns {node is PropertyAccessExpression} */
   const isThisField = (node) => ts.isPropertyAccessExpression(node) && node.expression.kind === ts.SyntaxKind.ThisKeyword;
-  /** @param {ts.PropertyAccessExpression} fieldAccess */
+  /** @param {PropertyAccessExpression} fieldAccess */
   const record = (fieldAccess) => {
     const name = fieldAccess.name.text;
     if (!accessed.has(name)) accessed.set(name, fieldAccess.name.getStart(sf));
   };
-  /** @param {ts.Node} node */
+  /** @param {Node} node */
   const walk = (node) => {
     if ((ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) || ts.isCallExpression(node)) && isThisField(node.expression))
       record(node.expression);
@@ -54,7 +56,7 @@ export const findUndeclaredInstanceFields = ({ literal, sf, declared, skip = () 
 
 /**
  * The `props` keys of a definition literal.
- * @param {ts.ObjectLiteralExpression} literal
+ * @param {ObjectLiteralExpression} literal
  * @returns {string[]}
  */
 export const declaredPropertyNames = (literal) => {

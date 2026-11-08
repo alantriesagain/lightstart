@@ -9,7 +9,7 @@
  * release.
  */
 
-import * as ts from "typescript";
+import ts from "../../check/parse/typescript.js";
 import { anyOffsets } from "../../check/parse/any.js";
 
 /** @type {import("eslint").Rule.RuleModule} */

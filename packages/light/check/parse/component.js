@@ -1,14 +1,15 @@
 /** The shape of every component definition a module holds, read from its definition sites. */
 
-import * as ts from "typescript";
+import ts from "./typescript.js";
 import { hasNonNullDefault, mixinBindings, nameOf, sourceFile } from "./ast.js";
 import { definitionSites } from "./sites.js";
 
+/** @import { ObjectLiteralExpression, SourceFile } from "typescript" */
 /** @import { ParsedComponent, PropertyInfo } from "../types.ts" */
 
 /**
- * @param {ts.ObjectLiteralExpression} props
- * @param {ts.SourceFile} sf
+ * @param {ObjectLiteralExpression} props
+ * @param {SourceFile} sf
  * @returns {PropertyInfo[]}
  */
 const readProps = (props, sf) => {
