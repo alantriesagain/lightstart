@@ -296,8 +296,8 @@ export type ProjectContext<M extends ProjectModel = ProjectModel> = M & {
 
 export interface RuleEntry<M extends ProjectModel = ProjectModel> { id: string; owner: string; file: string; rule: CheckRule<M> }
 
-/** A rule file and the owner its id is derived from. */
-export interface RuleSource { owner: string; file: string }
+/** A rule file and the owner its id is derived from; `own` marks light's built-in rules. */
+export interface RuleSource { owner: string; file: string; own?: boolean }
 
 export interface RunOptions<M extends ProjectModel = ProjectModel> {
   context: ProjectContext<M>;

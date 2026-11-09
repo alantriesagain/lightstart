@@ -18,7 +18,7 @@
 
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import * as ts from "typescript";
+import ts from "../check/parse/typescript.js";
 
 const LIGHT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LEFT_OUT = ["node_modules/", ".bootstrapp/", "native/probes/"];

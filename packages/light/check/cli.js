@@ -12,10 +12,13 @@
 
 import { statSync } from "node:fs";
 import path from "node:path";
+import { TYPESCRIPT_HINT } from "./parse/typescript-hint.js";
+
+/** @import { RuleSource } from "./types.ts" */
+
+export { TYPESCRIPT_HINT };
 
 const USAGE = "Usage: light check [--root <dir>] [--rule <id>] [--json] [dir]";
-const LIGHT_RULE_FAILED = /^rule light\/\S+ failed to load: /;
-export const TYPESCRIPT_HINT = "light check reads component definitions with the TypeScript 6 compiler API: typescript 6, or @typescript/typescript6 beside TypeScript 7.\n  Install it where you are running from:  npm i -D @typescript/typescript6";
 /** @param {string} p */
 const isDir = (p) => {
   try {
@@ -27,9 +30,10 @@ const isDir = (p) => {
 
 /**
  * @param {string[]} argv
+ * @param {RuleSource[]} [sources]
  * @returns {Promise<boolean>}
  */
-export const check = async (argv) => {
+export const check = async (argv, sources) => {
   /** @type {string | null} */
   let root = null;
   /** @type {string | undefined} */
@@ -61,18 +65,17 @@ export const check = async (argv) => {
     import("./project.js"),
   ]);
   root ??= projectRoot(dir) ?? dir;
-  const { context, sources } = openProject(root, dir);
-  const { rules, warnings } = await loadRules(sources);
-  const failed = warnings.filter((warning) => LIGHT_RULE_FAILED.test(warning));
-  if (failed.length) {
-    for (const warning of failed) console.log(`[check] ${warning}`);
+  const opened = openProject(root, dir);
+  const { rules, warnings, failures } = await loadRules(sources ?? opened.sources);
+  if (failures.length && !json) {
+    for (const warning of failures) console.log(`[check] ${warning}`);
     return false;
   }
-  const result = await runRules({ context, rules, ruleFilter: rule });
+  const result = await runRules({ context: opened.context, rules, ruleFilter: rule });
   result.configWarnings.unshift(...warnings);
   if (json) {
     console.log(JSON.stringify(result, null, 2));
-    return result.stats.errors === 0;
+    return failures.length ? false : result.stats.errors === 0;
   }
   for (const warning of result.configWarnings) console.log(`[check] ${warning}`);
   for (const finding of result.findings) console.log(formatFinding(finding));
