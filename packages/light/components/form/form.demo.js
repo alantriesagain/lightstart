@@ -20,7 +20,9 @@ export default {
       title: "A field list",
       description: "The form decides which control each field gets; the view never dispatches on a type.",
       render: () => html`
-        <lc-form .fields=${fields} .data=${data}></lc-form>
+        <lc-form .fields=${fields} .data=${data}>
+          <lc-button primary type="submit">Save</lc-button>
+        </lc-form>
       `,
     },
     {

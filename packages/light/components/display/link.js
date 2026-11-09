@@ -105,20 +105,14 @@ export default defineComponent({
     if (this._handlePopoverTarget(e))
       return;
 
-    if (this.href && !this.skipRoute) {
-      const handled = navigation.click(e, { external: this.external });
-      if (handled) return;
-    }
-
-    if (!this.href && this.type === "submit") {
-      this.closest("form")?.requestSubmit();
+    if (this.confirmation && !globalThis.confirm(this.confirmation)) {
+      e.preventDefault();
+      e.stopPropagation();
       return;
     }
 
-    if (this.confirmation && this.type !== "submit" && !globalThis.confirm(this.confirmation)) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+    if (this.href && !this.skipRoute)
+      navigation.click(e, { external: this.external });
   },
   _getHref() {
     if (!this.href) return this.href;
@@ -158,7 +152,7 @@ export default defineComponent({
           aria-current=${this.active ? "true" : nothing}
           aria-disabled=${this.disabled ? "true" : "false"}
           ?disabled=${this.disabled}
-          type="button"
+          type=${this.type === "submit" || this.type === "reset" ? this.type : "button"}
           tabindex=${innerTabindex}
         >
           ${content}

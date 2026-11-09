@@ -94,7 +94,9 @@ applyScopedTheme("[data-skin=neo]", await loadPreset("neobrutalist"));`,
     { name: "news", label: "Newsletter", type: "checkbox" },
   ]}
   @form-submit=\${(e) => save(e.detail)}
-></lc-form>`,
+>
+  <lc-button primary type="submit">Save</lc-button>
+</lc-form>`,
   test: `import assert from "node:assert/strict";
 import { it } from "node:test";
 

@@ -22,7 +22,7 @@ export default {
             <lc-form>
               <lc-input label="Username"></lc-input>
               <lc-input label="Email" type="email"></lc-input>
-              <lc-button primary w-full>Save</lc-button>
+              <lc-button primary w-full type="submit">Save</lc-button>
             </lc-form>
           </div>
         </lc-drawer>
