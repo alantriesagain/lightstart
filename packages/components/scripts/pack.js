@@ -33,7 +33,7 @@ const strippedModule = (file) => {
 };
 
 /** Where the staged package lands. */
-export const DIST = join(PKG, "dist");
+const DIST = join(PKG, "dist");
 
 /** @param {string} dir @returns {string[]} */
 const walk = (dir) =>
@@ -45,7 +45,7 @@ const walk = (dir) =>
  * and `.d.ts` files with a package.json whose exports name the declarations.
  * @returns {{ dir: string, manifest: { name: string, exports: Record<string, string | { types: string, default: string }> } }}
  */
-export const stage = () => {
+const stage = () => {
   rmSync(DIST, { recursive: true, force: true });
   const sources = walk(PKG).map((file) => relative(PKG, file)).filter((file) => (/\.(js|ts|css)$/.test(file) || file === "package.json") && !SIDE_FILE.test(file));
   const docs = ["README.md", "LICENSE"].filter((file) => existsSync(join(PKG, file)));
