@@ -18,14 +18,10 @@ export default defineComponent({
     allowClear: false,
     _draft: "",
   },
-  connected() {
-    this.syncFormValue(this.value);
-  },
   /** @param {string} next @param {"input" | "change"} event */
   _commit(next, event) {
     if (next === this.value) return;
     this.value = next;
-    this.syncFormValue(next);
     this.$emit(event, { value: next });
   },
   _locked() {

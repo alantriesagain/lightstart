@@ -18,15 +18,10 @@ export default defineComponent({
   },
   style: true,
 
-  connected() {
-    this.syncFormValue(this.value);
-  },
-
   /** @param {Event} e */
   handleInput(e) {
     e.stopPropagation();
     this.value = /** @type {HTMLTextAreaElement} */ (e.target).value;
-    this.syncFormValue(this.value);
     this.$emit("input", { value: this.value });
   },
 
@@ -34,7 +29,6 @@ export default defineComponent({
   handleChange(e) {
     e.stopPropagation();
     this.value = /** @type {HTMLTextAreaElement} */ (e.target).value;
-    this.syncFormValue(this.value);
     this.$emit("change", { value: this.value });
   },
 

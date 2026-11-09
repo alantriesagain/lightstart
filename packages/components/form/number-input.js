@@ -26,20 +26,11 @@ export default defineComponent({
   },
   style: true,
 
-  connected() {
-    this._updateFormValue();
-  },
-
-  _updateFormValue() {
-    this.syncFormValue(this.value == null ? "" : String(this.value));
-  },
-
   /** @param {Event} e */
   handleInput(e) {
     e.stopPropagation();
     const val = /** @type {HTMLInputElement} */ (e.target).value;
     this.value = val === "" ? null : parseFloat(val);
-    this._updateFormValue();
     this.$emit("input", { value: this.value });
   },
 
@@ -48,7 +39,6 @@ export default defineComponent({
     e.stopPropagation();
     const val = /** @type {HTMLInputElement} */ (e.target).value;
     this.value = val === "" ? null : parseFloat(val);
-    this._updateFormValue();
     this.$emit("change", { value: this.value });
   },
 
@@ -61,7 +51,6 @@ export default defineComponent({
     next = Number(next.toFixed(10));
     if (next === this.value) return;
     this.value = next;
-    this._updateFormValue();
     this.$emit("change", { value: this.value });
   },
 
@@ -111,7 +100,6 @@ export default defineComponent({
     next = Number(next.toFixed(10));
     if (next === this.value) return;
     this.value = next;
-    this._updateFormValue();
     this.$emit("change", { value: this.value });
   },
 
@@ -189,7 +177,10 @@ export default defineComponent({
   },
 
   render() {
-    if (this.stepper) return this._renderStepper();
+    const hidden = this.name
+      ? html`<input type="hidden" name=${this.name} .value=${this.value == null ? "" : String(this.value)} />`
+      : nothing;
+    if (this.stepper) return html`${this._renderStepper()}${hidden}`;
     return html`
       <div class="number-input-wrapper">
         <input
@@ -232,6 +223,7 @@ export default defineComponent({
             `
             : ""
         }
+        ${hidden}
       </div>
     `;
   },

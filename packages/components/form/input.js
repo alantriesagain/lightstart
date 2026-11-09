@@ -39,7 +39,7 @@ export default defineComponent({
     const id = this.getInputId();
     const field = html`<input
         id=${id}
-        name=${this.name ?? id}
+        name=${this.name || this.id || nothing}
         class="input"
         type=${this.type}
         inputmode=${this.inputmode || nothing}

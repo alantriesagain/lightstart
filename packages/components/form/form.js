@@ -6,6 +6,7 @@ import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
 
 const TAG = /** @type {const} */ ("lc-form");
+const CONTROL_HOSTS = "lc-input, lc-select, lc-textarea, lc-checkbox, lc-switch, lc-file-upload";
 
 /** @import { FormControlElement, FormField, FormTypeHandlers, Prop, Renderable } from "../types.ts" */
 
@@ -174,9 +175,7 @@ export default defineComponent({
 
   /** @returns {NodeListOf<FormControlElement>} */
   getFormControls() {
-    return this.querySelectorAll(
-      "lc-input, lc-select, lc-textarea, lc-checkbox, lc-switch, lc-file-upload, input, select, textarea",
-    );
+    return this.querySelectorAll(`${CONTROL_HOSTS}, input, select, textarea`);
   },
 
   /**
@@ -304,6 +303,9 @@ export default defineComponent({
         data[field.name] = this.data[field.name];
 
     controls.forEach((el) => {
+      const owner = el.closest(CONTROL_HOSTS);
+      if (owner && owner !== el) return;
+
       const name = el.getAttribute("name") || el.name;
       if (!name || !shown.has(name)) return;
 
