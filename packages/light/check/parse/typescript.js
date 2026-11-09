@@ -7,7 +7,7 @@
  */
 
 import { createRequire } from "node:module";
-import { TYPESCRIPT_HINT } from "../cli.js";
+import { TYPESCRIPT_HINT } from "./typescript-hint.js";
 
 /** @type {(id: string) => unknown} */
 const require = createRequire(import.meta.url);

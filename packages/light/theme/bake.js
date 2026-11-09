@@ -23,7 +23,7 @@ const ATTR = /\bclass=(?:"([^"]*)"|'([^']*)')/g;
 const OPEN = /\bclass=(["']?)$/;
 const UNTERMINATED = /\bclass=["'][^"']*$/;
 
-export const TYPESCRIPT_HINT = "light classes:bake reads templates with TypeScript.\n  Install it where you are running from:  npm i -D typescript";
+export const TYPESCRIPT_HINT = "light classes:bake reads templates with TypeScript 6: typescript 6, or @typescript/typescript6 beside TypeScript 7.\n  Install it where you are running from:  npm i -D @typescript/typescript6";
 
 /** @param {unknown} target */
 const exportFile = (target) => (typeof target === "string" ? target : /** @type {{ default?: string }} */ (target)?.default);
@@ -213,7 +213,7 @@ export const bake = async (argv) => {
   /** @type {typeof import("typescript")} */
   let ts;
   try {
-    ts = (await import("typescript")).default;
+    ts = (await import("../check/parse/typescript.js")).default;
   } catch {
     console.error(TYPESCRIPT_HINT);
     return false;

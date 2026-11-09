@@ -15,7 +15,7 @@ import { walkFiles } from "./walk.js";
 
 /** @import { PackageJson, ProjectModel, RuleEntry, RuleSource } from "./types.ts" */
 
-/** @typedef {{ entry: RuleEntry } | { warning: string }} Loaded */
+/** @typedef {{ entry: RuleEntry } | { warning: string, own?: boolean }} Loaded */
 
 const LIGHT_ROOT = fileURLToPath(new URL("../", import.meta.url));
 /** @type {(id: string) => unknown} */
@@ -25,15 +25,17 @@ const require = createRequire(import.meta.url);
 export const listRuleFiles = (dir) => walkFiles(dir, { recursive: false });
 
 /**
- * The rule files of `<dir>/check/rules`, each owned by `owner`.
+ * The rule files of `<dir>/check/rules`, each owned by `owner`; `own` marks
+ * light's built-in rules.
  * @param {string} owner
  * @param {string} dir
+ * @param {boolean} [own]
  * @returns {RuleSource[]}
  */
-export const ruleSources = (owner, dir) => listRuleFiles(path.join(dir, "check", "rules")).map((file) => ({ owner, file }));
+export const ruleSources = (owner, dir, own = false) => listRuleFiles(path.join(dir, "check", "rules")).map((file) => ({ owner, file, ...(own ? { own } : {}) }));
 
 /** Light's own rules. */
-export const ownRuleSources = () => ruleSources("light", LIGHT_ROOT);
+export const ownRuleSources = () => ruleSources("light", LIGHT_ROOT, true);
 
 /**
  * The project's own rules, owned by the name after the slash.
@@ -65,9 +67,10 @@ const entryOf = (owner, file, mod) => {
  * @param {string} owner
  * @param {string} file
  * @param {unknown} e
+ * @param {boolean} own
  * @returns {Loaded}
  */
-const loadFailed = (owner, file, e) => ({ warning: `rule ${ruleId(owner, file)} failed to load: ${e instanceof Error ? e.message : e}` });
+const loadFailed = (owner, file, e, own) => ({ warning: `rule ${ruleId(owner, file)} failed to load: ${e instanceof Error ? e.message : e}`, ...(own ? { own } : {}) });
 
 /**
  * The sources once each, the first owner of a file winning.
@@ -84,10 +87,14 @@ const collect = (loaded) => {
   const rules = [];
   /** @type {string[]} */
   const warnings = [];
+  /** @type {string[]} */
+  const failures = [];
   for (const one of loaded)
-    if ("warning" in one) warnings.push(one.warning);
-    else rules.push(one.entry);
-  return { rules, warnings };
+    if ("warning" in one) {
+      warnings.push(one.warning);
+      if (one.own) failures.push(one.warning);
+    } else rules.push(one.entry);
+  return { rules, warnings, failures };
 };
 
 /**
@@ -95,13 +102,14 @@ const collect = (loaded) => {
  * never a crash.
  * @param {string} owner
  * @param {string} file
+ * @param {boolean} [own]
  * @returns {Promise<Loaded>}
  */
-export const loadRuleFile = async (owner, file) => {
+export const loadRuleFile = async (owner, file, own = false) => {
   try {
     return entryOf(owner, file, await import(pathToFileURL(file).href));
   } catch (e) {
-    return loadFailed(owner, file, e);
+    return loadFailed(owner, file, e, own);
   }
 };
 
@@ -109,29 +117,31 @@ export const loadRuleFile = async (owner, file) => {
  * `loadRuleFile` without waiting.
  * @param {string} owner
  * @param {string} file
+ * @param {boolean} [own]
  * @returns {Loaded}
  */
-export const loadRuleFileSync = (owner, file) => {
+export const loadRuleFileSync = (owner, file, own = false) => {
   try {
     return entryOf(owner, file, /** @type {{ default?: unknown }} */ (require(file)));
   } catch (e) {
-    return loadFailed(owner, file, e);
+    return loadFailed(owner, file, e, own);
   }
 };
 
 /**
  * Load every source once (the first owner of a file wins). A host names the
- * project model its rules read as `M`.
+ * project model its rules read as `M`. `failures` are the warnings of light's
+ * own rules, which fail the run.
  * @template {ProjectModel} [M=ProjectModel]
  * @param {RuleSource[]} sources
- * @returns {Promise<{ rules: RuleEntry<M>[], warnings: string[] }>}
+ * @returns {Promise<{ rules: RuleEntry<M>[], warnings: string[], failures: string[] }>}
  */
-export const loadRules = async (sources) => collect(await Promise.all(unique(sources).map(({ owner, file }) => loadRuleFile(owner, file))));
+export const loadRules = async (sources) => collect(await Promise.all(unique(sources).map(({ owner, file, own }) => loadRuleFile(owner, file, own))));
 
 /**
  * `loadRules` without waiting.
  * @template {ProjectModel} [M=ProjectModel]
  * @param {RuleSource[]} sources
- * @returns {{ rules: RuleEntry<M>[], warnings: string[] }}
+ * @returns {{ rules: RuleEntry<M>[], warnings: string[], failures: string[] }}
  */
-export const loadRulesSync = (sources) => collect(unique(sources).map(({ owner, file }) => loadRuleFileSync(owner, file)));
+export const loadRulesSync = (sources) => collect(unique(sources).map(({ owner, file, own }) => loadRuleFileSync(owner, file, own)));
