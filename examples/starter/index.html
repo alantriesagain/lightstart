@@ -14,7 +14,8 @@
       "@lightstart/light/env": "../../packages/light/env/index.js",
       "@lightstart/light/navigation": "../../packages/light/navigation/index.js",
       "@lightstart/light/theme": "../../packages/light/theme/index.js",
-      "@lightstart/light/": "../../packages/light/"
+      "@lightstart/light/": "../../packages/light/",
+      "@lightstart/components/": "../../packages/components/"
     }
   }
   </script>
@@ -48,7 +49,7 @@
     import { applyTheme } from "@lightstart/light/theme";
     import { loadPreset } from "@lightstart/light/theme/presets.js";
     import { configureIcons, iconify } from "@lightstart/light/theme/icons.js";
-    import { toasts } from "@lightstart/light/components/feedback/toasts.js";
+    import { toasts } from "@lightstart/components/feedback/toasts.js";
 
     applyTheme(await loadPreset("default"));
     configureIcons({ load: iconify("lucide") });
@@ -84,7 +85,7 @@
       "feedback/toast",
       "overlay/tooltip",
     ];
-    for (const path of components) View.define((await import(`@lightstart/light/components/${path}.js`)).default);
+    for (const path of components) View.define((await import(`@lightstart/components/${path}.js`)).default);
 
     document.getElementById("plan").options = [{ label: "Free", value: "free" }, { label: "Pro", value: "pro" }];
     document.getElementById("open").addEventListener("click", () => document.getElementById("terms").open = true);

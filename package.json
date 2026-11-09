@@ -22,7 +22,8 @@
     "verify": "npm run lint && npm run typecheck && npm run check:root && npm --prefix packages/light run verify && npm run coverage:tasks && npm run bake:tasks -- --check && npm run verify:packages"
   },
   "dependencies": {
-    "@lightstart/light": "workspace:*"
+    "@lightstart/light": "workspace:*",
+    "@lightstart/components": "workspace:*"
   },
   "devDependencies": {
     "@lightstart/server": "workspace:*",

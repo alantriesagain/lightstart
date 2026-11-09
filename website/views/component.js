@@ -10,7 +10,7 @@ import { browsableCategories, categoryById, humanize } from "@bootstrapp/showcas
 import { categoryPath, componentPath, COMPONENTS_PATH, neighbours } from "../lib/paths.js";
 
 /** @import { ComponentRef } from "../lib/paths.js" */
-/** @import { TocItem } from "@lightstart/light/components/types.ts" */
+/** @import { TocItem } from "@lightstart/components/types.ts" */
 
 /** @param {ComponentRef | null} ref */
 const pagerLink = (ref) => (ref ? { label: humanize(ref.name), href: componentPath(ref.category, ref.name), hint: humanize(ref.category) } : null);

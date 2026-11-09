@@ -6,7 +6,7 @@
  * and can close the app.
  */
 import View from "@lightstart/light";
-import titleBar from "@lightstart/light/components/app/title-bar.js";
+import titleBar from "@lightstart/components/app/title-bar.js";
 import { env } from "@lightstart/light/env";
 import { html } from "@lightstart/light/html";
 import { connect } from "@lightstart/light/native/desktop/client.js";

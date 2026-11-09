@@ -8,7 +8,7 @@
 
 const LIGHT = "@lightstart/light";
 
-/** @import { FormField } from "@lightstart/light/components/types.ts" */
+/** @import { FormField } from "@lightstart/components/types.ts" */
 
 export const TAGLINE = "Web Components made simple.";
 

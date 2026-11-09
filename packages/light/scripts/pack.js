@@ -79,8 +79,7 @@ export const stage = () => {
     include: ["**/*.js", "**/*.ts"],
     exclude: sources.filter((file) => file.endsWith(".js") && sources.includes(file.replace(/\.js$/, ".d.ts"))),
   }));
-  const { bootstrapp, scripts: _, devDependencies: __, ...manifest } = /** @type {{ name: string, exports: Record<string, string | { types: string, default: string }>, bootstrapp: { components: unknown }, scripts?: unknown, devDependencies?: unknown, [key: string]: unknown }} */ (JSON.parse(readFileSync(join(LIGHT, "package.json"), "utf8")));
-  manifest.bootstrapp = { components: bootstrapp.components };
+  const { bootstrapp: _, scripts: __, devDependencies: ___, ...manifest } = /** @type {{ name: string, exports: Record<string, string | { types: string, default: string }>, bootstrapp?: unknown, scripts?: unknown, devDependencies?: unknown, [key: string]: unknown }} */ (JSON.parse(readFileSync(join(LIGHT, "package.json"), "utf8")));
   const files = ["**/*.js", "**/*.d.ts", "**/*.css", "native/desktop/ffi.ts", "native/desktop/shim/**"];
   writeFileSync(join(DIST, "package.json"), `${JSON.stringify({ ...manifest, files }, null, 2)}\n`);
   execFileSync(join(LIGHT, "node_modules/.bin/tsc"), ["-p", DIST], { stdio: "inherit" });

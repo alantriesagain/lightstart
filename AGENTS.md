@@ -1,6 +1,6 @@
 # Working in this repository
 
-Each package has its own rules where it has an `AGENTS.md` (`packages/server/AGENTS.md`, `packages/light/components/AGENTS.md`); this file holds what applies to all of them.
+Each package has its own rules where it has an `AGENTS.md` (`packages/server/AGENTS.md`, `packages/components/AGENTS.md`); this file holds what applies to all of them.
 
 ## Packages
 

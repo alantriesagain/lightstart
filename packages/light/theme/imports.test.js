@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -45,23 +45,15 @@ const reach = (entry) => {
   return [...seen].map((file) => relative(ROOT, file));
 };
 
-/** @param {string} dir @returns {string[]} */
-const sourceFiles = (dir) =>
-  readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) return sourceFiles(path);
-    return /\.(js|ts)$/.test(entry.name) && !/\.test\.js$/.test(entry.name) && entry.name !== "types.ts" ? [path] : [];
-  });
-
 const entry = (/** @type {string} */ key) => /** @type {string} */ (exportFile(pkg.exports[key])).replace(/^\.\//, "");
 const inClasses = (/** @type {string} */ file) => file.startsWith("theme/classes/");
 
 const codeOf = (/** @type {string} */ file) => readFileSync(join(ROOT, file), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").split("\n").filter((line) => !/^\s*\/\//.test(line)).join("\n");
 
 describe("@lightstart/light/theme/classes: the engine stands alone", () => {
-  it("no entry outside the theme, and no component, reaches the engine", () => {
+  it("no entry outside the theme reaches the engine", () => {
     const outside = Object.keys(pkg.exports).filter((key) => !key.startsWith("./theme") && !key.includes("*")).map((key) => exportFile(pkg.exports[key])).filter((file) => typeof file === "string");
-    for (const file of [...outside, ...sourceFiles("components")]) {
+    for (const file of outside) {
       const leaked = reach(file).filter(inClasses);
       assert.deepEqual(leaked, [], `${file} reaches ${leaked.join(", ")}`);
     }

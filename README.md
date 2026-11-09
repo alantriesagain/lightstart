@@ -63,7 +63,7 @@ from its own demo, in any skin.
 | [Controllers](packages/light/controller/README.md) | Shared state, `sync` bindings, `resource()` |
 | [Models](packages/light/model/README.md) | Schemas, the store, IndexedDB and JSONL adapters, live queries |
 | [The theme](packages/light/theme/README.md) | Tokens, presets, color scheme, icons, the utility-class engine |
-| [The component library](packages/light/components/README.md) | The `lc-*` tags, their CSS, forms, theming and composition |
+| [The component library](packages/components/README.md) | The `lc-*` tags, their CSS, forms, theming and composition |
 | [Native targets](packages/light/native/README.md) | The terminal and desktop hosts, scriptc, the coverage and parity gates |
 | [Testing and checking](packages/light/test/README.md) | `light test`, `light check`, the ESLint plugin |
 
@@ -72,6 +72,7 @@ from its own demo, in any skin.
 | Folder | Holds |
 |---|---|
 | `packages/light/` | `@lightstart/light`: the runtime and the `light` command, with [its documentation](packages/light/README.md) |
+| `packages/components/` | `@lightstart/components`: the `lc-*` component library, its mixins, libs, stores and translated words ([README](packages/components/README.md)) |
 | `packages/server/` | `@lightstart/server`: a small HTTP server core, routes, middleware, hooks and plugins over one `Context` and `Reply`, run on node, natively by scriptc, on Fetch runtimes and on Lambda ([README](packages/server/README.md)); an optional peer of `@lightstart/light`, which `light test`, `light serve` and the desktop shell serve with |
 | `packages/router/` | `@lightstart/router`: a client router with `/`-separated route patterns, a navigation stack over a browser or memory adapter, locales and base paths, exposing light's `Navigation` contract ([README](packages/router/README.md)) |
 | `packages/native/`, `packages/tui/` | The workspace packages native apps share, and `light-native`, their tooling ([README](packages/README.md)) |

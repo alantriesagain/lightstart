@@ -4,7 +4,7 @@ import presets, { loadPreset } from "@lightstart/light/theme/presets.js";
 import { componentPath } from "../lib/paths.js";
 
 /** @import { SkinOption } from "../types.ts" */
-/** @import { SearchDoc, TocItem } from "@lightstart/light/components/types.ts" */
+/** @import { SearchDoc, TocItem } from "@lightstart/components/types.ts" */
 
 const HOST_THEME = "";
 

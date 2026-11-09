@@ -5,7 +5,7 @@
 import { BUILT_WITH_LIGHT_PATH, componentPath } from "./paths.js";
 import { NATIVE_PAGES } from "./native/pages.js";
 
-/** @import { SearchDoc } from "@lightstart/light/components/types.ts" */
+/** @import { SearchDoc } from "@lightstart/components/types.ts" */
 /** @import { ShowcaseCategoryListing } from "@bootstrapp/showcase/types.ts" */
 /** @import { ThemePreset } from "@lightstart/light/theme" */
 

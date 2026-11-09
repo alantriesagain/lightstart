@@ -1,7 +1,8 @@
 /**
  * @file The workspace as the commands see it: its root, its members (every folder a pnpm-workspace.yaml
  * pattern names that holds a package.json), a member's `native` block and the members it depends
- * on, in dependency order. Light itself is no member. In a workspace that links light (a `light`
+ * on, in dependency order. Light itself is no member, and neither is its browser component package.
+ * In a workspace that links light (a `light`
  * pattern), the packages under `light/` are members the others depend on, prepared with them, and
  * light's own gates check them: the commands that go over every member leave them out.
  */
@@ -48,6 +49,9 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 /** The fields of a package.json that declare dependencies. */
 export const DEPENDENCY_FIELDS = /** @type {const} */ (["dependencies", "devDependencies", "peerDependencies"]);
 
+/** Light itself, its unscoped alias and its browser component package: workspace packages that are no native member. */
+export const NOT_MEMBERS = new Set(["@lightstart/light", "lightstart", "@lightstart/components"]);
+
 /** Light's folder: this CLI is light's, under packages/native/cli. */
 export const LIGHT = resolve(import.meta.dirname, "..", "..", "..", "..");
 
@@ -90,7 +94,7 @@ export class Member {
   /** The members it declares, in any class: every dependency on `workspace:` but light. @returns {string[]} */
   get workspaceDependencies() {
     const out = [];
-    for (const key of DEPENDENCY_FIELDS) for (const [name, range] of Object.entries(this.pkg[key] ?? {})) if (range.startsWith("workspace:") && name !== "@lightstart/light") out.push(name);
+    for (const key of DEPENDENCY_FIELDS) for (const [name, range] of Object.entries(this.pkg[key] ?? {})) if (range.startsWith("workspace:") && !NOT_MEMBERS.has(name)) out.push(name);
     return out;
   }
 }
@@ -135,9 +139,10 @@ const readPackage = (dir) => {
 };
 
 /**
- * Every member but light itself (`@lightstart/light`) and its unscoped alias
- * (`lightstart`), neither a native package, light's linked packages included,
- * packages first, each group by folder.
+ * Every member but light itself (`@lightstart/light`), its unscoped alias
+ * (`lightstart`) and its browser component package (`@lightstart/components`),
+ * none a native package, light's linked packages included, packages first,
+ * each group by folder.
  * @param {string} root
  * @returns {Member[]}
  */
@@ -156,7 +161,7 @@ export const allMembers = (root) => {
     for (const dir of dirs) {
       if (!statSync(dir).isDirectory()) continue;
       const pkg = readPackage(dir);
-      if (pkg === null || pkg.name === "@lightstart/light" || pkg.name === "lightstart") continue;
+      if (pkg === null || NOT_MEMBERS.has(String(pkg.name))) continue;
       const label = relative(root, dir);
       out.push(new Member(String(pkg.name ?? basename(dir)), dir, basename(dirname(dir)) === "apps" ? "apps" : "packages", pkg, label, !label.startsWith("light/")));
     }

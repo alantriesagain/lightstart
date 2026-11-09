@@ -1,0 +1,213 @@
+{
+  "name": "@lightstart/components",
+  "version": "0.1.0",
+  "description": "Light-DOM web components: the lc-* tags in nine categories, with their mixins, libs, stores and translated words.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/components"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "web-components",
+    "custom-elements",
+    "light-dom",
+    "ui",
+    "components",
+    "design-system"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "pack": "node scripts/pack.js",
+    "test": "node --test $(find . -path ./node_modules -prune -o -name \"*.test.js\" -not -name \"*.browser.test.js\" -print) && node ../light/bin/light.js test */*.browser.test.js",
+    "check": "node ../light/bin/light.js check",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    "./types": "./types.ts",
+    "./types.ts": "./types.ts",
+    "./*": "./*"
+  },
+  "peerDependencies": {
+    "@lightstart/light": "^0.1.0"
+  },
+  "devDependencies": {
+    "@lightstart/light": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3",
+    "marked": "^18.1.0"
+  },
+  "bootstrapp": {
+    "components": {
+      "lc": {
+        "about-section": "page/about-section.js",
+        "accordion": "navigation/accordion.js",
+        "alert": "feedback/alert.js",
+        "alert-dialog": "overlay/alert-dialog.js",
+        "app-container": "app/app-container.js",
+        "app-header": "app/app-header.js",
+        "app-shell": "app/app-shell.js",
+        "auth-form": "form/auth-form.js",
+        "avatar": "display/avatar.js",
+        "avatar-group": "display/avatar-group.js",
+        "badge": "display/badge.js",
+        "bar-chart": "display/bar-chart.js",
+        "bottom-nav": "app/bottom-nav.js",
+        "bottom-sheet": "overlay/bottom-sheet.js",
+        "breadcrumbs": "navigation/breadcrumbs.js",
+        "button": "display/button.js",
+        "calendar": "display/calendar.js",
+        "card": "layout/card.js",
+        "checkbox": "form/checkbox.js",
+        "circle": "display/circle.js",
+        "clipboard": "utility/clipboard.js",
+        "code-block": "display/code-block.js",
+        "color-picker": "form/color-picker.js",
+        "command-palette": "overlay/command-palette.js",
+        "comment": "display/comment.js",
+        "container": "layout/container.js",
+        "context-menu": "overlay/context-menu.js",
+        "cta-section": "page/cta-section.js",
+        "darkmode": "utility/darkmode.js",
+        "data-table": "display/data-table.js",
+        "day-strip": "form/day-strip.js",
+        "device": "utility/device.js",
+        "divider": "layout/divider.js",
+        "draggable": "utility/draggable.js",
+        "drawer": "overlay/drawer.js",
+        "droparea": "utility/droparea.js",
+        "dropdown": "overlay/dropdown.js",
+        "editable": "display/editable.js",
+        "empty-state": "feedback/empty-state.js",
+        "example": "display/example.js",
+        "faq-section": "page/faq-section.js",
+        "feature-grid": "page/feature-grid.js",
+        "file-upload": "form/file-upload.js",
+        "flex": "layout/flex.js",
+        "float-card": "page/float-card.js",
+        "float-panel": "overlay/float-panel.js",
+        "flow": "display/flow.js",
+        "footer": "page/footer.js",
+        "form": "form/form.js",
+        "grid": "layout/grid.js",
+        "hero-section": "page/hero-section.js",
+        "icon": "display/icon.js",
+        "icon-picker": "form/icon-picker.js",
+        "image": "display/image.js",
+        "image-crop": "form/image-crop.js",
+        "input": "form/input.js",
+        "join": "form/join.js",
+        "kanban": "display/kanban.js",
+        "kbd": "display/kbd.js",
+        "label": "form/label.js",
+        "line-chart": "display/line-chart.js",
+        "link": "display/link.js",
+        "link-preview": "display/link-preview.js",
+        "list": "display/list.js",
+        "list-item": "display/list-item.js",
+        "list-row": "display/list-row.js",
+        "markdown": "display/markdown.js",
+        "media-card": "display/media-card.js",
+        "menu": "navigation/menu.js",
+        "modal": "overlay/modal.js",
+        "month-picker": "form/month-picker.js",
+        "nav-item": "navigation/nav-item.js",
+        "nav-tree": "navigation/nav-tree.js",
+        "navbar": "navigation/navbar.js",
+        "number-input": "form/number-input.js",
+        "page": "layout/page.js",
+        "page-header": "app/page-header.js",
+        "pagination": "navigation/pagination.js",
+        "palette": "display/palette.js",
+        "panel": "layout/panel.js",
+        "pattern": "display/pattern.js",
+        "pie-chart": "display/pie-chart.js",
+        "popover": "overlay/popover.js",
+        "pricing-card": "page/pricing-card.js",
+        "pricing-table": "page/pricing-table.js",
+        "progress-bar": "feedback/progress-bar.js",
+        "pull-indicator": "feedback/pull-indicator.js",
+        "prose": "layout/prose.js",
+        "radio": "form/radio.js",
+        "radio-group": "form/radio-group.js",
+        "rating": "form/rating.js",
+        "ruler": "form/ruler.js",
+        "scroller": "app/scroller.js",
+        "search": "form/search.js",
+        "section": "layout/section.js",
+        "segmented": "form/segmented.js",
+        "select": "form/select.js",
+        "showcase-section": "page/showcase-section.js",
+        "sidebar": "navigation/sidebar.js",
+        "sidebar-section": "navigation/sidebar-section.js",
+        "site-header": "page/site-header.js",
+        "skeleton": "feedback/skeleton.js",
+        "slider": "form/slider.js",
+        "sparkline": "display/sparkline.js",
+        "spinner": "feedback/spinner.js",
+        "split-pane": "layout/split-pane.js",
+        "stat": "display/stat.js",
+        "stats-section": "page/stats-section.js",
+        "stepper": "feedback/stepper.js",
+        "steps-section": "page/steps-section.js",
+        "stories": "app/stories.js",
+        "story-circle": "display/story-circle.js",
+        "swipe-deck": "app/swipe-deck.js",
+        "switch": "form/switch.js",
+        "table": "display/table.js",
+        "tabs": "navigation/tabs.js",
+        "tag": "display/tag.js",
+        "testimonial-section": "page/testimonial-section.js",
+        "text": "display/text.js",
+        "textarea": "form/textarea.js",
+        "tile": "display/tile.js",
+        "time": "form/time.js",
+        "timeline": "display/timeline.js",
+        "title-bar": "app/title-bar.js",
+        "toast": "feedback/toast.js",
+        "toc": "navigation/toc.js",
+        "toolbar": "layout/toolbar.js",
+        "tooltip": "overlay/tooltip.js",
+        "tree": "navigation/tree.js",
+        "tree-item": "navigation/tree-item.js",
+        "week-hours": "form/week-hours.js",
+        "wizard": "navigation/wizard.js"
+      }
+    },
+    "locales": true,
+    "bundle": {
+      "vendor": {
+        "marked": "display/marked-vendor.js"
+      }
+    },
+    "test": {
+      "browser": true,
+      "ignore": [
+        "website/**"
+      ]
+    },
+    "check": {
+      "from": [
+        "bootstrapp",
+        "@bootstrapp/check"
+      ],
+      "rules": {
+        "light/no-any": "error",
+        "light/declare-instance-surface": "error"
+      },
+      "noAny": {},
+      "allow": {
+        "light/no-any": {
+          "display/marked-vendor.js": "the vendored marked build, copied as published; light does not edit or type it"
+        }
+      }
+    }
+  }
+}

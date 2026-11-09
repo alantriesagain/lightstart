@@ -11,7 +11,7 @@ import { DIFFERENCES, EXAMPLE, LANES, PHASES, RUNS, STEPS, TOOLS, megabytes } fr
 import { nativeNeighbours } from "../lib/native/pages.js";
 import { prose } from "../lib/native/prose-html.js";
 
-/** @import { TocItem } from "@lightstart/light/components/types.ts" */
+/** @import { TocItem } from "@lightstart/components/types.ts" */
 
 /** @type {TocItem[]} */
 const OUTLINE = [

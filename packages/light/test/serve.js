@@ -67,7 +67,7 @@ export const importmapFor = (root) => {
   map(root);
   for (const section of ["dependencies", "devDependencies", "peerDependencies"])
     for (const name of Object.keys(self?.[section] ?? {})) map(path.join(root, "node_modules", name));
-  const lightDir = self?.name === "@lightstart/light" ? root : path.join(root, "node_modules", "@bootstrapp", "light");
+  const lightDir = self?.name === "@lightstart/light" ? root : [path.join(root, "node_modules", "@bootstrapp", "light"), path.join(root, "node_modules", "@lightstart", "light")].find((dir) => existsSync(dir)) ?? path.join(root, "node_modules", "@bootstrapp", "light");
   imports["node:test"] = urlOf(lightDir, "test/node-test.js");
   imports["node:assert"] = urlOf(lightDir, "test/node-assert.js");
   imports["node:assert/strict"] = urlOf(lightDir, "test/node-assert-strict.js");
