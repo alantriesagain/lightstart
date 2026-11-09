@@ -1,27 +1,29 @@
 import { html } from "@lightstart/light/html";
 
 export default {
-  description: "The name of a field, tied to it so a click moves focus.",
+  description: "The name of a field. An lc-* control takes a label prop; a plain native field takes for.",
   slot: () => "Field Label",
   preview: () => html`
     <lc-flex direction="column" gap="xs">
-      <lc-label for="preview-username" required>Username</lc-label>
-      <lc-input id="preview-username" size="sm" placeholder="ada"></lc-input>
+      <lc-input label="Username" size="sm" placeholder="ada" required></lc-input>
     </lc-flex>
   `,
   examples: [
     {
-      title: "Basic",
+      title: "With a control",
+      render: () => html`<lc-input label="Username"></lc-input>`,
+    },
+    {
+      title: "Wrapping a control",
       render: () => html`
-        <lc-label for="username">Username</lc-label>
-        <lc-input id="username"></lc-input>
+        <label>Email <lc-input type="email" required></lc-input></label>
       `,
     },
     {
-      title: "Required",
+      title: "A plain native field",
       render: () => html`
-        <lc-label for="email" required>Email</lc-label>
-        <lc-input id="email" required></lc-input>
+        <lc-label for="username">Username</lc-label>
+        <input id="username" />
       `,
     },
   ],

@@ -22,10 +22,6 @@ export default defineComponent({
   },
   style: true,
 
-  connected() {
-    this.syncFormValue(this.value.toString());
-  },
-
   willUpdate() {
     const clamped = Math.min(this.max, Math.max(this.min, this.value));
     if (clamped !== this.value) this.value = clamped;
@@ -66,7 +62,6 @@ export default defineComponent({
   _commit(e, event) {
     e.stopPropagation();
     this.value = parseFloat(/** @type {HTMLInputElement} */ (e.target).value);
-    this.syncFormValue(this.value.toString());
     this.$emit(event, { value: this.value });
   },
 
@@ -77,7 +72,6 @@ export default defineComponent({
     const next = Math.min(this.max, Math.max(this.min, Number(raw.toFixed(decimals))));
     if (next === this.value) return;
     this.value = next;
-    this.syncFormValue(this.value.toString());
     this.$emit("input", { value: this.value });
     this.$emit("change", { value: this.value });
   },

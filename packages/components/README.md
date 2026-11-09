@@ -175,7 +175,7 @@ Eight mixins carry behaviour that more than one component needs. List them under
 
 | Mixin | What the host gets |
 |---|---|
-| `withFormControl` | label, name, value, disabled, required, size and variant props, an id for `<label for>`, and form association through ElementInternals |
+| `withFormControl` | label, name, value, disabled, required, size and variant props, and an id for the inner native control |
 | `withClickOutside()` | `onClickOutside(e)` whenever a click lands outside the host |
 | `withEscapeKey` | `onEscape()` while mounted |
 | `withOverlay()` | a place on the overlay stack while open: scroll lock, focus restore, and Escape delivered only to the topmost layer |
@@ -195,7 +195,7 @@ export default defineComponent({
     const id = this.getInputId();
     return html`
       ${this.label ? html`<lc-label for=${id} text=${this.label}></lc-label>` : ""}
-      <input id=${id} .value=${this.value} ?disabled=${this.disabled} />
+      <input id=${id} name=${this.name} .value=${this.value} ?disabled=${this.disabled} />
     `;
   },
 });

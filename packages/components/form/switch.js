@@ -1,13 +1,10 @@
 import { html } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
-
-/** @import { Prop } from "../types.ts" */
 import { defineComponent } from "@lightstart/light";
 
 export default defineComponent({
   tag: "lc-switch",
   props: {
-    _internals: /** @type {Prop<ElementInternals | null>} */ (T.object({ reactive: false, defaultValue: null })),
     checked: false,
     disabled: false,
     name: "",
@@ -23,20 +20,11 @@ export default defineComponent({
     }),
   },
   style: true,
-  formAssociated: true,
-
-  connected() {
-    if (!this._internals)
-      this._internals = this.attachInternals();
-
-    this._internals.setFormValue(this.checked ? this.value : null);
-  },
 
   /** @param {Event} e */
   handleChange(e) {
     e.stopPropagation();
     this.checked = /** @type {HTMLInputElement} */ (e.target).checked;
-    this._internals?.setFormValue(this.checked ? this.value : null);
     this.$emit("change", { checked: this.checked });
     this.$emit("input", { checked: this.checked });
   },

@@ -6,14 +6,13 @@ import { withClickOutside } from "@lightstart/components/mixins/click-outside.js
 import T from "@lightstart/light/types";
 import { lcText } from "../utils/text.js";
 
-/** @import { Prop, SelectOption } from "../types.ts" */
+/** @import { Prop, Renderable, SelectOption } from "../types.ts" */
 
 export default defineComponent({
   mixins: [withFormControl, withClickOutside()],
   tag: "lc-select",
   style: true,
   props: {
-    _defaultValue: /** @type {Prop<string | string[]>} */ (T.any({ reactive: false, defaultValue: "" })),
     options: /** @type {Prop<SelectOption[]>} */ (T.array({ defaultValue: [] })),
     multiple: T.boolean(),
     searchable: T.boolean(),
@@ -22,32 +21,6 @@ export default defineComponent({
     search: T.string({ attribute: false, defaultValue: "" }),
     highlightIndex: T.number({ attribute: false, defaultValue: -1 }),
   },
-  formResetCallback() {
-    if (this.multiple) {
-      this.value = Array.isArray(this._defaultValue) ? [...this._defaultValue] : [];
-      return;
-    }
-    const $select = this.querySelector("select");
-    if ($select) {
-      $select.value = /** @type {string} */ (this._defaultValue) || "";
-      this.value = $select.value;
-    }
-  },
-  /** @param {boolean} disabled */
-  formDisabledCallback(disabled) {
-    const $select = this.querySelector("select");
-    if ($select) $select.disabled = disabled;
-  },
-  /** @param {string} state */
-  formStateRestoreCallback(state) {
-    if (this.multiple) {
-      this.value = state ? state.split(",") : [];
-      return;
-    }
-    const $select = this.querySelector("select");
-    if ($select) $select.value = state;
-    this.value = state;
-  },
   reportValidity() {
     const $select = this.querySelector("select");
     if (!$select) return true;
@@ -55,10 +28,6 @@ export default defineComponent({
     $select?.classList.toggle("input-error", !validity);
     return validity;
   },
-  connected() {
-    this._defaultValue = this.multiple ? [...this.selected] : String(this.value ?? "");
-  },
-
   /**
    * The current value as the list it is when `multiple`, so every read has
    * one shape whichever mode the element is in.
@@ -74,14 +43,9 @@ export default defineComponent({
     return this.multiple ? this.selected.includes(String(value)) : value === this.value;
   },
 
-  /**
-   * A multi-select's form value is the list joined, which is what
-   * `formStateRestoreCallback` reads back.
-   * @param {string[] | string} value
-   */
+  /** @param {string[] | string} value */
   _commit(value) {
     this.value = value;
-    this.syncFormValue(Array.isArray(value) ? value.join(",") : value);
     this.$emit("input", { value: this.value });
     this.$emit("change", { value: this.value });
   },
@@ -244,7 +208,6 @@ export default defineComponent({
     e.stopPropagation();
     const value = this._readNative(e);
     this.value = value;
-    this.syncFormValue(Array.isArray(value) ? value.join(",") : value);
     this.$emit("input", { value: this.value });
   },
 
@@ -253,7 +216,6 @@ export default defineComponent({
     e.stopPropagation();
     const value = this._readNative(e);
     this.value = value;
-    this.syncFormValue(Array.isArray(value) ? value.join(",") : value);
     this.$emit("change", { value: this.value });
   },
 
@@ -270,6 +232,16 @@ export default defineComponent({
       const input = /** @type {HTMLElement | null} */ (this.querySelector(".select-search-input"));
       if (input) input.focus();
     }
+  },
+
+  /**
+   * The named native control a searchable select does not draw.
+   * @returns {Renderable}
+   */
+  _hiddenValues() {
+    if (!this.name) return nothing;
+    const values = this.multiple ? this.selected : [this.value ?? ""];
+    return values.map((value) => html`<input type="hidden" name=${this.name} .value=${String(value)} />`);
   },
 
   renderTags() {
@@ -322,6 +294,7 @@ export default defineComponent({
               })}
           </div>` : nothing}
       </div>
+      ${this._hiddenValues()}
     `;
   },
 
@@ -371,6 +344,7 @@ export default defineComponent({
           </div>
         ` : nothing}
       </div>
+      ${this._hiddenValues()}
     `;
   },
 
@@ -386,7 +360,7 @@ export default defineComponent({
         <div class="select-wrapper">
           <select
             id=${id}
-            name=${name || ""}
+            name=${name || nothing}
             value=${this.multiple ? "" : value || ""}
             ?multiple=${this.multiple}
             ?disabled=${disabled}

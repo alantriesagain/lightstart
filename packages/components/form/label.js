@@ -28,17 +28,21 @@ export default defineComponent({
  *
  * A form label with consistent styling and required indicator support.
  *
+ * `for` names a plain native control. An `lc-*` control already renders its
+ * own control, so name it with the component's `label` prop or wrap it in a
+ * `<label>` instead.
+ *
  * @example
- * // Basic label
+ * // A plain native field
  * ```html
  * <lc-label for="username">Username</lc-label>
- * <lc-input id="username"></lc-input>
+ * <input id="username" />
  * ```
  *
  * @example
  * // Required label
  * ```html
  * <lc-label for="email" required>Email</lc-label>
- * <lc-input id="email" required></lc-input>
+ * <input id="email" type="email" required />
  * ```
  */

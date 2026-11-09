@@ -28,14 +28,12 @@ export default defineComponent({
       const detail = /** @type {CustomEvent<{ checked: boolean, value: Exclude<Renderable, undefined> } | undefined>} */ (e).detail;
       if (!detail?.checked) return;
       this.value = detail.value;
-      this._updateFormValue();
       this.$emit("change", { value: this.value });
     });
     this.$own(() => {
       for (const radio of this._radios())
         /** @type {EventTarget} */ (radio).removeEventListener("change", /** @type {EventListener} */ (this._onRadioChange));
     });
-    this._updateFormValue();
     this._syncRadios();
   },
 
@@ -45,20 +43,14 @@ export default defineComponent({
 
   /** @param {{ changedProps: Map<string, unknown> }} props */
   updated({ changedProps }) {
-    if (changedProps.has("value") || changedProps.has("name")) {
+    if (changedProps.has("value") || changedProps.has("name"))
       this._syncRadios();
-      this._updateFormValue();
-    }
     if (
       changedProps.has("size") ||
       changedProps.has("variant") ||
       changedProps.has("disabled")
     )
       this._syncRadios();
-  },
-
-  _updateFormValue() {
-    this.syncFormValue(this.value || null);
   },
 
   _syncRadios() {

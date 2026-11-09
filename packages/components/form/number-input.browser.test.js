@@ -36,12 +36,12 @@ describe("lc-number-input with no value", () => {
     assert.equal(input.value, "");
   });
 
-  it("publishes an empty form value while it has none", () => {
-    /** @type {string[]} */
-    const published = [];
-    el.syncFormValue = (value) => published.push(value);
-    el._updateFormValue();
-    assert.deepEqual(published, [""]);
+  it("submits an empty hidden value while it has none", async () => {
+    el.name = "quantity";
+    await rendered(el);
+    const hidden = /** @type {HTMLInputElement} */ (el.querySelector('input[type="hidden"]'));
+    assert.equal(hidden.name, "quantity");
+    assert.equal(hidden.value, "");
   });
 
   it("nudges from null as if it were zero", async () => {
