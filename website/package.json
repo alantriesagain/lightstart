@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@lightstart/light": "workspace:*",
+    "@lightstart/router": "workspace:*",
     "@bootstrapp/showcase": "workspace:*",
     "bootstrapp": "workspace:*",
     "@bootstrapp/theme": "workspace:*",
