@@ -53,6 +53,71 @@ describe("@lightstart/light - lc-button inherits lc-link's click wiring", () => 
     assert.equal(submitted, 1);
   });
 
+  it("is a real submit button, so the form can submit implicitly from an input", async () => {
+    const form = /** @type {HTMLFormElement} */ (mount(document.createElement("form")));
+    for (const name of ["one", "two"]) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = name;
+      form.append(input);
+    }
+    const el = /** @type {any} */ (document.createElement("lc-button"));
+    el.setAttribute("type", "submit");
+    form.append(el);
+    await el.$requestUpdate();
+
+    const anchor = anchorOf(el);
+    assert.equal(anchor.type, "submit", "the inner button carries the real type");
+    assert.equal(form.querySelector("button[type=submit]"), anchor, "the form has a real submit button, which is what Enter-key submission drives");
+  });
+
+  it("names the pressed button as the submit event's submitter", async () => {
+    const form = /** @type {HTMLFormElement} */ (mount(document.createElement("form")));
+    /** @type {Event | null} */
+    let seen = null;
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      seen = e;
+    });
+    const el = /** @type {any} */ (document.createElement("lc-button"));
+    el.setAttribute("type", "submit");
+    form.append(el);
+    await el.$requestUpdate();
+
+    const anchor = anchorOf(el);
+    anchor.click();
+    assert.equal(/** @type {any} */ (seen).submitter, anchor);
+  });
+
+  it("renders a reset button with the platform's reset type", async () => {
+    const el = await button({ type: "reset" });
+    assert.equal(anchorOf(el).type, "reset");
+  });
+
+  it("cancels a native submit when confirmation is declined", async () => {
+    const form = /** @type {HTMLFormElement} */ (mount(document.createElement("form")));
+    let submitted = 0;
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitted++;
+    });
+    const el = /** @type {any} */ (document.createElement("lc-button"));
+    el.setAttribute("type", "submit");
+    el.setAttribute("confirmation", "Sure?");
+    form.append(el);
+    await el.$requestUpdate();
+
+    const original = globalThis.confirm;
+    globalThis.confirm = () => false;
+    try {
+      anchorOf(el).click();
+    } finally {
+      globalThis.confirm = original;
+    }
+
+    assert.equal(submitted, 0, "a declined confirmation prevents the native submit");
+  });
+
   it("drives a popovertarget through the overlay's trigger protocol", async () => {
     const target = mount(document.createElement("div"));
     target.id = "menu";

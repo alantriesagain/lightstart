@@ -126,8 +126,9 @@ export default defineComponent({
       case "form":
         return html`
           <lc-card padding="md" class="home-form">
-            <lc-form .fields=${FORM_FIELDS} layout="stacked" @form-submit=${(/** @type {CustomEvent} */ e) => { this.saved = `Saved ${e.detail.email} on ${e.detail.plan}`; }}></lc-form>
-            <lc-button primary @click=${() => this._save()}>Save</lc-button>
+            <lc-form .fields=${FORM_FIELDS} layout="stacked" @form-submit=${(/** @type {CustomEvent} */ e) => { this.saved = `Saved ${e.detail.email} on ${e.detail.plan}`; }}>
+              <lc-button primary type="submit">Save</lc-button>
+            </lc-form>
             ${this.saved ? html`<span class="home-note">${this.saved}</span>` : nothing}
           </lc-card>
         `;
@@ -144,11 +145,6 @@ export default defineComponent({
       default:
         return nothing;
     }
-  },
-
-  _save() {
-    const form = /** @type {(HTMLElement & { submit(): void }) | null} */ (this.$("lc-form"));
-    form?.submit();
   },
 
   _signIn() {

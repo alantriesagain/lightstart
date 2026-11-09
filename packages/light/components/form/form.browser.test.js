@@ -349,6 +349,45 @@ describe("lc-form", () => {
       await frame();
       assert.equal(el.querySelector(".form-error"), null);
     });
+
+    it("a slotted lc-button type=submit is the form's real submit button", async () => {
+      const el = await mount({
+        fields: [
+          { name: "title", label: "Title", type: "text" },
+          { name: "notes", label: "Notes", type: "text" },
+        ],
+        data: { title: "A place", notes: "some notes" },
+      });
+      const button = document.createElement("lc-button");
+      button.setAttribute("type", "submit");
+      button.textContent = "Save";
+      el.appendChild(button);
+      await frame();
+      await tick();
+
+      const inner = /** @type {HTMLElement} */ (el.querySelector("form").querySelector("button[type=submit]"));
+      assert.equal(inner.getAttribute("part"), "lc-link-anchor");
+
+      /** @type {unknown[]} */
+      const submitted = [];
+      el.addEventListener("form-submit", (e) => submitted.push(e.detail));
+      press(inner);
+      await frame();
+      assert.deepEqual(submitted, [{ title: "A place", notes: "some notes" }], "one submit, carrying the payload");
+    });
+
+    it("a slotted control is not collected unless a field declares its name", async () => {
+      const el = await mount({ fields: [{ name: "title", label: "Title", type: "text" }], data: { title: "A place" } });
+      const input = document.createElement("input");
+      input.name = "extra";
+      input.value = "slotted";
+      el.appendChild(input);
+      await frame();
+      await tick();
+
+      assert.ok(el.querySelector("form").contains(input), "it sits in the form");
+      assert.deepEqual(el.collectFormData(), { title: "A place" });
+    });
   });
 });
 
@@ -550,8 +589,51 @@ describe("lc-form: refusing a submit", () => {
     assert.equal(el.submit(), false, "submit says it did not go");
     await frame();
     assert.deepEqual(submitted, []);
-    assert.deepEqual(refused, [{ errors: { title: "Title is required" } }]);
-    assert.equal(el.querySelector(".form-error").textContent.trim(), "Title is required");
+    const message = /** @type {HTMLInputElement} */ (el.querySelector('[name="title"] input')).validationMessage;
+    assert.deepEqual(refused, [{ errors: { title: message } }], "the platform's refusal is announced once");
+    assert.equal(el.errors.title, message, "the platform's reason becomes the form's");
+    assert.equal(el.querySelector(".form-error").textContent.trim(), message);
+  });
+
+  it("two refused controls are announced as one refusal", async () => {
+    const el = await mount({
+      fields: [
+        { name: "title", label: "Title", type: "text", required: true },
+        { name: "notes", label: "Notes", type: "text", required: true },
+      ],
+      data: {},
+    });
+    /** @type {any[]} */
+    const refused = [];
+    el.addEventListener("form-invalid", (e) => refused.push(e.detail));
+
+    el.querySelector("form").requestSubmit();
+    await frame();
+    assert.equal(refused.length, 1);
+    assert.deepEqual(Object.keys(refused[0].errors).sort(), ["notes", "title"]);
+  });
+
+  it("a native submit validates a field the platform cannot see", async () => {
+    registerFormFieldRenderer("swatch3", (field, value, onChange, html) =>
+      html`<button type="button" @click=${() => onChange("#fff")}>pick</button>`);
+    const el = await mount({
+      fields: [{ name: "colour", label: "Colour", type: "text", required: true, cmsType: "swatch3" }],
+      data: {},
+    });
+    /** @type {unknown[]} */
+    const submitted = [];
+    /** @type {unknown[]} */
+    const refused = [];
+    el.addEventListener("form-submit", (e) => submitted.push(e.detail));
+    el.addEventListener("form-invalid", (e) => refused.push(e.detail));
+
+    el.querySelector("form").requestSubmit();
+    await frame();
+
+    assert.deepEqual(submitted, []);
+    assert.deepEqual(refused, [{ errors: { colour: "Colour is required" } }]);
+    assert.equal(el.errors.colour, "Colour is required");
+    assert.equal(el.querySelector(".form-error").textContent.trim(), "Colour is required");
   });
 
   it("a widget-rendered required field is checked, which the platform cannot do", async () => {

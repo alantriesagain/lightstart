@@ -72,6 +72,7 @@ export default defineComponent({
       T.object({ attribute: false, defaultValue: () => ({}) })
     ),
     _loads: /** @type {Prop<Map<string, number>>} */ (T.object({ reactive: false, defaultValue: () => new Map() })),
+    _refusing: T.boolean({ reactive: false, defaultValue: false }),
   },
 
   events: {
@@ -98,7 +99,8 @@ export default defineComponent({
   /**
    * A native control the platform refused. It fires one `invalid` per failing
    * control and then submits nothing, so this is where a submit driven by a
-   * plain `<button type="submit">` gets its reason drawn.
+   * submit button gets its reason drawn, and the refusal is announced once
+   * the platform has checked every control.
    *
    * @param {Event} e
    */
@@ -109,6 +111,12 @@ export default defineComponent({
     const field = this.getFieldConfig(name);
     if (!field.name) return;
     this.errors = { ...this.errors, [name]: target.validationMessage || lcText(TAG, "required", { label: field.label || name }) };
+    if (this._refusing) return;
+    this._refusing = true;
+    queueMicrotask(() => {
+      this._refusing = false;
+      this.$emit("form-invalid", { errors: this.errors });
+    });
   },
 
   /**
@@ -158,16 +166,10 @@ export default defineComponent({
    * @returns {boolean}
    */
   submit() {
-    const errors = this.validate();
-    if (Object.keys(errors).length) {
-      this.setErrors(errors);
-      this.$emit("form-invalid", { errors });
-      return false;
-    }
     const form = this.querySelector("form");
     if (!form) return false;
     form.requestSubmit();
-    return true;
+    return Object.keys(this.errors).length === 0;
   },
 
   /** @returns {NodeListOf<FormControlElement>} */
@@ -477,6 +479,13 @@ export default defineComponent({
     e.preventDefault();
     e.stopPropagation();
 
+    const errors = this.validate();
+    if (Object.keys(errors).length) {
+      this.setErrors(errors);
+      this.$emit("form-invalid", { errors });
+      return;
+    }
+
     this.errors = {};
 
     const rawData = this.collectFormData();
@@ -524,6 +533,7 @@ export default defineComponent({
             </div>
           `;
         })}
+        <slot></slot>
       </form>
     `;
   },
