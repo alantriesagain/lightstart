@@ -173,7 +173,7 @@ async function mirrorModules(buildDir, dev) {
     if (!((isModule && /javascript/.test(mime)) || (isCss && /css/.test(mime)) || (isJson && /json/.test(mime)))) continue;
     let body = await response.text();
     if (isModule) {
-      body = body.replaceAll("/app/light/html/index.js", RUNTIME_SHIM);
+      body = body.replaceAll("/app/@lightstart/light/html/index.js", RUNTIME_SHIM);
       body = body.replace(SPECIFIER, (match, quote, specifier) => {
         const fixed = specifier.replace(/\.m?ts$/, (ext) => ext.replace("ts", "js"));
         return fixed === specifier ? match : match.replace(specifier, fixed);
