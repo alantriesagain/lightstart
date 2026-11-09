@@ -1,5 +1,6 @@
 packages:
   - 'packages/light'
+  - 'packages/components'
   - 'packages/native/*'
   - 'packages/tui/*'
   - 'packages/lightstart'

@@ -125,7 +125,7 @@ test("the tag argument wins over a tag key inside the literal", () => {
 test("a View that is a parameter is not light's import, and a definition nothing can read is no site", () => {
   const param = `${LIGHT}const install = (View) => View.define("app-container", { tag: "app-container" });\nexport default { connected() { install(this.constructor); } };\n`;
   assert.deepEqual(parseComponentSources(param, "frontend.js").map((p) => p.tag), [null]);
-  const loop = `${LIGHT}for (const path of ["display/button"]) View.define((await import(\`@lightstart/light/components/\${path}.js\`)).default);\n`;
+  const loop = `${LIGHT}for (const path of ["display/button"]) View.define((await import(\`@lightstart/components/\${path}.js\`)).default);\n`;
   assert.deepEqual(parseComponentSources(loop, "index.js"), []);
 });
 

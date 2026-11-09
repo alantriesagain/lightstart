@@ -11,13 +11,13 @@ import { defineComponent } from "@lightstart/light";
 import { ROUTER_CHANGED } from "bootstrapp/router/events.js";
 import presets from "@lightstart/light/theme/presets.js";
 import { browsableCategories, humanize } from "@bootstrapp/showcase/lib/categories.js";
-import { matchesBreakpoint } from "@lightstart/light/components/utils/breakpoints.js";
+import { matchesBreakpoint } from "@lightstart/components/utils/breakpoints.js";
 import { BUILT_WITH_LIGHT_PATH, componentPath, GITHUB_URL } from "../../lib/paths.js";
 import { GROUPS, searchIndex } from "../../lib/search-index.js";
 import { inNative, NATIVE_GROUPS, NATIVE_PAGES } from "../../lib/native/pages.js";
 
 /** @import { Prop, SkinOption } from "../../types.ts" */
-/** @import { NavTreeGroup, TocItem } from "@lightstart/light/components/types.ts" */
+/** @import { NavTreeGroup, TocItem } from "@lightstart/components/types.ts" */
 
 const COLLAPSE_AT = 7;
 const SKIN_MENU = "docs-skin-menu";

@@ -1,6 +1,6 @@
 import Dexie from "https://esm.sh/dexie@4.0.11";
 import { html } from "@lightstart/light/html";
-import { toasts } from "@lightstart/light/components/feedback/toasts.js";
+import { toasts } from "@lightstart/components/feedback/toasts.js";
 import T from "@lightstart/light/types";
 import View from "@lightstart/light";
 

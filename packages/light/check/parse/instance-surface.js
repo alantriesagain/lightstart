@@ -72,7 +72,7 @@ export const declaredPropertyNames = (literal) => {
 /**
  * The package-relative path a mixin specifier names, or null when it points
  * outside the package being checked. A package's own components import its
- * mixins through its public specifier (`@lightstart/light/components/mixins/x.js`), so
+ * mixins through its public specifier (`@lightstart/components/mixins/x.js`), so
  * `selfPrefix` maps that back onto a readable path.
  * @param {string} spec
  * @param {string} fromFile

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -52,23 +52,15 @@ const reach = (entry, { types = false } = {}) => {
   return [...seen].map((file) => relative(ROOT, file));
 };
 
-/** @param {string} dir @returns {string[]} */
-const sourceFiles = (dir) =>
-  readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) return sourceFiles(path);
-    return /\.(js|ts)$/.test(entry.name) && !entry.name.endsWith(".test.js") && entry.name !== "types.ts" ? [path] : [];
-  });
-
 const inController = (/** @type {string} */ file) => file.startsWith("controller/");
 
 describe("@lightstart/light/controller: nothing loads what it did not ask for", () => {
-  it("no entry outside the controller but the model's binding, and no component, reaches controller/", () => {
+  it("no entry outside the controller but the model's binding reaches controller/", () => {
     const entries = Object.entries(pkg.exports)
       .filter(([key]) => !key.startsWith("./controller") && key !== "./model/binder" && !key.includes("*"))
       .map(([, target]) => exportFile(target))
       .filter((file) => typeof file === "string");
-    for (const entry of [...entries, ...sourceFiles("components")]) {
+    for (const entry of entries) {
       const leaked = reach(entry).filter(inController);
       assert.deepEqual(leaked, [], `${entry} reaches ${leaked.join(", ")}`);
     }

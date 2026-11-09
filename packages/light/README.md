@@ -17,7 +17,6 @@ in browsers, under server-side prerendering, and on native targets.
 | `@lightstart/light/navigation` | The host's router as components see it; plain anchors until one is configured |
 | `@lightstart/light/theme` | Design tokens from a theme object, presets, `theme.css`, the color scheme, icons ([README](theme/README.md)) |
 | `@lightstart/light/theme/classes` | The utility classes a theme provides: `createEngine`, `buildTheme`, the rule table ([README](theme/README.md#classes)) |
-| `@lightstart/light/components/<category>/<name>.js` | The component library: `lc-*` tags in nine categories ([README](components/README.md)) |
 
 ## Two ways to write a component
 
@@ -431,7 +430,6 @@ native gates. Both pass only at zero errors.
 | `markup/`, `native/` | The in-memory host and the native targets |
 | `controller/`, `model/` | Shared state and the data layer |
 | `theme/` | Tokens, presets, color scheme, icons and the utility-class engine |
-| `components/`, `locales/` | The component library and its translated words |
 | `check/`, `eslint/`, `test/` | The convention checker, the ESLint plugin and the test runner |
 
 ## License

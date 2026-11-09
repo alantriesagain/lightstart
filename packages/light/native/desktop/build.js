@@ -15,6 +15,7 @@ import { scriptcPath } from "../scriptc.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const light = join(here, "..", "..");
+const components = join(light, "..", "components");
 const shimDir = join(here, "shim");
 const vendor = join(shimDir, "vendor", "webview");
 const packModule = "../../scripts/pack.js";
@@ -208,10 +209,11 @@ const currentShim = (target) => {
 
 /**
  * The import map a page gets: every entry of light's `exports` as a bare specifier under
- * `light/`, plus the prefix for anything else in the package.
+ * `light/`, the prefix for anything else in the package, and the components package beside it.
  * @param {Record<string, string | { types: string, default: string }>} exports
+ * @param {boolean} withComponents
  */
-const importMap = (exports) => {
+const importMap = (exports, withComponents) => {
   /** @type {Record<string, string>} */
   const imports = {};
   for (const [key, target] of Object.entries(exports)) {
@@ -220,6 +222,7 @@ const importMap = (exports) => {
     imports["@lightstart/light" + key.slice(1)] = "light/" + file.replace(/^\.\//, "");
   }
   imports["@lightstart/light/"] = "light/";
+  if (withComponents) imports["@lightstart/components/"] = "components/";
   return { imports };
 };
 
@@ -296,13 +299,19 @@ export const build = async (backend, web, out, name, target, keepLight, noWeb = 
   const webOut = join(out, "web");
   const lightOut = join(webOut, "light");
   const staged = await stageLight(keepLight);
+  const withComponents = existsSync(components);
   if (existsSync(webOut))
     for (const entry of readdirSync(webOut, { withFileTypes: true }))
-      if (entry.name !== "light") rmSync(join(webOut, entry.name), { recursive: true, force: true });
+      if (entry.name !== "light" && entry.name !== "components") rmSync(join(webOut, entry.name), { recursive: true, force: true });
   cpSync(web, webOut, { recursive: true });
   rmSync(lightOut, { recursive: true, force: true });
   copyPage(staged.dir, lightOut);
-  writeFileSync(join(webOut, "importmap.json"), `${JSON.stringify(importMap(staged.manifest.exports), null, 2)}\n`);
+  if (withComponents) {
+    const componentsOut = join(webOut, "components");
+    rmSync(componentsOut, { recursive: true, force: true });
+    copyPage(components, componentsOut);
+  }
+  writeFileSync(join(webOut, "importmap.json"), `${JSON.stringify(importMap(staged.manifest.exports, withComponents), null, 2)}\n`);
   return new Built(exe, webOut);
 };
 

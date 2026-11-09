@@ -9,7 +9,7 @@ import { defineComponent } from "@lightstart/light";
 import navigation from "@lightstart/light/navigation";
 import { NATIVE_GROUPS, NATIVE_PAGES, nativeNeighbours } from "../lib/native/pages.js";
 
-/** @import { TocItem } from "@lightstart/light/components/types.ts" */
+/** @import { TocItem } from "@lightstart/components/types.ts" */
 
 const GROUP_TEXT = {
   native: "How light's native build works, how to use it, and what is not finished yet.",

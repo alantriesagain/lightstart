@@ -14,7 +14,8 @@
       "@lightstart/light/env": "../../packages/light/env/index.js",
       "@lightstart/light/navigation": "../../packages/light/navigation/index.js",
       "@lightstart/light/theme": "../../packages/light/theme/index.js",
-      "@lightstart/light/": "../../packages/light/"
+      "@lightstart/light/": "../../packages/light/",
+      "@lightstart/components/": "../../packages/components/"
     }
   }
   </script>
@@ -40,7 +41,7 @@
       "form/select", "layout/card", "layout/container", "layout/flex", "layout/split-pane", "navigation/accordion", "navigation/menu",
       "navigation/nav-item", "navigation/tabs", "overlay/alert-dialog", "overlay/modal",
     ];
-    for (const path of components) View.define((await import(`@lightstart/light/components/${path}.js`)).default);
+    for (const path of components) View.define((await import(`@lightstart/components/${path}.js`)).default);
   </script>
 </body>
 </html>

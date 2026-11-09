@@ -1,0 +1,13 @@
+{
+  "extends": "../light/tsconfig.json",
+  "include": [
+    "**/*.js",
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.js",
+    "**/*.browser.test.js"
+  ]
+}

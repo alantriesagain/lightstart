@@ -9,7 +9,7 @@ import $APP from "bootstrapp";
 import T from "@lightstart/light/types";
 import { defineComponent } from "@lightstart/light";
 import { env } from "@lightstart/light/env";
-import { matchesBreakpoint } from "@lightstart/light/components/utils/breakpoints.js";
+import { matchesBreakpoint } from "@lightstart/components/utils/breakpoints.js";
 import { browsableCategories } from "@bootstrapp/showcase/lib/categories.js";
 import { applySkin, clearSkin } from "@bootstrapp/showcase/lib/skins.js";
 import { BUILT_WITH_LIGHT_PATH, COMPONENTS_PATH, GITHUB_URL, NPM_URL, README_URL } from "../lib/paths.js";

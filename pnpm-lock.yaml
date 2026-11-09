@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@lightstart/components':
+        specifier: workspace:*
+        version: link:packages/components
       '@lightstart/light':
         specifier: workspace:*
         version: link:packages/light
@@ -61,8 +64,26 @@ importers:
         specifier: ^1.58.2
         version: 1.64.0
 
+  packages/components:
+    devDependencies:
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      marked:
+        specifier: ^18.1.0
+        version: 18.1.0
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/light:
     devDependencies:
+      '@lightstart/components':
+        specifier: workspace:*
+        version: link:../components
       '@lightstart/server':
         specifier: workspace:*
         version: link:../server
