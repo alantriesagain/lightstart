@@ -1,0 +1,49 @@
+{
+  "name": "@lightstart/router",
+  "version": "0.1.0",
+  "description": "A client router: /-separated route patterns without URLPattern, a navigation stack over a browser or memory adapter, locales, base paths, named routes and light's Navigation contract.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/router"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "router",
+    "client",
+    "navigation",
+    "history",
+    "locales",
+    "scriptc"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "pack": "node scripts/pack.js"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./core": "./core.ts",
+    "./logger": "./logger.ts",
+    "./matcher": "./matcher.ts",
+    "./adapters/browser": "./adapters/browser.ts",
+    "./adapters/memory": "./adapters/memory.ts",
+    "./click": "./click.ts",
+    "./listen": "./listen.ts",
+    "./locale": "./locale.ts",
+    "./url": "./url.ts",
+    "./*": "./*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}

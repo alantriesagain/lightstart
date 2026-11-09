@@ -73,6 +73,7 @@ from its own demo, in any skin.
 |---|---|
 | `packages/light/` | `@lightstart/light`: the runtime and the `light` command, with [its documentation](packages/light/README.md) |
 | `packages/server/` | `@lightstart/server`: a small HTTP server core, routes, middleware, hooks and plugins over one `Context` and `Reply`, run on node, natively by scriptc, on Fetch runtimes and on Lambda ([README](packages/server/README.md)); an optional peer of `@lightstart/light`, which `light test`, `light serve` and the desktop shell serve with |
+| `packages/router/` | `@lightstart/router`: a client router with `/`-separated route patterns, a navigation stack over a browser or memory adapter, locales and base paths, exposing light's `Navigation` contract ([README](packages/router/README.md)) |
 | `packages/native/`, `packages/tui/` | The workspace packages native apps share, and `light-native`, their tooling ([README](packages/README.md)) |
 | `examples/` | Pages and apps on light alone: `starter`, `todomvc`, `indexeddb-explorer`, `grand-octave`, the five guided pages (`01-basic-counter.html` … `05-plugin-system.html`), and `tasks`, the terminal reference app ([README](examples/tasks/README.md)) |
 | `benchmarks/` | The view engine and renderer under node, natively and in Chromium ([README](benchmarks/README.md)); `benchmarks/server/`, the server against bare `node:http` on both engines ([README](benchmarks/server/README.md)) |

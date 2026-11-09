@@ -3,6 +3,7 @@ packages:
   - 'packages/native/*'
   - 'packages/tui/*'
   - 'packages/lightstart'
+  - 'packages/router'
   - 'packages/server'
   - 'packages/sqlite'
   - 'benchmarks'
