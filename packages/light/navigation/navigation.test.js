@@ -17,3 +17,20 @@ test("a configured router answers, and what it leaves out stays plain", () => {
   assert.equal(navigation.path(), "/here");
   assert.equal(navigation.click(/** @type {MouseEvent} */ ({})), false);
 });
+
+test("a router handed over as a class instance answers through its prototype's methods", () => {
+  class Bridge {
+    prefix = "/pt";
+    /** @param {string} path */
+    href(path) {
+      return `${this.prefix}${path}`;
+    }
+    path() {
+      return "/places";
+    }
+  }
+  configureNavigation(new Bridge());
+  assert.equal(navigation.href("/agenda"), "/pt/agenda");
+  assert.equal(navigation.path(), "/places");
+  assert.equal(navigation.click(/** @type {MouseEvent} */ ({})), false);
+});

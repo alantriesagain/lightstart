@@ -22,11 +22,16 @@ const plain = {
 let host = plain;
 
 /**
- * Hand the engine the host's router. Missing members keep the plain behaviour.
+ * Hand the engine the host's router, a plain object or a class instance whose
+ * members live on its prototype. Missing members keep the plain behaviour.
  * @param {Partial<Navigation>} router
  */
 export const configureNavigation = (router) => {
-  host = { ...plain, ...router };
+  const member = /** @type {<K extends keyof Navigation>(key: K) => Navigation[K]} */ ((key) => {
+    const fn = router[key];
+    return typeof fn === "function" ? /** @type {Navigation[typeof key]} */ (fn.bind(router)) : plain[key];
+  });
+  host = { href: member("href"), go: member("go"), click: member("click"), path: member("path"), subscribe: member("subscribe") };
 };
 
 /** @type {Navigation} */
