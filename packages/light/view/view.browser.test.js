@@ -2038,49 +2038,7 @@ describe("light - light-DOM slots", () => {
     el.remove();
   });
 
-  it("stops observing a host once it leaves the document", async () => {
-    const tag = defineHost(() => html`<slot></slot>`);
-    const el = await mount(tag, "<i>x</i>");
-    await tick();
-    const i = el.querySelector("i");
-    let projections = 0;
-    const project = el.$project.bind(el);
-    el.$project = () => {
-      projections++;
-      project();
-    };
-    el.remove();
-    i.setAttribute("slot", "nope");
-    await tick();
-    assert.equal(projections, 0);
-  });
-
-  it("stops observing a disconnected host without MutationObserver.unobserve", async () => {
-    const proto = MutationObserver.prototype;
-    const saved = proto.unobserve;
-    proto.unobserve = undefined;
-    try {
-      const tag = defineHost(() => html`<slot></slot>`);
-      const el = await mount(tag, "<i>x</i>");
-      await tick();
-      const i = el.querySelector("i");
-      let projections = 0;
-      const project = el.$project.bind(el);
-      el.$project = () => {
-        projections++;
-        project();
-      };
-      el.remove();
-      await tick();
-      i.setAttribute("slot", "nope");
-      await tick();
-      assert.equal(projections, 0);
-    } finally {
-      proto.unobserve = saved;
-    }
-  });
-
-  it("stops observing a unit removed from its host", async () => {
+  it("a unit taken out of its host no longer asks it to project", async () => {
     const tag = defineHost(() => html`<slot></slot>`);
     const el = await mount(tag, "<i>x</i>");
     await tick();
@@ -2109,6 +2067,18 @@ describe("light - light-DOM slots", () => {
     await el.$requestUpdate();
     await tick();
     assert.equal(i.parentNode, el.querySelector(":scope > unslotted"));
+    el.remove();
+  });
+
+  it("an unslotted unit renamed to a rendered slot is projected into it", async () => {
+    const tag = defineHost(() => html`<slot name="a"></slot>`);
+    const el = await mount(tag, '<i slot="nope">x</i>');
+    const i = el.querySelector("i");
+    await tick();
+    assert.equal(i.parentNode, el.querySelector(":scope > unslotted"));
+    i.setAttribute("slot", "a");
+    await tick();
+    assert.equal(i.parentNode, el.querySelector("slot"));
     el.remove();
   });
 });

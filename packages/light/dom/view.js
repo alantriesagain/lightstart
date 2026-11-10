@@ -14,7 +14,6 @@ import { assertDefinitionKeys, composeDefinition, isThenable, LIFECYCLE_HOOKS } 
 import { UNSLOTTED_TAG, hasRootPart, isMoving, projectSlots, render, topLevelPair, unprojectUnits } from "../html/index.js";
 import { untracked } from "../signals/index.ts";
 import { CORE_METHODS, ViewCore, config } from "../view/core.ts";
-import { unitNodes } from "./slots.js";
 
 /**
  * Store field specs from a properties schema. Defaults are wrapped in a
@@ -168,17 +167,24 @@ const SLOT_OBSERVE = { childList: true, attributes: true, attributeFilter: ["slo
 /** @type {WeakSet<View>} */
 const projectingHosts = new WeakSet();
 /** @type {WeakMap<Element, View>} */
-const projectedBy = new WeakMap();
-/** @type {WeakMap<Element, View>} */
 const slotOwner = new WeakMap();
-/** @type {Map<Element, Set<View>>} */
-const observedTargets = new Map();
-/** @type {WeakMap<View, Set<Element>>} */
-const hostTargets = new WeakMap();
+/** @type {WeakSet<Node>} */
+const observedForSlots = new WeakSet();
 /** @type {MutationObserver | null} */
 let slotObserver = null;
-/** @type {Set<Element> | null} */
-let unobserveQueue = null;
+
+/**
+ * The host whose units `node` holds: the host itself, one of its slots, or
+ * its unslotted holder.
+ * @param {Node | null} node
+ * @returns {View | undefined}
+ */
+const hostHolding = (node) => {
+  if (node === null) return undefined;
+  if (projectingHosts.has(/** @type {View} */ (node))) return /** @type {View} */ (node);
+  if (/** @type {Element} */ (node).localName === UNSLOTTED_TAG) return hostHolding(node.parentNode);
+  return slotOwner.get(/** @type {Element} */ (node));
+};
 
 /** @param {MutationRecord[]} records */
 const onSlotRecords = (records) => {
@@ -186,104 +192,17 @@ const onSlotRecords = (records) => {
   const due = new Set();
   for (const record of records) {
     const target = /** @type {Element} */ (record.target);
-    const host =
-      record.type === "attributes"
-        ? projectedBy.get(target) ?? slotOwner.get(target)
-        : projectingHosts.has(/** @type {View} */ (target))
-          ? /** @type {View} */ (target)
-          : slotOwner.get(target);
+    const host = record.type === "attributes" && !slotOwner.has(target) ? hostHolding(target.parentNode) : hostHolding(target);
     if (host) due.add(host);
   }
   for (const host of due) host.$project();
 };
 
-/**
- * A browser with `MutationObserver.unobserve` drops one target; one without
- * rebuilds the set, so a removed node never stays watched.
- * @typedef {MutationObserver & { unobserve(target: Node): void }} SlotObserver
- */
-
-/** @param {MutationObserver} observer @returns {observer is SlotObserver} */
-const canUnobserve = (observer) => typeof (/** @type {SlotObserver} */ (observer)).unobserve === "function";
-
-/** @param {Element} target */
-const removeObservedTarget = (target) => {
-  if (slotObserver === null) return;
-  if (canUnobserve(slotObserver)) {
-    slotObserver.unobserve(target);
-    return;
-  }
-  (unobserveQueue ??= new Set()).add(target);
-  if (unobserveQueue.size > 1) return;
-  queueMicrotask(() => {
-    const targets = unobserveQueue;
-    unobserveQueue = null;
-    if (targets === null || slotObserver === null) return;
-    if (canUnobserve(slotObserver)) {
-      for (const one of targets) slotObserver.unobserve(one);
-      return;
-    }
-    const records = slotObserver.takeRecords();
-    slotObserver.disconnect();
-    for (const one of observedTargets.keys()) slotObserver.observe(one, SLOT_OBSERVE);
-    if (records.length) onSlotRecords(records);
-  });
-};
-
-/**
- * Start watching `target` for the mutations that ask `host` to project again.
- * One observer serves every host; a target two hosts share stays observed
- * until the last of them lets go.
- * @param {View} host
- * @param {Element} target
- */
-const observeForSlots = (host, target) => {
-  let hosts = observedTargets.get(target);
-  if (hosts === undefined) {
-    hosts = new Set();
-    observedTargets.set(target, hosts);
-    slotObserver ??= new MutationObserver(onSlotRecords);
-    slotObserver.observe(target, SLOT_OBSERVE);
-  }
-  hosts.add(host);
-  let targets = hostTargets.get(host);
-  if (targets === undefined) hostTargets.set(host, (targets = new Set()));
-  targets.add(target);
-};
-
-/**
- * Let go of one target for one host, stopping the observer only when no host
- * still needs it.
- * @param {View} host
- * @param {Element} target
- */
-const unobserveForHost = (host, target) => {
-  const targets = hostTargets.get(host);
-  if (targets !== undefined) targets.delete(target);
-  const hosts = observedTargets.get(target);
-  if (hosts !== undefined) {
-    hosts.delete(host);
-    if (hosts.size === 0) {
-      observedTargets.delete(target);
-      removeObservedTarget(target);
-    }
-  }
-  if (target === host) projectingHosts.delete(host);
-  if (slotOwner.get(target) === host) slotOwner.delete(target);
-  if (projectedBy.get(target) === host) projectedBy.delete(target);
-};
-
-/**
- * Stop watching everything a host was watching: its own children, its slot
- * elements and the units projected into them. The next projection watches
- * them again.
- * @param {View} host
- */
-const forgetObservedSlots = (host) => {
-  const targets = hostTargets.get(host);
-  if (targets === undefined) return;
-  hostTargets.delete(host);
-  for (const target of targets) unobserveForHost(host, target);
+/** @param {Node} target */
+const observeForSlots = (target) => {
+  if (observedForSlots.has(target)) return;
+  observedForSlots.add(target);
+  (slotObserver ??= new MutationObserver(onSlotRecords)).observe(target, SLOT_OBSERVE);
 };
 
 const KNOWN_DEFINITION_KEYS = ["mixins", "props", "events", "extends", "icons", "formAssociated", "style", "class", "role", "tag"];
@@ -485,10 +404,6 @@ class View extends BaseElement {
   $slotWarned = null;
   /** @type {Element | null} */
   $unslotted = null;
-  /** @type {Set<Element>} */
-  $slotUnits = new Set();
-  /** @type {Set<Element> | null} */
-  $pendingUnits = null;
 
   /**
    * Typed view of `this.constructor`: includes framework-added
@@ -806,8 +721,6 @@ class View extends BaseElement {
 
   disconnectedCallback() {
     if (isMoving()) return;
-    forgetObservedSlots(this);
-    this.$slotUnits.clear();
     this.$unobserve?.();
     this.$unobserve = null;
     this.$detach();
@@ -983,24 +896,6 @@ class View extends BaseElement {
     return null;
   }
 
-  /**
-   * Stop watching a slot part that is being disposed: its element and the
-   * units it held, and the host itself once it renders no slot at all.
-   * @param {import("./slots.js").SlotPart} part
-   */
-  $unwatchSlotPart(part) {
-    const slots = this.$slotParts;
-    slots.delete(part);
-    unobserveForHost(this, part.el);
-    for (const unit of part.units)
-      for (const node of unitNodes(unit)) if (node.nodeType === 1) unobserveForHost(this, /** @type {Element} */ (node));
-    if (slots.size === 0) {
-      unobserveForHost(this, this);
-      for (const el of this.$slotUnits) unobserveForHost(this, el);
-      this.$slotUnits.clear();
-    }
-  }
-
   $queueProject() {
     if (this.$projectQueued || !this.$slotParts) return;
     this.$projectQueued = true;
@@ -1019,20 +914,13 @@ class View extends BaseElement {
     this.$projecting = true;
     this.$unslotted ??= this.querySelector(`:scope > ${UNSLOTTED_TAG}`);
     projectingHosts.add(this);
-    observeForSlots(this, this);
-    this.$pendingUnits = new Set();
+    observeForSlots(this);
     const hooks = (this.$slotHooks ??= {
       watchSlot: (el) => {
-        if (slotOwner.get(el) === this) return;
         slotOwner.set(el, this);
-        observeForSlots(this, el);
+        observeForSlots(el);
       },
-      watchUnit: (el) => {
-        this.$pendingUnits?.add(el);
-        if (projectedBy.get(el) === this) return;
-        projectedBy.set(el, this);
-        observeForSlots(this, el);
-      },
+      watchUnit: (el) => observeForSlots(el),
       unknown: (name) => {
         if (!config.dev) return;
         const warned = (this.$slotWarned ??= new Set());
@@ -1042,23 +930,14 @@ class View extends BaseElement {
         console.debug(`[view] <${this.localName}> renders no ${which}; that child is held unrendered until one appears`);
       },
     });
-    let projected = false;
     try {
       for (let pass = 0; pass < 3; pass++) {
         this.$projectAgain = false;
         const again = projectSlots(this, hooks);
         if (!again && !this.$projectAgain) break;
       }
-      projected = true;
     } finally {
       this.$projecting = false;
-      const watched = this.$pendingUnits;
-      this.$pendingUnits = null;
-      if (projected && watched !== null) {
-        const previous = this.$slotUnits;
-        this.$slotUnits = watched;
-        for (const el of previous) if (!watched.has(el)) unobserveForHost(this, el);
-      }
     }
   }
 
