@@ -12,6 +12,8 @@ export interface SlotHost extends Element {
   /** The hidden holder of content no rendered slot takes, present only while it holds something. */
   $unslotted: Element | null;
   $queueProject(): void;
+  /** Stop watching a slot part that is being disposed, when the host owns an observer. */
+  $unwatchSlotPart?(part: import("./slots.js").SlotPart): void;
 }
 
 /** What a host hands `projectSlots` to be told which nodes to watch and which slot names it lacks. */

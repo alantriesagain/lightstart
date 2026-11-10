@@ -236,6 +236,7 @@ export class SlotPart {
 
   dispose() {
     if (!this.host) return;
+    this.host.$unwatchSlotPart?.(this);
     this.release();
     this.host.$slotParts?.delete(this);
   }
@@ -320,6 +321,8 @@ export const projectSlots = (host, hooks) => {
     for (const unit of list)
       for (const node of unitNodes(unit)) if (node.nodeType === 1) hooks.watchUnit(/** @type {Element} */ (node));
   }
+  for (const unit of stray)
+    for (const node of unitNodes(unit)) if (node.nodeType === 1) hooks.watchUnit(/** @type {Element} */ (node));
 
   if (host.$unslotted && !unitsIn(host.$unslotted).length) {
     host.$unslotted.remove();

@@ -2037,6 +2037,80 @@ describe("light - light-DOM slots", () => {
     assert.equal(el.$slotParts.size, 0);
     el.remove();
   });
+
+  it("stops observing a host once it leaves the document", async () => {
+    const tag = defineHost(() => html`<slot></slot>`);
+    const el = await mount(tag, "<i>x</i>");
+    await tick();
+    const i = el.querySelector("i");
+    let projections = 0;
+    const project = el.$project.bind(el);
+    el.$project = () => {
+      projections++;
+      project();
+    };
+    el.remove();
+    i.setAttribute("slot", "nope");
+    await tick();
+    assert.equal(projections, 0);
+  });
+
+  it("stops observing a disconnected host without MutationObserver.unobserve", async () => {
+    const proto = MutationObserver.prototype;
+    const saved = proto.unobserve;
+    proto.unobserve = undefined;
+    try {
+      const tag = defineHost(() => html`<slot></slot>`);
+      const el = await mount(tag, "<i>x</i>");
+      await tick();
+      const i = el.querySelector("i");
+      let projections = 0;
+      const project = el.$project.bind(el);
+      el.$project = () => {
+        projections++;
+        project();
+      };
+      el.remove();
+      await tick();
+      i.setAttribute("slot", "nope");
+      await tick();
+      assert.equal(projections, 0);
+    } finally {
+      proto.unobserve = saved;
+    }
+  });
+
+  it("stops observing a unit removed from its host", async () => {
+    const tag = defineHost(() => html`<slot></slot>`);
+    const el = await mount(tag, "<i>x</i>");
+    await tick();
+    const i = el.querySelector("i");
+    let projections = 0;
+    const project = el.$project.bind(el);
+    el.$project = () => {
+      projections++;
+      project();
+    };
+    i.remove();
+    await tick();
+    projections = 0;
+    i.setAttribute("slot", "nope");
+    await tick();
+    assert.equal(projections, 0);
+  });
+
+  it("projects again after a host is removed and reconnected", async () => {
+    const tag = defineHost(() => html`<slot></slot>`);
+    const el = await mount(tag, "<i>x</i>");
+    const i = el.querySelector("i");
+    el.remove();
+    i.setAttribute("slot", "nope");
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    await tick();
+    assert.equal(i.parentNode, el.querySelector(":scope > unslotted"));
+    el.remove();
+  });
 });
 
 describe("light - update scheduling", () => {
