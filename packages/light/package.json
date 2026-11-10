@@ -142,6 +142,7 @@
     "@lightstart/sqlite": "workspace:*",
     "@stylistic/eslint-plugin": "^2.13.0",
     "@types/node": "^26.6.5",
+    "@typescript/typescript6": "^6.0.2",
     "eslint": "^9.17.0",
     "eslint-plugin-lit": "^2.3.1",
     "globals": "^15.14.0",
@@ -155,6 +156,7 @@
     "@lightstart/server": "^0.1.0",
     "@lightstart/sqlite": "^0.1.0",
     "@stylistic/eslint-plugin": "^2.13.0",
+    "@typescript/typescript6": "^6.0.2",
     "eslint": "^9.17.0",
     "eslint-plugin-lit": "^2.3.1",
     "globals": "^15.14.0",
@@ -168,6 +170,9 @@
       "optional": true
     },
     "@stylistic/eslint-plugin": {
+      "optional": true
+    },
+    "@typescript/typescript6": {
       "optional": true
     },
     "eslint": {
