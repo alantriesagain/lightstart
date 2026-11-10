@@ -43,6 +43,8 @@ eq("invoked, it called the app's namespace, answered by the core", String(ran.st
 ok("the call crossed as JSON, with its registration", core.seen[core.seen.length - 1].startsWith('greet ["x",') && core.seen[core.seen.length - 1].includes('"@r'));
 const bad = engine.eval("app.plugin({})", "bad.js");
 ok("a plugin without an id is refused in the app's name", bad.status === FAILED && bad.message().includes("app.plugin: a plugin needs an id"));
+engine.eval("__file(\"gate.js\"); app.plugin({ id: \"gate\", agent(agent) { globalThis.gotAgent = agent; } });", "gate.js");
+ok("a plugin with only an agent part registers with no activate function", core.seen[core.seen.length - 1].startsWith("plugin [\"gate\",[],true,-1,-1,") && engine.eval("typeof globalThis.gotAgent", "gate.js").text === "undefined");
 engine.eval("__retire(1)", "retire.js");
 eqn("retired, its functions are gone", engine.invoke(core.activate, "[]").status, FAILED);
 done();

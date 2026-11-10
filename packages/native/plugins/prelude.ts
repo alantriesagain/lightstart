@@ -275,14 +275,14 @@ const __THEME = ` +
     util,
     theme,
     plugin(def) {
-      if (def === null || typeof def !== "object" || typeof def.id !== "string" || typeof def.activate !== "function") throw new Error(` + JSON.stringify(globalName + ".plugin: a plugin needs an id and activate(api)") + `);
+      if (def === null || typeof def !== "object" || typeof def.id !== "string") throw new Error(` + JSON.stringify(globalName + ".plugin: a plugin needs an id") + `);
       const r = ++reg;
       const a = api(def.id, r);
       const list = owned.get(r);
       const requires = Array.isArray(def.requires) ? def.requires.map(String) : [];
       const defaults = typeof def.defaults === "function" ? def.defaults() : true;
-      const activate = fn(() => { def.activate(a); });
-      list.push(activate);
+      const activate = typeof def.activate === "function" ? fn(() => { def.activate(a); }) : -1;
+      if (activate >= 0) list.push(activate);
       const deactivate = typeof def.deactivate === "function" ? fn(() => { def.deactivate(); }) : -1;
       if (deactivate >= 0) list.push(deactivate);
       call("plugin", def.id, requires, defaults === undefined ? true : defaults, activate, deactivate, file, r);
