@@ -521,6 +521,18 @@ describe("light - Property System", () => {
       el.setAttribute("usesystempreference", "");
       document.body.appendChild(el);
       assert.equal(el.useSystemPreference, true);
+      assert.equal(el.hasAttribute("use-system-preference"), true, "and writes the kebab form");
+      assert.equal(el.hasAttribute("usesystempreference"), false, "dropping the collapsed form");
+      el.remove();
+    });
+
+    it("canonicalizes a camel-case attribute written in markup, which the HTML parser collapses", () => {
+      const el = document.createElement(kebabTag);
+      el.setAttribute("useSystemPreference", "");
+      document.body.appendChild(el);
+      assert.equal(el.useSystemPreference, true);
+      assert.equal(el.hasAttribute("use-system-preference"), true, "the attribute the stylesheets select");
+      assert.equal(el.hasAttribute("usesystempreference"), false);
       el.remove();
     });
 

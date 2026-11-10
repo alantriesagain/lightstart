@@ -947,8 +947,11 @@ class View extends BaseElement {
     const key = this.$ctor._attrs[attrName] ?? attrName;
     if (this.$ignoreAttributeChange) return;
     this.$attrOriginated = true;
-    this.$state.set(key, parse(value, this.$ctor.properties[key]));
+    const prop = this.$ctor.properties[key];
+    this.$state.set(key, parse(value, prop));
     this.$attrOriginated = false;
+    if (prop?.attribute && attrName === key.toLowerCase() && kebabOf(key) !== attrName)
+      this.$updateAttribute({ key, value: this.$state.get(key), skipPropUpdate: true, type: prop.$type });
   }
 
   /**
