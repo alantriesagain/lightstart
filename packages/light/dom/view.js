@@ -3,9 +3,10 @@
  * whose instance is the component's own element: attributes reflect
  * properties, light-DOM slots project children, `View.define` builds a class
  * from a definition object and `View.register` installs a class written by
- * hand, with signal fields and a render the engine tracks. The update cycle
- * itself is the host-neutral ViewCore in view/core.js, whose methods this
- * class carries on its own prototype.
+ * hand, with signal fields, a render the engine tracks and the props its
+ * `static props` (or `static properties`) declares. The update cycle itself
+ * is the host-neutral ViewCore in view/core.js, whose methods this class
+ * carries on its own prototype.
  */
 import { cloneDefault, isReactive, normalizeProperties, parse } from "../types/index.js";
 import { createStore } from "../signals/store.ts";
@@ -52,6 +53,117 @@ const SANITIZE_KEYS = ["__proto__", "constructor", "prototype"];
 
 /** @param {string} prop */
 const kebabOf = (prop) => prop.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+
+/**
+ * Install the props a class declares: `properties` merged over its base's,
+ * `observedAttributes`, the prototype accessors, and the store and attribute
+ * lookups an element reads. A class `View.define` builds and one installed by
+ * `View.register` get the same prop behaviour from it.
+ *
+ * @param {ViewConstructor} component
+ * @param {ViewConstructor} base
+ * @param {PropertiesSchema} declared the class's own props, normalised
+ * @param {string} tag the tag the class is installed under
+ * @param {ViewPlugin[]} [plugins] the plugins whose `props` hook rewrites them
+ * @param {ComponentDefinition} [definition] the definition that hook reads; absent for a class written by hand
+ */
+const installProps = (component, base, declared, tag, plugins = [], definition) => {
+  const baseProperties = base.properties || {};
+  /** @type {PropertiesSchema} */
+  const merged = { ...baseProperties };
+
+  for (const key of Object.keys(declared)) {
+    if (SANITIZE_KEYS.includes(key)) continue;
+
+    const config = declared[key];
+    const inherited = merged[key];
+    const nested = config.$type === "object" && config.props && inherited?.props
+      ? { props: { ...inherited.props, ...config.props } }
+      : null;
+    merged[key] = /** @type {TypeDefinition} */ ({ ...inherited, ...config, ...nested });
+  }
+
+  const properties = definition
+    ? plugins.reduce((current, plugin) => plugin.props?.(current, definition) ?? current, merged)
+    : merged;
+
+  for (const key of Object.keys(properties)) {
+    if (isFrameworkMember(key) || key === "render")
+      throw new Error(`[view] <${tag}>: property "${key}" is a framework member on the element; rename it`);
+    if (Object.hasOwn(component.prototype, key))
+      throw new Error(`[view] <${tag}>: property "${key}" is also a member of the class; rename one`);
+  }
+
+  component.properties = properties;
+
+  Object.defineProperty(component, "observedAttributes", {
+    configurable: true,
+    get() {
+      return Object.keys(component.properties)
+        .filter(
+          /** @param {string} key */ (key) =>
+            component.properties[key].attribute !== false,
+        )
+        .flatMap(/** @param {string} key */ (key) => {
+          const lower = key.toLowerCase();
+          const kebab = kebabOf(key);
+          return kebab === lower ? [lower] : [lower, kebab];
+        });
+    },
+  });
+
+  for (const [key, prop] of Object.entries(properties)) {
+    const { setter, getter } = /** @type {TypeDefinition} */ (prop);
+    if (!isReactive(prop)) {
+      Object.defineProperty(component.prototype, key, {
+        configurable: true,
+        enumerable: true,
+        /** @this {View} */
+        get() {
+          const store = this._plainFields ?? (this._plainFields = {});
+          return key in store ? store[key] : (store[key] = cloneDefault(prop));
+        },
+        /** @this {View} @param {unknown} value */
+        set(value) {
+          (this._plainFields ?? (this._plainFields = {}))[key] = value;
+        },
+      });
+      continue;
+    }
+
+    Object.defineProperty(component.prototype, key, {
+      configurable: true,
+      enumerable: true,
+      get: getter
+        ? /** @this {View} */ function () {
+            return /** @type {() => unknown} */ (getter).call(this);
+          }
+        : /** @this {View} */ function () {
+            return this.$state.get(key);
+          },
+      set: setter
+        ? /** @this {View} @param {unknown} value */ function (value) {
+            /** @type {(value: unknown) => void} */ (setter).call(this, value);
+          }
+        : /** @this {View} @param {unknown} value */ function (value) {
+            this.$state.set(key, value);
+          },
+    });
+  }
+
+  component._storeDefs = storeDefs(properties);
+  component._attrs = Object.fromEntries(
+    Object.entries(properties)
+      .filter(([, prop]) => isReactive(prop))
+      .flatMap(
+        /** @param {[string, unknown]} entry */ ([prop]) => {
+          const lower = prop.toLowerCase();
+          const kebab = kebabOf(prop);
+          return kebab === lower ? [[lower, prop]] : [[lower, prop], [kebab, prop]];
+        },
+      ),
+  );
+};
 
 const SLOT_OBSERVE = { childList: true, attributes: true, attributeFilter: ["slot", "name"] };
 /** @type {WeakSet<View>} */
@@ -216,8 +328,11 @@ class View extends BaseElement {
 
   /**
    * Install a class written by hand as the custom element `tag`: signal
-   * fields, a `render()` the engine tracks, and `connected`, `disconnected`,
-   * `willUpdate`, `firstUpdated`, `updated` as plain methods.
+   * fields, a `render()` the engine tracks, `connected`, `disconnected`,
+   * `willUpdate`, `firstUpdated`, `updated` as plain methods, and the props
+   * its `static props` declares, the shape `View.define` takes. A class
+   * without `static props` may declare them as `static properties`; one that
+   * declares both takes `props`.
    * @template {ViewConstructor} C
    * @param {string} tag
    * @param {C} component
@@ -225,6 +340,13 @@ class View extends BaseElement {
    */
   static register(tag, component) {
     component.tag = tag;
+    const declared = Object.hasOwn(component, "props") ? component.props
+      : Object.hasOwn(component, "properties") ? component.properties
+      : null;
+    if (declared) {
+      const base = /** @type {ViewConstructor} */ (Object.getPrototypeOf(component));
+      installProps(component, base, normalizeProperties(declared), tag);
+    }
     customElements.define(tag, component);
     View.components.set(tag, { ...View.components.get(tag), _constructor: component });
     return component;
@@ -354,82 +476,11 @@ class View extends BaseElement {
           if (typeof method === "function") self[key] = /** @type {(...args: unknown[]) => unknown} */ (method).bind(this);
         });
       }
-
-      static get observedAttributes() {
-        return Object.keys(component.properties)
-          .filter(
-            /** @param {string} key */ (key) =>
-              component.properties[key].attribute !== false,
-          )
-          .flatMap(/** @param {string} key */ (key) => {
-            const lower = key.toLowerCase();
-            const kebab = kebabOf(key);
-            return kebab === lower ? [lower] : [lower, kebab];
-          });
-      }
-
-      static properties = (() => {
-        const baseProperties = base.properties || {};
-        /** @type {PropertiesSchema} */
-        const merged = { ...baseProperties };
-
-        for (const key of Object.keys(properties)) {
-          if (SANITIZE_KEYS.includes(key)) continue;
-
-          const config = properties[key];
-          const inherited = merged[key];
-          const nested = config.$type === "object" && config.props && inherited?.props
-            ? { props: { ...inherited.props, ...config.props } }
-            : null;
-          merged[key] = /** @type {TypeDefinition} */ ({ ...inherited, ...config, ...nested });
-        }
-        return plugins.reduce((current, plugin) => plugin.props?.(current, def) ?? current, merged);
-      })();
     };
 
     Object.defineProperty(component, "name", { value: tag });
 
-    for (const [key, prop] of Object.entries(component.properties)) {
-      const { setter, getter } = /** @type {TypeDefinition} */ (prop);
-      if (isFrameworkMember(key) || key === "render")
-        throw new Error(`[view] <${tag}>: property "${key}" is a framework member on the element; rename it`);
-
-      if (!isReactive(prop)) {
-        Object.defineProperty(component.prototype, key, {
-          configurable: true,
-          enumerable: true,
-          /** @this {View} */
-          get() {
-            const store = this._plainFields ?? (this._plainFields = {});
-            return key in store ? store[key] : (store[key] = cloneDefault(prop));
-          },
-          /** @this {View} @param {unknown} value */
-          set(value) {
-            (this._plainFields ?? (this._plainFields = {}))[key] = value;
-          },
-        });
-        continue;
-      }
-
-      Object.defineProperty(component.prototype, key, {
-        configurable: true,
-        enumerable: true,
-        get: getter
-          ? /** @this {View} */ function () {
-              return /** @type {() => unknown} */ (getter).call(this);
-            }
-          : /** @this {View} */ function () {
-              return this.$state.get(key);
-            },
-        set: setter
-          ? /** @this {View} @param {unknown} value */ function (value) {
-              /** @type {(value: unknown) => void} */ (setter).call(this, value);
-            }
-          : /** @this {View} @param {unknown} value */ function (value) {
-              this.$state.set(key, value);
-            },
-      });
-    }
+    installProps(component, base, properties, tag, plugins, def);
 
     for (const key of Object.keys(prototypeMethods)) {
       const descriptor = Object.getOwnPropertyDescriptor(prototypeMethods, key);
@@ -449,18 +500,6 @@ class View extends BaseElement {
     }
 
     component.tag = tag;
-    component._storeDefs = storeDefs(component.properties);
-    component._attrs = Object.fromEntries(
-      Object.entries(component.properties)
-        .filter(([, prop]) => isReactive(prop))
-        .flatMap(
-          /** @param {[string, unknown]} entry */ ([prop]) => {
-            const lower = prop.toLowerCase();
-            const kebab = kebabOf(prop);
-            return kebab === lower ? [[lower, prop]] : [[lower, prop], [kebab, prop]];
-          },
-        ),
-    );
 
     component.plugins = plugins.filter((plugin) => !plugin.test || plugin.test({ component, definition: def }));
 

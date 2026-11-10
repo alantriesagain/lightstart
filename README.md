@@ -39,10 +39,11 @@ import { html } from "@lightstart/light/html";
 import { signal } from "@lightstart/light/signals";
 
 class MyCounter extends View {
+  static props = { label: "Count" };
   count = signal(0);
   render() {
     return html`<button @click=${() => this.count.value++}>
-      Count: ${this.count.value}
+      ${this.label}: ${this.count.value}
     </button>`;
   }
 }

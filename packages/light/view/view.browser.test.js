@@ -2358,3 +2358,277 @@ describe("light - a class with signal fields", () => {
     el.remove();
   });
 });
+
+describe("light - a class with static props", () => {
+  const frames = (n) => new Promise((resolve) => {
+    let left = n;
+    const step = () => (--left <= 0 ? resolve() : requestAnimationFrame(step));
+    requestAnimationFrame(step);
+  });
+
+  it("draws the declared defaults", async () => {
+    const tag = getUniqueTag("class-props-default");
+    class Item extends View {
+      static props = { item: "a", count: 0 };
+      render() {
+        return html`<b>${this.item}</b><i>${this.count}</i>`;
+      }
+    }
+    View.register(tag, Item);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "a");
+    assert.equal(el.querySelector("i").textContent, "0");
+    el.remove();
+  });
+
+  it("reads attributes at connect, parsing their declared types", async () => {
+    const tag = getUniqueTag("class-props-connect");
+    class Item extends View {
+      static props = { item: "a", count: 0 };
+      render() {
+        return html`<b>${this.item}</b><i>${this.count}</i>`;
+      }
+    }
+    View.register(tag, Item);
+    assert.deepEqual(Item.observedAttributes.sort(), ["count", "item"]);
+    const el = document.createElement(tag);
+    el.setAttribute("item", "z");
+    el.setAttribute("count", "3");
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.item, "z");
+    assert.equal(el.count, 3);
+    assert.equal(el.querySelector("b").textContent, "z");
+    assert.equal(el.querySelector("i").textContent, "3");
+    el.remove();
+  });
+
+  it("updates a prop when its attribute changes after connect", async () => {
+    const tag = getUniqueTag("class-props-attr-change");
+    class Item extends View {
+      static props = { count: 0 };
+      render() {
+        return html`<i>${this.count}</i>`;
+      }
+    }
+    View.register(tag, Item);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    el.setAttribute("count", "7");
+    assert.equal(el.count, 7);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("i").textContent, "7");
+    el.remove();
+  });
+
+  it("re-renders when the property is set, and reflects it to the attribute", async () => {
+    const tag = getUniqueTag("class-props-set");
+    class Item extends View {
+      static props = { item: "a" };
+      render() {
+        return html`<b>${this.item}</b>`;
+      }
+    }
+    View.register(tag, Item);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    el.item = "y";
+    assert.equal(el.getAttribute("item"), "y");
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "y");
+    el.item = "";
+    assert.equal(el.hasAttribute("item"), false);
+    el.remove();
+  });
+
+  it("hands the props to the update hooks' changed map", async () => {
+    const tag = getUniqueTag("class-props-changed");
+    const seen = [];
+    const keys = (changed) => [...changed.keys()].sort().join(",");
+    class Hooked extends View {
+      static props = { item: "a", count: 0 };
+      willUpdate(changed) { seen.push(`willUpdate:${keys(changed)}`); }
+      firstUpdated(changed) { seen.push(`firstUpdated:${keys(changed)}`); }
+      updated(changed) { seen.push(`updated:${keys(changed)}`); }
+      render() {
+        return html`<b>${this.item}:${this.count}</b>`;
+      }
+    }
+    View.register(tag, Hooked);
+    const el = document.createElement(tag);
+    el.setAttribute("item", "z");
+    el.setAttribute("count", "3");
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    seen.length = 0;
+    el.setAttribute("count", "5");
+    await el.$requestUpdate();
+    assert.deepEqual(seen, ["willUpdate:count", "updated:count"]);
+    el.remove();
+  });
+
+  it("keeps signal fields and props working together", async () => {
+    const tag = getUniqueTag("class-props-signal");
+    class Both extends View {
+      static props = { label: "Count" };
+      n = signal(0);
+      render() {
+        return html`<b>${this.label}:${this.n.value}</b>`;
+      }
+    }
+    View.register(tag, Both);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "Count:0");
+    el.label = "Total";
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "Total:0");
+    el.n.value = 2;
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "Total:2");
+    el.remove();
+  });
+
+  it("inherits a registered base's props and adds its own", async () => {
+    const baseTag = getUniqueTag("class-props-base");
+    class Base extends View {
+      static props = { item: "a" };
+      render() {
+        return html`<b>${this.item}</b>`;
+      }
+    }
+    View.register(baseTag, Base);
+
+    const childTag = getUniqueTag("class-props-child");
+    class Child extends Base {
+      static props = { count: 0 };
+      render() {
+        return html`<b>${this.item}:${this.count}</b>`;
+      }
+    }
+    View.register(childTag, Child);
+    assert.ok(Child.properties.item);
+    assert.ok(Child.properties.count);
+    assert.deepEqual(Child.observedAttributes.sort(), ["count", "item"]);
+
+    const el = document.createElement(childTag);
+    el.setAttribute("item", "z");
+    el.setAttribute("count", "4");
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "z:4");
+    el.remove();
+  });
+
+  it("throws for a prop named like a framework member or render", () => {
+    class Member extends View {
+      static props = { connectedCallback: "x" };
+    }
+    assert.throws(() => View.register(getUniqueTag("class-props-member"), Member), /framework member/);
+
+    class RenderProp extends View {
+      static props = { render: "x" };
+    }
+    assert.throws(() => View.register(getUniqueTag("class-props-render"), RenderProp), /framework member/);
+  });
+
+  it("takes the props a class declares as static properties", async () => {
+    const tag = getUniqueTag("class-properties");
+    class Item extends View {
+      static properties = { item: "a", count: 0 };
+      render() {
+        return html`<b>${this.item}</b><i>${this.count}</i>`;
+      }
+    }
+    View.register(tag, Item);
+    assert.deepEqual(Item.observedAttributes.sort(), ["count", "item"]);
+    const el = document.createElement(tag);
+    el.setAttribute("count", "3");
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "a");
+    assert.equal(el.count, 3);
+    el.item = "y";
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "y");
+    el.remove();
+  });
+
+  it("takes static props over static properties when a class declares both", async () => {
+    const tag = getUniqueTag("class-props-over-properties");
+    class Both extends View {
+      static props = { item: "from-props" };
+      static properties = { other: "from-properties" };
+      render() {
+        return html`<b>${this.item}</b>`;
+      }
+    }
+    View.register(tag, Both);
+    assert.deepEqual(Both.observedAttributes, ["item"]);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "from-props");
+    assert.equal(el.other, undefined);
+    el.remove();
+  });
+
+  it("inherits a base's static properties into a subclass's static props", async () => {
+    const baseTag = getUniqueTag("class-properties-base");
+    class Base extends View {
+      static properties = { item: "a" };
+    }
+    View.register(baseTag, Base);
+    const childTag = getUniqueTag("class-properties-child");
+    class Child extends Base {
+      static props = { count: 0 };
+      render() {
+        return html`<b>${this.item}:${this.count}</b>`;
+      }
+    }
+    View.register(childTag, Child);
+    const el = document.createElement(childTag);
+    el.setAttribute("item", "z");
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "z:0");
+    el.remove();
+  });
+
+  it("throws for a prop named like a method or getter of the class, and leaves the class unregistered", () => {
+    const tag = getUniqueTag("class-props-clash");
+    class Clash extends View {
+      static props = { item: "a" };
+      get item() {
+        return "mine";
+      }
+    }
+    assert.throws(() => View.register(tag, Clash), /also a member of the class/);
+    assert.equal(customElements.get(tag), undefined);
+    assert.equal(Object.hasOwn(Clash, "properties"), false);
+  });
+
+  it("leaves a class without static props as it was", async () => {
+    const tag = getUniqueTag("class-props-none");
+    class Plain extends View {
+      n = signal(0);
+      render() {
+        return html`<i>${this.n.value}</i>`;
+      }
+    }
+    View.register(tag, Plain);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("i").textContent, "0");
+    el.n.value = 1;
+    await frames(1);
+    assert.equal(el.querySelector("i").textContent, "1");
+    el.remove();
+  });
+});

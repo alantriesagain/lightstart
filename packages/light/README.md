@@ -34,8 +34,10 @@ View.define("my-counter", { count: 0, label: "Count" }, (el) => html`
 `);
 ```
 
-A class extends `View` and holds state in signal fields. Its `render()` is
-tracked, so any signal the render reads re-renders the element when it changes:
+A class declares its props with `static props`, in the same shape a definition
+takes (`static properties` is read when `static props` is absent), and holds
+state it writes in signal fields. Its `render()` is tracked,
+so any signal the render reads re-renders the element when it changes:
 
 ```js
 import View from "@lightstart/light";
@@ -43,12 +45,13 @@ import { html } from "@lightstart/light/html";
 import { signal } from "@lightstart/light/signals";
 
 class MyCounter extends View {
+  static props = { label: "Count" };
   count = signal(0);
 
   render() {
     return html`
       <button @click=${() => this.count.value++}>
-        Count: ${this.count.value}
+        ${this.label}: ${this.count.value}
       </button>
     `;
   }
@@ -57,10 +60,11 @@ class MyCounter extends View {
 View.register("my-counter", MyCounter);
 ```
 
-Both examples register the `<my-counter>` element. A class adds methods and
-lifecycle hooks directly (`connected()`, `updated()`, and so on). A definition
-passes methods, hooks, events and mixins in the object instead, and `this`
-inside them is the element:
+Both examples register the `<my-counter>` element, and a class gets the same
+prop behaviour a definition does. A class adds methods and lifecycle hooks
+directly (`connected()`, `updated()`, and so on). A definition passes methods,
+hooks, events and mixins in the object instead, and `this` inside them is the
+element:
 
 ```js
 View.define("my-menu", { open: false }, {
