@@ -64,10 +64,10 @@ const kebabOf = (prop) => prop.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCas
  * @param {ViewConstructor} base
  * @param {PropertiesSchema} declared the class's own props, normalised
  * @param {string} tag the tag the class is installed under
- * @param {ViewPlugin[]} [plugins] the plugins whose `props` hook rewrites them
- * @param {ComponentDefinition} [definition] the definition that hook reads; absent for a class written by hand
+ * @param {ViewPlugin[]} plugins the plugins whose `props` hook rewrites them
+ * @param {ComponentDefinition} definition the definition that hook reads: a class written by hand stands for its own
  */
-const installProps = (component, base, declared, tag, plugins = [], definition) => {
+const installProps = (component, base, declared, tag, plugins, definition) => {
   const baseProperties = base.properties || {};
   /** @type {PropertiesSchema} */
   const merged = { ...baseProperties };
@@ -83,9 +83,7 @@ const installProps = (component, base, declared, tag, plugins = [], definition) 
     merged[key] = /** @type {TypeDefinition} */ ({ ...inherited, ...config, ...nested });
   }
 
-  const properties = definition
-    ? plugins.reduce((current, plugin) => plugin.props?.(current, definition) ?? current, merged)
-    : merged;
+  const properties = plugins.reduce((current, plugin) => plugin.props?.(current, definition) ?? current, merged);
 
   for (const key of Object.keys(properties)) {
     if (isFrameworkMember(key) || key === "render")
@@ -332,7 +330,10 @@ class View extends BaseElement {
    * `willUpdate`, `firstUpdated`, `updated` as plain methods, and the props
    * its `static props` declares, the shape `View.define` takes. A class
    * without `static props` may declare them as `static properties`; one that
-   * declares both takes `props`.
+   * declares both takes `props`. The plugins apply as they do to a class
+   * `View.define` builds, with the class's statics as its definition: a
+   * plugin's `props`, `test` and `init` read them, a key it declares is a
+   * static, and a hook it adds is a method.
    * @template {ViewConstructor} C
    * @param {string} tag
    * @param {C} component
@@ -343,11 +344,14 @@ class View extends BaseElement {
     const declared = Object.hasOwn(component, "props") ? component.props
       : Object.hasOwn(component, "properties") ? component.properties
       : null;
-    if (declared) {
-      const base = /** @type {ViewConstructor} */ (Object.getPrototypeOf(component));
-      installProps(component, base, normalizeProperties(declared), tag);
-    }
+    const base = /** @type {ViewConstructor} */ (Object.getPrototypeOf(component));
+    const plugins = pluginsFor(base);
+    const definition = /** @type {ComponentDefinition} */ (/** @type {unknown} */ (component));
+    installProps(component, base, normalizeProperties(declared ?? {}), tag, plugins, definition);
+    component.plugins = plugins.filter((plugin) => !plugin.test || plugin.test({ component, definition }));
+    component._hookLists = null;
     customElements.define(tag, component);
+    config.wrap(View.initPlugins(component, definition, tag), `view:${tag}:init`);
     View.components.set(tag, { ...View.components.get(tag), _constructor: component });
     return component;
   }
@@ -621,22 +625,25 @@ class View extends BaseElement {
       const result = fn.call(this, detail);
       if (isThenable(result)) config.wrap(/** @type {Promise<void>} */ (result), `view:${ctor.tag}:${name}`);
     }
-    this.$runMethodHook(name, detail.changedProps ?? null);
+    this.$runMethodHook(name, detail);
   }
 
   /**
    * Call the hook a class written by hand declares as a method (a class
    * `View.define` built has its hooks on the class, run above). The update
-   * hooks receive the changed properties.
+   * hooks receive the changed properties; a hook a plugin adds receives the
+   * detail, as a definition's does.
    * @param {string} name
-   * @param {Map<string, unknown> | null} changedProps
+   * @param {LifecycleEventDetail} detail
    */
-  $runMethodHook(name, changedProps) {
-    if (!this.$ctor.$methodHooks || !LIFECYCLE_HOOKS.includes(name)) return;
+  $runMethodHook(name, detail) {
+    if (!this.$ctor.$methodHooks) return;
+    const lifecycle = LIFECYCLE_HOOKS.includes(name);
+    if (!lifecycle && !this.$ctor.plugins.some((plugin) => plugin.hooks?.includes(name))) return;
     const method = membersOf(this)[name];
     if (typeof method !== "function") return;
-    const fn = /** @type {(this: View, changedProps?: Map<string, unknown>) => unknown} */ (method);
-    const result = changedProps === null ? fn.call(this) : fn.call(this, changedProps);
+    const fn = /** @type {(this: View, arg?: unknown) => unknown} */ (method);
+    const result = !lifecycle ? fn.call(this, detail) : detail.changedProps ? fn.call(this, detail.changedProps) : fn.call(this);
     if (isThenable(result)) config.wrap(/** @type {Promise<unknown>} */ (result), `view:${this.$ctor.tag}:${name}`);
   }
 

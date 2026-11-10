@@ -969,6 +969,110 @@ describe("light - Plugin System", () => {
     el.$runHook("ripened", {});
     assert.deepEqual(ran, ["mixin", "own"]);
   });
+
+  it("applies a plugin's props, test, init and events to a class View.register installs, its statics standing for the definition", async () => {
+    const seen = [];
+    View.use({
+      name: "class-plugin",
+      keys: ["flavor"],
+      props: (props, definition) => (definition.flavor ? { ...props, ripe: T.boolean({ defaultValue: false }) } : props),
+      test: ({ definition }) => Boolean(definition.flavor),
+      init: ({ tag, definition }) => { seen.push(`init:${tag}:${definition.flavor}`); },
+      events: { connected: ({ instance }) => seen.push(`connected:${instance.localName}`) },
+    });
+    const tag = getUniqueTag("class-plugin-on");
+    class Lime extends View {
+      static flavor = "lime";
+      static props = { item: "a" };
+      render() {
+        return html`<b>${this.item}:${this.ripe}</b>`;
+      }
+    }
+    View.register(tag, Lime);
+    assert.ok(Lime.plugins.some((p) => p.name === "class-plugin"));
+    assert.ok(Lime.properties.ripe);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "a:false");
+    el.remove();
+    assert.deepEqual(seen, [`init:${tag}:lime`, `connected:${tag}`]);
+  });
+
+  it("keeps a plugin off a class View.register installs when its test refuses, and from classes registered before it", async () => {
+    const seen = [];
+    const earlyTag = getUniqueTag("class-plugin-early");
+    class Early extends View {
+      render() { return null; }
+    }
+    View.register(earlyTag, Early);
+    View.use({
+      name: "picky-plugin",
+      test: ({ component }) => Boolean(component.properties.wanted),
+      events: { connected: ({ instance }) => seen.push(instance.localName) },
+    });
+    const offTag = getUniqueTag("class-plugin-off");
+    class Off extends View {
+      static props = { item: "a" };
+      render() { return null; }
+    }
+    View.register(offTag, Off);
+    const onTag = getUniqueTag("class-plugin-wanted");
+    class On extends View {
+      static props = { wanted: true };
+      render() { return null; }
+    }
+    View.register(onTag, On);
+    for (const tag of [earlyTag, offTag, onTag]) {
+      const el = document.createElement(tag);
+      document.body.appendChild(el);
+      await el.$requestUpdate();
+      el.remove();
+    }
+    assert.deepEqual(seen, [onTag]);
+  });
+
+  it("calls a hook a plugin adds as a method of a class View.register installs, with the detail", () => {
+    const ran = [];
+    View.use({ name: "ripening", hooks: ["ripened"] });
+    const tag = getUniqueTag("class-plugin-hook");
+    class Fruit extends View {
+      ripened(detail) { ran.push(detail.how); }
+      render() { return null; }
+    }
+    View.register(tag, Fruit);
+    const el = document.createElement(tag);
+    el.$runHook("ripened", { how: "sun" });
+    assert.deepEqual(ran, ["sun"]);
+  });
+
+  it("gives a subclass View.register installs its own plugins, not its base's", async () => {
+    const seen = [];
+    View.use({
+      name: "sub-only",
+      test: ({ component }) => Boolean(component.properties.extra),
+      events: { connected: ({ instance }) => seen.push(instance.localName) },
+    });
+    const baseTag = getUniqueTag("class-plugin-base");
+    class Base extends View {
+      render() { return null; }
+    }
+    View.register(baseTag, Base);
+    const baseEl = document.createElement(baseTag);
+    document.body.appendChild(baseEl);
+    await baseEl.$requestUpdate();
+    const subTag = getUniqueTag("class-plugin-sub");
+    class Sub extends Base {
+      static props = { extra: 1 };
+    }
+    View.register(subTag, Sub);
+    const subEl = document.createElement(subTag);
+    document.body.appendChild(subEl);
+    await subEl.$requestUpdate();
+    baseEl.remove();
+    subEl.remove();
+    assert.deepEqual(seen, [subTag]);
+  });
 });
 
 describe("light - Query Helpers", () => {
