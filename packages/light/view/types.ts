@@ -251,6 +251,8 @@ export type ViewConstructor = typeof View & {
   formAssociated?: boolean;
   style?: boolean;
   tag?: string;
+  /** The props a class written by hand declares, the shape `View.define` takes. */
+  props?: PropertyDeclarations;
   _storeDefs?: Record<string, { default: () => unknown }>;
   _klass?: string;
   _role?: string;
