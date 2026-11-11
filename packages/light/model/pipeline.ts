@@ -12,6 +12,13 @@ import { ValidationError, validateRow } from "./validate.ts";
 
 import type { ModelField, ModelSchema, Row } from "./types.ts";
 
+/** The row made of `entries`, in order, a later field of the same name winning. */
+export const rowOf = (entries: [string, unknown][]): Row => {
+  const row: Row = {};
+  for (const [field, value] of entries) row[field] = value;
+  return row;
+};
+
 /** A row as an adapter stores it: a `many`/`one` value dropped, a loaded `belongs` row reduced to its id. */
 export const forStorage = (schema: ModelSchema | undefined, row: Row): Row => {
   const relations = new Map<string, ModelField>();
@@ -19,7 +26,7 @@ export const forStorage = (schema: ModelSchema | undefined, row: Row): Row => {
     if (def.relationship) relations.set(field, def);
   });
   if (relations.size === 0) return row;
-  return Object.fromEntries(Object.entries(row).flatMap(([field, value]): [string, unknown][] => {
+  return rowOf(Object.entries(row).flatMap(([field, value]): [string, unknown][] => {
     const def = relations.get(field);
     if (def === undefined) return [[field, value]];
     if (!def.belongs) return [];
@@ -37,7 +44,7 @@ export const withDefaults = (schema: ModelSchema | undefined, row: Row): Row => 
     const value = def.defaultValue;
     filled.push([field, typeof value === "function" ? (value as () => unknown)() : value && typeof value === "object" ? structuredClone(value) : value]);
   });
-  return filled.length === 0 ? row : Object.fromEntries([...Object.entries(row), ...filled]);
+  return filled.length === 0 ? row : rowOf([...Object.entries(row), ...filled]);
 };
 
 /** The patch without the fields the schema marks `immutable` (an `id` stays). */
@@ -46,7 +53,7 @@ export const withoutImmutable = (schema: ModelSchema | undefined, patch: Row): R
   eachField(schema, (field, def) => {
     if (def.immutable && field !== "id") immutable.add(field);
   });
-  return immutable.size === 0 ? patch : Object.fromEntries(Object.entries(patch).filter(([field]) => !immutable.has(field)));
+  return immutable.size === 0 ? patch : rowOf(Object.entries(patch).filter(([field]) => !immutable.has(field)));
 };
 
 /** Whether `schema` declares a numeric id, which the database assigns when a row has none. */
@@ -55,9 +62,9 @@ export const numericIdOf = (schema: ModelSchema | undefined): boolean => (schema
 /** The row with an id: its own, else `next()` when the adapter makes ids, else a fresh one unless the id is numeric. */
 export const withId = (schema: ModelSchema | undefined, row: Row, next: (() => string | number) | null = null): Row => {
   if (row.id !== undefined && row.id !== null) return row;
-  if (next !== null) return Object.fromEntries([...Object.entries(row), ["id", next()]]);
+  if (next !== null) return rowOf([...Object.entries(row), ["id", next()]]);
   if (numericIdOf(schema)) return row;
-  return Object.fromEntries([...Object.entries(row), ["id", newId()]]);
+  return rowOf([...Object.entries(row), ["id", newId()]]);
 };
 
 /** The row an add stores, after its before hook and its id: relations reduced, defaults filled, validated. */
@@ -72,7 +79,7 @@ export const prepareAddRow = (models: Record<string, ModelSchema>, model: string
 /** The row an edit stores: `changes` (after the before hook) merged over `current`, relations reduced, validated. */
 export const prepareEditRow = (models: Record<string, ModelSchema>, model: string, current: Row, changes: Row, id: string | number): Row => {
   const schema = model in models ? models[model] : undefined;
-  const row = forStorage(schema, Object.fromEntries([...Object.entries(current), ...Object.entries(changes), ["id", id]]));
+  const row = forStorage(schema, rowOf([...Object.entries(current), ...Object.entries(changes), ["id", id]]));
   const { valid, errors } = validateRow(models, model, row, { operation: "edit" });
   if (!valid) throw new ValidationError(model, errors);
   return row;

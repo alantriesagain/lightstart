@@ -36,6 +36,12 @@ interface QueryKnobs {
   ready: ResourceOptions["ready"];
 }
 
+const copyQuery = (source: object): QueryOptions => {
+  const query: QueryOptions = {};
+  for (const [field, value] of Object.entries(source)) query[field] = value;
+  return query;
+};
+
 const liveQuery = <T extends Record<string, unknown>>(api: ModelApi, query: QueryOptions, { name, eager, ready }: QueryKnobs): ModelQueryResource<T> => {
   let total = 0;
   let settled = false;
@@ -88,7 +94,7 @@ const liveQuery = <T extends Record<string, unknown>>(api: ModelApi, query: Quer
 /** A live query of `api`: a `resource()` over `api.query()` that refetches, coalesced per tick, when its model or an included model changes. */
 export const modelQuery = <T extends Record<string, unknown>>(api: ModelApi, opts: ModelQueryOptions = {}): ModelQueryResource<T> => {
   const { name = api.name, eager = true, ready, ...query } = opts;
-  return liveQuery<T>(api, query, { name, eager, ready });
+  return liveQuery<T>(api, copyQuery(query), { name, eager, ready });
 };
 
 const loadsInFlight: WeakMap<object, number> = new WeakMap();
@@ -121,7 +127,7 @@ interface Following {
   settle: () => void;
 }
 
-const follow = <V>(current: Resource<V>, at: Following): Resource<V> => {
+function followLive<T>(current: ModelQueryResource<T>, at: Following): ModelQueryResource<T> {
   let writer = writerOf(at.host.$queries);
   if (writer === undefined) {
     writer = writableRecord();
@@ -142,7 +148,30 @@ const follow = <V>(current: Resource<V>, at: Following): Resource<V> => {
     at.settle();
   });
   return current;
-};
+}
+
+function followOne<V>(current: Resource<V>, at: Following): Resource<V> {
+  let writer = writerOf(at.host.$queries);
+  if (writer === undefined) {
+    writer = writableRecord();
+    at.host.$queries = writer.record;
+  }
+  writer.writeKey(at.key, current);
+  at.offs.push(current.value.subscribe((value) => {
+    if (value === undefined) return;
+    at.store.set(at.key, value);
+    at.onValue(value, current);
+  }));
+  at.offs.push(current.error.subscribe((error) => {
+    if (error) at.onError(error);
+  }));
+  countLoad(at.store, 1);
+  current.ensure().catch(() => {}).finally(() => {
+    countLoad(at.store, -1);
+    at.settle();
+  });
+  return current;
+}
 
 /** Keep `store`'s `key` mirroring `api`'s live query (an array property) or one row (any other), rebuilt when a `dependsOn` key changes. */
 export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }: {
@@ -155,7 +184,7 @@ export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }
   onError?: (error: unknown) => void;
 }): { unbind: () => void; loaded: Promise<void> } => {
   const name = `${api.name}:${key}`;
-  let res: { dispose(): void } | null = null;
+  let stop: (() => void) | null = null;
   const at: Following = { offs: [], host, key, store, onValue: onValue ?? (() => {}), onError: onError ?? (() => {}), settle: () => {} };
   const loaded = new Promise<void>((resolve) => {
     at.settle = () => resolve();
@@ -163,12 +192,17 @@ export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }
 
   const build = () => {
     for (const off of at.offs.splice(0)) off();
-    res?.dispose();
+    stop?.();
     const given = prop.query;
     const query = (typeof given === "function" ? (given as (host: SyncHost) => unknown)(host) : (given ?? {})) as QueryOptions & { id?: unknown };
     const ready = prop.ready as ResourceOptions["ready"];
-    if (prop.$type === "array") res = follow(liveQuery(api, query, { name, eager: true, ready }), at);
-    else res = follow(singleRow(api, query, name, ready), at);
+    if (prop.$type === "array") {
+      const current = followLive(liveQuery(api, copyQuery(query), { name, eager: true, ready }), at);
+      stop = () => current.dispose();
+    } else {
+      const current = followOne(singleRow(api, query, name, ready), at);
+      stop = () => current.dispose();
+    }
   };
 
   build();
@@ -180,8 +214,8 @@ export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }
     unbind: () => {
       for (const off of depOffs) off();
       for (const off of at.offs.splice(0)) off();
-      res?.dispose();
-      res = null;
+      stop?.();
+      stop = null;
       const writer = writerOf(host.$queries);
       if (writer && writer.dropKey !== null) writer.dropKey(key);
     },

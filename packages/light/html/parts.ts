@@ -498,7 +498,9 @@ export class ChildPart extends ThunkHolder {
     if (keyed && st.keyed) {
       let reconciled = false;
       try {
-        st.parts = this._reconcileKeyed(st.parts.slice(), st.keys, values, newKeys);
+        const old: (ChildPart | null)[] = [];
+        for (const part of st.parts) old.push(part);
+        st.parts = this._reconcileKeyed(old, st.keys, values, newKeys);
         st.keys = newKeys;
         reconciled = true;
       } finally {
@@ -616,8 +618,12 @@ export class ChildPart extends ThunkHolder {
       const part = oldParts[oldHead++];
       if (part !== null) this._removeItemPart(part);
     }
-    for (const p of newParts) if (p === null) throw new Error("[light/html] keyed reconcile left a hole");
-    return newParts as ChildPart[];
+    const parts: ChildPart[] = [];
+    for (const p of newParts) {
+      if (p === null) throw new Error("[light/html] keyed reconcile left a hole");
+      parts.push(p);
+    }
+    return parts;
   }
 
   _createItemPart(refNode: HostNode) {

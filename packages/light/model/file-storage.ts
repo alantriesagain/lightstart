@@ -6,6 +6,7 @@
  */
 
 import { schemaField } from "./fields.ts";
+import { rowOf } from "./pipeline.ts";
 
 import type { FileStorage, ModelField, ModelSchema, Row } from "./types.ts";
 
@@ -62,7 +63,7 @@ export const uploadFiles = async (schema: ModelSchema | undefined, model: string
     if (kind === "file") uploaded.push([field, await uploadOne(provider, value, { field, model })]);
     else if (kind === "files" && Array.isArray(value)) uploaded.push([field, await uploadAll(provider, value, { field, model })]);
   }
-  return Object.fromEntries([...Object.entries(row), ...uploaded]);
+  return rowOf([...Object.entries(row), ...uploaded]);
 };
 
 /**

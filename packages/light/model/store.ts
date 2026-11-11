@@ -15,7 +15,7 @@ import { uploadFiles } from "./file-storage.ts";
 import { loadRelationships, loadRelationshipsForMany } from "./relationship-loader.ts";
 import { applyFields, validateQueryOptions } from "./query-builder.ts";
 import { entryOf } from "./fields.ts";
-import { forStorage, prepareAddRow, prepareEditRow, withId, withoutImmutable } from "./pipeline.ts";
+import { forStorage, prepareAddRow, prepareEditRow, rowOf, withId, withoutImmutable } from "./pipeline.ts";
 
 export { createModelHandlers, storeRequest } from "./handlers.ts";
 
@@ -43,7 +43,7 @@ const queryOf = (opts: QueryOptions | undefined): QueryOptions => (opts === unde
 
 const writeOf = (options: WriteOptions | undefined): WriteOptions => (options === undefined ? {} : options);
 
-const merged = (...rows: Row[]): Row => Object.fromEntries(rows.flatMap((row) => Object.entries(row)));
+const merged = (...rows: Row[]): Row => rowOf(rows.flatMap((row) => Object.entries(row)));
 
 /** The store over `models` and the adapters in `databases`, routing each model to its adapter. */
 export function createStore({ models, databases = {}, defaultAdapter = "indexeddb", emit = null }: StoreConfig): Store {
@@ -240,7 +240,14 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
       const current = await adapter.get(model, id);
       if (!current) throw new Error(`Record ${id} not found in model "${model}"`);
       const row = await uploadFiles(schema, model, prepareEditRow(models, model, current, changes, id));
-      const stored = await adapter.update(model, row, { ...options, patch: without(changes, "id") });
+      const patchOnly = without(changes, "id");
+      let write: WriteOptions;
+      if (options.importing !== undefined) {
+        write = options.direct !== undefined ? { importing: options.importing, direct: options.direct, patch: patchOnly } : { importing: options.importing, patch: patchOnly };
+      } else {
+        write = options.direct !== undefined ? { direct: options.direct, patch: patchOnly } : { patch: patchOnly };
+      }
+      const stored = await adapter.update(model, row, write);
       changed(model, "edit", stored);
       await runAfter(model, "afterEdit", stored, ctx);
       return stored;

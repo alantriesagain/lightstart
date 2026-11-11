@@ -8,6 +8,7 @@ import { modelBus } from "./config.ts";
 import { MODEL_ERROR, MODEL_WARN } from "./events.ts";
 import { relationValueToId, relationWhere } from "./relationships.ts";
 import { entryOf, schemaEntry } from "./fields.ts";
+import { rowOf } from "./pipeline.ts";
 
 import type { ModelSchema, Row, RelationshipDefinition, RowReader } from "./types.ts";
 
@@ -16,7 +17,7 @@ import type { ModelSchema, Row, RelationshipDefinition, RowReader } from "./type
  * warns and is skipped; a failed load emits `MODEL_ERROR` and leaves `[]` or
  * `null` per the relation's cardinality.
  */
-export async function loadRelationships(reader: RowReader, models: Record<string, ModelSchema>, modelName: string, record: Row, includes: string[]): Promise<Row> {
+export async function loadRelationships<R extends RowReader>(reader: R, models: Record<string, ModelSchema>, modelName: string, record: Row, includes: string[]): Promise<Row> {
   if (includes.length === 0) return record;
 
   const modelSchema = entryOf(models, modelName);
@@ -48,14 +49,14 @@ export async function loadRelationships(reader: RowReader, models: Record<string
     }
   }
 
-  return Object.fromEntries([...Object.entries(record), ...loaded]);
+  return rowOf([...Object.entries(record), ...loaded]);
 }
 
 /**
  * Batch version of `loadRelationships`: a polymorphic `belongs` is resolved
  * with one query per target type instead of one per row.
  */
-export async function loadRelationshipsForMany(reader: RowReader, models: Record<string, ModelSchema>, modelName: string, records: Row[], includes: string[]): Promise<Row[]> {
+export async function loadRelationshipsForMany<R extends RowReader>(reader: R, models: Record<string, ModelSchema>, modelName: string, records: Row[], includes: string[]): Promise<Row[]> {
   if (!includes || includes.length === 0 || !records || records.length === 0) return records;
 
   const modelSchema = entryOf(models, modelName);
@@ -70,7 +71,7 @@ export async function loadRelationshipsForMany(reader: RowReader, models: Record
     else regularIncludes.push(relationName);
   }
 
-  let enriched: Row[] = records.map((r): Row => Object.fromEntries(Object.entries(r)));
+  let enriched: Row[] = records.map((r): Row => rowOf(Object.entries(r)));
 
   if (regularIncludes.length > 0) {
     const loads: Promise<Row>[] = [];
@@ -80,7 +81,8 @@ export async function loadRelationshipsForMany(reader: RowReader, models: Record
 
   for (const relationName of polymorphicIncludes) {
     const typeFieldName = `${relationName}Type`;
-    const found: (Row | null)[] = enriched.map(() => null);
+    const found: (Row | null)[] = [];
+    for (let i = 0; i < enriched.length; i++) found.push(null);
     const byType = new Map<string, Map<string, number[]>>();
     for (let i = 0; i < enriched.length; i++) {
       const record = enriched[i];
@@ -107,14 +109,14 @@ export async function loadRelationshipsForMany(reader: RowReader, models: Record
 
     enriched = enriched.map((record, i): Row => {
       const hit: [string, unknown] = [relationName, found[i]];
-      return Object.fromEntries([...Object.entries(record), hit]);
+      return rowOf([...Object.entries(record), hit]);
     });
   }
 
   return enriched;
 }
 
-async function loadRelationship(reader: RowReader, models: Record<string, ModelSchema>, modelName: string, record: Row, relationName: string, relationDef: RelationshipDefinition): Promise<Row | Row[] | null> {
+async function loadRelationship<R extends RowReader>(reader: R, models: Record<string, ModelSchema>, modelName: string, record: Row, relationName: string, relationDef: RelationshipDefinition): Promise<Row | Row[] | null> {
   const { relationship, targetModel, many, polymorphic } = relationDef;
 
   if (relationship === "belongs" && polymorphic) {

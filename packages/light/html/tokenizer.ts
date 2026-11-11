@@ -336,7 +336,7 @@ export const indexParts = (tree: TplNode[], parts: ParsedPart[]): PartSpec[] => 
   const specs: PartSpec[] = [];
   for (const p of parts) {
     const nodeIndexOf = p.kind === "child" ? childIndex[p.childOrd ?? 0] : elIndex[p.elOrd ?? 0];
-    specs.push({ kind: p.kind, valueIndex: p.valueIndex, valueCount: p.valueCount, name: p.name, statics: p.statics, elOrd: p.elOrd, childOrd: p.childOrd, nodeIndex: nodeIndexOf });
+    specs.push({ nodeIndex: nodeIndexOf, kind: p.kind, valueIndex: p.valueIndex, valueCount: p.valueCount, name: p.name, statics: p.statics, elOrd: p.elOrd, childOrd: p.childOrd });
   }
   specs.sort(
     (a: PartSpec, b: PartSpec) => a.nodeIndex - b.nodeIndex || a.valueIndex - b.valueIndex,

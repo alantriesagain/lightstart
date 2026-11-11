@@ -74,8 +74,8 @@ export const modelApi = (name: string, schemaOf: () => ModelSchema | undefined):
       const byId = (id: string | number): Promise<Row> => send(MODEL_EDIT, withOpts({ id, patch: (patchOrOpts ?? {}) as Row }, opts)) as Promise<Row>;
       if (typeof idOrRow === "string") return byId(idOrRow);
       if (typeof idOrRow === "number") return byId(idOrRow);
-      const row: Row = idOrRow;
-      return send(MODEL_EDIT, withOpts({ id: row.id, patch: row }, patchOrOpts as ClientWriteOptions | undefined)) as Promise<Row>;
+      const row: Row & { id: string | number } = idOrRow;
+      return send(MODEL_EDIT, withOpts({ id: row.id, patch: { ...row } }, patchOrOpts as ClientWriteOptions | undefined)) as Promise<Row>;
     },
     remove: (id, opts) => send(MODEL_REMOVE, withOpts({ id }, opts)) as Promise<boolean>,
     removeAll: (where = {}) => send(MODEL_REMOVE_MANY, { where }) as Promise<number>,

@@ -18,6 +18,7 @@ import { configureModel, modelBus } from "./config.ts";
 import { createAdapter, hasAdapter, registerStorageAdapter } from "./factory.ts";
 import { buildQueryResult, validateQueryOptions } from "./query-builder.ts";
 import { createStore, storeRequest } from "./store.ts";
+import { rowOf } from "./pipeline.ts";
 
 import type { JsonlIO, JsonlStorage, JsonlTable, ModelApi, ModelSchema, QueryOptions, QueryPage, Row, StorageAdapter, Store, WhereClause } from "./types.ts";
 
@@ -77,7 +78,7 @@ const tableOf = (adapter: JsonlStorage, model: string): JsonlTable => {
   return table;
 };
 
-const copy = (row: Row): Row => Object.fromEntries(Object.entries(row));
+const copy = (row: Row): Row => rowOf(Object.entries(row));
 
 const record = (adapter: JsonlStorage, table: JsonlTable, row: Row): Row => {
   const line = JSON.stringify(row);
