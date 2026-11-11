@@ -32,7 +32,6 @@ const strippedModule = (file) => {
   }
 };
 
-/** Where the staged package lands. */
 const DIST = join(PKG, "dist");
 
 /** @param {string} dir @returns {string[]} */
