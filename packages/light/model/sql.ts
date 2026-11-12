@@ -32,7 +32,7 @@ export type SqlStorage = StorageAdapter & {
   models: Record<string, ModelSchema>;
 };
 
-const copy = (row: Row): Row => Object.fromEntries(Object.entries(row));
+const copy = (row: Row): Row => ({ ...Object.fromEntries(Object.entries(row)) });
 
 /** What a schema stores as JSON text, as SQLite's 1 or 0, and as a JSON array. */
 class FieldSets {
@@ -72,7 +72,7 @@ export const decodeRow = (schema: ModelSchema | undefined, row: Row): Row => {
     if (booleans.has(field) && value !== null && value !== undefined) return [field, Boolean(Number(value))];
     return [field, value];
   });
-  return Object.fromEntries(entries);
+  return { ...Object.fromEntries(entries) };
 };
 
 const selectOne = (db: SqlDatabase, model: string, id: string | number, schema: ModelSchema | undefined): Row | null => {
@@ -281,7 +281,8 @@ export class SqlWriter {
     const schema = this.schemaOf(model);
     const ctx = this.context(model, "edit", id, options.user);
     const reduced = forStorage(schema, withoutImmutable(schema, patch));
-    const asked = Object.fromEntries([...Object.entries(reduced), ["id", id]]);
+    const entries: Array<[string, unknown]> = [...Object.entries(reduced), ["id", id]];
+    const asked: Row = { ...Object.fromEntries(entries) };
     const hooked = this.hook(model, "beforeEdit", asked, ctx);
     let changes = hooked === undefined || hooked === null ? asked : (hooked as Row);
     if (options.shape !== undefined) changes = options.shape(changes);

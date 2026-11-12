@@ -182,7 +182,7 @@ export const bindModelQuery = ({ store, key, prop, host, api, onValue, onError }
   api: ModelApi;
   onValue?: (value: unknown, res: unknown) => void;
   onError?: (error: unknown) => void;
-}): { unbind: () => void; loaded: Promise<void> } => {
+}): Binding => {
   const name = `${api.name}:${key}`;
   let stop: (() => void) | null = null;
   const at: Following = { offs: [], host, key, store, onValue: onValue ?? (() => {}), onError: onError ?? (() => {}), settle: () => {} };

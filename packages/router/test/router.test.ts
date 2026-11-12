@@ -71,15 +71,18 @@ const createRouter = (adapter: RouterAdapter, options: RouterOptions & { routes?
   return router;
 };
 
-const testRoutes = (): RoutesMap => ({
-  "/": { name: "home", title: "Home" },
-  "/about": { name: "about", title: "About" },
-  "/users": { name: "users", title: "Users" },
-  "/users/:id": { name: "user-detail", title: "User" },
-  "/posts/:slug": { name: "post-detail", title: "Post" },
-  "/redirect-test": { name: "redirect-test", redirect: "/" },
-  "/action-test": { name: "action-test", action: () => "action-called" },
-});
+const testRoutes = (): RoutesMap => {
+  const routes: RoutesMap = {
+    "/": { name: "home", title: "Home" },
+    "/about": { name: "about", title: "About" },
+    "/users": { name: "users", title: "Users" },
+    "/users/:id": { name: "user-detail", title: "User" },
+    "/posts/:slug": { name: "post-detail", title: "Post" },
+    "/redirect-test": { name: "redirect-test", redirect: "/" },
+    "/action-test": { name: "action-test", action: () => "action-called" },
+  };
+  return routes;
+};
 
 const json = (value: unknown): string => JSON.stringify(value);
 
@@ -149,34 +152,38 @@ const main = (): void => {
   eq("a query is appended and encoded", withQuery("/join", { next: "/profile" }), "/join?next=%2Fprofile");
   eq("an empty query value is dropped", withQuery("/join", { empty: "" }), "/join");
 
-  const flat = flattenRoutes({
+  const flattenedRoutes: RoutesMap = {
     "/": { name: "home" },
     "/users": { name: "users", routes: { "/:id": { name: "user-detail" } } },
-  });
+  };
+  const flat = flattenRoutes(flattenedRoutes);
   eq("a named route maps to its path", String(flat.namedRoutes.get("home")), "/");
   eq("a nested named route maps to its full path", String(flat.namedRoutes.get("user-detail")), "/users/:id");
   let child: RouteConfig | null = null;
   for (const entry of flat.flatRoutes) if (entry.path === "/users/:id") child = entry.route;
   eq("a flattened child points at its parent", String(child?.parent?.name), "users");
 
-  const nested = table({ "/parent": { name: "parent", routes: { "/child": { name: "child" } } } });
+  const nestedRoutes: RoutesMap = { "/parent": { name: "parent", routes: { "/child": { name: "child" } } } };
+  const nested = table(nestedRoutes);
   const nestedMatched = found(matchRoute(nested, "/parent/child"));
   eq("a nested match names the child", String(nestedMatched.name), "child");
   eq("and answers the parent config", String(nestedMatched.route.name), "parent");
   eq("with the inner match in matched", String(nestedMatched.matched?.route.name), "child");
 
-  for (const entries of [
+  const precedenceTables: RoutesMap[] = [
     { "/post/new": { name: "new" }, "/post/:slug": { name: "slug" }, "/post/*": { name: "wild" } },
     { "/post/*": { name: "wild" }, "/post/:slug": { name: "slug" }, "/post/new": { name: "new" } },
     { "/post/:slug": { name: "slug" }, "/post/*": { name: "wild" }, "/post/new": { name: "new" } },
-  ]) {
+  ];
+  for (const entries of precedenceTables) {
     const routes = table(entries);
     eq("a literal beats a parameter and a wildcard", String(found(matchRoute(routes, "/post/new")).name), "new");
     eq("a parameter beats a wildcard", String(found(matchRoute(routes, "/post/x")).name), "slug");
     eq("a wildcard takes the rest", String(found(matchRoute(routes, "/post/x/y")).name), "wild");
   }
 
-  const optional = table({ "/post/:slug": { name: "post", namedParams: ["tab", "sort"] } });
+  const optionalRoutes: RoutesMap = { "/post/:slug": { name: "post", namedParams: ["tab", "sort"] } };
+  const optional = table(optionalRoutes);
   eq("an optional pair is absent", String(found(matchRoute(optional, "/post/x")).name), "post");
   eq("no optional params means only the slug", json(found(matchRoute(optional, "/post/x")).params), json({ slug: "x" }));
   eq("the first optional pair matches", json(found(matchRoute(optional, "/post/x/tab/y")).params), json({ slug: "x", tab: "y" }));
@@ -323,8 +330,9 @@ const main = (): void => {
   eq("a navigation clears the flag and sets the title", prerenderAdapter.titles[prerenderAdapter.titles.length - 1] ?? "", "About | TestApp");
 
   const handled: Array<[string, string]> = [];
+  const hookedRoutes: RoutesMap = { "/": { name: "home" }, "/places": { name: "places", ssg: true } };
   const hooked = createMemoryRouter({
-    routes: { "/": { name: "home" }, "/places": { name: "places", ssg: true } },
+    routes: hookedRoutes,
     beforeNavigate: (path: string, matched: MatchedRoute): boolean => {
       handled.push([path, String(matched.route.name)]);
       return matched.route.ssg === true;
@@ -335,9 +343,8 @@ const main = (): void => {
   eq("the early hook sees the path and route", json(handled), json([["/places", "places"]]));
   eq("a handled navigation stops on the old route", String(hooked.currentRoute?.name), "home");
 
-  const functionTitle = createMemoryRouter({
-    routes: { "/": { name: "home", title: () => "Home" }, "/places": { name: "places", title: "Places" } },
-  });
+  const titleRoutes: RoutesMap = { "/": { name: "home", title: () => "Home" }, "/places": { name: "places", title: "Places" } };
+  const functionTitle = createMemoryRouter({ routes: titleRoutes });
   const initTitle = functionTitle.currentRoute?.route.title;
   eq("a function title is read at init", typeof initTitle === "string" ? initTitle : "", "Home");
   functionTitle.go("/places");
@@ -365,18 +372,21 @@ const main = (): void => {
   const boundary = createMemoryRouter({ routes: baseRoutes, initialPath: "/budget/budgets", basePath: "/budget" });
   eq("the base strips on a segment boundary", String(boundary.currentRoute?.name), "budgets");
 
-  const localeRoutes = (): RoutesMap => ({
-    "/": { name: "home", title: () => "Home" },
-    "/places": { name: "places", title: "Places" },
-    "/places/:slug": { name: "place" },
-    "/today": { name: "today", redirect: "/agenda" },
-    "/agenda": { name: "agenda" },
-    "/pt-BR": { name: "home-pt-BR", title: () => "Início", locale: "pt-BR" },
-    "/pt-BR/places": { name: "places-pt-BR", locale: "pt-BR" },
-    "/pt-BR/places/:slug": { name: "place-pt-BR", locale: "pt-BR" },
-    "/pt-BR/today": { name: "today-pt-BR", redirect: "/agenda", locale: "pt-BR" },
-    "/pt-BR/agenda": { name: "agenda-pt-BR", locale: "pt-BR" },
-  });
+  const localeRoutes = (): RoutesMap => {
+    const routes: RoutesMap = {
+      "/": { name: "home", title: () => "Home" },
+      "/places": { name: "places", title: "Places" },
+      "/places/:slug": { name: "place" },
+      "/today": { name: "today", redirect: "/agenda" },
+      "/agenda": { name: "agenda" },
+      "/pt-BR": { name: "home-pt-BR", title: () => "Início", locale: "pt-BR" },
+      "/pt-BR/places": { name: "places-pt-BR", locale: "pt-BR" },
+      "/pt-BR/places/:slug": { name: "place-pt-BR", locale: "pt-BR" },
+      "/pt-BR/today": { name: "today-pt-BR", redirect: "/agenda", locale: "pt-BR" },
+      "/pt-BR/agenda": { name: "agenda-pt-BR", locale: "pt-BR" },
+    };
+    return routes;
+  };
   const boot = (initialPath: string) => createMemoryRouter({ routes: localeRoutes(), initialPath, locales, defaultLocale: "en" });
 
   const localized = boot("/pt-BR/places");
@@ -424,10 +434,8 @@ const main = (): void => {
   const mediaPt = createMemoryRouter({ routes: mediaRoutes, initialPath: "/pt-BR", locales, defaultLocale: "en" });
   eq("a localized media redirect keeps its locale", mediaPt.path, "/pt-BR/map");
 
-  const later = createMemoryRouter({
-    routes: { "/": { name: "home", mediaRedirect: { media: narrow, to: "/map" } }, "/map": { name: "map" } },
-    initialPath: "/",
-  });
+  const laterRoutes: RoutesMap = { "/": { name: "home", mediaRedirect: { media: narrow, to: "/map" } }, "/map": { name: "map" } };
+  const later = createMemoryRouter({ routes: laterRoutes, initialPath: "/" });
   eq("the page load redirects", String(later.currentRoute?.route.name), "map");
   later.go("/");
   eq("a later navigation does not redirect", String(later.currentRoute?.route.name), "home");

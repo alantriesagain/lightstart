@@ -15,23 +15,26 @@ import { effect, signal } from "../../signals/index.ts";
 import { Listeners } from "../../signals/listeners.ts";
 
 /** The adapter over `target`'s `$sync` (or `target` itself, when it is the surface), registered as `name`. */
-export const adapterFor = (name: string, target: StoreShaped): Adapter => {
-  const surface = (target.$sync ?? target) as SyncObj;
-  const keysOf = () => target.$state?.keys?.() ?? target.keys?.() ?? [];
+export const adapterFor = (name: string, target: StoreShaped | SyncObj): Adapter => {
+  const $sync = "$sync" in target ? target.$sync : undefined;
+  const read = (key: string): unknown => ($sync === undefined ? target.get(key) : $sync.get(key));
+  const write = (key: string, value: unknown): unknown => ($sync === undefined ? target.set(key, value) : $sync.set(key, value));
+  const listen = (key: string, callback: (value: unknown) => void): (() => void) => ($sync === undefined ? target.subscribe(key, callback) : $sync.subscribe(key, callback));
+  const keysOf = () => ("$state" in target ? target.$state?.keys?.() : undefined) ?? ("keys" in target ? target.keys?.() : undefined) ?? [];
   const unsubs: Array<{ callback: ListenerFn, off: () => void }> = [];
   const listeners: Map<string, Listeners<ListenerFn>> = new Map();
   const signals: Map<string, Signal<unknown>> = new Map();
 
   const adapter: Adapter = {
     name,
-    get: (key) => surface.get(key),
-    set: (key, value) => surface.set(key, value),
-    remove: (key) => surface.set(key, undefined),
+    get: (key) => read(key),
+    set: (key, value) => write(key, value),
+    remove: (key) => write(key, undefined),
     has: (key) => keysOf().includes(key),
     keys: keysOf,
-    entries: () => keysOf().map((key): [string, unknown] => [key, surface.get(key)]),
+    entries: () => keysOf().map((key): [string, unknown] => [key, read(key)]),
     on(key, callback) {
-      const off = surface.subscribe(key, (value) => callback(value));
+      const off = listen(key, (value) => callback(value));
       const known = unsubs.find((entry) => entry.callback === callback);
       if (known) known.off = off;
       else unsubs.push({ callback, off });
@@ -48,19 +51,19 @@ export const adapterFor = (name: string, target: StoreShaped): Adapter => {
       listeners.get(key)?.delete(callback);
     },
     emit(key, value) {
-      surface.set(key, value);
+      write(key, value);
     },
     hasListeners: (key) => (listeners.get(key)?.size ?? 0) > 0,
     signal(key, defaultValue) {
       const existing = signals.get(key);
       if (existing) return existing;
 
-      const sig = signal(surface.get(key) ?? defaultValue);
+      const sig = signal(read(key) ?? defaultValue);
       effect(() => {
         const value = sig.value;
-        if (value !== surface.get(key)) surface.set(key, value);
+        if (value !== read(key)) write(key, value);
       });
-      surface.subscribe(key, (value) => {
+      listen(key, (value) => {
         if (value !== sig.peek()) sig.value = value ?? defaultValue;
       });
       signals.set(key, sig);

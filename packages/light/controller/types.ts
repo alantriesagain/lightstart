@@ -209,18 +209,14 @@ export interface DocumentAdapter extends Adapter {
 }
 
 export interface SyncObj {
-  adapter?: string;
+  adapter: string;
   get(key: string): unknown;
   set(key: string, value: unknown): unknown;
   subscribe(key: string, callback: (value: unknown, oldValue: unknown) => void): () => void;
 }
 
-/** What `adapterFor` wraps: a controller instance or a store through its `$sync`, or a `$sync` object itself. */
-export interface StoreShaped {
-  adapter?: string;
-  get?(key: string): unknown;
-  set?(key: string, value: unknown): unknown;
-  subscribe?(key: string, callback: (value: unknown, oldValue: unknown) => void): () => void;
+/** What `adapterFor` wraps: a `$sync` object, or a controller or store through its own `$sync`. */
+export interface StoreShaped extends SyncObj {
   $sync?: SyncObj;
   $state?: { keys?: () => string[] };
   keys?: () => string[];

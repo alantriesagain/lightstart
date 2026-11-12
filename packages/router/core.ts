@@ -7,7 +7,7 @@
  */
 
 import { interceptedPath } from "./click.ts";
-import type { ClickEvent } from "./click.ts";
+import type { ClickEvent, ClickLocation } from "./click.ts";
 import { localeOfPath, stripLocale, withLocale } from "./locale.ts";
 import { Logger } from "./logger.ts";
 import { MatchedRoute, compileRoutes, flattenRoutes } from "./matcher.ts";
@@ -384,7 +384,9 @@ export class RouterCore {
 
   click(event: ClickEvent, options: { external?: boolean } = {}): boolean {
     if (options.external) return false;
-    const path = interceptedPath(event, this.adapter.getLocation());
+    const current = this.adapter.getLocation();
+    const location: ClickLocation = { origin: current.origin, pathname: current.pathname };
+    const path = interceptedPath(event, location);
     if (path === null) return false;
     if (typeof event.preventDefault === "function") event.preventDefault();
     this.go(path);
