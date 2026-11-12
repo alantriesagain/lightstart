@@ -9,7 +9,7 @@
  * LLVM IR, assembly, coverage, the executable); both builds run to compare
  * output, time and memory. Writes `lib/native/captures.js`.
  *
- *   SCRIPTC=scriptc-dev node scripts/capture-native.mjs
+ *   node scripts/capture-native.mjs
  *
  * With `--measures`, the slow measurements: TypeScript 6, tsgo and tsc-ts
  * checking light's project, light's native benchmark under node and as a
@@ -17,7 +17,7 @@
  * tsgo executable (TypeScript 7.0.2's `tsc`) and `SCRIPTC_REPO` a scriptc
  * checkout; either can be left out. Writes `lib/native/measures.js`.
  *
- *   SCRIPTC=scriptc-dev TSGO=<tsgo> SCRIPTC_REPO=<scriptc> node scripts/capture-native.mjs --measures
+ *   TSGO=<tsgo> SCRIPTC_REPO=<scriptc> node scripts/capture-native.mjs --measures
  *
  * With `--types`, the programs in `native-examples/types/`: their IR types,
  * the functions their hot code calls, coverage and the time under node and
