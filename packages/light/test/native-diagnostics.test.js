@@ -35,8 +35,7 @@ const report = (diagnostics, counts = {}) => ({
   diagnostics,
 });
 
-const slowPath = diagnostic({ code: "SC6901", category: "slow-path", severity: "warning", message: "this write's key can name any property", hint: "type the key as a number", group: "SC6901-bbbb" });
-const divergence = diagnostic({ code: "SC6001", category: "divergence", severity: "warning", group: "SC6001-cccc" });
+const divergence = diagnostic({ code: "SC6001", category: "divergence", severity: "warning", message: "node throws where native returns", hint: "avoid the cast", group: "SC6001-cccc" });
 const deferred = diagnostic({ scope: "deferred", group: "SC1090-dddd" });
 
 describe("the native coverage gate", () => {
@@ -46,18 +45,17 @@ describe("the native coverage gate", () => {
     assert.deepEqual(result.failures, []);
   });
 
-  it("fails on a blocker and on a slow path, whatever the dynamic allowance", () => {
+  it("fails on a blocker, whatever the dynamic allowance", () => {
     for (const allowDynamic of [false, true]) {
-      const result = gate(classify(report([diagnostic({}), slowPath])), { allowDynamic });
+      const result = gate(classify(report([diagnostic({})])), { allowDynamic });
       assert.equal(result.pass, false);
-      assert.deepEqual(result.failures.map((d) => d.code), ["SC1090", "SC6901"]);
+      assert.deepEqual(result.failures.map((d) => d.code), ["SC1090"]);
     }
   });
 
-  it("tells a slow path by its category, not its code", () => {
+  it("holds an error to be a blocker, whatever its code", () => {
     const contract = diagnostic({ code: "SC7001", category: "unsupported", message: "a NoThrow contract does not hold" });
     const coverage = classify(report([contract]));
-    assert.deepEqual(coverage.slowPaths, []);
     assert.deepEqual(coverage.blockers, [contract]);
   });
 
@@ -112,6 +110,6 @@ describe("the native coverage gate", () => {
   });
 
   it("prints a finding as file:line:col, code and message, then its hint", () => {
-    assert.equal(formatDiagnostic(slowPath, "/repo"), "html/parts.ts:10:3 SC6901 this write's key can name any property\n    hint: type the key as a number");
+    assert.equal(formatDiagnostic(divergence, "/repo"), "html/parts.ts:10:3 SC6001 node throws where native returns\n    hint: avoid the cast");
   });
 });

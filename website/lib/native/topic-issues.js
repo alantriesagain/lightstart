@@ -1,8 +1,7 @@
 /**
  * /native/issues: open issues in light's native build and in scriptc: performance
- * against Node, the fork's status against scriptc 0.3.7, JSDoc-typed
- * JavaScript, intentional differences from Node, tsc-ts's status, and how
- * these pages are generated.
+ * against Node, scriptc's releases, JSDoc-typed JavaScript, intentional
+ * differences from Node, tsc-ts's status, and how these pages are generated.
  */
 import captures from "./captures.js";
 import measures from "./measures.js";
@@ -41,24 +40,11 @@ export default {
     },
     {
       id: "fork",
-      title: "Fork status",
+      title: "scriptc status",
       blocks: [
         {
           kind: "text",
-          text: "Upstream has implemented its own versions of three of the fork's fixes (#1208, #1215, #1218), crediting light's author, but no release includes them yet. On 2026-10-18, the fork's tests were run against an unpatched build of upstream's main branch. The results:",
-        },
-        {
-          kind: "list",
-          items: [
-            "`census-typed-keys` and `ts-unknown-fields` can be dropped at 0.3.7: upstream handles every case light uses.",
-            "`generic-method-slots` can be dropped if light's checks pass without it. Upstream still fails a method read through a receiver typed as a non-generic base class; light's signals have that structure but do not call methods through the base type.",
-            "`generic-unknown-fields` has to be ported to upstream's implementation of `unknown` fields; it does not apply as it is.",
-            "`census-report`, `generic-record-return`, `async-return-union` and `async-dynamic-return` are still needed: their tests fail without them.",
-          ],
-        },
-        {
-          kind: "text",
-          text: "The fork's tests also found three cases upstream's versions do not handle, to report upstream: fields typed `(object | null)[]`, method reads through a non-generic base type, and literal keys under `as string`. `census-report` used to report SC7001, which scriptc's contracts checker already uses, and then SC6201, which upstream later took for start-up failures, so it now reports SC6901.",
+          text: "While scriptc releases lacked fixes light's TypeScript core needed, light's native tools ran a fork of the compiler. Since scriptc 0.4.12 every fix light needed has landed upstream, and light builds with the stock release that `package.json` pins; the fork is no longer used.",
         },
       ],
     },
@@ -119,7 +105,7 @@ export default {
       blocks: [
         {
           kind: "text",
-          text: `Every snippet and number on these pages comes from \`website/scripts/capture-native.mjs\`, which runs the actual tools on the programs in \`website/native-examples/\` and on light itself. This capture used scriptc ${tools.scriptc} with light's patches, tsc-ts ${tools.tscTs} and Node ${tools.node}, on ${tools.platform}, on ${tools.capturedAt}. The capture will be run again when scriptc 0.3.7 is released.`,
+          text: `Every snippet and number on these pages comes from \`website/scripts/capture-native.mjs\`, which runs the actual tools on the programs in \`website/native-examples/\` and on light itself. This capture used scriptc ${tools.scriptc} with light's patches (the fork light used then), tsc-ts ${tools.tscTs} and Node ${tools.node}, on ${tools.platform}, on ${tools.capturedAt}. The capture will be run again when the tools it names change.`,
         },
         {
           kind: "text",

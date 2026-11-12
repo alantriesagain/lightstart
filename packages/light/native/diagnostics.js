@@ -1,7 +1,7 @@
 /**
  * @file scriptc's coverage, read from its JSON report (`--print=diagnostics`) rather than its
- * text: every blocker, slow path, divergence from node, untyped hot function (SC6101), deferred
- * and unreached site, with its
+ * text: every blocker, divergence from node, untyped hot function (SC6101), deferred and
+ * unreached site, with its
  * file, line, column and hint. `classify` and `gate` are pure, so a test drives them with saved
  * reports; `readCoverage` runs scriptc. The coverage gates and the probe runner share it.
  */
@@ -38,7 +38,6 @@ import { relative } from "node:path";
  * @typedef {object} Coverage
  * @property {Envelope} envelope
  * @property {Diagnostic[]} blockers code the entry reaches that does not compile
- * @property {Diagnostic[]} slowPaths code that compiles and behaves like node, but slower
  * @property {Diagnostic[]} divergences code that compiles but behaves differently from node
  * @property {Diagnostic[]} performance functions that likely run often and use untyped values (SC6101)
  * @property {Diagnostic[]} deferred JavaScript statements compiled to a throw if they run
@@ -58,12 +57,11 @@ export const classify = (envelope) => {
   const stats = envelope.stats;
   return {
     envelope,
-    slowPaths: all.filter((d) => d.category === "slow-path"),
     divergences: all.filter((d) => d.category === "divergence"),
     performance: all.filter((d) => d.category === "performance"),
     deferred: all.filter((d) => d.scope === "deferred"),
     unreached: all.filter((d) => d.scope === "unreached"),
-    blockers: all.filter((d) => (d.scope === "reached" || d.scope === "preflight") && d.severity === "error" && d.category !== "slow-path" && d.category !== "divergence"),
+    blockers: all.filter((d) => (d.scope === "reached" || d.scope === "preflight") && d.severity === "error" && d.category !== "divergence"),
     fullyStatic: stats !== undefined && stats.statementsFailed === 0 && stats.statementsStatic === stats.statementsTotal,
   };
 };
@@ -84,7 +82,7 @@ export const classify = (envelope) => {
  */
 
 /**
- * What fails the gate: blockers, slow paths, divergences not in the allowlist, and, unless
+ * What fails the gate: blockers, divergences not in the allowlist, and, unless
  * dynamic code is allowed, deferred and unreached sites. An untyped hot function (SC6101) is a
  * note: the warning guesses which functions run often, and data parsed from outside stays
  * `unknown` on purpose. With a baseline, the failed and deferred
@@ -96,7 +94,7 @@ export const classify = (envelope) => {
 export const gate = (coverage, options = {}) => {
   const allowed = options.divergences ?? {};
   /** @type {Diagnostic[]} */
-  const failures = [...coverage.blockers, ...coverage.slowPaths, ...coverage.divergences.filter((d) => !(d.group in allowed))];
+  const failures = [...coverage.blockers, ...coverage.divergences.filter((d) => !(d.group in allowed))];
   if (!options.allowDynamic) failures.push(...coverage.deferred, ...(options.allowUnreached ? [] : coverage.unreached));
   /** @type {string[]} */
   const notes = [];
@@ -128,7 +126,7 @@ export const formatDiagnostic = (d, root) => `${relative(root, d.file) || d.file
  * @returns {Coverage & { status: number }}
  */
 export const readCoverage = (scriptc, entry, options) => {
-  const r = spawnSync(scriptc, ["coverage", entry, "--print=diagnostics", `--fail-on=${options.failOn ?? "slow-paths"}`, ...(options.args ?? [])], {
+  const r = spawnSync(scriptc, ["coverage", entry, "--print=diagnostics", `--fail-on=${options.failOn ?? "blockers"}`, ...(options.args ?? [])], {
     encoding: "utf8",
     cwd: options.cwd,
     timeout: 600000,

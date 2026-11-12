@@ -5,8 +5,6 @@
  * and `native/README.md`).
  */
 
-const FORK_URL = "https://github.com/alantriesagain/scriptc/blob/light-integration/FORK.md";
-
 /** @type {import("./topics.js").TopicPage} */
 export default {
   title: "Using light natively",
@@ -18,12 +16,12 @@ export default {
       blocks: [
         {
           kind: "text",
-          text: `Light's native tools need scriptc with light's patches: the \`light-integration\` branch of the fork. Its [FORK.md](${FORK_URL}) lists the patches and how to build the fork, including the runtime pack and the LLVM helper it needs. Then point light's tools at it with the \`SCRIPTC\` environment variable:`,
+          text: "Light's native tools need the scriptc release light pins (`scriptc` in `package.json`), which installing light's dependencies installs. Point the tools at another build with the `SCRIPTC` environment variable:",
         },
         { kind: "code", title: "shell", code: "SCRIPTC=/path/to/scriptc npm run verify", language: "text" },
         {
           kind: "text",
-          text: "When `SCRIPTC` is not set, the tools use the scriptc in light's `node_modules`, then the one on `PATH`. scriptc caches builds by its version, not its source, so a patched scriptc should run with `SCRIPTC_NO_CACHE=1`; otherwise it can replay a binary an unpatched build of the same version produced.",
+          text: "When `SCRIPTC` is not set, the tools use the scriptc in light's `node_modules`, then the one on `PATH`.",
         },
       ],
     },
@@ -43,7 +41,7 @@ export default {
           ],
           rows: [
             { command: "npm run typecheck:native", does: "Type-checks the native code with tsc-ts against es2024, with Node's types and no DOM." },
-            { command: "npm run coverage:native", does: "Runs scriptc coverage on native/tui/index.ts; fails on any statement that does not compile statically and on any slow path." },
+            { command: "npm run coverage:native", does: "Runs scriptc coverage on native/tui/index.ts; fails on any statement that does not compile statically." },
             { command: "npm run coverage:tasks", does: "The same for the tasks example, whose JSDoc-typed JavaScript may compile partly dynamically." },
             { command: "npm run test:native", does: "Runs every native/*.test.js under Node and with scriptc run; both must exit zero and print the same output." },
             { command: "npm run probes", does: "Runs the compiler probes in native/probes/, one-file programs that test what scriptc accepts." },

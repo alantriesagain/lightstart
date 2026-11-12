@@ -12,7 +12,7 @@ What every target shares sits here: which scriptc the tools run, the parity runn
 ```
 npm run typecheck:native   # tsc-ts over the terminal graph (native/tui) against es2024, no dom lib
 npm run coverage:native    # scriptc coverage native/tui/index.ts: fully static, nothing deferred
-npm run coverage:tasks     # the same over examples/tasks/main.js: no blocker, no slow path (its JSDoc JavaScript is not held to fully static)
+npm run coverage:tasks     # the same over examples/tasks/main.js: no blocker (its JSDoc JavaScript is not held to fully static)
 npm run test:native        # every target's *.test.js under node and under scriptc run; outputs must match
 npm run probes             # the compiler probes (native/probes/) that decided how the core is written
 light desktop run native/desktop/demo/backend.js   # the desktop shell's demo: a light page in the system web view
@@ -20,22 +20,24 @@ light desktop run native/desktop/demo/backend.js   # the desktop shell's demo: a
 
 ## Which scriptc
 
-Light's core is TypeScript (`html/`, `signals/`, `view/core.ts`, `native/tui/`, `controller/`, `model/`), and it needs seven scriptc patches no release carries yet (0.4.1 included): fields of a generic class whose type parameter is bound to `unknown` (`Signal<unknown>`); coverage that reports slow paths; a JavaScript generic call whose return type does not map; `Promise.all` and array facts that widened every array; an async function that returns a dynamic promise; a workspace package compiled from its TypeScript source taking its JavaScript modules as program source; and abstract methods read through an untyped lookup (`LineSource`'s, in the tasks example). Until a release has them, the native tools compile with the fork's `light-integration` branch (v0.4.1 plus the patches), named by `SCRIPTC`; the fork's `FORK.md` lists every patch and how to re-apply them on a new scriptc release, and its `JSDOC.md` the issues JSDoc-typed JavaScript meets natively:
+Light's core is TypeScript (`html/`, `signals/`, `view/core.ts`, `native/tui/`, `controller/`, `model/`), and it compiles with the scriptc release its `package.json` pins (0.4.12), installed with the workspace's dependencies; it needs no fork or patch. Every fix the core needed has landed upstream in that release. Until it did, the native tools compiled with the `light-integration` branch of a fork; `native/scriptc.js` no longer looks for it.
 
 ```
 SCRIPTC=/path/to/scriptc npm run verify
 ```
 
-`native/scriptc.js` resolves the compiler for every tool, `light-native` included: `$SCRIPTC`, else the fork's `scriptc-dev` on `PATH`, else the scriptc in the workspace's `node_modules`, else the one on `PATH`. `light desktop build` and `native/tui/pty.sh` follow it too.
+To move to another scriptc release, change `scriptc` in the root `package.json` and in `packages/light/package.json`, run `pnpm install`, and run the gates. With npm's `ignore-scripts` on, scriptc's install script does not run and the CLI answers "native installation is incomplete"; `pnpm rebuild scriptc --config.ignore-scripts=false` runs it for scriptc alone.
 
-The coverage gates run `--fail-on=slow-paths`: besides blockers, they fail on any write that makes methods replaceable (a computed key that can be any string, a reflective write), which would make every method call in the program dispatch dynamically and several times slower while the build still reports "fully static". The report names the write and how to avoid it. scriptc's SC6101 warning, a function that likely runs often and works on untyped values (an `any`, an untyped `JSON.parse` result, an untyped JavaScript file), is printed as a note: the warning guesses which functions are hot, and data parsed from outside stays `unknown` on purpose.
+`native/scriptc.js` resolves the compiler for every tool, `light-native` included: `$SCRIPTC`, else the scriptc in the workspace's `node_modules`, else the one on `PATH`. `light desktop build` and `native/tui/pty.sh` follow it too.
+
+The coverage gates run `--fail-on=blockers`: they fail on any blocker and on a divergence from node not listed in `divergences.json`, and, unless dynamic code is allowed, on any deferred or unreached site or a statically compiled share under 100%. scriptc's SC6101 warning, a function that likely runs often and works on untyped values (an `any`, an untyped `JSON.parse` result, an untyped JavaScript file), is printed as a note: the warning guesses which functions are hot, and data parsed from outside stays `unknown` on purpose.
 
 | File | What it owns |
 |---|---|
 | `assert.ts` | `ok`, `eq`, `eqn`, `throws`, `budget`, `done`: the checks a native test uses, light's and its packages' (`@light/test` re-exports them), since node:test does not run under scriptc |
 | `run.js` | The parity runner `npm run test:native` runs: every `*.test.js` of a target's folder under node and under `scriptc run` |
 | `coverage.js`, `diagnostics.js`, `coverage-baseline.json` | The coverage gate `npm run verify` runs, over `native/tui/index.ts` and, with `--allow-dynamic`, the tasks app's entry; the reading of scriptc's JSON report it shares with the desktop gate and the probes; the counts the tasks graph may only lower |
-| `scriptc.js` | Which scriptc the native tools and `light-native` run (`$SCRIPTC`, then the fork's `scriptc-dev`) |
+| `scriptc.js` | Which scriptc the native tools and `light-native` run (`$SCRIPTC`, then the workspace's `node_modules`, then `PATH`) |
 | `probes/` | One-file programs that pin what the compiler accepts, and the decisions they produced (`probes/README.md`) |
 | `tui/`, `desktop/` | The targets |
 

@@ -102,7 +102,7 @@ const CHANGES = [
     title: "Keeping writes with string keys off objects",
     change: "A `save(settings, key, value)` helper that writes into a `Record<string, unknown>` before, and into a `Map` after. The loop that is timed only calls `counter.increment(2)`.",
     node: "V8 already checks the object's map on each method call, so the helper changes nothing.",
-    native: "A write whose key can be any string could replace a method, so with the `Record` helper anywhere in the program every method call is dynamic ([writes with string keys](/native/how-it-works#slow-paths)). Coverage reports the write as SC6901.",
+    native: "A write whose key can be any string could replace a method, so with the `Record` helper anywhere in the program every method call is dynamic ([writes with string keys](/native/how-it-works#slow-paths)).",
   },
   {
     id: "results-instead-of-exceptions",

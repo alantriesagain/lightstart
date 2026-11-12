@@ -1,7 +1,7 @@
 /**
  * @file The desktop coverage gate: scriptc's coverage of the demo backend, against the shim's
  * manifest, read from scriptc's JSON report, must be fully static with nothing deferred to a
- * runtime throw, no slow path and no divergence from node. Skipped, with a
+ * runtime throw and no divergence from node. Skipped, with a
  * notice, when WebKitGTK's development package is not installed, since the manifest needs the
  * archive. Run with `node native/desktop/coverage.js`.
  */
@@ -33,5 +33,5 @@ if (result.pass) {
   console.log(`${entry}: fully static, ${stats?.statementsTotal ?? "?"} statements, nothing deferred`);
   process.exit(0);
 }
-console.log(`${entry}: ${coverage.slowPaths.length} slow paths, ${coverage.blockers.length} blockers, ${coverage.divergences.length} divergences, ${coverage.deferred.length} deferred statements${coverage.fullyStatic ? "" : ", not fully static"}`);
+console.log(`${entry}: ${coverage.blockers.length} blockers, ${coverage.divergences.length} divergences, ${coverage.deferred.length} deferred statements${coverage.fullyStatic ? "" : ", not fully static"}`);
 process.exit(1);

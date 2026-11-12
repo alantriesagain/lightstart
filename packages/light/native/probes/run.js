@@ -73,7 +73,7 @@ for (const file of files) {
   lines.push("- build rc=" + String(build.code) + " node rc=" + String(nodeRun.code) + " native rc=" + String(native.code) + " same output=" + String(same));
   if (!pass) {
     lines.push("```");
-    lines.push([...cov.blockers, ...cov.slowPaths, ...cov.divergences, ...cov.deferred, ...cov.unreached].map((d) => formatDiagnostic(d, root)).join("\n").split("\n").slice(-20).join("\n"));
+    lines.push([...cov.blockers, ...cov.divergences, ...cov.deferred, ...cov.unreached].map((d) => formatDiagnostic(d, root)).join("\n").split("\n").slice(-20).join("\n"));
     lines.push("--- build");
     lines.push(build.out.trim().split("\n").slice(-20).join("\n"));
     lines.push("--- node");

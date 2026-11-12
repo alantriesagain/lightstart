@@ -173,7 +173,7 @@ export default {
             { kind: "code", title: "scriptc coverage refused.ts", code: refused.coverage, language: "text" },
           ],
         },
-        { kind: "text", text: "With light's patches, coverage also reports code that compiles but makes method calls slower, and light's builds fail on it. See [writes with string keys and method calls](/native/how-it-works#slow-paths)." },
+        { kind: "text", text: "Coverage does not report writes that make method calls slower. See [writes with string keys and method calls](/native/how-it-works#slow-paths)." },
       ],
     },
     {

@@ -1,7 +1,6 @@
 /**
  * @file The native gate: scriptc's coverage of an entry (native/tui/index.ts by default), read from its
- * JSON report. It fails on a blocker, a slow path (a write that makes methods replaceable, so every
- * call dispatches dynamically), and a divergence from node not listed with its reason in
+ * JSON report. It fails on a blocker and a divergence from node not listed with its reason in
  * `divergences.json`; unless `--allow-dynamic` says the entry's graph holds JSDoc-typed JavaScript,
  * also on any statement deferred to a runtime throw and on a statically compiled share under 100%.
  * An entry listed in `coverage-baseline.json` may not gain failed or deferred statements;
@@ -48,12 +47,11 @@ for (const note of result.notes) console.log(`note: ${note}`);
 
 const share = stats ? `${stats.statementsStatic} of ${stats.statementsTotal} statements (${stats.percentStatic}%) static` : "static share unknown";
 if (result.pass) {
-  console.log(coverage.fullyStatic ? `${entry}: fully static, ${stats?.statementsTotal ?? "?"} statements, nothing deferred` : `${entry}: no blocker, no slow path and no divergence, ${share}`);
+  console.log(coverage.fullyStatic ? `${entry}: fully static, ${stats?.statementsTotal ?? "?"} statements, nothing deferred` : `${entry}: no blocker and no divergence, ${share}`);
   process.exit(0);
 }
 const counts = [
   [coverage.blockers.length, "blockers"],
-  [coverage.slowPaths.length, "slow paths"],
   [result.failures.filter((d) => d.category === "divergence").length, "divergences not in divergences.json"],
   [allowDynamic ? 0 : coverage.deferred.length, "deferred statements"],
   [allowDynamic ? 0 : coverage.unreached.length, "unreached blockers"],

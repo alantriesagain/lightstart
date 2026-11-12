@@ -9,7 +9,7 @@ node examples/tasks/main.js --scheme light  # the theme's light side; dark by de
 node examples/tasks/tasks.test.js           # drives the app on a test terminal
 ```
 
-It compiles to one native binary with scriptc (the fork's `light-integration`, named by `SCRIPTC`; see `packages/light/native/README.md`), with no JavaScript engine inside: the model, the controller, the views, the JSONL files and the terminal host. The test builds the same way and prints what it prints under node.
+It compiles to one native binary with scriptc (the release light pins; see `packages/light/native/README.md`), with no JavaScript engine inside: the model, the controller, the views, the JSONL files and the terminal host. The test builds the same way and prints what it prints under node.
 
 ```
 $SCRIPTC build examples/tasks/main.js -o tasks --strip     # about 6 MB

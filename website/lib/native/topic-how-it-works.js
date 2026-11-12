@@ -1,10 +1,9 @@
 /**
  * /native/how-it-works: how light's native build works: what compiles, the
- * coverage check, which scriptc it uses and the patches, the benchmark against
- * Node, the move of its core to TypeScript, and writes with string keys and
- * method calls. Measured numbers are `measures.js` and `captures.js`;
- * light's history is quoted from `native/README.md` with its dates, and the
- * patches from the scriptc fork's FORK.md.
+ * coverage check, which scriptc it uses, the benchmark against Node, the move
+ * of its core to TypeScript, and writes with string keys and method calls.
+ * Measured numbers are `measures.js` and `captures.js`; light's history is
+ * quoted from `native/README.md` with its dates.
  */
 import captures from "./captures.js";
 import measures from "./measures.js";
@@ -47,9 +46,9 @@ export default {
       blocks: [
         {
           kind: "text",
-          text: `\`npm run coverage:native\` runs \`scriptc coverage\` on \`native/tui/index.ts\` with \`--fail-on=slow-paths\` and fails unless every statement compiles statically and no write makes method calls dynamic. All ${coverage.statements.toLocaleString("en-US")} statements do. \`coverage:tasks\` checks the tasks example the same way, except that its JSDoc-typed JavaScript may compile partly dynamically.`,
+          text: `\`npm run coverage:native\` runs \`scriptc coverage\` on \`native/tui/index.ts\` with \`--fail-on=blockers\` and fails unless every statement compiles statically. All ${coverage.statements.toLocaleString("en-US")} statements do. \`coverage:tasks\` checks the tasks example the same way, except that its JSDoc-typed JavaScript may compile partly dynamically.`,
         },
-        { kind: "code", title: "scriptc coverage native/tui/index.ts --fail-on=slow-paths", code: coverage.text, language: "text" },
+        { kind: "code", title: "scriptc coverage native/tui/index.ts --fail-on=blockers", code: coverage.text, language: "text" },
       ],
     },
     {
@@ -58,28 +57,8 @@ export default {
       blocks: [
         {
           kind: "text",
-          text: "Light needs fixes that no scriptc release has yet, so its native tools run a fork: the latest release plus one branch per fix, each submitted upstream separately. `native/scriptc.js` decides which scriptc the tools run: the one named by the `SCRIPTC` environment variable, then the one in light's `node_modules`, then the one on `PATH`. As of 2026-10-18, upstream has implemented its own versions of three of the fixes, which are not in a release yet:",
+          text: "Light compiles with the scriptc release its `package.json` pins, currently 0.4.12. While releases lacked fixes light's TypeScript core needed, the native tools ran a fork of scriptc, the latest release plus one branch per fix. Since 0.4.12 every fix light needed has landed upstream, and light builds with the stock release. `native/scriptc.js` decides which scriptc the tools run: the one named by the `SCRIPTC` environment variable, then the one in light's `node_modules`, then the one on `PATH`.",
         },
-        {
-          kind: "table",
-          columns: [
-            { name: "patch", label: "Patch", code: true },
-            { name: "fixes", label: "What it fixes" },
-            { name: "light", label: "Why light needed it" },
-            { name: "upstream", label: "Upstream" },
-          ],
-          rows: [
-            { patch: "ts-unknown-fields", fixes: "Class fields typed unknown or object compile, in checked dynamic storage", light: "Template values, host nodes and committed values are unknown", upstream: "#1208 covers it, except (object | null)[] fields" },
-            { patch: "generic-unknown-fields", fixes: "Fields typed by a type parameter compile when it is bound to unknown", light: "Signal<T> is built with unknown values", upstream: "Landed as #3107, after v0.4.9" },
-            { patch: "generic-method-slots", fixes: "Methods of generic classes are found when a write can replace methods", light: "Signal<T> crashed natively: this._track is not a function", upstream: "#1215 covers it, except reads through a non-generic base type" },
-            { patch: "census-typed-keys", fixes: "A key asserted to a number (i as number, i!) only marks numeric names", light: "One write made all 176 methods dispatch dynamically", upstream: "#1218 covers light's case" },
-            { patch: "census-report", fixes: "Coverage reports writes that make methods replaceable (SC6901)", light: "Coverage said fully static while every call was slower", upstream: "Declined upstream (#1153); #1149 open" },
-            { patch: "generic-record-return", fixes: "A JSDoc generic whose return type does not map returns a checked dynamic value", light: "Every model definition was refused (SC2009)", upstream: "v0.4.7 covers it" },
-            { patch: "async-return-union", fixes: "Promise.all's result is possibly undefined only when an entry can be", light: "Loading related rows with Promise.all did not build", upstream: "Landed as #3109, after v0.4.9" },
-            { patch: "async-dynamic-return", fixes: "An async function resolves a returned dynamic promise", light: "The store's dynamic returns failed at run time", upstream: "Landed as #3104, after v0.4.9" },
-          ],
-        },
-        { kind: "text", text: "When scriptc 0.3.7 is released, the fork can drop the patches upstream covers, once light's own checks pass without them. See [fork status](/native/issues#fork) in the open issues." },
       ],
     },
     {
@@ -143,11 +122,11 @@ export default {
           text: "JavaScript allows replacing a method at run time: `obj[\"increment\"] = fn` is valid. When a program contains a write whose key can be any string, scriptc cannot prove that the write never replaces a method. It then compiles every method call in the program as a dynamic call: the call reads the method from the instance and boxes the receiver. One such write anywhere in the program is enough. The three example programs differ only in a `save` helper, which is never called with a method name:",
         },
         {
-          kind: "compare",
-          items: [
-            { kind: "code", title: methods.replaceable.file, code: methods.replaceable.source.trimEnd(), language: "ts", highlight: String(replaceableLine(methods.replaceable.source)) },
-            { kind: "code", title: "scriptc coverage --fail-on=slow-paths", code: methods.replaceable.coverage, language: "text" },
-          ],
+          kind: "code",
+          title: methods.replaceable.file,
+          code: methods.replaceable.source.trimEnd(),
+          language: "ts",
+          highlight: String(replaceableLine(methods.replaceable.source)),
         },
         {
           kind: "bars",
@@ -164,7 +143,7 @@ export default {
         },
         {
           kind: "text",
-          text: "In light, the write was `oldParts[(oldIndex as number)] = null` in the html engine. scriptc read the key's type from before the `as number` cast, `number | undefined`, which it treats as a key that can be any string, so all 176 of light's methods were called dynamically, about seven times slower. Two of the fork's patches address this: one reads the key's type after the cast, and one makes coverage report such writes (the SC6901 note above). Light's checks run coverage with `--fail-on=slow-paths`, so a new write of this kind fails them.",
+          text: "In light, the write was `oldParts[(oldIndex as number)] = null` in the html engine. scriptc read the key's type from before the `as number` cast, `number | undefined`, which it treats as a key that can be any string, so all 176 of light's methods were called dynamically, about seven times slower. That write is typed now. A new write whose key can be any string still makes every call dynamic, and stock scriptc's coverage does not report it, so the rule stays in `native/README.md`.",
         },
       ],
     },
