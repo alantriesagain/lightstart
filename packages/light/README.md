@@ -374,7 +374,7 @@ uses them installs (`npm i -D @lightstart/server`); a project that does not
 never downloads it. `light serve` comes from [`@lightstart/dev`](../dev/README.md),
 and light's own `test/serve.js` remains the test runner's server.
 
-`npx light check [dir]` checks component definitions against light's
+`npx light check [dirs...]` checks component definitions against light's
 conventions: definitions go through `defineComponent`, props are declared under
 `props`, boolean attributes bind as `?attr`, parts are named by their tag, hooks
 use the engine's names, methods do not shadow DOM methods, and stylesheets scope
@@ -387,6 +387,43 @@ TypeScript 7's `typescript` no longer exports. Under TypeScript 7, install
 `@typescript/typescript6` beside it (`npm i -D @typescript/typescript6`); the
 checker reads the API from there. A rule of light's own that cannot load fails
 the run.
+
+### Extending light check
+
+A package adds `cli/extend/check.ts`, default-exporting
+`defineExtension("check", { args, setup })`. Its `setup(ctx, args, api)` runs
+before the pass, and `api` is:
+
+| Member | What it does |
+|---|---|
+| `sources(add)` | Replaces the sources to add with `add(sources)`, beside the project's own |
+| `addSources(...sources)` | Adds rule sources (`{ owner, file }`) beside the project's own |
+| `context(wrap)` | Wraps or replaces the context a rule reads, once per target |
+| `run(fn)` | Replaces the whole run; `fn(input)` answers whether it passed |
+
+`input` is `{ targets, root, rule, json, runOnce(dir) }`: the folders given
+(none: the current folder), the `--root` override, the `--rule` filter, whether
+`--json` was given, and light's own pass over one folder. A replacement that
+walks a workspace still gets light's engine per member through `runOnce`.
+
+```ts
+import { defineExtension } from "@lightstart/cli";
+
+export default defineExtension("check", {
+  args: { all: { flag: true } },
+  setup(_ctx, args, api) {
+    api.addSources({ owner: "acme", file: "node_modules/@acme/check/rules/x.js" });
+    if (args.all) api.run(async (input) => {
+      for (const dir of input.targets) if (!(await input.runOnce(dir))) return false;
+      return true;
+    });
+  },
+});
+```
+
+A replacement can build its own pass from `@lightstart/light/check`, which
+re-exports `checkTarget`, `openProject`, `loadRules`, `runRules`,
+`formatFinding` and `formatSummary`.
 
 `@lightstart/light/eslint` provides `light/check-errors` and
 `light/check-warnings` inside ESLint, plus the style rules light uses.

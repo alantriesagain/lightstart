@@ -7,11 +7,14 @@
  * `light desktop <command> …`; works from the checkout and from the installed package.
  */
 
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { scriptcPath } from "../scriptc.js";
+
+/** @import { DesktopExtension, DesktopInput } from "../../cli/extensions.ts" */
 
 const here = dirname(fileURLToPath(import.meta.url));
 const light = join(here, "..", "..");
@@ -318,14 +321,208 @@ export const build = async (backend, web, out, name, target, keepLight, noWeb = 
 /** @param {string} target */
 const defaultTarget = (target) => (target === "linux" ? "linux-x64" : target === "mac" ? "mac-arm64" : target === "win" ? "win-x64" : target);
 
+const shellDir = join(here, "shell");
+const shellBackend = join(shellDir, "backend.js");
+/** @param {string} target */
+const shellExe = (target) => join(here, "out", target, "shell", process.platform === "win32" ? "light-dev.exe" : "light-dev");
+
 /**
- * The command line: `shim`, `smoke`, `build` or `run` with their options; answers the exit code.
- * `light desktop …` and `node native/desktop/build.js …` both land here.
- * @param {string[]} argv
+ * Whether the shell executable is newer than its source and the modules it loads.
+ * @param {string} target
  */
-export const desktop = async (argv) => {
+const shellCurrent = (target) => {
+  const exe = shellExe(target);
+  if (!existsSync(exe)) return false;
+  const deps = [shellBackend, join(here, "window.js"), join(here, "window-host.js"), join(here, "ffi.ts"), fileURLToPath(import.meta.url)];
+  return statSync(exe).mtimeMs > Math.max(newest(shellDir), ...deps.map((file) => statSync(file).mtimeMs));
+};
+
+/**
+ * The executable `light desktop dev` runs when an extension names none: light's own shell, built
+ * from `shell/backend.js` for the target.
+ * @param {string} target
+ */
+const defaultHost = (target) => {
+  const exe = shellExe(target);
+  if (!shellCurrent(target))
+    try {
+      compileBackend(shellBackend, exe, target, []);
+    } catch (error) {
+      throw new Error(`no desktop shell could open the dev server (${error instanceof Error ? error.message : String(error)}); a desktop extension must name one with host()`);
+    }
+  return exe;
+};
+
+/**
+ * `light.dev.port` from a project's package.json, when it is a port.
+ * @param {string} dir
+ * @returns {number | null}
+ */
+const manifestPort = (dir) => {
+  try {
+    const pkg = /** @type {unknown} */ (JSON.parse(readFileSync(join(dir, "package.json"), "utf8")));
+    if (pkg === null || typeof pkg !== "object") return null;
+    const light = /** @type {Record<string, unknown>} */ (pkg).light;
+    if (light === null || typeof light !== "object") return null;
+    const dev = /** @type {Record<string, unknown>} */ (light).dev;
+    if (dev === null || typeof dev !== "object") return null;
+    const value = /** @type {Record<string, unknown>} */ (dev).port;
+    const port = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
+    return Number.isInteger(port) && port >= 0 && port <= 65535 ? port : null;
+  } catch {
+    return null;
+  }
+};
+
+/** @param {number} port */
+const portFree = (port) =>
+  new Promise((/** @type {(free: boolean) => void} */ resolvePort) => {
+    const probe = createServer();
+    probe.once("error", () => resolvePort(false));
+    probe.once("listening", () => probe.close(() => resolvePort(true)));
+    probe.listen(port, "127.0.0.1");
+  });
+
+/**
+ * @param {string} url
+ * @param {number} timeoutMs
+ */
+const waitForOrigin = async (url, timeoutMs) => {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      const answer = await fetch(url);
+      if (answer.status < 500) return true;
+    } catch {}
+    await new Promise((ready) => setTimeout(ready, 100));
+  }
+  return false;
+};
+
+/** @param {import("node:child_process").ChildProcess[]} children */
+const stopChildren = (children) => {
+  for (const child of children) if (child.exitCode === null && child.signalCode === null) child.kill("SIGTERM");
+};
+
+/**
+ * `desktop dev` when it is run without the CLI's parsed arguments.
+ * @param {string[]} rest
+ * @returns {Record<string, unknown>}
+ */
+const parseDev = (rest) => {
+  /** @type {Record<string, unknown>} */
+  const parsed = { attach: false };
+  /** @type {string[]} */
+  const dirs = [];
+  for (let i = 0; i < rest.length; i++) {
+    const arg = rest[i];
+    if (arg === "--port") parsed.port = rest[++i];
+    else if (arg.startsWith("--port=")) parsed.port = arg.slice(7);
+    else if (arg === "--target") parsed.target = rest[++i];
+    else if (arg === "--attach") parsed.attach = true;
+    else if (!arg.startsWith("-")) dirs.push(arg);
+  }
+  parsed.rest = dirs;
+  return parsed;
+};
+
+/**
+ * `light desktop dev`: serve the project with `light serve`, wait for it, then run the shell on
+ * that origin; `--attach` reuses a server already answering there.
+ * @param {string[]} rest
+ * @param {{ ctx?: import("@lightstart/cli").CommandContext, args?: Record<string, unknown> }} [options]
+ * @returns {Promise<number>}
+ */
+const dev = async (rest, options = {}) => {
+  const parsed = options.args ?? parseDev(rest);
+  const dirs = Array.isArray(parsed.rest) ? parsed.rest : [];
+  const dir = dirs.find((value) => typeof value === "string" && !value.startsWith("-"));
+  const projectDir = typeof dir === "string" ? resolve(options.ctx?.cwd ?? process.cwd(), dir) : (options.ctx?.projectDir ?? process.cwd());
+  const explicit = typeof parsed.port === "number" ? parsed.port : typeof parsed.port === "string" && parsed.port !== "" ? Number(parsed.port) : null;
+  const port = explicit !== null && Number.isInteger(explicit) && explicit >= 0 ? explicit : (manifestPort(projectDir) ?? 3500);
+  const attach = parsed.attach === true;
+  const target = defaultTarget(typeof parsed.target === "string" ? parsed.target : "linux");
+  const origin = `http://127.0.0.1:${port}`;
+  /** @type {DesktopInput} */
+  const input = { args: parsed, projectDir, origin, port, attach };
+  /** @type {Array<(value: DesktopInput) => Promise<string> | string>} */
+  const hostResolvers = [];
+  /** @type {Array<(args: string[], value: DesktopInput) => string[] | void>} */
+  const hostArgBuilders = [];
+  /** @type {Array<(args: string[], value: DesktopInput) => string[] | void>} */
+  const serveArgBuilders = [];
+  /** @type {DesktopExtension} */
+  const api = {
+    host(resolver) { hostResolvers.push(resolver); },
+    hostArgs(add) { hostArgBuilders.push(add); },
+    serveArgs(add) { serveArgBuilders.push(add); },
+  };
+  if (options.ctx) await options.ctx.cli.extend("desktop", api);
+
+  /** @type {string[]} */
+  const serveExtra = [];
+  for (const add of serveArgBuilders) {
+    const answer = add(serveExtra, input);
+    if (Array.isArray(answer)) serveExtra.splice(0, serveExtra.length, ...answer);
+  }
+
+  /** @type {import("node:child_process").ChildProcess[]} */
+  const children = [];
+  if (!attach) {
+    if (!(await portFree(port))) throw new Error(`port ${port} is in use; pass --port <n> or --attach`);
+    const bin = join(here, "..", "..", "bin", "light.js");
+    children.push(spawn(process.execPath, [bin, "serve", projectDir, "--port", String(port), ...serveExtra], { stdio: "inherit", env: process.env }));
+  }
+  const ready = await waitForOrigin(origin, attach ? 5000 : 60000);
+  if (!ready) {
+    stopChildren(children);
+    throw new Error(attach ? `nothing is answering at ${origin}; start light serve first or drop --attach` : `light serve did not answer at ${origin}`);
+  }
+
+  const hostExe = hostResolvers.length > 0 ? await hostResolvers[0](input) : defaultHost(target);
+  /** @type {string[]} */
+  const hostExtra = [];
+  for (const add of hostArgBuilders) {
+    const answer = add(hostExtra, input);
+    if (Array.isArray(answer)) hostExtra.splice(0, hostExtra.length, ...answer);
+  }
+  const host = spawn(hostExe, [origin, ...hostExtra], { stdio: "inherit", env: process.env });
+  children.push(host);
+  return await new Promise((/** @type {(code: number) => void} */ resolveDev) => {
+    const onSignal = () => {
+      stopChildren(children);
+    };
+    /** @param {number} code */
+    const done = (code) => {
+      process.removeListener("SIGINT", onSignal);
+      process.removeListener("SIGTERM", onSignal);
+      if (!attach) stopChildren(children);
+      resolveDev(code);
+    };
+    process.once("SIGINT", onSignal);
+    process.once("SIGTERM", onSignal);
+    host.on("exit", (code) => done(code ?? 1));
+    host.on("error", (error) => {
+      const message = `desktop host ${hostExe}: ${error.message}`;
+      if (options.ctx) options.ctx.log.error(message);
+      else console.error(message);
+      done(1);
+    });
+  });
+};
+
+/**
+ * The command line: `shim`, `smoke`, `build`, `run` or `dev` with their options; answers the exit
+ * code. `light desktop …` and `node native/desktop/build.js …` both land here.
+ * @param {readonly string[]} argv
+ * @param {{ ctx?: import("@lightstart/cli").CommandContext, args?: Record<string, unknown> }} [options]
+ */
+export const desktop = async (argv, options = {}) => {
   const [command, ...rest] = argv;
   const target = defaultTarget(option(rest, "target", "linux") ?? "linux");
+  if (command === "dev") return await dev(rest, options);
+  if (command !== undefined && options.ctx)
+    await options.ctx.cli.extend("desktop", { host() {}, hostArgs() {}, serveArgs() {} });
   const dash = rest.indexOf("--");
   const own = dash >= 0 ? rest.slice(0, dash) : rest;
   const passthrough = dash >= 0 ? rest.slice(dash + 1) : [];
@@ -348,6 +545,7 @@ export const desktop = async (argv) => {
   }
   console.log("usage: light desktop shim|smoke [--target linux|mac|win] [--wait]");
   console.log("       light desktop build|run <backend.js> [--web <dir>] [--out <dir>] [--name <app>] [--target …] [--keep-light] [--no-web] [--npm-static <pkg>] [-- <app args>]");
+  console.log("       light desktop dev [dir] [--port <n>] [--attach] [--target …]");
   return 1;
 };
 

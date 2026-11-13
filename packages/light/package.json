@@ -77,8 +77,8 @@
       "default": "./theme/runtime.js"
     },
     "./check": {
-      "types": "./check/types.ts",
-      "default": "./check/define.js"
+      "types": "./check/index.ts",
+      "default": "./check/index.js"
     },
     "./eslint": {
       "types": "./eslint/types.ts",
