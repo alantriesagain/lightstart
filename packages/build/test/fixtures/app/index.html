@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Build fixture</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "@app/": "./src/"
+    }
+  }
+  </script>
+  <link rel="stylesheet" href="./styles/main.css">
+</head>
+<body>
+  <h1>Build fixture</h1>
+  <script type="module" src="./app.js"></script>
+  <script type="module">
+    import { text } from "@app/thing.ts";
+    export { text };
+  </script>
+</body>
+</html>

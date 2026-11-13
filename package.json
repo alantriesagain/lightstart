@@ -26,6 +26,9 @@
     "@lightstart/components": "workspace:*"
   },
   "devDependencies": {
+    "@lightstart/build": "workspace:*",
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/dev": "workspace:*",
     "@lightstart/server": "workspace:*",
     "@types/node": "^26.6.5",
     "eslint": "^9.17.0",
