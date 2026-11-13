@@ -140,8 +140,15 @@ export const discover = async (options: DiscoverOptions): Promise<Discovered> =>
   const projectPkg = readPackageJson(options.projectDir);
   const projectSource: Source = { name: "<project>", root: options.projectDir };
 
-  const projectLight = lightField(projectPkg);
-  const declared = projectLight ? stringList(projectLight.scopes) : [];
+  const workspace = findWorkspaceRoot(options.projectDir);
+  const configs = [lightField(projectPkg), workspace === null ? null : lightField(readPackageJson(workspace))];
+  const declared: string[] = [];
+  const declaredPackages: string[] = [];
+  for (const light of configs) {
+    if (!light) continue;
+    declared.push(...stringList(light.scopes));
+    declaredPackages.push(...stringList(light.packages));
+  }
   const scopes: string[] = [];
   const seenScopes = new Set<string>();
   for (const scope of options.scopes) {
@@ -164,7 +171,6 @@ export const discover = async (options: DiscoverOptions): Promise<Discovered> =>
   }
 
   const packageRoots: string[] = [options.projectDir];
-  const workspace = findWorkspaceRoot(options.projectDir);
   if (workspace !== null) packageRoots.push(workspace);
 
   for (const root of packageRoots) {
@@ -176,9 +182,11 @@ export const discover = async (options: DiscoverOptions): Promise<Discovered> =>
     }
   }
 
-  for (const packageName of options.packages) {
-    const dir = realPath(join(options.projectDir, "node_modules", packageName));
-    if (!exists(dir) || scanned.has(dir)) continue;
+  for (const packageName of [...options.packages, ...declaredPackages]) {
+    const found = packageRoots.map((root) => join(root, "node_modules", packageName)).find((candidate) => exists(candidate));
+    if (found === undefined) continue;
+    const dir = realPath(found);
+    if (scanned.has(dir)) continue;
     scanned.add(dir);
     const pkg = readPackageJson(dir);
     scanPackage(dir, pkg && typeof pkg.name === "string" ? pkg.name : packageName, pkg, out, options.log);
