@@ -368,10 +368,11 @@ under `node --test`; one that does runs in a real browser with
 implementation there. See [test/README.md](test/README.md). The `light`
 binary comes from [`@lightstart/cli`](../cli/README.md): the files under
 [`cli/commands/`](cli/commands) here are the commands its discovery finds.
-`light test`, `light serve` and the desktop shell serve their pages with
+`light test` and the desktop shell serve their pages with
 [`@lightstart/server`](../server/README.md), an optional peer a project that
 uses them installs (`npm i -D @lightstart/server`); a project that does not
-never downloads it.
+never downloads it. `light serve` comes from [`@lightstart/dev`](../dev/README.md),
+and light's own `test/serve.js` remains the test runner's server.
 
 `npx light check [dir]` checks component definitions against light's
 conventions: definitions go through `defineComponent`, props are declared under
