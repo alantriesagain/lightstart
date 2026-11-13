@@ -2,7 +2,7 @@
 
 The command runner behind the `light` binary: commands, hooks and routes come from a static table and from the `cli/` folders of the project and of every installed `@lightstart/*` package. The core is runtime-neutral and compiles fully statically with [scriptc](https://github.com/vercel-labs/scriptc); walking folders and loading files with `import()` lives in the node-only `node/` entry. TypeScript with no build step, no runtime dependencies.
 
-The `light` commands `test`, `check`, `serve`, `desktop` and `classes:bake` are files under `packages/light/cli/commands/`, found by discovery. `packages/light/bin/light.js` forwards to this package for one release: when `@lightstart/cli` is installed it runs this CLI, otherwise it keeps the old dispatch and says on stderr where the commands moved.
+The `light` commands `test`, `check`, `desktop` and `classes:bake` are files under `packages/light/cli/commands/`, found by discovery. `serve` comes from `@lightstart/dev` and `build` from `@lightstart/build`, each in its own `cli/commands/` folder. `packages/light/bin/light.js` forwards to this package for one release: when `@lightstart/cli` is installed it runs this CLI, otherwise it keeps the old dispatch and says on stderr where the commands moved.
 
 ```bash
 light serve --watch

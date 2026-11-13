@@ -74,8 +74,10 @@ from its own demo, in any skin.
 |---|---|
 | `packages/light/` | `@lightstart/light`: the runtime, with [its documentation](packages/light/README.md); the `light` binary comes from `@lightstart/cli` |
 | `packages/cli/` | `@lightstart/cli`: the command runner behind `light`, with commands, hooks and routes discovered from `cli/` folders and a core that compiles natively ([README](packages/cli/README.md)) |
+| `packages/dev/` | `@lightstart/dev`: the dev server behind `light serve`, with the importmap, TypeScript stripping, the app shell, routes from `cli/` folders and live reload ([README](packages/dev/README.md)) |
+| `packages/build/` | `@lightstart/build`: the production build behind `light build`, bundling a page's modules and stylesheets with esbuild into kept build folders ([README](packages/build/README.md)) |
 | `packages/components/` | `@lightstart/components`: the `lc-*` component library, its mixins, libs, stores and translated words ([README](packages/components/README.md)) |
-| `packages/server/` | `@lightstart/server`: a small HTTP server core, routes, middleware, hooks and plugins over one `Context` and `Reply`, run on node, natively by scriptc, on Fetch runtimes and on Lambda ([README](packages/server/README.md)); an optional peer of `@lightstart/light`, which `light test`, `light serve` and the desktop shell serve with |
+| `packages/server/` | `@lightstart/server`: a small HTTP server core, routes, middleware, hooks and plugins over one `Context` and `Reply`, run on node, natively by scriptc, on Fetch runtimes and on Lambda ([README](packages/server/README.md)); an optional peer of `@lightstart/light`, which `light test` and the desktop shell serve with; `light serve` comes from `@lightstart/dev` |
 | `packages/router/` | `@lightstart/router`: a client router with `/`-separated route patterns, a navigation stack over a browser or memory adapter, locales and base paths, exposing light's `Navigation` contract ([README](packages/router/README.md)) |
 | `packages/native/`, `packages/tui/` | The workspace packages native apps share, and `light-native`, their tooling ([README](packages/README.md)) |
 | `examples/` | Pages and apps on light alone: `starter`, `todomvc`, `indexeddb-explorer`, `grand-octave`, the five guided pages (`01-basic-counter.html` … `05-plugin-system.html`), and `tasks`, the terminal reference app ([README](examples/tasks/README.md)) |
@@ -91,7 +93,7 @@ pnpm verify      # every gate: lint, types, light check, node and browser tests,
 pnpm test        # the package's tests
 pnpm check       # light check over the repository and the package
 pnpm bench       # the benchmarks in Chromium
-npx light serve  # serve the repository; open /examples/…
+npx light serve  # from the repository root; open /examples/… (for example /examples/starter/)
 ```
 
 `pnpm verify` passes only at zero errors; beyond the package's gates it covers
