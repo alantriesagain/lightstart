@@ -8,16 +8,19 @@ import { formatBytes } from "./format.ts";
 import { hookNameOf } from "./hooks.ts";
 import { renderHelp } from "./help.ts";
 import { createLogger, resolveLevel } from "./log.ts";
-import { Registry } from "./registry.ts";
+import { LoadError, Registry } from "./registry.ts";
 import { buildContext, runCommand } from "./runner.ts";
 import type { RunOptions } from "./runner.ts";
 import { defineCommand } from "./types/command.ts";
 import type { ArgsSchema, ArgSpec, Command, ResolvedArgs } from "./types/command.ts";
 import type { CliApi, CommandContext, Logger, LogLevel } from "./types/context.ts";
-import type { Discovered, Discoverer, DiscoverOptions, LoadedCommand, LoadedHook, LoadedRoute, Source } from "./types/discovery.ts";
+import type { CommandRecord, Discovered, Discoverer, DiscoverOptions, ExtensionRecord, HookRecord, ListedModule, LoadedCommand, LoadedExtension, LoadedHook, LoadedRoute, RouteRecord, Source } from "./types/discovery.ts";
+import { FileLoader } from "./types/discovery.ts";
+import { defineExtension } from "./types/extension.ts";
+import type { Extension, ExtensionApi, ExtensionDefinition, ExtensionSetup, Extensions } from "./types/extension.ts";
 
-export type { ArgsSchema, ArgSpec, CliApi, Command, CommandContext, Discovered, Discoverer, DiscoverOptions, LoadedCommand, LoadedHook, LoadedRoute, Logger, LogLevel, ResolvedArgs, Source, RunOptions };
-export { ArgError, SchemaError, Registry, buildContext, createLogger, defineCommand, formatBytes, loadEnv, logicalCwd, parseArgs, renderHelp, resolveLevel, runCommand, hookNameOf };
+export type { ArgsSchema, ArgSpec, CliApi, Command, CommandContext, CommandRecord, Discovered, Discoverer, DiscoverOptions, Extension, ExtensionApi, ExtensionDefinition, ExtensionRecord, ExtensionSetup, Extensions, HookRecord, ListedModule, LoadedCommand, LoadedExtension, LoadedHook, LoadedRoute, Logger, LogLevel, ResolvedArgs, RouteRecord, Source, RunOptions };
+export { ArgError, FileLoader, LoadError, SchemaError, Registry, buildContext, createLogger, defineCommand, defineExtension, formatBytes, loadEnv, logicalCwd, parseArgs, renderHelp, resolveLevel, runCommand, hookNameOf };
 
 /** What a hook answers to be run at shutdown. */
 export type HookTeardown = () => Promise<void> | void;
@@ -88,10 +91,12 @@ export const splitGlobals = (rawArgv: readonly string[]): Globals => {
 };
 
 const emptyDiscovered = (): Discovered => ({
-  commands: new Map<string, LoadedCommand>(),
+  commands: new Map<string, CommandRecord>(),
   routes: [],
-  hooks: new Map<string, LoadedHook[]>(),
+  hooks: new Map<string, HookRecord[]>(),
+  extensions: new Map<string, ExtensionRecord[]>(),
   cliDir: "",
+  loader: null,
 });
 
 /**

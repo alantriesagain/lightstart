@@ -1,11 +1,11 @@
 /**
- * @file Hooks: every handler runs in order, a throwing one is warned and counted, and returned
- * teardowns run last first, each isolated.
+ * @file Hooks: files load on the first dispatch, every handler runs in order, a throwing one is
+ * warned and counted, and returned teardowns run last first, each isolated.
  * Runs under node and natively; the outputs must be identical.
  */
 import { Registry, buildContext, runCommand } from "../index.ts";
 import type { CommandContext, LogLevel } from "../index.ts";
-import { captureLogger, emptyDiscovered, silentLogger, source } from "./_helpers.ts";
+import { TestLoader, captureLogger, emptyDiscovered, silentLogger, source } from "./_helpers.ts";
 import { done, eq, eqn, ok } from "@light/test/assert.ts";
 
 class Payload {
@@ -39,11 +39,17 @@ const beta = (_ctx: CommandContext, payload: unknown): unknown => {
   };
 };
 
+const loader = new TestLoader();
+loader.add("project.ts", { default: project });
+loader.add("alpha.ts", { default: alpha });
+loader.add("beta.ts", { default: beta });
+
 const discovered = emptyDiscovered();
+discovered.loader = loader;
 discovered.hooks.set("serve:after", [
-  { fn: project, source: source("<project>") },
-  { fn: alpha, source: source("@lightstart/alpha") },
-  { fn: beta, source: source("@lightstart/beta") },
+  { file: "project.ts", source: source("<project>") },
+  { file: "alpha.ts", source: source("@lightstart/alpha") },
+  { file: "beta.ts", source: source("@lightstart/beta") },
 ]);
 const registry = new Registry("light", {}, discovered, silentLogger);
 const level: LogLevel = "silent";

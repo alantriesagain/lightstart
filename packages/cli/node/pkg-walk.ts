@@ -135,19 +135,27 @@ export const listScopedPackages = ({ roots, scopes }: { roots: readonly string[]
   return out;
 };
 
-/** The nearest ancestor (8 levels at most) holding a `pnpm-workspace.yaml`, or failing that `.git`. */
-export const findWorkspaceRoot = (start: string, markers: readonly string[] = ["pnpm-workspace.yaml", ".git"]): string | null => {
-  for (const marker of markers) {
-    let dir = start;
-    for (let i = 0; i < 8; i++) {
-      try {
-        statSync(join(dir, marker));
-        return dir;
-      } catch {}
-      const parent = dirname(dir);
-      if (parent === dir) break;
-      dir = parent;
-    }
+/** Whether `<dir>/package.json` declares `workspaces`. */
+const declaresWorkspaces = (dir: string): boolean => {
+  const pkg = readPackageJson(dir);
+  return pkg !== null && pkg.workspaces !== undefined;
+};
+
+/**
+ * The nearest folder at or above `start` (8 levels at most) holding a `pnpm-workspace.yaml` or a
+ * `package.json` with `workspaces`.
+ */
+export const findWorkspaceRoot = (start: string): string | null => {
+  let dir = start;
+  for (let i = 0; i < 8; i++) {
+    try {
+      statSync(join(dir, "pnpm-workspace.yaml"));
+      return dir;
+    } catch {}
+    if (declaresWorkspaces(dir)) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
   }
   return null;
 };

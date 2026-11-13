@@ -1,6 +1,6 @@
 # @lightstart/cli
 
-The command runner behind the `light` binary: commands, hooks and routes come from a static table and from the `cli/` folders of the project and of every installed `@lightstart/*` package. The core is runtime-neutral and compiles fully statically with [scriptc](https://github.com/vercel-labs/scriptc); walking folders and loading files with `import()` lives in the node-only `node/` entry. TypeScript with no build step, no runtime dependencies.
+The command runner behind the `light` binary: commands, hooks, routes and command extensions come from a static table and from the `cli/` folders of the project and of every installed package in the project's scopes. The core is runtime-neutral and compiles fully statically with [scriptc](https://github.com/vercel-labs/scriptc); walking folders and loading files with `import()` lives in the node-only `node/` entry. Discovery lists files and imports none: a file is loaded when it is needed. TypeScript with no build step, no runtime dependencies.
 
 The `light` commands `test`, `check`, `desktop` and `classes:bake` are files under `packages/light/cli/commands/`, found by discovery. `serve` comes from `@lightstart/dev` and `build` from `@lightstart/build`, each in its own `cli/commands/` folder. `packages/light/bin/light.js` forwards to this package for one release: when `@lightstart/cli` is installed it runs this CLI, otherwise it keeps the old dispatch and says on stderr where the commands moved.
 
@@ -43,13 +43,15 @@ cli/
 │   ├── build.ts             # light build
 │   └── content/
 │       └── add.ts           # light content:add
+├── extend/
+│   └── serve.ts             # extension of the "serve" command
 ├── routes/
 │   └── api.ts               # dev-server routes
 └── hooks/
     └── serve.after.ts       # the hook "serve:after"
 ```
 
-`commands/<a>/<b>.ts` is the command `<a>:<b>`; `hooks/<a>.<b>.ts` is the hook `<a>:<b>`. `.ts`, `.js` and `.mjs` files are found the same way, `.test.` files are skipped, and each folder is read sorted. A command file default-exports a `Command`, a hook file a handler function, and a route file an app function.
+`commands/<a>/<b>.ts` is the command `<a>:<b>`; `hooks/<a>.<b>.ts` is the hook `<a>:<b>`; `extend/<a>.ts` extends the command `<a>`. `.ts`, `.js` and `.mjs` files are found the same way, `.test.` files are skipped, and each folder is read sorted. A command file default-exports a `Command`, a hook file a handler function, a route file an app function, and an extension file a `defineExtension()` value.
 
 A project's `server/routes/` are routes too, loaded after its `cli/routes/`.
 
@@ -101,7 +103,7 @@ The parser: `--port 3000` or `--port=3000`; one-letter shorts that group (`-wo`)
 | `argv` | The command's argv after the global flags |
 | `log` | `log`, `debug`, `warn`, `error`, filtered at the resolved level and tagged with the source |
 | `env` | `process.env` |
-| `cli` | `runCommand(name, args?)`, `runHook(name, payload)`, `listCommands()`, `loadRoutes()` |
+| `cli` | `runCommand(name, args?)`, `runHook(name, payload)`, `listCommands()`, `loadRoutes()`, `extend(name, api)` |
 | `formatBytes` | A byte count as `"1.5 MB"` |
 
 Exit codes: a command's own number, 0 when it returns nothing, 1 for an unknown command (with a line saying how to see the help) or a thrown error, 2 for an argument error.
@@ -128,7 +130,7 @@ process.exitCode = await cli.main(process.argv.slice(2));
 |---|---|
 | `name` | The CLI name in help and in the usage line |
 | `version` | What `--version` prints |
-| `scopes` | The npm scopes discovery scans (`@lightstart` for `light`) |
+| `scopes` | The npm scopes the binary always scans (`@lightstart` for `light`); discovery appends the project's own `light.scopes` |
 | `envPrefix` | The prefix of `_PROJECT_DIR` and `_LOG_LEVEL` |
 | `commands` | A static table of commands; each wins its name over a discovered one |
 | `packages` | Extra package names to scan under the project's `node_modules` |
@@ -161,24 +163,66 @@ declare module "@lightstart/cli" {
 
 `HookName` is then the keys of `Hooks`, and `HookPayload<"serve:before">` is the handler's second parameter. With no declaration, `HookName` is `string` and the payload is `unknown`. A new hook is a new entry; there is no priority.
 
+## Extensions
+
+A package extends an existing command with `cli/extend/<command>.ts`, default-exporting `defineExtension("<command>", { args?, setup })`:
+
+```ts
+import { defineExtension } from "@lightstart/cli";
+
+export default defineExtension("serve", {
+  args: { preview: { flag: true, description: "Also start the build preview" } },
+  setup(ctx, args, api) {
+    if (args.preview) api.preview = true;
+  },
+});
+```
+
+`args` are merged into the command's own before its argv is parsed, and help for the command lists them under the extension's source. A name the command or an earlier extension already declares is an error naming both sources; the command does not run and the exit code is 2. Every extension of a command runs in discovery order, each in its own try/catch: a setup that throws is an error naming its source and the command exits 1.
+
+The command opens what its engine has at the point it is ready, by calling `await ctx.cli.extend("<command>", api)`. The runner then runs each extension's `setup(ctx, parsedArgs, api)`, in discovery order. `api` is typed per command by declaration merging on the `Extensions` interface, as hooks are on `Hooks`:
+
+```ts
+declare module "@lightstart/cli" {
+  interface Extensions {
+    serve: { preview?: boolean };
+  }
+}
+```
+
+A command nobody extends gets `extend` as a no-op. Extension files are imported when their command runs or its help is asked for; global help imports none.
+
 ## Routes
 
-A route file default-exports an app function. Discovery loads every route file, in tier order, the project's `server/routes/` after its `cli/routes/`. `ctx.cli.loadRoutes()` answers their default exports in that order, typed `readonly unknown[]` until the dev-server package of a later phase gives them their type. A file whose default export is not a function is logged and skipped; one that fails to import never aborts the run.
+A route file default-exports an app function. The project's own `server/routes/` are loaded after its `cli/routes/`. `ctx.cli.loadRoutes()` imports every route file, in tier order, and answers their default exports, typed `readonly unknown[]` until the dev-server package of a later phase gives them their type. A file whose default export is not a function is warned and skipped; one that fails to import never aborts the run.
 
 ## Discovery
 
-`@lightstart/cli/node`'s `discover` contributes in tiers, in this order:
+`@lightstart/cli/node`'s `discover` lists files in tiers, in this order, and imports none of them:
 
-1. `<project>/cli/` and `<project>/server/routes/`
-2. `<project>/node_modules/<scope>/*/cli/`, alphabetically
-3. each name in `packages`, at `<project>/node_modules/<name>/cli/`
-4. this CLI's own installed `<cliDir>/node_modules/<scope>/*/cli/`
+1. `<project>/cli/` or the roots its `light.cli` names, and `<project>/server/routes/`
+2. the scoped packages under `<project>/node_modules/<scope>/*`, alphabetically
+3. the scoped packages under the workspace root's `node_modules/<scope>/*`
+4. each name in `packages`, at `<project>/node_modules/<name>`
+5. this CLI's own installed `<cliDir>/node_modules/<scope>/*`
 
-A command name belongs to the first tier that declares it; a later declaration warns and is ignored. A static command from `createCli` wins over both. Every hook file is kept and every route file is loaded. Sources are named `<project>` for the project and by their `package.json` name for packages; help groups commands by that name.
+The scopes are the `scopes` the binary was built with plus the project's `package.json` `light.scopes`. The workspace root is the nearest folder at or above the project holding a `pnpm-workspace.yaml` or a `package.json` with `workspaces`. `cliDir` defaults to `@lightstart/cli`'s folder, so a binary built on `createCli` scans the packages installed beside itself. A package folder is scanned once, by its real path.
+
+A package that is a set of areas names them in `light.cli`:
+
+```json
+"light": { "scopes": ["@acme"], "cli": ["events", "tools"] }
+```
+
+That package contributes `<pkg>/events/cli/` and then `<pkg>/tools/cli/` instead of `<pkg>/cli/`. Its sources are named `<package name>/events` and `<package name>/tools`.
+
+A command name belongs to the first tier that declares it; a later declaration warns and is ignored. A static command from `createCli` wins over both. Every hook, route and extension is kept, in tier order. Sources are named `<project>` for the project, by their `package.json` name for packages, and by package and folder when `light.cli` names roots; help groups commands by that name.
+
+A file is imported when it is needed: a command when it runs or when help needs its description (global help imports every listed command, `<cmd> --help` only that one), a hook when it is first dispatched, a route when `loadRoutes()` is called, an extension when its command runs or asks for its help. A command file that fails to import warns and is skipped in help; running it is an error and exits 1.
 
 ## Native
 
-The core (`index.ts`, `argv.ts`, `registry.ts`, `runner.ts`, `help.ts`, `log.ts`, `env.ts`, `format.ts`, `hooks.ts`, `types/`) compiles fully statically with scriptc. `node/` is node-only: it walks folders and loads files with `import()` of a computed path, which scriptc 0.4.12 does not compile, and a table of lazy `() => import()` loaders throws when called.
+The core (`index.ts`, `argv.ts`, `registry.ts`, `runner.ts`, `help.ts`, `log.ts`, `env.ts`, `format.ts`, `hooks.ts`, `types/`) compiles fully statically with scriptc. `node/` is node-only: it walks folders and loads files with `import()` of a computed path, which scriptc 0.4.12 does not compile, and a table of lazy `() => import()` loaders throws when called. The core gets its lazy loading through a `FileLoader` object the node layer supplies; a CLI with no discovery passes none and answers only its static table.
 
 A native binary registers its commands in a static table instead. `native/light.ts` is that entry: `version` and `echo`, no discovery. A package names its entry and binary in `package.json`:
 

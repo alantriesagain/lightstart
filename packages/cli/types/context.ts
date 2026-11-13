@@ -3,6 +3,7 @@
  * can call back into.
  */
 import type { HookName, HookPayload, HookRun } from "../index.ts";
+import type { ExtensionApi, Extensions } from "./extension.ts";
 
 export type LogLevel = "debug" | "log" | "warn" | "error" | "silent";
 
@@ -20,6 +21,8 @@ export type CliApi = {
   listCommands(): readonly string[];
   /** Every loaded route file's default export, in discovery order. */
   loadRoutes(): Promise<readonly unknown[]>;
+  /** Run every extension of this command, handing each `api`; a no-op when none extends it. */
+  extend<K extends keyof Extensions>(name: K, api: ExtensionApi<K>): Promise<void>;
 };
 
 export type CommandContext = {
