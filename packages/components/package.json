@@ -38,11 +38,13 @@
   "peerDependencies": {
     "@lightstart/light": "^0.1.0"
   },
+  "dependencies": {
+    "@lightstart/markdown": "workspace:*"
+  },
   "devDependencies": {
     "@lightstart/light": "workspace:*",
     "@types/node": "^26.6.5",
-    "typescript": "^6.0.3",
-    "marked": "^18.1.0"
+    "typescript": "^6.0.3"
   },
   "bootstrapp": {
     "components": {
@@ -182,11 +184,6 @@
       }
     },
     "locales": true,
-    "bundle": {
-      "vendor": {
-        "marked": "display/marked-vendor.js"
-      }
-    },
     "test": {
       "browser": true,
       "ignore": [
@@ -202,12 +199,7 @@
         "light/no-any": "error",
         "light/declare-instance-surface": "error"
       },
-      "noAny": {},
-      "allow": {
-        "light/no-any": {
-          "display/marked-vendor.js": "the vendored marked build, copied as published; light does not edit or type it"
-        }
-      }
+      "noAny": {}
     }
   }
 }

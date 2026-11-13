@@ -833,12 +833,6 @@ export interface SiteHeaderAction {
   variant?: "primary" | "secondary";
 }
 
-/** Minimal shape of the lazily-loaded `marked` module used by `<lc-markdown>`. */
-export interface MarkedLike {
-  parse(src: string): string;
-  use(options: unknown): void;
-}
-
 /** One link of a `<lc-nav-tree>` group. */
 export interface NavTreeItem {
   label: string;

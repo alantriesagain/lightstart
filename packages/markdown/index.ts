@@ -8,3 +8,4 @@ export * from "./nodes.ts";
 export * from "./table.ts";
 export * from "./inline.ts";
 export * from "./parser.ts";
+export { safeUrl } from "./url.ts";

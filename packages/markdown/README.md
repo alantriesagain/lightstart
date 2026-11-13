@@ -15,7 +15,7 @@ console.log(blocks[1] instanceof List); // true
 ## Blocks
 
 `Heading(level, children, text)`, `Paragraph(children)`, `Code(info, text)` for a fenced block,
-`List(ordered, start, items)` with `ListItem(blocks, task, checked)`, `Quote(blocks)`, `Rule`,
+`List(ordered, start, items, loose)` with `ListItem(blocks, task, checked)`, `Quote(blocks)`, `Rule`,
 `Table(header, aligns, rows)` with cells as text, and `Html(text)` for a raw HTML block.
 
 ## Inlines
@@ -37,6 +37,10 @@ breaks. Character references stay as written and URLs are not decoded.
 
 Setext headings, indented code blocks, footnotes and bare-URL autolinks are out of scope: their
 lines are paragraphs, except that a `---` under a line is a rule after it.
+
+`safeUrl(href)` says whether a renderer may write a link or image address: a relative one, or
+`http:`, `https:` or `mailto:`, after decoding character references and dropping whitespace and
+control characters, so `java&#x09;script:` is refused. The parser keeps addresses as written.
 
 Quotes and list items nest at most 100 deep (`MAX_NESTING`); past that a marker stays paragraph
 text, and inline nesting is bounded by the same cap.
