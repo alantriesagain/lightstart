@@ -1,9 +1,10 @@
 /**
- * @file Claude's Markdown as terminal lines. Each source line is rendered on its own (Claude writes one
- * paragraph per line): headings bold and colored, list items with a bullet and a hanging indent,
- * quotes behind a bar, fenced code on a tinted background without wrapping, tables in columns
- * (table.ts), rules as a line; inline `code`, **bold**, *italic* and [links](url) styled. Raw HTML
- * stays text.
+ * @file Markdown as terminal lines over one parser (`@lightstart/markdown`). Each source line is
+ * rendered on its own (a soft break starts a new line, as Claude writes one paragraph per line):
+ * headings bold and colored, list items with a bullet and a hanging indent, quotes behind a bar,
+ * fenced code on a tinted background without wrapping, tables in columns (table.ts), rules as a
+ * line; inline code, bold, italic, links, images, wiki links and raw HTML styled. Raw HTML stays
+ * text.
  *
  * A label goes as it is on a first line that is not a wrapped paragraph (a fence, a rule).
  */
@@ -11,73 +12,171 @@ import { palette } from "@light/ui/palette.ts";
 import { Line, Run } from "@lightstart/light/native/tui/lines.ts";
 import { clipText, expandTabs, wrap } from "@light/ui/text.ts";
 import { HlState, languageForFence, TOKEN_COLORS, tokenizeLine } from "@light/highlight";
-import { parseTable, renderTable } from "./table.ts";
+import {
+  Code,
+  CodeSpan,
+  Del,
+  Em,
+  HardBreak,
+  Heading,
+  Html,
+  Image,
+  InlineHtml,
+  Link,
+  List,
+  Paragraph,
+  Quote,
+  Rule,
+  SoftBreak,
+  Strong,
+  Text,
+  WikiLink,
+  parse,
+  parseInline,
+} from "@lightstart/markdown";
+import type { Block, Inline } from "@lightstart/markdown";
+import { Table, renderTable } from "./table.ts";
 
-
-const run = (text: string, fg: string, bold: boolean, italic: boolean): Run => {
+const makeRun = (text: string, fg: string, bold: boolean, italic: boolean, underline: boolean, dim: boolean): Run => {
   const r = new Run(text, fg);
   r.bold = bold;
   r.italic = italic;
+  r.underline = underline;
+  r.dim = dim;
   return r;
+};
+
+const addInline = (out: Run[], nodes: Inline[], fg: string, bold: boolean, italic: boolean, underline: boolean, dim: boolean): void => {
+  for (const node of nodes) {
+    if (node instanceof Strong) addInline(out, node.children, fg, true, italic, underline, dim);
+    else if (node instanceof Em) addInline(out, node.children, fg, bold, true, underline, dim);
+    else if (node instanceof Del) addInline(out, node.children, fg, bold, italic, underline, true);
+    else if (node instanceof Text) out.push(makeRun(node.text, fg, bold, italic, underline, dim));
+    else if (node instanceof CodeSpan) out.push(makeRun(node.text, palette.code, bold, italic, false, dim));
+    else if (node instanceof Link) addInline(out, node.children, palette.link, bold, italic, true, dim);
+    else if (node instanceof Image) out.push(makeRun(node.alt, fg, bold, italic, underline, dim));
+    else if (node instanceof WikiLink) out.push(makeRun(node.display, fg, bold, italic, underline, dim));
+    else if (node instanceof InlineHtml) out.push(makeRun(node.text, fg, bold, italic, underline, dim));
+    else if (node instanceof HardBreak) out.push(makeRun("\n", fg, bold, italic, underline, dim));
+    else if (node instanceof SoftBreak) out.push(makeRun("\n", fg, bold, italic, underline, dim));
+  }
 };
 
 /** Inline styles over one line of text, as runs on top of `fg`. */
 export const inline = (text: string, fg: string, bold: boolean): Run[] => {
   const out: Run[] = [];
-  let buf = "";
-  let isBold = bold;
-  let italic = false;
-  const flush = (): void => {
-    if (buf.length > 0) out.push(run(buf, fg, isBold, italic));
-    buf = "";
-  };
-  let i = 0;
-  while (i < text.length) {
-    const c = text.charAt(i);
-    if (c === "`") {
-      const end = text.indexOf("`", i + 1);
-      if (end > i) {
-        flush();
-        out.push(run(text.slice(i + 1, end), palette.code, isBold, italic));
-        i = end + 1;
-        continue;
-      }
-    }
-    if (c === "*" && text.charAt(i + 1) === "*") {
-      const end = text.indexOf("**", i + 2);
-      if (end > i + 2 || isBold !== bold) {
-        flush();
-        isBold = isBold === bold ? true : bold;
-        i += 2;
-        continue;
-      }
-    }
-    if (c === "*" && text.charAt(i + 1) !== " " && (italic || text.indexOf("*", i + 1) > i + 1)) {
-      flush();
-      italic = !italic;
-      i++;
-      continue;
-    }
-    if (c === "[") {
-      const close = text.indexOf("](", i + 1);
-      const end = close > i ? text.indexOf(")", close + 2) : -1;
-      if (close > i && end > close) {
-        flush();
-        const link = run(text.slice(i + 1, close), palette.link, isBold, italic);
-        link.underline = true;
-        out.push(link);
-        i = end + 1;
-        continue;
-      }
-    }
-    buf += c;
-    i++;
-  }
-  flush();
+  addInline(out, parseInline(text), fg, bold, false, false, false);
   return out;
 };
 
 const spaces = (n: number): Run[] => (n > 0 ? [new Run(" ".repeat(n), "")] : []);
+
+const renderCode = (block: Code, width: number, indent: Run[], fg: string, out: Line[]): void => {
+  const language = languageForFence(block.info);
+  const state = new HlState();
+  if (block.text.length === 0) return;
+  for (const source of block.text.split("\n")) {
+    const l = new Line();
+    for (const r of indent) l.runs.push(r);
+    const code = clipText(expandTabs(source), Math.max(1, width - 2));
+    l.add("  ", fg);
+    if (language.length === 0) l.add(code, fg);
+    else {
+      let at = 0;
+      for (const t of tokenizeLine(language, code, state)) {
+        if (t.from > at) l.add(code.slice(at, t.from), fg);
+        const run = l.add(code.slice(t.from, t.to), TOKEN_COLORS.get(t.type) ?? fg);
+        if (t.type === "comment") run.italic = true;
+        at = t.to;
+      }
+      if (at < code.length) l.add(code.slice(at), fg);
+    }
+    l.bg = palette.codeBg;
+    out.push(l);
+  }
+};
+
+const renderList = (list: List, width: number, indent: Run[], fg: string, out: Line[]): void => {
+  let number = list.start;
+  for (const item of list.items) {
+    let marker = list.ordered ? String(number) + ". " : "• ";
+    if (item.task) marker += item.checked ? "[x] " : "[ ] ";
+    const rest = indent.concat(spaces(marker.length));
+    const rendered: Line[] = [];
+    renderBlocks(item.blocks, width, rest, fg, rendered);
+    if (rendered.length === 0) {
+      const l = new Line();
+      for (const r of indent) l.runs.push(r);
+      l.add(marker, palette.dim);
+      out.push(l);
+    } else {
+      const line = rendered[0];
+      // The indent's runs are shared by every line of the item, so the marker replaces the first
+      // line's run rather than writing into it.
+      if (line.runs.length > indent.length) line.runs[indent.length] = new Run(marker, palette.dim);
+      else line.runs.push(new Run(marker, palette.dim));
+      for (const l of rendered) out.push(l);
+    }
+    number++;
+  }
+};
+
+const renderBlock = (block: Block, width: number, indent: Run[], fg: string, out: Line[]): void => {
+  if (block instanceof Heading) {
+    const runs: Run[] = [];
+    addInline(runs, block.children, palette.link, true, false, false, false);
+    for (const l of wrap(runs, width, indent, indent, "")) out.push(l);
+    return;
+  }
+  if (block instanceof Paragraph) {
+    const runs: Run[] = [];
+    addInline(runs, block.children, fg, false, false, false, false);
+    for (const l of wrap(runs, width, indent, indent, "")) out.push(l);
+    return;
+  }
+  if (block instanceof Code) {
+    renderCode(block, width, indent, fg, out);
+    return;
+  }
+  if (block instanceof Rule) {
+    const l = new Line();
+    for (const r of indent) l.runs.push(r);
+    l.runs.push(new Run("─".repeat(Math.max(1, Math.min(width - 2, 60))), palette.dim));
+    out.push(l);
+    return;
+  }
+  if (block instanceof Table) {
+    for (const l of renderTable(block, width, indent, (cell: string, bold: boolean) => inline(cell, fg, bold))) out.push(l);
+    return;
+  }
+  if (block instanceof Quote) {
+    const bar = indent.concat([new Run("│ ", palette.dim)]);
+    renderBlocks(block.blocks, width, bar, palette.dim, out);
+    return;
+  }
+  if (block instanceof List) {
+    renderList(block, width, indent, fg, out);
+    return;
+  }
+  if (block instanceof Html) {
+    for (const source of block.text.split("\n")) {
+      for (const l of wrap([new Run(source, fg)], width, indent, indent, "")) out.push(l);
+    }
+  }
+};
+
+const renderBlocks = (blocks: Block[], width: number, indent: Run[], fg: string, out: Line[]): void => {
+  let first = true;
+  for (const block of blocks) {
+    if (!first && block.blankBefore) {
+      const l = new Line();
+      for (const r of indent) l.runs.push(r);
+      out.push(l);
+    }
+    renderBlock(block, width, indent, fg, out);
+    first = false;
+  }
+};
 
 /**
  * `text` as lines `width` cells wide, every line starting with `indent` (runs, usually spaces or
@@ -85,104 +184,7 @@ const spaces = (n: number): Run[] => (n > 0 ? [new Run(" ".repeat(n), "")] : [])
  */
 export const renderMarkdown = (text: string, width: number, indent: Run[], fg: string, first: Run[] = []): Line[] => {
   const out: Line[] = [];
-  let fence = "";
-  let fenceLanguage = "";
-  let fenceState = new HlState();
-  /** The first line's own prefix (a message's label), used once, on the first line drawn. */
-  let lead: Run[] | null = first.length > 0 ? first : null;
-  const leaded = (runs: Run[]): Run[] => {
-    const l = lead;
-    lead = null;
-    return l === null ? runs : l.concat(runs);
-  };
-  const withIndent = (runs: Run[]): Run[] => {
-    const all: Run[] = [];
-    for (const r of indent) all.push(r);
-    for (const r of runs) all.push(r);
-    return all;
-  };
-  const lines = text.split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    const source = lines[i];
-    const trimmed = source.trim();
-    if (fence.length > 0) {
-      if (trimmed.startsWith(fence)) {
-        fence = "";
-        continue;
-      }
-      const l = new Line();
-      const code = clipText(expandTabs(source), Math.max(1, width - 2));
-      for (const r of indent) l.runs.push(r);
-      l.add("  ", fg);
-      if (fenceLanguage.length === 0) l.add(code, fg);
-      else {
-        let at = 0;
-        for (const t of tokenizeLine(fenceLanguage, code, fenceState)) {
-          if (t.from > at) l.add(code.slice(at, t.from), fg);
-          const run = l.add(code.slice(t.from, t.to), TOKEN_COLORS.get(t.type) ?? fg);
-          if (t.type === "comment") run.italic = true;
-          at = t.to;
-        }
-        if (at < code.length) l.add(code.slice(at), fg);
-      }
-      l.bg = palette.codeBg;
-      out.push(l);
-      continue;
-    }
-    if (trimmed.startsWith("```") || trimmed.startsWith("~~~")) {
-      fence = trimmed.slice(0, 3);
-      fenceLanguage = languageForFence(trimmed.slice(3));
-      fenceState = new HlState();
-      continue;
-    }
-    if (trimmed.length === 0) {
-      const l = new Line();
-      for (const r of indent) l.runs.push(r);
-      out.push(l);
-      continue;
-    }
-    const table = parseTable(lines, i);
-    if (table !== null) {
-      for (const l of renderTable(table.table, width, indent, (cell, bold) => inline(cell, fg, bold))) out.push(l);
-      i = table.end - 1;
-      continue;
-    }
-    const heading = /^(#{1,6})\s+(.*)$/.exec(trimmed);
-    if (heading !== null) {
-      const runs = inline(heading[2], palette.link, true);
-      for (const l of wrap(runs, width, leaded(indent), indent, "")) out.push(l);
-      continue;
-    }
-    if (/^(\*{3,}|-{3,}|_{3,})$/.test(trimmed)) {
-      const l = new Line();
-      for (const r of indent) l.runs.push(r);
-      l.runs.push(new Run("─".repeat(Math.max(1, Math.min(width - 2, 60))), palette.dim));
-      out.push(l);
-      continue;
-    }
-    if (trimmed.startsWith("|")) {
-      const l = new Line();
-      for (const r of withIndent([new Run(source, fg)])) l.runs.push(r);
-      out.push(l);
-      continue;
-    }
-    const quote = /^>\s?(.*)$/.exec(trimmed);
-    if (quote !== null) {
-      const bar = withIndent([new Run("│ ", palette.dim)]);
-      for (const l of wrap(inline(quote[1], palette.dim, false), width, leaded(bar), bar, "")) out.push(l);
-      continue;
-    }
-    const item = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/.exec(source);
-    if (item !== null) {
-      const depth = Math.floor(item[1].replace(/\t/g, "  ").length / 2);
-      const marker = /\d/.test(item[2]) ? item[2] + " " : "• ";
-      const first = withIndent(spaces(depth * 2).concat([new Run(marker, palette.dim)]));
-      const rest = withIndent(spaces(depth * 2 + marker.length));
-      for (const l of wrap(inline(item[3], fg, false), width, leaded(first), rest, "")) out.push(l);
-      continue;
-    }
-    for (const l of wrap(inline(trimmed, fg, false), width, leaded(indent), indent, "")) out.push(l);
-  }
-  if (lead !== null && out.length > 0) out[0].runs = lead.concat(out[0].runs);
+  renderBlocks(parse(text), width, indent, fg, out);
+  if (first.length > 0 && out.length > 0) out[0].runs = first.concat(out[0].runs);
   return out;
 };

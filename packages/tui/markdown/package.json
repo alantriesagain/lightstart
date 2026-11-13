@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@lightstart/light": "workspace:*",
+    "@lightstart/markdown": "workspace:*",
     "@light/highlight": "workspace:*",
     "@light/ui": "workspace:*"
   },

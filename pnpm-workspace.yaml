@@ -7,4 +7,5 @@ packages:
   - 'packages/router'
   - 'packages/server'
   - 'packages/sqlite'
+  - 'packages/markdown'
   - 'benchmarks'

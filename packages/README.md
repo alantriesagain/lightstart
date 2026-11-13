@@ -18,7 +18,8 @@ What native apps of a kind share, as workspace packages on light's native target
 | `tui/kernel` | The plugin kernel of a native app: plugins ordered by what they require, slash commands, named actions with default keys, layered keymaps, payload-less hooks, settings and kept state. |
 | `tui/ui` | What the terminal views of the packages share: the palette the process draws with, durations as the views write them, word wrap over styled runs, the windowed list in the palette's colors, and the clipboard. |
 | `sqlite` | A synchronous SQLite driver over node:sqlite or a native shim, with JSON built in C. |
-| `tui/markdown` | Markdown as terminal lines: a line of prose to styled runs (emphasis, code, links, headings, lists, code blocks colored by the tokenizers) and a table laid out in columns. |
+| `markdown` | One Markdown parser in classes: blocks (headings, paragraphs, fenced code, lists, quotes, rules, tables, raw HTML) and the inline nodes inside them; no rendering. |
+| `tui/markdown` | Markdown as terminal lines: a line of prose to styled runs (emphasis, code, links, headings, lists, code blocks colored by the tokenizers) and a table laid out in columns, over `@lightstart/markdown`. |
 
 A package never imports one after it in that order, nor an app. `lib` and `highlight` reach nothing of light; `kernel` reaches only the type of a key event.
 
