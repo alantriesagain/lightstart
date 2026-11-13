@@ -6,20 +6,23 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Where | What |
 |---|---|
-| `index.ts` | The public entry: `build`, the bundlers, the page scanner and rewriter, the importmap resolver, the build ids and the folder layout |
-| `build.ts` | `build(options)`: the step list, the in-memory outputs and the write |
+| `index.ts` | The public entry: `build`, `createBuildExtension`, the bundlers, the page scanner and rewriter, the importmap resolver, the build ids and the folder layout |
+| `build.ts` | `build(options)`: the built-in steps, the resolved options, the in-memory outputs and the write |
+| `extension.ts` | `BuildSteps`, `BuildExtension`: the api `light build` hands an extension, and the `Extensions` declaration merge |
 | `bundle.ts` | `bundleModules`, `bundleStyles`: the esbuild build, the importmap plugin, the loaders |
 | `html.ts` | `parsePage`, `renderPage`: the ranges of the importmap, module scripts and stylesheet links |
 | `importmap.ts` | `parseImportMap`, `resolveSpecifier`: exact keys, then the longest trailing-slash prefix |
 | `build-id.ts` | `generateBuildId`: `YYYYMMDD-HHMMSS` |
 | `versioning.ts` | `getBuilds`, `cleanupOldBuilds`, `updateCurrent` |
-| `types.ts` | `BuildOptions`, `BuildContext`, `BuildStep`, `BuildReport`, `BuildFile`, `BuildLog` |
-| `cli/commands/build.ts` | `light build`: the flags, then `build` |
+| `types.ts` | `BuildOptions`, `BuildContext`, `BuildStep`, `BuildReport`, `BuildFile`, `BuildLog` || `cli/commands/build.ts` | `light build`: the flags, then `build` |
 | `test/` | Plain scripts on `@light/test/assert.ts`; `test/fixtures/app` and the repository examples |
 
 ## Rules the sources keep
 
 - The step order is page, modules, stylesheets, public, html, every `options.steps` entry, then write. An extra step runs before anything is written, so it can add outputs or change the module and style URLs.
+- The built-in step names are `page`, `modules`, `stylesheets`, `public`, `html` and `write`. `options.steps` is sugar over `steps.add`, which inserts before `write`; `before`, `after`, `replace` and `remove` act by name and throw with the known names when it is unknown.
+- The command builds the extension api after reading its options, calls `ctx.cli.extend("build", api)`, and only then runs the steps. `api.options` is the resolved options (absolute `root` and `outDir`), writable before the run; `api.mode` defaults to `"spa"`; `api.data` is one `Map` shared by the steps, which read it and the mode as `ctx.data` and `ctx.mode`.
+- The report and the `write` step do not change: an extension changes what is written, never where or how the build is kept.
 - Outputs live in `ctx.outputs` until the `write` step. Nothing writes to the build folder before it.
 - Every build is `<root>/<outDir>/builds/<id>/`; `<outDir>/current` is a symlink to `builds/<id>` and is replaced each time. An id that already exists takes a `-2`, `-3`, … suffix.
 - `keep` is at least 1 and 5 when it is not a finite number; pruning removes the oldest builds first, never `current`.
@@ -39,6 +42,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `parsePage` and `renderPage` keeping every range outside the importmap, module scripts and stylesheet links | the build tests, and any step that rewrites the page |
 | `parseImportMap` and `resolveSpecifier` | the esbuild importmap plugin, and pages whose entries name local files |
 | `options.steps` as `{ name, run(ctx) }` inserted before `write` | packages that add outputs to a build |
+| `createBuildExtension(options)` answering the `BuildExtension` api, and `build(options, extension?)` running the api as it stands | the `light build` command, which extends the api before running |
+| `BuildSteps`' `add`/`before`/`after`/`replace`/`remove`/`names`, and `BuildContext.mode`/`BuildContext.data` | extension packages and the step-list tests |
 | The `light build` flags (`dir`, `--page`, `--out`, `--no-minify`, `--keep`) | `light build` users and the examples test |
 
 ## Gates
