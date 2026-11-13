@@ -130,7 +130,7 @@ process.exitCode = await cli.main(process.argv.slice(2));
 |---|---|
 | `name` | The CLI name in help and in the usage line |
 | `version` | What `--version` prints |
-| `scopes` | The npm scopes the binary always scans (`@lightstart` for `light`); discovery appends the project's own `light.scopes` |
+| `scopes` | The npm scopes the binary always scans (`@lightstart` for `light`); discovery appends `light.scopes` from the project and its workspace root |
 | `envPrefix` | The prefix of `_PROJECT_DIR` and `_LOG_LEVEL` |
 | `commands` | A static table of commands; each wins its name over a discovered one |
 | `packages` | Extra package names to scan under the project's `node_modules` |
@@ -206,7 +206,7 @@ A route file default-exports an app function. The project's own `server/routes/`
 4. each name in `packages`, at `<project>/node_modules/<name>`
 5. this CLI's own installed `<cliDir>/node_modules/<scope>/*`
 
-The scopes are the `scopes` the binary was built with plus the project's `package.json` `light.scopes`. The workspace root is the nearest folder at or above the project holding a `pnpm-workspace.yaml` or a `package.json` with `workspaces`. `cliDir` defaults to `@lightstart/cli`'s folder, so a binary built on `createCli` scans the packages installed beside itself. A package folder is scanned once, by its real path.
+The scopes are the `scopes` the binary was built with plus `light.scopes` in the project's `package.json` and in its workspace root's, so a workspace declares them once for every member. `light.packages` names unscoped packages the same way; each is looked up under the project's `node_modules`, then the workspace root's, and scanned by its `light.cli` roots. The workspace root is the nearest folder at or above the project holding a `pnpm-workspace.yaml` or a `package.json` with `workspaces`. `cliDir` defaults to `@lightstart/cli`'s folder, so a binary built on `createCli` scans the packages installed beside itself. A package folder is scanned once, by its real path.
 
 A package that is a set of areas names them in `light.cli`:
 
