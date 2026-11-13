@@ -20,7 +20,50 @@ light build --page app.html --out dist --keep 3
 | `--no-minify` | minified | Keep the bundles readable |
 | `--keep` | `5` | How many builds to keep; at least 1 |
 
-The programmatic `build(options)` takes the same as `BuildOptions`, plus `steps`, extra steps over the build context, and `log`, a `(message) => void` a step may write through. It answers a `BuildReport`: the id, the build folder, the files with their sizes, and the elapsed milliseconds. The command prints each file and the total, and answers exit code 1 on a failed build.
+The programmatic `build(options)` takes the same as `BuildOptions`, plus `steps`, extra steps inserted before `write`, `mode` (default `"spa"`) and `data` (a `Map` the steps share), and `log`, a `(message) => void` a step may write through. It answers a `BuildReport`: the id, the build folder, the files with their sizes, and the elapsed milliseconds. The command prints each file and the total, and answers exit code 1 on a failed build.
+
+## Extending light build
+
+A package the project declares extends the command with `cli/extend/build.ts`, default-exporting `defineExtension("build", { args?, setup })`. Its `args` join the command's schema and help; `setup(ctx, args, api)` runs after the options are read and before the build runs.
+
+| `api` field | What |
+|---|---|
+| `steps` | The ordered step list; `add`, `before`, `after`, `replace`, `remove` and `names` |
+| `options` | The resolved options (`root`, `page`, `outDir`, `minify`, `keep`), writable during setup |
+| `mode` | A string the steps read; `"spa"` until an extension sets it |
+| `data` | A `Map<string, unknown>` shared by the steps of one build; seed it during setup |
+
+| Method | What |
+|---|---|
+| `add(step)` | Insert before `write` |
+| `before(name, step)` | Insert just before the named step |
+| `after(name, step)` | Insert just after the named step |
+| `replace(name, step)` | Replace the named step in place |
+| `remove(name)` | Drop the named step |
+| `names()` | Every step name, in order |
+
+The built-in steps are `page`, `modules`, `stylesheets`, `public`, `html` and `write`. An unknown name passed to `before`, `after`, `replace` or `remove` throws with the names it knows. A framework with its own pipeline removes the built-ins it does not use and adds its own; its step gets the same `BuildContext`, so it reads `ctx.mode` and `ctx.data` and writes files to `ctx.outputs`.
+
+```ts
+import { defineExtension } from "@lightstart/cli";
+
+export default defineExtension("build", {
+  args: { ssg: { flag: true, description: "Render the pages ahead of time" } },
+  setup(_ctx, { ssg }, api) {
+    if (!ssg) return;
+    api.mode = "ssg";
+    api.steps.remove("html");
+    api.steps.after("modules", {
+      name: "render",
+      run(ctx) {
+        ctx.outputs.set("mode.txt", ctx.mode);
+      },
+    });
+  },
+});
+```
+
+The report and the `write` step do not change: an extension's steps run before anything is written, and the build folder, `current` and pruning stay as below.
 
 ## Steps
 
@@ -36,7 +79,7 @@ A build is a list of named steps over one `BuildContext`:
 | extra steps | Every `options.steps` entry, in order |
 | `write` | Write the outputs, point `current` at the build, prune old builds |
 
-A package adds a step through `options.steps`: `{ name, run(ctx) }`. Extra steps run after the page is rewritten in memory and before anything is written, so they can add files to `ctx.outputs` or change `ctx.moduleOutputs` and `ctx.styleOutputs`.
+A package adds a step through `options.steps`: `{ name, run(ctx) }`. Extra steps run after the page is rewritten in memory and before anything is written, so they can add files to `ctx.outputs` or change `ctx.moduleOutputs` and `ctx.styleOutputs`. An extension gets the same list through `api.steps.add`, or inserts, replaces and removes a named step with the rest of the step-list methods.
 
 ## Output layout
 

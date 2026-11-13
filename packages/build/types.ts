@@ -23,6 +23,8 @@ export type BuildContext = {
   id: string;
   minify: boolean;
   keep: number;
+  mode: string;
+  data: Map<string, unknown>;
   importMap: ImportMap;
   parsed: ParsedPage;
   moduleOutputs: (string | undefined)[];
@@ -34,13 +36,15 @@ export type BuildContext = {
 /** A named step over the build context. */
 export type BuildStep = { name: string; run(ctx: BuildContext): Promise<void> | void };
 
-/** What `build` needs: the app root and, optionally, the page, the output folder, minification, retention, extra steps and a log. */
+/** What `build` needs: the app root and, optionally, the page, the output folder, minification, retention, the mode, shared data, extra steps and a log. */
 export type BuildOptions = {
   root: string;
   page?: string;
   outDir?: string;
   minify?: boolean;
   keep?: number;
+  mode?: string;
+  data?: Map<string, unknown>;
   steps?: readonly BuildStep[];
   log?: BuildLog;
 };
