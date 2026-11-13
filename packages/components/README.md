@@ -76,6 +76,15 @@ export default {
 };
 ```
 
+## Markdown
+
+`<lc-markdown>` renders its `content` with `marked`. Raw HTML renders as text unless the caller sets `.unsafeHtml=${true}`, which it does only for content it trusts. Links keep `http`, `https`, `mailto` and relative targets; any other scheme is dropped in both modes.
+
+```html
+<lc-markdown .content=${doc}></lc-markdown>
+<lc-markdown .content=${trusted} .unsafeHtml=${true}></lc-markdown>
+```
+
 ## Forms
 
 `<lc-form>` takes a field list and draws it. A field says what it is and the component decides how: which control, how it serializes, whether it is even on screen.
