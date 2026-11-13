@@ -1,179 +1,195 @@
 import { unsafeHTML } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
 import { defineComponent } from "@lightstart/light";
+import {
+  Code,
+  CodeSpan,
+  Del,
+  Em,
+  HardBreak,
+  Heading,
+  Html,
+  Image,
+  InlineHtml,
+  Link,
+  List,
+  Paragraph,
+  Quote,
+  Rule,
+  SoftBreak,
+  Strong,
+  Table,
+  Text,
+  WikiLink,
+  parse,
+  parseInline,
+  plainText,
+  safeUrl,
+} from "@lightstart/markdown";
 import { createSlugger } from "../utils/slug.js";
-/** @import { MarkdownHeading, MarkedLike, Prop } from "../types.ts" */
+/** @import { MarkdownHeading, Prop } from "../types.ts" */
+
+/**
+ * @typedef {import("@lightstart/markdown").Block} BlockNode
+ * @typedef {import("@lightstart/markdown").Inline} InlineNode
+ * @typedef {{ slug: (text: string) => string, headings: MarkdownHeading[], anchors: boolean, unsafeHtml: boolean }} RenderContext
+ */
+
+/** @param {string} text */
+const escapeText = (text) =>
+  text
+    .replace(/&(?!(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});)/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 
 /** @param {string} text */
 const escapeAttribute = (text) => text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/** @type {Map<string, string>} */
-const NAMED_ENTITIES = new Map([
-  ["colon", ":"],
-  ["tab", "\t"],
-  ["newline", "\n"],
-  ["amp", "&"],
-  ["lpar", "("],
-  ["rpar", ")"],
-]);
-
 /**
- * One character reference as its text, or the reference unchanged when it names no code point.
- * @param {string} digits
- * @param {number} radix
- * @param {string} fallback
+ * @param {InlineNode} node
+ * @param {RenderContext} context
+ * @returns {string}
  */
-const codePoint = (digits, radix, fallback) => {
-  const code = Number.parseInt(digits, radix);
-  return Number.isSafeInteger(code) && code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : fallback;
-};
-
-/** @param {string} text */
-const decodeEntitiesOnce = (text) =>
-  text
-    .replace(/&#x([0-9a-f]+);/gi, (entity, hex) => codePoint(hex, 16, entity))
-    .replace(/&#([0-9]+);/g, (entity, decimal) => codePoint(decimal, 10, entity))
-    .replace(/&([a-z][a-z0-9]+);/gi, (entity, name) => NAMED_ENTITIES.get(name.toLowerCase()) ?? entity);
-
-/**
- * Decode what a browser would decode, so `java&#x09;script:` cannot hide a scheme.
- * @param {string} text
- */
-const decodeEntities = (text) => {
-  let decoded = text;
-  for (let pass = 0; pass < 5; pass++) {
-    const next = decodeEntitiesOnce(decoded);
-    if (next === decoded) break;
-    decoded = next;
+const renderInline = (node, context) => {
+  if (node instanceof Text) return escapeText(node.text);
+  if (node instanceof Strong) return `<strong>${renderInlines(node.children, context)}</strong>`;
+  if (node instanceof Em) return `<em>${renderInlines(node.children, context)}</em>`;
+  if (node instanceof Del) return `<del>${renderInlines(node.children, context)}</del>`;
+  if (node instanceof CodeSpan) return `<code>${escapeText(node.text)}</code>`;
+  if (node instanceof Link) {
+    const children = renderInlines(node.children, context);
+    if (!safeUrl(node.href)) return children;
+    const title = node.title.length > 0 ? ` title="${escapeAttribute(node.title)}"` : "";
+    return `<a href="${escapeAttribute(node.href)}"${title}>${children}</a>`;
   }
-  return decoded;
+  if (node instanceof Image) {
+    if (!safeUrl(node.href)) return escapeText(node.alt);
+    const title = node.title.length > 0 ? ` title="${escapeAttribute(node.title)}"` : "";
+    return `<img src="${escapeAttribute(node.href)}" alt="${escapeAttribute(node.alt)}"${title}>`;
+  }
+  if (node instanceof SoftBreak) return "\n";
+  if (node instanceof HardBreak) return "<br>";
+  if (node instanceof WikiLink) return `<a class="wiki-link" data-name="${escapeAttribute(node.name)}">${escapeText(node.display)}</a>`;
+  if (node instanceof InlineHtml) return context.unsafeHtml ? node.text : escapeText(node.text);
+  return "";
 };
 
 /**
- * Whether a href is relative or uses http, https or mailto. A colon after a
- * path, query or fragment delimiter is not a scheme.
- * @param {string} href
+ * @param {InlineNode[]} nodes
+ * @param {RenderContext} context
+ * @returns {string}
  */
-const safeUrl = (href) => {
-  const url = decodeEntities(href).replace(/[\u0000-\u0020\u007f]/g, "").toLowerCase();
-  return !/^[a-z][a-z0-9+.-]*:/.test(url) || /^(https?|mailto):/.test(url);
+const renderInlines = (nodes, context) => {
+  let out = "";
+  for (const node of nodes) out += renderInline(node, context);
+  return out;
 };
 
 /**
- * What one parse collects. `marked` is one module-wide instance and `parse`
- * is synchronous, so the component points this at its own record before
- * parsing and the renderers write into it.
- * @type {{ slug: (text: string) => string, headings: MarkdownHeading[], anchors: boolean, unsafeHtml: boolean }}
+ * @param {string} tag
+ * @param {string} text
+ * @param {string} align
+ * @param {RenderContext} context
+ * @returns {string}
  */
-let current = {
-  slug: createSlugger(),
-  headings: [],
-  anchors: false,
-  unsafeHtml: /** @type {boolean} */ (false),
+const renderCell = (tag, text, align, context) => {
+  const attribute = align === "left" ? "" : ` align="${escapeAttribute(align)}"`;
+  return `<${tag}${attribute}>${renderInlines(parseInline(text), context)}</${tag}>`;
 };
-
-const renderer = {
-  /**
-   * @this {{ parser: { parseInline: (tokens: unknown[]) => string } }}
-   * @param {string | { depth: number, tokens: unknown[], text: string }} token a token from marked 5 on; before, the text, with the level and raw text after it
-   * @param {number} [level]
-   * @param {string} [raw]
-   */
-  heading(token, level, raw) {
-    const depth = typeof token === "object" ? token.depth : (level ?? 1);
-    const inner = typeof token === "object" ? this.parser.parseInline(token.tokens) : token;
-    const text = typeof token === "object" ? token.text : (raw ?? token);
-    const id = current.slug(text);
-    current.headings.push({ id, text, level: depth });
-    const anchor = current.anchors ? `<a class="anchor" href="#${id}" aria-label="${escapeAttribute(text)}">#</a>` : "";
-    return `<h${depth} id="${id}">${inner}${anchor}</h${depth}>\n`;
-  },
-  /**
-   * @param {string | { text: string, lang?: string }} token a token from marked 5 on; before, the code, with the info string after it
-   * @param {string} [info]
-   */
-  code(token, info) {
-    const text = typeof token === "object" ? token.text : token;
-    const lang = typeof token === "object" ? token.lang : info;
-    const language = (lang || "").split(/\s/)[0];
-    return `<lc-code-block language="${escapeAttribute(language)}" code="${escapeAttribute(text)}"></lc-code-block>\n`;
-  },
-  /**
-   * @param {{ text: string }} token
-   */
-  html(token) {
-    if (current.unsafeHtml) return false;
-    return escapeAttribute(token.text);
-  },
-  /**
-   * @this {{ parser: { parseInline: (tokens: unknown[]) => string } }}
-   * @param {{ href: string, text: string, tokens: unknown[] }} token
-   */
-  link(token) {
-    if (safeUrl(token.href)) return false;
-    return this.parser.parseInline(token.tokens);
-  },
-  /**
-   * @param {{ href: string, text: string }} token
-   */
-  image(token) {
-    if (safeUrl(token.href)) return false;
-    return escapeAttribute(token.text);
-  },
-};
-
-const MARKED = "marked";
-
-/** @type {{ load: () => Promise<{ marked: MarkedLike }> }} */
-const source = { load: () => import(MARKED) };
 
 /**
- * Say where `marked` comes from. By default it is the bare `marked`
- * specifier, which the page's importmap resolves; with a bundler, pass
- * `load: () => import("marked")` so it sees the dependency.
- * @param {{ load: () => Promise<{ marked: MarkedLike }> }} options
+ * @param {Table} table
+ * @param {RenderContext} context
+ * @returns {string}
  */
-export const configureMarkdown = (options) => {
-  Object.assign(source, options);
+const renderTable = (table, context) => {
+  let out = "<table><thead><tr>";
+  for (let i = 0; i < table.header.length; i++) out += renderCell("th", table.header[i], table.aligns[i], context);
+  out += "</tr></thead><tbody>";
+  for (const row of table.rows) {
+    out += "<tr>";
+    for (let i = 0; i < table.header.length; i++) out += renderCell("td", row[i], table.aligns[i], context);
+    out += "</tr>";
+  }
+  return `${out}</tbody></table>`;
 };
 
-/** @type {Promise<MarkedLike> | null} */
-let _markedPromise = null;
-const loadMarked = () => {
-  if (_markedPromise) return _markedPromise;
-  _markedPromise = source.load().then(({ marked }) => {
-    marked.use({
-      renderer,
-      extensions: [
-        {
-          name: "wikiLink",
-          level: "inline",
-          /** @param {string} src */
-          start(src) {
-            return src.match(/\[\[/)?.index;
-          },
-          /** @param {string} src */
-          tokenizer(src) {
-            const match = src.match(/^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/);
-            if (match)
-              return {
-                type: "wikiLink",
-                raw: match[0],
-                name: match[1].trim(),
-                display: (match[2] || match[1]).trim(),
-              };
-          },
-          /** @param {{ name: string, display: string }} token */
-          renderer(token) {
-            return `<a class="wiki-link" data-name="${escapeAttribute(token.name)}">${escapeAttribute(token.display)}</a>`;
-          },
-        },
-      ],
-    });
-    return marked;
-  });
-  return _markedPromise;
+/**
+ * @param {List} list
+ * @param {RenderContext} context
+ * @returns {string}
+ */
+const renderList = (list, context) => {
+  const tag = list.ordered ? "ol" : "ul";
+  const start = list.ordered && list.start !== 1 ? ` start="${escapeAttribute(String(list.start))}"` : "";
+  let out = `<${tag}${start}>`;
+  for (const item of list.items) {
+    out += "<li>";
+    if (item.task) out += `<input type="checkbox" disabled${item.checked ? " checked" : ""}> `;
+    out += renderBlocks(item.blocks, context, !list.loose);
+    out += "</li>";
+  }
+  return `${out}</${tag}>`;
 };
+
+/**
+ * @param {Heading} heading
+ * @param {RenderContext} context
+ * @returns {string}
+ */
+const renderHeading = (heading, context) => {
+  const text = plainText(heading.children);
+  const id = context.slug(text);
+  context.headings.push({ id, text, level: heading.level });
+  const anchor = context.anchors
+    ? `<a class="anchor" href="#${escapeAttribute(id)}" aria-label="${escapeAttribute(text)}">#</a>`
+    : "";
+  return `<h${heading.level} id="${escapeAttribute(id)}">${renderInlines(heading.children, context)}${anchor}</h${heading.level}>`;
+};
+
+/**
+ * @param {BlockNode} block
+ * @param {RenderContext} context
+ * @param {boolean} tight
+ * @returns {string}
+ */
+const renderBlock = (block, context, tight) => {
+  if (block instanceof Heading) return renderHeading(block, context);
+  if (block instanceof Paragraph) {
+    const children = renderInlines(block.children, context);
+    return tight ? children : `<p>${children}</p>`;
+  }
+  if (block instanceof Code) {
+    const language = block.info.split(/\s/)[0];
+    return `<lc-code-block language="${escapeAttribute(language)}" code="${escapeAttribute(block.text)}"></lc-code-block>`;
+  }
+  if (block instanceof List) return renderList(block, context);
+  if (block instanceof Quote) return `<blockquote>${renderBlocks(block.blocks, context, false)}</blockquote>`;
+  if (block instanceof Rule) return "<hr>";
+  if (block instanceof Table) return renderTable(block, context);
+  if (block instanceof Html) return context.unsafeHtml ? block.text : `<p>${escapeText(block.text)}</p>`;
+  return "";
+};
+
+/**
+ * @param {BlockNode[]} blocks
+ * @param {RenderContext} context
+ * @param {boolean} tight
+ * @returns {string}
+ */
+const renderBlocks = (blocks, context, tight) => {
+  /** @type {string[]} */
+  const parts = [];
+  for (const block of blocks) parts.push(renderBlock(block, context, tight));
+  return parts.join("\n");
+};
+
+/**
+ * @param {BlockNode[]} blocks
+ * @param {RenderContext} context
+ * @returns {string}
+ */
+const toHtml = (blocks, context) => renderBlocks(blocks, context, false);
 
 /**
  * Markdown Component
@@ -182,9 +198,9 @@ const loadMarked = () => {
  * @category display
  * @tag lc-markdown
  *
- * Renders markdown through `marked`, styled by the theme's prose rules. Raw HTML in the
- * content shows as text unless `unsafeHtml` is set, which a caller does only for content
- * it trusts. Links keep only `http`, `https`, `mailto` and relative targets, in both modes.
+ * Renders markdown with `@lightstart/markdown`, styled by the theme's prose rules. Raw HTML in
+ * the content shows as text unless `unsafeHtml` is set, which a caller does only for content it
+ * trusts. Links keep only `http`, `https`, `mailto` and relative targets, in both modes.
  *
  * @example
  * ```html
@@ -201,7 +217,6 @@ export default defineComponent({
     anchors: T.boolean(),
     unsafeHtml: T.boolean({ attribute: false, defaultValue: false }),
     onWikiLink: T.function(),
-    _marked: /** @type {Prop<MarkedLike | null>} */ (T.object({ attribute: false })),
     _headings: /** @type {Prop<MarkdownHeading[]>} */ (T.array({ attribute: false, defaultValue: [], reactive: false })),
     _announced: T.string({ defaultValue: "", reactive: false }),
   },
@@ -219,11 +234,9 @@ export default defineComponent({
     });
     this.addEventListener("click", onWikiClick);
     this.$own(() => this.removeEventListener("click", onWikiClick));
-    loadMarked().then((marked) => { this._marked = marked; });
   },
 
   updated() {
-    if (!this._marked) return;
     const key = `${this.anchors}:${this.content || ""}`;
     if (key === this._announced) return;
     this._announced = key;
@@ -231,10 +244,10 @@ export default defineComponent({
   },
 
   render() {
-    if (!this._marked) return "";
-    current = { slug: createSlugger(), headings: [], anchors: this.anchors, unsafeHtml: !!this.unsafeHtml };
-    const rendered = this._marked.parse(this.content || "");
-    this._headings = current.headings;
+    /** @type {RenderContext} */
+    const context = { slug: createSlugger(), headings: [], anchors: !!this.anchors, unsafeHtml: !!this.unsafeHtml };
+    const rendered = toHtml(parse(this.content || ""), context);
+    this._headings = context.headings;
     return unsafeHTML(rendered);
   },
 });

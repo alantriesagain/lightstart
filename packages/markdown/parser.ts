@@ -213,13 +213,19 @@ const collectDefinitions = (lines: string[], defs: Map<string, LinkDefinition>):
 const parseList = (lines: string[], at: number, defs: Map<string, LinkDefinition>, depth: number): { list: List; end: number } => {
   const first = matchListMarker(lines[at]) as Marker;
   const items: ListItem[] = [];
+  let loose = false;
   let i = at;
   let end = at;
   while (i < lines.length) {
-    while (i < lines.length && isBlank(lines[i])) i++;
+    let blanks = 0;
+    while (i < lines.length && isBlank(lines[i])) {
+      i++;
+      blanks++;
+    }
     if (i >= lines.length) break;
     const marker = matchListMarker(lines[i]);
     if (marker === null || !sameList(first, marker)) break;
+    if (blanks > 0 && items.length > 0) loose = true;
     let content = marker.content;
     let task = false;
     let checked = false;
@@ -263,10 +269,14 @@ const parseList = (lines: string[], at: number, defs: Map<string, LinkDefinition
       }
       break;
     }
-    items.push(new ListItem(parseBlocks(itemLines, defs, depth + 1), task, checked));
+    const blocks = parseBlocks(itemLines, defs, depth + 1);
+    for (let k = 1; k < blocks.length; k++) {
+      if (blocks[k].blankBefore) loose = true;
+    }
+    items.push(new ListItem(blocks, task, checked));
     end = i;
   }
-  return { list: new List(first.ordered, first.ordered ? first.start : 1, items), end };
+  return { list: new List(first.ordered, first.ordered ? first.start : 1, items, loose), end };
 };
 
 /** `depth` counts the quotes and list items around `lines`; past MAX_NESTING a marker stays text. */

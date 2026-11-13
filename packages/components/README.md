@@ -34,9 +34,9 @@ for (const component of [link, button, icon]) View.define(component);
 @import "@lightstart/components/display/icon.css";
 ```
 
-A browser resolves the bare specifiers through an importmap (`"@lightstart/light/": "/node_modules/@lightstart/light/"` and `"@lightstart/components/": "/node_modules/@lightstart/components/"` cover every subpath); a bundler resolves them from `node_modules`.
+A browser resolves the bare specifiers through an importmap (`"@lightstart/light/": "/node_modules/@lightstart/light/"`, `"@lightstart/components/": "/node_modules/@lightstart/components/"` and, for `<lc-markdown>`, `"@lightstart/markdown": "/node_modules/@lightstart/markdown/index.ts"` cover every subpath); a bundler resolves them from `node_modules`.
 
-`applyTheme` writes the design tokens the stylesheets read; `configureIcons` says where `<lc-icon>` fetches an icon (the public Iconify API here; a page that has the icons in its own stylesheet leaves it unset). Four more hooks matter only when you have the thing they connect: `configureNavigation` from `@lightstart/light/navigation` for a router (links are plain anchors without one), `configureView({ translate })` for translations (the components speak English without one), `configureMarkdown` from `display/markdown.js` for where `marked` comes from (the bare `marked` specifier by default), and `configureHighlight` from `utils/highlight.js` for a tokenizer behind `<lc-code-block>` (plain lines without one).
+`applyTheme` writes the design tokens the stylesheets read; `configureIcons` says where `<lc-icon>` fetches an icon (the public Iconify API here; a page that has the icons in its own stylesheet leaves it unset). Three more hooks matter only when you have the thing they connect: `configureNavigation` from `@lightstart/light/navigation` for a router (links are plain anchors without one), `configureView({ translate })` for translations (the components speak English without one), and `configureHighlight` from `utils/highlight.js` for a tokenizer behind `<lc-code-block>` (plain lines without one).
 
 A component that draws other tags needs them defined too, or they stay inert; the table at the end lists what each one renders. `examples/starter` and `examples/indexeddb-explorer` are whole pages built this way.
 
@@ -78,7 +78,7 @@ export default {
 
 ## Markdown
 
-`<lc-markdown>` renders its `content` with `marked`. Raw HTML renders as text unless the caller sets `.unsafeHtml=${true}`, which it does only for content it trusts. Links keep `http`, `https`, `mailto` and relative targets; any other scheme is dropped in both modes.
+`<lc-markdown>` renders its `content` synchronously with `@lightstart/markdown`, the parser the terminal renderer uses too. Raw HTML renders as text unless the caller sets `.unsafeHtml=${true}`, which it does only for content it trusts. Links keep `http`, `https`, `mailto` and relative targets; any other scheme is dropped in both modes.
 
 ```html
 <lc-markdown .content=${doc}></lc-markdown>

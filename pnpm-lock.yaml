@@ -114,6 +114,10 @@ importers:
         version: 6.0.3
 
   packages/components:
+    dependencies:
+      '@lightstart/markdown':
+        specifier: workspace:*
+        version: link:../markdown
     devDependencies:
       '@lightstart/light':
         specifier: workspace:*
@@ -121,9 +125,6 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
-      marked:
-        specifier: ^18.1.0
-        version: 18.1.0
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -179,9 +180,6 @@ importers:
       globals:
         specifier: ^15.14.0
         version: 15.15.0
-      marked:
-        specifier: ^18.1.0
-        version: 18.1.0
       playwright:
         specifier: ^1.58.2
         version: 1.64.0
@@ -1279,11 +1277,6 @@ packages:
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
-
-  marked@18.1.0:
-    resolution: {integrity: sha512-PamYXWWWg2nboG3oX5Ffzpy3EFZROqZJK9hSlMmUnekp7TxPs5DcT95vwd46m73/exfKCRVMtgXoPMI4FEJL6w==}
-    engines: {node: '>= 20'}
-    hasBin: true
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -2491,8 +2484,6 @@ snapshots:
       p-locate: 5.0.0
 
   lodash.merge@4.6.2: {}
-
-  marked@18.1.0: {}
 
   math-intrinsics@1.1.0: {}
 

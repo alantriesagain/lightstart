@@ -112,4 +112,16 @@ if (escaped instanceof Table) {
   eq("a bar in code stays in its cell", escaped.header[1], "`x|y`");
 }
 
+const tight = parse("- one\n- two")[0];
+if (tight instanceof List) ok("a tight list is not loose", !tight.loose);
+
+const looseBetween = parse("- one\n\n- two")[0];
+if (looseBetween instanceof List) ok("a blank line between items makes a list loose", looseBetween.loose);
+
+const looseInside = parse("- one\n\n  two")[0];
+if (looseInside instanceof List) {
+  ok("a blank line between blocks inside an item makes a list loose", looseInside.loose);
+  ok("the item has two blocks", looseInside.items[0].blocks.length === 2);
+}
+
 done();

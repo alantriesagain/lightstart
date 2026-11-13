@@ -172,17 +172,19 @@ export class ListItem {
   }
 }
 
-/** An ordered or unordered list; `start` is the first item's number. */
+/** An ordered or unordered list; `start` is the first item's number and `loose` says a blank line separates its blocks. */
 export class List extends Block {
   ordered: boolean;
   start: number;
   items: ListItem[];
+  loose: boolean;
 
-  constructor(ordered: boolean, start: number, items: ListItem[]) {
+  constructor(ordered: boolean, start: number, items: ListItem[], loose: boolean = false) {
     super();
     this.ordered = ordered;
     this.start = start;
     this.items = items;
+    this.loose = loose;
   }
 }
 
