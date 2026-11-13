@@ -1,16 +1,17 @@
 /**
- * @file The node discovery: it walks a project's `cli/` folders and loads the files with
- * `import()`. It is the only place a computed path reaches an import, so the core stays fully
- * static.
+ * @file The node discovery: it walks a project's `cli/` folders and lists the files, importing
+ * none. Importing happens through `NodeFileLoader`, the only place a computed path reaches an
+ * `import()`, so the core stays fully static.
  */
-import { statSync } from "node:fs";
+import { realpathSync, statSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { hookNameOf } from "../hooks.ts";
-import type { ArgsSchema, Command } from "../types/command.ts";
 import type { Logger } from "../types/context.ts";
-import type { Discovered, DiscoverOptions, LoadedCommand, LoadedHook, Source } from "../types/discovery.ts";
-import { listScopedPackages, readPackageJson, walkFiles } from "./pkg-walk.ts";
+import type { CommandRecord, Discovered, DiscoverOptions, ExtensionRecord, HookRecord, RouteRecord, Source } from "../types/discovery.ts";
+import { FileLoader as Loader } from "../types/discovery.ts";
+import type { PackageJson } from "./pkg-walk.ts";
+import { findWorkspaceRoot, listScopedPackages, readPackageJson, walkFiles } from "./pkg-walk.ts";
 
 const CODE_EXTENSIONS = [".ts", ".js", ".mjs"];
 
@@ -25,6 +26,14 @@ const exists = (path: string): boolean => {
   }
 };
 
+const realPath = (path: string): string => {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
+};
+
 const stripExt = (name: string): string => name.replace(/\.(ts|js|mjs)$/, "");
 
 const codeFiles = (dir: string): string[] => walkFiles(dir, { extensions: CODE_EXTENSIONS });
@@ -33,13 +42,42 @@ const commandNameFromFile = (file: string, commandsDir: string): string => strip
 
 const hookNameFromFile = (file: string, hooksDir: string): string => hookNameOf(stripExt(relative(hooksDir, file)).split(sep).join("/"));
 
-const messageOf = (err: unknown): string => (err instanceof Error ? err.message : typeof err === "string" ? err : "an unknown error");
+const lightField = (pkg: PackageJson | null): Record<string, unknown> | null => {
+  if (!pkg) return null;
+  const light = pkg.light;
+  if (light === null || typeof light !== "object" || Array.isArray(light)) return null;
+  return light as Record<string, unknown>;
+};
+
+const stringList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  const list: string[] = [];
+  for (const item of value) if (typeof item === "string") list.push(item);
+  return list;
+};
 
 /** Load a module by its file path. */
 export const importFile = async (file: string): Promise<unknown> => await import(pathToFileURL(file).href);
 
-const scanCliRoot = async (source: Source, out: Discovered, log: Logger): Promise<void> => {
-  const cliDir = join(source.root, "cli");
+/** The loader the core uses; it is the one module allowed a computed `import()`. */
+export class NodeFileLoader extends Loader {
+  load(file: string): Promise<unknown> {
+    return import(pathToFileURL(file).href);
+  }
+}
+
+type CliRoot = { cliDir: string; source: Source };
+
+const cliRootsOf = (packageDir: string, sourceName: string, pkg: PackageJson | null): CliRoot[] => {
+  const light = lightField(pkg);
+  const folders = light ? stringList(light.cli) : [];
+  if (folders.length === 0) return [{ cliDir: join(packageDir, "cli"), source: { name: sourceName, root: packageDir } }];
+  const roots: CliRoot[] = [];
+  for (const folder of folders) roots.push({ cliDir: join(packageDir, folder, "cli"), source: { name: `${sourceName}/${folder}`, root: packageDir } });
+  return roots;
+};
+
+const listCliRoot = (cliDir: string, source: Source, out: Discovered, log: Logger): void => {
   if (!exists(cliDir)) return;
 
   const commandsDir = join(cliDir, "commands");
@@ -50,104 +88,107 @@ const scanCliRoot = async (source: Source, out: Discovered, log: Logger): Promis
       log.warn(`Command "${name}" already registered by ${existing.source.name}; ignoring duplicate from ${source.name}`);
       continue;
     }
-    let mod: { default?: unknown };
-    try {
-      mod = (await importFile(file)) as { default?: unknown };
-    } catch (err) {
-      log.warn(`Command "${name}" at ${file} failed to load: ${messageOf(err)}`);
-      continue;
-    }
-    const definition = mod.default;
-    if (definition === null || typeof definition !== "object") {
-      log.warn(`Command "${name}" at ${file} must export a default Command with a run() method`);
-      continue;
-    }
-    const run = (definition as { run?: unknown }).run;
-    if (typeof run !== "function") {
-      log.warn(`Command "${name}" at ${file} must export a default Command with a run() method`);
-      continue;
-    }
-    const record: LoadedCommand = { command: definition as Command<ArgsSchema>, source };
+    const record: CommandRecord = { file, source };
     out.commands.set(name, record);
   }
 
   for (const file of codeFiles(join(cliDir, "routes"))) {
-    try {
-      const mod = (await importFile(file)) as { default?: unknown };
-      if (typeof mod.default === "function") out.routes.push({ app: mod.default, source });
-      else log.warn(`Route file ${file} from ${source.name} default-exports no function`);
-    } catch (err) {
-      log.warn(`Route file ${file} from ${source.name} failed to load: ${messageOf(err)}`);
-    }
+    const record: RouteRecord = { file, source };
+    out.routes.push(record);
   }
 
   const hooksDir = join(cliDir, "hooks");
   for (const file of codeFiles(hooksDir)) {
     const name = hookNameFromFile(file, hooksDir);
-    let mod: { default?: unknown };
-    try {
-      mod = (await importFile(file)) as { default?: unknown };
-    } catch (err) {
-      log.warn(`Hook ${name} from ${source.name} failed to load: ${messageOf(err)}`);
-      continue;
-    }
-    if (typeof mod.default !== "function") {
-      log.warn(`Hook ${name} from ${source.name} exports no function`);
-      continue;
-    }
+    const record: HookRecord = { file, source };
     const list = out.hooks.get(name) ?? [];
-    const hook: LoadedHook = { fn: mod.default, source };
-    list.push(hook);
+    list.push(record);
     out.hooks.set(name, list);
   }
+
+  const extendDir = join(cliDir, "extend");
+  for (const file of codeFiles(extendDir)) {
+    const command = commandNameFromFile(file, extendDir);
+    const record: ExtensionRecord = { file, source, command };
+    const list = out.extensions.get(command) ?? [];
+    list.push(record);
+    out.extensions.set(command, list);
+  }
+};
+
+const scanPackage = (packageDir: string, sourceName: string, pkg: PackageJson | null, out: Discovered, log: Logger): void => {
+  for (const root of cliRootsOf(packageDir, sourceName, pkg)) listCliRoot(root.cliDir, root.source, out, log);
 };
 
 /**
  * Everything in reach contributes in tiers: the project's own `cli/` and `server/routes/`, the
- * project's scoped packages, the extra package names it names, then the CLI's own installed
- * scoped packages. A command name is taken by the first tier that declares it.
+ * scoped packages under the project and its workspace root, the extra package names it names, and
+ * the CLI's own installed scoped packages. A command name is taken by the first tier that declares
+ * it; every hook, route and extension is kept in order.
  */
 export const discover = async (options: DiscoverOptions): Promise<Discovered> => {
+  const cliDir = options.cliDir ?? CLI_DIR;
   const out: Discovered = {
-    commands: new Map<string, LoadedCommand>(),
+    commands: new Map<string, CommandRecord>(),
     routes: [],
-    hooks: new Map<string, LoadedHook[]>(),
-    cliDir: CLI_DIR,
+    hooks: new Map<string, HookRecord[]>(),
+    extensions: new Map<string, ExtensionRecord[]>(),
+    cliDir,
+    loader: new NodeFileLoader(),
   };
   const scanned = new Set<string>();
+  const projectPkg = readPackageJson(options.projectDir);
   const projectSource: Source = { name: "<project>", root: options.projectDir };
 
-  await scanCliRoot(projectSource, out, options.log);
-  scanned.add(options.projectDir);
+  const projectLight = lightField(projectPkg);
+  const declared = projectLight ? stringList(projectLight.scopes) : [];
+  const scopes: string[] = [];
+  const seenScopes = new Set<string>();
+  for (const scope of options.scopes) {
+    if (seenScopes.has(scope)) continue;
+    seenScopes.add(scope);
+    scopes.push(scope);
+  }
+  for (const scope of declared) {
+    if (seenScopes.has(scope)) continue;
+    seenScopes.add(scope);
+    scopes.push(scope);
+  }
+
+  scanPackage(options.projectDir, projectSource.name, projectPkg, out, options.log);
+  scanned.add(realPath(options.projectDir));
 
   for (const file of codeFiles(join(options.projectDir, "server", "routes"))) {
-    try {
-      const mod = (await importFile(file)) as { default?: unknown };
-      if (typeof mod.default === "function") out.routes.push({ app: mod.default, source: projectSource });
-      else options.log.warn(`Route file ${file} from <project> default-exports no function`);
-    } catch (err) {
-      options.log.warn(`Route file ${file} from <project> failed to load: ${messageOf(err)}`);
+    const record: RouteRecord = { file, source: projectSource };
+    out.routes.push(record);
+  }
+
+  const packageRoots: string[] = [options.projectDir];
+  const workspace = findWorkspaceRoot(options.projectDir);
+  if (workspace !== null) packageRoots.push(workspace);
+
+  for (const root of packageRoots) {
+    for (const entry of listScopedPackages({ roots: [root], scopes })) {
+      const dir = realPath(entry.dir);
+      if (scanned.has(dir)) continue;
+      scanned.add(dir);
+      scanPackage(dir, entry.name, readPackageJson(dir) ?? entry.pkg, out, options.log);
     }
   }
 
-  for (const entry of listScopedPackages({ roots: [options.projectDir], scopes: options.scopes })) {
-    if (scanned.has(entry.dir)) continue;
-    scanned.add(entry.dir);
-    await scanCliRoot({ name: entry.name, root: entry.dir }, out, options.log);
-  }
-
   for (const packageName of options.packages) {
-    const dir = join(options.projectDir, "node_modules", packageName);
+    const dir = realPath(join(options.projectDir, "node_modules", packageName));
     if (!exists(dir) || scanned.has(dir)) continue;
     scanned.add(dir);
     const pkg = readPackageJson(dir);
-    await scanCliRoot({ name: pkg && typeof pkg.name === "string" ? pkg.name : packageName, root: dir }, out, options.log);
+    scanPackage(dir, pkg && typeof pkg.name === "string" ? pkg.name : packageName, pkg, out, options.log);
   }
 
-  for (const entry of listScopedPackages({ roots: [CLI_DIR], scopes: options.scopes })) {
-    if (scanned.has(entry.dir)) continue;
-    scanned.add(entry.dir);
-    await scanCliRoot({ name: entry.name, root: entry.dir }, out, options.log);
+  for (const entry of listScopedPackages({ roots: [cliDir], scopes })) {
+    const dir = realPath(entry.dir);
+    if (scanned.has(dir)) continue;
+    scanned.add(dir);
+    scanPackage(dir, entry.name, readPackageJson(dir) ?? entry.pkg, out, options.log);
   }
 
   return out;
