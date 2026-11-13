@@ -6,6 +6,7 @@
   "description": "light's benchmarks: the page benchmarks in a browser, and the server benchmark, which runs scriptc's http-api workload on raw node:http, @lightstart/server, Express, Fastify and Hono, under node and as native binaries.",
   "devDependencies": {
     "@hono/node-server": "^2.1.5",
+    "@lightstart/build": "workspace:*",
     "@lightstart/light": "workspace:*",
     "@lightstart/server": "workspace:*",
     "@types/express": "^5.0.6",

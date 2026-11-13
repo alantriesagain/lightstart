@@ -51,6 +51,9 @@ importers:
       '@hono/node-server':
         specifier: ^2.1.5
         version: 2.1.5(hono@4.13.16)
+      '@lightstart/build':
+        specifier: workspace:*
+        version: link:../packages/build
       '@lightstart/light':
         specifier: workspace:*
         version: link:../packages/light

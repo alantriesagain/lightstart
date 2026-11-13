@@ -3,6 +3,7 @@
  */
 import type { CliApi, Logger } from "@lightstart/cli";
 import type { App } from "@lightstart/server";
+import type { Transformed } from "@lightstart/server/static";
 
 /** What a `cli/routes` file's default export receives: the project it serves and the CLI it came from. */
 export type RouteContext = {
@@ -15,4 +16,4 @@ export type RouteContext = {
 export type RouteFactory = (ctx: RouteContext) => App;
 
 /** What changes a module's bytes on the way out: TypeScript stripped and bare specifiers rewritten, injected by the node layer. */
-export type ModuleTransform = (path: string, body: Uint8Array) => { body: Uint8Array; type: string } | null;
+export type ModuleTransform = (path: string, body: Uint8Array) => Transformed | null;
