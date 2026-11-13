@@ -49,10 +49,11 @@ The map the page already carries is read from its `index.html` and merged on top
 A request is answered in this order:
 
 1. Every route app, in discovery order; a `pass()` falls through to the next, and a reply ends the request.
-2. `/__light/reload.js`, the reload client.
-3. A file under the project root. A request for `name.js` also probes `name.ts` and `name.tsx`.
-4. The app shell for `/` and for a path with no extension (a route such as `/posts/one`).
-5. A 404 for a missing path that has an extension, so a missing asset is not answered with the shell.
+2. Every app an extension added with `handle()`, in the order added; no route or a `pass()` falls through.
+3. `/__light/reload.js`, the reload client.
+4. A file under the project root, then a file under an extension's extra roots. A request for `name.js` also probes `name.ts` and `name.tsx`.
+5. The app shell for `/` and for a path with no extension (a route such as `/posts/one`).
+6. A 404 for a missing path that has an extension, so a missing asset is not answered with the shell.
 
 Route, reload, file and shell replies carry `cache-control: no-store`.
 
@@ -66,6 +67,58 @@ The shell is the project's `index.html` with its importmap scripts replaced by o
 
 A route file default-exports a factory `(ctx) => App`, where `ctx` holds `projectDir`, `log` and `cli`. The pipeline builds every app once. On a websocket upgrade the route apps get first claim; every socket none of them takes joins the reload set, and the server pings each socket every 30 seconds.
 
+## Extending light serve
+
+A package extends `light serve` with `cli/extend/serve.ts`, default-exporting
+`defineExtension("serve", { args, setup })`. The command builds a `ServeExtension` after it knows the
+project, the port and the importmap, and hands it to `setup` with `ctx.cli.extend("serve", api)`
+before it listens. Everything an extension does is optional: with no extension the server behaves
+as this README describes.
+
+```ts
+import { defineExtension } from "@lightstart/cli";
+import { Cors } from "@lightstart/server/cors";
+import { App, respond } from "@lightstart/server";
+
+export default defineExtension("serve", {
+  args: { previewPort: { description: "Also preview the build here" } },
+  setup(ctx, args, api) {
+    const handler = (request: Request) => new Response("from a Fetch handler");
+    api.app.plugin(new Cors({ origins: ["https://app.example"] }));
+    api.handle(new App().all("/*", async (c) => respond(await handler(await c.request()))));
+    api.root("/vendor-x/", ctx.projectDir + "/vendor");
+    api.watch(ctx.projectDir + "/vendor", "vendor-x");
+    api.basePath("/docs");
+    api.payload.greeting = "hi";
+    if (args.previewPort) api.preview(Number(args.previewPort));
+  },
+});
+```
+
+| Member | What |
+|---|---|
+| `app` | The root `App` every request goes through first: add plugins, middleware and routes to it. The dev pipeline answers what the root app passes on |
+| `handle(app)` | An app tried after the project's route files and before its files, in the order added; a path it has no route for, or `pass()`es, falls through. A Fetch handler goes in as an app whose catch-all route answers `respond(await handler(await c.request()))` |
+| `root(prefix, dir)` | More files under a URL prefix, served like the project's own: TypeScript stripped, a `.js` request finding its `.ts`, bare specifiers rewritten through the importmap, the same path guard |
+| `importmap` | The merged importmap, mutable before listening; an extension may add entries |
+| `page(render)` | Replaces how the shell's HTML is produced from the page: `(c, html) => string`. The default injects the importmap and the reload client |
+| `pageFile(path)` | Names another file as the page when the project has no `index.html`; a relative path is from the project |
+| `watch(dir, label)` | One more folder watched under `--watch`; its changes reach `serve:file-changed` with `path` as `label` and the relative path |
+| `basePath(path)` | Answers the app under `path` as well as at the root (the path is stripped before the pipeline); `/path` redirects to `/path/` |
+| `preview(port)` | Starts the strict build preview over `.deployed/current` on that port beside the dev server, skipped with a warning when the port is taken |
+| `payload` | The record every serve hook's payload carries, writable during setup |
+
+A hook payload is an interface another package widens by declaration merging, so an extension's own
+fields reach its hooks typed:
+
+```ts
+declare module "@lightstart/dev/hooks" {
+  interface ServeBeforePayload {
+    greeting: string;
+  }
+}
+```
+
 ## Hooks
 
 `light serve` dispatches three hooks, declared by adding to `@lightstart/cli`'s `Hooks` through declaration merging:
@@ -76,13 +129,18 @@ A route file default-exports a factory `(ctx) => App`, where `ctx` holds `projec
 | `serve:after` | Once listening; its teardown runs at shutdown | `{ projectDir, port, watch, origins: { local, lan? } }` |
 | `serve:file-changed` | On each settled watched change | `{ path, type }`, the project-relative path and `"change"` or `"rename"` |
 
+An extension's fields on `api.payload` are on every serve hook payload, and an extra watched folder's
+path is its label and the relative path.
+
 ## Watch and reload
 
-`--watch` runs a recursive `fs.watch` over the project, ignoring `node_modules`, `.git` and `.deployed`, and debounces changes per path for 50 ms. Each settled change is broadcast to the reload clients as `{ "type": "file-changed", "path": "..." }` and dispatched as `serve:file-changed`. The client at `/__light/reload.js` reloads the page on that message and reconnects a second after the socket drops.
+`--watch` runs a recursive `fs.watch` over the project and over each extra folder an extension added, ignoring `node_modules`, `.git` and `.deployed`, and debounces changes per path for 50 ms. Each settled change is broadcast to the reload clients as `{ "type": "file-changed", "path": "..." }` and dispatched as `serve:file-changed`. The client at `/__light/reload.js` reloads the page on that message and reconnects a second after the socket drops.
 
 ## Build preview
 
 With `--build`, the server does not serve sources. It serves `.deployed/current` strictly: files as they were built, no TypeScript, no importmap and no rewriting, a missing asset a 404, and an extensionless path the build's `index.html`. A project with no build there is an error with exit code 1. The preview does not watch.
+
+An extension may also ask for a preview beside the dev server with `preview(port)`. It starts when the dev server does, serves `.deployed/current` the same strict way, and is skipped with a warning when the port is taken or no build exists.
 
 ## What is node-only
 

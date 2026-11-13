@@ -14,6 +14,8 @@ export type DeployedOptions = {
   dir: string;
   port?: number;
   host?: string;
+  /** How many ports above the requested one to try; 1 when a caller wants that port or none. */
+  attempts?: number;
 };
 
 /** A running build preview: its port and one close. */
@@ -52,14 +54,17 @@ export const createDeployedServer = async (options: DeployedOptions): Promise<De
   };
   const app = new App().all("/*", answer);
   const start = options.port ?? 0;
-  const attempts = start === 0 ? 1 : MAX_PORT_ATTEMPTS;
+  const attempts = options.attempts ?? (start === 0 ? 1 : MAX_PORT_ATTEMPTS);
+  let failure: unknown = null;
   for (let i = 0; i < attempts; i++) {
     try {
       const server = await serve(app, { port: start + i, host: options.host, grace: 1000 });
       return { port: server.port, close: () => server.close() };
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EADDRINUSE") throw error;
+      failure = error;
     }
   }
+  if (failure instanceof Error) throw failure;
   throw new Error(`No free port between ${start} and ${start + attempts - 1}`);
 };
