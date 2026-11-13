@@ -53,4 +53,10 @@ eq("a nested item indents under its parent", nested.join("|"), "• outer|  • 
 const fencedItem = text(renderMarkdown("- ```\n  one\n  two\n  ```\n- next", 40, [], ""));
 eq("an item's marker is on its first line only, a fence in it included", fencedItem.join("|"), "•   one|    two|• next");
 
+const label = [new Run("Claude  ", "")];
+const labelled = text(renderMarkdown("This sentence is long enough that it must wrap at forty columns wide.", 40, [new Run("  ", "")], "", label));
+ok("a label counts in the width of the line it starts", labelled.every((l) => l.length <= 40) && labelled[0].startsWith("Claude    This"));
+eq("a label goes before a list's first marker", text(renderMarkdown("- one\n- two", 40, [], "", label)).join("|"), "Claude  • one|• two");
+eq("and before a fence's first line", text(renderMarkdown("```\nx\n```", 40, [], "", label)).join("|"), "Claude    x");
+
 done();

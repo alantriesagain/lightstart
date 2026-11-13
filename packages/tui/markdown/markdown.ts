@@ -96,76 +96,73 @@ const renderCode = (block: Code, width: number, indent: Run[], fg: string, out: 
   }
 };
 
-const renderList = (list: List, width: number, indent: Run[], fg: string, out: Line[]): void => {
+/**
+ * Starts the first line drawn from `from` on with `lead` in place of `indent`, for a block drawn
+ * line by line rather than wrapped (a fence, a rule, a table).
+ */
+const relead = (out: Line[], from: number, indent: Run[], lead: Run[]): void => {
+  if (lead === indent || out.length <= from) return;
+  out[from].runs = lead.concat(out[from].runs.slice(indent.length));
+};
+
+const renderList = (list: List, width: number, indent: Run[], lead: Run[], fg: string, out: Line[]): void => {
   let number = list.start;
+  let first = true;
   for (const item of list.items) {
     let marker = list.ordered ? String(number) + ". " : "• ";
     if (item.task) marker += item.checked ? "[x] " : "[ ] ";
-    const rest = indent.concat(spaces(marker.length));
-    const rendered: Line[] = [];
-    renderBlocks(item.blocks, width, rest, fg, rendered);
-    if (rendered.length === 0) {
+    const itemLead = (first ? lead : indent).concat([new Run(marker, palette.dim)]);
+    const at = out.length;
+    renderBlocks(item.blocks, width, indent.concat(spaces(marker.length)), itemLead, fg, out);
+    if (out.length === at) {
       const l = new Line();
-      for (const r of indent) l.runs.push(r);
-      l.add(marker, palette.dim);
+      for (const r of itemLead) l.runs.push(r);
       out.push(l);
-    } else {
-      const line = rendered[0];
-      // The indent's runs are shared by every line of the item, so the marker replaces the first
-      // line's run rather than writing into it.
-      if (line.runs.length > indent.length) line.runs[indent.length] = new Run(marker, palette.dim);
-      else line.runs.push(new Run(marker, palette.dim));
-      for (const l of rendered) out.push(l);
     }
+    first = false;
     number++;
   }
 };
 
-const renderBlock = (block: Block, width: number, indent: Run[], fg: string, out: Line[]): void => {
+/** One block: its first line starts with `lead`, the others with `indent`. */
+const renderBlock = (block: Block, width: number, indent: Run[], lead: Run[], fg: string, out: Line[]): void => {
+  const at = out.length;
   if (block instanceof Heading) {
     const runs: Run[] = [];
     addInline(runs, block.children, palette.link, true, false, false, false);
-    for (const l of wrap(runs, width, indent, indent, "")) out.push(l);
-    return;
-  }
-  if (block instanceof Paragraph) {
+    for (const l of wrap(runs, width, lead, indent, "")) out.push(l);
+  } else if (block instanceof Paragraph) {
     const runs: Run[] = [];
     addInline(runs, block.children, fg, false, false, false, false);
-    for (const l of wrap(runs, width, indent, indent, "")) out.push(l);
-    return;
-  }
-  if (block instanceof Code) {
+    for (const l of wrap(runs, width, lead, indent, "")) out.push(l);
+  } else if (block instanceof Code) {
     renderCode(block, width, indent, fg, out);
-    return;
-  }
-  if (block instanceof Rule) {
+    relead(out, at, indent, lead);
+  } else if (block instanceof Rule) {
     const l = new Line();
     for (const r of indent) l.runs.push(r);
     l.runs.push(new Run("─".repeat(Math.max(1, Math.min(width - 2, 60))), palette.dim));
     out.push(l);
-    return;
-  }
-  if (block instanceof Table) {
+    relead(out, at, indent, lead);
+  } else if (block instanceof Table) {
     for (const l of renderTable(block, width, indent, (cell: string, bold: boolean) => inline(cell, fg, bold))) out.push(l);
-    return;
-  }
-  if (block instanceof Quote) {
-    const bar = indent.concat([new Run("│ ", palette.dim)]);
-    renderBlocks(block.blocks, width, bar, palette.dim, out);
-    return;
-  }
-  if (block instanceof List) {
-    renderList(block, width, indent, fg, out);
-    return;
-  }
-  if (block instanceof Html) {
+    relead(out, at, indent, lead);
+  } else if (block instanceof Quote) {
+    const bar = new Run("│ ", palette.dim);
+    renderBlocks(block.blocks, width, indent.concat([bar]), lead.concat([bar]), palette.dim, out);
+  } else if (block instanceof List) {
+    renderList(block, width, indent, lead, fg, out);
+  } else if (block instanceof Html) {
+    let first = true;
     for (const source of block.text.split("\n")) {
-      for (const l of wrap([new Run(source, fg)], width, indent, indent, "")) out.push(l);
+      for (const l of wrap([new Run(source, fg)], width, first ? lead : indent, indent, "")) out.push(l);
+      first = false;
     }
   }
 };
 
-const renderBlocks = (blocks: Block[], width: number, indent: Run[], fg: string, out: Line[]): void => {
+/** Blocks in order, a blank line where the source had one; the first block's first line starts with `lead`. */
+const renderBlocks = (blocks: Block[], width: number, indent: Run[], lead: Run[], fg: string, out: Line[]): void => {
   let first = true;
   for (const block of blocks) {
     if (!first && block.blankBefore) {
@@ -173,18 +170,18 @@ const renderBlocks = (blocks: Block[], width: number, indent: Run[], fg: string,
       for (const r of indent) l.runs.push(r);
       out.push(l);
     }
-    renderBlock(block, width, indent, fg, out);
+    renderBlock(block, width, indent, first ? lead : indent, fg, out);
     first = false;
   }
 };
 
 /**
  * `text` as lines `width` cells wide, every line starting with `indent` (runs, usually spaces or
- * a nesting bar), in `fg`.
+ * a nesting bar), in `fg`; `first` (a label) goes before the first line's indent.
  */
 export const renderMarkdown = (text: string, width: number, indent: Run[], fg: string, first: Run[] = []): Line[] => {
   const out: Line[] = [];
-  renderBlocks(parse(text), width, indent, fg, out);
-  if (first.length > 0 && out.length > 0) out[0].runs = first.concat(out[0].runs);
+  // The label goes before the first line's indent, inside the width when that line wraps.
+  renderBlocks(parse(text), width, indent, first.length > 0 ? first.concat(indent) : indent, fg, out);
   return out;
 };
