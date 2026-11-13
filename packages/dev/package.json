@@ -33,6 +33,7 @@
     "./rewrite": "./rewrite.ts",
     "./shell": "./shell.ts",
     "./pipeline": "./pipeline.ts",
+    "./extension": "./extension.ts",
     "./types": "./types.ts",
     "./hooks": "./hooks.ts",
     "./*": "./*"

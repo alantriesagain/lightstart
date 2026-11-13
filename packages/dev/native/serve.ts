@@ -41,6 +41,10 @@ class EmptyCli implements CliApi {
   loadRoutes(): Promise<readonly unknown[]> {
     return Promise.resolve([]);
   }
+
+  extend(): Promise<void> {
+    return Promise.resolve();
+  }
 }
 
 const MODULES = new Set([".js", ".mjs", ".mts", ".ts", ".tsx"]);

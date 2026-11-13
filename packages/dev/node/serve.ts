@@ -1,6 +1,7 @@
 /**
- * @file `light serve`: resolve the project, run the hooks, build the pipeline, listen on the first
- * free port, watch and broadcast changes, and take everything down on SIGINT or SIGTERM.
+ * @file `light serve`: resolve the project, open the command to extensions, run the hooks, build
+ * the pipeline, listen on the first free port, watch and broadcast changes, and take everything
+ * down on SIGINT or SIGTERM.
  */
 import { readFile, stat } from "node:fs/promises";
 import { networkInterfaces } from "node:os";
@@ -9,14 +10,16 @@ import type { CommandContext } from "@lightstart/cli";
 import { App, fail } from "@lightstart/server";
 import { serve, type NodeServer } from "@lightstart/server/node";
 import { MAX_PORT_ATTEMPTS, resolvePort } from "../config.ts";
+import { ServeExtension, withBasePaths } from "../extension.ts";
+import type { ServeAfterPayload, ServeBeforePayload, ServeFileChangedPayload } from "../hooks.ts";
 import { importmapFromHtml, mergeImportMaps, type ImportMap } from "../importmap.ts";
 import { createPipeline } from "../pipeline.ts";
 import type { RouteFactory } from "../types.ts";
-import { createDeployedServer } from "./deployed.ts";
+import { createDeployedServer, type DeployedServer } from "./deployed.ts";
 import { attachSockets } from "./hmr.ts";
 import { buildImportMap, devPortOf, readPackageJson } from "./importmap.ts";
 import { createModuleTransform } from "./transform.ts";
-import { startWatcher } from "./watch.ts";
+import { startWatcher, type Watcher } from "./watch.ts";
 
 /** What `light serve` accepts after its flags are parsed. */
 export type ServeArgs = {
@@ -71,14 +74,19 @@ const urlsFor = (port: number, host: string): { local: string; lan: string[] } =
   return { local, lan: host === "0.0.0.0" ? lanAddresses().map((address) => `http://${address}:${port}`) : [] };
 };
 
-/** Start a dev server (or, with `--build`, a build preview) and resolve when it closes. */
+const watchedPath = (label: string, path: string): string => (label === "" ? path : label + "/" + path);
+
+/** Start the dev server (or, with `--build`, a build preview) and resolve when it closes. */
 export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise<number> => {
   const projectDir = await resolveProjectDir(ctx.cwd, args.dir);
   const pkg = readPackageJson(projectDir);
   const basePort = resolvePort({ argsPort: args.port, pkgPort: devPortOf(pkg), env: ctx.env });
   const host = bindHostFor(args.host ?? "127.0.0.1");
   const watch = args.watch === true;
-  const before = await ctx.cli.runHook("serve:before", { projectDir, port: basePort, watch });
+  const extension = new ServeExtension(await projectImportMap(projectDir));
+  await ctx.cli.extend("serve", extension);
+  const beforePayload = { ...extension.payload, projectDir, port: basePort, watch } as unknown as ServeBeforePayload;
+  const before = await ctx.cli.runHook("serve:before", beforePayload);
 
   if (args.build === true) {
     const dir = join(projectDir, ".deployed", "current");
@@ -93,11 +101,12 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
     ctx.log.log(`Serving the build at ${urls.local}`);
     for (const url of urls.lan) ctx.log.log(`LAN: ${url}`);
     const after = await ctx.cli.runHook("serve:after", {
+      ...extension.payload,
       projectDir,
       port: server.port,
       watch: false,
       origins: { local: urls.local, ...(urls.lan[0] === undefined ? {} : { lan: urls.lan[0] }) },
-    });
+    } as unknown as ServeAfterPayload);
     return await new Promise<number>((resolve: (code: number) => void) => {
       let closing = false;
       const shutdown = async (): Promise<void> => {
@@ -113,7 +122,7 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
     });
   }
 
-  const importmap = await projectImportMap(projectDir);
+  const importmap = extension.importmap;
   const routes = await routeFactories(ctx);
   const pipeline = createPipeline({
     projectDir,
@@ -123,16 +132,51 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
     importmap,
     transform: createModuleTransform(importmap),
     watch,
+    extension,
   });
-  const app = new App().all("/*", async (c) => (await pipeline.handle(c)) ?? fail("Not found: " + c.path, 404));
+  extension.app.all("/*", async (c) => (await pipeline.handle(c)) ?? fail("Not found: " + c.path, 404));
+  const app = withBasePaths(extension.app, extension.basePaths);
   const server = await listenOnFreePort(app, basePort, host);
   const sockets = attachSockets(server.server, pipeline.apps);
-  const watcher = watch
-    ? startWatcher(projectDir, (event) => {
+  const watchers: Watcher[] = [];
+  if (watch) {
+    watchers.push(
+      startWatcher(projectDir, (event) => {
         sockets.broadcast({ type: "file-changed", path: event.path });
-        void ctx.cli.runHook("serve:file-changed", { path: event.path, type: event.type });
-      }, ctx.log)
-    : null;
+        void ctx.cli.runHook("serve:file-changed", { ...extension.payload, path: event.path, type: event.type } as unknown as ServeFileChangedPayload);
+      }, ctx.log),
+    );
+    for (const watched of extension.watches) {
+      watchers.push(
+        startWatcher(watched.dir, (event) => {
+          const path = watchedPath(watched.label, event.path);
+          sockets.broadcast({ type: "file-changed", path });
+          void ctx.cli.runHook("serve:file-changed", { ...extension.payload, path, type: event.type } as unknown as ServeFileChangedPayload);
+        }, ctx.log),
+      );
+    }
+  }
+
+  const previews: DeployedServer[] = [];
+  for (const port of extension.previews) {
+    const dir = join(projectDir, ".deployed", "current");
+    const found = await stat(dir).catch(() => null);
+    if (found === null) {
+      ctx.log.warn(`No build at ${dir}: preview on port ${port} skipped`);
+      continue;
+    }
+    try {
+      const preview = await createDeployedServer({ dir, port, host, attempts: 1 });
+      previews.push(preview);
+      ctx.log.log(`Build preview at ${urlsFor(preview.port, host).local}`);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EADDRINUSE") {
+        ctx.log.warn(`Port ${port} is taken: preview skipped`);
+        continue;
+      }
+      throw error;
+    }
+  }
 
   const urls = urlsFor(server.port, host);
   ctx.log.log(`Dev server running at ${urls.local}`);
@@ -140,11 +184,12 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
   if (watch) ctx.log.log(`Watching ${projectDir} for changes`);
 
   const after = await ctx.cli.runHook("serve:after", {
+    ...extension.payload,
     projectDir,
     port: server.port,
     watch,
     origins: { local: urls.local, ...(urls.lan[0] === undefined ? {} : { lan: urls.lan[0] }) },
-  });
+  } as unknown as ServeAfterPayload);
 
   return await new Promise<number>((resolve: (code: number) => void) => {
     let closing = false;
@@ -154,7 +199,8 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
       ctx.log.log("Shutting down...");
       await after.teardown();
       await before.teardown();
-      watcher?.close();
+      for (const watcher of watchers) watcher.close();
+      for (const preview of previews) await preview.close();
       sockets.close();
       await server.close();
       resolve(0);

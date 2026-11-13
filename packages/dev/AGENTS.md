@@ -11,11 +11,12 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `importmap.ts` | `packageImports`, `importMapFor`, `declaredPackages`, `mergeImportMaps`, `importmapFromHtml` |
 | `rewrite.ts` | `resolveSpecifier`, `rewriteSpecifiers` |
 | `shell.ts` | `renderShell`, `RELOAD_CLIENT` |
-| `pipeline.ts` | `createPipeline`: the request order, the shell, `.js` to `.ts`/`.tsx` probing |
+| `pipeline.ts` | `createPipeline`: the request order, extension apps and file roots, the shell, `.js` to `.ts`/`.tsx` probing |
+| `extension.ts` | `ServeExtension` and the base-path wrapper: the api `light serve` opens to extensions |
 | `types.ts` | `RouteContext`, `RouteFactory`, `ModuleTransform` |
-| `hooks.ts` | `serve:before`, `serve:after` and `serve:file-changed`, added to `Hooks` by declaration merging |
+| `hooks.ts` | `serve:before`, `serve:after` and `serve:file-changed`, added to `Hooks` by declaration merging, and `serve` added to `Extensions` |
 | `node/` | The disk importmap, type stripping, `startServer`, the build preview, the websockets and the watcher |
-| `cli/commands/serve.ts` | `light serve`: the flags, then `startServer` |
+| `cli/commands/serve.ts` | `light serve`: the flags, then `startServer`, which opens the command to extensions |
 | `native/serve.ts` | The native entry: serves a folder without TypeScript |
 | `test/` | Plain scripts on `@light/test/assert.ts`; `test/fixtures/project` has a package, a page and TypeScript modules |
 
@@ -28,6 +29,9 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - The pipeline order is route apps, the reload client, files, the shell for `/` and extensionless paths, then a 404 for a missing asset. Route, reload, file and shell replies are `no-store`. A `.js` request probes `.ts` and `.tsx`; only modules are transformed and a `.d.ts` is left as it is.
 - The watcher ignores `node_modules`, `.git` and `.deployed`, debounces per path for 50 ms, broadcasts to the reload clients and then dispatches `serve:file-changed`.
 - Route apps are built once; `pass()` falls through to the next. A websocket upgrade goes to the route apps first, and the rest join the reload set.
+- `startServer` builds `ServeExtension` after the project, port and importmap are known, calls `ctx.cli.extend("serve", api)` before the hooks and before listening, and applies what setup changed: the root app, handled apps after route apps and before files, extra roots, the mutable importmap, the page renderer and page file, extra watched folders, base paths and build previews. With no extension everything is unchanged.
+- An extension's `api.payload` fields are spread into every serve hook payload. The hook payloads stay interfaces so another package widens them by declaration merging.
+- Extension work stays in the core where it compiles statically; `native/serve.ts` and its empty CLI keep the native entry compiling.
 - Tests are plain scripts on `@light/test/assert.ts`, not a test framework. A node-only test starts with `// node-only` and is left out of the native and coverage runs.
 - Comments are a JSDoc module header and JSDoc on exported symbols, nothing else.
 - TypeScript with erasable syntax only; the package ships its sources and needs no build step.
@@ -37,7 +41,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | Contract | Who relies on it |
 |---|---|
 | `startServer(ctx, args)` and the `serve` command flags | `light serve`, and the hooks a project contributes under `cli/hooks/` |
-| The hook names and payloads (`serve:before`, `serve:after`, `serve:file-changed`) declared on `@lightstart/cli`'s `Hooks` | project hook files, and any package that dispatches or listens to `light serve` |
+| The hook names and payloads (`serve:before`, `serve:after`, `serve:file-changed`) declared on `@lightstart/cli`'s `Hooks`, and the `serve` extension api on `Extensions` | project hook and extension files, and any package that dispatches or listens to `light serve` |
+| `ServeExtension` and its methods (`app`, `handle`, `root`, `importmap`, `page`, `pageFile`, `watch`, `basePath`, `preview`, `payload`) | extension files under a project's scopes |
 | `resolvePort`, `DEFAULT_PORT` and `MAX_PORT_ATTEMPTS` | the serve command's port behavior and the build preview |
 | `createPipeline`, `renderShell`, `RELOAD_CLIENT`, `buildImportMap` and `createModuleTransform` | `@lightstart/dev/node`, the native entry, and the pipeline tests |
 | `.deployed/current` naming the newest build | `--build`, and `@lightstart/build`, whose output this preview serves |
