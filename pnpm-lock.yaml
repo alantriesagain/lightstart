@@ -133,6 +133,15 @@ importers:
         specifier: workspace:*
         version: link:../light
 
+  packages/markdown:
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../tui/test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
   packages/native/cli:
     dependencies:
       '@lightstart/light':
@@ -262,6 +271,9 @@ importers:
       '@lightstart/light':
         specifier: workspace:*
         version: link:../../light
+      '@lightstart/markdown':
+        specifier: workspace:*
+        version: link:../../markdown
     devDependencies:
       '@light/test':
         specifier: workspace:*

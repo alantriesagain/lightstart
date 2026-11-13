@@ -48,4 +48,9 @@ ok("inline bold, code and italic keep their runs", rich.some((r) => r.text === "
 const ragged = text(renderMarkdown("| a | b |\n|---|---|\n| 1 |\n| 2 | 3 | 4 |", 40, [], ""));
 eq("a short row is padded and a long one cut to the header's columns", ragged.slice(2).join("\n"), "1 │\n2 │ 3");
 
+const nested = text(renderMarkdown("- outer\n  - inner\n- second", 40, [], ""));
+eq("a nested item indents under its parent", nested.join("|"), "• outer|  • inner|• second");
+const fencedItem = text(renderMarkdown("- ```\n  one\n  two\n  ```\n- next", 40, [], ""));
+eq("an item's marker is on its first line only, a fence in it included", fencedItem.join("|"), "•   one|    two|• next");
+
 done();

@@ -9,85 +9,15 @@ import { palette } from "@light/ui/palette.ts";
 import { Line, Run } from "@lightstart/light/native/tui/lines.ts";
 import { wrap } from "@light/ui/text.ts";
 import { stringWidth } from "@lightstart/light/native/tui/width.ts";
+import { Table } from "@lightstart/markdown";
+import type { Align } from "@lightstart/markdown";
+
+export { Table, cells, parseTable } from "@lightstart/markdown";
+export type { Align } from "@lightstart/markdown";
 
 const BAR = " │ ";
 /** A column narrows no further than this; past it the table lists its rows instead. */
 const MIN_COLUMN = 6;
-
-export type Align = "left" | "center" | "right";
-
-export class Table {
-  header: string[];
-  aligns: Align[];
-  rows: string[][];
-
-  constructor(header: string[], aligns: Align[], rows: string[][]) {
-    this.header = header;
-    this.aligns = aligns;
-    this.rows = rows;
-  }
-}
-
-/** The cells of a row: split on bars outside code spans, `\|` a bar in a cell, the outer bars dropped. */
-export const cells = (line: string): string[] => {
-  const out: string[] = [];
-  let buf = "";
-  let ticks = 0;
-  for (let i = 0; i < line.length; i++) {
-    const c = line.charAt(i);
-    if (c === "\\" && line.charAt(i + 1) === "|") {
-      buf += "|";
-      i++;
-      continue;
-    }
-    if (c === "`") {
-      let n = 1;
-      while (line.charAt(i + n) === "`") n++;
-      if (ticks === 0) ticks = n;
-      else if (ticks === n) ticks = 0;
-      buf += "`".repeat(n);
-      i += n - 1;
-      continue;
-    }
-    if (c === "|" && ticks === 0) {
-      out.push(buf);
-      buf = "";
-      continue;
-    }
-    buf += c;
-  }
-  out.push(buf);
-  const t = line.trim();
-  if (t.startsWith("|")) out.shift();
-  if (t.endsWith("|") && !t.endsWith("\\|")) out.pop();
-  return out.map((c) => c.trim());
-};
-
-/** Whether `line` is the row under a header that gives each column's alignment: dashes, with a colon at either end. */
-const isDelimiter = (line: string): boolean => {
-  if (!line.includes("-")) return false;
-  const cs = cells(line);
-  return cs.length > 0 && cs.every((c) => /^:?-+:?$/.test(c));
-};
-
-const alignOf = (c: string): Align => (c.startsWith(":") && c.endsWith(":") ? "center" : c.endsWith(":") ? "right" : "left");
-
-/** The table whose header stands at `lines[at]` over a delimiter row, and the index after its last row; null when none does. */
-export const parseTable = (lines: string[], at: number): { table: Table; end: number } | null => {
-  if (at + 1 >= lines.length || !lines[at].includes("|") || !isDelimiter(lines[at + 1])) return null;
-  const header = cells(lines[at]);
-  const delimiter = cells(lines[at + 1]);
-  if (header.length === 0 || header.length !== delimiter.length) return null;
-  const rows: string[][] = [];
-  let end = at + 2;
-  while (end < lines.length && lines[end].includes("|") && lines[end].trim().length > 0) {
-    const row = cells(lines[end]);
-    while (row.length < header.length) row.push("");
-    rows.push(row.slice(0, header.length));
-    end++;
-  }
-  return { table: new Table(header, delimiter.map(alignOf), rows), end };
-};
 
 const widthOf = (runs: Run[]): number => {
   let w = 0;
@@ -139,7 +69,7 @@ const listed = (styled: Run[][][], width: number, indent: Run[], room: number): 
   for (const h of styled[0]) labelWidth = Math.max(labelWidth, widthOf(h));
   labelWidth = Math.min(labelWidth, Math.max(4, Math.floor(room / 3)));
   const dim = (runs: Run[]): Run[] =>
-    runs.map((r) => {
+    runs.map((r: Run) => {
       const c = r.restyle(r.text);
       c.fg = palette.dim;
       return c;
@@ -165,8 +95,8 @@ export const renderTable = (table: Table, width: number, indent: Run[], style: (
   for (const r of indent) indentWidth += stringWidth(r.text);
   const room = Math.max(1, width - indentWidth);
   const n = table.header.length;
-  const styled: Run[][][] = [table.header.map((c) => style(c, true))];
-  for (const row of table.rows) styled.push(row.map((c) => style(c, false)));
+  const styled: Run[][][] = [table.header.map((c: string) => style(c, true))];
+  for (const row of table.rows) styled.push(row.map((c: string) => style(c, false)));
   const natural: number[] = [];
   for (let i = 0; i < n; i++) natural.push(1);
   for (const row of styled) for (let i = 0; i < n; i++) natural[i] = Math.max(natural[i], widthOf(row[i]));
@@ -174,7 +104,7 @@ export const renderTable = (table: Table, width: number, indent: Run[], style: (
   if (widths === null) return listed(styled, width, indent, room);
   const out: Line[] = [];
   for (let r = 0; r < styled.length; r++) {
-    const cellLines = styled[r].map((runs, i) => wrap(runs, widths[i], [], [], ""));
+    const cellLines = styled[r].map((runs: Run[], i: number) => wrap(runs, widths[i], [], [], ""));
     let height = 1;
     for (const ls of cellLines) height = Math.max(height, ls.length);
     for (let k = 0; k < height; k++) {
@@ -186,7 +116,7 @@ export const renderTable = (table: Table, width: number, indent: Run[], style: (
       }
       out.push(withIndent(indent, runs, k > 0));
     }
-    if (r === 0) out.push(withIndent(indent, [new Run(widths.map((w) => "─".repeat(w)).join("─┼─"), palette.dim)], false));
+    if (r === 0) out.push(withIndent(indent, [new Run(widths.map((w: number) => "─".repeat(w)).join("─┼─"), palette.dim)], false));
   }
   return out;
 };

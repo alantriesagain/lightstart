@@ -1,0 +1,32 @@
+{
+  "name": "@lightstart/markdown",
+  "version": "0.1.0",
+  "description": "One Markdown parser in classes: blocks (headings, paragraphs, fenced code, lists, quotes, rules, tables, raw HTML) and the inline nodes inside them. No rendering, no DOM.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/markdown"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "markdown",
+    "parser",
+    "scriptc"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  }
+}
