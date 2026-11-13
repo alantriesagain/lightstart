@@ -1,0 +1,49 @@
+{
+  "name": "@lightstart/dev",
+  "version": "0.1.0",
+  "description": "The dev server behind light serve: static files with TypeScript stripped and bare specifiers resolved through an importmap, the app shell, routes and hooks from cli/ folders, a watcher with live reload.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/dev"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "dev-server",
+    "importmap",
+    "live-reload",
+    "scriptc"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "pack": "node scripts/pack.js"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./node": "./node/index.ts",
+    "./config": "./config.ts",
+    "./importmap": "./importmap.ts",
+    "./rewrite": "./rewrite.ts",
+    "./shell": "./shell.ts",
+    "./pipeline": "./pipeline.ts",
+    "./types": "./types.ts",
+    "./hooks": "./hooks.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/server": "workspace:*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}

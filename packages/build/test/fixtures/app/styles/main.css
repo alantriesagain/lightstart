@@ -1,0 +1,5 @@
+@import "./base.css";
+
+.icon {
+  background-image: url("../images/pixel.svg");
+}

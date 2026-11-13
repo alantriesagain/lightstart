@@ -1,0 +1,9 @@
+{
+  "name": "fixture-app",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./app.js",
+    "./types": "./types.ts"
+  }
+}

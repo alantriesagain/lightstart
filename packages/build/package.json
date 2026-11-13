@@ -1,0 +1,40 @@
+{
+  "name": "@lightstart/build",
+  "version": "0.1.0",
+  "description": "The production build behind light build: a page's modules bundled with esbuild through its importmap, assets copied, the shell written with content-hashed URLs, builds kept by id.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/build"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": ["build", "bundle", "esbuild", "importmap"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "pack": "node scripts/pack.js"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/cli": "workspace:*",
+    "esbuild": "^0.28.2"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@lightstart/server": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  },
+  "native": {
+    "tooling": true
+  }
+}
