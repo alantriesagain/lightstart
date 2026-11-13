@@ -6,6 +6,7 @@ packages:
   - 'packages/lightstart'
   - 'packages/router'
   - 'packages/server'
+  - 'packages/cli'
   - 'packages/sqlite'
   - 'packages/markdown'
   - 'benchmarks'

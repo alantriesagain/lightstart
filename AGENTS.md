@@ -4,7 +4,7 @@ Each package has its own rules where it has an `AGENTS.md` (`packages/server/AGE
 
 ## Packages
 
-A new module is its own scoped package, `@lightstart/<name>` in `packages/<name>/`, as `@lightstart/server` and `@lightstart/sqlite` are. Never add a subpath to light for it (`@lightstart/light/<name>`): `@lightstart/light` holds the engine, and what is built on it ships beside it.
+A new module is its own scoped package, `@lightstart/<name>` in `packages/<name>/`, as `@lightstart/server`, `@lightstart/sqlite` and `@lightstart/cli` are. Never add a subpath to light for it (`@lightstart/light/<name>`): `@lightstart/light` holds the engine, and what is built on it ships beside it.
 
 ## Workflow
 
