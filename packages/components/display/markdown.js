@@ -7,13 +7,70 @@ import { createSlugger } from "../utils/slug.js";
 /** @param {string} text */
 const escapeAttribute = (text) => text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/** @type {Map<string, string>} */
+const NAMED_ENTITIES = new Map([
+  ["colon", ":"],
+  ["tab", "\t"],
+  ["newline", "\n"],
+  ["amp", "&"],
+  ["lpar", "("],
+  ["rpar", ")"],
+]);
+
+/**
+ * One character reference as its text, or the reference unchanged when it names no code point.
+ * @param {string} digits
+ * @param {number} radix
+ * @param {string} fallback
+ */
+const codePoint = (digits, radix, fallback) => {
+  const code = Number.parseInt(digits, radix);
+  return Number.isSafeInteger(code) && code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : fallback;
+};
+
+/** @param {string} text */
+const decodeEntitiesOnce = (text) =>
+  text
+    .replace(/&#x([0-9a-f]+);/gi, (entity, hex) => codePoint(hex, 16, entity))
+    .replace(/&#([0-9]+);/g, (entity, decimal) => codePoint(decimal, 10, entity))
+    .replace(/&([a-z][a-z0-9]+);/gi, (entity, name) => NAMED_ENTITIES.get(name.toLowerCase()) ?? entity);
+
+/**
+ * Decode what a browser would decode, so `java&#x09;script:` cannot hide a scheme.
+ * @param {string} text
+ */
+const decodeEntities = (text) => {
+  let decoded = text;
+  for (let pass = 0; pass < 5; pass++) {
+    const next = decodeEntitiesOnce(decoded);
+    if (next === decoded) break;
+    decoded = next;
+  }
+  return decoded;
+};
+
+/**
+ * Whether a href is relative or uses http, https or mailto. A colon after a
+ * path, query or fragment delimiter is not a scheme.
+ * @param {string} href
+ */
+const safeUrl = (href) => {
+  const url = decodeEntities(href).replace(/[\u0000-\u0020\u007f]/g, "").toLowerCase();
+  return !/^[a-z][a-z0-9+.-]*:/.test(url) || /^(https?|mailto):/.test(url);
+};
+
 /**
  * What one parse collects. `marked` is one module-wide instance and `parse`
  * is synchronous, so the component points this at its own record before
  * parsing and the renderers write into it.
- * @type {{ slug: (text: string) => string, headings: MarkdownHeading[], anchors: boolean }}
+ * @type {{ slug: (text: string) => string, headings: MarkdownHeading[], anchors: boolean, unsafeHtml: boolean }}
  */
-let current = { slug: createSlugger(), headings: [], anchors: false };
+let current = {
+  slug: createSlugger(),
+  headings: [],
+  anchors: false,
+  unsafeHtml: /** @type {boolean} */ (false),
+};
 
 const renderer = {
   /**
@@ -40,6 +97,28 @@ const renderer = {
     const lang = typeof token === "object" ? token.lang : info;
     const language = (lang || "").split(/\s/)[0];
     return `<lc-code-block language="${escapeAttribute(language)}" code="${escapeAttribute(text)}"></lc-code-block>\n`;
+  },
+  /**
+   * @param {{ text: string }} token
+   */
+  html(token) {
+    if (current.unsafeHtml) return false;
+    return escapeAttribute(token.text);
+  },
+  /**
+   * @this {{ parser: { parseInline: (tokens: unknown[]) => string } }}
+   * @param {{ href: string, text: string, tokens: unknown[] }} token
+   */
+  link(token) {
+    if (safeUrl(token.href)) return false;
+    return this.parser.parseInline(token.tokens);
+  },
+  /**
+   * @param {{ href: string, text: string }} token
+   */
+  image(token) {
+    if (safeUrl(token.href)) return false;
+    return escapeAttribute(token.text);
   },
 };
 
@@ -86,8 +165,7 @@ const loadMarked = () => {
           },
           /** @param {{ name: string, display: string }} token */
           renderer(token) {
-            const escaped = token.name.replace(/"/g, "&quot;");
-            return `<a class="wiki-link" data-name="${escaped}">${token.display}</a>`;
+            return `<a class="wiki-link" data-name="${escapeAttribute(token.name)}">${escapeAttribute(token.display)}</a>`;
           },
         },
       ],
@@ -97,12 +175,31 @@ const loadMarked = () => {
   return _markedPromise;
 };
 
+/**
+ * Markdown Component
+ *
+ * @component
+ * @category display
+ * @tag lc-markdown
+ *
+ * Renders markdown through `marked`, styled by the theme's prose rules. Raw HTML in the
+ * content shows as text unless `unsafeHtml` is set, which a caller does only for content
+ * it trusts. Links keep only `http`, `https`, `mailto` and relative targets, in both modes.
+ *
+ * @example
+ * ```html
+ * <lc-markdown .content=${doc}></lc-markdown>
+ * <lc-markdown anchors .content=${guide}></lc-markdown>
+ * <lc-markdown .content=${trusted} .unsafeHtml=${true}></lc-markdown>
+ * ```
+ */
 export default defineComponent({
   tag: "lc-markdown",
   style: true,
   props: {
     content: T.string(),
     anchors: T.boolean(),
+    unsafeHtml: T.boolean({ attribute: false, defaultValue: false }),
     onWikiLink: T.function(),
     _marked: /** @type {Prop<MarkedLike | null>} */ (T.object({ attribute: false })),
     _headings: /** @type {Prop<MarkdownHeading[]>} */ (T.array({ attribute: false, defaultValue: [], reactive: false })),
@@ -135,7 +232,7 @@ export default defineComponent({
 
   render() {
     if (!this._marked) return "";
-    current = { slug: createSlugger(), headings: [], anchors: this.anchors };
+    current = { slug: createSlugger(), headings: [], anchors: this.anchors, unsafeHtml: !!this.unsafeHtml };
     const rendered = this._marked.parse(this.content || "");
     this._headings = current.headings;
     return unsafeHTML(rendered);

@@ -10,6 +10,15 @@ Install the package and write the tag. There is **no import step**.
 
 > A framework sized like a library.`;
 
+const trusted = `Content the app's own authors wrote can mix in HTML:
+
+<details>
+<summary>What the installer writes</summary>
+
+A \`package.json\` and a root \`routes.js\`.
+
+</details>`;
+
 const guide = `## Routes
 
 Every app declares its route table in a root \`routes.js\`:
@@ -40,6 +49,13 @@ export default {
       description: "Every heading gets an id; `anchors` shows a link to it on hover. A fenced block renders through lc-code-block.",
       render: () => html`
         <lc-markdown anchors .content=${guide}></lc-markdown>
+      `,
+    },
+    {
+      title: "Trusted raw HTML",
+      description: "Raw HTML renders as text unless `.unsafeHtml` is set, which a caller does only for content it trusts.",
+      render: () => html`
+        <lc-markdown .content=${trusted} .unsafeHtml=${true}></lc-markdown>
       `,
     },
   ],

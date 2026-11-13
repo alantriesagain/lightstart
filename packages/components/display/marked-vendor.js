@@ -10,4 +10,4 @@
  * so marked is fetched only when the first `<lc-markdown>` connects.
  */
 
-export { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
+export { marked } from "https://cdn.jsdelivr.net/npm/marked@18.1.0/lib/marked.esm.js";
