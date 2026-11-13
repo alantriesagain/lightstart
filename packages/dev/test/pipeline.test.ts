@@ -22,6 +22,7 @@ const cli: CommandContext["cli"] = {
   runHook: async () => ({ ran: 0, failed: 0, teardown: async () => {} }),
   listCommands: () => [],
   loadRoutes: async () => [],
+  extend: async () => {},
 };
 
 const built = buildImportMap(projectDir);
