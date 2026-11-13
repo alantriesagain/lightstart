@@ -38,6 +38,51 @@ npx light test --headed counter.browser.test.js                  # watch it
 
 For a setup of your own, the pieces are exported: `runFiles` (`test/run.js`) is the loop, `serve` (`test/serve.js`) the static server with the runner page, `runnerPage` (`test/page.js`) the page itself. A host that serves its own pages passes `runFiles` the URL of its runner for each file; the page imports `harness.js` and `report.js`, runs the file and publishes a `WireRun` on `window.testResults`.
 
+## Extending light test
+
+A package adds `cli/extend/test.ts`, default-exporting
+`defineExtension("test", { args, setup })`. Its `setup(ctx, args, api)` runs
+before the command picks its files or groups, and `api` is:
+
+| Member | What it does |
+|---|---|
+| `group({ name, flag?, description, run })` | Adds a test group; `flag` names an extension argument that selects it |
+| `runnerPage(render)` | Replaces the runner page light's own browser run serves |
+
+With no files, `light test` runs every group, or only the groups whose flags
+were given; the exit is 0 only when every run group passed. A group's
+`run(input)` receives the parsed `args`, the `projectDir`, the `root`,
+`headless`, the `timeoutMs`, and light's own `runFiles` and `serve`, so it can
+run its own browser tests with its own runner page and server. With files,
+light's browser runner runs them as before and the groups do not.
+
+```ts
+import { defineExtension } from "@lightstart/cli";
+
+export default defineExtension("test", {
+  args: { browser: { flag: true, description: "Run the browser tests" } },
+  setup(_ctx, _args, api) {
+    api.group({
+      name: "browser",
+      flag: "browser",
+      description: "The app's browser tests",
+      async run(input) {
+        const { server, url } = await input.serve(input.root);
+        try {
+          return await input.runFiles({
+            files: [{ label: "app.test.js", url: "/app.test.js" }],
+            runnerUrl: (file) => `${url}/__light/runner?file=${encodeURIComponent(file)}`,
+            headless: input.headless,
+          });
+        } finally {
+          server.close();
+        }
+      },
+    });
+  },
+});
+```
+
 ## What `node:test` covers here
 
 `test`/`it`, `describe`/`suite`, their `.skip`, `.todo` and `.only`, `before`/`after`/`beforeEach`/`afterEach`, the options `skip`, `todo`, `only`, `timeout` (on a test) `plan` and `concurrency`, and the test context: `name`, `fullName`, `signal`, `mock`, `diagnostic`, `skip`, `todo`, `plan`, `before` (once before the first subtest), `after`, `t.test` subtests and `t.assert` (which counts toward `plan`). `mock.fn`, `mock.method`, `mock.getter`, `mock.setter`, `mock.reset` and `mock.restoreAll` answer the node shapes (`calls[i].arguments`, `callCount`, `mockImplementation`, `mockImplementationOnce`, `resetCalls`). `node:assert` and `node:assert/strict` are both here.

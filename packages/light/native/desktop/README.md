@@ -32,6 +32,45 @@ On Linux the build needs `pkg-config`, `g++`, `cc`, `ar` and the development pac
 (`libwebkit2gtk-4.1-dev` on Debian and Ubuntu, which brings GTK 3). A built app needs only the
 runtime libraries, which a desktop already has (`libwebkit2gtk-4.1-0`).
 
+## Development
+
+`light desktop dev [dir] [--port <n>] [--attach]` serves the project with
+`light serve` on `--port`, or the project's `light.dev.port`, or 3500; it waits
+until the origin answers and then opens the shell on it, taking both down
+together. `--attach` reuses a server already answering there and leaves it
+running. The shell is light's own, built from `shell/backend.js`; when it cannot
+be built (no WebKitGTK, no scriptc), a desktop extension must name one.
+
+## Extending light desktop
+
+A package adds `cli/extend/desktop.ts`, default-exporting
+`defineExtension("desktop", { args, setup })`. Its `setup(ctx, args, api)` runs
+before `dev` starts the server, and `api` is:
+
+| Member | What it does |
+|---|---|
+| `host(resolve)` | Names the executable that opens the window; `resolve(input)` answers its path |
+| `hostArgs(add)` | Adds arguments to the host executable (`add(args, input)`, return a list or push) |
+| `serveArgs(add)` | Adds arguments to the spawned `light serve` (`add(args, input)`, return a list or push) |
+
+`input` is `{ args, projectDir, origin, port, attach }`. The origin is the
+host's first argument, before the `hostArgs` additions:
+
+```ts
+import { defineExtension } from "@lightstart/cli";
+
+export default defineExtension("desktop", {
+  args: { devtools: { flag: true } },
+  setup(_ctx, args, api) {
+    api.host(() => "my-shell");
+    if (args.devtools) api.hostArgs((list) => { list.push("--devtools"); });
+    api.serveArgs((list) => { list.push("--watch"); });
+  },
+});
+```
+
+The existing subcommands (`shim`, `smoke`, `build`, `run`) are unchanged.
+
 ## An app
 
 Three files: the contract, the backend, the page.
