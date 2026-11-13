@@ -6,9 +6,11 @@ import { existsSync, promises as fs } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 import { bundleModules, bundleStyles } from "./bundle.ts";
 import { generateBuildId } from "./build-id.ts";
+import { BuildSteps } from "./extension.ts";
+import type { BuildExtension, BuildExtensionOptions } from "./extension.ts";
 import { parsePage, renderPage } from "./html.ts";
 import { parseImportMap } from "./importmap.ts";
-import type { BuildContext, BuildFile, BuildOptions, BuildReport, BuildStep } from "./types.ts";
+import type { BuildContext, BuildFile, BuildLog, BuildOptions, BuildReport, BuildStep } from "./types.ts";
 import { cleanupOldBuilds, updateCurrent } from "./versioning.ts";
 
 const readPage = async (ctx: BuildContext): Promise<void> => {
@@ -76,17 +78,42 @@ const uniqueId = async (outDir: string): Promise<string> => {
 
 const byteLength = (content: Uint8Array | string): number => (typeof content === "string" ? Buffer.byteLength(content) : content.byteLength);
 
-/** Build a page and its assets into `<root>/<outDir>/builds/<id>/`, point `current` at it, and prune old builds. */
-export const build = async (options: BuildOptions): Promise<BuildReport> => {
-  const started = Date.now();
+const builtInSteps = (): BuildStep[] => [
+  { name: "page", run: readPage },
+  { name: "modules", run: bundleModules },
+  { name: "stylesheets", run: bundleStyles },
+  { name: "public", run: copyPublic },
+  { name: "html", run: writePage },
+  { name: "write", run: writeBuild },
+];
+
+const resolvedOptions = (options: BuildOptions): BuildExtensionOptions => {
   const root = resolve(options.root);
-  const page = options.page ?? "index.html";
-  const outDir = resolve(root, options.outDir ?? ".deployed");
+  const keep = options.keep ?? 5;
+  return {
+    root,
+    page: options.page ?? "index.html",
+    outDir: resolve(root, options.outDir ?? ".deployed"),
+    minify: options.minify ?? true,
+    keep: Number.isFinite(keep) ? Math.max(1, keep) : 5,
+  };
+};
+
+/** The api `light build` hands an extension: the built-in steps, the resolved options, `spa` and empty data. */
+export const createBuildExtension = (options: BuildOptions): BuildExtension => ({
+  steps: new BuildSteps(builtInSteps()),
+  options: resolvedOptions(options),
+  mode: "spa",
+  data: new Map<string, unknown>(),
+});
+
+const runBuild = async (extension: BuildExtension, log: BuildLog): Promise<BuildReport> => {
+  const started = Date.now();
+  const { root, page, outDir, minify } = extension.options;
+  const keep = Number.isFinite(extension.options.keep) ? Math.max(1, extension.options.keep) : 5;
   const pagePath = resolve(root, page);
   const id = await uniqueId(outDir);
   const buildDir = resolve(outDir, "builds", id);
-  const log = options.log ?? (() => undefined);
-  const keep = options.keep ?? 5;
 
   const ctx: BuildContext = {
     root,
@@ -95,8 +122,10 @@ export const build = async (options: BuildOptions): Promise<BuildReport> => {
     outDir,
     buildDir,
     id,
-    minify: options.minify ?? true,
-    keep: Number.isFinite(keep) ? Math.max(1, keep) : 5,
+    minify,
+    keep,
+    mode: extension.mode,
+    data: extension.data,
     importMap: { imports: {} },
     parsed: parsePage("", dirname(pagePath)),
     moduleOutputs: [],
@@ -105,16 +134,7 @@ export const build = async (options: BuildOptions): Promise<BuildReport> => {
     log,
   };
 
-  const steps: BuildStep[] = [
-    { name: "page", run: readPage },
-    { name: "modules", run: bundleModules },
-    { name: "stylesheets", run: bundleStyles },
-    { name: "public", run: copyPublic },
-    { name: "html", run: writePage },
-    ...(options.steps ?? []),
-    { name: "write", run: writeBuild },
-  ];
-  for (const step of steps) await step.run(ctx);
+  for (const step of extension.steps.list()) await step.run(ctx);
 
   const files: BuildFile[] = [...ctx.outputs.entries()]
     .map(([path, content]) => ({ path, bytes: byteLength(content) }))
@@ -122,5 +142,21 @@ export const build = async (options: BuildOptions): Promise<BuildReport> => {
   return { id, dir: buildDir, files, ms: Date.now() - started };
 };
 
+/**
+ * Build a page and its assets into `<root>/<outDir>/builds/<id>/`, point `current` at it, and prune old builds.
+ * `steps` adds steps before `write`; `mode` and `data` are what the steps read. When `extension` is
+ * given it is the api the command already widened, and its options, mode, data and steps are used.
+ */
+export const build = async (options: BuildOptions, extension?: BuildExtension): Promise<BuildReport> => {
+  const log = options.log ?? (() => undefined);
+  if (extension !== undefined) return await runBuild(extension, log);
+  const created = createBuildExtension(options);
+  created.mode = options.mode ?? "spa";
+  created.data = options.data ?? new Map<string, unknown>();
+  for (const step of options.steps ?? []) created.steps.add(step);
+  return await runBuild(created, log);
+};
+
 export type { BuildContext, BuildFile, BuildLog, BuildOptions, BuildReport, BuildStep } from "./types.ts";
+export type { BuildExtension, BuildExtensionOptions } from "./extension.ts";
 export type { ImportMap } from "./importmap.ts";

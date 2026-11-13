@@ -1,0 +1,8 @@
+{
+  "name": "light-build-extension-fixture",
+  "private": true,
+  "type": "module",
+  "light": {
+    "scopes": ["@acme"]
+  }
+}
