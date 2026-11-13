@@ -78,18 +78,20 @@ export const RUNNER_PATH = "/__light/runner";
 
 /**
  * Serve `root` on `port` (0 picks a free one). `RUNNER_PATH?file=<url>` is the
- * runner page for one test file; a folder answers its `index.html`.
+ * runner page for one test file; a folder answers its `index.html`. `render`
+ * replaces the runner page light serves.
  * @param {string} root
  * @param {number} [port]
+ * @param {(options: import("../cli/extensions.ts").RunnerPageOptions) => string} [render]
  * @returns {Promise<{ server: import("node:http").Server, url: string }>}
  */
-export const serve = async (root, port = 0) => {
+export const serve = async (root, port = 0, render = runnerPage) => {
   const { imports, lightDir } = importmapFor(root);
   const harnessUrl = `/${path.relative(root, path.join(lightDir, "test/harness.js")).split(path.sep).join("/")}`;
   const reportUrl = `/${path.relative(root, path.join(lightDir, "test/report.js")).split(path.sep).join("/")}`;
   const files = new Static({ root, dotfiles: true, cacheControl: "no-store" });
   const app = new App()
-    .get(RUNNER_PATH, (c) => html(runnerPage({ file: c.query("file") ?? "", importmap: imports, harnessUrl, reportUrl })).header("cache-control", "no-store"))
+    .get(RUNNER_PATH, (c) => html(render({ file: c.query("file") ?? "", importmap: imports, harnessUrl, reportUrl })).header("cache-control", "no-store"))
     .get("/*", async (c) => {
       const found = await files.find(c.param("*") ?? "");
       if (found === null) return text("", 404);
