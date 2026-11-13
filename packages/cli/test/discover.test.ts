@@ -27,6 +27,11 @@ ok("a member command is listed", workspace.commands.has("member"));
 ok("the workspace root's node_modules is scanned after the project", workspace.commands.has("root"));
 eq("the workspace package keeps its own source", workspace.commands.get("root")?.source.name ?? "", "@acme/root");
 
+const inherited = await discover({ projectDir: join(FIXTURES, "ws-config", "app"), scopes: [], packages: [], log: silentLogger });
+ok("a member inherits the scopes its workspace root declares", inherited.commands.has("inherited"));
+ok("and the packages it names, by their light.cli roots", inherited.commands.has("area"));
+eq("a named package's root keeps its name and folder", inherited.commands.get("area")?.source.name ?? "", "core/areas");
+
 const areas = await discover({ projectDir: join(FIXTURES, "proj-areas"), scopes: [], packages: [], log: silentLogger });
 ok("the first named root contributes", areas.commands.has("event"));
 ok("the second named root contributes", areas.commands.has("tool"));
