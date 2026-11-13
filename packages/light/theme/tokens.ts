@@ -7,7 +7,24 @@
  * reads them for the terminal host.
  */
 /** A theme: nested token groups (`color`, `spacing`, `font`, ...) whose leaves become `--group-key` variables, and an optional `dark` block of the same shape. */
-export type ThemeData = Record<string, unknown> & { dark?: ThemeData; font?: ThemeFont };
+export type ThemeData = {
+  name?: string;
+  content?: Record<string, unknown>;
+  font?: ThemeFont;
+  link?: Record<string, unknown>;
+  text?: Record<string, unknown>;
+  canvas?: Record<string, unknown>;
+  color?: Record<string, unknown>;
+  spacing?: Record<string, unknown>;
+  leading?: Record<string, unknown>;
+  radius?: Record<string, unknown>;
+  shadow?: Record<string, unknown>;
+  border?: Record<string, unknown>;
+  motion?: Record<string, unknown>;
+  control?: Record<string, unknown>;
+  lc?: Record<string, unknown>;
+  dark?: ThemeData;
+};
 
 /** A font a theme names: a family string, or an object with the CSS family and the Google Fonts name to request (`google: false` requests none). */
 export type FontValue = string | { family?: string; google?: string | false };

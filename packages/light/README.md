@@ -432,6 +432,12 @@ folder, `pnpm test` runs the node tests and then the browser tests, and
 `pnpm verify` runs the package's typechecks, `light check`, the tests and the
 native gates. Both pass only at zero errors.
 
+`npm run pack` stages the package in `dist/`: the sources with a `.d.ts` beside
+every module, and a `package.json` whose exports TypeScript resolves to them.
+It then runs `npm pack` there. A project outside this repository installs that
+tarball, or the staged folder itself, and compiles against it under `strict`
+with no `allowJs` and no `maxNodeModuleJsDepth`.
+
 | Path | Owns |
 |---|---|
 | `view/` | The browser entry, the host-neutral update cycle, definition composition |

@@ -2,7 +2,7 @@
  * @lightstart/light: the view engine's public type declarations.
  */
 
-import type { PropertyDeclaration, PropertyDeclarations, PropsToThis, TypeDefinition } from "../types/types.ts";
+import type { DeclaredTypeDefinition, PropertyDeclaration, PropertyDeclarations, PropsToThis, TypeDefinition } from "../types/types.ts";
 import type View from "./index.js";
 
 export type { PropertyDeclarations, PropsToThis, PropertyValue } from "../types/types.ts";
@@ -33,6 +33,16 @@ export type ComponentThis<D, M, P, E> = PropsToThis<P & Omit<MixinProps<M>, keyo
  * members, since a render passed as a function has no definition object.
  */
 export type ElementOf<M, P, E> = ComponentThis<{}, M, P, E>;
+
+/**
+ * The element a page holds for a component, read from the type
+ * `defineComponent` answers for its definition: the props as values, own and
+ * from mixins, the definition's and the mixins' members, and the engine's.
+ * `never` for anything that is not a definition.
+ */
+export type ComponentElement<Def> = Def extends Record<string, unknown> & { props?: infer P; events?: infer E; mixins?: infer M }
+  ? ComponentThis<Def, M, P, E>
+  : never;
 
 /** A component definition as `defineComponent` and `View.define` accept it, `this` typed inside its methods. */
 export type Definition<D, M, P, E> = D & { props?: P; events?: E; mixins?: M } & ThisType<ComponentThis<D, M, P, E>>;
@@ -67,6 +77,7 @@ export interface Define {
   <D extends Record<string, unknown>, M extends readonly Record<string, unknown>[] | [] = [], P extends PropertyDeclarations = {}, E extends Record<string, TypeDefinition> = {}>(
     definition: Definition<D, M, P, E> & { tag: string },
   ): Defined<D>;
+  (definition: ComponentDefinition & { tag: string }): ViewConstructor | Promise<ViewConstructor>;
 }
 
 /**
@@ -91,6 +102,34 @@ export type TypedEmit<E> = <K extends string>(
     ? E[K] extends TypeDefinition<infer V> ? V : unknown
     : unknown,
 ) => CustomEvent;
+
+/**
+ * The `detail` an event descriptor declares: for a descriptor that holds a
+ * schema (`T.object({ value: T.string() })`), one field per schema key with
+ * that descriptor's value type; otherwise the descriptor's value type; for
+ * anything else, `unknown`.
+ */
+export type DetailOf<T> = T extends DeclaredTypeDefinition<infer V, infer S>
+  ? [S] extends [Record<string, TypeDefinition>]
+    ? { [K in keyof S]: S[K] extends TypeDefinition<infer F> ? F : unknown }
+    : V
+  : T extends TypeDefinition<infer V> ? V : unknown;
+
+/** The events a definition declares, its mixins' included. */
+type EventsOfDefinition<Def> = Def extends { events?: infer E; mixins?: infer M }
+  ? (E extends undefined ? {} : E) & MixinEvents<M>
+  : {};
+
+/**
+ * The event a listener receives for `K` from the component `Def` defines (the
+ * type `defineComponent` answers): a `CustomEvent` whose `detail` is
+ * `DetailOf` the declared descriptor, or `unknown` when `K` is not declared.
+ *
+ *   (e: ComponentEvent<typeof segmented, "change">) => e.detail.value // string
+ */
+export type ComponentEvent<Def, K extends string> = CustomEvent<
+  K extends keyof EventsOfDefinition<Def> ? DetailOf<EventsOfDefinition<Def>[K]> : unknown
+>;
 
 /** Method-style so the parameter compares bivariantly: a delegated listener may declare the DOM event it receives. */
 interface ViewEventListenerSignature {

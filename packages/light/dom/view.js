@@ -1020,7 +1020,7 @@ export default View;
  * @template {Record<string, import("../types/types.ts").PropertyDeclaration>} [P={}]
  * @template {Record<string, import("../types/types.ts").TypeDefinition<unknown>>} [E={}]
  * @param {import("../view/types.ts").Definition<D, M, P, E>} def
- * @returns {D & { props?: P, events?: E, mixins?: M }}
+ * @returns {Omit<D, "events"> & { props?: P, events?: E, mixins?: M }}
  */
 export const defineComponent = (def) => def;
 
