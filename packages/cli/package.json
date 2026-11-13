@@ -1,0 +1,45 @@
+{
+  "name": "@lightstart/cli",
+  "version": "0.1.0",
+  "description": "A command runner: commands, hooks and routes discovered from cli/ folders, with a core that compiles to a native binary.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "cli",
+    "command-runner",
+    "hooks",
+    "scriptc"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "light": "./bin/light.js"
+  },
+  "scripts": {
+    "pack": "node scripts/pack.js"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./node": "./node/index.ts",
+    "./*": "./*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  },
+  "native": {
+    "entry": "native/light.ts",
+    "binary": "light"
+  }
+}

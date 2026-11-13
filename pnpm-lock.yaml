@@ -67,6 +67,18 @@ importers:
         specifier: ^1.58.2
         version: 1.64.0
 
+  packages/cli:
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../tui/test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/components:
     devDependencies:
       '@lightstart/light':
@@ -84,6 +96,9 @@ importers:
 
   packages/light:
     devDependencies:
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
       '@lightstart/components':
         specifier: workspace:*
         version: link:../components

@@ -1,0 +1,1 @@
+{"name": "proj-conflict", "type": "module", "dependencies": {"@lightstart/one": "*", "@lightstart/two": "*"}}
