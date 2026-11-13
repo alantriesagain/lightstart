@@ -1,0 +1,11 @@
+{
+  "name": "dev-fixture",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./alpha": "./lib/alpha.js",
+    "./beta": "./lib/beta.js",
+    "./gamma": "./lib/gamma.js",
+    "./delta": "./lib/delta.js"
+  }
+}

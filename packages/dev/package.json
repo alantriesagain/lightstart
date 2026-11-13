@@ -41,6 +41,10 @@
     "@lightstart/cli": "workspace:*",
     "@lightstart/server": "workspace:*"
   },
+  "native": {
+    "entry": "native/serve.ts",
+    "binary": "light-serve"
+  },
   "devDependencies": {
     "@light/test": "workspace:*",
     "@types/node": "^26.6.5",
