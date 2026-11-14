@@ -15,6 +15,7 @@ export default defineExtension("serve", {
     api.watch(join(ctx.projectDir, "vendor"), "vendor-x");
     api.basePath("/base");
     api.payload.greeting = "hi-from-ext";
+    api.routeContext.greeting = "hi-from-route";
     const preview = process.env["EXT_PREVIEW_PORT"];
     if (preview !== undefined && preview !== "") api.preview(Number(preview));
   },

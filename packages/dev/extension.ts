@@ -37,6 +37,8 @@ export class ServeExtension {
   readonly previews: number[];
   /** The fields every serve hook's payload carries, writable during setup. */
   readonly payload: Record<string, unknown>;
+  /** The fields every route file's context carries beside the project, the log and the CLI, writable during setup. */
+  readonly routeContext: Record<string, unknown>;
   private renderer: ((c: Context, html: string) => string) | null;
   private pagePath: string | null;
 
@@ -49,6 +51,7 @@ export class ServeExtension {
     this.basePaths = [];
     this.previews = [];
     this.payload = {};
+    this.routeContext = {};
     this.renderer = null;
     this.pagePath = null;
   }
