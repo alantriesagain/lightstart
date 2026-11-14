@@ -99,9 +99,9 @@ const main = async (): Promise<void> => {
 
     ok("the page renderer answers the shell", (await bodyOf(await fetch(`${origin}/`))).includes("custom-shell"));
 
-    const redirect = await fetch(`${origin}/base`, { redirect: "manual" });
-    eqn("the base path redirects", redirect.status, 302);
-    eq("to its slash", redirect.headers.get("location") ?? "", "/base/");
+    const bare = await fetch(`${origin}/base`, { redirect: "manual" });
+    eqn("the bare base path answers the app's root", bare.status, 200);
+    ok("with the shell", (await bare.text()).includes("custom-shell"));
     eq("the app answers under the base path", await bodyOf(await fetch(`${origin}/base/handled`)), "handled-app");
     ok("and its files", (await bodyOf(await fetch(`${origin}/base/vendor-x/mod.js`))).includes('from "/vendor-lib.js"'));
 
