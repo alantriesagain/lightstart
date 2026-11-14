@@ -1,6 +1,6 @@
 import { defineCommand } from "@lightstart/cli";
 import { resolve } from "node:path";
-import { build } from "../../index.ts";
+import { build, createBuildExtension } from "../../index.ts";
 
 export default defineCommand({
   description: "Build a page and its assets into a kept build folder",
@@ -15,7 +15,10 @@ export default defineCommand({
   async run(ctx, { dir, page, out, minify, keep }) {
     const root = resolve(ctx.cwd, dir ?? ".");
     try {
-      const report = await build({ root, page, outDir: out, minify, keep: Number(keep), log: (message) => ctx.log.debug(message) });
+      const api = createBuildExtension({ root, page, outDir: out, minify, keep: Number(keep) });
+      await ctx.cli.extend("build", api);
+      const report = await build({ root: api.options.root, log: (message) => ctx.log.debug(message) }, api);
+      if (report.files.length === 0) return 0;
       for (const file of report.files) ctx.log.log(`${file.path}  ${ctx.formatBytes(file.bytes)}`);
       const total = report.files.reduce((sum, file) => sum + file.bytes, 0);
       ctx.log.log(`${report.files.length} files, ${ctx.formatBytes(total)} in ${report.ms} ms`);

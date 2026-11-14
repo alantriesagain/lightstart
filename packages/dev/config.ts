@@ -19,8 +19,8 @@ export const portOf = (value: unknown): number | null => {
   return null;
 };
 
-/** The port to start from: the flag, then `light.dev.port`, then `PORT`, then the default. */
-export const resolvePort = (options: { argsPort?: unknown; pkgPort?: unknown; env?: Record<string, string | undefined> } = {}): number => {
+/** The port to start from: the flag, then `light.dev.port`, then `PORT`, then an extension's default, then 3000. */
+export const resolvePort = (options: { argsPort?: unknown; pkgPort?: unknown; env?: Record<string, string | undefined>; fallback?: number | null } = {}): number => {
   const env = options.env ?? {};
-  return portOf(options.argsPort) ?? portOf(options.pkgPort) ?? portOf(env["PORT"]) ?? DEFAULT_PORT;
+  return portOf(options.argsPort) ?? portOf(options.pkgPort) ?? portOf(env["PORT"]) ?? portOf(options.fallback) ?? DEFAULT_PORT;
 };

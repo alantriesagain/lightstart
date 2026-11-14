@@ -1,0 +1,1 @@
+{"name": "ws-config", "private": true, "light": {"scopes": ["@acme"], "packages": ["core"]}}
