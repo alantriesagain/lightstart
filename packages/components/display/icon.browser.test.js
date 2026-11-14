@@ -114,6 +114,25 @@ describe("@lightstart/light - lc-icon", () => {
     }
   });
 
+  it("sizes a numeric size by a stylesheet rule, with no style attribute", async () => {
+    const sizeOf = (el) => getComputedStyle(el).getPropertyValue("--lc-icon-size").trim();
+    const byAttribute = mount("lc-icon");
+    byAttribute.setAttribute("size", "23");
+    const byProperty = mount("lc-icon");
+    byProperty.size = "31";
+    await waitFor(() => sizeOf(byAttribute) === "23px" && sizeOf(byProperty) === "31px", "the sizes to apply");
+    assert.equal(byAttribute.hasAttribute("style"), false);
+    assert.equal(byProperty.hasAttribute("style"), false);
+    assert.equal(byProperty.getAttribute("size"), "31", "a size set as a property reflects, so the rule matches");
+    byAttribute.size = "29";
+    await waitFor(() => sizeOf(byAttribute) === "29px", "the new size to apply");
+    const named = mount("lc-icon");
+    named.size = "lg";
+    await waitFor(() => named.getAttribute("size") === "lg", "the named size to settle");
+    assert.equal(named.hasAttribute("style"), false);
+    assert.ok(!drawnIconRules().includes('[size="lg"]'), "a named size keeps its own CSS");
+  });
+
   it("draws every icon of a list that mounts in one commit", async () => {
     const hostTag = uniqueTag("icon-host");
     View.define(hostTag, {

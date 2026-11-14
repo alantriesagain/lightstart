@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { iconMaskCSS, maskDataUri, maskRule } from "./icon-mask.js";
+import { iconMaskCSS, iconSizeCSS, iconSizeRule, maskDataUri, maskRule } from "./icon-mask.js";
 
 /** @type {import("@lightstart/light/theme").IconEntry} */
 const DOT = { body: `<circle cx="6" cy="19" r="3" fill="none" stroke="currentColor" stroke-width="2"/>`, width: 24, height: 24 };
@@ -97,4 +97,11 @@ test("an icon with no strokes has no bold rule, and a bold rule ships only for t
   assert.ok(css.includes('[name="route"][bold]'));
   assert.ok(!css.includes('[name="heart"][bold]'));
   assert.equal(iconMaskCSS(icons, { bold: "all" }).match(/\[bold\]/g)?.length, 2);
+});
+
+test("a numeric size is a rule on the size attribute, and a set of them is sorted and deduplicated", () => {
+  assert.equal(iconSizeRule(18), ':where(.lc-icon,lc-icon)[size="18"]{--lc-icon-size:18px}');
+  assert.equal(iconSizeRule("lg"), "");
+  assert.equal(iconSizeCSS(["18", 12, "18", "lg"]), ':where(.lc-icon,lc-icon)[size="12"]{--lc-icon-size:12px}\n:where(.lc-icon,lc-icon)[size="18"]{--lc-icon-size:18px}\n');
+  assert.equal(iconSizeCSS([]), "");
 });
