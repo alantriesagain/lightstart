@@ -10,15 +10,24 @@ export class LanguageEntry {
   id: string;
   extensions: string[];
   fences: string[];
-  lookAhead: number;
-  indentAfter: (textBeforeCursor: string) => number;
+  lookAhead = 0;
+  indentAfter: (textBeforeCursor: string) => number = (_textBeforeCursor: string): number => 0;
 
-  constructor(id: string, extensions: string[], fences: string[], lookAhead: number, indentAfter: (textBeforeCursor: string) => number) {
+  constructor(id: string, extensions: string[], fences: string[]) {
     this.id = id;
     this.extensions = extensions;
     this.fences = fences;
+  }
+
+  /**
+   * Set how many lines ahead its tokens look and the indentation after a line, and answer the entry.
+   * A call after the constructor rather than more arguments, so a reader of this file that takes the
+   * constructor's three (widecode's languages plugin is generated that way) reads it as before.
+   */
+  traits(lookAhead: number, indentAfter: (textBeforeCursor: string) => number): LanguageEntry {
     this.lookAhead = lookAhead;
     this.indentAfter = indentAfter;
+    return this;
   }
 }
 
@@ -28,11 +37,11 @@ const afterOpenTag = (before: string): number => (/<[a-zA-Z][^>]*[^/]>\s*$/.test
 const never = (_before: string): number => 0;
 
 export const LANGUAGES = [
-  new LanguageEntry("javascript", ["js", "mjs", "cjs", "jsx", "json", "jsonc"], ["javascript", "js", "jsx", "json", "mjs"], 0, afterBracket),
-  new LanguageEntry("typescript", ["ts", "mts", "cts", "tsx"], ["typescript", "ts", "tsx"], 0, afterBracket),
-  new LanguageEntry("css", ["css", "scss", "less"], ["css", "scss"], 0, afterBrace),
-  new LanguageEntry("html", ["html", "htm", "xhtml", "svg", "xml", "vue", "svelte"], ["html", "xml", "svg", "vue"], 0, afterOpenTag),
-  new LanguageEntry("markdown", ["md", "markdown", "mdx"], ["md", "markdown"], 1, never),
+  new LanguageEntry("javascript", ["js", "mjs", "cjs", "jsx", "json", "jsonc"], ["javascript", "js", "jsx", "json", "mjs"]).traits(0, afterBracket),
+  new LanguageEntry("typescript", ["ts", "mts", "cts", "tsx"], ["typescript", "ts", "tsx"]).traits(0, afterBracket),
+  new LanguageEntry("css", ["css", "scss", "less"], ["css", "scss"]).traits(0, afterBrace),
+  new LanguageEntry("html", ["html", "htm", "xhtml", "svg", "xml", "vue", "svelte"], ["html", "xml", "svg", "vue"]).traits(0, afterOpenTag),
+  new LanguageEntry("markdown", ["md", "markdown", "mdx"], ["md", "markdown"]).traits(1, never),
 ];
 
 /** Register them, each with the core tokenizer of its id. */

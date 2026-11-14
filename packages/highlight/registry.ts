@@ -13,7 +13,7 @@ export class Language {
   readonly extensions: string[];
   /** Lower-case names a Markdown fence gives it ("typescript", "ts"). */
   readonly fences: string[];
-  readonly tokenizeText: (text: string, state: HlState) => Token[];
+  readonly tokenizeText: (text: string, state: HlState, peek: (offset: number) => string | null) => Token[];
   /** The plugin that registered it ("" for none). */
   owner = "";
   /** How many lines after one its tokens depend on (a Markdown table's header waits for its delimiter row). */
@@ -21,7 +21,7 @@ export class Language {
   /** The extra indentation a new line takes after `textBeforeCursor` (1 after an opening bracket). */
   indentAfter: (textBeforeCursor: string) => number = (_textBeforeCursor: string): number => 0;
 
-  constructor(id: string, extensions: string[], fences: string[], tokenizeText: (text: string, state: HlState) => Token[]) {
+  constructor(id: string, extensions: string[], fences: string[], tokenizeText: (text: string, state: HlState, peek: (offset: number) => string | null) => Token[]) {
     this.id = id;
     this.extensions = extensions;
     this.fences = fences;

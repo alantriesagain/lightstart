@@ -2,13 +2,14 @@
  * @file The tokenizers the core has, by the name a languages plugin registers a language with:
  * "javascript", "typescript" (JavaScript's with types), "css", "html" (with the JavaScript and CSS
  * inside it) and "markdown" (its fenced code in the fence's language when one is registered). Each
- * colors one line and carries its state to the next.
+ * colors one line and carries its state to the next; Markdown also answers the line's structure.
  */
 import { cssToken } from "./css.ts";
 import { htmlToken } from "./html.ts";
 import { jsToken } from "./javascript.ts";
 import { markdownLine } from "./markdown.ts";
-import { findLanguage, languageForFence } from "./registry.ts";
+import type { LineResult, Peek } from "./markdown.ts";
+import { findLanguage } from "./registry.ts";
 import { HlState, pushToken, Token } from "./state.ts";
 import { Stream } from "./stream.ts";
 
@@ -28,28 +29,31 @@ const streamLine = (text: string, state: HlState, step: (stream: Stream, state: 
   return tokens;
 };
 
-/** A fenced line in Markdown: in the fence's language when one is registered, else as code. */
-const fencedLine = (fence: string, text: string, state: HlState): Token[] => {
-  const l = findLanguage(languageForFence(fence));
-  if (l !== null) return l.tokenizeText(text, state);
+/** A fenced line in its registered language, or as code when none answers to it. */
+export const fencedLine = (language: string, text: string, state: HlState, peek: Peek): Token[] => {
+  const l = findLanguage(language);
+  if (l !== null) return l.tokenizeText(text, state, peek);
   const tokens: Token[] = [];
-  pushToken(tokens, 0, text.length, "string");
+  pushToken(tokens, 0, text.length, "code");
   return tokens;
 };
 
+/** A Markdown line's tokens and structure. */
+export const markdownStructure = (text: string, state: HlState, peek: Peek): LineResult => markdownLine(text, state, fencedLine, peek);
+
 /** The tokenizer named `name`; null for none. */
-export const tokenizerFor = (name: string): ((text: string, state: HlState) => Token[]) | null => {
+export const tokenizerFor = (name: string): ((text: string, state: HlState, peek: Peek) => Token[]) | null => {
   switch (name) {
     case "javascript":
-      return (text: string, state: HlState) => streamLine(text, state, (s: Stream, st: HlState) => jsToken(s, st, false));
+      return (text: string, state: HlState, _peek: Peek) => streamLine(text, state, (s: Stream, st: HlState) => jsToken(s, st, false));
     case "typescript":
-      return (text: string, state: HlState) => streamLine(text, state, (s: Stream, st: HlState) => jsToken(s, st, true));
+      return (text: string, state: HlState, _peek: Peek) => streamLine(text, state, (s: Stream, st: HlState) => jsToken(s, st, true));
     case "css":
-      return (text: string, state: HlState) => streamLine(text, state, cssToken);
+      return (text: string, state: HlState, _peek: Peek) => streamLine(text, state, cssToken);
     case "html":
-      return (text: string, state: HlState) => streamLine(text, state, htmlToken);
+      return (text: string, state: HlState, _peek: Peek) => streamLine(text, state, htmlToken);
     case "markdown":
-      return (text: string, state: HlState) => markdownLine(text, state, fencedLine);
+      return (text: string, state: HlState, peek: Peek) => markdownStructure(text, state, peek).tokens;
   }
   return null;
 };
