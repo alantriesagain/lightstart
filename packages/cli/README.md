@@ -190,7 +190,17 @@ declare module "@lightstart/cli" {
 }
 ```
 
-A command nobody extends gets `extend` as a no-op. Extension files are imported when their command runs or its help is asked for; global help imports none.
+Besides its own `args`, `setup` receives the command's parsed arguments, typed by declaration merging on the `CommandArgs` interface, as `api` is on `Extensions`:
+
+```ts
+declare module "@lightstart/cli" {
+  interface CommandArgs {
+    serve: { port: string | undefined; watch: boolean };
+  }
+}
+```
+
+`args` is then the extension's own resolved arguments intersected with `CommandArgs["serve"]`, so `args.watch` reads without a cast. A command that declares no `CommandArgs` entry hands only the extension's own arguments. A command nobody extends gets `extend` as a no-op. Extension files are imported when their command runs or its help is asked for; global help imports none.
 
 ## Routes
 
