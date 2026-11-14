@@ -107,6 +107,7 @@ export default defineExtension("serve", {
 | `basePath(path)` | Answers the app under `path` as well as at the root (the path is stripped before the pipeline); `/path` redirects to `/path/` |
 | `preview(port)` | Starts the strict build preview over `.deployed/current` on that port beside the dev server, skipped with a warning when the port is taken |
 | `payload` | The record every serve hook's payload carries, writable during setup |
+| `routeContext` | The fields every route file's context carries beside `projectDir`, `log` and `cli`, writable during setup; `RouteContext` is an interface a package widens to type them |
 
 A hook payload is an interface another package widens by declaration merging, so an extension's own
 fields reach its hooks typed:

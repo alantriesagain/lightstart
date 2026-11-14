@@ -123,7 +123,7 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
   }
 
   const importmap = extension.importmap;
-  const routes = await routeFactories(ctx);
+  const routes = (await routeFactories(ctx)).map((route): RouteFactory => (context) => route({ ...extension.routeContext, ...context }));
   const pipeline = createPipeline({
     projectDir,
     log: ctx.log,

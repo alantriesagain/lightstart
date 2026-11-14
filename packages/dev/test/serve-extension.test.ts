@@ -86,6 +86,7 @@ const main = async (): Promise<void> => {
     const origin = `http://127.0.0.1:${port}`;
     const handled = await fetchUntil(`${origin}/handled`);
     eq("the handled app answers", await handled.text(), "handled-app");
+    eq("a route file reads the field the extension put in routeContext", await (await fetch(`${origin}/route-greeting`)).text(), "hi-from-route");
 
     const cors = await fetch(`${origin}/handled`, { headers: { origin: "https://allowed.example" } });
     eq("CORS grants the allowed origin", cors.headers.get("access-control-allow-origin") ?? "", "https://allowed.example");
