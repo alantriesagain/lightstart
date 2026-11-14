@@ -37,7 +37,7 @@ const pageDir = mkdtempSync(join(tmpdir(), "dev-extension-page-"));
 writeFileSync(join(root, "mod.ts"), 'import { dep } from "dep";\nimport { extra } from "extra";\nexport const answer: number = 42;\nexport const both: string = dep + extra;\n');
 writeFileSync(join(pageDir, "page.html"), "<html><body>the named page</body></html>");
 
-const extension = new ServeExtension({ dep: "/dep.js" });
+const extension = new ServeExtension("/project", { dep: "/dep.js" });
 extension.importmap["extra"] = "/extra.js";
 extension.handle(new App().get("/skip", () => pass()));
 extension.handle(new App().get("/skip", () => text("second-app")).get("/handled", () => text("handled")));
@@ -88,7 +88,7 @@ const main = async (): Promise<void> => {
   eq("and its handled apps", await bodyOf(await request(app, "GET", "/base/handled")), "handled");
   ok("and its files with rewritten specifiers", (await bodyOf(await request(app, "GET", "/base/vendor/mod.js"))).includes('from "/dep.js"'));
 
-  const named = new ServeExtension({});
+  const named = new ServeExtension("/project", {});
   named.pageFile("page.html");
   const namedPipeline = createPipeline({ projectDir: pageDir, log, cli, routes: [], importmap: named.importmap, watch: false, extension: named });
   named.app.all("/*", async (c) => (await namedPipeline.handle(c)) ?? fail("Not found: " + c.path, 404));
