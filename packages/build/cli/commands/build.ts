@@ -18,6 +18,7 @@ export default defineCommand({
       const api = createBuildExtension({ root, page, outDir: out, minify, keep: Number(keep) });
       await ctx.cli.extend("build", api);
       const report = await build({ root: api.options.root, log: (message) => ctx.log.debug(message) }, api);
+      if (report.files.length === 0) return 0;
       for (const file of report.files) ctx.log.log(`${file.path}  ${ctx.formatBytes(file.bytes)}`);
       const total = report.files.reduce((sum, file) => sum + file.bytes, 0);
       ctx.log.log(`${report.files.length} files, ${ctx.formatBytes(total)} in ${report.ms} ms`);
