@@ -80,11 +80,11 @@ const watchedPath = (label: string, path: string): string => (label === "" ? pat
 export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise<number> => {
   const projectDir = await resolveProjectDir(ctx.cwd, args.dir);
   const pkg = readPackageJson(projectDir);
-  const basePort = resolvePort({ argsPort: args.port, pkgPort: devPortOf(pkg), env: ctx.env });
   const host = bindHostFor(args.host ?? "127.0.0.1");
   const watch = args.watch === true;
-  const extension = new ServeExtension(await projectImportMap(projectDir));
+  const extension = new ServeExtension(projectDir, await projectImportMap(projectDir));
   await ctx.cli.extend("serve", extension);
+  const basePort = resolvePort({ argsPort: args.port, pkgPort: devPortOf(pkg), env: ctx.env, fallback: extension.defaultPortValue() });
   const beforePayload = { ...extension.payload, projectDir, port: basePort, watch } as unknown as ServeBeforePayload;
   const before = await ctx.cli.runHook("serve:before", beforePayload);
 

@@ -21,6 +21,8 @@ export type ServeWatch = {
 
 /** What `light serve` hands an extension; it widens `Extensions`, as hooks widen `Hooks`. */
 export class ServeExtension {
+  /** The folder being served. */
+  readonly projectDir: string;
   /** The root app every request goes through first. */
   readonly app: App;
   /** The merged importmap, mutable before the server listens. */
@@ -41,8 +43,10 @@ export class ServeExtension {
   readonly routeContext: Record<string, unknown>;
   private renderer: ((c: Context, html: string) => string) | null;
   private pagePath: string | null;
+  private fallbackPort: number | null;
 
-  constructor(importmap: ImportMap) {
+  constructor(projectDir: string, importmap: ImportMap) {
+    this.projectDir = projectDir;
     this.app = new App();
     this.importmap = importmap;
     this.handled = [];
@@ -54,6 +58,17 @@ export class ServeExtension {
     this.routeContext = {};
     this.renderer = null;
     this.pagePath = null;
+    this.fallbackPort = null;
+  }
+
+  /** The port to start from when neither `--port`, `light.dev.port` nor `PORT` names one. */
+  defaultPort(port: number): void {
+    this.fallbackPort = port;
+  }
+
+  /** The port `defaultPort` named, or null. */
+  defaultPortValue(): number | null {
+    return this.fallbackPort;
   }
 
   /** Try `app` after the project's route files and before its files; a path it has no route for falls through. */
