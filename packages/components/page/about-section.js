@@ -2,6 +2,24 @@ import { html } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
 import { defineComponent } from "@lightstart/light";
 
+/**
+ * About section
+ *
+ * @component
+ * @category page
+ * @tag lc-about-section
+ *
+ * A page band for the long explanation, in prose or in columns. The body renders through
+ * `<lc-markdown>`.
+ *
+ * @prop {string} variant - `prose` or `split`.
+ * @prop {string} eyebrow - The small line above the headline.
+ * @prop {string} headline - The section heading.
+ * @prop {string} subheadline - The line under the heading.
+ * @prop {string} body - Markdown rendered under the head.
+ * @prop {string} sectionId - The section's id.
+ * @prop {boolean} unsafeHtml - Render the body's raw HTML rather than showing it as text.
+ */
 export default defineComponent({
   tag: "lc-about-section",
   style: true,
@@ -22,6 +40,7 @@ export default defineComponent({
     subheadline: "",
     body: "",
     sectionId: "",
+    unsafeHtml: T.boolean({ attribute: false, defaultValue: false }),
   },
   render() {
     const variantClass =
@@ -48,7 +67,7 @@ export default defineComponent({
           </div>
           ${this.body
             ? html`<div class="about-body">
-                <lc-markdown .content=${this.body}></lc-markdown>
+                <lc-markdown .content=${this.body} .unsafeHtml=${this.unsafeHtml}></lc-markdown>
               </div>`
             : ""}
         </div>

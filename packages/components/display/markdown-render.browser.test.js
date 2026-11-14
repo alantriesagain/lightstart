@@ -17,13 +17,15 @@ describe("lc-markdown rendering", () => {
 
   /**
    * @param {string} content
-   * @param {{ unsafeHtml?: boolean }} [options]
+   * @param {{ unsafeHtml?: boolean, remoteImages?: boolean, idPrefix?: string }} [options]
    * @returns {Promise<HTMLElement>}
    */
   const mount = async (content, options = {}) => {
-    const el = /** @type {HTMLElement & { content: string, unsafeHtml: boolean, $requestUpdate: () => Promise<void> | void }} */ (document.createElement("lc-markdown"));
+    const el = /** @type {HTMLElement & { content: string, unsafeHtml: boolean, remoteImages: boolean, idPrefix: string, $requestUpdate: () => Promise<void> | void }} */ (document.createElement("lc-markdown"));
     el.content = content;
     if (options.unsafeHtml) el.unsafeHtml = true;
+    if (options.remoteImages === false) el.remoteImages = false;
+    if (options.idPrefix) el.idPrefix = options.idPrefix;
     document.body.appendChild(el);
     mounted.push(el);
     await el.$requestUpdate();
@@ -98,6 +100,70 @@ describe("lc-markdown rendering", () => {
     assert.ok(details, "the raw details element renders");
     assert.equal(details?.querySelector("summary")?.textContent, "S");
     assert.ok(details?.querySelector("p em"), "the markdown paragraph renders inside it");
+  });
+
+  it("draws an absolute image as a link when remoteImages is off", async () => {
+    const el = await mount("![a](https://x.test/p.png)\n\n![](//x.test/p.png)", { remoteImages: false });
+    assert.equal(el.querySelector("img"), null);
+    const links = [...el.querySelectorAll("a[href]")];
+    assert.equal(links.length, 2);
+    assert.equal(links[0].textContent, "a");
+    assert.equal(links[0].getAttribute("href"), "https://x.test/p.png");
+    assert.equal(links[1].textContent, "//x.test/p.png");
+    assert.equal(links[1].getAttribute("href"), "//x.test/p.png");
+  });
+
+  it("draws a relative image as an image when remoteImages is off", async () => {
+    const el = await mount("![a](/local.png)", { remoteImages: false });
+    assert.equal(el.querySelector("img")?.getAttribute("src"), "/local.png");
+    assert.equal(el.querySelector("a[href]"), null);
+  });
+
+  it("draws no image and no link for an unsafe image when remoteImages is off", async () => {
+    const el = await mount("![a](javascript:x)", { remoteImages: false });
+    assert.equal(el.querySelector("img"), null);
+    assert.equal(el.querySelector("a[href]"), null);
+    assert.equal(el.textContent, "a");
+  });
+
+  it("draws a remote image as an image by default", async () => {
+    const el = await mount("![a](https://x.test/p.png)");
+    assert.equal(el.querySelector("img")?.getAttribute("src"), "https://x.test/p.png");
+  });
+
+  it("puts idPrefix before every heading id", async () => {
+    const el = /** @type {HTMLElement & { content: string, anchors: boolean, idPrefix: string, $requestUpdate: () => Promise<void> | void }} */ (document.createElement("lc-markdown"));
+    el.content = "## Intro";
+    el.anchors = true;
+    el.idPrefix = "user-content-";
+    /** @type {{ headings: { id: string }[] } | null} */
+    let detail = null;
+    el.addEventListener("markdown-rendered", (event) => {
+      detail = /** @type {CustomEvent} */ (event).detail;
+    });
+    document.body.appendChild(el);
+    mounted.push(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("h2")?.id, "user-content-intro");
+    assert.equal(el.querySelector("h2 a.anchor")?.getAttribute("href"), "#user-content-intro");
+    assert.equal(detail?.headings[0]?.id, "user-content-intro");
+  });
+
+  it("re-emits markdown-rendered when idPrefix changes", async () => {
+    const el = /** @type {HTMLElement & { content: string, idPrefix: string, $requestUpdate: () => Promise<void> | void }} */ (document.createElement("lc-markdown"));
+    el.content = "# Intro";
+    let renders = 0;
+    el.addEventListener("markdown-rendered", () => {
+      renders += 1;
+    });
+    document.body.appendChild(el);
+    mounted.push(el);
+    await el.$requestUpdate();
+    const first = renders;
+    el.idPrefix = "x-";
+    await el.$requestUpdate();
+    assert.ok(renders > first, "a changed prefix announces the new headings");
+    assert.equal(el.querySelector("h1")?.id, "x-intro");
   });
 
   it("draws a fence inside a list item as a code block", async () => {
