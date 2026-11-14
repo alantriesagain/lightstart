@@ -172,6 +172,16 @@ The package is an app server: it does what needs the app's knowledge (which rout
 | `@lightstart/server/access-log` | `new AccessLog(sink?)`: one line per request, `GET /carts/7 200 1.4ms 203.0.113.9` |
 | `@lightstart/server/mime` | `mimeOf(path)`: the content type table every server of files here shares |
 
+`SecurityHeaders` sends no `Content-Security-Policy` until it is given one, because the right one depends on what the pages load. A policy to start from, for an app that serves its own scripts and styles:
+
+```js
+new SecurityHeaders({
+  csp: "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+});
+```
+
+Keep `'unsafe-inline'` out of `script-src`: it also lets an inline event handler (`onerror=`) and a `javascript:` URL run, which is what injected markup needs to execute. An inline script the page does need, an importmap among them, goes in by its hash (`'sha256-<base64 of its exact text>'`) or by a nonce the reply generates; a JSON-LD block is data and needs neither. Add the origins the app talks to in `connect-src`, `img-src` and the rest, one directive at a time.
+
 ## Extending it
 
 - **Middleware**, `(c, next) => Promise<Reply>`: `app.use(mw)` for every route, outermost first; a route's own as the last argument (`app.get("/admin", handler, [auth])`), inside the app's. Each route's chain is composed once, when the app is built.
