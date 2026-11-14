@@ -39,4 +39,14 @@ declare module "@lightstart/cli" {
   interface Extensions {
     serve: ServeExtension;
   }
+
+  interface CommandArgs {
+    serve: {
+      dir: string | undefined;
+      port: string | undefined;
+      host: string;
+      watch: boolean;
+      build: boolean;
+    };
+  }
 }

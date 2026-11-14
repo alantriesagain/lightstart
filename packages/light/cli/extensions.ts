@@ -97,4 +97,33 @@ declare module "@lightstart/cli" {
     test: TestExtension;
     desktop: DesktopExtension;
   }
+
+  interface CommandArgs {
+    check: {
+      root: string | undefined;
+      rule: string | undefined;
+      json: boolean;
+      targets: string[];
+    };
+    test: {
+      headed: boolean;
+      timeout: string | undefined;
+      root: string | undefined;
+      files: string[];
+    };
+    desktop: {
+      command: string | undefined;
+      rest: string[];
+      target: string | undefined;
+      wait: boolean;
+      web: string | undefined;
+      out: string | undefined;
+      name: string | undefined;
+      "keep-light": boolean;
+      "no-web": boolean;
+      "npm-static": string | undefined;
+      port: string | undefined;
+      attach: boolean;
+    };
+  }
 }

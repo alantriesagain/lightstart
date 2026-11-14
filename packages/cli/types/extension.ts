@@ -9,11 +9,17 @@ import type { CommandContext } from "./context.ts";
 /** The commands a package may extend, and what each hands an extension. */
 export interface Extensions {}
 
+/**
+ * The arguments each command hands an extension beside the extension's own. A package widens
+ * `CommandArgs` by declaration merging, as it does `Extensions`.
+ */
+export interface CommandArgs {}
+
 export type ExtensionApi<K extends keyof Extensions> = Extensions[K];
 
 export type ExtensionSetup<K extends keyof Extensions, S extends ArgsSchema = ArgsSchema> = (
   ctx: CommandContext,
-  args: ResolvedArgs<S>,
+  args: ResolvedArgs<S> & (K extends keyof CommandArgs ? CommandArgs[K] : {}),
   api: ExtensionApi<K>,
 ) => Promise<void> | void;
 

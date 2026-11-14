@@ -82,4 +82,14 @@ declare module "@lightstart/cli" {
   interface Extensions {
     build: BuildExtension;
   }
+
+  interface CommandArgs {
+    build: {
+      dir: string | undefined;
+      page: string;
+      out: string;
+      minify: boolean;
+      keep: string;
+    };
+  }
 }
