@@ -103,16 +103,6 @@ export default defineComponent({
       `);
 
     const content = html`
-      <style>
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .wizard-overlay {
-          animation: fadeIn 0.2s ease-out;
-        }
-      </style>
-
       <div class="wizard-container" part="lc-wizard-container">
         ${this.showHeader ? html`
         <div class="wizard-header" part="lc-wizard-header">

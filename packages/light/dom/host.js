@@ -200,6 +200,22 @@ export class DomHost extends Host {
   }
 
   /**
+   * Write through the CSSOM, which a `style-src 'self'` policy allows where an
+   * inline style attribute does not. A null value removes the attribute, which
+   * clears every declaration and adds nothing. Chromium writes the attribute
+   * back from a CSSOM change lazily, so a bare `removeAttribute` right after
+   * one finds nothing to remove and `style=""` appears later; reading it first
+   * (`hasAttribute`) brings it up to date.
+   * @param {HostNode} el
+   * @param {string | null} value
+   */
+  setStyle(el, value) {
+    const element = /** @type {HTMLElement} */ (el);
+    if (value !== null) element.style.cssText = value;
+    else if (element.hasAttribute("style")) element.removeAttribute("style");
+  }
+
+  /**
    * @param {HostNode} el
    * @param {string} name
    * @param {boolean} on

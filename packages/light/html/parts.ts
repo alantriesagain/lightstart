@@ -216,19 +216,48 @@ export class AttributePart extends ThunkHolder {
   }
 
   _commitResolved(value: unknown) {
+    if (this.name === "style" && (value === nothing || value == null))
+      return this._commitString(nothing);
     this._commitString(value === nothing ? nothing : value == null ? "" : String(value));
   }
 
   _commitString(value: string | NothingValue) {
     if (value === this.committed) return;
     this.committed = value;
-    if (value === nothing) currentHost().removeAttribute(this.el, this.name);
-    else currentHost().setAttribute(this.el, this.name, value);
+    const host = currentHost();
+    if (this.name === "style") host.setStyle(this.el, value === nothing ? null : value);
+    else if (value === nothing) host.removeAttribute(this.el, this.name);
+    else host.setAttribute(this.el, this.name, value);
   }
 
   dispose() {
     disposeThunk(this);
   }
+}
+
+/**
+ * A static `style="…"` attribute withheld from the template markup, applied
+ * through the host's style path once, when the element first commits.
+ */
+export class StaticStylePart extends Part {
+  el: unknown;
+  value: string;
+  committed: boolean;
+
+  constructor(spec: PartSpec, el: HostNode) {
+    super();
+    this.el = el;
+    this.value = (spec.statics as string[])[0];
+    this.committed = false;
+  }
+
+  setFromValues(_values: unknown[]) {
+    if (this.committed) return;
+    this.committed = true;
+    currentHost().setStyle(this.el, this.value);
+  }
+
+  dispose() {}
 }
 
 export class RawTextPart extends ThunkHolder {
@@ -471,6 +500,10 @@ export class ChildPart extends ThunkHolder {
     }
     if (prefix === "?") {
       host.toggleAttribute(el, rawKey.slice(1), Boolean(value) && value !== nothing);
+      return;
+    }
+    if (rawKey === "style") {
+      host.setStyle(el, value === nothing || value == null ? null : String(value));
       return;
     }
     if (value === nothing || value == null) host.removeAttribute(el, rawKey);
@@ -716,6 +749,8 @@ export const createPart = (spec: PartSpec, node: unknown, owner: object | undefi
     }
     case "attr":
       return new AttributePart(spec, node);
+    case "style":
+      return new StaticStylePart(spec, node);
     case "prop":
       return new PropertyPart(spec, node);
     case "bool":

@@ -55,6 +55,49 @@ const loadCSS = (href, prepend = false) => {
   loadedCSSFiles.add(href);
 };
 
+/**
+ * The constructable stylesheet a former style element id stands for. It is
+ * created once and adopted by the document once; later writes go through
+ * `replaceSync`, which a `style-src 'self'` policy allows.
+ * @type {Map<string, CSSStyleSheet>}
+ */
+const themeSheets = new Map();
+
+/**
+ * @param {string} styleId
+ * @returns {CSSStyleSheet}
+ */
+const styleSheetFor = (styleId) => {
+  let sheet = themeSheets.get(styleId);
+  if (!sheet) {
+    sheet = new CSSStyleSheet();
+    themeSheets.set(styleId, sheet);
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+  }
+  return sheet;
+};
+
+/**
+ * @param {string} styleId
+ * @param {string} css
+ */
+const writeSheet = (styleId, css) => {
+  styleSheetFor(styleId).replaceSync(css);
+};
+
+/**
+ * Drop the sheet `injectThemeCSS` (or the theme itself) wrote under an id, and
+ * only that sheet: the counterpart of `injectThemeCSS(vars, styleId)`, now that
+ * the theme writes constructable sheets rather than `<style id>` elements.
+ * @param {string} styleId
+ */
+const removeThemeCSS = (styleId) => {
+  const sheet = themeSheets.get(styleId);
+  if (!sheet) return;
+  themeSheets.delete(styleId);
+  document.adoptedStyleSheets = document.adoptedStyleSheets.filter((adopted) => adopted !== sheet);
+};
+
 const CSS_FONT_KEYWORDS = new Set([
   "system-ui", "ui-sans-serif", "ui-serif", "ui-monospace", "ui-rounded",
   "serif", "sans-serif", "monospace", "cursive", "fantasy", "math",
@@ -128,23 +171,16 @@ const loadFont = (fontValue, varName = "font-family-base") => {
   }
 
   const styleId = `theme-font-${varName}`;
-  let styleTag = document.getElementById(styleId);
-
-  if (!styleTag) {
-    styleTag = document.createElement("style");
-    styleTag.id = styleId;
-    document.head.appendChild(styleTag);
-  }
 
   const fontValueCss = cssFamilyFor(fontValue);
 
   if (varName === "font-family-base")
-    styleTag.textContent = `
+    writeSheet(styleId, `
       :root { --font-family-base: ${fontValueCss}; }
       body { font-family: var(--font-family-base); }
-    `;
+    `);
    else
-    styleTag.textContent = `:root { --${varName}: ${fontValueCss}; }`;
+    writeSheet(styleId, `:root { --${varName}: ${fontValueCss}; }`);
 
 };
 
@@ -213,13 +249,7 @@ const generateVariantRules = (variables, components = ["button"]) => {
 /** @param {string} css @param {string} [styleId] */
 const injectVariantRules = (css, styleId = "lc-variant-rules") => {
   if (!css) return;
-  let styleTag = document.getElementById(styleId);
-  if (!styleTag) {
-    styleTag = document.createElement("style");
-    styleTag.id = styleId;
-    document.head.appendChild(styleTag);
-  }
-  styleTag.textContent = css;
+  writeSheet(styleId, css);
 };
 
 /**
@@ -233,19 +263,11 @@ const injectThemeCSS = (
   styleId = "dynamic-theme-vars",
   selector = ":root",
 ) => {
-  let styleTag = document.getElementById(styleId);
-
-  if (!styleTag) {
-    styleTag = document.createElement("style");
-    styleTag.id = styleId;
-    document.head.appendChild(styleTag);
-  }
-
   const cssRules = Object.entries(variables)
     .map(([key, val]) => `${key}: ${val};`)
     .join("\n  ");
 
-  styleTag.textContent = `${selector} {\n  ${cssRules}\n}`;
+  writeSheet(styleId, `${selector} {\n  ${cssRules}\n}`);
 };
 
 /**
@@ -268,7 +290,7 @@ const applyThemeFonts = (theme) => {
  */
 const applyDarkTheme = (lightTheme, explicitDark) => {
   const hasExplicit = explicitDark && Object.keys(explicitDark).length > 0;
-  if (!hasExplicit && isDarkBase(lightTheme)) return void document.getElementById("dark-theme-vars")?.remove();
+  if (!hasExplicit && isDarkBase(lightTheme)) return removeThemeCSS("dark-theme-vars");
   const auto = generateDarkTheme(lightTheme);
   const dark = hasExplicit ? deepMerge(auto, explicitDark) : auto;
   injectThemeCSS(generateThemeVariables(dark), "dark-theme-vars", ":root.dark");
@@ -311,7 +333,7 @@ const applyScopedTheme = (scope, themeData, styleId) => {
  * @param {string} [styleId]
  */
 const clearScopedTheme = (scope, styleId) => {
-  document.getElementById(styleId || scopedStyleId(scope))?.remove();
+  removeThemeCSS(styleId || scopedStyleId(scope));
 };
 
 /**
@@ -389,6 +411,7 @@ export {
   generateVariantRules,
   generateDarkTheme,
   injectThemeCSS,
+  removeThemeCSS,
   applyTheme,
   applyDarkTheme,
   applyScopedTheme,

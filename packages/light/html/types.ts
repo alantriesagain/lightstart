@@ -94,7 +94,7 @@ export type EffectAdapter = (fn: () => void) => EffectHandle;
 
 export type { ThunkHolder } from "./reactive.ts";
 
-export type PartKind = "child" | "attr" | "prop" | "bool" | "event" | "rawtext" | "slot";
+export type PartKind = "child" | "attr" | "style" | "prop" | "bool" | "event" | "rawtext" | "slot";
 
 export interface ParsedPart {
   kind: PartKind;

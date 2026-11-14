@@ -3,6 +3,16 @@ import { defineComponent, trackWork } from "@lightstart/light";
 
 /** @type {Map<string, Promise<void>>} */
 const imageStyleCache = new Map();
+/** @type {CSSStyleSheet | null} */
+let imageSheet = null;
+let imageRules = "";
+
+const styledSheet = () => {
+  if (imageSheet || typeof document === "undefined" || typeof CSSStyleSheet === "undefined") return imageSheet;
+  imageSheet = new CSSStyleSheet();
+  document.adoptedStyleSheets = [...document.adoptedStyleSheets, imageSheet];
+  return imageSheet;
+};
 
 /**
  * @param {string} url
@@ -20,13 +30,10 @@ const inlineBase64Style = async (url, className) => {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(blob);
   });
-  let styleSheet = document.getElementById("lc-image-styles");
-  if (!styleSheet) {
-    styleSheet = document.createElement("style");
-    styleSheet.id = "lc-image-styles";
-    document.head.appendChild(styleSheet);
-  }
-  styleSheet.innerHTML += `.${className} { background-image: url(${base64String}); }`;
+  const sheet = styledSheet();
+  if (!sheet) return;
+  imageRules += `.${className} { background-image: url(${base64String}); }`;
+  sheet.replaceSync(imageRules);
 };
 
 /**

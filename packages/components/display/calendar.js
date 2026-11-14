@@ -406,11 +406,6 @@ export default defineComponent({
     const groupedEvents = groupEventsByDate(events);
 
     return html`
-      <style>
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-      </style>
-
       <div class="calendar-container" part="lc-calendar-container">
         ${this.showViewToggle ? this.renderViewToggle() : null}
         ${this.viewMode === "list"
