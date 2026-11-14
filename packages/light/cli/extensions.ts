@@ -89,6 +89,10 @@ export interface DesktopExtension {
   hostArgs(add: (args: string[], input: DesktopInput) => string[] | void): void;
   /** Add arguments to the spawned `light serve`; return the list, or push into it. */
   serveArgs(add: (args: string[], input: DesktopInput) => string[] | void): void;
+  /** Add variables to the spawned `light serve`'s environment only; return the record to merge. */
+  serveEnv(add: (input: DesktopInput) => Record<string, string>): void;
+  /** Name the port used when neither `--port` nor `light.dev.port` does; 3500 stays the last fallback. */
+  defaultPort(port: number): void;
 }
 
 declare module "@lightstart/cli" {
