@@ -72,6 +72,46 @@ export class HlState {
     c.inner = inner !== null ? inner.clone() : null;
     return c;
   }
+
+  /**
+   * Whether `other` is the same state, field for field as `clone()` copies them: a line that ends in
+   * the state it ended in before leaves every later line as it was, so re-tokenizing can stop there.
+   */
+  equals(other: HlState): boolean {
+    if (this.stack.length !== other.stack.length) return false;
+    for (let i = 0; i < this.stack.length; i++) {
+      const a = this.stack[i];
+      const b = other.stack[i];
+      if (a.kind !== b.kind || a.braces !== b.braces) return false;
+    }
+    if (
+      this.comment !== other.comment ||
+      this.string !== other.string ||
+      this.regexOk !== other.regexOk ||
+      this.decl !== other.decl ||
+      this.afterDot !== other.afterDot ||
+      this.objKey !== other.objKey ||
+      this.depth !== other.depth ||
+      this.mode !== other.mode ||
+      this.url !== other.url ||
+      this.hmode !== other.hmode ||
+      this.quote !== other.quote ||
+      this.tagName !== other.tagName ||
+      this.closing !== other.closing ||
+      this.nameNext !== other.nameNext ||
+      this.afterEq !== other.afterEq ||
+      this.attrName !== other.attrName ||
+      this.scriptType !== other.scriptType ||
+      this.hasScriptType !== other.hasScriptType ||
+      this.rawTag !== other.rawTag ||
+      this.rawLang !== other.rawLang
+    )
+      return false;
+    const inner = this.inner;
+    const otherInner = other.inner;
+    if (inner === null || otherInner === null) return inner === otherInner;
+    return inner.equals(otherInner);
+  }
 }
 
 export class Token {
