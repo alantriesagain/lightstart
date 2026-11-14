@@ -11,5 +11,10 @@
   "devDependencies": {
     "@light/test": "workspace:*",
     "@types/node": "^26.6.5"
+  },
+  "native": {
+    "prepare": [
+      "native/build.sh"
+    ]
   }
 }

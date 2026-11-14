@@ -16,10 +16,10 @@ import { binaryOf, buildApp } from "./build.js";
  * @returns {Promise<number>}
  */
 export const run = async (args, root) => {
-  const [appName, name] = args;
-  if (appName === undefined) throw new Error("usage: light-native install <app> [name]");
+  const [appName, name] = args.filter((a) => a !== "--strip");
+  if (appName === undefined) throw new Error("usage: light-native install <app> [name] [--strip]");
   const app = memberByName(root, appName);
-  const binary = await buildApp(root, app);
+  const binary = await buildApp(root, app, args.includes("--strip"));
   const target = name ?? binaryOf(app);
   const bin = process.env["BIN_DIR"] ?? join(homedir(), ".local", "bin");
   mkdirSync(bin, { recursive: true });

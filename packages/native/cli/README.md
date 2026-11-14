@@ -5,14 +5,14 @@ The tooling of a workspace of native apps and packages, a node program (nothing 
 | Command | Does |
 |---|---|
 | `light-native prepare [member…]` | the prepare steps (`native.prepare`, shell lines run in the member's folder) of the members named, every app by default, and of the members they depend on, each once |
-| `light-native build <app>` | prepare, then `scriptc build <native.entry> [--ffi <native.ffi>] -o dist/<native.binary> --strip --no-keep-llvm` from the app's folder |
+| `light-native build <app> [--strip]` | prepare, then `scriptc build <native.entry> [--ffi <native.ffi>] -o dist/<native.binary> --no-keep-llvm` from the app's folder, keeping the symbol table so a crash's backtrace names functions; `--strip` drops it |
 | `light-native run <app> [--no-build] [-- flags…]` | build, then run the binary in the folder the command was launched from, logging to `$NATIVE_LOG` (else `/tmp/<binary>.log`), with `CLAUDECODE` and `CLAUDE_CODE_ENTRYPOINT` unset |
 | `light-native selftest <app> <scenario> [--no-build]` | build, then run the scenario (`native.selftests.<name>`) in a 200x40 pseudo-terminal on a temp git repository with `--trust --selftest <name>`, and check the log; `live` scenarios run only with `NATIVE_LIVE=1` |
 | `light-native test [member…] [--node-only] [--jobs N] [--opt dev\|release] [-- test…]` | every `test/*.test.ts` of the members (every member with a `test/` folder by default), or the tests named after `--`, from the member's folder, under node and under `scriptc run`; both outputs must match byte for byte |
 | `light-native coverage [member…] [--jobs N] [--apps]` | `scriptc coverage --print=diagnostics --fail-on=blockers` of every app entry and (unless `--apps`) every test, read by light's `packages/light/native/diagnostics.js` gate: each must compile fully statically, with no blocker, no divergence from node, no deferred site, and, in an app's entry, no unreached one (a test compiles a slice of its packages, whose unreached code the apps answer for); the apps' SC6101 notes print after the entries; a step's gate covers the apps, `pnpm verify` everything |
 | `light-native typecheck --all \| <member…>` | `tsc -p tsconfig.json` per member, after its prepare steps; errors in files outside the member are reported apart and do not count; a member with sources and no tsconfig fails |
 | `light-native probes` | the compiler probes in the workspace's `probes/` (light's own are in `packages/light/native/probes/`, with their runner): coverage, build, node against native, written to `probes/RESULTS.md` |
-| `light-native install <app> [name]` | build and copy the binary into `~/.local/bin` (`BIN_DIR` overrides), atomically |
+| `light-native install <app> [name] [--strip]` | build and copy the binary into `~/.local/bin` (`BIN_DIR` overrides), atomically |
 | `light-native desktop <app> [--selftest]` | build a desktop app with light's desktop shell (`native.web` the page) into its dist/ and run it, or its `native.selftest` |
 
 The compiler is light's choice (`packages/light/native/scriptc.js`): `$SCRIPTC`, else the one installed at the root, else `scriptc` on PATH. scriptc caches what it built and what coverage found under `SCRIPTC_CACHE_DIR`, so an unchanged program comes back in a second (a test with the FFI manifest in a third of its time).
@@ -23,9 +23,9 @@ The compiler is light's choice (`packages/light/native/scriptc.js`): `$SCRIPTC`,
 |---|---|
 | `entry` | the app's entry, relative to the app (`src/main.ts`) |
 | `binary` | the binary's name (the folder's name by default) |
-| `ffi` | the FFI manifest the app links: a package path (`@light/plugins/native/ffi.json`, reached through the app's `node_modules`) or a path relative to the app |
+| `ffi` | the FFI manifest the app links: a package path (`@light/plugins/native/ffi.json`, reached through the app's `node_modules`) or a path relative to the app; an array of them is merged into one under the app's `dist/`, each library named by its absolute path |
 | `prepare` | shell lines run in the member's folder before a build, a test run, coverage or typecheck, with `LIGHT_NATIVE_COMMAND` naming the command (`build`, `test`, `coverage`, `typecheck`, `desktop`, `prepare`), so a step can generate what a test run compiles apart from what a build does |
-| `selftests` | the selftest scenarios: `args`, `home` (files of a temp folder given through `homeEnv`), `live`, `wait`, `checks` (`[label, grep pattern]` pairs), `noProcessLeft`, `exitCode` (the code the app ends with, 0 by default) |
+| `selftests` | the selftest scenarios: `args`, `home` (files of a temp folder given through `homeEnv`), `live`, `wait`, `checks` (`[label, grep pattern]` pairs over the log), `outputChecks` (the same over what the terminal showed), `noProcessLeft`, `exitCode` (the code the app ends with, 0 by default) |
 | `web`, `selftest` | a desktop app's page folder and its selftest (`wait`, `checks`) |
 | `tooling` | a node-only package: no `.ts` exports, no native gate |
 

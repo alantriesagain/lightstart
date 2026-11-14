@@ -5,8 +5,9 @@
  * `args` (flags for the app; a path that exists relative to the app is made absolute), `home` (files
  * of a temp folder the app takes as its own through the `homeEnv` variable; an object is written as
  * JSON), `live` (the agent it talks to: run only with NATIVE_LIVE=1), `wait` (seconds, 40 by default),
- * `checks` ([label, grep pattern] pairs), `noProcessLeft` (a pgrep pattern that must find nothing
- * once the app exited), `exitCode` (the code the app ends with, 0 by default). The terminal is
+ * `checks` ([label, grep pattern] pairs) over the log, `outputChecks` over what the terminal showed,
+ * `noProcessLeft` (a pgrep pattern that must find nothing once the app exited), `exitCode` (the code
+ * the app ends with, 0 by default). The terminal is
  * util-linux `script` under `timeout` on Linux and BSD `script` under a timer on macOS, its stdin
  * /dev/null since BSD script refuses the socket pair node gives a piped stdin.
  */
@@ -91,11 +92,15 @@ export const run = async (args, root) => {
   const wait = Number(cfg.wait ?? (typeof cfg.live === "string" ? 150 : 40));
   const flags = [.../** @type {string[]} */ (absolute(app, cfg.args ?? [])), ...extra];
   const line = ["stty cols 200 rows 40;", quote(binary), "--dir", quote(repo), "--trust", "--selftest", quote(scenario), "--log", quote(log), ...flags.map(quote)].join(" ");
+  let output = "";
   const code = await new Promise((resolvePromise) => {
     const darwin = process.platform === "darwin";
     const child = darwin
-      ? spawn("script", ["-q", "/dev/null", "sh", "-c", line], { env, stdio: ["ignore", "ignore", "ignore"] })
-      : spawn("timeout", [String(wait), "script", "-q", "-e", "-c", line, "/dev/null"], { env, stdio: ["pipe", "ignore", "ignore"] });
+      ? spawn("script", ["-q", "/dev/null", "sh", "-c", line], { env, stdio: ["ignore", "pipe", "ignore"] })
+      : spawn("timeout", [String(wait), "script", "-q", "-e", "-c", line, "/dev/null"], { env, stdio: ["pipe", "pipe", "ignore"] });
+    child.stdout?.on("data", (chunk) => {
+      output += String(chunk);
+    });
     const timer = darwin ? setTimeout(() => child.kill("SIGTERM"), wait * 1000) : null;
     child.on("error", () => resolvePromise(127));
     child.on("close", (c) => {
@@ -108,6 +113,12 @@ export const run = async (args, root) => {
     if (spawnSync("grep", ["-q", "--", pattern, log]).status === 0) console.log("ok   " + label);
     else {
       console.log("FAIL " + label + " (no '" + pattern + "' in " + log + ")");
+      status = 1;
+    }
+  for (const [label, pattern] of cfg.outputChecks ?? [])
+    if (spawnSync("grep", ["-q", "--", pattern], { input: output }).status === 0) console.log("ok   " + label);
+    else {
+      console.log("FAIL " + label + " (no '" + pattern + "' in the terminal output)");
       status = 1;
     }
   if (typeof cfg.noProcessLeft === "string") {

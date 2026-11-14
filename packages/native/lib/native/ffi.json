@@ -1,0 +1,9 @@
+{
+  "ffi_format": 7,
+  "functions": [
+    { "name": "crash_install", "symbol": "crash_install", "params": ["string", "string"], "returns": "i32" },
+    { "name": "crash_note", "symbol": "crash_note", "params": ["string"], "returns": "void" },
+    { "name": "crash_trigger", "symbol": "crash_trigger", "params": ["i32"], "returns": "void" }
+  ],
+  "libraries": ["./out/libcrash.a"]
+}

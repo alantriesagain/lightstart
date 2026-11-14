@@ -10,7 +10,7 @@
 import { join, relative } from "node:path";
 import { formatDiagnostic, gate, parseCoverage } from "@lightstart/light/native/diagnostics.js";
 import { scriptcPath } from "@lightstart/light/native/scriptc.js";
-import { ffiHeader, nodeOnly, resolveFfi } from "../ffi.js";
+import { ffiHeader, nodeOnly, resolveAppFfi, resolveFfi } from "../ffi.js";
 import { prepare } from "../prepare.js";
 import { captureStreams, pool } from "../run.js";
 import { Member, memberByName, members } from "../workspace.js";
@@ -53,7 +53,7 @@ const entriesOf = (_root, targets, appsOnly) => {
   for (const app of targets.filter((m) => m.group === "apps")) {
     if (typeof app.config.entry !== "string") continue;
     if (app.config.coverage === false) continue;
-    out.push(new Entry(app, join(app.dir, app.config.entry), typeof app.config.ffi === "string" ? resolveFfi(app, app.config.ffi) : null, false));
+    out.push(new Entry(app, join(app.dir, app.config.entry), resolveAppFfi(app), false));
   }
   if (appsOnly) return out;
   for (const m of targets)

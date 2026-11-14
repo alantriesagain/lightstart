@@ -1,4 +1,4 @@
-# Probe results (2026-10-21T11:24Z, scriptc 0.3.6, node v25.3.0)
+# Probe results (2026-11-14T18:23Z, scriptc 0.4.12, node v25.3.0)
 
 ## p-a-dispatch: PASS
 - coverage rc=0 static=64 (100%) fully=true deferred=false
@@ -233,3 +233,17 @@ empty array field only: 9.0 ms
 ## p-z-spawn-kill: PASS
 - coverage rc=0 static=31 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
+
+## p-al-window-move: FAIL
+- coverage rc=0 static=6 (100%) fully=true deferred=false
+- build rc=0 node rc=0 native rc=-1 same output=false
+```
+
+--- build
+/home/alanleal/Projects/light/packages/light/native/probes/out/p-al-window-move
+--- node
+4229281
+["xxxxxx
+--- native
+
+```

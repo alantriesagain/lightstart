@@ -5,7 +5,7 @@
  * path relative to the member. Under node the manifest folder's `*-node.mjs` plays the native
  * calls on node's engine, preloaded with `--import`.
  */
-import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { Member } from "./workspace.js";
 
@@ -51,6 +51,61 @@ export const resolveFfi = (member, spec) => {
   } else path = resolve(member.dir, spec);
   if (!existsSync(path)) throw new Error(member.name + ": no ffi manifest at " + path);
   return realpathSync(path);
+};
+
+/**
+ * The app's FFI manifest: `native.ffi` names one, or several that are merged into one file under the
+ * app's dist/ (scriptc takes one). A library path in a manifest is relative to that manifest, so a
+ * merged one names every library by its absolute path.
+ * @param {Member} app
+ * @returns {string | null}
+ */
+export const resolveAppFfi = (app) => {
+  const spec = app.config.ffi;
+  if (typeof spec === "string") return resolveFfi(app, spec);
+  if (!Array.isArray(spec) || spec.length === 0) return null;
+  const paths = spec.map((one) => resolveFfi(app, one));
+  if (paths.length === 1) return paths[0];
+  /** @type {{ ffi_format: number, functions: unknown[], libraries: string[], system_libraries: string[], frameworks: string[], callbacks: unknown[] }} */
+  const merged = { ffi_format: 1, functions: [], libraries: [], system_libraries: [], frameworks: [], callbacks: [] };
+  const names = new Set();
+  const symbols = new Set();
+  for (const path of paths) {
+    const raw = JSON.parse(readFileSync(path, "utf8"));
+    const format = Number(raw.ffi_format);
+    if (!Number.isFinite(format)) throw new Error(path + ": ffi_format is not a number");
+    if (format > merged.ffi_format) merged.ffi_format = format;
+    const dir = dirname(path);
+    for (const fn of raw.functions ?? []) {
+      if (typeof fn.name === "string") {
+        if (names.has(fn.name)) throw new Error("ffi function " + fn.name + " is declared in two manifests");
+        names.add(fn.name);
+      }
+      if (typeof fn.symbol === "string") {
+        if (symbols.has(fn.symbol)) throw new Error("ffi symbol " + fn.symbol + " is declared in two manifests");
+        symbols.add(fn.symbol);
+      }
+      merged.functions.push(fn);
+    }
+    for (const lib of raw.libraries ?? []) merged.libraries.push(resolve(dir, lib));
+    for (const lib of raw.system_libraries ?? []) merged.system_libraries.push(lib);
+    for (const name of raw.frameworks ?? []) merged.frameworks.push(name);
+    for (const cb of raw.callbacks ?? []) merged.callbacks.push(cb);
+  }
+  merged.system_libraries = [...new Set(merged.system_libraries)];
+  merged.frameworks = [...new Set(merged.frameworks)];
+  const output = {
+    ffi_format: merged.ffi_format,
+    functions: merged.functions,
+    libraries: merged.libraries,
+    system_libraries: merged.system_libraries,
+    frameworks: merged.frameworks,
+    ...(merged.callbacks.length > 0 ? { callbacks: merged.callbacks } : {}),
+  };
+  const out = join(app.dir, "dist", "ffi-merged.json");
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, JSON.stringify(output) + "\n");
+  return out;
 };
 
 /**

@@ -17,6 +17,7 @@ import { basename, dirname, join, relative, resolve } from "node:path";
  * @property {string} [live]
  * @property {number} [wait]
  * @property {[string, string][]} [checks]
+ * @property {[string, string][]} [outputChecks]
  * @property {string} [noProcessLeft]
  * @property {number} [exitCode]
  */
@@ -25,7 +26,7 @@ import { basename, dirname, join, relative, resolve } from "node:path";
  * @typedef {object} NativeBlock
  * @property {string} [entry]
  * @property {string} [binary]
- * @property {string} [ffi]
+ * @property {string | string[]} [ffi]
  * @property {string[]} [prepare]
  * @property {Record<string, Selftest>} [selftests]
  * @property {string} [web]

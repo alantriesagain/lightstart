@@ -5,4 +5,5 @@ export * from "./paths.ts";
 export * from "./process.ts";
 export * from "./timing.ts";
 export * from "./log.ts";
+export * from "./crash.ts";
 export * from "./ndjson.ts";

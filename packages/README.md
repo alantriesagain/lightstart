@@ -9,7 +9,7 @@ What native apps of a kind share, as workspace packages on light's native target
 
 | Package | What it is |
 |---|---|
-| `native/lib` | What the core's modules share, light-free: dynamic data narrowed to records, text and numbers, JSON written as text, files read and written whole, the paths a walk takes, a child process run to its end with its output capped, a watcher's closer and the latest-wins ticket, a log file and the command line, NDJSON lines. |
+| `native/lib` | What the core's modules share, light-free: dynamic data narrowed to records, text and numbers, JSON written as text, files read and written whole, the paths a walk takes, a child process run to its end with its output capped, a watcher's closer and the latest-wins ticket, a log file and the command line, NDJSON lines, and the handler a native crash reports itself with. |
 | `highlight` | Syntax tokenizers (JavaScript, CSS, HTML, Markdown), a line at a time with a carried state, and the registry of languages by file extension and fence name. |
 | `native/plugins` | User plugins in a native app: an embedded QuickJS (scriptc's vendored quickjs-ng behind a C shim, linked through the FFI manifest in native/), the engine that evaluates and invokes a plugin's code with a time budget, a plugin's child process with its output batched, and the sources of a plugin folder. |
 | `native/workspace` | A folder as a native app works in it: its files (git's view or a capped walk), its git state read without touching the index (status, branches, the log, a commit's files, a file at HEAD), what changed against a base, a tree of the files, a watcher batching the folder's changes, a file's lines read from an offset, and a controller holding the folder's snapshots for the views. |

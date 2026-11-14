@@ -117,6 +117,8 @@ export class Trail {
   private openKinds: string[] = [];
   private openNames: string[] = [];
   private depth = 0;
+  /** Hears what is open after each change, for the crash report (`crash.ts` sets it to `noteCrash`). */
+  onChange: ((text: string) => void) | null = null;
 
   constructor() {
     for (let i = 0; i < TRAIL_SIZE; i++) {
@@ -136,6 +138,7 @@ export class Trail {
     const d = this.depth;
     this.push(kind, name);
     if (d === 0) this.record(kind, name);
+    this.changed();
     return d;
   }
 
@@ -143,17 +146,26 @@ export class Trail {
   within(kind: string, name: string): number {
     const d = this.depth;
     this.push(kind, name);
+    this.changed();
     return d;
   }
 
   /** What `enter` or `within` started ended: back to its depth (an exception caught between them is forgotten here). */
   leave(depth: number): void {
     this.depth = depth;
+    this.changed();
   }
 
   /** Nothing is open: a top-level boundary (a key, a frame) that heals a depth an exception left. */
   reset(): void {
     this.depth = 0;
+    this.changed();
+  }
+
+  /** Tell `onChange` what is open now. */
+  private changed(): void {
+    const fn = this.onChange;
+    if (fn !== null) fn(this.open());
   }
 
   private push(kind: string, name: string): void {
