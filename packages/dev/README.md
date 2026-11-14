@@ -104,7 +104,7 @@ export default defineExtension("serve", {
 | `page(render)` | Replaces how the shell's HTML is produced from the page: `(c, html) => string`. The default injects the importmap and the reload client |
 | `pageFile(path)` | Names another file as the page when the project has no `index.html`; a relative path is from the project |
 | `watch(dir, label)` | One more folder watched under `--watch`; its changes reach `serve:file-changed` with `path` as `label` and the relative path |
-| `basePath(path)` | Answers the app under `path` as well as at the root (the path is stripped before the pipeline); `/path` redirects to `/path/` |
+| `basePath(path)` | Answers the app under `path` as well as at the root (the path is stripped before the pipeline); `/path` itself answers the app's root |
 | `preview(port)` | Starts the strict build preview over `.deployed/current` on that port beside the dev server, skipped with a warning when the port is taken |
 | `projectDir` | The folder being served |
 | `defaultPort(port)` | The port to start from when neither `--port`, `light.dev.port` nor `PORT` names one |

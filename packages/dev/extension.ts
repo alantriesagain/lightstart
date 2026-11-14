@@ -3,7 +3,7 @@
  * tried behind the project's routes, more file roots, the importmap, the page renderer, more
  * watched folders, base paths, build previews and the payload serve hooks receive.
  */
-import { App, Context, Incoming, type Reply, fail, redirect } from "@lightstart/server";
+import { App, Context, Incoming, type Reply, fail } from "@lightstart/server";
 import type { ImportMap } from "./importmap.ts";
 import { renderShell } from "./shell.ts";
 
@@ -101,7 +101,7 @@ export class ServeExtension {
     this.watches.push({ dir, label });
   }
 
-  /** Answer the app under `path` as well as at the root, with `/path` redirecting to `/path/`. */
+  /** Answer the app under `path` as well as at the root, `/path` itself as the app's root. */
   basePath(path: string): void {
     const trimmed = path.endsWith("/") ? path.slice(0, -1) : path;
     this.basePaths.push(trimmed.startsWith("/") ? trimmed : "/" + trimmed);
@@ -194,12 +194,12 @@ class BaseIncoming extends Incoming {
 /** The context for `c` with `base` stripped from its path. */
 export const withBase = (c: Context, base: string): Context => new Context(new BaseIncoming(c.incoming, base));
 
-/** An app that answers `app` under each base path as well as at the root, redirecting `/base` to `/base/`. */
+/** An app that answers `app` under each base path as well as at the root, `/base` itself as the app's root. */
 export const withBasePaths = (app: App, basePaths: readonly string[]): App => {
   if (basePaths.length === 0) return app;
   const outer = new App();
   for (const base of basePaths) {
-    outer.get(base, (): Reply => redirect(base + "/"));
+    outer.all(base, async (c: Context): Promise<Reply> => (await app.handle(withBase(c, base))) ?? fail("Not found: " + c.path, 404));
     outer.all(base + "/*", async (c: Context): Promise<Reply> => (await app.handle(withBase(c, base))) ?? fail("Not found: " + c.path, 404));
   }
   outer.all("/*", async (c: Context): Promise<Reply> => (await app.handle(c)) ?? fail("Not found: " + c.path, 404));
