@@ -1,11 +1,14 @@
 /**
- * Syntax colouring for `<lc-code-block>`, handed in by the host. Light draws a
- * snippet as plain lines until something configures a tokenizer; in a
- * Bootstrapp app `@bootstrapp/editor` does at boot, so a snippet and the same
- * text open in `<editor-code>` colour identically.
+ * Syntax colouring for `<lc-code-block>`. A host may hand in a tokenizer with
+ * `configureHighlight`; without one the snippet is coloured by
+ * `@lightstart/highlight`'s built-in languages, and a language it does not know
+ * stays plain.
  */
 
 /** @import { Run } from "../types.ts" */
+
+import { languageForFence, tokenizeAll } from "@lightstart/highlight";
+import { registerLanguages } from "@lightstart/highlight/languages.ts";
 
 /** @type {{ lines: ((code: string, language?: string) => Run[][]) | null }} */
 export const highlighter = { lines: null };
@@ -15,10 +18,42 @@ export const configureHighlight = (options) => {
   Object.assign(highlighter, options);
 };
 
+let registered = false;
+
+/**
+ * The built-in tokenizer's runs for `code`, or null when it does not know `language`.
+ * @param {string} code
+ * @param {string} [language]
+ * @returns {Run[][] | null}
+ */
+const builtIn = (code, language) => {
+  if (typeof language !== "string" || language.trim() === "") return null;
+  if (!registered) {
+    registerLanguages();
+    registered = true;
+  }
+  const id = languageForFence(language);
+  if (id === "") return null;
+  const lines = code.split("\n");
+  const tokens = tokenizeAll(id, lines);
+  return lines.map((text, index) => {
+    /** @type {Run[]} */
+    const runs = [];
+    let at = 0;
+    for (const token of tokens[index]) {
+      if (token.from > at) runs.push({ text: text.slice(at, token.from), type: null });
+      runs.push({ text: text.slice(token.from, token.to), type: token.type });
+      at = token.to;
+    }
+    if (at < text.length) runs.push({ text: text.slice(at), type: null });
+    return runs;
+  });
+};
+
 /**
  * @param {string} code
  * @param {string} [language]
  * @returns {Run[][]}
  */
 export const highlightLines = (code, language) =>
-  highlighter.lines?.(code, language) ?? code.split("\n").map((text) => [{ text, type: null }]);
+  highlighter.lines?.(code, language) ?? builtIn(code, language) ?? code.split("\n").map((text) => [{ text, type: null }]);

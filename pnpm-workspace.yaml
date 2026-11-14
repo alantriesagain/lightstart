@@ -11,4 +11,5 @@ packages:
   - 'packages/build'
   - 'packages/sqlite'
   - 'packages/markdown'
+  - 'packages/highlight'
   - 'benchmarks'

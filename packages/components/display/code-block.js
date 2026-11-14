@@ -28,7 +28,7 @@ const markedLines = (text) => {
  * @category display
  * @tag lc-code-block
  *
- * A snippet, coloured by the tokenizer the host configures (plain until one does), with a copy control. Sizes to
+ * A snippet, coloured by `@lightstart/highlight` unless the host configures a tokenizer, with a copy control. Sizes to
  * its content; a long one folds after `fold-at` lines until the reader asks.
  *
  * @example

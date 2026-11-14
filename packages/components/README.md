@@ -34,9 +34,9 @@ for (const component of [link, button, icon]) View.define(component);
 @import "@lightstart/components/display/icon.css";
 ```
 
-A browser resolves the bare specifiers through an importmap (`"@lightstart/light/": "/node_modules/@lightstart/light/"`, `"@lightstart/components/": "/node_modules/@lightstart/components/"` and, for `<lc-markdown>`, `"@lightstart/markdown": "/node_modules/@lightstart/markdown/index.ts"` cover every subpath); a bundler resolves them from `node_modules`.
+A browser resolves the bare specifiers through an importmap (`"@lightstart/light/": "/node_modules/@lightstart/light/"`, `"@lightstart/components/": "/node_modules/@lightstart/components/"`, for `<lc-markdown>`, `"@lightstart/markdown": "/node_modules/@lightstart/markdown/index.ts"`, and for `<lc-code-block>`, `"@lightstart/highlight": "/node_modules/@lightstart/highlight/index.ts"` and `"@lightstart/highlight/": "/node_modules/@lightstart/highlight/"` cover every subpath); a bundler resolves them from `node_modules`.
 
-`applyTheme` writes the design tokens the stylesheets read; `configureIcons` says where `<lc-icon>` fetches an icon (the public Iconify API here; a page that has the icons in its own stylesheet leaves it unset). Three more hooks matter only when you have the thing they connect: `configureNavigation` from `@lightstart/light/navigation` for a router (links are plain anchors without one), `configureView({ translate })` for translations (the components speak English without one), and `configureHighlight` from `utils/highlight.js` for a tokenizer behind `<lc-code-block>` (plain lines without one).
+`applyTheme` writes the design tokens the stylesheets read; `configureIcons` says where `<lc-icon>` fetches an icon (the public Iconify API here; a page that has the icons in its own stylesheet leaves it unset). Three more hooks matter only when you have the thing they connect: `configureNavigation` from `@lightstart/light/navigation` for a router (links are plain anchors without one), `configureView({ translate })` for translations (the components speak English without one), and `configureHighlight` from `utils/highlight.js` for a tokenizer behind `<lc-code-block>` (which otherwise colours with `@lightstart/highlight`'s built-in languages, or leaves an unknown language plain).
 
 A component that draws other tags needs them defined too, or they stay inert; the table at the end lists what each one renders. `examples/starter` and `examples/indexeddb-explorer` are whole pages built this way.
 
@@ -222,7 +222,7 @@ Pure modules: no `$APP`, no DOM, each tested under `node --test`.
 | `utils/scale.js` | `compactNumber(value)` for a tick label (`1.2K`), `niceMax(max, intervals)` for a round top of a value axis |
 | `utils/time-ago.js` | `timeAgo(iso, locale, now)`, a timestamp as "2 hours ago" in the reader's language |
 | `utils/day-groups.js` | `readAt`, `dayKeyOf`, `groupByDay`, `dayWords`: dated entries as the reader's day groups, with the day's words from `Intl` |
-| `utils/highlight.js` | `highlightLines(code, language)`, plain lines until `configureHighlight({ lines })` hands a tokenizer in |
+| `utils/highlight.js` | `highlightLines(code, language)`, coloured by `@lightstart/highlight` unless `configureHighlight({ lines })` hands a tokenizer in; an unknown language stays plain |
 | `overlay/anchor.js` | `anchorPosition({ trigger, floating, side, align, offset, viewport })`, clamped into the viewport |
 | `overlay/detents.js` | `resolveStops`, `classify`, `releaseVelocity`, `rubber` for a draggable sheet |
 | `overlay/float-rect.js` | `clampRect`, `loadRect`, `saveRect` for a floating window |

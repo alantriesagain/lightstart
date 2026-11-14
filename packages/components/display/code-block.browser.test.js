@@ -1,7 +1,7 @@
 /**
- * `<lc-code-block>`: the snippet renders as plain lines until a host
- * configures a tokenizer, a configured one colours the runs, a long block
- * folds until asked, and the copy control writes the whole snippet. The
+ * `<lc-code-block>`: the snippet is coloured by `@lightstart/highlight` by
+ * default, a configured tokenizer overrides it, a long block folds until
+ * asked, and the copy control writes the whole snippet. The
  * clipboard is stubbed: a test page has no permission to write the real one.
  */
 import assert from "node:assert/strict";
@@ -43,10 +43,10 @@ describe("lc-code-block", () => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: realClipboard });
   });
 
-  it("shows the snippet as plain lines that read back to the same text", () => {
+  it("colours the snippet by default, and it reads back to the same text", () => {
     const code = el.querySelector(".code-block-code");
     assert.equal(code.textContent, el.code);
-    assert.equal(el.querySelector("[class^=tok-]"), null, "nothing is coloured until a tokenizer is configured");
+    assert.ok(el.querySelector(".tok-tag"), "the default tokenizer colours the html tag");
   });
 
   it("colours the runs a configured tokenizer answers", async () => {
