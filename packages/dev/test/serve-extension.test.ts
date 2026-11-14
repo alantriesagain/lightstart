@@ -86,6 +86,8 @@ const main = async (): Promise<void> => {
     const origin = `http://127.0.0.1:${port}`;
     const handled = await fetchUntil(`${origin}/handled`);
     eq("the handled app answers", await handled.text(), "handled-app");
+    await fetch(`${origin}/settle-write`);
+    eq("a route's waitUntil work is done before its reply goes out", await (await fetch(`${origin}/settle-read`)).text(), "done");
     eq("a route file reads the field the extension put in routeContext", await (await fetch(`${origin}/route-greeting`)).text(), "hi-from-route");
 
     const cors = await fetch(`${origin}/handled`, { headers: { origin: "https://allowed.example" } });
