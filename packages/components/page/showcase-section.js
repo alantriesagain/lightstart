@@ -3,6 +3,26 @@ import T from "@lightstart/light/types";
 import { defineComponent } from "@lightstart/light";
 /** @import { Prop, ShowcaseImage, ShowcaseCta } from "../types.ts" */
 
+/**
+ * Showcase section
+ *
+ * @component
+ * @category page
+ * @tag lc-showcase-section
+ *
+ * A page band pairing a picture with copy and calls to action. The body renders through
+ * `<lc-markdown>`.
+ *
+ * @prop {string} align - `left` or `right`: which side the copy sits on.
+ * @prop {string} eyebrow - The small line above the headline.
+ * @prop {string} headline - The section heading.
+ * @prop {string} subheadline - The line under the heading.
+ * @prop {string} body - Markdown rendered under the subheadline.
+ * @prop {ShowcaseImage} image - The picture, `{ src, alt }`.
+ * @prop {ShowcaseCta[]} ctas - The actions, `{ label, href, variant }`.
+ * @prop {string} sectionId - The section's id.
+ * @prop {boolean} unsafeHtml - Render the body's raw HTML rather than showing it as text.
+ */
 export default defineComponent({
   tag: "lc-showcase-section",
   style: true,
@@ -45,6 +65,7 @@ export default defineComponent({
       })
     ),
     sectionId: "",
+    unsafeHtml: T.boolean({ attribute: false, defaultValue: false }),
   },
   render() {
     const image = this.image;
@@ -73,7 +94,7 @@ export default defineComponent({
           : ""}
         ${this.body
           ? html`<div class="showcase-body">
-              <lc-markdown .content=${this.body}></lc-markdown>
+              <lc-markdown .content=${this.body} .unsafeHtml=${this.unsafeHtml}></lc-markdown>
             </div>`
           : ""}
         ${ctas.length > 0

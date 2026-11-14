@@ -34,11 +34,17 @@ const decodeEntities = (text: string): string => {
   return decoded;
 };
 
+/** A href as a browser reads it: references decoded, whitespace and control characters dropped. */
+const normalized = (href: string): string => decodeEntities(href).replace(/[\u0000-\u0020\u007f]/g, "").toLowerCase();
+
 /**
  * Whether a href is relative or uses http, https or mailto. A colon after a path, query or
  * fragment delimiter is not a scheme.
  */
 export const safeUrl = (href: string): boolean => {
-  const url = decodeEntities(href).replace(/[\u0000-\u0020\u007f]/g, "").toLowerCase();
+  const url = normalized(href);
   return !/^[a-z][a-z0-9+.-]*:/.test(url) || /^(https?|mailto):/.test(url);
 };
+
+/** Whether a href names another host (`https://host/…`, `//host/…`) rather than a path on this one. */
+export const remoteUrl = (href: string): boolean => /^(?:[a-z][a-z0-9+.-]*:)?\/\//.test(normalized(href));

@@ -24,6 +24,7 @@ import {
   parse,
   parseInline,
   plainText,
+  remoteUrl,
   safeUrl,
 } from "@lightstart/markdown";
 import { createSlugger } from "../utils/slug.js";
@@ -32,7 +33,7 @@ import { createSlugger } from "../utils/slug.js";
 /**
  * @typedef {import("@lightstart/markdown").Block} BlockNode
  * @typedef {import("@lightstart/markdown").Inline} InlineNode
- * @typedef {{ slug: (text: string) => string, headings: MarkdownHeading[], anchors: boolean, unsafeHtml: boolean }} RenderContext
+ * @typedef {{ slug: (text: string) => string, headings: MarkdownHeading[], anchors: boolean, unsafeHtml: boolean, remoteImages: boolean, idPrefix: string }} RenderContext
  */
 
 /** @param {string} text */
@@ -64,6 +65,10 @@ const renderInline = (node, context) => {
   }
   if (node instanceof Image) {
     if (!safeUrl(node.href)) return escapeText(node.alt);
+    if (!context.remoteImages && remoteUrl(node.href)) {
+      const text = node.alt.length > 0 ? escapeText(node.alt) : escapeText(node.href);
+      return `<a href="${escapeAttribute(node.href)}">${text}</a>`;
+    }
     const title = node.title.length > 0 ? ` title="${escapeAttribute(node.title)}"` : "";
     return `<img src="${escapeAttribute(node.href)}" alt="${escapeAttribute(node.alt)}"${title}>`;
   }
@@ -139,7 +144,7 @@ const renderList = (list, context) => {
  */
 const renderHeading = (heading, context) => {
   const text = plainText(heading.children);
-  const id = context.slug(text);
+  const id = context.idPrefix + context.slug(text);
   context.headings.push({ id, text, level: heading.level });
   const anchor = context.anchors
     ? `<a class="anchor" href="#${escapeAttribute(id)}" aria-label="${escapeAttribute(text)}">#</a>`
@@ -201,6 +206,8 @@ const toHtml = (blocks, context) => renderBlocks(blocks, context, false);
  * Renders markdown with `@lightstart/markdown`, styled by the theme's prose rules. Raw HTML in
  * the content shows as text unless `unsafeHtml` is set, which a caller does only for content it
  * trusts. Links keep only `http`, `https`, `mailto` and relative targets, in both modes.
+ * `remoteImages` off draws an absolute image as a link to it instead of loading it, and `idPrefix`
+ * goes before every heading id.
  *
  * @example
  * ```html
@@ -216,6 +223,8 @@ export default defineComponent({
     content: T.string(),
     anchors: T.boolean(),
     unsafeHtml: T.boolean({ attribute: false, defaultValue: false }),
+    remoteImages: T.boolean({ attribute: false, defaultValue: true }),
+    idPrefix: T.string({ attribute: false, defaultValue: "" }),
     onWikiLink: T.function(),
     _headings: /** @type {Prop<MarkdownHeading[]>} */ (T.array({ attribute: false, defaultValue: [], reactive: false })),
     _announced: T.string({ defaultValue: "", reactive: false }),
@@ -237,7 +246,7 @@ export default defineComponent({
   },
 
   updated() {
-    const key = `${this.anchors}:${this.content || ""}`;
+    const key = `${this.anchors}:${this.idPrefix}:${this.remoteImages}:${this.content || ""}`;
     if (key === this._announced) return;
     this._announced = key;
     this.$emit("markdown-rendered", { headings: this._headings });
@@ -245,7 +254,7 @@ export default defineComponent({
 
   render() {
     /** @type {RenderContext} */
-    const context = { slug: createSlugger(), headings: [], anchors: !!this.anchors, unsafeHtml: !!this.unsafeHtml };
+    const context = { slug: createSlugger(), headings: [], anchors: !!this.anchors, unsafeHtml: !!this.unsafeHtml, remoteImages: this.remoteImages !== false, idPrefix: this.idPrefix || "" };
     const rendered = toHtml(parse(this.content || ""), context);
     this._headings = context.headings;
     return unsafeHTML(rendered);

@@ -78,7 +78,7 @@ export default {
 
 ## Markdown
 
-`<lc-markdown>` renders its `content` synchronously with `@lightstart/markdown`, the parser the terminal renderer uses too. Raw HTML renders as text unless the caller sets `.unsafeHtml=${true}`, which it does only for content it trusts. Links keep `http`, `https`, `mailto` and relative targets; any other scheme is dropped in both modes.
+`<lc-markdown>` renders its `content` synchronously with `@lightstart/markdown`, the parser the terminal renderer uses too. Raw HTML renders as text unless the caller sets `.unsafeHtml=${true}`, which it does only for content it trusts. Links keep `http`, `https`, `mailto` and relative targets; any other scheme is dropped in both modes. `.remoteImages=${false}` draws an absolute image as a link to it instead of loading it, and `.idPrefix` goes before every heading id.
 
 ```html
 <lc-markdown .content=${doc}></lc-markdown>
