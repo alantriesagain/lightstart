@@ -16,6 +16,10 @@ export class Language {
   readonly tokenizeText: (text: string, state: HlState) => Token[];
   /** The plugin that registered it ("" for none). */
   owner = "";
+  /** How many lines after one its tokens depend on (a Markdown table's header waits for its delimiter row). */
+  lookAhead = 0;
+  /** The extra indentation a new line takes after `textBeforeCursor` (1 after an opening bracket). */
+  indentAfter: (textBeforeCursor: string) => number = (_textBeforeCursor: string): number => 0;
 
   constructor(id: string, extensions: string[], fences: string[], tokenizeText: (text: string, state: HlState) => Token[]) {
     this.id = id;

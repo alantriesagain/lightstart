@@ -8,6 +8,8 @@
 import { HlState, languageForFence, languageForPath, tokenizeAll, tokenizeLine } from "../index.ts";
 import { budget, done, eq, ok } from "@light/test/assert.ts";
 import { registerLanguages } from "../languages.ts";
+import { findLanguage } from "../registry.ts";
+import { Frame } from "../state.ts";
 
 registerLanguages();
 
@@ -141,4 +143,32 @@ const tokens = tokenizeAll("typescript", big);
 const ms = Date.now() - t0;
 ok("20000 lines tokenized (" + String(tokens.length) + ")", tokens.length === 20000 && tokens[19999].length > 10);
 ok("in under 2 s", ms < budget(2000));
+
+const htmlState = new HlState();
+tokenizeLine("html", "<script>const a = `x${", htmlState);
+const copy = htmlState.clone();
+ok("a clone equals its source", copy.equals(htmlState) && htmlState.equals(copy));
+copy.hmode = copy.hmode + 1;
+ok("a scalar field makes it unequal", !copy.equals(htmlState));
+const framed = htmlState.clone();
+framed.stack.push(new Frame("expr"));
+ok("a stack frame makes it unequal", !framed.equals(htmlState));
+const nested = htmlState.clone();
+const inner = nested.inner;
+ok("a script's state is held inside", inner !== null);
+if (inner !== null) {
+  inner.regexOk = !inner.regexOk;
+  ok("a field of the inner state makes it unequal", !nested.equals(htmlState));
+}
+ok("a fresh state equals a fresh state", new HlState().equals(new HlState()));
+
+const jsLang = findLanguage("javascript");
+const mdLang = findLanguage("markdown");
+const cssLang = findLanguage("css");
+const htmlLang = findLanguage("html");
+ok("Markdown looks one line ahead, JavaScript none", mdLang !== null && mdLang.lookAhead === 1 && jsLang !== null && jsLang.lookAhead === 0);
+ok("JavaScript indents after an opening bracket or an arrow", jsLang !== null && jsLang.indentAfter("if (a) {") === 1 && jsLang.indentAfter("const f = () =>") === 1 && jsLang.indentAfter("a;") === 0);
+ok("CSS indents after a brace", cssLang !== null && cssLang.indentAfter("a {") === 1 && cssLang.indentAfter("color: red;") === 0);
+ok("HTML indents after an open tag, not a closed one", htmlLang !== null && htmlLang.indentAfter("<div>") === 1 && htmlLang.indentAfter("<b>x</b>") === 0 && htmlLang.indentAfter("<br/>") === 0);
+ok("Markdown never indents", mdLang !== null && mdLang.indentAfter("- item") === 0);
 done();
