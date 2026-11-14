@@ -106,6 +106,8 @@ export default defineExtension("serve", {
 | `watch(dir, label)` | One more folder watched under `--watch`; its changes reach `serve:file-changed` with `path` as `label` and the relative path |
 | `basePath(path)` | Answers the app under `path` as well as at the root (the path is stripped before the pipeline); `/path` redirects to `/path/` |
 | `preview(port)` | Starts the strict build preview over `.deployed/current` on that port beside the dev server, skipped with a warning when the port is taken |
+| `projectDir` | The folder being served |
+| `defaultPort(port)` | The port to start from when neither `--port`, `light.dev.port` nor `PORT` names one |
 | `payload` | The record every serve hook's payload carries, writable during setup |
 | `routeContext` | The fields every route file's context carries beside `projectDir`, `log` and `cli`, writable during setup; `RouteContext` is an interface a package widens to type them |
 
