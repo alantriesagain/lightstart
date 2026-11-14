@@ -9,6 +9,7 @@ import { MarkupHost } from "./host.js";
 import { MRoot } from "./node.js";
 import { markupOf, serialize } from "./serialize.js";
 
+/** @type {MarkupHost | null} */
 let host = null;
 
 /**

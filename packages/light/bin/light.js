@@ -29,7 +29,7 @@ try {
 
 if (cli !== null) {
   const { discover } = await import("@lightstart/cli/node");
-  const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
+  const version = /** @type {{ version: string }} */ (JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"))).version;
   const light = cli.createCli({
     name: "light",
     version,
