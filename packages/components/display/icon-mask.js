@@ -78,4 +78,24 @@ export const iconMaskCSS = (icons, { solid = new Set(), bold = new Set() } = {})
   return css ? `${css}\n` : "";
 };
 
+/**
+ * The rule that sizes `<lc-icon size="18">`: a numeric size is a stylesheet rule on the attribute
+ * rather than an inline style, so a page served with its markup needs no `style` attribute for it.
+ * @param {number | string} px
+ * @returns {string}
+ */
+export const iconSizeRule = (px) =>
+  /^\d+$/.test(String(px)) ? `:where(.lc-icon,lc-icon)[size="${px}"]{--lc-icon-size:${px}px}` : "";
+
+/**
+ * The rules for a set of numeric sizes, smallest first; a value that is not a number is skipped.
+ * @param {Iterable<number | string>} sizes
+ * @returns {string}
+ */
+export const iconSizeCSS = (sizes) => {
+  const numeric = [...new Set([...sizes].map(String))].filter((size) => /^\d+$/.test(size)).sort((a, b) => Number(a) - Number(b));
+  const css = numeric.map(iconSizeRule).join("\n");
+  return css ? `${css}\n` : "";
+};
+
 export { ICON_NAME };

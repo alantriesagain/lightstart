@@ -1,7 +1,7 @@
 import T from "@lightstart/light/types";
 import View, { defineComponent, trackWork } from "@lightstart/light";
 import { icons } from "@lightstart/light/theme/icons.js";
-import { ICON_NAME, maskRule } from "./icon-mask.js";
+import { ICON_NAME, iconSizeRule, maskRule } from "./icon-mask.js";
 /** @import { IconEntry } from "@lightstart/light/theme" */
 /** @import { IconVariant } from "../types.ts" */
 
@@ -11,6 +11,7 @@ const isIconName = (name) => typeof name === "string" && ICON_NAME.test(name);
 /** @type {Map<string, Promise<IconEntry | null>>} */
 const entries = new Map();
 const drawn = new Set();
+const sized = new Set();
 /** @type {CSSStyleSheet | null} */
 let iconSheet = null;
 let iconRules = "";
@@ -25,6 +26,16 @@ const devSheet = () => {
 
 /** The rules drawn so far, for a test or a diagnostic. */
 export const drawnIconRules = () => iconRules;
+
+/** @param {string} size */
+const drawSize = (size) => {
+  if (sized.has(size)) return;
+  const sheet = devSheet();
+  if (!sheet) return;
+  sized.add(size);
+  iconRules += `${iconSizeRule(size)}\n`;
+  sheet.replaceSync(iconRules);
+};
 
 /** @param {string} name */
 const entryFor = (name) => {
@@ -102,11 +113,7 @@ export default defineComponent({
     return this.getIcon(this.name, this.solid, this.bold);
   },
   applyNumericSize() {
-    if (this.size && /^\d+$/.test(this.size))
-      this.style.setProperty("--lc-icon-size", `${this.size}px`);
-     else
-      this.style.removeProperty("--lc-icon-size");
-
+    if (this.size && /^\d+$/.test(this.size)) drawSize(this.size);
   },
   render() {
     if (this.name && !isIconName(this.name)) return this.name;
