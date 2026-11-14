@@ -1,12 +1,15 @@
 /**
  * @file The block phase: text to blocks with a container stack of quotes and list items, paragraphs
- * that continue lazily across lines, GFM pipe tables, fences, rules, headings, raw HTML blocks and
- * link reference definitions collected document-wide. It then parses each block's text with the
- * inline phase (`inline.ts`).
+ * that continue lazily across lines, GFM pipe tables, fences, indented code, rules, ATX and setext
+ * headings, raw HTML blocks, link reference definitions and footnote definitions collected
+ * document-wide. It then parses each block's text with the inline phase (`inline.ts`) and appends
+ * the referenced footnotes as one trailing block.
  */
 import {
   Block,
   Code,
+  FootnoteDefinition,
+  Footnotes,
   Heading,
   Html,
   Inline,
@@ -17,7 +20,7 @@ import {
   Quote,
   Rule,
 } from "./nodes.ts";
-import { LinkDefinition, normalizeLabel, parseInline, plainText } from "./inline.ts";
+import { FootnoteState, LinkDefinition, normalizeLabel, parseInline, plainText } from "./inline.ts";
 import { parseTable } from "./table.ts";
 
 const BLOCK_TAGS = new Set<string>([
@@ -58,6 +61,16 @@ class DefinitionMatch {
   constructor(label: string, definition: LinkDefinition) {
     this.label = label;
     this.definition = definition;
+  }
+}
+
+class FootnoteMatch {
+  label: string;
+  rest: string;
+
+  constructor(label: string, rest: string) {
+    this.label = label;
+    this.rest = rest;
   }
 }
 
@@ -175,10 +188,102 @@ const definitionOf = (rest: string): LinkDefinition | null => {
 
 const matchDefinition = (line: string): DefinitionMatch | null => {
   const m = /^\[([^\]]+)\]:[ \t]*(.*)$/.exec(line);
-  if (m === null) return null;
+  if (m === null || m[1].startsWith("^")) return null;
   const definition = definitionOf(m[2]);
   if (definition === null) return null;
   return new DefinitionMatch(m[1], definition);
+};
+
+const matchFootnote = (line: string): FootnoteMatch | null => {
+  const m = /^\[\^([^\]\s]+)\]:[ \t]*(.*)$/.exec(line);
+  if (m === null) return null;
+  return new FootnoteMatch(m[1], m[2]);
+};
+
+/**
+ * The body lines a footnote definition at `lines[at]` owns, its first `text` included, and the
+ * index after them: continuation lines are indented at least two spaces, blank lines are kept
+ * between them, and a lazy line that does not start a block continues the body too.
+ */
+const readFootnoteBody = (lines: string[], at: number, text: string, container: boolean): { body: string[]; end: number } => {
+  const body: string[] = [text];
+  let i = at + 1;
+  while (i < lines.length) {
+    const content = container ? containerContent(lines[i]) : lines[i];
+    if (isBlank(content)) {
+      let k = i + 1;
+      while (k < lines.length) {
+        const next = container ? containerContent(lines[k]) : lines[k];
+        if (!isBlank(next)) break;
+        k++;
+      }
+      if (k >= lines.length) break;
+      const next = container ? containerContent(lines[k]) : lines[k];
+      if (leadingSpaces(next) < 2) break;
+      for (let b = i; b < k; b++) body.push("");
+      i = k;
+      continue;
+    }
+    const lead = leadingSpaces(content);
+    if (lead >= 2) {
+      body.push(stripIndent(content, Math.min(lead, 4)));
+      i++;
+      continue;
+    }
+    if (matchFootnote(content) !== null || matchDefinition(content) !== null) break;
+    if (!isBlockStart(content)) {
+      body.push(content.slice(Math.min(lead, 3)));
+      i++;
+      continue;
+    }
+    break;
+  }
+  return { body, end: i };
+};
+
+const collectFootnoteLabels = (lines: string[]): Map<string, boolean> => {
+  const labels = new Map<string, boolean>();
+  let fence = "";
+  let inHtml = false;
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (isBlank(line)) {
+      inHtml = false;
+      i++;
+      continue;
+    }
+    const content = containerContent(line);
+    if (fence.length > 0) {
+      const close = /^(`{3,}|~{3,})[ \t]*$/.exec(content);
+      if (close !== null && close[1].charAt(0) === fence.charAt(0) && close[1].length >= fence.length) fence = "";
+      i++;
+      continue;
+    }
+    const open = /^(`{3,}|~{3,})(.*)$/.exec(content);
+    if (open !== null) {
+      fence = open[1];
+      i++;
+      continue;
+    }
+    if (inHtml) {
+      i++;
+      continue;
+    }
+    if (isHtmlStart(content)) {
+      inHtml = true;
+      i++;
+      continue;
+    }
+    const footnote = matchFootnote(content);
+    if (footnote !== null) {
+      labels.set(normalizeLabel(footnote.label), true);
+      i = readFootnoteBody(lines, i, footnote.rest, true).end;
+      continue;
+    }
+    i++;
+  }
+  return labels;
 };
 
 const collectDefinitions = (lines: string[], defs: Map<string, LinkDefinition>): void => {
@@ -210,7 +315,7 @@ const collectDefinitions = (lines: string[], defs: Map<string, LinkDefinition>):
   }
 };
 
-const parseList = (lines: string[], at: number, defs: Map<string, LinkDefinition>, depth: number): { list: List; end: number } => {
+const parseList = (lines: string[], at: number, defs: Map<string, LinkDefinition>, depth: number, notes: FootnoteState): { list: List; end: number } => {
   const first = matchListMarker(lines[at]) as Marker;
   const items: ListItem[] = [];
   let loose = false;
@@ -269,7 +374,7 @@ const parseList = (lines: string[], at: number, defs: Map<string, LinkDefinition
       }
       break;
     }
-    const blocks = parseBlocks(itemLines, defs, depth + 1);
+    const blocks = parseBlocks(itemLines, defs, depth + 1, notes);
     for (let k = 1; k < blocks.length; k++) {
       if (blocks[k].blankBefore) loose = true;
     }
@@ -280,7 +385,7 @@ const parseList = (lines: string[], at: number, defs: Map<string, LinkDefinition
 };
 
 /** `depth` counts the quotes and list items around `lines`; past MAX_NESTING a marker stays text. */
-const parseBlocks = (lines: string[], defs: Map<string, LinkDefinition>, depth: number): Block[] => {
+const parseBlocks = (lines: string[], defs: Map<string, LinkDefinition>, depth: number, notes: FootnoteState): Block[] => {
   const out: Block[] = [];
   let pendingBlank = false;
   const emit = (block: Block): void => {
@@ -298,6 +403,28 @@ const parseBlocks = (lines: string[], defs: Map<string, LinkDefinition>, depth: 
     }
     const indent = leadingSpaces(line);
     const s = indent <= 3 ? line.slice(indent) : line;
+    if (indent >= 4) {
+      const code: string[] = [];
+      let j = i;
+      while (j < lines.length) {
+        if (isBlank(lines[j])) {
+          let k = j + 1;
+          while (k < lines.length && isBlank(lines[k])) k++;
+          if (k < lines.length && leadingSpaces(lines[k]) >= 4) {
+            for (let b = j; b < k; b++) code.push("");
+            j = k;
+            continue;
+          }
+          break;
+        }
+        if (leadingSpaces(lines[j]) < 4) break;
+        code.push(stripIndent(lines[j], 4));
+        j++;
+      }
+      emit(new Code("", code.join("\n")));
+      i = j;
+      continue;
+    }
     const fence = indent <= 3 ? /^(`{3,}|~{3,})(.*)$/.exec(s) : null;
     if (fence !== null) {
       const char = fence[1].charAt(0);
@@ -323,7 +450,7 @@ const parseBlocks = (lines: string[], defs: Map<string, LinkDefinition>, depth: 
     if (heading !== null) {
       let text = heading[2] === undefined ? "" : heading[2];
       text = text.replace(/[ \t]+#+[ \t]*$/, "");
-      const children = parseInline(text, defs);
+      const children = parseInline(text, defs, 0, notes);
       emit(new Heading(heading[1].length, children, plainText(children)));
       i++;
       continue;
@@ -369,16 +496,23 @@ const parseBlocks = (lines: string[], defs: Map<string, LinkDefinition>, depth: 
         }
         break;
       }
-      emit(new Quote(parseBlocks(quoteLines, defs, depth + 1)));
+      emit(new Quote(parseBlocks(quoteLines, defs, depth + 1, notes)));
       continue;
     }
     if (indent <= 3 && depth < MAX_NESTING && matchListMarker(line) !== null) {
-      const parsed = parseList(lines, i, defs, depth);
+      const parsed = parseList(lines, i, defs, depth, notes);
       emit(parsed.list);
       i = parsed.end;
       continue;
     }
     if (indent <= 3) {
+      const footnote = matchFootnote(s);
+      if (footnote !== null) {
+        const body = readFootnoteBody(lines, i, footnote.rest, false);
+        notes.definitions.set(normalizeLabel(footnote.label), body.body);
+        i = body.end;
+        continue;
+      }
       const definition = matchDefinition(s);
       if (definition !== null) {
         defs.set(normalizeLabel(definition.label), definition.definition);
@@ -387,25 +521,74 @@ const parseBlocks = (lines: string[], defs: Map<string, LinkDefinition>, depth: 
       }
     }
     const paragraph: string[] = [];
+    let setext = 0;
     while (i < lines.length) {
       const next = lines[i];
       if (isBlank(next)) break;
-      if (paragraph.length > 0 && (isBlockStart(next) || parseTable(lines, i) !== null)) break;
+      if (paragraph.length > 0) {
+        setext = setextLevel(next);
+        if (setext > 0) {
+          i++;
+          break;
+        }
+        if (isBlockStart(next) || parseTable(lines, i) !== null) break;
+      }
       paragraph.push(next.slice(Math.min(leadingSpaces(next), 3)));
       i++;
     }
-    const children: Inline[] = parseInline(paragraph.join("\n"), defs);
+    if (setext > 0) {
+      const children: Inline[] = parseInline(paragraph.join("\n"), defs, 0, notes);
+      emit(new Heading(setext, children, plainText(children)));
+      continue;
+    }
+    const children: Inline[] = parseInline(paragraph.join("\n"), defs, 0, notes);
     emit(new Paragraph(children));
   }
   return out;
 };
 
-/** `text` as blocks, its link reference definitions resolved across the whole document. */
+/** The setext level a line underlines a paragraph with: 1 for `=`, 2 for `-`, 0 when neither. */
+const setextLevel = (line: string): number => {
+  const indent = leadingSpaces(line);
+  if (indent > 3) return 0;
+  const s = line.slice(indent).replace(/[ \t]+$/, "");
+  if (/^=+$/.test(s)) return 1;
+  if (/^-+$/.test(s)) return 2;
+  return 0;
+};
+
+/** The referenced footnotes, parsed in the order their references first numbered them. */
+const buildFootnotes = (notes: FootnoteState, defs: Map<string, LinkDefinition>): FootnoteDefinition[] => {
+  const items: FootnoteDefinition[] = [];
+  let at = 0;
+  while (at < notes.order.length) {
+    const label = notes.order[at];
+    const number = notes.numbers.get(label);
+    const body = notes.definitions.get(label);
+    const blocks = parseBlocks(body === undefined ? [] : body, defs, 1, notes);
+    items.push(new FootnoteDefinition(label, number === undefined ? at + 1 : number, blocks));
+    at++;
+  }
+  return items;
+};
+
+/**
+ * `text` as blocks, its link reference definitions resolved across the whole document. The
+ * referenced footnotes come last, as one `Footnotes` block in reference order.
+ */
 export const parse = (text: string): Block[] => {
   const lines: string[] = [];
   const normalized = text.replace(/\r\n?/g, "\n").replace(/\t/g, "    ");
   for (const line of normalized.split("\n")) lines.push(line);
   const defs = new Map<string, LinkDefinition>();
   collectDefinitions(lines, defs);
-  return parseBlocks(lines, defs, 0);
+  const notes = new FootnoteState(collectFootnoteLabels(lines));
+  const blocks = parseBlocks(lines, defs, 0, notes);
+  const items = buildFootnotes(notes, defs);
+  if (items.length > 0) {
+    const footnotes = new Footnotes(items);
+    footnotes.blankBefore = blocks.length > 0;
+    blocks.push(footnotes);
+  }
+  return blocks;
 };

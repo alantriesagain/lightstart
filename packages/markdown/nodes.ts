@@ -1,8 +1,9 @@
 /**
- * @file The nodes a Markdown document parses into: blocks (a heading, a paragraph, a fenced code
- * block, a list and its items, a quote, a rule, a table, raw HTML) and inlines (text, its styles,
- * links, images, wiki links, breaks and raw inline HTML). Every node is a class, so a renderer
- * narrows one with `instanceof`; none of them draws anything.
+ * @file The nodes a Markdown document parses into: blocks (a heading, a paragraph, a fenced or
+ * indented code block, a list and its items, a quote, a rule, a table, raw HTML and the trailing
+ * footnotes) and inlines (text, its styles, links, images, wiki links, footnote references,
+ * breaks and raw inline HTML). Every node is a class, so a renderer narrows one with
+ * `instanceof`; none of them draws anything.
  */
 
 /** The cap on containers (quotes and list levels) and on inline nesting. */
@@ -208,5 +209,40 @@ export class Html extends Block {
   constructor(text: string) {
     super();
     this.text = text;
+  }
+}
+
+/** A reference to a footnote by its label, numbered in order of first reference. */
+export class FootnoteRef extends Inline {
+  label: string;
+  number: number;
+
+  constructor(label: string, number: number) {
+    super();
+    this.label = label;
+    this.number = number;
+  }
+}
+
+/** One footnote definition: its label, its number and the blocks its body parses into. */
+export class FootnoteDefinition {
+  label: string;
+  number: number;
+  blocks: Block[];
+
+  constructor(label: string, number: number, blocks: Block[]) {
+    this.label = label;
+    this.number = number;
+    this.blocks = blocks;
+  }
+}
+
+/** The document's referenced footnotes, in reference order, as a trailing block. */
+export class Footnotes extends Block {
+  items: FootnoteDefinition[];
+
+  constructor(items: FootnoteDefinition[]) {
+    super();
+    this.items = items;
   }
 }

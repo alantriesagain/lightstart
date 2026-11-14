@@ -8,6 +8,9 @@ import {
   CodeSpan,
   Del,
   Em,
+  FootnoteDefinition,
+  FootnoteRef,
+  Footnotes,
   HardBreak,
   Image,
   Inline,
@@ -22,7 +25,7 @@ import {
   parseInline,
   plainText,
 } from "../index.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@light/test/assert.ts";
 
 const show = (nodes: Inline[]): string => {
   let out = "";
@@ -32,6 +35,7 @@ const show = (nodes: Inline[]): string => {
     else if (node instanceof Em) out += "Em(" + show(node.children) + ")";
     else if (node instanceof Del) out += "Del(" + show(node.children) + ")";
     else if (node instanceof CodeSpan) out += "Code(" + node.text + ")";
+    else if (node instanceof FootnoteRef) out += "Note(" + node.label + "|" + node.number + ")";
     else if (node instanceof Link) out += "Link(" + node.href + "|" + node.title + "|" + show(node.children) + ")";
     else if (node instanceof Image) out += "Image(" + node.href + "|" + node.title + "|" + node.alt + ")";
     else if (node instanceof WikiLink) out += "Wiki(" + node.name + "|" + node.display + ")";
@@ -87,5 +91,38 @@ if (first instanceof Paragraph) {
 
 const undefinedRef = parse("[a][nope]")[0];
 if (undefinedRef instanceof Paragraph) eq("an undefined reference stays text", show(undefinedRef.children), "T([a][nope])");
+
+const notes = parse("first [^b] then [^a]\n\n[^a]: A\n\n[^b]: B\n\n[^c]: unused");
+const notesParagraph = notes[0];
+ok("footnote references number by first reference", notesParagraph instanceof Paragraph);
+if (notesParagraph instanceof Paragraph) eq("their numbers", show(notesParagraph.children), "T(first )Note(b|1)T( then )Note(a|2)");
+const notesBlock = notes[notes.length - 1];
+ok("the referenced footnotes trail the document", notesBlock instanceof Footnotes);
+if (notesBlock instanceof Footnotes) {
+  eqn("only referenced definitions are kept", notesBlock.items.length, 2);
+  eq("in reference order", notesBlock.items.map((item: FootnoteDefinition) => item.label + "|" + item.number).join(","), "b|1,a|2");
+}
+
+const undefinedNote = parse("[^nope]")[0];
+if (undefinedNote instanceof Paragraph) eq("an undefined footnote reference stays text", show(undefinedNote.children), "T([^nope])");
+
+const multiline = parse("[^a]\n\n[^a]: first\n    second")[0];
+const multilineBlocks = parse("[^a]\n\n[^a]: first\n    second");
+const multilineFootnotes = multilineBlocks[multilineBlocks.length - 1];
+ok("a multi-line definition", multilineFootnotes instanceof Footnotes);
+if (multilineFootnotes instanceof Footnotes && multilineFootnotes.items[0].blocks[0] instanceof Paragraph) {
+  eq("keeps its continued text", plainText(multilineFootnotes.items[0].blocks[0].children), "first second");
+}
+ok("the reference is in the paragraph", multiline instanceof Paragraph);
+
+eq("a URL drops trailing punctuation", show(parseInline("see https://a.b/x.")), "T(see )Link(https://a.b/x||T(https://a.b/x))T(.)");
+eq("a URL drops a colon and a star", show(parseInline("https://a.b/x:*")), "Link(https://a.b/x||T(https://a.b/x))T(:)T(*)");
+eq("a URL keeps a balanced parenthesis", show(parseInline("https://a.b/x_(y)")), "Link(https://a.b/x_(y)||T(https://a.b/x_(y)))");
+eq("a URL drops an unbalanced closing parenthesis", show(parseInline("https://a.b/x(y))")), "Link(https://a.b/x(y)||T(https://a.b/x(y)))T())");
+eq("a URL drops a trailing entity", show(parseInline("https://a.b/x&amp;")), "Link(https://a.b/x||T(https://a.b/x))T(&amp;)");
+eq("www becomes an http URL", show(parseInline("www.example.com")), "Link(http://www.example.com||T(www.example.com))");
+eq("an email becomes a mailto link", show(parseInline("a.b@host.tld")), "Link(mailto:a.b@host.tld||T(a.b@host.tld))");
+eq("a URL inside a code span stays code", show(parseInline("`https://a.b`")), "Code(https://a.b)");
+eq("a URL inside a link's text is not linked again", show(parseInline("[https://a.b](/x)")), "Link(/x||T(https://a.b))");
 
 done();
