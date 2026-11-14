@@ -125,15 +125,15 @@ eq("languages by path", ["a.js", "b.TS", "c.json", "d.css", "e.html", "f.svg", "
 eq("languages by fence", ["js", "TypeScript", "css {.x}", "html", "python", ""].map(languageForFence).join(","), "javascript,typescript,css,html,,");
 
 const mdDoc = ["---", "title: Hello", "---", "# Heading one", "Some **bold**, *em*, snake_case_name, `code` and [a link](https://x.dev) or https://example.com.", "> a quote", "- [x] done item", "1. first", "| a | b |", "|---|:-:|", "```ts", "const x = 1;", "```", "~~~", "plain fenced", "~~~", "<div class=\"x\">html</div> \\*not em\\*", "***"];
-const mdState = new HlState();
-const md = mdDoc.map((line) => tokenizeLine("markdown", line, mdState).map((tk) => tk.type + ":" + line.slice(tk.from, tk.to)).join(" "));
+const mdTokens = tokenizeAll("markdown", mdDoc);
+const md = mdDoc.map((line, i) => mdTokens[i].map((tk) => tk.type + ":" + line.slice(tk.from, tk.to)).join(" "));
 eq("markdown: front matter", md.slice(0, 3).join(" | "), "meta:--- | property:title string: Hello | meta:---");
-eq("markdown: a heading", md[3], "heading:# Heading one");
-eq("markdown: inline marks; snake_case is not emphasis", md[4], "strong:**bold** emphasis:*em* string:`code` link:[a link] url:(https://x.dev) url:https://example.com");
-eq("markdown: a quote, a task item, a numbered item, a table", [md[5], md[6], md[7], md[8], md[9]].join(" | "), "quote:> a quote | list:- atom:[x] | list:1. | meta:| meta:| meta:| | meta:|---|:-:|");
-eq("markdown: a fence in its language", md.slice(10, 13).join(" | "), "meta:``` keyword:ts | keyword:const definition:x operator:= number:1 punctuation:; | meta:```");
-eq("markdown: a fence without one, as code", md.slice(13, 16).join(" | "), "meta:~~~ | string:plain fenced | meta:~~~");
-eq("markdown: tags, escapes, a rule", [md[16], md[17]].join(" | "), "tag:<div class=\"x\"> tag:</div> escape:\\* escape:\\* | meta:***");
+eq("markdown: a heading", md[3], "heading:#  heading:Heading one");
+eq("markdown: inline marks; snake_case is not emphasis", md[4], "strong:** strong:bold strong:** emphasis:* emphasis:em emphasis:* code:` code:code code:` link:[ link:a link link:]( url:https://x.dev link:) url:https://example.com.");
+eq("markdown: a quote, a task item, a numbered item, a table", [md[5], md[6], md[7], md[8], md[9]].join(" | "), "quote:>  | list:-  list:[x] | list:1.  | table:| table:| table:| | table:| table:| table:| table:|---|:-:|");
+eq("markdown: a fence in its language", md.slice(10, 13).join(" | "), "code:``` meta:ts | keyword:const definition:x operator:= number:1 punctuation:; | code:```");
+eq("markdown: a fence without one, as code", md.slice(13, 16).join(" | "), "code:~~~ | code:plain fenced | code:~~~");
+eq("markdown: tags, escapes, a rule", [md[16], md[17]].join(" | "), "tag:<div class=\"x\"> tag:</div> escape:\\* escape:\\* | hr:***");
 eq("markdown files and fences", ["README.md", "notes.markdown", "page.mdx"].map(languageForPath).join(",") + " " + languageForFence("md"), "markdown,markdown,markdown markdown");
 
 const big: string[] = [];

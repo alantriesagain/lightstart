@@ -6,22 +6,39 @@
  */
 import { findLanguage } from "./registry.ts";
 import { HlState, Token } from "./state.ts";
+import { LineResult } from "./markdown.ts";
+import { markdownStructure } from "./tokenizers.ts";
 
 export { HlState, Token } from "./state.ts";
 export { addLanguage, Language, languageForFence, languageForPath } from "./registry.ts";
+export { LineResult, MdBlock, MdLine, MdQuote, MdSpan, Range } from "./markdown.ts";
 
-/** Tokens of one line in `language`, advancing `state` to the next line's; [] for a language not registered. */
+/** A line's tokens in `language`, advancing `state` to the next line's; [] for a language not registered. */
 export const tokenizeLine = (language: string, text: string, state: HlState): Token[] => {
   const l = findLanguage(language);
-  return l !== null ? l.tokenizeText(text, state) : [];
+  return l !== null ? l.tokenizeText(text, state, (_offset: number): string | null => null) : [];
 };
 
-/** Every line's tokens, the state carried from line to line. */
+/** Every line's tokens, the state carried from line to line, `peek` answering the lines below. */
 export const tokenizeAll = (language: string, lines: string[]): Token[][] => {
   const state = new HlState();
   const out: Token[][] = [];
-  for (const l of lines) out.push(tokenizeLine(language, l, state));
+  for (let i = 0; i < lines.length; i++) {
+    const l = findLanguage(language);
+    out.push(l !== null ? l.tokenizeText(lines[i], state, (offset: number): string | null => (i + offset >= 0 && i + offset < lines.length ? lines[i + offset] : null)) : []);
+  }
   return out;
+};
+
+/**
+ * A line's tokens and, for `markdown`, its structure; `md` is null for another language. Like
+ * `tokenizeLine`, it advances `state` in place; `peek` answers the line `offset` after this one,
+ * null for none.
+ */
+export const tokenizeLineWithStructure = (language: string, text: string, state: HlState, peek: (offset: number) => string | null): LineResult => {
+  if (language === "markdown") return markdownStructure(text, state, peek);
+  const l = findLanguage(language);
+  return new LineResult(l !== null ? l.tokenizeText(text, state, peek) : [], null);
 };
 
 /** The color of a token type (One Dark, as the editor's defaults); "" keeps the text color. */
@@ -45,7 +62,18 @@ export const TOKEN_COLORS = new Map<string, string>([
   ["url", "#56b6c2"],
   ["list", "#e5c07b"],
   ["quote", "#7f848e"],
+  ["code", "#98c379"],
+  ["strikethrough", "#7f848e"],
+  ["hr", "#7f848e"],
+  ["table", "#7f848e"],
 ]);
 
 /** How a token type is drawn besides its color: "bold", "italic", "underline" or "". */
-export const tokenStyle = (type: string): string => (type === "heading" || type === "strong" ? "bold" : type === "emphasis" || type === "quote" || type === "comment" ? "italic" : type === "url" ? "underline" : "");
+export const tokenStyle = (type: string): string =>
+  type === "heading" || type === "strong"
+    ? "bold"
+    : type === "emphasis" || type === "quote" || type === "comment" || type === "strikethrough"
+      ? "italic"
+      : type === "url"
+        ? "underline"
+        : "";

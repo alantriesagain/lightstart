@@ -4,4 +4,8 @@ Syntax coloring for terminal views and the browser's `<lc-code-block>`, with not
 
 `registerLanguages()` registers the built-in set; call it once before tokenizing (a host that wants languages of its own registers those separately with `addLanguage`).
 
-Tests: `test/highlight.test.ts`, `test/imports.test.ts`, under node and natively (`light-native test highlight`).
+An editor re-tokenizes as it is edited, from the changed line on: `HlState.clone()` keeps a line's outgoing state, and `HlState.equals(other)` says a line ended in the state it ended in before, where the change stops spreading. Each `Language` says how many lines after one its tokens depend on (`lookAhead`: Markdown's 1, since a table header waits for its delimiter row) and how far a new line indents after the text before the cursor (`indentAfter`).
+
+Markdown follows CommonMark: emphasis by the delimiter stack, setext headings, indented code, tables, strikethrough, `[[wiki links]]`, `#tags` and front matter. A token that is syntax rather than text (the `**` of strong, a heading's `#`) carries `mark`, so a preview may hide it. `tokenizeLineWithStructure(language, text, state, peek)` answers a line's tokens with its `MdLine` (`markdown.ts`): its block (heading, list with its marker and checkbox, table row with its cells, fence edge, and so on), its quote depth with the `>` ranges, and its inline spans with the ranges of their delimiters, link targets and wiki names. `peek(offset)` answers a following line, or null past the end; `tokenizeAll` peeks into the lines it is given.
+
+Tests: `test/highlight.test.ts`, `test/markdown.test.ts`, `test/imports.test.ts`, under node and natively (`light-native test highlight`).
