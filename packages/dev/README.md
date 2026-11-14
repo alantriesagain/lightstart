@@ -109,6 +109,8 @@ export default defineExtension("serve", {
 | `payload` | The record every serve hook's payload carries, writable during setup |
 | `routeContext` | The fields every route file's context carries beside `projectDir`, `log` and `cli`, writable during setup; `RouteContext` is an interface a package widens to type them |
 
+A route app and an app given to `handle` answer with their `waitUntil` work finished: the dev server holds the reply until it is done, so a dev route's writes are complete by the time its caller hears back. One context serves every app a request passes through, so a body one app reads is still there for the next.
+
 A hook payload is an interface another package widens by declaration merging, so an extension's own
 fields reach its hooks typed:
 
