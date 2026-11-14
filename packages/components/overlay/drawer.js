@@ -56,15 +56,6 @@ export default defineComponent({
 
   render() {
     return html`
-    <style>
-
-      .panel {
-          transition:
-            transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-            opacity 0.3s ease;
-          will-change: transform;
-      }
-    </style>
       ${
         this.backdrop && this.open
           ? html`<div

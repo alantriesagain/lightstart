@@ -11,16 +11,20 @@ const isIconName = (name) => typeof name === "string" && ICON_NAME.test(name);
 /** @type {Map<string, Promise<IconEntry | null>>} */
 const entries = new Map();
 const drawn = new Set();
+/** @type {CSSStyleSheet | null} */
+let iconSheet = null;
+let iconRules = "";
+
 const devSheet = () => {
   const doc = globalThis.document;
-  let tag = doc?.getElementById("lc-icon-rules");
-  if (!tag && doc) {
-    tag = doc.createElement("style");
-    tag.id = "lc-icon-rules";
-    doc.head.appendChild(tag);
-  }
-  return tag;
+  if (iconSheet || !doc || typeof CSSStyleSheet === "undefined") return iconSheet;
+  iconSheet = new CSSStyleSheet();
+  doc.adoptedStyleSheets = [...doc.adoptedStyleSheets, iconSheet];
+  return iconSheet;
 };
+
+/** The rules drawn so far, for a test or a diagnostic. */
+export const drawnIconRules = () => iconRules;
 
 /** @param {string} name */
 const entryFor = (name) => {
@@ -38,8 +42,8 @@ const variantsOf = (solid, bold) => ["", ...(solid ? /** @type {IconVariant[]} *
 /** @type {(name: string, solid: boolean, bold: boolean) => Promise<void>} */
 const drawIcon = async (name, solid, bold) => {
   const entry = await entryFor(name);
-  const tag = devSheet();
-  if (!entry || !tag) return;
+  const sheet = devSheet();
+  if (!entry || !sheet) return;
   let added = "";
   for (const variant of variantsOf(solid, bold)) {
     const key = ruleKey(name, variant);
@@ -49,7 +53,8 @@ const drawIcon = async (name, solid, bold) => {
     if (rule) added += `${rule}\n`;
   }
   if (!added) return;
-  tag.textContent += added;
+  iconRules += added;
+  sheet.replaceSync(iconRules);
 };
 
 export default defineComponent({

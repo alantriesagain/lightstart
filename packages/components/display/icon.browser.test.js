@@ -8,7 +8,7 @@ import { maskRule } from "./icon-mask.js";
 const ICON = "heart";
 const ICON_ENTRY = { body: '<path fill="none" d="M12 21 3 12a5 5 0 0 1 9-3 5 5 0 0 1 9 3z"/>', width: 24, height: 24 };
 
-const { default: iconDef } = await import("./icon.js");
+const { default: iconDef, drawnIconRules } = await import("./icon.js");
 
 const BASE = `:where(.lc-icon,lc-icon){display:inline-block;width:1rem;height:1rem;` +
   `--lc-icon-mask:initial;--lc-icon-paint:transparent;` +
@@ -99,7 +99,7 @@ describe("@lightstart/light - lc-icon", () => {
     const asked = [];
     configureIcons({ load: async (name) => { asked.push(name); return ICON_ENTRY; } });
     try {
-      const devRules = () => document.getElementById("lc-icon-rules")?.textContent ?? "";
+      const devRules = () => drawnIconRules();
       const outline = mount("lc-icon");
       outline.name = "dev-heart";
       const later = mount("lc-icon");

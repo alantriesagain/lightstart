@@ -55,8 +55,15 @@ export const parseTemplate = (strings: ReadonlyArray<string>, kind: number): Par
 
   const finishAttr = (quote: string) => {
     const a = attr as NonNullable<typeof attr>;
-    if (a.statics === null) out += ` ${a.name}=${quote}${a.value}${quote}`;
-    else {
+    if (a.statics === null) {
+      if (a.name.toLowerCase() === "style") {
+        if (!marked) {
+          marked = true;
+          markedOrd = markedCount++;
+        }
+        parts.push({ kind: "style", name: "style", statics: [a.value], elOrd: markedOrd, valueIndex: -1, valueCount: 0 });
+      } else out += ` ${a.name}=${quote}${a.value}${quote}`;
+    } else {
       a.statics.push(a.value);
       let partKind: PartKind = "attr";
       let name = a.name;

@@ -217,6 +217,47 @@ describe("light/html", () => {
     });
   });
 
+  describe("styles", () => {
+    it("a style binding writes through the CSSOM and reflects in the attribute", () => {
+      const tpl = (v) => html`<div style=${v}></div>`;
+      render(tpl("width: 37px"), container);
+      const el = container.querySelector("div");
+      assert.equal(el.style.width, "37px");
+      assert.equal(el.getAttribute("style"), "width: 37px;");
+      render(tpl("width: 12px"), container);
+      assert.equal(el.style.width, "12px");
+    });
+
+    it("a static style applies and is not left in the template markup", () => {
+      render(html`<div style="color: red; width: 37px"></div>`, container);
+      const el = container.querySelector("div");
+      assert.equal(el.style.color, "red");
+      assert.equal(el.style.width, "37px");
+      assert.equal(el.hasAttribute("style"), true);
+    });
+
+    it("a style binding going null or nothing removes the attribute", () => {
+      const tpl = (v) => html`<div style=${v}></div>`;
+      render(tpl("width: 37px"), container);
+      const el = container.querySelector("div");
+      render(tpl(null), container);
+      assert.equal(el.hasAttribute("style"), false);
+      assert.equal(el.style.width, "");
+      render(tpl("width: 37px"), container);
+      render(tpl(nothing), container);
+      assert.equal(el.hasAttribute("style"), false);
+    });
+
+    it("element() with a style key writes through the CSSOM", () => {
+      const tpl = (v) => html`<div>${element("i", { style: v })}</div>`;
+      render(tpl("width: 37px"), container);
+      const el = container.querySelector("i");
+      assert.equal(el.style.width, "37px");
+      render(tpl(null), container);
+      assert.equal(el.hasAttribute("style"), false);
+    });
+  });
+
   describe("properties", () => {
     it("assigns properties with .prop syntax preserving case", () => {
       render(html`<div .fooBar=${{ a: 1 }}></div>`, container);
