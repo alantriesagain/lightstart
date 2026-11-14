@@ -17,9 +17,9 @@ import type { CliApi, CommandContext, Logger, LogLevel } from "./types/context.t
 import type { CommandRecord, Discovered, Discoverer, DiscoverOptions, ExtensionRecord, HookRecord, ListedModule, LoadedCommand, LoadedExtension, LoadedHook, LoadedRoute, RouteRecord, Source } from "./types/discovery.ts";
 import { FileLoader } from "./types/discovery.ts";
 import { defineExtension } from "./types/extension.ts";
-import type { Extension, ExtensionApi, ExtensionDefinition, ExtensionSetup, Extensions } from "./types/extension.ts";
+import type { CommandArgs, Extension, ExtensionApi, ExtensionDefinition, ExtensionSetup, Extensions } from "./types/extension.ts";
 
-export type { ArgsSchema, ArgSpec, CliApi, Command, CommandContext, CommandRecord, Discovered, Discoverer, DiscoverOptions, Extension, ExtensionApi, ExtensionDefinition, ExtensionRecord, ExtensionSetup, Extensions, HookRecord, ListedModule, LoadedCommand, LoadedExtension, LoadedHook, LoadedRoute, Logger, LogLevel, ResolvedArgs, RouteRecord, Source, RunOptions };
+export type { ArgsSchema, ArgSpec, CliApi, Command, CommandArgs, CommandContext, CommandRecord, Discovered, Discoverer, DiscoverOptions, Extension, ExtensionApi, ExtensionDefinition, ExtensionRecord, ExtensionSetup, Extensions, HookRecord, ListedModule, LoadedCommand, LoadedExtension, LoadedHook, LoadedRoute, Logger, LogLevel, ResolvedArgs, RouteRecord, Source, RunOptions };
 export { ArgError, FileLoader, LoadError, SchemaError, Registry, buildContext, createLogger, defineCommand, defineExtension, formatBytes, loadEnv, logicalCwd, parseArgs, renderHelp, resolveLevel, runCommand, hookNameOf };
 
 /** What a hook answers to be run at shutdown. */
