@@ -11,7 +11,7 @@
   "dependencies": {
     "@lightstart/light": "workspace:*",
     "@lightstart/markdown": "workspace:*",
-    "@light/highlight": "workspace:*",
+    "@lightstart/highlight": "workspace:*",
     "@light/ui": "workspace:*"
   },
   "devDependencies": {

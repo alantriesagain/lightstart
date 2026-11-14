@@ -11,7 +11,7 @@
 import { palette } from "@light/ui/palette.ts";
 import { Line, Run } from "@lightstart/light/native/tui/lines.ts";
 import { clipText, expandTabs, wrap } from "@light/ui/text.ts";
-import { HlState, languageForFence, TOKEN_COLORS, tokenizeLine } from "@light/highlight";
+import { HlState, languageForFence, TOKEN_COLORS, tokenizeLine } from "@lightstart/highlight";
 import {
   Code,
   CodeSpan,

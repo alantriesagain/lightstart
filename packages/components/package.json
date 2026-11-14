@@ -39,6 +39,7 @@
     "@lightstart/light": "^0.1.0"
   },
   "dependencies": {
+    "@lightstart/highlight": "workspace:*",
     "@lightstart/markdown": "workspace:*"
   },
   "devDependencies": {

@@ -1,0 +1,33 @@
+{
+  "name": "@lightstart/highlight",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Syntax tokenizers (JavaScript, CSS, HTML, Markdown), a line at a time with a carried state, and the registry of languages by file extension and fence name.",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/highlight"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "syntax-highlighting",
+    "tokenizer",
+    "markdown",
+    "scriptc"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "devDependencies": {
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  }
+}

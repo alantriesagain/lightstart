@@ -23,6 +23,14 @@
   --tok-escape: var(--color-accent, #d19a66);
   --tok-meta: var(--text-muted, #8a8a8a);
   --tok-link: var(--color-primary, #61afef);
+  --tok-operator: var(--text-muted, #8a8a8a);
+  --tok-punctuation: var(--text-muted, #8a8a8a);
+  --tok-heading: var(--color-danger, #e06c75);
+  --tok-strong: var(--color-accent, #d19a66);
+  --tok-emphasis: var(--color-secondary, #c678dd);
+  --tok-url: var(--color-info, #56b6c2);
+  --tok-list: var(--text-muted, #8a8a8a);
+  --tok-quote: var(--text-muted, #8a8a8a);
 
   .code-block-header {
     display: flex;
@@ -99,4 +107,12 @@
   .tok-escape { color: var(--tok-escape); }
   .tok-meta { color: var(--tok-meta); }
   .tok-link { color: var(--tok-link); text-decoration: underline; }
+  .tok-operator { color: var(--tok-operator); }
+  .tok-punctuation { color: var(--tok-punctuation); }
+  .tok-heading { color: var(--tok-heading); font-weight: 700; }
+  .tok-strong { color: var(--tok-strong); font-weight: 700; }
+  .tok-emphasis { color: var(--tok-emphasis); font-style: italic; }
+  .tok-url { color: var(--tok-url); text-decoration: underline; }
+  .tok-list { color: var(--tok-list); }
+  .tok-quote { color: var(--tok-quote); font-style: italic; }
 }
