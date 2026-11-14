@@ -154,6 +154,57 @@ process.exit(answer.ok ? 0 : 1);
   assert.deepEqual(seen.args, ["--profile"]);
 });
 
+test("light desktop dev gives serveEnv to the server only and uses defaultPort", async (t) => {
+  const freePort = () =>
+    new Promise((/** @type {(port: number) => void} */ resolvePort) => {
+      const probe = createServer();
+      probe.listen(0, "127.0.0.1", () => {
+        const address = probe.address();
+        const port = address !== null && typeof address === "object" ? address.port : 0;
+        probe.close(() => resolvePort(port));
+      });
+    });
+  const port = await freePort();
+
+  const { dir, file } = projectWith(t, "desktop");
+  const dev = path.resolve(here, "../../dev");
+  symlinkSync(dev, path.join(dir, "node_modules", "@lightstart", "dev"), "dir");
+  const hostMarker = path.join(dir, "host.json");
+  const serverMarker = path.join(dir, "server.json");
+  const hooks = path.join(dir, "cli", "hooks");
+  mkdirSync(hooks, { recursive: true });
+  writeFileSync(path.join(hooks, "serve.after.js"), `import { writeFileSync } from "node:fs";
+export default (_ctx, payload) => {
+  writeFileSync(${JSON.stringify(serverMarker)}, JSON.stringify({ port: payload.port, env: process.env.LIGHT_EXT_SERVER ?? null }));
+};
+`);
+  const host = path.join(dir, "host.mjs");
+  writeFileSync(host, `#!/usr/bin/env node
+import { writeFileSync } from "node:fs";
+const [origin, ...args] = process.argv.slice(2);
+writeFileSync(${JSON.stringify(hostMarker)}, JSON.stringify({ origin, args, env: process.env.LIGHT_EXT_SERVER ?? null }));
+const answer = await fetch(origin);
+process.exit(answer.status < 500 ? 0 : 1);
+`);
+  chmodSync(host, 0o755);
+  writeFileSync(file, `${header}export default defineExtension("desktop", {
+  setup(ctx, args, api) {
+    api.host(() => ${JSON.stringify(host)});
+    api.serveEnv((input) => ({ LIGHT_EXT_SERVER: "server:" + input.port }));
+    api.defaultPort(${port});
+  },
+});
+`);
+  const result = await lightAsync(dir, ["desktop", "dev"]);
+  assert.equal(result.status, 0, result.stderr);
+  const seenHost = JSON.parse(readFileSync(hostMarker, "utf8"));
+  assert.equal(seenHost.origin, `http://127.0.0.1:${port}`);
+  assert.equal(seenHost.env, null);
+  const seenServer = JSON.parse(readFileSync(serverMarker, "utf8"));
+  assert.equal(seenServer.port, port);
+  assert.equal(seenServer.env, `server:${port}`);
+});
+
 test("the check entry exports what a replacement run builds on", async () => {
   const check = await import("../check/index.js");
   assert.equal(typeof check.checkTarget, "function");
