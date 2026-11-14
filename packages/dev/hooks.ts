@@ -5,11 +5,11 @@
 import type { CommandContext } from "@lightstart/cli";
 import type { ServeExtension } from "./extension.ts";
 
-/** The URLs the server answers on, as a hook sees them. */
-export type ServeOrigins = {
+/** The URLs the server answers on, as a hook sees them; a package that exposes the server elsewhere widens it. */
+export interface ServeOrigins {
   local: string;
   lan?: string;
-};
+}
 
 /** What `serve:before` receives: the project, the port it will try, and whether it watches. */
 export interface ServeBeforePayload {
@@ -31,9 +31,9 @@ export interface ServeFileChangedPayload {
 
 declare module "@lightstart/cli" {
   interface Hooks {
-    "serve:before": (ctx: CommandContext, payload: ServeBeforePayload) => void;
-    "serve:after": (ctx: CommandContext, payload: ServeAfterPayload) => Promise<void> | void;
-    "serve:file-changed": (ctx: CommandContext, payload: ServeFileChangedPayload) => void;
+    "serve:before": (ctx: CommandContext, payload: ServeBeforePayload) => Promise<void> | void;
+    "serve:after": (ctx: CommandContext, payload: ServeAfterPayload) => Promise<HookTeardown | void> | HookTeardown | void;
+    "serve:file-changed": (ctx: CommandContext, payload: ServeFileChangedPayload) => Promise<void> | void;
   }
 
   interface Extensions {
