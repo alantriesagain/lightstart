@@ -35,7 +35,8 @@ runtime libraries, which a desktop already has (`libwebkit2gtk-4.1-0`).
 ## Development
 
 `light desktop dev [dir] [--port <n>] [--attach]` serves the project with
-`light serve` on `--port`, or the project's `light.dev.port`, or 3500; it waits
+`light serve` on `--port`, or the project's `light.dev.port`, or the port a desktop
+extension names with `defaultPort`, or 3500; it waits
 until the origin answers and then opens the shell on it, taking both down
 together. `--attach` reuses a server already answering there and leaves it
 running. The shell is light's own, built from `shell/backend.js`; when it cannot
@@ -52,6 +53,8 @@ before `dev` starts the server, and `api` is:
 | `host(resolve)` | Names the executable that opens the window; `resolve(input)` answers its path |
 | `hostArgs(add)` | Adds arguments to the host executable (`add(args, input)`, return a list or push) |
 | `serveArgs(add)` | Adds arguments to the spawned `light serve` (`add(args, input)`, return a list or push) |
+| `serveEnv(add)` | Adds variables to the spawned `light serve`'s environment only (`add(input)` answers a record), not to the host or this process |
+| `defaultPort(port)` | Names the port used when neither `--port` nor `light.dev.port` does; 3500 stays the last fallback |
 
 `input` is `{ args, projectDir, origin, port, attach }`. The origin is the
 host's first argument, before the `hostArgs` additions:

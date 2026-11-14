@@ -439,25 +439,31 @@ const dev = async (rest, options = {}) => {
   const dir = dirs.find((value) => typeof value === "string" && !value.startsWith("-"));
   const projectDir = typeof dir === "string" ? resolve(options.ctx?.cwd ?? process.cwd(), dir) : (options.ctx?.projectDir ?? process.cwd());
   const explicit = typeof parsed.port === "number" ? parsed.port : typeof parsed.port === "string" && parsed.port !== "" ? Number(parsed.port) : null;
-  const port = explicit !== null && Number.isInteger(explicit) && explicit >= 0 ? explicit : (manifestPort(projectDir) ?? 3500);
   const attach = parsed.attach === true;
   const target = defaultTarget(typeof parsed.target === "string" ? parsed.target : "linux");
-  const origin = `http://127.0.0.1:${port}`;
-  /** @type {DesktopInput} */
-  const input = { args: parsed, projectDir, origin, port, attach };
+  /** @type {number | null} */
+  let fallbackPort = null;
   /** @type {Array<(value: DesktopInput) => Promise<string> | string>} */
   const hostResolvers = [];
   /** @type {Array<(args: string[], value: DesktopInput) => string[] | void>} */
   const hostArgBuilders = [];
   /** @type {Array<(args: string[], value: DesktopInput) => string[] | void>} */
   const serveArgBuilders = [];
+  /** @type {Array<(value: DesktopInput) => Record<string, string>>} */
+  const serveEnvBuilders = [];
   /** @type {DesktopExtension} */
   const api = {
     host(resolver) { hostResolvers.push(resolver); },
     hostArgs(add) { hostArgBuilders.push(add); },
     serveArgs(add) { serveArgBuilders.push(add); },
+    serveEnv(add) { serveEnvBuilders.push(add); },
+    defaultPort(defaultPortValue) { fallbackPort = defaultPortValue; },
   };
   if (options.ctx) await options.ctx.cli.extend("desktop", api);
+  const port = explicit !== null && Number.isInteger(explicit) && explicit >= 0 ? explicit : (manifestPort(projectDir) ?? fallbackPort ?? 3500);
+  const origin = `http://127.0.0.1:${port}`;
+  /** @type {DesktopInput} */
+  const input = { args: parsed, projectDir, origin, port, attach };
 
   /** @type {string[]} */
   const serveExtra = [];
@@ -465,13 +471,16 @@ const dev = async (rest, options = {}) => {
     const answer = add(serveExtra, input);
     if (Array.isArray(answer)) serveExtra.splice(0, serveExtra.length, ...answer);
   }
+  /** @type {Record<string, string>} */
+  const serveEnvironment = {};
+  for (const add of serveEnvBuilders) Object.assign(serveEnvironment, add(input));
 
   /** @type {import("node:child_process").ChildProcess[]} */
   const children = [];
   if (!attach) {
     if (!(await portFree(port))) throw new Error(`port ${port} is in use; pass --port <n> or --attach`);
     const bin = join(here, "..", "..", "bin", "light.js");
-    children.push(spawn(process.execPath, [bin, "serve", projectDir, "--port", String(port), ...serveExtra], { stdio: "inherit", env: process.env }));
+    children.push(spawn(process.execPath, [bin, "serve", projectDir, "--port", String(port), ...serveExtra], { stdio: "inherit", cwd: projectDir, env: { ...process.env, ...serveEnvironment } }));
   }
   const ready = await waitForOrigin(origin, attach ? 5000 : 60000);
   if (!ready) {
@@ -522,7 +531,7 @@ export const desktop = async (argv, options = {}) => {
   const target = defaultTarget(option(rest, "target", "linux") ?? "linux");
   if (command === "dev") return await dev(rest, options);
   if (command !== undefined && options.ctx)
-    await options.ctx.cli.extend("desktop", { host() {}, hostArgs() {}, serveArgs() {} });
+    await options.ctx.cli.extend("desktop", { host() {}, hostArgs() {}, serveArgs() {}, serveEnv() {}, defaultPort() {} });
   const dash = rest.indexOf("--");
   const own = dash >= 0 ? rest.slice(0, dash) : rest;
   const passthrough = dash >= 0 ? rest.slice(dash + 1) : [];
