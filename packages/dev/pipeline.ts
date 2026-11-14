@@ -11,6 +11,7 @@ import { App, type Context, type Reply, fail, html, text } from "@lightstart/ser
 import { Static } from "@lightstart/server/static";
 import type { ServeExtension } from "./extension.ts";
 import type { ImportMap } from "./importmap.ts";
+import { settledContext } from "./settle.ts";
 import { RELOAD_CLIENT, renderShell } from "./shell.ts";
 import type { ModuleTransform, RouteFactory } from "./types.ts";
 
@@ -108,13 +109,12 @@ export const createPipeline = (options: PipelineOptions): Pipeline => {
   };
 
   const handle = async (c: Context): Promise<Reply | null> => {
-    for (const app of apps) {
-      const reply = await app.handle(c);
-      if (reply !== null) return noStore(reply);
-    }
-    for (const app of handled) {
-      const reply = await app.handle(c);
-      if (reply !== null) return noStore(reply);
+    const { context, incoming } = settledContext(c);
+    for (const app of [...apps, ...handled]) {
+      const reply = await app.handle(context);
+      if (reply === null) continue;
+      await Promise.all(incoming.work);
+      return noStore(reply);
     }
     if (c.path === RELOAD_PATH) return noStore(text(RELOAD_CLIENT).header("content-type", "text/javascript; charset=utf-8"));
     if (c.path !== "/") {
