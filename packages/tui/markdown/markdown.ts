@@ -17,6 +17,8 @@ import {
   CodeSpan,
   Del,
   Em,
+  FootnoteRef,
+  Footnotes,
   HardBreak,
   Heading,
   Html,
@@ -56,6 +58,7 @@ const addInline = (out: Run[], nodes: Inline[], fg: string, bold: boolean, itali
     else if (node instanceof Link) addInline(out, node.children, palette.link, bold, italic, true, dim);
     else if (node instanceof Image) out.push(makeRun(node.alt, fg, bold, italic, underline, dim));
     else if (node instanceof WikiLink) out.push(makeRun(node.display, fg, bold, italic, underline, dim));
+    else if (node instanceof FootnoteRef) out.push(makeRun("[" + node.number + "]", palette.dim, bold, italic, underline, true));
     else if (node instanceof InlineHtml) out.push(makeRun(node.text, fg, bold, italic, underline, dim));
     else if (node instanceof HardBreak) out.push(makeRun("\n", fg, bold, italic, underline, dim));
     else if (node instanceof SoftBreak) out.push(makeRun("\n", fg, bold, italic, underline, dim));
@@ -152,6 +155,25 @@ const renderBlock = (block: Block, width: number, indent: Run[], lead: Run[], fg
     renderBlocks(block.blocks, width, indent.concat([bar]), lead.concat([bar]), palette.dim, out);
   } else if (block instanceof List) {
     renderList(block, width, indent, lead, fg, out);
+  } else if (block instanceof Footnotes) {
+    const rule = new Line();
+    for (const r of indent) rule.runs.push(r);
+    rule.runs.push(new Run("─".repeat(Math.max(1, Math.min(width - 2, 60))), palette.dim));
+    out.push(rule);
+    let first = true;
+    for (const item of block.items) {
+      const marker = item.number + ". ";
+      const itemLead = (first ? lead : indent).concat([new Run(marker, palette.dim)]);
+      const atItem = out.length;
+      renderBlocks(item.blocks, width, indent.concat(spaces(marker.length)), itemLead, fg, out);
+      if (out.length === atItem) {
+        const l = new Line();
+        for (const r of itemLead) l.runs.push(r);
+        out.push(l);
+      }
+      first = false;
+    }
+    relead(out, at, indent, lead);
   } else if (block instanceof Html) {
     let first = true;
     for (const source of block.text.split("\n")) {

@@ -6,6 +6,8 @@ import {
   CodeSpan,
   Del,
   Em,
+  FootnoteRef,
+  Footnotes,
   HardBreak,
   Heading,
   Html,
@@ -74,6 +76,12 @@ const renderInline = (node, context) => {
   }
   if (node instanceof SoftBreak) return "\n";
   if (node instanceof HardBreak) return "<br>";
+  if (node instanceof FootnoteRef) {
+    const number = String(node.number);
+    const id = escapeAttribute(context.idPrefix + "fn-" + number);
+    const ref = escapeAttribute(context.idPrefix + "fnref-" + number);
+    return `<sup><a href="#${id}" id="${ref}">${escapeText(number)}</a></sup>`;
+  }
   if (node instanceof WikiLink) return `<a class="wiki-link" data-name="${escapeAttribute(node.name)}">${escapeText(node.display)}</a>`;
   if (node instanceof InlineHtml) return context.unsafeHtml ? node.text : escapeText(node.text);
   return "";
@@ -169,6 +177,16 @@ const renderBlock = (block, context, tight) => {
     return `<lc-code-block language="${escapeAttribute(language)}" code="${escapeAttribute(block.text)}"></lc-code-block>`;
   }
   if (block instanceof List) return renderList(block, context);
+  if (block instanceof Footnotes) {
+    let out = '<section class="footnotes"><ol>';
+    for (const item of block.items) {
+      const number = String(item.number);
+      const id = escapeAttribute(context.idPrefix + "fn-" + number);
+      const ref = escapeAttribute(context.idPrefix + "fnref-" + number);
+      out += `<li id="${id}">${renderBlocks(item.blocks, context, false)} <a href="#${ref}" aria-label="${escapeAttribute("Back to reference " + number)}">↩</a></li>`;
+    }
+    return `${out}</ol></section>`;
+  }
   if (block instanceof Quote) return `<blockquote>${renderBlocks(block.blocks, context, false)}</blockquote>`;
   if (block instanceof Rule) return "<hr>";
   if (block instanceof Table) return renderTable(block, context);

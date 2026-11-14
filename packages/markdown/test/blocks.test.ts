@@ -12,7 +12,9 @@ import {
   Paragraph,
   Quote,
   Rule,
+  SoftBreak,
   Table,
+  Text,
   parse,
 } from "../index.ts";
 import { done, eq, eqn, ok } from "@light/test/assert.ts";
@@ -122,6 +124,55 @@ const looseInside = parse("- one\n\n  two")[0];
 if (looseInside instanceof List) {
   ok("a blank line between blocks inside an item makes a list loose", looseInside.loose);
   ok("the item has two blocks", looseInside.items[0].blocks.length === 2);
+}
+
+const setext1 = parse("Title\n===")[0];
+ok("a setext level 1 heading", setext1 instanceof Heading);
+if (setext1 instanceof Heading) {
+  eqn("its level", setext1.level, 1);
+  eq("its text", setext1.text, "Title");
+}
+
+const setext2 = parse("Title\n---")[0];
+ok("a setext level 2 heading", setext2 instanceof Heading);
+if (setext2 instanceof Heading) eqn("its level", setext2.level, 2);
+
+const setextMany = parse("one\ntwo\n===")[0];
+ok("a multi-line setext heading", setextMany instanceof Heading);
+if (setextMany instanceof Heading) eq("its lines joined", setextMany.text, "one two");
+
+const afterBlank = parse("Title\n\n---");
+ok("a rule after a blank line is still a rule", afterBlank.length === 2 && afterBlank[0] instanceof Paragraph && afterBlank[1] instanceof Rule);
+
+const quotedSetext = parse("> Title\n> ===")[0];
+ok("a setext heading in a quote", quotedSetext instanceof Quote && quotedSetext.blocks[0] instanceof Heading);
+if (quotedSetext instanceof Quote && quotedSetext.blocks[0] instanceof Heading) eq("its text", quotedSetext.blocks[0].text, "Title");
+
+const indented = parse("    one\n    two")[0];
+ok("an indented code block", indented instanceof Code);
+if (indented instanceof Code) eq("its text and empty info", indented.info + "|" + indented.text, "|one\ntwo");
+
+const indentedBlanks = parse("    one\n\n    two\n\nAfter.")[0];
+ok("an indented code block keeps internal blank lines", indentedBlanks instanceof Code);
+if (indentedBlanks instanceof Code) eq("its text", indentedBlanks.text, "one\n\ntwo");
+
+const listContent = parse("- item\n    continuation")[0];
+ok("four spaces in a list item can be content, not code", listContent instanceof List && listContent.items[0].blocks[0] instanceof Paragraph);
+if (listContent instanceof List && listContent.items[0].blocks[0] instanceof Paragraph) {
+  eq("the content is the paragraph's continuation", plainShow(listContent.items[0].blocks[0]), "item\ncontinuation");
+}
+
+const lazyIndented = parse("para\n    continuation")[0];
+ok("an indented lazy continuation stays a paragraph", lazyIndented instanceof Paragraph);
+
+/** The block's paragraph text, joined as the source lines were. */
+function plainShow(block: Paragraph): string {
+  let out = "";
+  for (const node of block.children) {
+    if (node instanceof Text) out += node.text;
+    else if (node instanceof SoftBreak) out += "\n";
+  }
+  return out;
 }
 
 done();

@@ -59,4 +59,10 @@ ok("a label counts in the width of the line it starts", labelled.every((l) => l.
 eq("a label goes before a list's first marker", text(renderMarkdown("- one\n- two", 40, [], "", label)).join("|"), "Claude  • one|• two");
 eq("and before a fence's first line", text(renderMarkdown("```\nx\n```", 40, [], "", label)).join("|"), "Claude    x");
 
+const footnotes = renderMarkdown("Text[^a].\n\n[^a]: A note.", 40, [], "");
+const footnoteLines = text(footnotes);
+eq("a footnote reference is its number in brackets, the note under a rule", footnoteLines[0] + "|" + footnoteLines[footnoteLines.length - 1], "Text[1].|1. A note.");
+ok("the rule stands between them", footnoteLines.some((l) => l.startsWith("─")));
+ok("the reference number is dim", footnotes[0].runs.some((r) => r.text === "[1]" && r.dim));
+
 done();

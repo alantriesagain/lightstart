@@ -179,6 +179,42 @@ describe("lc-markdown rendering", () => {
     assert.equal(el.querySelector("td")?.textContent, "x");
   });
 
+  it("draws a footnote reference as a sup link and its note in a section", async () => {
+    const el = await mount("Text[^a].\n\n[^a]: A note.");
+    const sup = el.querySelector("p sup a[href='#fn-1']");
+    assert.equal(sup?.getAttribute("id"), "fnref-1");
+    assert.equal(sup?.textContent, "1");
+    const item = el.querySelector("section.footnotes li[id='fn-1']");
+    assert.match(item?.textContent || "", /A note/);
+    assert.equal(item?.querySelector("a[href='#fnref-1']")?.getAttribute("aria-label"), "Back to reference 1");
+  });
+
+  it("puts idPrefix before every footnote id", async () => {
+    const el = await mount("Text[^a].\n\n[^a]: A note.", { idPrefix: "doc-" });
+    assert.ok(el.querySelector("sup a[href='#doc-fn-1'][id='doc-fnref-1']"));
+    assert.ok(el.querySelector("section.footnotes li[id='doc-fn-1'] a[href='#doc-fnref-1']"));
+  });
+
+  it("draws a bare URL as a link", async () => {
+    const el = await mount("See https://example.com/a.");
+    const link = el.querySelector("p a[href='https://example.com/a']");
+    assert.equal(link?.textContent, "https://example.com/a");
+  });
+
+  it("draws setext headings", async () => {
+    const h1 = await mount("Title\n===");
+    assert.equal(h1.querySelector("h1")?.textContent, "Title");
+    const h2 = await mount("Subtitle\n---");
+    assert.equal(h2.querySelector("h2")?.textContent, "Subtitle");
+  });
+
+  it("draws an indented code block as lc-code-block", async () => {
+    const el = await mount("    const a = 1;");
+    const block = el.querySelector("lc-code-block");
+    assert.equal(block?.getAttribute("code"), "const a = 1;");
+    assert.equal(block?.getAttribute("language"), "");
+  });
+
   it("renders on the first connect, synchronously", async () => {
     const el = /** @type {HTMLElement & { content: string, $requestUpdate: () => Promise<void> | void }} */ (document.createElement("lc-markdown"));
     el.content = "# First";

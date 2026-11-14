@@ -61,6 +61,10 @@ run("\\ repeated", repeated("\\", 100000));
 run("[a][ repeated", repeated("[a][", 100000));
 run("[a]: /u lines", repeated("[a]: /u\n", 100000));
 run("quotes then text", repeated(">", 100000) + " a");
+run("https://a.b/ repeated", repeated("https://a.b/", 100000));
+run("www. repeated", repeated("www.", 100000));
+run("[^a] repeated with a definition", repeated("[^a]", 100000) + "\n\n[^a]: note");
+run("[^ repeated", repeated("[^", 100000));
 
 // A level costs its own indent, so 100,000 characters hold about 300 levels, three times the cap.
 const listLines: string[] = [];

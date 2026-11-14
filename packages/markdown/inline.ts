@@ -1,14 +1,15 @@
 /**
  * @file The inline phase: a line of Markdown to inline nodes, with CommonMark's delimiter-run
  * algorithm for `*` and `_`, code spans in backtick runs of any length, backslash escapes, links,
- * images and their references, `<scheme:...>` and `<email>` autolinks before inline HTML, wiki
- * links, `~~del~~` and hard and soft breaks. Character references stay as written; a URL is not
- * decoded here.
+ * images and their references, footnote references, `<scheme:...>` and `<email>` autolinks before
+ * inline HTML, GFM's bare-URL and email autolinks in text, wiki links, `~~del~~` and hard and soft
+ * breaks. Character references stay as written; a URL is not decoded here.
  */
 import {
   CodeSpan,
   Del,
   Em,
+  FootnoteRef,
   HardBreak,
   Image,
   Inline,
@@ -70,6 +71,37 @@ const isWhitespace = (c: string): boolean => c.length === 0 || WHITESPACE.test(c
 
 /** A reference label as it is looked up: trimmed, its runs of whitespace one space, lowercased. */
 export const normalizeLabel = (label: string): string => label.trim().replace(/\s+/g, " ").toLowerCase();
+
+/** The footnote definitions in a document and the numbers its references have so far taken. */
+export class FootnoteState {
+  labels: Map<string, boolean>;
+  definitions: Map<string, string[]>;
+  numbers: Map<string, number>;
+  order: string[];
+
+  constructor(labels: Map<string, boolean>) {
+    this.labels = labels;
+    this.definitions = new Map<string, string[]>();
+    this.numbers = new Map<string, number>();
+    this.order = [];
+  }
+
+  /** Whether `label` names a footnote definition somewhere in the document. */
+  has(label: string): boolean {
+    return this.labels.get(normalizeLabel(label)) === true;
+  }
+
+  /** The number a reference to `label` takes, assigned on its first reference, in document order. */
+  number(label: string): number {
+    const key = normalizeLabel(label);
+    const existing = this.numbers.get(key);
+    if (existing !== undefined) return existing;
+    const assigned = this.order.length + 1;
+    this.numbers.set(key, assigned);
+    this.order.push(key);
+    return assigned;
+  }
+}
 
 /** The plain text of `inlines`: a break becomes a space, a link its text, an image its alt. */
 export const plainText = (inlines: Inline[]): string => {
@@ -215,6 +247,151 @@ const linkTail = (text: string, at: number, label: string, defs: Map<string, Lin
   return new LinkTail(def.href, def.title, at);
 };
 
+/** A bare autolink found in text: its address, the text it shows and where it ends. */
+class BareLink {
+  href: string;
+  visible: string;
+  end: number;
+
+  constructor(href: string, visible: string, end: number) {
+    this.href = href;
+    this.visible = visible;
+    this.end = end;
+  }
+}
+
+const ALNUM = /[A-Za-z0-9]/;
+const EMAIL_LOCAL = /[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]/;
+const TRAILING = "?!.,:*_~";
+
+const isAlnum = (c: string): boolean => c.length > 0 && ALNUM.test(c);
+const isEmailLocal = (c: string): boolean => c.length > 0 && EMAIL_LOCAL.test(c);
+const isDigit = (c: string): boolean => c >= "0" && c <= "9";
+
+const ciStartsWith = (text: string, at: number, word: string): boolean => {
+  if (at + word.length > text.length) return false;
+  for (let k = 0; k < word.length; k++) {
+    if (text.charAt(at + k).toLowerCase() !== word.charAt(k)) return false;
+  }
+  return true;
+};
+
+/** The end of a domain host (letters, digits, hyphens and dots, at least two labels) at `from`, or -1. */
+const scanHost = (text: string, from: number): number => {
+  let i = from;
+  let labels = 0;
+  let dots = 0;
+  while (i < text.length) {
+    if (!isAlnum(text.charAt(i))) return -1;
+    i++;
+    while (i < text.length) {
+      const c = text.charAt(i);
+      if (isAlnum(c) || c === "-") i++;
+      else break;
+    }
+    if (text.charAt(i - 1) === "-") return -1;
+    labels++;
+    if (text.charAt(i) === "." && isAlnum(text.charAt(i + 1))) {
+      dots++;
+      i++;
+      continue;
+    }
+    break;
+  }
+  return dots > 0 && labels >= 2 ? i : -1;
+};
+
+const scanPort = (text: string, from: number): number => {
+  let i = from + 1;
+  const start = i;
+  while (i < text.length && isDigit(text.charAt(i))) i++;
+  return i > start ? i : from;
+};
+
+/** Drop GFM's excluded trailing punctuation: balanced `)`, an entity-like `&x;`, and `?!.,:*_~`. */
+const trimBareEnd = (text: string, start: number, end: number, open: number, close: number): number => {
+  let stop = end;
+  let opens = open;
+  let closes = close;
+  while (stop > start) {
+    const c = text.charAt(stop - 1);
+    if (TRAILING.includes(c)) {
+      stop--;
+      continue;
+    }
+    if (c === ")") {
+      if (closes > opens) {
+        closes--;
+        stop--;
+        continue;
+      }
+      break;
+    }
+    if (c === ";") {
+      let amp = stop - 2;
+      while (amp >= start && text.charAt(amp) !== "&") amp--;
+      if (amp >= start) {
+        const entity = text.slice(amp + 1, stop - 1);
+        if (/^(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31})$/.test(entity)) {
+          stop = amp;
+          continue;
+        }
+      }
+      break;
+    }
+    break;
+  }
+  return stop;
+};
+
+/** A bare `http://`, `https://` or `www.` link starting at `at`, or null. Scanned once, forward. */
+const scanBareUrl = (text: string, at: number): BareLink | null => {
+  const prev = at > 0 ? text.charAt(at - 1) : "";
+  if (isAlnum(prev) || prev === "_") return null;
+  let prefix = "";
+  let hostStart = 0;
+  if (ciStartsWith(text, at, "https://")) hostStart = at + 8;
+  else if (ciStartsWith(text, at, "http://")) hostStart = at + 7;
+  else if (ciStartsWith(text, at, "www.")) {
+    prefix = "http://";
+    hostStart = at;
+  } else return null;
+  const hostEnd = scanHost(text, hostStart);
+  if (hostEnd < 0) return null;
+  let i = hostEnd;
+  if (text.charAt(i) === ":") i = scanPort(text, i);
+  let open = 0;
+  let close = 0;
+  while (i < text.length) {
+    const c = text.charAt(i);
+    if (c === "<" || isWhitespace(c)) break;
+    if (c === "(") open++;
+    else if (c === ")") close++;
+    i++;
+  }
+  const end = trimBareEnd(text, at, i, open, close);
+  if (end <= at) return null;
+  const visible = text.slice(at, end);
+  return new BareLink(prefix + visible, visible, end);
+};
+
+/** A bare `a.b@host.tld` email starting at `at`, or null. Scanned once, forward. */
+const scanBareEmail = (text: string, at: number): BareLink | null => {
+  const prev = at > 0 ? text.charAt(at - 1) : "";
+  if (isEmailLocal(prev) || prev === "@") return null;
+  let i = at;
+  while (i < text.length && isEmailLocal(text.charAt(i))) i++;
+  if (i === at || text.charAt(i) !== "@") return null;
+  if (".-_".includes(text.charAt(i - 1))) return null;
+  const hostStart = i + 1;
+  const hostEnd = scanHost(text, hostStart);
+  if (hostEnd < 0) return null;
+  const end = trimBareEnd(text, at, hostEnd, 0, 0);
+  if (end <= hostStart) return null;
+  const visible = text.slice(at, end);
+  return new BareLink("mailto:" + visible, visible, end);
+};
+
 /** The index of the closing backtick run of exactly `n` at or after `from`, or -1. */
 const closingBackticks = (text: string, from: number, n: number): number => {
   let i = from;
@@ -277,8 +454,11 @@ const resolveDelimiters = (nodes: Inline[], depth: number = 0): Inline[] => {
   return literalize(out);
 };
 
-/** `text` as inline nodes; reference links resolve through `defs`. `depth` bounds nested link text. */
-export const parseInline = (text: string, defs: Map<string, LinkDefinition> = new Map<string, LinkDefinition>(), depth: number = 0): Inline[] => {
+/**
+ * `text` as inline nodes; reference links resolve through `defs`, footnote references through
+ * `notes`. `depth` bounds nested link text, and `bare` turns extended autolinks off inside a link.
+ */
+export const parseInline = (text: string, defs: Map<string, LinkDefinition> = new Map<string, LinkDefinition>(), depth: number = 0, notes?: FootnoteState, bare: boolean = true): Inline[] => {
   const out: Inline[] = [];
   const closers = new Closers(text);
   let buf = "";
@@ -346,6 +526,18 @@ export const parseInline = (text: string, defs: Map<string, LinkDefinition> = ne
         continue;
       }
     }
+    if (notes !== undefined && c === "[" && text.charAt(i + 1) === "^") {
+      const close = closers.brackets[i];
+      if (close >= 0) {
+        const label = text.slice(i + 2, close);
+        if (label.length > 0 && !/[\s\]]/.test(label) && notes.has(label)) {
+          flush();
+          out.push(new FootnoteRef(label, notes.number(label)));
+          i = close + 1;
+          continue;
+        }
+      }
+    }
     if (depth < MAX_NESTING && c === "!" && text.charAt(i + 1) === "[") {
       const close = closers.brackets[i + 1];
       if (close >= 0) {
@@ -353,7 +545,7 @@ export const parseInline = (text: string, defs: Map<string, LinkDefinition> = ne
         const tail = linkTail(text, close + 1, label, defs);
         if (tail !== null) {
           flush();
-          out.push(new Image(tail.href, tail.title, plainText(parseInline(label, defs, depth + 1))));
+          out.push(new Image(tail.href, tail.title, plainText(parseInline(label, defs, depth + 1, notes, false))));
           i = tail.end;
           continue;
         }
@@ -369,7 +561,7 @@ export const parseInline = (text: string, defs: Map<string, LinkDefinition> = ne
         const tail = linkTail(text, close + 1, label, defs);
         if (tail !== null) {
           flush();
-          out.push(new Link(tail.href, tail.title, parseInline(label, defs, depth + 1)));
+          out.push(new Link(tail.href, tail.title, parseInline(label, defs, depth + 1, notes, false)));
           i = tail.end;
           continue;
         }
@@ -406,6 +598,16 @@ export const parseInline = (text: string, defs: Map<string, LinkDefinition> = ne
         flush();
         out.push(new InlineHtml(tag[0]));
         i += tag[0].length;
+        continue;
+      }
+    }
+    if (bare && isAlnum(c)) {
+      const url = scanBareUrl(text, i);
+      const link = url !== null ? url : scanBareEmail(text, i);
+      if (link !== null) {
+        flush();
+        out.push(new Link(link.href, "", [new Text(link.visible)]));
+        i = link.end;
         continue;
       }
     }
