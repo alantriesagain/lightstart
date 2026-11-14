@@ -81,9 +81,9 @@ const main = async (): Promise<void> => {
   ok("the page renderer answers the shell", (await bodyOf(shell)).startsWith("CUSTOM:"));
   ok("with the project page under it", (await bodyOf(shell)).includes("Fixture"));
 
-  const redirect = await request(app, "GET", "/base");
-  eqn("the base path redirects", redirect.status, 302);
-  eq("to its slash", redirect.headers.get("location") ?? "", "/base/");
+  const bare = await request(app, "GET", "/base");
+  eqn("the bare base path answers the app's root", bare.status, 200);
+  ok("with the shell", (await bodyOf(bare)).startsWith("CUSTOM:"));
   eq("the base path serves the app", await bodyOf(await request(app, "GET", "/base/root-route")), "root-route");
   eq("and its handled apps", await bodyOf(await request(app, "GET", "/base/handled")), "handled");
   ok("and its files with rewritten specifiers", (await bodyOf(await request(app, "GET", "/base/vendor/mod.js"))).includes('from "/dep.js"'));
