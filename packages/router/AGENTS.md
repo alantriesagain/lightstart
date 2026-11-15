@@ -47,10 +47,10 @@ scriptc compiles the core, the matcher, the adapters, the helpers and the naviga
 From the repository root:
 
 ```bash
-node packages/native/bin/light-native.js test @lightstart/router       # node and native, outputs equal
-node packages/native/bin/light-native.js coverage @lightstart/router   # every test fully static, no slow path
-node packages/native/bin/light-native.js typecheck @lightstart/router
-node packages/native/bin/light-native.js check --all
+light test @lightstart/router       # node and native, outputs equal
+light coverage @lightstart/router   # every test fully static, no slow path
+light typecheck @lightstart/router
+light check --all
 ```
 
 `@lightstart/light` is a devDependency only for the type-level navigation contract; the sources import nothing from it.

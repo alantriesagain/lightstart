@@ -3,10 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "The tooling of a workspace of native apps and packages compiled by scriptc: build, run, selftest, test, coverage, typecheck, check and install.",
-  "bin": {
-    "light-native": "./bin/light-native.js"
-  },
+  "description": "The native tasks of light: a native project built, run, selftested, tested, covered, typechecked, checked, installed and prepared with scriptc.",
   "exports": {
     "./*": "./*"
   },
@@ -17,10 +14,12 @@
     "@lightstart/light": "workspace:*"
   },
   "devDependencies": {
+    "@lightstart/build": "workspace:*",
     "@lightstart/cli": "workspace:*",
     "@types/node": "^26.6.5"
   },
   "peerDependencies": {
+    "@lightstart/build": "workspace:*",
     "@lightstart/cli": "workspace:*"
   }
 }

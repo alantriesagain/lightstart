@@ -1,6 +1,6 @@
 /**
  * @file The type-level contract: `router.navigation` is assignable to light's `Navigation`, the
- * shape `configureNavigation` takes. Checked by `light-native typecheck`; it runs nothing.
+ * shape `configureNavigation` takes. Checked by `light typecheck`; it runs nothing.
  */
 import type { Navigation } from "@lightstart/light/navigation";
 import { createMemoryRouter } from "../app.ts";

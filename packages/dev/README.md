@@ -185,7 +185,7 @@ An extension may also ask for a preview beside the dev server with `preview(port
 A native entry at `packages/dev/native/serve.ts` serves a folder natively without TypeScript, built with:
 
 ```bash
-node packages/native/bin/light-native.js build @lightstart/dev
+light build packages/dev
 ```
 
 [`benchmarks/dev/`](../../benchmarks/dev/README.md) measures it against the node server.

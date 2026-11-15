@@ -1,5 +1,5 @@
 /**
- * @file `light-native run <app> [--no-build] [-- flags…]`: build the app, then run it in the folder the command was
+ * @file `light run [--no-build] [-- flags…]`: build the app, then run it in the folder the command was
  * launched from, logging to $NATIVE_LOG (else /tmp/<binary>.log), with the environment the agents'
  * CLIs expect.
  */
@@ -30,7 +30,7 @@ export const runProject = async (project, extra, launchDir) => {
  */
 export const run = async (args, root) => {
   const [name, ...rest] = args;
-  if (name === undefined) throw new Error("usage: light-native run <app> [--no-build] [-- flags…]");
+  if (name === undefined) throw new Error("usage: light run [--no-build] [-- flags…]");
   const app = memberByName(root, name);
   const extra = rest.filter((a) => a !== "--no-build" && a !== "--");
   const binary = rest.includes("--no-build") ? binaryPath(app) : await buildApp(root, app);

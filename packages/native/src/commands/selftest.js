@@ -1,5 +1,5 @@
 /**
- * @file `light-native selftest <app> <scenario> [--no-build] [-- flags…]`: the app built, then run in a
+ * @file `light selftest <scenario> [--no-build] [-- flags…]`: the app built, then run in a
  * pseudo-terminal (200x40) on a temp git repository with `--trust --selftest <scenario>`, its log
  * checked for the lines the scenario expects. A scenario is an entry of the app's `native.selftests`:
  * `args` (flags for the app; a path that exists relative to the app is made absolute), `home` (files
@@ -89,7 +89,7 @@ const scenarioOf = (app, scenario) => {
  */
 export const run = async (args, root) => {
   const [name, scenario, ...rest] = args;
-  if (name === undefined || scenario === undefined) throw new Error("usage: light-native selftest <app> <scenario> [--no-build] [-- flags…]");
+  if (name === undefined || scenario === undefined) throw new Error("usage: light selftest <scenario> [--no-build] [-- flags…]");
   const app = memberByName(root, name);
   const cfg = scenarioOf(app, scenario);
   if (typeof cfg.live === "string" && process.env["NATIVE_LIVE"] !== "1") {

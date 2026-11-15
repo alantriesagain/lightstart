@@ -51,7 +51,7 @@ export function throws(name: string, fn: () => void, contains: string): void {
 }
 
 /**
- * A time budget of `ms` for a speed check, times $TEST_TIME_SCALE (`light-native test` sets 4 for
+ * A time budget of `ms` for a speed check, times $TEST_TIME_SCALE (`light test` sets 4 for
  * its -O0 builds; 1 by default and for OPT=release): an order of magnitude slower still fails.
  */
 export function budget(ms: number): number {

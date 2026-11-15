@@ -27,6 +27,9 @@ importers:
       '@lightstart/dev':
         specifier: workspace:*
         version: link:packages/dev
+      '@lightstart/native':
+        specifier: workspace:*
+        version: link:packages/native
       '@lightstart/server':
         specifier: workspace:*
         version: link:packages/server
@@ -273,6 +276,9 @@ importers:
         specifier: workspace:*
         version: link:../light
     devDependencies:
+      '@lightstart/build':
+        specifier: workspace:*
+        version: link:../build
       '@lightstart/cli':
         specifier: workspace:*
         version: link:../cli

@@ -75,8 +75,9 @@ export const test = async (argv) => {
 };
 
 /**
- * The `light test` command: the files when it is given any, otherwise the
- * groups extensions added, all of them or only those whose flags were given.
+ * The `light test` command: a replacement run when an extension registers one,
+ * otherwise the files when it is given any, otherwise the groups extensions
+ * added, all of them or only those whose flags were given.
  * @param {CommandContext} ctx
  * @param {Record<string, unknown>} args
  * @returns {Promise<boolean>}
@@ -88,6 +89,8 @@ export const runTestCommand = async (ctx, args) => {
   const root = typeof args.root === "string" ? path.resolve(args.root) : process.cwd();
   /** @type {TestGroup[]} */
   const groups = [];
+  /** @type {Array<(input: import("../cli/extensions.ts").TestInput) => Promise<boolean> | boolean>} */
+  const replacements = [];
   /** @type {((options: RunnerPageOptions) => string) | undefined} */
   let render;
   const api = {
@@ -98,6 +101,12 @@ export const runTestCommand = async (ctx, args) => {
       groups.push(group);
     },
     /**
+     * @param {(input: import("../cli/extensions.ts").TestInput) => Promise<boolean> | boolean} fn
+     */
+    run(fn) {
+      replacements.push(fn);
+    },
+    /**
      * @param {(options: RunnerPageOptions) => string} fn
      */
     runnerPage(fn) {
@@ -105,6 +114,9 @@ export const runTestCommand = async (ctx, args) => {
     },
   };
   await ctx.cli.extend("test", api);
+  /** @type {import("../cli/extensions.ts").TestInput} */
+  const input = { args, files, projectDir: ctx.projectDir, root, headless, timeoutMs, runFiles, serve: (dir, port = 0) => serve(dir, port, render) };
+  if (replacements.length > 0) return replacements[0](input);
   if (files.length > 0) return runTestFiles({ files, root, headless, timeoutMs, render });
   if (groups.length === 0) {
     console.error(USAGE);
@@ -112,8 +124,6 @@ export const runTestCommand = async (ctx, args) => {
   }
   const selected = groups.filter((group) => group.flag !== undefined && Boolean(args[group.flag]));
   const running = selected.length > 0 ? selected : groups;
-  /** @type {import("../cli/extensions.ts").TestInput} */
-  const input = { args, projectDir: ctx.projectDir, root, headless, timeoutMs, runFiles, serve: (dir, port = 0) => serve(dir, port, render) };
   let passed = true;
   for (const group of running)
     try {

@@ -103,7 +103,7 @@ imitates the native calls. There is no stand-in driver.
 ## Gates
 
 ```bash
-node packages/native/bin/light-native.js test @lightstart/sqlite
-node packages/native/bin/light-native.js coverage @lightstart/sqlite
-node packages/native/bin/light-native.js typecheck @lightstart/sqlite
+light test @lightstart/sqlite
+light coverage @lightstart/sqlite
+light typecheck @lightstart/sqlite
 ```

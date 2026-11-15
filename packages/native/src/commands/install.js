@@ -1,5 +1,5 @@
 /**
- * @file `light-native install <app> [name]`: build the app and put it on PATH as a copy in ~/.local/bin ($BIN_DIR
+ * @file `light install [name]`: build the app and put it on PATH as a copy in ~/.local/bin ($BIN_DIR
  * overrides), written beside the one in use and moved over it, so a rebuild never touches the
  * binary a running session uses.
  */
@@ -43,7 +43,7 @@ export const installBinary = async (root, app, binary, name) => {
  */
 export const run = async (args, root) => {
   const [appName, name] = args.filter((a) => a !== "--strip");
-  if (appName === undefined) throw new Error("usage: light-native install <app> [name] [--strip]");
+  if (appName === undefined) throw new Error("usage: light install [name] [--strip]");
   const app = memberByName(root, appName);
   const binary = await buildApp(root, app, args.includes("--strip"));
   return installBinary(root, app, binary, name);

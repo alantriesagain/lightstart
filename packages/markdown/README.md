@@ -59,6 +59,6 @@ text, and inline nesting is bounded by the same cap.
 ## Gates
 
 ```bash
-node packages/native/bin/light-native.js test @lightstart/markdown
-node packages/native/bin/light-native.js typecheck @lightstart/markdown
+light test @lightstart/markdown
+light typecheck @lightstart/markdown
 ```

@@ -1,5 +1,5 @@
 /**
- * @file `light-native test [member…] [--node-only] [--jobs N] [--opt dev|release] [-- test…]`: every member's
+ * @file `light test [member…] [--node-only] [--jobs N] [--opt dev|release] [-- test…]`: every member's
  * test/*.test.ts (or the tests named) run under node (fast) and under scriptc (the gate); the
  * outputs must match byte for byte. A test whose first line is `// ffi: <manifest>` runs natively
  * with that manifest and under node with the manifest folder's node stand-in preloaded; one whose
@@ -12,7 +12,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { basename, join, relative } from "node:path";
 import { ffiHeader, nativeOnly, nodeOnly, nodePreload, resolveFfi } from "../ffi.js";
-import { prepare } from "../prepare.js";
+import { prepare, prepareProject } from "../prepare.js";
 import { capture, pool } from "../run.js";
 import { scriptcPath } from "@lightstart/light/native/scriptc.js";
 import { Member, memberByName, members } from "../workspace.js";
@@ -93,13 +93,26 @@ const flagValue = (flags, name, fallback) => {
 };
 
 /**
- * @param {string[]} args
+ * The tests `files` name, by path or by file name; every test when none.
+ * @param {TestFile[]} tests
+ * @param {string[]} files
+ * @returns {TestFile[]}
+ */
+export const selectTestFiles = (tests, files) => {
+  if (files.length === 0) return tests;
+  const chosen = tests.filter((t) => files.some((file) => t.path === file || t.path.endsWith("/" + file) || basename(t.path) === basename(file)));
+  if (chosen.length === 0) throw new Error("no test matches " + files.join(", "));
+  return chosen;
+};
+
+/**
+ * `tests` run under node and natively from their members' folders.
+ * @param {TestFile[]} tests
+ * @param {string[]} flags
  * @param {string} root
  * @returns {Promise<number>}
  */
-export const run = async (args, root) => {
-  const { targets, tests, flags } = selectTests(root, args);
-  for (const m of targets) await prepare(root, m, "test");
+const runFiles = async (tests, flags, root) => {
   const jobs = Number(flagValue(flags, "--jobs", process.env["JOBS"] ?? "4"));
   const opt = flagValue(flags, "--opt", process.env["OPT"] ?? "dev");
   const nodeOnlyRun = flags.includes("--node-only");
@@ -145,4 +158,27 @@ export const run = async (args, root) => {
   }
   console.log(String(results.length) + " tests in " + String(Math.round((Date.now() - start) / 1000)) + " s, " + String(jobs) + " at a time, " + (nodeOnlyRun ? "node only" : opt + " builds"));
   return status;
+};
+
+/**
+ * @param {string[]} args
+ * @param {string} root
+ * @returns {Promise<number>}
+ */
+export const run = async (args, root) => {
+  const { targets, tests, flags } = selectTests(root, args);
+  for (const m of targets) await prepare(root, m, "test");
+  return runFiles(tests, flags, root);
+};
+
+/**
+ * A project's tests, its prepare steps first; `files` select tests by name.
+ * @param {import("../project.js").Project} project
+ * @param {string[]} flags
+ * @param {string[]} [files]
+ * @returns {Promise<number>}
+ */
+export const runProject = async (project, flags, files = []) => {
+  await prepareProject(project, "test");
+  return runFiles(selectTestFiles(testsOf(project), files), flags, project.dir);
 };

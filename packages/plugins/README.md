@@ -4,4 +4,4 @@ The embedded JavaScript an app's user plugins run in, and nothing of the app's o
 
 `native/` holds the C shim (`wcjs.c`), the build of the archive (`build.sh`, run as the package's prepare step: scriptc's vendored quickjs-ng with its regex and Unicode symbols renamed apart from the runtime's own copy, into `native/out/libwcjs.a`), the FFI manifest an app links (`ffi.json`, named by the app's `native.ffi` and by a test's `// ffi:` header as `@lightstart/plugins/native/ffi.json`) and `wcjs-node.mjs`, the same calls on node's engine for the tests.
 
-Tests: `test/engine.test.ts` and `test/prelude.test.ts`, under node (the stand-in preloaded) and natively (`light-native test plugins`).
+Tests: `test/engine.test.ts` and `test/prelude.test.ts`, under node (the stand-in preloaded) and natively (`light test plugins`).

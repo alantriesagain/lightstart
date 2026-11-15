@@ -1,6 +1,6 @@
 # @lightstart/test
 
-What a member's tests share. A test is a plain script that prints what it checks and runs under node and natively with the same output (`light-native test`).
+What a member's tests share. A test is a plain script that prints what it checks and runs under node and natively with the same output (`light test`).
 
 | Module | Holds |
 |---|---|

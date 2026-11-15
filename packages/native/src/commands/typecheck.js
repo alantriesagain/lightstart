@@ -1,5 +1,5 @@
 /**
- * @file `light-native typecheck --all | <member…>`: tsc over each member's own tsconfig.json, run in the member's
+ * @file `light typecheck --all | <member…>`: tsc over each member's own tsconfig.json, run in the member's
  * folder after its prepare steps (generated sources must exist). An error is the member's own when
  * its file is inside the member and outside node_modules; the rest is reported and does not count
  * (a dependency's problem fails that dependency's own run). A member holding sources but no

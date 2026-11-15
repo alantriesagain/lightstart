@@ -119,4 +119,4 @@ Each stage: its tests passing before and after, `wrangler pages functions build`
 
 ## Order and gates
 
-A, then B, then C (its probes first), then F, then D; E only on evidence. Each phase: the package's gates (`light-native test`, `coverage`, `typecheck`, `check --all`), the hello-get CPU check of principle 3, README and AGENTS.md updated, then bootstrapp's deletions for that phase as a separate change in bootstrapp.
+A, then B, then C (its probes first), then F, then D; E only on evidence. Each phase: the package's gates (`light test`, `coverage`, `typecheck`, `check --all`), the hello-get CPU check of principle 3, README and AGENTS.md updated, then bootstrapp's deletions for that phase as a separate change in bootstrapp.

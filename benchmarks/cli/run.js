@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..", "..");
-const NATIVE_CLI = path.join(ROOT, "packages/native/bin/light-native.js");
+const LIGHT = path.join(ROOT, "packages/cli/bin/light.js");
 const SOURCE = path.join(ROOT, "packages/cli/native/light.ts");
 const BINARY = path.join(ROOT, "packages/cli/dist/light");
 const DISCOVERY = path.join(ROOT, "packages/cli/bin/light.js");
@@ -81,7 +81,7 @@ const main = () => {
   let buildMs = /** @type {number | null} */ (null);
   if (build) {
     const start = process.hrtime.bigint();
-    const built = spawnSync(process.execPath, [NATIVE_CLI, "build", "@lightstart/cli"], { cwd: ROOT, stdio: "inherit" });
+    const built = spawnSync(process.execPath, [LIGHT, "build", "packages/cli"], { cwd: ROOT, stdio: "inherit" });
     buildMs = Number(process.hrtime.bigint() - start) / 1e6;
     if (built.status !== 0) throw new Error("native build failed");
   }
