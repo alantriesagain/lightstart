@@ -253,7 +253,7 @@ const linkOf = (text) => {
  */
 const stage = (path) => {
   const file = basename(path);
-  const dir = mkdtempSync(join(tmpdir(), `light-native-${basename(file, ".ts")}-`));
+  const dir = mkdtempSync(join(tmpdir(), `light-capture-${basename(file, ".ts")}-`));
   copyFileSync(join(examplesDir, path), join(dir, file));
   const stem = basename(file, ".ts");
   run(tscTs, [file, "--target", "es2024", "--module", "esnext", "--outDir", "js"], dir);
@@ -764,7 +764,7 @@ const measures = () => {
   });
   const files = tsgo ? run(tsgo, ["--noEmit", "-p", ".", "--listFilesOnly"], light).stdout.trim().split("\n").length : null;
 
-  const benchDir = mkdtempSync(join(tmpdir(), "light-native-bench-"));
+  const benchDir = mkdtempSync(join(tmpdir(), "light-capture-bench-"));
   try {
     const binary = join(benchDir, "bench");
     run(scriptc, ["build", "native/tui/bench.js", "-o", binary, "--strip"], light);

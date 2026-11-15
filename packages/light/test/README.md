@@ -47,14 +47,21 @@ before the command picks its files or groups, and `api` is:
 | Member | What it does |
 |---|---|
 | `group({ name, flag?, description, run })` | Adds a test group; `flag` names an extension argument that selects it |
+| `run(fn)` | Replaces the whole run: `fn(input)` receives the parsed `args` and `files` and answers whether it passed |
 | `runnerPage(render)` | Replaces the runner page light's own browser run serves |
 
 With no files, `light test` runs every group, or only the groups whose flags
 were given; the exit is 0 only when every run group passed. A group's
-`run(input)` receives the parsed `args`, the `projectDir`, the `root`,
-`headless`, the `timeoutMs`, and light's own `runFiles` and `serve`, so it can
-run its own browser tests with its own runner page and server. With files,
-light's browser runner runs them as before and the groups do not.
+`run(input)` receives the parsed `args`, the files light was given, the
+`projectDir`, the `root`, `headless`, the `timeoutMs`, and light's own
+`runFiles` and `serve`, so it can run its own browser tests with its own
+runner page and server. With files, light's browser runner runs them as before
+and the groups do not.
+
+A replacement `run(fn)` is asked instead of both: it receives the same input
+with `files` as the files light was given (none when it was given none), and
+answers whether the run passed. An extension registers one when it takes over
+the command for its own project; without one, light's own run is unchanged.
 
 ```ts
 import { defineExtension } from "@lightstart/cli";

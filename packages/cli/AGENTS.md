@@ -48,18 +48,18 @@ The core is compiled as program source by scriptc, so it follows light's native 
 | `ctx.cli.loadRoutes()` answering every route's default export in discovery order | the dev-server package of a later phase, which types and serves them |
 | Discovery order is project `cli/`, the project's scoped packages, the workspace root's scoped packages, `packages`, the CLI's own scoped packages; a static command wins its name | help grouping and duplicate warnings, and a binary that scans more than one scope |
 | `light.scopes` and `light.cli` in a `package.json`, and `discover`'s `cliDir`, which defaults to this package's folder | a project naming the scopes it ships; a package that is a set of areas; a binary scanning beside itself |
-| `package.json`'s `native.entry` and `native.binary` | `light-native build @lightstart/cli`, which writes `dist/light` |
+| `package.json`'s `native.entry` and `native.binary` | `light build packages/cli`, which writes `dist/light` |
 
 ## Gates
 
 From the repository root:
 
 ```bash
-node packages/native/bin/light-native.js test @lightstart/cli       # node and native, outputs equal
-node packages/native/bin/light-native.js coverage @lightstart/cli   # every test fully static, node-only left out
-node packages/native/bin/light-native.js typecheck @lightstart/cli
-node packages/native/bin/light-native.js build @lightstart/cli      # dist/light
-node packages/native/bin/light-native.js check --all
+light test @lightstart/cli       # node and native, outputs equal
+light coverage @lightstart/cli   # every test fully static, node-only left out
+light typecheck @lightstart/cli
+light build packages/cli      # dist/light
+light check --all
 npx eslint packages/cli
 node benchmarks/cli/run.js                     # node and native stdout equal, then the ratios
 ```

@@ -32,7 +32,7 @@ A package never imports one after it in that order, nor an app. `lib` and `highl
 - A `native` block for what the tools need: a package's prepare steps (`@lightstart/plugins` builds its QuickJS archive), an app's entry, binary, FFI manifest and selftests (`native/README.md`).
 - The code follows light's rules for code that compiles statically (`light/native/README.md`) and light's comment rule: a JSDoc module header, JSDoc on an exported symbol or a JSDoc type, nothing else.
 
-`light-native check --all` holds the members to this layout.
+`light check --all` holds the members to this layout.
 
 ## A workspace that links light
 
@@ -52,4 +52,4 @@ packages:
   - 'apps/*'
 ```
 
-with `light` a symbolic link to light's checkout. The tools there (`light-native`, from `@lightstart/native`) prepare light's packages with the members that depend on them and leave their tests and coverage to light's gates.
+with `light` a symbolic link to light's checkout. The tools there (`light <command>`, from `@lightstart/native`) prepare light's packages with the members that depend on them and leave their tests and coverage to light's gates.

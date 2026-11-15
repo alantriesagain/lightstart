@@ -243,7 +243,7 @@ A native binary registers its commands in a static table instead. `native/light.
 Build `@lightstart/cli` into `packages/cli/dist/light`:
 
 ```bash
-node packages/native/bin/light-native.js build @lightstart/cli
+light build packages/cli
 ```
 
 [`benchmarks/cli/`](../../benchmarks/cli/README.md) measures the binary against the node entry.

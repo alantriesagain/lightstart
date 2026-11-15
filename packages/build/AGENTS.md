@@ -51,9 +51,9 @@ What the package is and how to use it: [README.md](README.md). This file is what
 From the repository root:
 
 ```bash
-node packages/native/bin/light-native.js test @lightstart/build       # node and native where the test allows it
-node packages/native/bin/light-native.js typecheck @lightstart/build
-node packages/native/bin/light-native.js check --all
+light test @lightstart/build       # node and native where the test allows it
+light typecheck @lightstart/build
+light check --all
 npx eslint packages/build
 node benchmarks/build/run.js               # then the ratios (benchmarks/build/README.md)
 node packages/build/test/browser-smoke.ts  # builds examples/todomvc and checks it in Chromium

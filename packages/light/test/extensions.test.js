@@ -115,6 +115,27 @@ test("light test runs extension groups, selects them by flag, and fails when one
   assert.match(all.stdout, /group browser/);
 });
 
+test("light test asks a replacement run with the parsed files and args, even when files are given", (t) => {
+  const { dir, file } = projectWith(t, "test");
+  writeFileSync(file, `${header}export default defineExtension("test", {
+  args: { mode: { default: "unit", description: "The mode the replacement run prints" } },
+  setup(ctx, args, api) {
+    api.group({ name: "group", description: "Never reached", run() { console.log("group ran"); return false; } });
+    api.run((input) => { console.log("run " + input.files.length + " " + input.args.mode); return input.args.mode !== "fail"; });
+  },
+});
+`);
+  const withFile = light(dir, ["test", "missing.test.js"]);
+  assert.equal(withFile.status, 0, withFile.stderr);
+  assert.match(withFile.stdout, /run 1 unit/);
+  assert.doesNotMatch(withFile.stdout, /group ran/);
+  const withoutFiles = light(dir, ["test"]);
+  assert.equal(withoutFiles.status, 0, withoutFiles.stderr);
+  assert.match(withoutFiles.stdout, /run 0 unit/);
+  const failed = light(dir, ["test", "--mode", "fail"]);
+  assert.equal(failed.status, 1, failed.stderr);
+});
+
 test("light desktop dev --attach runs a host a desktop extension names on the served origin", async (t) => {
   let requests = 0;
   const server = createServer((_req, res) => {

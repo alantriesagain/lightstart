@@ -24,8 +24,8 @@ The generator behind `light new`. Node-only (`native.tooling`): it reads and wri
 ## Gates
 
 ```bash
-node packages/native/bin/light-native.js test @lightstart/create
-node packages/native/bin/light-native.js typecheck @lightstart/create @lightstart/cli
-node packages/native/bin/light-native.js check --all
+light test @lightstart/create
+light typecheck @lightstart/create @lightstart/cli
+light check --all
 npx eslint packages/create packages/cli
 ```

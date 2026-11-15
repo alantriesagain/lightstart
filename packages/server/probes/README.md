@@ -21,7 +21,7 @@ What scriptc (the fork's `light-integration`, v0.4.5) accepts and does for this 
 | `probes/crypto-node.ts`: `createHmac("sha256").update(…).digest("base64url"/"hex")`, `createHash("sha256")` over text and bytes, `timingSafeEqual`, `randomBytes`, `randomUUID`, `Buffer` base64url round trip | PASS, identical to node | The `Crypto` seam stays synchronous, and `node/crypto.ts` (`NodeCrypto`) is its node and native implementation |
 | `probes/crypto-web.ts`: `crypto.subtle.digest("SHA-256")`, `importKey`/`sign` for HMAC-SHA256, `getRandomValues`, `randomUUID` | PASS, identical to node; `crypto.subtle` is present natively too | WebCrypto's digest and sign are promises, so a fetch adapter filling the same seam needs an async seam; the node path stays synchronous |
 
-With these, every test compiles fully statically (`light-native coverage @lightstart/server`: 100% of statements, no slow path) and prints under scriptc exactly what it prints under node.
+With these, every test compiles fully statically (`light coverage @lightstart/server`: 100% of statements, no slow path) and prints under scriptc exactly what it prints under node.
 
 ## Throughput
 

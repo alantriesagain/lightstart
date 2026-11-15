@@ -1,5 +1,5 @@
 /**
- * @file `light-native desktop <app> [--selftest] [--no-build] [-- flags…]`: build a desktop app with light's
+ * @file `light desktop <app> [--selftest] [--no-build] [-- flags…]`: build a desktop app with light's
  * desktop shell (the shim, the backend compiled by scriptc, the page in `native.web` staged beside
  * it) into the app's dist/, then run it, logging to $NATIVE_LOG. Light's script is run by its real
  * path (this CLI's own light): it runs its main only when invoked as the file it is. With --selftest the app's `native.selftest` checks are run against the log: the backend starts
@@ -21,7 +21,7 @@ import { binaryOf } from "./build.js";
  */
 export const run = async (args, root) => {
   const [name, ...rest] = args;
-  if (name === undefined) throw new Error("usage: light-native desktop <app> [--selftest] [--no-build] [-- flags…]");
+  if (name === undefined) throw new Error("usage: light desktop <app> [--selftest] [--no-build] [-- flags…]");
   const app = memberByName(root, name);
   const entry = app.config.entry;
   if (typeof entry !== "string") throw new Error(app.name + ": package.json has no native.entry");

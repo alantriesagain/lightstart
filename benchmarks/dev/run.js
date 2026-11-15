@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..", "..");
 const FIXTURE = path.join(HERE, "fixture");
-const NATIVE_CLI = path.join(ROOT, "packages/native/bin/light-native.js");
+const LIGHT = path.join(ROOT, "packages/cli/bin/light.js");
 const BINARY = path.join(ROOT, "packages/dev/dist/light-serve");
 const NODE_CLI = path.join(ROOT, "packages/cli/bin/light.js");
 
@@ -192,7 +192,7 @@ const measure = async (url) => {
 
 const main = async () => {
   if (build) {
-    const built = spawnSync(process.execPath, [NATIVE_CLI, "build", "@lightstart/dev"], { cwd: ROOT, stdio: "inherit" });
+    const built = spawnSync(process.execPath, [LIGHT, "build", "packages/dev"], { cwd: ROOT, stdio: "inherit" });
     if (built.status !== 0) throw new Error("native build failed");
   }
   if (!existsSync(BINARY)) throw new Error(`${BINARY} is missing; run without --no-build`);

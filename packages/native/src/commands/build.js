@@ -1,5 +1,5 @@
 /**
- * @file `light-native build <app>`: the app's prepare steps, then scriptc builds its entry (`native.entry`, with the
+ * @file `light build`: the app's prepare steps, then scriptc builds its entry (`native.entry`, with the
  * FFI manifests `native.ffi` names) into the app's dist/. The symbol table is kept unless `--strip` asks for it,
  * so a crash's backtrace can name functions.
  */
@@ -71,7 +71,7 @@ export const buildProject = async (project, strip = false) => buildTarget(projec
  * @returns {Promise<number>}
  */
 export const run = async (args, root) => {
-  if (args.length === 0) throw new Error("usage: light-native build <app> [--strip]");
+  if (args.length === 0) throw new Error("usage: light build [--strip]");
   console.log(await buildApp(root, memberByName(root, args[0]), args.includes("--strip")));
   return 0;
 };

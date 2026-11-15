@@ -45,9 +45,10 @@ export interface RunnerPageOptions {
   prelude?: string;
 }
 
-/** What one browser test group receives. */
+/** What one test group, or a replacement run, receives. */
 export interface TestInput {
   args: Record<string, unknown>;
+  files: string[];
   projectDir: string;
   root: string;
   headless: boolean;
@@ -68,6 +69,8 @@ export interface TestGroup {
 export interface TestExtension {
   /** Add a group; `flag` names an argument the extension declared to select it. */
   group(group: TestGroup): void;
+  /** Replace the whole run; `input.files` are the files light was given, if any. */
+  run(fn: (input: TestInput) => Promise<boolean> | boolean): void;
   /** Replace the runner page light's own browser run serves. */
   runnerPage(render: (options: RunnerPageOptions) => string): void;
 }

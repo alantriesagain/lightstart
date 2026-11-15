@@ -1,5 +1,5 @@
 /**
- * @file `light-native prepare [member…]`: the prepare steps of the members named (every app by default) and of the
+ * @file `light prepare [member…]`: the prepare steps of the members named (every app by default) and of the
  * packages they depend on.
  */
 import { prepare, prepareProject } from "../prepare.js";

@@ -52,10 +52,10 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 From the repository root:
 
 ```bash
-node packages/native/bin/light-native.js test @lightstart/server       # node and native, outputs equal (--node-only without a scriptc)
-node packages/native/bin/light-native.js coverage @lightstart/server   # every test fully static, no slow path
-node packages/native/bin/light-native.js typecheck @lightstart/server
-node packages/native/bin/light-native.js check --all
+light test @lightstart/server       # node and native, outputs equal (--node-only without a scriptc)
+light coverage @lightstart/server   # every test fully static, no slow path
+light typecheck @lightstart/server
+light check --all
 node benchmarks/server/run.js --engines node,native                        # every contender's digest must match; read the ratios
 ```
 

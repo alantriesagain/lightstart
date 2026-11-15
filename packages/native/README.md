@@ -1,8 +1,10 @@
 # @lightstart/native
 
-The tooling of a workspace of native apps and packages, a node program (nothing here is compiled by scriptc): `light-native <command>`, run from anywhere inside the workspace (the root's scripts, or `pnpm exec light-native …`). It serves light's own packages and any workspace that links light (a `light` entry in its `pnpm-workspace.yaml`, light's native and terminal packages listed after it by folder, `light/packages/lib` and the rest). A member is any folder a `pnpm-workspace.yaml` pattern names that holds a `package.json`, and the workspace root itself when its `package.json` names a `native.entry` (a workspace that is one app); light itself is none. An app is a member under `apps/` or any member with a `native.entry`. In a workspace that links light, light's packages are members the others depend on and are prepared with them, and the commands that go over every member leave them to light's gates.
+The tooling of a workspace of native apps and packages, a node program (nothing here is compiled by scriptc): the commands `light` discovers from this package, `light <command>`, run from anywhere inside the workspace. It serves light's own packages and any workspace that links light (a `light` entry in its `pnpm-workspace.yaml`, light's native and terminal packages listed after it by folder, `light/packages/lib` and the rest). A member is any folder a `pnpm-workspace.yaml` pattern names that holds a `package.json`, and the workspace root itself when its `package.json` names a `native.entry` (a workspace that is one app); light itself is none. An app is a member under `apps/` or any member with a `native.entry`. In a workspace that links light, light's packages are members the others depend on and are prepared with them, and the commands that go over every member leave them to light's gates.
 
 ## A standalone project
+
+A native project declares `@lightstart/native` and `@lightstart/build` (devDependencies): `light build` is `@lightstart/build`'s command and this package's extension takes it over for a native project, while `light test` and `light check` come from `@lightstart/light`, which the project's code depends on anyway.
 
 A standalone project needs no `pnpm-workspace.yaml`: its project is the nearest folder at or above the start folder whose `package.json` holds a `native` block. The start folder is the command's folder, or `LIGHT_PROJECT_DIR`. Its dependencies are found through its `node_modules` (a `link:` symlink or an installed folder alike), walked as a closure in dependency order, each package's own `dependencies` and `devDependencies` resolved from its real folder.
 
@@ -16,27 +18,15 @@ A project that declares `@lightstart/native` gets these commands from `light`; e
 
 | Command | Does |
 |---|---|
-| `light run [-- args…]` | build the project (`scriptc build native.entry` into `dist/<native.binary>`, keeping the symbol table) and run it in the folder the command was launched from, as `light-native run` does |
+| `light build [--strip]` | for a native project, in place of the page build: prepare, then `scriptc build native.entry [--ffi native.ffi] -o dist/<native.binary> --no-keep-llvm` from the project's folder, keeping the symbol table so a crash's backtrace names functions; `--strip` drops it |
+| `light test [--node-only] [--jobs N] [--all] [-- test…]` | every `test/*.test.ts` of the project (or of the workspace members, with `--all` or when a positional file names one), or the tests named, from the member's folder, under node and under `scriptc run`; both outputs must match byte for byte; `JOBS` and `OPT` set the defaults |
+| `light check [--all]` | the native conventions: tsconfig options, declared imports, test layout; with `--all` the workspace members light check's targets name |
+| `light run [-- args…]` | build the project (`scriptc build native.entry` into `dist/<native.binary>`, keeping the symbol table) and run it in the folder the command was launched from |
 | `light selftest <scenario> [--no-build]` | build the project and run one of its `native.selftests` scenarios in a pseudo-terminal |
 | `light install [name]` | build the project and copy its binary into `~/.local/bin` (`BIN_DIR` overrides), atomically |
-| `light coverage [--apps] [--jobs N]` | scriptc's static coverage of the project's entry and, without `--apps`, of every test |
-| `light typecheck [--all]` | tsc over the project's tsconfig, or with `--all` over every workspace member |
-| `light prepare` | the prepare steps alone, the dependencies' first |
-
-## The `light-native` commands
-
-| Command | Does |
-|---|---|
-| `light-native prepare [member…]` | the prepare steps (`native.prepare`, shell lines run in the member's folder) of the members named, every app by default, and of the members they depend on, each once |
-| `light-native build <app> [--strip]` | prepare, then `scriptc build <native.entry> [--ffi <native.ffi>] -o dist/<native.binary> --no-keep-llvm` from the app's folder, keeping the symbol table so a crash's backtrace names functions; `--strip` drops it |
-| `light-native run <app> [--no-build] [-- flags…]` | build, then run the binary in the folder the command was launched from, logging to `$NATIVE_LOG` (else `/tmp/<binary>.log`), with `CLAUDECODE` and `CLAUDE_CODE_ENTRYPOINT` unset |
-| `light-native selftest <app> <scenario> [--no-build]` | build, then run the scenario (`native.selftests.<name>`) in a 200x40 pseudo-terminal on a temp git repository with `--trust --selftest <name>`, and check the log; `live` scenarios run only with `NATIVE_LIVE=1` |
-| `light-native test [member…] [--node-only] [--jobs N] [--opt dev\|release] [-- test…]` | every `test/*.test.ts` of the members (every member with a `test/` folder by default), or the tests named after `--`, from the member's folder, under node and under `scriptc run`; both outputs must match byte for byte |
-| `light-native coverage [member…] [--jobs N] [--apps]` | `scriptc coverage --print=diagnostics --fail-on=blockers` of every app entry and (unless `--apps`) every test, read by light's `packages/light/native/diagnostics.js` gate: each must compile fully statically, with no blocker, no divergence from node, no deferred site, and, in an app's entry, no unreached one (a test compiles a slice of its packages, whose unreached code the apps answer for); the apps' SC6101 notes print after the entries; a step's gate covers the apps, `pnpm verify` everything |
-| `light-native typecheck --all \| <member…>` | `tsc -p tsconfig.json` per member, after its prepare steps; errors in files outside the member are reported apart and do not count; a member with sources and no tsconfig fails |
-| `light-native probes` | the compiler probes in the workspace's `probes/` (light's own are in `packages/light/native/probes/`, with their runner): coverage, build, node against native, written to `probes/RESULTS.md` |
-| `light-native install <app> [name] [--strip]` | build and copy the binary into `~/.local/bin` (`BIN_DIR` overrides), atomically |
-| `light-native desktop <app> [--selftest]` | build a desktop app with light's desktop shell (`native.web` the page) into its dist/ and run it, or its `native.selftest` |
+| `light coverage [--apps] [--jobs N] [--all] [member…]` | scriptc's static coverage of the project's entry and, without `--apps`, of every test; with `--all` or member names, of the workspace members |
+| `light typecheck [--all] [member…]` | tsc over the project's tsconfig, or with `--all` over every workspace member |
+| `light prepare [--all] [member…]` | the prepare steps alone, the dependencies' first |
 
 The compiler is light's choice (`packages/light/native/scriptc.js`): `$SCRIPTC`, else the one installed at the root (`<root>/node_modules/.bin/scriptc`), else the one beside `@lightstart/native`, else `scriptc` on PATH. scriptc caches what it built and what coverage found under `SCRIPTC_CACHE_DIR`, so an unchanged program comes back in a second (a test with the FFI manifest in a third of its time).
 

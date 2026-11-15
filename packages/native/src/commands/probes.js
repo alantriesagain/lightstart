@@ -1,5 +1,5 @@
 /**
- * @file `light-native probes [name…]`: the compiler probes in probes/ (one-file programs that decide design
+ * @file `light probes [name…]`: the compiler probes in probes/ (one-file programs that decide design
  * branches): for each, scriptc's coverage with blockers failing, a native build, a run, and a
  * comparison with node; the verdicts go to probes/RESULTS.md. The probes keep their relative
  * imports of light (they predate the workspace and document compiler behaviour as it was found).

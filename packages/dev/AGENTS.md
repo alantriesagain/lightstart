@@ -56,11 +56,11 @@ What the package is and how to use it: [README.md](README.md). This file is what
 From the repository root:
 
 ```bash
-node packages/native/bin/light-native.js test @lightstart/dev       # node and native where the test allows it
-node packages/native/bin/light-native.js typecheck @lightstart/dev
-node packages/native/bin/light-native.js check --all
+light test @lightstart/dev       # node and native where the test allows it
+light typecheck @lightstart/dev
+light check --all
 npx eslint packages/dev
 node benchmarks/dev/run.js                 # node and native, then the ratios (benchmarks/dev/README.md)
 ```
 
-The native entry (`packages/dev/native/serve.ts`) is built with `node packages/native/bin/light-native.js build @lightstart/dev`.
+The native entry (`packages/dev/native/serve.ts`) is built with `light build packages/dev`.
