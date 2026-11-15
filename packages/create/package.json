@@ -1,0 +1,46 @@
+{
+  "name": "@lightstart/create",
+  "version": "0.1.0",
+  "description": "The light new generator: a project's kind, files, scripts and package.json, with light linked from a checkout.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/create"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "create",
+    "scaffold",
+    "generator",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "pack": "node scripts/pack.js"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./command": "./command.ts",
+    "./kinds": "./kinds.ts",
+    "./*": "./*"
+  },
+  "devDependencies": {
+    "@lightstart/cli": "workspace:*",
+    "@light/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "@lightstart/cli": "workspace:*"
+  },
+  "native": {
+    "tooling": true
+  }
+}

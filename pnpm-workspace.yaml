@@ -7,6 +7,7 @@ packages:
   - 'packages/router'
   - 'packages/server'
   - 'packages/cli'
+  - 'packages/create'
   - 'packages/dev'
   - 'packages/build'
   - 'packages/sqlite'

@@ -1,0 +1,60 @@
+# @lightstart/create
+
+The generator behind `light new`: a project of a named kind, with light's commands, layout and conventions already in place. It copies a kind's template, writes the `package.json`, links light's packages from a checkout, and runs the install. Node-only, TypeScript with no build step.
+
+```bash
+light new                          # list the kinds, one line each
+light new web my-app               # a page of light views and lc-* components
+light new web my-app --dir sites/my-app
+light new package my-package --no-install
+```
+
+`light new <kind> <name> [--dir <path>] [--light <path>] [--npm] [--pm pnpm|npm] [--no-install] [--force]`
+
+| Option | Default | What |
+|---|---|---|
+| `kind` | | `web`, `tui`, `desktop` or `package` |
+| `name` | | The package name, and the folder when `--dir` is not given |
+| `--dir` | `./<name>` | The folder to write |
+| `--light` | the checkout the generator runs from | The light checkout that holds `packages/light` |
+| `--npm` | off | Write semver ranges of the packages' current versions instead of linking; the packages may not be published yet, so the install may fail |
+| `--pm` | `pnpm`, or `npm` with `--npm` | The package manager |
+| `--no-install` | install | Do not run the install |
+| `--force` | off | Write into a folder that is not empty |
+
+## Kinds
+
+| Kind | What it starts |
+|---|---|
+| `web` | A page of light views and `lc-*` components |
+| `tui` | A terminal app on light's terminal host |
+| `desktop` | A page in light's desktop shell with a native backend |
+| `package` | A light package with modules, tests and a README |
+
+Only `web` has a template today; the table and the generator are made for all four.
+
+## Where light comes from
+
+Light's packages are not on npm yet. The generator links a checkout: the one it runs from (`packages/create/../..` holding `packages/light`), or the one `--light <path>` names.
+
+| Mode | package.json |
+|---|---|
+| `link` (pnpm, default) | `"@lightstart/light": "link:/abs/path/packages/light"` |
+| `file` (`--pm npm`) | `"@lightstart/light": "file:/abs/path/packages/light"` |
+| `npm` (`--npm`) | `"@lightstart/light": "^0.1.0"` |
+
+Every package a linked package depends on from the same checkout is added too, so an outside project can resolve light's workspace dependencies: `@lightstart/components` brings `@lightstart/markdown` and `@lightstart/highlight`, `@lightstart/dev` brings `@lightstart/cli` and `@lightstart/server`.
+
+## Templates
+
+A kind is a folder `templates/<kind>/` plus an entry in `kinds.ts` (its name, description, light packages, scripts and devDependencies). The generator writes `package.json` from the table.
+
+A file is copied with `__NAME__` and `__TITLE__` replaced. A `.tpl` suffix is dropped, so no template's `package.json` or `AGENTS.md` acts as a real one inside this repository.
+
+## Tests
+
+`packages/create/test/*.test.ts` are plain node scripts on `@light/test/assert.ts`; each starts `// node-only`. They cover tokens and `.tpl` names, the kind table, the three install modes and their dependency closure, a non-empty target, and an end-to-end `light new web` with an install, a build and a served page.
+
+```bash
+node packages/native/cli/bin/light-native.js test @lightstart/create
+```
