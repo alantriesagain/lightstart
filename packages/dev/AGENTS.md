@@ -18,7 +18,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `node/` | The disk importmap, type stripping, `startServer`, the build preview, the websockets, the watcher, the pidfile, the tunnel, the browser and what runs after listening |
 | `cli/commands/serve.ts` | `light serve`: the flags, then `startServer`, which opens the command to extensions |
 | `native/serve.ts` | The native entry: serves a folder without TypeScript |
-| `test/` | Plain scripts on `@light/test/assert.ts`; `test/fixtures/project` has a package, a page and TypeScript modules |
+| `test/` | Plain scripts on `@lightstart/test/assert.ts`; `test/fixtures/project` has a package, a page and TypeScript modules |
 
 ## Rules the sources keep
 
@@ -34,7 +34,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - `startServer` builds `ServeExtension` after the project, port and importmap are known, calls `ctx.cli.extend("serve", api)` before the hooks and before listening, and applies what setup changed: the root app, handled apps after route apps and before files, extra roots, the mutable importmap, the page renderer and page file, extra watched folders, base paths and build previews. With no extension everything is unchanged.
 - An extension's `api.payload` fields are spread into every serve hook payload. The hook payloads stay interfaces so another package widens them by declaration merging.
 - Extension work stays in the core where it compiles statically; `native/serve.ts` and its empty CLI keep the native entry compiling.
-- Tests are plain scripts on `@light/test/assert.ts`, not a test framework. A node-only test starts with `// node-only` and is left out of the native and coverage runs.
+- Tests are plain scripts on `@lightstart/test/assert.ts`, not a test framework. A node-only test starts with `// node-only` and is left out of the native and coverage runs.
 - Comments are a JSDoc module header and JSDoc on exported symbols, nothing else.
 - TypeScript with erasable syntax only; the package ships its sources and needs no build step.
 
@@ -56,11 +56,11 @@ What the package is and how to use it: [README.md](README.md). This file is what
 From the repository root:
 
 ```bash
-node packages/native/cli/bin/light-native.js test @lightstart/dev       # node and native where the test allows it
-node packages/native/cli/bin/light-native.js typecheck @lightstart/dev
-node packages/native/cli/bin/light-native.js check --all
+node packages/native/bin/light-native.js test @lightstart/dev       # node and native where the test allows it
+node packages/native/bin/light-native.js typecheck @lightstart/dev
+node packages/native/bin/light-native.js check --all
 npx eslint packages/dev
 node benchmarks/dev/run.js                 # node and native, then the ratios (benchmarks/dev/README.md)
 ```
 
-The native entry (`packages/dev/native/serve.ts`) is built with `node packages/native/cli/bin/light-native.js build @lightstart/dev`.
+The native entry (`packages/dev/native/serve.ts`) is built with `node packages/native/bin/light-native.js build @lightstart/dev`.

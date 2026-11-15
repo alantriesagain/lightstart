@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { attachSockets } from "../node/hmr.ts";
 import { startWatcher, type FileChangeEvent } from "../node/watch.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 const log = { log() {}, warn() {}, error() {}, debug() {} };
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));

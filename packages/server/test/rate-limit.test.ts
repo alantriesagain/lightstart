@@ -10,7 +10,7 @@ import { Context } from "../context.ts";
 import { Reply, text } from "../reply.ts";
 import { bodyOf, request } from "../memory/index.ts";
 import { MemoryRateStore, RateHit, RateLimit, rateLimit, type RateStore } from "../plugins/rate-limit.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const read = (reply: Reply, name: string): string => reply.headers.get(name) ?? "";
 

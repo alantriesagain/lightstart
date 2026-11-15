@@ -14,7 +14,7 @@ import { MemoryLogger } from "../logger.ts";
 import { Reply, text } from "../reply.ts";
 import { clearCookie, parseCookies, setCookie, type CookieOptions } from "../cookies.ts";
 import { request } from "../memory/index.ts";
-import { done, eq, eqn, ok, throws } from "@light/test/assert.ts";
+import { done, eq, eqn, ok, throws } from "@lightstart/test/assert.ts";
 
 const main = async (): Promise<void> => {
   eqn("no header is no cookie", parseCookies(null).size, 0);

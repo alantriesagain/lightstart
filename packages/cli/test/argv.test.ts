@@ -4,7 +4,7 @@
  * Runs under node and natively; the outputs must be identical.
  */
 import { ArgError, SchemaError, parseArgs } from "../argv.ts";
-import { done, eq, ok, throws } from "@light/test/assert.ts";
+import { done, eq, ok, throws } from "@lightstart/test/assert.ts";
 
 eq("a positional", JSON.stringify(parseArgs({ name: { positional: true } }, ["alice"])), '{"name":"alice"}');
 eq("a positional default when omitted", JSON.stringify(parseArgs({ name: { positional: true, default: "world" } }, [])), '{"name":"world"}');

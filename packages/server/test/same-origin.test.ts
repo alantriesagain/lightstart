@@ -10,7 +10,7 @@ import { Reply, text } from "../reply.ts";
 import { bodyOf, connect, request } from "../memory/index.ts";
 import { Channel, Socket, upgrade } from "../socket.ts";
 import { SameOrigin } from "../plugins/same-origin.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 class Quiet extends Channel {
   override open(_socket: Socket): void {}

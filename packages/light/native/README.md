@@ -34,7 +34,7 @@ The coverage gates run `--fail-on=blockers`: they fail on any blocker and on a d
 
 | File | What it owns |
 |---|---|
-| `assert.ts` | `ok`, `eq`, `eqn`, `throws`, `budget`, `done`: the checks a native test uses, light's and its packages' (`@light/test` re-exports them), since node:test does not run under scriptc |
+| `assert.ts` | `ok`, `eq`, `eqn`, `throws`, `budget`, `done`: the checks a native test uses, light's and its packages' (`@lightstart/test` re-exports them), since node:test does not run under scriptc |
 | `run.js` | The parity runner `npm run test:native` runs: every `*.test.js` of a target's folder under node and under `scriptc run` |
 | `coverage.js`, `diagnostics.js`, `coverage-baseline.json` | The coverage gate `npm run verify` runs, over `native/tui/index.ts` and, with `--allow-dynamic`, the tasks app's entry; the reading of scriptc's JSON report it shares with the desktop gate and the probes; the counts the tasks graph may only lower |
 | `scriptc.js` | Which scriptc the native tools and `light-native` run (`$SCRIPTC`, then the workspace's `node_modules`, then `PATH`) |

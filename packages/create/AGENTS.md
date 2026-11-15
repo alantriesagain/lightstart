@@ -10,7 +10,7 @@ The generator behind `light new`. Node-only (`native.tooling`): it reads and wri
 | `kinds.ts` | The kind table and `titleOf` |
 | `generate.ts` | Find the checkout, build the manifest and its closure, copy a template, install |
 | `templates/<kind>/` | The files a kind writes; every one ends in `.tpl` |
-| `test/` | Plain node scripts on `@light/test/assert.ts`, each `// node-only` |
+| `test/` | Plain node scripts on `@lightstart/test/assert.ts`, each `// node-only` |
 
 ## Rules
 
@@ -24,8 +24,8 @@ The generator behind `light new`. Node-only (`native.tooling`): it reads and wri
 ## Gates
 
 ```bash
-node packages/native/cli/bin/light-native.js test @lightstart/create
-node packages/native/cli/bin/light-native.js typecheck @lightstart/create @lightstart/cli
-node packages/native/cli/bin/light-native.js check --all
+node packages/native/bin/light-native.js test @lightstart/create
+node packages/native/bin/light-native.js typecheck @lightstart/create @lightstart/cli
+node packages/native/bin/light-native.js check --all
 npx eslint packages/create packages/cli
 ```

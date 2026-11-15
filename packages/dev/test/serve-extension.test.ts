@@ -8,7 +8,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { join, resolve } from "node:path";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const repoRoot = resolve(join(process.cwd(), "..", ".."));
 const cliPath = join(repoRoot, "packages", "cli", "bin", "light.js");

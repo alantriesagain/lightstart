@@ -7,7 +7,7 @@
 import { Registry, defineCommand, defineExtension, renderHelp, runCommand } from "../index.ts";
 import type { ArgsSchema, Command, LogLevel } from "../index.ts";
 import { TestLoader, emptyDiscovered, silentLogger, source } from "./_helpers.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 declare module "../index.ts" {
   interface Extensions {

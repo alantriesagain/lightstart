@@ -11,7 +11,7 @@ scriptc's `http-api` workload (a JSON API with routing, query parsing, a seeded 
 | `variants/fastify.ts` | On Fastify 5 with its JSON body parser; its error handler answers a malformed body as raw does and keeps the connection open |
 | `variants/hono.ts` | On Hono served by `@hono/node-server`, its official node adapter; headers set by hand where `c.json` would differ (no `charset`) |
 
-Express, Fastify and Hono are devDependencies of `@light/benchmarks` (`benchmarks/package.json`), not of the repository. None of them builds natively: Express and Fastify call into node's own JavaScript, which scriptc reaches only through a libnode pack (SC8005), and scriptc's shim for `@hono/node-server` stops at a `write` it does not lower yet (SC2020).
+Express, Fastify and Hono are devDependencies of `@lightstart/benchmarks` (`benchmarks/package.json`), not of the repository. None of them builds natively: Express and Fastify call into node's own JavaScript, which scriptc reaches only through a libnode pack (SC8005), and scriptc's shim for `@hono/node-server` stops at a `write` it does not lower yet (SC2020).
 
 ```
 node benchmarks/server/run.js [--workload http-api] [--rounds 3] [--engines node,native] [--variants raw,bridge,light,express,fastify,hono]

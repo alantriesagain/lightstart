@@ -20,7 +20,7 @@ import { toResponse } from "../fetch/index.ts";
 import { MemoryIncoming, connect, request } from "../memory/index.ts";
 import { serve } from "../node/index.ts";
 import type { Next } from "../router.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 class Journal {
   lines: string[] = [];

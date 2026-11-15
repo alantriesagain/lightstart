@@ -12,7 +12,7 @@ import { MemoryLogger } from "../logger.ts";
 import { Channel, upgrade } from "../socket.ts";
 import { text } from "../reply.ts";
 import { serve } from "../node/index.ts";
-import { done, ok } from "@light/test/assert.ts";
+import { done, ok } from "@lightstart/test/assert.ts";
 
 const later = (ms: number): Promise<void> => new Promise<void>((resolve: () => void) => {
   setTimeout(resolve, ms);

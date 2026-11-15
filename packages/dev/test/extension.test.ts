@@ -14,7 +14,7 @@ import { ServeExtension, withBasePaths } from "../extension.ts";
 import type { ServeBeforePayload } from "../hooks.ts";
 import { createPipeline } from "../pipeline.ts";
 import { createModuleTransform } from "../node/transform.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 declare module "../hooks.ts" {
   interface ServeBeforePayload {

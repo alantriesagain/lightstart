@@ -13,7 +13,7 @@ import { Context } from "../context.ts";
 import { fresh } from "../conditional.ts";
 import { Reply, empty, fail, stream, text } from "../reply.ts";
 import { bodyOf, request } from "../memory/index.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const cached = (): Reply =>
   text("body")

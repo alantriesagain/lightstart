@@ -4,7 +4,7 @@
  */
 import { BuildSteps } from "../extension.ts";
 import type { BuildStep } from "../types.ts";
-import { done, eq, ok, throws } from "@light/test/assert.ts";
+import { done, eq, ok, throws } from "@lightstart/test/assert.ts";
 
 const builtIn = ["page", "modules", "stylesheets", "public", "html", "write"];
 

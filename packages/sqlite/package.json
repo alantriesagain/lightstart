@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@lightstart/light": "workspace:*",
-    "@light/test": "workspace:*",
+    "@lightstart/test": "workspace:*",
     "@types/node": "^26.6.5",
     "typescript": "^6.0.3"
   },

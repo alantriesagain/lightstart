@@ -1,5 +1,5 @@
 /**
- * @file The checks a native test uses, light's and its packages' (`@light/test` re-exports them):
+ * @file The checks a native test uses, light's and its packages' (`@lightstart/test` re-exports them):
  * plain functions that print "ok <name>" or "FAIL <name>", then a tally that makes the exit code 1
  * when anything failed, since node:test is not available under scriptc. A test runs the same
  * under `node` and `scriptc run`, and the runner compares the two outputs.

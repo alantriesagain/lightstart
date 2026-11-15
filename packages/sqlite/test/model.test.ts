@@ -9,7 +9,7 @@ import { defineModel } from "@lightstart/light/model";
 import type { ModelSchema } from "@lightstart/light/model";
 import { SqlWriter, openSql } from "@lightstart/light/model/sql";
 import { Database } from "../native.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const note = defineModel("note", {
   title: { $type: "string", required: true, attribute: true, persist: true },

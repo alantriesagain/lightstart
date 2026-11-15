@@ -10,7 +10,7 @@ import { Reply, text } from "../reply.ts";
 import type { Middleware, Next } from "../router.ts";
 import { request, bodyOf } from "../memory/index.ts";
 import { timeout } from "../timeout.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 const pause = (ms: number): Promise<void> =>
   new Promise((resolve: () => void) => {

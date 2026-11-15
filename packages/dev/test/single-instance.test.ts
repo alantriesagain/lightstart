@@ -14,7 +14,7 @@ import {
   replaceStaleServe,
   writePidRecord,
 } from "../node/single-instance.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 const freshProject = (): string => {
   const dir = mkdtempSync(join(tmpdir(), "dev-serve-pid-"));

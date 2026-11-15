@@ -5,7 +5,7 @@
  * under a loaded run and a quadratic one misses by far; the quote tree must stop at MAX_NESTING containers.
  */
 import { Block, List, Quote, parse } from "../index.ts";
-import { budget, done, ok } from "@light/test/assert.ts";
+import { budget, done, ok } from "@lightstart/test/assert.ts";
 
 const repeated = (part: string, size: number): string => {
   const parts: string[] = [];

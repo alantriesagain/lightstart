@@ -13,7 +13,7 @@ import { Context } from "../context.ts";
 import { MemoryLogger } from "../logger.ts";
 import { Reply, empty, json, respond, sse, stream, text } from "../reply.ts";
 import { serve } from "../node/index.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 class Journal {
   lines: string[] = [];

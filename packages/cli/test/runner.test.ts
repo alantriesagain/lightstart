@@ -6,7 +6,7 @@
 import { Registry, buildContext, defineCommand, runCommand } from "../index.ts";
 import type { ArgsSchema, Command, LogLevel, RunOptions } from "../index.ts";
 import { emptyDiscovered, silentLogger } from "./_helpers.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const commands: Record<string, Command<ArgsSchema>> = {
   hello: defineCommand<ArgsSchema>({

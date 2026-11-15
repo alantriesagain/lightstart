@@ -2,7 +2,7 @@
  * @file The app shell: one merged importmap, and the reload client when watching.
  */
 import { renderShell } from "../shell.ts";
-import { done, eqn, ok } from "@light/test/assert.ts";
+import { done, eqn, ok } from "@lightstart/test/assert.ts";
 
 const raw = '<html><head><title>x</title><script type="importmap">{"imports":{"old":"/old.js"}}</script></head><body><p>hi</p></body></html>';
 const out = renderShell(raw, { "@lightstart/light": "/light/index.js" }, { reload: true });

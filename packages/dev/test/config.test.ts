@@ -2,7 +2,7 @@
  * @file The port rules: the flag, then `light.dev.port`, then `PORT`, then 3000.
  */
 import { DEFAULT_PORT, portOf, resolvePort } from "../config.ts";
-import { done, eqn, ok } from "@light/test/assert.ts";
+import { done, eqn, ok } from "@lightstart/test/assert.ts";
 
 eqn("the flag wins", resolvePort({ argsPort: 4100, pkgPort: 4200, env: { PORT: "4300" } }), 4100);
 eqn("the project's port next", resolvePort({ argsPort: undefined, pkgPort: 4200, env: { PORT: "4300" } }), 4200);

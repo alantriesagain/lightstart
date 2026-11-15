@@ -15,7 +15,7 @@ import { compileRoutes, flattenRoutes, matchRoute } from "../matcher.ts";
 import type { MatchedRoute, RouteTable } from "../matcher.ts";
 import type { RouteConfig, RouterAdapter, RouterOptions, RoutesMap } from "../contracts.ts";
 import { normalizeBasePath, stripBase, withBase, withQuery } from "../url.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 interface LinkLike {
   tagName: string;

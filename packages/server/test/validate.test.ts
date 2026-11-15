@@ -11,7 +11,7 @@ import { Context } from "../context.ts";
 import { Reply, json } from "../reply.ts";
 import { bodyOf, request } from "../memory/index.ts";
 import { BODY, PARAMS, QUERY, validate, type FieldSchema } from "../validate.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const users: FieldSchema = {
   id: { $type: "number", required: true },

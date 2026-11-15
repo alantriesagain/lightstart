@@ -13,7 +13,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `adapters/browser.ts`, `adapters/memory.ts` | The platform seams: `window` and `document` in the browser, fields in memory |
 | `app.ts` | The convenience constructors: adapter choice, plugin merging and `init`, outside the native core |
 | `listen.ts` | The document click interceptor |
-| `test/` | Plain scripts on `@light/test/assert.ts`, run under node and natively, the outputs equal |
+| `test/` | Plain scripts on `@lightstart/test/assert.ts`, run under node and natively, the outputs equal |
 | `test/navigation-contract.ts` | The type-level check that `router.navigation` is assignable to light's `Navigation` |
 | `scripts/pack.js` | What npm gets: JavaScript with a `.d.ts` per module (`npm run pack`, into `dist/`) |
 
@@ -47,10 +47,10 @@ scriptc compiles the core, the matcher, the adapters, the helpers and the naviga
 From the repository root:
 
 ```bash
-node packages/native/cli/bin/light-native.js test @lightstart/router       # node and native, outputs equal
-node packages/native/cli/bin/light-native.js coverage @lightstart/router   # every test fully static, no slow path
-node packages/native/cli/bin/light-native.js typecheck @lightstart/router
-node packages/native/cli/bin/light-native.js check --all
+node packages/native/bin/light-native.js test @lightstart/router       # node and native, outputs equal
+node packages/native/bin/light-native.js coverage @lightstart/router   # every test fully static, no slow path
+node packages/native/bin/light-native.js typecheck @lightstart/router
+node packages/native/bin/light-native.js check --all
 ```
 
 `@lightstart/light` is a devDependency only for the type-level navigation contract; the sources import nothing from it.

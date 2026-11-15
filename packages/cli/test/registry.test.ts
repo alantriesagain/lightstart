@@ -6,7 +6,7 @@
 import { Registry, defineCommand } from "../index.ts";
 import type { ArgsSchema, Command, Logger } from "../index.ts";
 import { TestLoader, captureLogger, emptyDiscovered, silentLogger, source } from "./_helpers.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 const commands: Record<string, Command<ArgsSchema>> = {
   hello: defineCommand<ArgsSchema>({

@@ -6,7 +6,7 @@
  * large file's time.
  */
 import { HlState, languageForFence, languageForPath, tokenizeAll, tokenizeLine } from "../index.ts";
-import { budget, done, eq, ok } from "@light/test/assert.ts";
+import { budget, done, eq, ok } from "@lightstart/test/assert.ts";
 import { registerLanguages } from "../languages.ts";
 import { findLanguage } from "../registry.ts";
 import { Frame } from "../state.ts";

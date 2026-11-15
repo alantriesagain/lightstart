@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { copyTemplate, replaceTokens } from "../generate.ts";
 import { titleOf } from "../kinds.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 eq("a token is replaced", replaceTokens("hi __NAME__, __TITLE__", "my-app", "My App"), "hi my-app, My App");
 eq("a hyphenated name titles", titleOf("my-app"), "My App");

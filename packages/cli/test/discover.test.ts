@@ -10,7 +10,7 @@ import { Registry, buildContext, renderHelp, runCommand } from "../index.ts";
 import type { LogLevel } from "../index.ts";
 import { discover } from "../node/index.ts";
 import { captureLogger, silentLogger } from "./_helpers.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(HERE, "fixtures");

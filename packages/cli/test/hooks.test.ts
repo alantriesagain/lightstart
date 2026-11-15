@@ -6,7 +6,7 @@
 import { Registry, buildContext, runCommand } from "../index.ts";
 import type { CommandContext, LogLevel } from "../index.ts";
 import { TestLoader, captureLogger, emptyDiscovered, silentLogger, source } from "./_helpers.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 class Payload {
   log: string[] = [];

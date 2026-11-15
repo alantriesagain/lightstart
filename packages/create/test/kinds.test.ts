@@ -4,7 +4,7 @@
  * and devDependencies.
  */
 import { KINDS, kindByName } from "../kinds.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 eq("four kinds", KINDS.map((kind) => kind.name).join(","), "web,tui,desktop,package");
 ok("every kind has a sentence", KINDS.every((kind) => kind.description.length > 0));

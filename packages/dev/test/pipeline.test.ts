@@ -13,7 +13,7 @@ import { importmapFromHtml, mergeImportMaps } from "../importmap.ts";
 import { createPipeline } from "../pipeline.ts";
 import { buildImportMap } from "../node/importmap.ts";
 import { createModuleTransform } from "../node/transform.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const projectDir = resolve(join(process.cwd(), "test", "fixtures", "project"));
 const log = { log() {}, warn() {}, error() {}, debug() {} };

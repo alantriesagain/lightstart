@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..", "..");
 const FIXTURE = path.join(HERE, "fixture");
-const NATIVE_CLI = path.join(ROOT, "packages/native/cli/bin/light-native.js");
+const NATIVE_CLI = path.join(ROOT, "packages/native/bin/light-native.js");
 const BINARY = path.join(ROOT, "packages/dev/dist/light-serve");
 const NODE_CLI = path.join(ROOT, "packages/cli/bin/light.js");
 

@@ -20,7 +20,7 @@ import { Plugin } from "../plugin.ts";
 import { Reply, bytes, empty, fail, html, json, pass, redirect, stream, text } from "../reply.ts";
 import type { Next } from "../router.ts";
 import { MemoryIncoming, bodyOf, request } from "../memory/index.ts";
-import { done, eq, eqn, ok, throws } from "@light/test/assert.ts";
+import { done, eq, eqn, ok, throws } from "@lightstart/test/assert.ts";
 
 class Journal {
   lines: string[] = [];

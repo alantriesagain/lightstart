@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ensureTarget, findCheckout, generate } from "../generate.ts";
 import { KINDS } from "../kinds.ts";
-import { done, eq, ok, throws } from "@light/test/assert.ts";
+import { done, eq, ok, throws } from "@lightstart/test/assert.ts";
 
 const base = mkdtempSync(join(tmpdir(), "create-target-"));
 try {

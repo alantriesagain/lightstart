@@ -12,7 +12,7 @@ import { App } from "../app.ts";
 import { Context } from "../context.ts";
 import { Reply, pass, text } from "../reply.ts";
 import { MemoryIncoming, bodyOf, request } from "../memory/index.ts";
-import { done, eq, eqn, ok, throws } from "@light/test/assert.ts";
+import { done, eq, eqn, ok, throws } from "@lightstart/test/assert.ts";
 
 const named = (name: string) => (c: Context): Reply => text(name + (c.paramNames.length > 0 ? " " + c.paramNames.join(",") + "=" + c.paramValues.join(",") : ""));
 

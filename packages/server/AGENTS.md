@@ -9,7 +9,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `app.ts`, `context.ts`, `reply.ts`, `socket.ts`, `headers.ts`, `router.ts`, `plugin.ts`, `key.ts`, `logger.ts`, `errors.ts`, `incoming.ts` | The core: runtime-neutral, imports nothing outside the package, compiled fully statically by scriptc |
 | `node/`, `fetch/`, `lambda/`, `memory/` | The adapters, each a subclass of `Incoming` and a writer of `Reply`. `node/` is node and scriptc native alike, websockets (`node/socket.ts`) included; `lambda/` runs on node's runtime (`Buffer`) |
 | `plugins/` | The built-in plugins; `static.ts` reads the disk (`node:fs`), `mime.ts` and the rest are runtime-neutral |
-| `test/` | Plain scripts on `@light/test/assert.ts`, run under node and natively, the outputs equal |
+| `test/` | Plain scripts on `@lightstart/test/assert.ts`, run under node and natively, the outputs equal |
 | `probes/` | What scriptc refused and what each became (`probes/README.md`), and `backpressure.ts` |
 | `scripts/pack.js` | What npm gets: JavaScript with a `.d.ts` per module (`npm run pack`, into `dist/`) |
 
@@ -52,10 +52,10 @@ scriptc compiles them as program source, so they follow light's native rules (`p
 From the repository root:
 
 ```bash
-node packages/native/cli/bin/light-native.js test @lightstart/server       # node and native, outputs equal (--node-only without a scriptc)
-node packages/native/cli/bin/light-native.js coverage @lightstart/server   # every test fully static, no slow path
-node packages/native/cli/bin/light-native.js typecheck @lightstart/server
-node packages/native/cli/bin/light-native.js check --all
+node packages/native/bin/light-native.js test @lightstart/server       # node and native, outputs equal (--node-only without a scriptc)
+node packages/native/bin/light-native.js coverage @lightstart/server   # every test fully static, no slow path
+node packages/native/bin/light-native.js typecheck @lightstart/server
+node packages/native/bin/light-native.js check --all
 node benchmarks/server/run.js --engines node,native                        # every contender's digest must match; read the ratios
 ```
 

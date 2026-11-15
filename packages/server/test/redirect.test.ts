@@ -11,7 +11,7 @@ import { Reply } from "../reply.ts";
 import { safeRedirect } from "../redirect.ts";
 import { request } from "../memory/index.ts";
 import { TrustProxy } from "../plugins/proxy.ts";
-import { done, eq, eqn } from "@light/test/assert.ts";
+import { done, eq, eqn } from "@lightstart/test/assert.ts";
 
 const go = (c: Context): Reply => {
   const target = c.header("x-target") ?? "";

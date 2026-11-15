@@ -3,7 +3,7 @@
  * Runs under node and natively; the outputs must be identical.
  */
 import { formatBytes } from "../format.ts";
-import { done, eq } from "@light/test/assert.ts";
+import { done, eq } from "@lightstart/test/assert.ts";
 
 eq("zero bytes", formatBytes(0), "0 B");
 eq("null bytes", formatBytes(null), "0 B");

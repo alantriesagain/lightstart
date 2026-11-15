@@ -9,7 +9,7 @@ import { App } from "../app.ts";
 import { Context } from "../context.ts";
 import { Reply, bytes, json, stream, text } from "../reply.ts";
 import { toLambda, type LambdaEvent } from "../lambda/index.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 class Journal {
   lines: string[] = [];

@@ -3,7 +3,7 @@
  * @file The importmap resolver: exact keys, trailing-slash prefixes, the longest prefix, targets
  * relative to the page, and a bare specifier it does not name.
  */
-import { done, eq } from "@light/test/assert.ts";
+import { done, eq } from "@lightstart/test/assert.ts";
 import { parseImportMap, resolveSpecifier } from "../importmap.ts";
 
 const pageDir = "/project/app";

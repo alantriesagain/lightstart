@@ -11,7 +11,7 @@ import { Context } from "../context.ts";
 import { Reply, text } from "../reply.ts";
 import { bodyOf, request } from "../memory/index.ts";
 import { TrustProxy } from "../plugins/proxy.ts";
-import { done, eq, eqn } from "@light/test/assert.ts";
+import { done, eq, eqn } from "@lightstart/test/assert.ts";
 
 const cookie = (c: Context): Reply =>
   text(
