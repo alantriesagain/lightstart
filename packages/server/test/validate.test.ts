@@ -67,7 +67,7 @@ const app = new App()
   }, [validate({ body: recordBody })])
   .get("/plain", (): Reply => json({ params: "absent", body: "absent" }));
 
-const parityFields: import("@lightstart/light/model/types.ts").ModelSchema = {
+const parityFields: Record<string, import("@lightstart/light/model/types.ts").ModelField> = {
   name: { $type: "string", attribute: false, persist: true, required: true },
   email: { $type: "string", attribute: false, persist: true, format: "email" },
   age: { $type: "number", attribute: false, persist: true, validator: (value: unknown): boolean => typeof value === "number" && value >= 0 },

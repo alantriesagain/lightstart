@@ -13,6 +13,7 @@
 import { IDB_ERROR, IDB_LOG, IDB_WARN } from "./events.ts";
 import { buildQueryResult, validateQueryOptions } from "./query-builder.ts";
 import { modelBus } from "./config.ts";
+import { schemaField } from "./fields.ts";
 
 import type { ModelField, ModelSchema, QueryOptions, Row, StorageAdapter, WhereClause } from "./types.ts";
 
@@ -60,7 +61,7 @@ const fieldsOf = (schema: ModelSchema | undefined): Array<[string, ModelField]> 
 export const planIndex = (schema: ModelSchema | undefined, where: WhereClause | undefined): { field: string, range: IDBKeyRange, multiEntry: boolean } | null => {
   if (!schema || !where) return null;
   for (const [field, condition] of Object.entries(where)) {
-    const def: ModelField | undefined = schema[field];
+    const def = schemaField(schema, field);
     if (!def || (def.index !== true && def.unique !== true)) continue;
     const multiEntry = def.$type === "array";
     const encoded = (v: unknown): unknown => (def.$type === "boolean" && typeof v === "boolean" ? BOOLEAN_TO_STORAGE[String(v)] : v);
@@ -192,7 +193,7 @@ const IndexedDBAdapter: StorageAdapter = {
   },
 
   _createObjectStore(this: IdbAdapter, db: IDBDatabase, storeName: string, schema: ModelSchema) {
-    const idField: ModelField | undefined = schema.id;
+    const idField = schemaField(schema, "id");
     const store = db.createObjectStore(storeName, { keyPath: "id", autoIncrement: !idField || idField.$type === "number" });
     this._updateObjectStore(store, schema);
     modelBus().emit(IDB_LOG, { type: "store_created", store: storeName, fields: Object.keys(schema).length });
