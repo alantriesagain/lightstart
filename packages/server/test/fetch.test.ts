@@ -11,7 +11,7 @@ import { App } from "../app.ts";
 import { Context } from "../context.ts";
 import { Reply, empty, json, respond, stream, text } from "../reply.ts";
 import { toFetch, type FetchPlatform } from "../fetch/index.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 class Platform implements FetchPlatform {
   readonly work: Promise<unknown>[] = [];

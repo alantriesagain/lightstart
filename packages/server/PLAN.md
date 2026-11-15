@@ -67,7 +67,7 @@ Steps, measured with item 1's CPU mode and kept only if they show:
 
 ## 4. Plugins found at build time: a recipe, no command
 
-`light-native` already runs a member's `native.prepare` steps before build, test, coverage, typecheck and desktop, with `LIGHT_NATIVE_COMMAND` set (`packages/native/cli/src/prepare.js`), and widecode generates its plugin modules that way (`apps/widecode/scripts/builtin-plugins.mjs`). A `Plugin` is constructed with an app's own options, so a generator can list modules but not build them. The README's Plugins section gets the recipe instead of a `light server generate` command:
+`light-native` already runs a member's `native.prepare` steps before build, test, coverage, typecheck and desktop, with `LIGHT_NATIVE_COMMAND` set (`packages/native/src/prepare.js`), and widecode generates its plugin modules that way (`apps/widecode/scripts/builtin-plugins.mjs`). A `Plugin` is constructed with an app's own options, so a generator can list modules but not build them. The README's Plugins section gets the recipe instead of a `light server generate` command:
 
 - `server/plugins/*.ts`, each exporting `plugin: Plugin` (or `createPlugin(): Plugin`);
 - a prepare step writes `plugins.generated.ts` with their static imports, only when its text changed (scriptc caches by text);

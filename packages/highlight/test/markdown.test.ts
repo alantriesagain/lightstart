@@ -5,7 +5,7 @@
  */
 import { FenceState, TableState } from "../state.ts";
 import { HlState, LineResult, MdBlock, MdSpan, Range, tokenizeAll, tokenizeLineWithStructure } from "../index.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 import { registerLanguages } from "../languages.ts";
 
 registerLanguages();

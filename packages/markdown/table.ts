@@ -1,6 +1,6 @@
 /**
  * @file A Markdown table as data: the cells in columns, each column's alignment and its rows. The
- * terminal renderer (`@light/markdown/table.ts`) lays one out; the parser fills one from a GFM
+ * terminal renderer (`@lightstart/tui-markdown/table.ts`) lays one out; the parser fills one from a GFM
  * header, delimiter and body. A cell is its text: a renderer parses it with `parseInline`. `\|` is
  * a bar in a cell, and a bar inside `code` does not split it.
  */

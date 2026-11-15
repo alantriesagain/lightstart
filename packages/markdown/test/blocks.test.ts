@@ -17,7 +17,7 @@ import {
   Text,
   parse,
 } from "../index.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const doc = parse("# Title\n\nA *b*.\n\n> quote\n\n- one\n- two\n\n1. a\n2. b\n\n---\n\n```js\nx = 1\n```");
 eqn("the document has every block kind once", doc.length, 7);

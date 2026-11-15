@@ -91,12 +91,12 @@ importers:
         specifier: ^0.28.2
         version: 0.28.2
     devDependencies:
-      '@light/test':
-        specifier: workspace:*
-        version: link:../tui/test
       '@lightstart/server':
         specifier: workspace:*
         version: link:../server
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -110,9 +110,9 @@ importers:
         specifier: workspace:*
         version: link:../create
     devDependencies:
-      '@light/test':
+      '@lightstart/test':
         specifier: workspace:*
-        version: link:../tui/test
+        version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -141,12 +141,12 @@ importers:
 
   packages/create:
     devDependencies:
-      '@light/test':
-        specifier: workspace:*
-        version: link:../tui/test
       '@lightstart/cli':
         specifier: workspace:*
         version: link:../cli
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -163,9 +163,9 @@ importers:
         specifier: workspace:*
         version: link:../server
     devDependencies:
-      '@light/test':
+      '@lightstart/test':
         specifier: workspace:*
-        version: link:../tui/test
+        version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -175,9 +175,34 @@ importers:
 
   packages/highlight:
     devDependencies:
-      '@light/test':
+      '@lightstart/test':
         specifier: workspace:*
-        version: link:../tui/test
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/kernel:
+    dependencies:
+      '@lightstart/lib':
+        specifier: workspace:*
+        version: link:../lib
+    devDependencies:
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/lib:
+    devDependencies:
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -235,72 +260,47 @@ importers:
 
   packages/markdown:
     devDependencies:
-      '@light/test':
+      '@lightstart/test':
         specifier: workspace:*
-        version: link:../tui/test
+        version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
 
-  packages/native/cli:
+  packages/native:
     dependencies:
       '@lightstart/light':
         specifier: workspace:*
-        version: link:../../light
+        version: link:../light
     devDependencies:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
 
-  packages/native/lib:
-    devDependencies:
-      '@light/test':
-        specifier: workspace:*
-        version: link:../../tui/test
-      '@types/node':
-        specifier: ^26.6.5
-        version: 26.6.5
-
-  packages/native/plugins:
+  packages/plugins:
     dependencies:
-      '@light/lib':
+      '@lightstart/lib':
         specifier: workspace:*
         version: link:../lib
       '@lightstart/light':
         specifier: workspace:*
-        version: link:../../light
+        version: link:../light
     devDependencies:
-      '@light/test':
+      '@lightstart/test':
         specifier: workspace:*
-        version: link:../../tui/test
-      '@types/node':
-        specifier: ^26.6.5
-        version: 26.6.5
-
-  packages/native/workspace:
-    dependencies:
-      '@light/lib':
-        specifier: workspace:*
-        version: link:../lib
-      '@lightstart/light':
-        specifier: workspace:*
-        version: link:../../light
-    devDependencies:
-      '@light/test':
-        specifier: workspace:*
-        version: link:../../tui/test
+        version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
 
   packages/router:
     devDependencies:
-      '@light/test':
-        specifier: workspace:*
-        version: link:../tui/test
       '@lightstart/light':
         specifier: workspace:*
         version: link:../light
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -310,9 +310,9 @@ importers:
 
   packages/server:
     devDependencies:
-      '@light/test':
+      '@lightstart/test':
         specifier: workspace:*
-        version: link:../tui/test
+        version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -322,12 +322,12 @@ importers:
 
   packages/sqlite:
     devDependencies:
-      '@light/test':
-        specifier: workspace:*
-        version: link:../tui/test
       '@lightstart/light':
         specifier: workspace:*
         version: link:../light
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -335,64 +335,64 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  packages/tui/kernel:
+  packages/test:
     dependencies:
-      '@light/lib':
-        specifier: workspace:*
-        version: link:../../native/lib
-    devDependencies:
-      '@light/test':
-        specifier: workspace:*
-        version: link:../test
       '@lightstart/light':
         specifier: workspace:*
-        version: link:../../light
+        version: link:../light
+    devDependencies:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
 
-  packages/tui/markdown:
+  packages/tui:
     dependencies:
-      '@light/ui':
+      '@lightstart/lib':
         specifier: workspace:*
-        version: link:../ui
+        version: link:../lib
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+    devDependencies:
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
+  packages/tui-markdown:
+    dependencies:
       '@lightstart/highlight':
         specifier: workspace:*
-        version: link:../../highlight
+        version: link:../highlight
       '@lightstart/light':
         specifier: workspace:*
-        version: link:../../light
+        version: link:../light
       '@lightstart/markdown':
         specifier: workspace:*
-        version: link:../../markdown
+        version: link:../markdown
+      '@lightstart/tui':
+        specifier: workspace:*
+        version: link:../tui
     devDependencies:
-      '@light/test':
+      '@lightstart/test':
         specifier: workspace:*
         version: link:../test
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
 
-  packages/tui/test:
+  packages/workspace:
     dependencies:
+      '@lightstart/lib':
+        specifier: workspace:*
+        version: link:../lib
       '@lightstart/light':
         specifier: workspace:*
-        version: link:../../light
+        version: link:../light
     devDependencies:
-      '@types/node':
-        specifier: ^26.6.5
-        version: 26.6.5
-
-  packages/tui/ui:
-    dependencies:
-      '@light/lib':
-        specifier: workspace:*
-        version: link:../../native/lib
-      '@lightstart/light':
-        specifier: workspace:*
-        version: link:../../light
-    devDependencies:
-      '@light/test':
+      '@lightstart/test':
         specifier: workspace:*
         version: link:../test
       '@types/node':

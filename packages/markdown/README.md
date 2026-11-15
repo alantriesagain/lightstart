@@ -2,7 +2,7 @@
 
 One Markdown parser, in classes: `parse(text)` answers blocks and `parseInline(text)` the inline
 nodes inside one. It does no rendering and touches no DOM, so the terminal renderer
-(`@light/markdown`) and the browser component (`<lc-markdown>`) draw the same tree.
+(`@lightstart/tui-markdown`) and the browser component (`<lc-markdown>`) draw the same tree.
 
 ```js
 import { Heading, List, parse } from "@lightstart/markdown";
@@ -59,6 +59,6 @@ text, and inline nesting is bounded by the same cap.
 ## Gates
 
 ```bash
-node packages/native/cli/bin/light-native.js test @lightstart/markdown
-node packages/native/cli/bin/light-native.js typecheck @lightstart/markdown
+node packages/native/bin/light-native.js test @lightstart/markdown
+node packages/native/bin/light-native.js typecheck @lightstart/markdown
 ```

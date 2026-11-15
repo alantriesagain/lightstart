@@ -53,8 +53,8 @@ A file is copied with `__NAME__` and `__TITLE__` replaced. A `.tpl` suffix is dr
 
 ## Tests
 
-`packages/create/test/*.test.ts` are plain node scripts on `@light/test/assert.ts`; each starts `// node-only`. They cover tokens and `.tpl` names, the kind table, the three install modes and their dependency closure, a non-empty target, and an end-to-end `light new web` with an install, a build and a served page.
+`packages/create/test/*.test.ts` are plain node scripts on `@lightstart/test/assert.ts`; each starts `// node-only`. They cover tokens and `.tpl` names, the kind table, the three install modes and their dependency closure, a non-empty target, and an end-to-end `light new web` with an install, a build and a served page.
 
 ```bash
-node packages/native/cli/bin/light-native.js test @lightstart/create
+node packages/native/bin/light-native.js test @lightstart/create
 ```

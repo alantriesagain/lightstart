@@ -12,7 +12,7 @@ import { MemoryIncoming, connect, request } from "../memory/index.ts";
 import { Reply, pass, text } from "../reply.ts";
 import { Channel, Socket, upgrade } from "../socket.ts";
 import { SecurityHeaders, noSecurityHeaders } from "../plugins/security-headers.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 class Quiet extends Channel {
   override open(_socket: Socket): void {}

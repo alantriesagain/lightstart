@@ -4,7 +4,7 @@
  */
 import { createCli, defineCommand, splitGlobals } from "../index.ts";
 import type { ArgsSchema, Command } from "../index.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 eq(
   "the level, help and version flags come out of the argv",

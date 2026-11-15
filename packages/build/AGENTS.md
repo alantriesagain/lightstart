@@ -15,7 +15,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `build-id.ts` | `generateBuildId`: `YYYYMMDD-HHMMSS` |
 | `versioning.ts` | `getBuilds`, `cleanupOldBuilds`, `updateCurrent` |
 | `types.ts` | `BuildOptions`, `BuildContext`, `BuildStep`, `BuildReport`, `BuildFile`, `BuildLog` || `cli/commands/build.ts` | `light build`: the flags, then `build` |
-| `test/` | Plain scripts on `@light/test/assert.ts`; `test/fixtures/app` and the repository examples |
+| `test/` | Plain scripts on `@lightstart/test/assert.ts`; `test/fixtures/app` and the repository examples |
 
 ## Rules the sources keep
 
@@ -29,7 +29,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - The page's importmap is the only resolver: an exact key, then the longest trailing-slash prefix, to a path relative to the page. A remote target is not a local path. A specifier the map does not name is left to esbuild.
 - The HTML rewrite removes the importmap, points each module script at its bundle and each stylesheet link at its output, and leaves the rest of the page unchanged.
 - The package is node-only: esbuild is a native node module and the build reads and writes the disk. The scanner, resolver, id and versioning helpers stay pure.
-- Tests are plain scripts on `@light/test/assert.ts`; a node-only test starts with `// node-only`.
+- Tests are plain scripts on `@lightstart/test/assert.ts`; a node-only test starts with `// node-only`.
 - Comments are a JSDoc module header and JSDoc on exported symbols, nothing else.
 - TypeScript with erasable syntax only; the package ships its sources and needs no build step.
 
@@ -51,9 +51,9 @@ What the package is and how to use it: [README.md](README.md). This file is what
 From the repository root:
 
 ```bash
-node packages/native/cli/bin/light-native.js test @lightstart/build       # node and native where the test allows it
-node packages/native/cli/bin/light-native.js typecheck @lightstart/build
-node packages/native/cli/bin/light-native.js check --all
+node packages/native/bin/light-native.js test @lightstart/build       # node and native where the test allows it
+node packages/native/bin/light-native.js typecheck @lightstart/build
+node packages/native/bin/light-native.js check --all
 npx eslint packages/build
 node benchmarks/build/run.js               # then the ratios (benchmarks/build/README.md)
 node packages/build/test/browser-smoke.ts  # builds examples/todomvc and checks it in Chromium

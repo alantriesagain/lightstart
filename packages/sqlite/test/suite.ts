@@ -4,7 +4,7 @@
  * back, a nested savepoint rolled back alone, the statement cache, and an
  * error surfacing with its SQLite message.
  */
-import { done, eq, eqn, ok, throws } from "@light/test/assert.ts";
+import { done, eq, eqn, ok, throws } from "@lightstart/test/assert.ts";
 
 import type { SqlDatabase } from "../index.ts";
 

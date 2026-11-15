@@ -5,7 +5,7 @@
  * that applies all of its statements or none, and the strict mode that refuses
  * what Cloudflare D1 refuses.
  */
-import { done, eq, eqn, ok, throws } from "@light/test/assert.ts";
+import { done, eq, eqn, ok, throws } from "@lightstart/test/assert.ts";
 import { D1_MAX_BOUND_PARAMETERS, D1_MAX_SQL_BYTES, d1Of } from "../d1.ts";
 import { Database } from "../node.ts";
 

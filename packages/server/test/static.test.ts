@@ -14,7 +14,7 @@ import { App } from "../app.ts";
 import { text } from "../reply.ts";
 import { bodyOf, request } from "../memory/index.ts";
 import { Static, Transformed } from "../plugins/static.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const root = mkdtempSync(join(tmpdir(), "light-static-"));
 mkdirSync(join(root, "docs"), { recursive: true });

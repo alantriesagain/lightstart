@@ -25,7 +25,7 @@ import {
   parseInline,
   plainText,
 } from "../index.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const show = (nodes: Inline[]): string => {
   let out = "";

@@ -14,7 +14,7 @@ import {
   tunnelName,
   tunnelOf,
 } from "../node/tunnel.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 const main = async (): Promise<void> => {
   eq("a hostname string is a tunnel with no paths", JSON.stringify(tunnelOf("dev.example.com")), JSON.stringify({ hostname: "dev.example.com", paths: [] }));

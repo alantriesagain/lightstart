@@ -8,7 +8,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 const root = fileURLToPath(new URL("./fixtures/extension", import.meta.url));
 const cli = fileURLToPath(new URL("../../cli/bin/light.js", import.meta.url));

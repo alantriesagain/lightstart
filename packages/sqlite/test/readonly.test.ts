@@ -6,7 +6,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { done, eq, throws } from "@light/test/assert.ts";
+import { done, eq, throws } from "@lightstart/test/assert.ts";
 import { Database } from "../node.ts";
 
 const dir = mkdtempSync(join(tmpdir(), "sqlite-readonly-"));

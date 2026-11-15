@@ -27,7 +27,7 @@
     "./*": "./*"
   },
   "devDependencies": {
-    "@light/test": "workspace:*",
+    "@lightstart/test": "workspace:*",
     "@types/node": "^26.6.5"
   }
 }

@@ -5,7 +5,7 @@
  */
 import { createLogger, resolveLevel } from "../log.ts";
 import type { LogWriter } from "../log.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 const lines: string[] = [];
 const writer: LogWriter = {

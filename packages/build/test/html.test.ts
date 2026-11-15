@@ -3,7 +3,7 @@
  * @file The page scanner and rewriter: the importmap, an external and an inline module script, and
  * a stylesheet link are found and replaced; everything else stays byte for byte.
  */
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 import { parsePage, renderPage } from "../html.ts";
 
 const html = `<!DOCTYPE html>

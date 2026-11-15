@@ -1,6 +1,6 @@
 # Dev server benchmark
 
-How the dev server in `packages/dev` answers a small app twice: the node server (`node packages/cli/bin/light.js serve benchmarks/dev/fixture`) and the native binary (`packages/dev/dist/light-serve benchmarks/dev/fixture`, built by `node packages/native/cli/bin/light-native.js build @lightstart/dev`).
+How the dev server in `packages/dev` answers a small app twice: the node server (`node packages/cli/bin/light.js serve benchmarks/dev/fixture`) and the native binary (`packages/dev/dist/light-serve benchmarks/dev/fixture`, built by `node packages/native/bin/light-native.js build @lightstart/dev`).
 
 The fixture is under `fixture/`: an `index.html` with an importmap for `page-lib`, a `package.json` whose `exports` map four bare specifiers to modules, a `main.js` importing all five, a 50 KB `asset.txt`, and a `types.ts` the node server strips. The native binary does not strip TypeScript, so that case is node only.
 

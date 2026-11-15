@@ -3,7 +3,7 @@
  * character is rejected, and http, https, mailto and relative targets are kept.
  */
 import { remoteUrl, safeUrl } from "../index.ts";
-import { done, ok } from "@light/test/assert.ts";
+import { done, ok } from "@lightstart/test/assert.ts";
 
 const rejected = [
   "java&#x09;script:alert(1)",

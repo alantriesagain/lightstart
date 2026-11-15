@@ -7,7 +7,7 @@ import { App } from "../app.ts";
 import { text } from "../reply.ts";
 import { serve } from "../node/index.ts";
 import { freePort } from "./ports.ts";
-import { done, eqn, ok } from "@light/test/assert.ts";
+import { done, eqn, ok } from "@lightstart/test/assert.ts";
 
 const messageOf = async (work: Promise<unknown>): Promise<string> => {
   try {

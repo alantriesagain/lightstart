@@ -10,7 +10,7 @@ Where the server work stands (2026-11-03), and what is left, so it is picked up 
 - **Phase C:** `validate` on light's field descriptors, `rateLimit`/`RateLimit`, `timeout`, and the `Crypto`/`NodeCrypto` hashing seam with signed cookie values.
 - **Phase D, the part that pays now:** `Static`'s `transform`/`transformable`/`transformVersion`, which bootstrapp's dev server uses, and `safeRedirect`.
 - **Phase F:** bootstrapp's Cloudflare plane on light, its standalone Worker retired; `Cors` takes `paths`; a handler's own `Response` gains the reply's headers.
-- **Measuring:** the `--cpu` mode, the hello workloads, the Express, Fastify and Hono variants (`benchmarks/server`, its own `@light/benchmarks` package), and `benchmarks/server/pair.js` for paired A/B runs.
+- **Measuring:** the `--cpu` mode, the hello workloads, the Express, Fastify and Hono variants (`benchmarks/server`, its own `@lightstart/benchmarks` package), and `benchmarks/server/pair.js` for paired A/B runs.
 - **Native:** `@lightstart/light/markup/core` for server-side rendering in a scriptc build. Bootstrapp's SQLite server builds into one binary and serves on several threads.
 
 ## Open, each waiting for a need

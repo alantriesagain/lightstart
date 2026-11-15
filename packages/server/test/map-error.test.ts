@@ -12,7 +12,7 @@ import { HttpError } from "../errors.ts";
 import { MemoryLogger } from "../logger.ts";
 import { Reply, fail, text } from "../reply.ts";
 import { bodyOf, request } from "../memory/index.ts";
-import { done, eq, eqn } from "@light/test/assert.ts";
+import { done, eq, eqn } from "@lightstart/test/assert.ts";
 
 const unique = (message: string): boolean => message.indexOf("UNIQUE constraint failed") >= 0;
 

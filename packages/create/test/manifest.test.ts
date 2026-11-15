@@ -6,7 +6,7 @@
 import { join } from "node:path";
 import { dependencyClosure, findCheckout, manifestFor } from "../generate.ts";
 import { KINDS } from "../kinds.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 const root = findCheckout();
 ok("the tests run from a checkout", root !== null);

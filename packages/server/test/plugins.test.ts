@@ -19,7 +19,7 @@ import { REQUEST_ID, RequestId } from "../plugins/request-id.ts";
 import { Health } from "../plugins/health.ts";
 import { BodyLimit, limit } from "../plugins/body-limit.ts";
 import { AccessLog, LineSink } from "../plugins/access-log.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 class Lines extends LineSink {
   readonly lines: string[] = [];

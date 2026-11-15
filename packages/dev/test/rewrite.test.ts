@@ -2,7 +2,7 @@
  * @file Bare specifiers rewritten only where a module imports them.
  */
 import { resolveSpecifier, rewriteSpecifiers } from "../rewrite.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 const map = {
   "@lightstart/light": "/light/index.js",

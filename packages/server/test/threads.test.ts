@@ -7,7 +7,7 @@
 import { Worker } from "node:worker_threads";
 import { serveThreads } from "../node/index.ts";
 import { freePort, isFree } from "./ports.ts";
-import { done, eqn, ok } from "@light/test/assert.ts";
+import { done, eqn, ok } from "@lightstart/test/assert.ts";
 
 const main = async (): Promise<void> => {
   const port = await freePort();

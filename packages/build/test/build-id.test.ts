@@ -2,7 +2,7 @@
 /**
  * @file A build id is a moment in `YYYYMMDD-HHMMSS`, sortable and readable in a folder name.
  */
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 import { generateBuildId } from "../build-id.ts";
 
 eq("a moment as YYYYMMDD-HHMMSS", generateBuildId(new Date(2026, 8, 4, 7, 5, 9)), "20260904-070509");

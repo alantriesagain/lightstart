@@ -5,7 +5,7 @@ How `@lightstart/cli` pays for its own startup under node and as a scriptc nativ
 | Variant | What it is |
 |---|---|
 | node | `node packages/cli/native/light.ts <args>`, the program with node stripping the types |
-| native | `packages/cli/dist/light <args>`, built by `node packages/native/cli/bin/light-native.js build @lightstart/cli` |
+| native | `packages/cli/dist/light <args>`, built by `node packages/native/bin/light-native.js build @lightstart/cli` |
 
 The real node CLI is a reference row: `node packages/cli/bin/light.js --help` also discovers light's commands (`test`, `check`, `serve`, `desktop`, `classes:bake`) from `packages/light/cli/commands`, which the native program does not.
 

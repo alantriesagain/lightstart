@@ -3,7 +3,7 @@
  * started here.
  */
 import { browserCommand } from "../node/browser.ts";
-import { done, eq, ok } from "@light/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 eq("macOS opens with open", String(browserCommand("darwin", "http://localhost:3000")), 'open "http://localhost:3000"');
 eq("Windows starts the default handler", String(browserCommand("win32", "http://localhost:3000")), 'start "" "http://localhost:3000"');

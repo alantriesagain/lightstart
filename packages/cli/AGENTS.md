@@ -17,7 +17,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `bin/light.js` | The `light` binary: `createCli` with `discover` |
 | `native/light.ts` | The native entry: `createCli` with a static command table, no discovery |
 | `scripts/pack.js` | What npm gets: JavaScript with a `.d.ts` per module (`npm run pack`, into `dist/`) |
-| `test/` | Plain scripts on `@light/test/assert.ts`, under node and natively, the outputs equal |
+| `test/` | Plain scripts on `@lightstart/test/assert.ts`, under node and natively, the outputs equal |
 | `package.json` | `bin`, `exports`, and the `native` entry and binary name |
 
 ## Rules the sources keep
@@ -30,7 +30,7 @@ The core is compiled as program source by scriptc, so it follows light's native 
 - Discovery lists files and imports none. A command is imported when it runs or help names it, a hook on its first dispatch, a route on `loadRoutes()`, an extension when its command runs or its help is asked for. The registry caches a successful load and a bad default export; a command import failure throws `LoadError` and the runner answers 1.
 - The parser collects values in a `Map` and makes the result record once with `Object.fromEntries`, so no write uses a computed string key. Empty maps are typed where they are declared.
 - The logger writes through an injected `LogWriter`, never by reassigning `console`; the tests pass a writer that keeps its lines.
-- Tests are plain scripts on `@light/test/assert.ts`, not a test framework. They run under node and natively and must print the same thing: compare numbers with `eqn`, strings and JSON with `eq`, booleans with `ok`, errors with `throws`. A node-only test starts with `// node-only` (`test/env.test.ts`, `test/discover.test.ts`); it is left out of the native and coverage runs.
+- Tests are plain scripts on `@lightstart/test/assert.ts`, not a test framework. They run under node and natively and must print the same thing: compare numbers with `eqn`, strings and JSON with `eq`, booleans with `ok`, errors with `throws`. A node-only test starts with `// node-only` (`test/env.test.ts`, `test/discover.test.ts`); it is left out of the native and coverage runs.
 - `bin/light.js` and `native/light.ts` set `process.exitCode` and let the program end; they never call `process.exit`.
 - Comments are a JSDoc module header and JSDoc on exported symbols, nothing else.
 - TypeScript with erasable syntax only. The package ships its sources to node and the stripped JavaScript to npm; both must run without a build step.
@@ -55,11 +55,11 @@ The core is compiled as program source by scriptc, so it follows light's native 
 From the repository root:
 
 ```bash
-node packages/native/cli/bin/light-native.js test @lightstart/cli       # node and native, outputs equal
-node packages/native/cli/bin/light-native.js coverage @lightstart/cli   # every test fully static, node-only left out
-node packages/native/cli/bin/light-native.js typecheck @lightstart/cli
-node packages/native/cli/bin/light-native.js build @lightstart/cli      # dist/light
-node packages/native/cli/bin/light-native.js check --all
+node packages/native/bin/light-native.js test @lightstart/cli       # node and native, outputs equal
+node packages/native/bin/light-native.js coverage @lightstart/cli   # every test fully static, node-only left out
+node packages/native/bin/light-native.js typecheck @lightstart/cli
+node packages/native/bin/light-native.js build @lightstart/cli      # dist/light
+node packages/native/bin/light-native.js check --all
 npx eslint packages/cli
 node benchmarks/cli/run.js                     # node and native stdout equal, then the ratios
 ```

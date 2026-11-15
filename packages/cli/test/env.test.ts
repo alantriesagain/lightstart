@@ -7,7 +7,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadEnv } from "../env.ts";
-import { done, eq } from "@light/test/assert.ts";
+import { done, eq } from "@lightstart/test/assert.ts";
 
 const dir = mkdtempSync(join(tmpdir(), "cli-env-"));
 const keys = ["CLI_TEST_PLAIN", "CLI_TEST_QUOTED", "CLI_TEST_SINGLE", "CLI_TEST_SET"];

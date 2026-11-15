@@ -4,7 +4,7 @@
  */
 import { join } from "node:path";
 import { importMapFor, importmapFromHtml, mergeImportMaps, packageImports } from "../importmap.ts";
-import { done, eq, eqn, ok } from "@light/test/assert.ts";
+import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
 
 const root = "/w/project";
 const app = { name: "app", exports: { ".": "./index.js", "./types": "./src/types.ts", "./*": "./src/*" } };
