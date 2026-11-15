@@ -10,7 +10,7 @@ import { spawnSync } from "node:child_process";
 import { done, eq, ok } from "@lightstart/test/assert.ts";
 
 const cwd = process.cwd();
-const quickjs = process.env["QUICKJS_DIR"] ?? join(cwd, "../../../../scriptc/packages/runtime/vendor/quickjs-ng");
+const quickjs = process.env["QUICKJS_DIR"] ?? join(cwd, "../../../scriptc/packages/runtime/vendor/quickjs-ng");
 const build = spawnSync("bash", ["native/build.sh"], { cwd, encoding: "utf8" });
 ok("the native shim builds", build.status === 0);
 const dir = mkdtempSync(join(tmpdir(), "plugins-rejection-"));

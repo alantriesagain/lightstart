@@ -7,7 +7,7 @@
 # underscore, which is stripped first). Builds again only when a source is newer.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd -P)"
-root="$(cd "$here/../../../.." && pwd -P)"
+root="$(cd "$here/../../.." && pwd -P)"
 quickjs="${QUICKJS_DIR:-$root/../scriptc/packages/runtime/vendor/quickjs-ng}"
 out="$here/out"
 lib="$out/libwcjs.a"
