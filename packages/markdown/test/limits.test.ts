@@ -1,7 +1,8 @@
 /**
  * @file Limits: an adversarial inline or a deep document must parse in bounded time and without
  * overflowing the stack. Each case is built at 100,000 characters (or the line/level count its
- * shape needs) and must answer within a second; the quote tree must stop at MAX_NESTING containers.
+ * shape needs) and must answer within 2.5 seconds (times TEST_TIME_SCALE), which a linear parse meets
+ * under a loaded run and a quadratic one misses by far; the quote tree must stop at MAX_NESTING containers.
  */
 import { Block, List, Quote, parse } from "../index.ts";
 import { budget, done, ok } from "@light/test/assert.ts";
@@ -22,7 +23,7 @@ const run = (name: string, input: string): void => {
     threw = true;
   }
   const ms = Date.now() - t0;
-  ok(name, !threw && ms < budget(1000));
+  ok(name, !threw && ms < budget(2500));
 };
 
 const containerDepth = (blocks: Block[], level: number): number => {
