@@ -480,7 +480,7 @@ const dev = async (rest, options = {}) => {
   if (!attach) {
     if (!(await portFree(port))) throw new Error(`port ${port} is in use; pass --port <n> or --attach`);
     const bin = join(here, "..", "..", "bin", "light.js");
-    children.push(spawn(process.execPath, [bin, "serve", projectDir, "--port", String(port), ...serveExtra], { stdio: "inherit", cwd: projectDir, env: { ...process.env, ...serveEnvironment } }));
+    children.push(spawn(process.execPath, [bin, "serve", projectDir, "--port", String(port), "--ephemeral", ...serveExtra], { stdio: "inherit", cwd: projectDir, env: { ...process.env, LIGHT_PARENT_PID: String(process.pid), ...serveEnvironment } }));
   }
   const ready = await waitForOrigin(origin, attach ? 5000 : 60000);
   if (!ready) {

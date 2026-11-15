@@ -6,6 +6,7 @@ The dev server behind `light serve`: it serves a project's files and routes, str
 light serve                  # the working directory
 light serve examples/starter --watch
 light serve --build          # preview the last build instead
+light serve --open --tunnel  # open the browser, expose it through Cloudflare
 ```
 
 | Entry | What it is |
@@ -15,7 +16,7 @@ light serve --build          # preview the last build instead
 
 ## Options
 
-`light serve [dir] [--port <n>] [--host <addr>] [--watch] [--build]`, alias `s`.
+`light serve [dir] [--port <n>] [--host <addr>] [--watch] [--build] [--open] [--tunnel] [--ephemeral]`, alias `s`.
 
 | Option | Default | What |
 |---|---|---|
@@ -24,6 +25,9 @@ light serve --build          # preview the last build instead
 | `--host` | `127.0.0.1` | The address to bind; `0.0.0.0` also prints the LAN URLs |
 | `--watch`, `-w` | off | Watch the project and reload the page on a change |
 | `--build` | off | Preview `.deployed/current` instead of serving sources |
+| `--open` | off | Open the page in the system's browser once it listens |
+| `--tunnel` | off | Expose the server through a Cloudflare tunnel |
+| `--ephemeral` | off | No pidfile; stop when `LIGHT_PARENT_PID` ends |
 
 The port is the first that is free, trying the requested port and up to 99 above it (`MAX_PORT_ATTEMPTS`, 100 ports in all) and giving up past them. The one asked for is, in order:
 
@@ -35,6 +39,31 @@ The port is the first that is free, trying the requested port and up to 99 above
 | The default | `DEFAULT_PORT`, 3000 |
 
 A value that is not a port falls through to the next source; `0` is a port, not a fallback.
+
+## One server per project
+
+A server that is not ephemeral records itself in `<project>/.light/serve.pid` as
+`{ pid, port }` once it listens, and removes the file at shutdown. The next `light serve` of the
+same project reads it and stops the recorded process first, freeing its port, but only when that
+process's command line is still a `light serve` (a `light` or `light.js` token and a `serve`
+token); a recycled pid running anything else is never touched. Add `.light/` to the project's
+`.gitignore`.
+
+`--ephemeral` is for a build, a test run or `light desktop dev`: it writes no pidfile and does not
+replace another server. With `LIGHT_PARENT_PID` set it also polls that process and shuts down when
+it ends, so a throwaway server cannot outlive the tool that spawned it.
+
+## Tunnels and the browser
+
+`--tunnel` runs `cloudflared` beside the server: a quick tunnel by default, whose
+`trycloudflare.com` origin is read from its output, or the named tunnel `light.dev.tunnel` declares
+in the project's `package.json`. A named tunnel is `"dev.example.com"` or
+`{ "hostname": "dev.example.com", "paths": ["/api", "/ws"] }`; with paths, its ingress passes only
+those and the whole-server origin is not reported. Its config is written to
+`<project>/.light/tunnel.yml`. A missing `cloudflared`, an invalid hostname or a named tunnel that
+cannot be created logs one clear warning and the server keeps running.
+
+`--open` opens the page once it listens (`open` on macOS, `start` on Windows, `xdg-open` on Linux).
 
 ## The importmap
 
@@ -130,12 +159,14 @@ declare module "@lightstart/dev/hooks" {
 
 | Hook | When | Payload |
 |---|---|---|
-| `serve:before` | Before listening | `{ projectDir, port, watch }` |
-| `serve:after` | Once listening; its teardown runs at shutdown | `{ projectDir, port, watch, origins: { local, lan? } }` |
+| `serve:before` | Before listening | `{ projectDir, port, watch, ephemeral }` |
+| `serve:after` | Once listening; its teardown runs at shutdown | `{ projectDir, port, watch, ephemeral, origins: { local, lan?, tunnel? } }` |
 | `serve:file-changed` | On each settled watched change | `{ path, type }`, the project-relative path and `"change"` or `"rename"` |
 
 An extension's fields on `api.payload` are on every serve hook payload, and an extra watched folder's
-path is its label and the relative path.
+path is its label and the relative path. `ephemeral` says whether the server is a throwaway one,
+and `origins.tunnel` is the tunnel's public origin when it answers the whole server (not when it
+passes only the paths `light.dev.tunnel` lists).
 
 ## Watch and reload
 
