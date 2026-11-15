@@ -4,6 +4,18 @@
  * otherwise at start (the defaults are widecode's look). A file's git marks have a color each.
  */
 
+/** `a` mixed into `b` at `amount` (0 is `b`, 1 is `a`), both `#rrggbb`; `a` when either is not. */
+export const mixHex = (a: string, b: string, amount: number): string => {
+  const ok = (s: string): boolean => s.length === 7 && s[0] === "#" && !Number.isNaN(parseInt(s.slice(1), 16));
+  if (!ok(a) || !ok(b)) return a;
+  let out = "#";
+  for (let i = 1; i < 7; i += 2) {
+    const v = Math.round(parseInt(a.slice(i, i + 2), 16) * amount + parseInt(b.slice(i, i + 2), 16) * (1 - amount));
+    out += (v < 16 ? "0" : "") + v.toString(16);
+  }
+  return out;
+};
+
 export class Palette {
   /** Text that steps back: hints, sizes, what a call was given. */
   dim = "gray";
@@ -47,6 +59,32 @@ export class Palette {
   track = "#4b5263";
   thumb = "#7f848e";
   held = "#abb2bf";
+
+  /** Behind the panes, around their cell borders; a pane a dragged one would drop on. */
+  screenBg = "#11111b";
+  dropBg = "#2a3a4c";
+  /** The panes' accents by id (their cell borders and active tabs), and the one for a pane not named. */
+  accents = "chat=#5fd7af code=#7aa2f7 side=#e0af68 tools=#f7768e";
+  accent = "#bb9af7";
+
+  /** Pane `id`'s accent. */
+  accentOf(id: string): string {
+    for (const pair of this.accents.split(" ")) {
+      const at = pair.indexOf("=");
+      if (at > 0 && pair.slice(0, at) === id) return pair.slice(at + 1);
+    }
+    return this.accent;
+  }
+
+  /** Pane `id`'s background: its accent faintly over `screenBg`, a little stronger while active. */
+  tintOf(id: string, active: boolean): string {
+    return mixHex(this.accentOf(id), this.screenBg, active ? 0.16 : 0.1);
+  }
+
+  /** Pane `id`'s border: the accent while active, else the accent dimmed toward `screenBg`. */
+  lineOf(id: string, active: boolean): string {
+    return active ? this.accentOf(id) : mixHex(this.accentOf(id), this.screenBg, 0.4);
+  }
 
   /** A file's git mark and its color: modified, added, untracked, deleted, renamed, conflicted, and a folder holding changes. */
   markColors(): Map<string, string> {

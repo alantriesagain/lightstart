@@ -2,7 +2,7 @@
  * @file What the members' tests share: a wait, a wait for a condition, and a view mounted on a root and
  * painted headless to a screen whose rows the checks read.
  */
-import { Caret, Clip, DEFAULT_STYLE, Screen, TRoot, View, frames, layout, mount, paint, unmount } from "@lightstart/light/native/tui";
+import { Caret, Clip, DEFAULT_STYLE, Screen, TRoot, View, frames, layout, mount, paint, paintLayers, unmount } from "@lightstart/light/native/tui";
 
 /** `ms` later. */
 export const wait = (ms: number): Promise<void> =>
@@ -31,14 +31,16 @@ export class Headless {
     mount(view, this.root);
   }
 
-  /** The screen as drawn now: three frames flushed and laid out, then painted. */
+  /** The screen as drawn now: three frames flushed and laid out, then painted, the overlay layers last. */
   paint(): Screen {
     for (let i = 0; i < 3; i++) {
       frames.flush();
       layout(this.root, this.w, this.h, DEFAULT_STYLE);
     }
     const s = new Screen(this.w, this.h);
-    paint(this.root, s, new Clip(0, 0, this.w, this.h), DEFAULT_STYLE, new Caret(), null);
+    const caret = new Caret();
+    paint(this.root, s, new Clip(0, 0, this.w, this.h), DEFAULT_STYLE, caret, null);
+    paintLayers(this.root, s, caret, null);
     return s;
   }
 
