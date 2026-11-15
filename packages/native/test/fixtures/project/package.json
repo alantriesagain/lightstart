@@ -1,0 +1,16 @@
+{
+  "name": "fixture-project",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@acme/linked": "^1.0.0",
+    "@acme/real": "^1.0.0"
+  },
+  "native": {
+    "entry": "src/deep/main.ts",
+    "binary": "fixture-project",
+    "prepare": [
+      "printf 'project\\n' >> \"$PREPARE_LOG\""
+    ]
+  }
+}

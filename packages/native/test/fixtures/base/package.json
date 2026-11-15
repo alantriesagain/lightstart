@@ -1,0 +1,11 @@
+{
+  "name": "@acme/base",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "native": {
+    "prepare": [
+      "printf 'base\\n' >> \"$PREPARE_LOG\""
+    ]
+  }
+}

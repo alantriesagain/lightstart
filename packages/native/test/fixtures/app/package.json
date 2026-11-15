@@ -1,0 +1,9 @@
+{
+  "name": "fixture-app",
+  "private": true,
+  "type": "module",
+  "native": {
+    "entry": "src/main.ts",
+    "binary": "fixture-app"
+  }
+}

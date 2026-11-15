@@ -7,7 +7,21 @@ import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { agentEnv, exec } from "../run.js";
 import { memberByName } from "../workspace.js";
-import { binaryOf, binaryPath, buildApp } from "./build.js";
+import { binaryOf, binaryPath, buildApp, buildProject } from "./build.js";
+
+/**
+ * Build `project` and run it in `launchDir`; answers the app's exit code.
+ * @param {import("../project.js").Project} project
+ * @param {string[]} extra
+ * @param {string} launchDir
+ * @returns {Promise<number>}
+ */
+export const runProject = async (project, extra, launchDir) => {
+  const binary = await buildProject(project);
+  const log = process.env["NATIVE_LOG"] ?? join("/tmp", binaryOf(project) + ".log");
+  rmSync(log, { force: true });
+  return exec(binary, ["--dir", launchDir, "--log", log, ...extra], { env: agentEnv() });
+};
 
 /**
  * @param {string[]} args

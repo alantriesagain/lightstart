@@ -17,6 +17,10 @@
     "@lightstart/light": "workspace:*"
   },
   "devDependencies": {
+    "@lightstart/cli": "workspace:*",
     "@types/node": "^26.6.5"
+  },
+  "peerDependencies": {
+    "@lightstart/cli": "workspace:*"
   }
 }

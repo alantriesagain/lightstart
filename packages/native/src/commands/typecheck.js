@@ -7,7 +7,7 @@
  */
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
-import { prepare } from "../prepare.js";
+import { prepare, prepareProject } from "../prepare.js";
 import { capture } from "../run.js";
 import { Member, memberByName, members, tscPath } from "../workspace.js";
 
@@ -55,6 +55,32 @@ export const attribute = (output, member) => {
 };
 
 /**
+ * tsc over one member's tsconfig; answers 0 or 1.
+ * @param {Member} m
+ * @param {string} tsc
+ * @param {string} label
+ * @returns {Promise<number>}
+ */
+const typecheckOne = async (m, tsc, label) => {
+  if (!existsSync(join(m.dir, "tsconfig.json"))) {
+    if (hasSource(m.dir)) {
+      console.log("✗ " + label + ": sources but no tsconfig.json");
+      return 1;
+    }
+    return 0;
+  }
+  const r = await capture(tsc, ["-p", "tsconfig.json", "--pretty", "false"], { cwd: m.dir });
+  const { own, foreign } = attribute(r.out, m);
+  if (own.length > 0) {
+    console.log("✗ " + label + " (" + String(own.length) + " error" + (own.length === 1 ? "" : "s") + ")");
+    for (const line of own) console.log("  " + line);
+    return 1;
+  }
+  console.log("✓ " + label + (foreign.length > 0 ? " (" + String(foreign.length) + " outside it)" : ""));
+  return 0;
+};
+
+/**
  * @param {string[]} args
  * @param {string} root
  * @returns {Promise<number>}
@@ -65,22 +91,18 @@ export const run = async (args, root) => {
   const tsc = tscPath(root);
   let status = 0;
   for (const m of targets) {
-    const label = relative(root, m.dir);
-    if (!existsSync(join(m.dir, "tsconfig.json"))) {
-      if (hasSource(m.dir)) {
-        console.log("✗ " + label + ": sources but no tsconfig.json");
-        status = 1;
-      }
-      continue;
-    }
     await prepare(root, m, "typecheck");
-    const r = await capture(tsc, ["-p", "tsconfig.json", "--pretty", "false"], { cwd: m.dir });
-    const { own, foreign } = attribute(r.out, m);
-    if (own.length > 0) {
-      status = 1;
-      console.log("✗ " + label + " (" + String(own.length) + " error" + (own.length === 1 ? "" : "s") + ")");
-      for (const line of own) console.log("  " + line);
-    } else console.log("✓ " + label + (foreign.length > 0 ? " (" + String(foreign.length) + " outside it)" : ""));
+    if ((await typecheckOne(m, tsc, relative(root, m.dir))) !== 0) status = 1;
   }
   return status;
+};
+
+/**
+ * A project's typecheck, its prepare steps first.
+ * @param {import("../project.js").Project} project
+ * @returns {Promise<number>}
+ */
+export const runProject = async (project) => {
+  await prepareProject(project, "typecheck");
+  return typecheckOne(project, tscPath(project.dir), ".");
 };

@@ -11,7 +11,7 @@ import { join, relative } from "node:path";
 import { formatDiagnostic, gate, parseCoverage } from "@lightstart/light/native/diagnostics.js";
 import { scriptcPath } from "@lightstart/light/native/scriptc.js";
 import { ffiHeader, nodeOnly, resolveAppFfi, resolveFfi } from "../ffi.js";
-import { prepare } from "../prepare.js";
+import { prepare, prepareProject } from "../prepare.js";
 import { captureStreams, pool } from "../run.js";
 import { Member, memberByName, members } from "../workspace.js";
 import { testsOf } from "./test.js";
@@ -66,18 +66,26 @@ const entriesOf = (_root, targets, appsOnly) => {
 };
 
 /**
+ * The jobs count the arguments name (`--jobs N`, else $JOBS, else 4).
  * @param {string[]} args
- * @param {string} root
+ * @returns {number}
+ */
+const jobsOf = (args) => {
+  const at = args.indexOf("--jobs");
+  return Number(at >= 0 ? (args[at + 1] ?? "4") : (process.env["JOBS"] ?? "4"));
+};
+
+/**
+ * The coverage verdict over `targets`; `labelRoot` is what the printed paths are relative to.
+ * @param {Member[]} targets
+ * @param {string} scriptc
+ * @param {boolean} appsOnly
+ * @param {number} jobs
+ * @param {string} labelRoot
  * @returns {Promise<number>}
  */
-export const run = async (args, root) => {
-  const names = args.filter((a) => !a.startsWith("--") && !/^\d+$/.test(a));
-  const at = args.indexOf("--jobs");
-  const jobs = Number(at >= 0 ? (args[at + 1] ?? "4") : (process.env["JOBS"] ?? "4"));
-  const targets = names.length > 0 ? names.map((n) => memberByName(root, n)) : members(root);
-  for (const m of targets) await prepare(root, m, "coverage");
-  const scriptc = scriptcPath(root);
-  const entries = entriesOf(root, targets, args.includes("--apps"));
+const coverageAt = async (targets, scriptc, appsOnly, jobs, labelRoot) => {
+  const entries = entriesOf(labelRoot, targets, appsOnly);
   const start = Date.now();
   const results = await pool(entries, jobs, async (e) => {
     const flags = ["coverage", e.path, "--print=diagnostics", "--fail-on=blockers"];
@@ -89,7 +97,7 @@ export const run = async (args, root) => {
   const notes = new Set();
   let notedTests = 0;
   for (let i = 0; i < entries.length; i++) {
-    const label = relative(root, entries[i].path);
+    const label = relative(labelRoot, entries[i].path);
     const r = results[i];
     let coverage;
     try {
@@ -110,7 +118,7 @@ export const run = async (args, root) => {
     }
     status = 1;
     console.log("NOT STATIC: " + label + statements);
-    for (const d of verdict.failures.slice(0, 40)) console.log("  " + formatDiagnostic(d, root));
+    for (const d of verdict.failures.slice(0, 40)) console.log("  " + formatDiagnostic(d, labelRoot));
     if (verdict.failures.length > 40) console.log("  … " + String(verdict.failures.length - 40) + " more");
     if (verdict.failures.length === 0) console.log(r.stderr.split("\n").slice(-20).join("\n"));
   }
@@ -118,4 +126,27 @@ export const run = async (args, root) => {
   if (notedTests > 0) console.log("note: " + String(notedTests) + " test" + (notedTests === 1 ? "" : "s") + " also noted (SC6101 for the code they compile)");
   console.log(String(entries.length) + " entries in " + String(Math.round((Date.now() - start) / 1000)) + " s, " + String(jobs) + " at a time");
   return status;
+};
+
+/**
+ * @param {string[]} args
+ * @param {string} root
+ * @returns {Promise<number>}
+ */
+export const run = async (args, root) => {
+  const names = args.filter((a) => !a.startsWith("--") && !/^\d+$/.test(a));
+  const targets = names.length > 0 ? names.map((n) => memberByName(root, n)) : members(root);
+  for (const m of targets) await prepare(root, m, "coverage");
+  return coverageAt(targets, scriptcPath(root), args.includes("--apps"), jobsOf(args), root);
+};
+
+/**
+ * A project's coverage, its prepare steps first.
+ * @param {import("../project.js").Project} project
+ * @param {string[]} args
+ * @returns {Promise<number>}
+ */
+export const runProject = async (project, args) => {
+  await prepareProject(project, "coverage");
+  return coverageAt([project], scriptcPath(project.dir), args.includes("--apps"), jobsOf(args), project.dir);
 };
