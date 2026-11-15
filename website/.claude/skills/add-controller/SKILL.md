@@ -4,7 +4,7 @@ description: Add a controller that owns state, model writes and IO, with its bro
 user_invocable: true
 ---
 
-<!-- Managed by Bootstrapp: generated from bootstrapp/controller/skills/add-controller.md. Edit the source, then run `bootstrapp types`. -->
+<!-- Managed by Bootstrapp: generated from bootstrapp/controller/skills/add-controller.md. Edit the source, then run `light types`. -->
 
 # Add a controller
 
@@ -12,11 +12,11 @@ A controller is a named piece of app state and the methods that change it, share
 
 ## Steps
 
-1. **Scaffold**: `bootstrapp new:controller <name> --props "count:number"` writes `controllers/<name>.js`. Registration is automatic: `$APP.<name>.<member>` works everywhere, and the controller is built on first reach. Read `$APP` inside the function that uses it, never into a module-scope binding.
+1. **Scaffold**: `light new:controller <name> --props "count:number"` writes `controllers/<name>.js`. Registration is automatic: `$APP.<name>.<member>` works everywhere, and the controller is built on first reach. Read `$APP` inside the function that uses it, never into a module-scope binding.
 2. **Declare every instance field**: reactive state in `props` as plain defaults (a JSDoc cast where the literal says too little), bindings in the `sync` block, plain fields (an interval id, a resource, an audio engine) as members beside the methods (`light/controller-declare-instance-surface`).
 3. **Own the teardown**: every subscription or disposable made in `connected()` goes through `this.$own(...)`; `connected()` may be async and returns the work it starts.
 4. **Write the browser test in the same commit**: `tests/app-<name>.browser.test.js` booting the real app (`controller/controller-has-test`).
-5. `bootstrapp types` so `$APP.<name>` is typed from the casts and the JSDoc on the methods.
+5. `light types` so `$APP.<name>` is typed from the casts and the JSDoc on the methods.
 
 ## Shape
 

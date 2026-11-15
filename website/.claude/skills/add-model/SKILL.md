@@ -4,7 +4,7 @@ description: Add a model to the project's models/schema.js and regenerate its ty
 user_invocable: true
 ---
 
-<!-- Managed by Bootstrapp: generated from bootstrapp/model/skills/add-model.md. Edit the source, then run `bootstrapp types`. -->
+<!-- Managed by Bootstrapp: generated from bootstrapp/model/skills/add-model.md. Edit the source, then run `light types`. -->
 
 # Add a model
 
@@ -12,9 +12,9 @@ user_invocable: true
 
 1. **Gather**: the model name (singular, kebab-case ids, matching the existing schema's convention) and its fields with types.
 
-2. **Scaffold or edit**: `bootstrapp new:model <name> --fields "title:string,done:boolean"` appends a block to `models/schema.js`; edit the file directly for anything richer (hooks, relations, enums, indexes).
+2. **Scaffold or edit**: `light new:model <name> --fields "title:string,done:boolean"` appends a block to `models/schema.js`; edit the file directly for anything richer (hooks, relations, enums, indexes).
 
-3. **Regenerate types**: `bootstrapp types`, then restart `bootstrapp serve`. `$APP.Model.<name>` is typed and `.bootstrapp/schemas.d.ts` exports `<Name>Record`, which `types.ts` re-exports.
+3. **Regenerate types**: `light types`, then restart `light serve`. `$APP.Model.<name>` is typed and `.bootstrapp/schemas.d.ts` exports `<Name>Record`, which `types.ts` re-exports.
 
 4. **Reseed if the data is reference data**: seeds load once, on a fresh database, so bump `bootstrapp.database.version` in `package.json` (or clear site data) after changing what a model is seeded with.
 
@@ -38,7 +38,7 @@ export default {
 };
 ```
 
-One default-exported object keyed by model name (`model/schema-shape` enforces it). `T` is imported; the file also loads in plain Node, which is how `bootstrapp types` reads it. No `export const version`: the database version lives in `package.json` under `bootstrapp.database.version`.
+One default-exported object keyed by model name (`model/schema-shape` enforces it). `T` is imported; the file also loads in plain Node, which is how `light types` reads it. No `export const version`: the database version lives in `package.json` under `bootstrapp.database.version`.
 
 ## Field types
 

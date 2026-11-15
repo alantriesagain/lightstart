@@ -4,7 +4,7 @@ description: Add a screen to the project's routes.js
 user_invocable: true
 ---
 
-<!-- Managed by Bootstrapp: generated from bootstrapp/router/skills/add-route.md. Edit the source, then run `bootstrapp types`. -->
+<!-- Managed by Bootstrapp: generated from bootstrapp/router/skills/add-route.md. Edit the source, then run `light types`. -->
 
 # Add a route
 
@@ -13,8 +13,8 @@ Every app declares its route table in a root `routes.js`, default-exporting `def
 ## Steps
 
 1. **Add the entry** to `routes.js`. A `component` tag string is the house default; path and query params spread onto the element as `.prop` bindings.
-2. **Create the view** if it does not exist (`bootstrapp new:view <name>`).
-3. **Regenerate types**: `bootstrapp types` (the route names and paths type `$APP.Router.go()` through `.bootstrapp/routes.d.ts`).
+2. **Create the view** if it does not exist (`light new:view <name>`).
+3. **Regenerate types**: `light types` (the route names and paths type `$APP.Router.go()` through `.bootstrapp/routes.d.ts`).
 
 ## Shape
 

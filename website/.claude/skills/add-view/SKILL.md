@@ -4,7 +4,7 @@ description: Create a project view component that composes light's components an
 user_invocable: true
 ---
 
-<!-- Managed by Bootstrapp: generated from bootstrapp/view/skills/add-view.md. Edit the source, then run `bootstrapp types`. -->
+<!-- Managed by Bootstrapp: generated from bootstrapp/view/skills/add-view.md. Edit the source, then run `light types`. -->
 
 # Add a view
 
@@ -20,7 +20,7 @@ Views are thin: they render controller state and dispatch to controller methods.
 
 ## Steps
 
-1. **Scaffold**: `bootstrapp new:view <kebab-name>` writes `views/<kebab-name>.js` (and a `.css` sibling when `bootstrapp.generator.styling` is `css`).
+1. **Scaffold**: `light new:view <kebab-name>` writes `views/<kebab-name>.js` (and a `.css` sibling when `bootstrapp.generator.styling` is `css`).
 2. **Use the tag** anywhere: `<docs-<kebab-name>>`. Views auto-load by tag; never import or register one.
 3. **Bind state** with `sync: "<controller>"` (property names must match the controller's) and call `$APP.<controller>.method()` on events.
 4. **Add the route** if it is a screen: root `routes.js`, `component: "docs-<name>"`.

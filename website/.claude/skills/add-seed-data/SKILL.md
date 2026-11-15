@@ -4,7 +4,7 @@ description: Seed a project's models with demo rows or reference data through mo
 user_invocable: true
 ---
 
-<!-- Managed by Bootstrapp: generated from bootstrapp/model/skills/add-seed-data.md. Edit the source, then run `bootstrapp types`. -->
+<!-- Managed by Bootstrapp: generated from bootstrapp/model/skills/add-seed-data.md. Edit the source, then run `light types`. -->
 
 # Add seed data
 

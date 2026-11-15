@@ -4,7 +4,7 @@ description: Add a unit, browser or e2e test with node:test
 user_invocable: true
 ---
 
-<!-- Managed by Bootstrapp: generated from @bootstrapp/test/skills/add-test.md. Edit the source, then run `bootstrapp types`. -->
+<!-- Managed by Bootstrapp: generated from @bootstrapp/test/skills/add-test.md. Edit the source, then run `light types`. -->
 
 # Add a test
 
@@ -14,7 +14,7 @@ One test API everywhere: `node:test` + `node:assert/strict`. The filename routes
 
 1. **Pick the layer.** Pure logic goes in `lib/<module>.test.js` (no `$APP`, no DOM); a controller flow goes in `tests/app-<controller>.browser.test.js`; a journey through the built app goes in `tests/e2e/<name>.e2e.js`.
 2. **Extract pure logic first.** If the logic under test is tangled into a view, pull it into `lib/` and test that.
-3. **Run it**: `node --test lib/<module>.test.js` for a quick loop, `bootstrapp test` for node plus browser, `bootstrapp build --spa && bootstrapp test --e2e` for journeys.
+3. **Run it**: `node --test lib/<module>.test.js` for a quick loop, `light test` for node plus browser, `light build --spa && light test --e2e` for journeys.
 
 ## Unit
 

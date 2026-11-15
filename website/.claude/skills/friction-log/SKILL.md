@@ -4,7 +4,7 @@ description: Record a framework stumble in the project's FRICTION.md the moment 
 user_invocable: true
 ---
 
-<!-- Managed by Bootstrapp: generated from bootstrapp/app/skills/friction-log.md. Edit the source, then run `bootstrapp types`. -->
+<!-- Managed by Bootstrapp: generated from bootstrapp/app/skills/friction-log.md. Edit the source, then run `light types`. -->
 
 # Log a friction entry
 
@@ -29,6 +29,6 @@ Categories: `docs`, `scaffold`, `cli`, `skill`, `check`, `components`, `mcp`, `b
 
 - Log at the moment of the stumble, not at the end; the details are gone by then.
 - Reading a sibling project or framework source because a doc did not say something is itself an entry.
-- After each build step, add a checkpoint line with the `bootstrapp check` and `bootstrapp test` counts.
+- After each build step, add a checkpoint line with the `light check` and `light test` counts.
 - Keep the file honest: an entry goes in only when the stumble was actually hit.
 - Reference: `projects/bboxe/FRICTION.md`, `examples/centavo/FRICTION.md`.
