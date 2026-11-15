@@ -33,6 +33,9 @@
     "./node": "./node/index.ts",
     "./*": "./*"
   },
+  "dependencies": {
+    "@lightstart/create": "workspace:*"
+  },
   "devDependencies": {
     "@light/test": "workspace:*",
     "@types/node": "^26.6.5",

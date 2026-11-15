@@ -21,6 +21,9 @@ importers:
       '@lightstart/cli':
         specifier: workspace:*
         version: link:packages/cli
+      '@lightstart/create':
+        specifier: workspace:*
+        version: link:packages/create
       '@lightstart/dev':
         specifier: workspace:*
         version: link:packages/dev
@@ -102,6 +105,10 @@ importers:
         version: 6.0.3
 
   packages/cli:
+    dependencies:
+      '@lightstart/create':
+        specifier: workspace:*
+        version: link:../create
     devDependencies:
       '@light/test':
         specifier: workspace:*
@@ -125,6 +132,21 @@ importers:
       '@lightstart/light':
         specifier: workspace:*
         version: link:../light
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/create:
+    devDependencies:
+      '@light/test':
+        specifier: workspace:*
+        version: link:../tui/test
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5

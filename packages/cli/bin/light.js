@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
+import newCommand from "@lightstart/create/command";
 import { createCli } from "../index.ts";
 import { discover } from "../node/index.ts";
 
@@ -9,6 +10,7 @@ const cli = createCli({
   version,
   scopes: ["@lightstart"],
   envPrefix: "LIGHT",
+  commands: { new: newCommand },
   discover,
 });
 
