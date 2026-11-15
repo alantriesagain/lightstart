@@ -9,7 +9,7 @@
     "typecheck": "tsc-ts --noEmit",
     "pack": "npm --prefix packages/light run pack",
     "check:root": "node packages/light/bin/light.js check",
-    "check": "npm run check:root && npm --prefix packages/light run check",
+    "check": "npm run check:root && npm --prefix packages/light run check && npm --prefix packages/components run check",
     "test": "npm --prefix packages/light test",
     "bench": "node benchmarks/run.js",
     "coverage:tasks": "node packages/light/native/coverage.js examples/tasks/main.js --allow-dynamic",
@@ -46,7 +46,8 @@
       ],
       "ignore": [
         "website/",
-        "packages/light/"
+        "packages/light/",
+        "packages/components/"
       ],
       "rules": {
         "view/no-raw-localstorage": "off",
