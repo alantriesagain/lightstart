@@ -20,6 +20,7 @@ const missingCli = (error) =>
 const needsServer = (error) =>
   error instanceof Error && /** @type {{ code?: unknown }} */ (error).code === "ERR_MODULE_NOT_FOUND" && error.message.includes("@lightstart/server");
 
+/** @type {typeof import("@lightstart/cli") | null} */
 let cli = null;
 try {
   cli = await import("@lightstart/cli");

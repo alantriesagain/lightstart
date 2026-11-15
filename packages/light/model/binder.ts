@@ -36,7 +36,7 @@ interface QueryKnobs {
   ready: ResourceOptions["ready"];
 }
 
-const copyQuery = (source: object): QueryOptions => {
+const copyQuery = (source: QueryOptions): QueryOptions => {
   const query: QueryOptions = {};
   for (const [field, value] of Object.entries(source)) query[field] = value;
   return query;
