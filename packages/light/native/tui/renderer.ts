@@ -186,6 +186,10 @@ export class Renderer {
 
   dispatchMouse(e: MouseEvent) {
     const hit = hitTestLayers(this.root, e.x, e.y);
+    if (e.type === "mousehover") {
+      if (hit !== null) hit.dispatch(e);
+      return;
+    }
     // While a button is held, the element pressed gets the moves and the release: a drag that
     // leaves it (a selection running past its edge) is still its drag.
     const held = e.type !== "mousedown" && this.pressed !== null && this.attached(this.pressed) ? this.pressed : null;
