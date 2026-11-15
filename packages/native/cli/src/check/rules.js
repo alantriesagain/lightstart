@@ -6,7 +6,7 @@
  * manifest that exists; a member's tsconfig equals the template; a test names no path from the
  * workspace root; a member with sources has tests.
  */
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { DEPENDENCY_FIELDS, Member } from "../workspace.js";
 
@@ -33,7 +33,8 @@ export class Finding {
 const SKIP = new Set(["node_modules", "dist", "out", ".scriptc", "examples"]);
 
 /**
- * The member's source and test files (.ts, .js, .mjs), absolute.
+ * The member's source and test files (.ts, .js, .mjs), absolute: its own, not what a symbolic link
+ * in it reaches (a workspace that is one app holds the `light` link at its root).
  * @param {Member} m
  * @returns {string[]}
  */
@@ -45,6 +46,7 @@ export const sourcesOf = (m) => {
     for (const name of readdirSync(dir)) {
       if (SKIP.has(name) || name.startsWith(".")) continue;
       const path = join(dir, name);
+      if (lstatSync(path).isSymbolicLink()) continue;
       if (statSync(path).isDirectory()) walk(path);
       else if (/\.(ts|js|mjs)$/.test(name)) out.push(path);
     }

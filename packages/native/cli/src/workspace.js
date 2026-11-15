@@ -1,6 +1,6 @@
 /**
  * @file The workspace as the commands see it: its root, its members (every folder a pnpm-workspace.yaml
- * pattern names that holds a package.json), a member's `native` block and the members it depends
+ * pattern names that holds a package.json, and the root itself when it is an app), a member's `native` block and the members it depends
  * on, in dependency order. Light itself is no member, and neither is its browser component package.
  * In a workspace that links light (a `light`
  * pattern), the packages under `light/` are members the others depend on, prepared with them, and
@@ -61,7 +61,7 @@ export class Member {
   name;
   /** The member's folder, absolute. @type {string} */
   dir;
-  /** The workspace group: `packages` or `apps`. @type {string} */
+  /** The workspace group: `apps` (a member under apps/, or any with a native entry) or `packages`. @type {string} */
   group;
   /** The parsed package.json. @type {PackageJson} */
   pkg;
@@ -150,6 +150,8 @@ const readPackage = (dir) => {
 export const allMembers = (root) => {
   /** @type {Member[]} */
   const out = [];
+  const own = readPackage(root);
+  if (own !== null && typeof own.native?.entry === "string") out.push(new Member(String(own.name ?? basename(root)), root, "apps", own, ".", true));
   for (const pattern of patterns(root)) {
     if (pattern === "light") continue;
     const base = pattern.endsWith("/*") ? join(root, pattern.slice(0, -2)) : null;
@@ -164,7 +166,8 @@ export const allMembers = (root) => {
       const pkg = readPackage(dir);
       if (pkg === null || NOT_MEMBERS.has(String(pkg.name))) continue;
       const label = relative(root, dir);
-      out.push(new Member(String(pkg.name ?? basename(dir)), dir, basename(dirname(dir)) === "apps" ? "apps" : "packages", pkg, label, !label.startsWith("light/")));
+      const app = basename(dirname(dir)) === "apps" || typeof pkg.native?.entry === "string";
+      out.push(new Member(String(pkg.name ?? basename(dir)), dir, app ? "apps" : "packages", pkg, label, !label.startsWith("light/")));
     }
   }
   out.sort((a, b) => (a.group === b.group ? (a.label < b.label ? -1 : 1) : a.group === "packages" ? -1 : 1));
