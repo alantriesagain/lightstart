@@ -214,15 +214,27 @@ const drawCellBorder = (screen: Screen, clip: Clip, box: TBox, style: Style, inh
   const edge = y + tabRow;
   const spans = tabSpans(box);
   const active = tabActive(box);
-  const lid = new Style(line, tint, 0);
+  // Heavy, the edge's line is the top quarter (`▆` with its colors swapped); no glyph has a quarter
+  // corner, so a corner is three quadrants (`▛`, `▜`), closed and a little thicker than the lines.
+  const lidGlyph = heavy ? "▆" : "▔";
+  const lid = heavy ? new Style(tint, line, 0) : new Style(line, tint, 0);
+  const corner = new Style(line, tint, 0);
   for (let i = 0; i < w; i++) {
     if (tabRow === 0) putClipped(screen, clip, x + i, y, top, 1, topStyle);
-    else if (i > 0 && i < w - 1) putClipped(screen, clip, x + i, edge, "▔", 1, lid);
+    else if (i > 0 && i < w - 1) putClipped(screen, clip, x + i, edge, lidGlyph, 1, lid);
     putClipped(screen, clip, x + i, y + h - 1, bottom, 1, bottomStyle);
   }
   if (tabRow > 0) {
-    putClipped(screen, clip, x, edge, box.borderSides ? "🭽" : "▔", 1, lid);
-    putClipped(screen, clip, x + w - 1, edge, box.borderSides ? "🭾" : "▔", 1, lid);
+    if (!box.borderSides) {
+      putClipped(screen, clip, x, edge, lidGlyph, 1, lid);
+      putClipped(screen, clip, x + w - 1, edge, lidGlyph, 1, lid);
+    } else if (heavy) {
+      putClipped(screen, clip, x, edge, "▛", 1, corner);
+      putClipped(screen, clip, x + w - 1, edge, "▜", 1, corner);
+    } else {
+      putClipped(screen, clip, x, edge, "🭽", 1, lid);
+      putClipped(screen, clip, x + w - 1, edge, "🭾", 1, lid);
+    }
   }
   for (let j = 1 + tabRow; j < h - 1 && box.borderSides; j++) {
     putClipped(screen, clip, x, y + j, left, 1, leftStyle);

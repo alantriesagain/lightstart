@@ -156,4 +156,14 @@ const tabs = "one\ntwo\nthree";
   eq("the prop shows when off", firstBox(firstBox(root)).describe().includes("borderSides=false") ? "yes" : "no", "yes");
 }
 
+{
+  const root = new TRoot();
+  render(html`<box bg="#202020"><box border borderStyle="cell" borderColor="#7aa2f7" borderHeavy bg="#101830" width=8 height=5 title="t"></box></box>`, root);
+  const s = screenOf(root, 8, 5);
+  eq("heavy, the edge under the tabs is a quarter thick, closed by quadrant corners", s.rowText(1), "▛▆▆▆▆▆▆▜");
+  const lid = at(s, 3, 1);
+  ok("the edge's quarter glyph swaps its colors, the line on top", lid.fg === INNER && lid.bg === BLUE);
+  eq("the sides run on under it", glyph(s, 0, 2) + glyph(s, 7, 2), "▎▊");
+}
+
 done();
