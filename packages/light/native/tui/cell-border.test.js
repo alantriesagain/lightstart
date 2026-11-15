@@ -145,4 +145,15 @@ const tabs = "one\ntwo\nthree";
   eqn("with tabs, one more for the tab row", firstBox(firstBox(root)).h, 4);
 }
 
+{
+  const root = new TRoot();
+  render(html`<box bg="#202020"><box border borderStyle="cell" borderColor="#7aa2f7" borderSides=${false} bg="#101830" width=10 height=5 title="t"></box></box>`, root);
+  const s = screenOf(root, 10, 5);
+  eq("without sides the edge runs to the corners as line", s.rowText(1), "▔▔▔▔▔▔▔▔▔▔");
+  eq("the side cells keep the tint, no line", glyph(s, 0, 2) + glyph(s, 9, 2), "  ");
+  eq("on the tint", String(at(s, 0, 2).bg), String(INNER));
+  eq("the bottom stays", s.rowText(4), "▔▔▔▔▔▔▔▔▔▔");
+  eq("the prop shows when off", firstBox(firstBox(root)).describe().includes("borderSides=false") ? "yes" : "no", "yes");
+}
+
 done();
