@@ -224,21 +224,17 @@ const drawCellBorder = (screen: Screen, clip: Clip, box: TBox, style: Style, inh
     else if (i > 0 && i < w - 1) putClipped(screen, clip, x + i, edge, lidGlyph, 1, lid);
     putClipped(screen, clip, x + i, y + h - 1, bottom, 1, bottomStyle);
   }
+  const leftSide = box.borderSides === "both" || box.borderSides === "left";
+  const rightSide = box.borderSides === "both" || box.borderSides === "right";
   if (tabRow > 0) {
-    if (!box.borderSides) {
-      putClipped(screen, clip, x, edge, lidGlyph, 1, lid);
-      putClipped(screen, clip, x + w - 1, edge, lidGlyph, 1, lid);
-    } else if (heavy) {
-      putClipped(screen, clip, x, edge, "▛", 1, corner);
-      putClipped(screen, clip, x + w - 1, edge, "▜", 1, corner);
-    } else {
-      putClipped(screen, clip, x, edge, "🭽", 1, lid);
-      putClipped(screen, clip, x + w - 1, edge, "🭾", 1, lid);
-    }
+    if (!leftSide) putClipped(screen, clip, x, edge, lidGlyph, 1, lid);
+    else putClipped(screen, clip, x, edge, heavy ? "▛" : "🭽", 1, heavy ? corner : lid);
+    if (!rightSide) putClipped(screen, clip, x + w - 1, edge, lidGlyph, 1, lid);
+    else putClipped(screen, clip, x + w - 1, edge, heavy ? "▜" : "🭾", 1, heavy ? corner : lid);
   }
-  for (let j = 1 + tabRow; j < h - 1 && box.borderSides; j++) {
-    putClipped(screen, clip, x, y + j, left, 1, leftStyle);
-    putClipped(screen, clip, x + w - 1, y + j, right, 1, rightStyle);
+  for (let j = 1 + tabRow; j < h - 1; j++) {
+    if (leftSide) putClipped(screen, clip, x, y + j, left, 1, leftStyle);
+    if (rightSide) putClipped(screen, clip, x + w - 1, y + j, right, 1, rightStyle);
   }
   const labels = tabLabels(box);
   for (let s = 0; s < spans.start.length; s++) {

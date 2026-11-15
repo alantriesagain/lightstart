@@ -166,6 +166,7 @@ export const tabRowOf = (box: TBox): number => (box.border && box.borderStyle ==
 
 const DIRECTIONS = ["column", "row"];
 const BORDER_STYLES = ["line", "cell"];
+const BORDER_SIDES = ["both", "none", "left", "right"];
 const ALIGNS = ["stretch", "start", "end"];
 const WRAPS = ["word", "char", "none"];
 
@@ -442,7 +443,7 @@ export class TBox extends TElement {
   borderStyle: string;
   borderColor: number;
   borderHeavy: boolean;
-  borderSides: boolean;
+  borderSides: string;
   tabBg: number;
   tabFg: number;
   tabs: string;
@@ -473,7 +474,7 @@ export class TBox extends TElement {
     this.borderStyle = "line";
     this.borderColor = -1;
     this.borderHeavy = false;
-    this.borderSides = true;
+    this.borderSides = "both";
     this.tabBg = -1;
     this.tabFg = -1;
     this.tabs = "";
@@ -526,7 +527,7 @@ export class TBox extends TElement {
         this.setBorderHeavy(asBool(v));
         return true;
       case "borderSides":
-        this.setBorderSides(v === null ? true : asBool(v));
+        this.setBorderSides(v === null || v === true || v === "true" ? "both" : v === false || v === "false" ? "none" : asEnum(name, v, BORDER_SIDES));
         return true;
       case "tabs":
         this.setTabs(asString(name, v));
@@ -647,9 +648,9 @@ export class TBox extends TElement {
     this.invalidate();
   }
 
-  setBorderSides(b: boolean) {
-    if (this.borderSides === b) return;
-    this.borderSides = b;
+  setBorderSides(s: string) {
+    if (this.borderSides === s) return;
+    this.borderSides = s;
     this.invalidate();
   }
 
@@ -737,7 +738,7 @@ export class TBox extends TElement {
     if (this.borderStyle !== "line") p.push("borderStyle=" + this.borderStyle);
     if (this.borderColor !== -1) p.push("borderColor=" + colorName(this.borderColor));
     if (this.borderHeavy) p.push("borderHeavy");
-    if (!this.borderSides) p.push("borderSides=false");
+    if (this.borderSides !== "both") p.push("borderSides=" + this.borderSides);
     if (this.tabs !== "") p.push("tabs=" + JSON.stringify(this.tabs));
     if (this.activeTab !== -1) p.push("activeTab=" + String(this.activeTab));
     if (this.tabBg !== -1) p.push("tabBg=" + colorName(this.tabBg));

@@ -53,7 +53,7 @@ const COMMON_PROPS = ["fg", "bg", "bold", "dim", "italic", "underline", "inverse
 const BOX_PROPS = ["direction", "flex", "width", "height", "padding", "gap", "border", "borderStyle", "borderColor", "borderHeavy", "borderSides", "tabs", "activeTab", "tabBg", "tabFg", "title", "scroll", "scrollTop", "stickToBottom", "align", "layer", "layerX", "layerY", "backdrop", "shadow"];
 const TEXT_PROPS = ["wrap"];
 const INPUT_PROPS = ["placeholder", "minLines", "maxLines", "value"];
-export const EVENT_NAMES = ["key", "submit", "change", "click", "mousedown", "mouseup", "mousemove", "wheel", "focus", "blur"];
+export const EVENT_NAMES = ["key", "submit", "change", "click", "mousedown", "mouseup", "mousemove", "mousehover", "wheel", "focus", "blur"];
 
 /**
  * The node kind a tag creates.

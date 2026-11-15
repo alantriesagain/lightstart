@@ -153,7 +153,7 @@ const tabs = "one\ntwo\nthree";
   eq("the side cells keep the tint, no line", glyph(s, 0, 2) + glyph(s, 9, 2), "  ");
   eq("on the tint", String(at(s, 0, 2).bg), String(INNER));
   eq("the bottom stays", s.rowText(4), "▔▔▔▔▔▔▔▔▔▔");
-  eq("the prop shows when off", firstBox(firstBox(root)).describe().includes("borderSides=false") ? "yes" : "no", "yes");
+  eq("the prop shows when off", firstBox(firstBox(root)).describe().includes("borderSides=none") ? "yes" : "no", "yes");
 }
 
 {
@@ -164,6 +164,15 @@ const tabs = "one\ntwo\nthree";
   const lid = at(s, 3, 1);
   ok("the edge's quarter glyph swaps its colors, the line on top", lid.fg === INNER && lid.bg === BLUE);
   eq("the sides run on under it", glyph(s, 0, 2) + glyph(s, 7, 2), "▎▊");
+}
+
+{
+  const root = new TRoot();
+  render(html`<box bg="#202020"><box border borderStyle="cell" borderColor="#7aa2f7" borderSides="right" bg="#101830" width=10 height=5 title="t"></box></box>`, root);
+  const s = screenOf(root, 10, 5);
+  eq("one side: the edge closes on the right only", s.rowText(1), "▔▔▔▔▔▔▔▔▔🭾");
+  eq("its line runs down the right side alone", glyph(s, 0, 2) + glyph(s, 9, 2), " ▕");
+  eq("the prop shows", firstBox(firstBox(root)).describe().includes("borderSides=right") ? "yes" : "no", "yes");
 }
 
 done();
