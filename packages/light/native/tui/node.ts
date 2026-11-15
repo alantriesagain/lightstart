@@ -153,7 +153,7 @@ export const asBool = (v: PropValue) => {
 };
 
 /** The camelCase props: a template's attribute names arrive lowercased, and `propName` gives them back their case. */
-const CAMEL_PROPS = ["borderStyle", "borderColor", "borderHeavy", "activeTab", "tabBg", "tabFg", "scrollTop", "stickToBottom", "minLines", "maxLines", "layerX", "layerY"];
+const CAMEL_PROPS = ["borderStyle", "borderColor", "borderHeavy", "borderSides", "activeTab", "tabBg", "tabFg", "scrollTop", "stickToBottom", "minLines", "maxLines", "layerX", "layerY"];
 
 /** The prop a template attribute names: `sticktobottom` is `stickToBottom`. */
 export const propName = (name: string): string => {
@@ -442,6 +442,7 @@ export class TBox extends TElement {
   borderStyle: string;
   borderColor: number;
   borderHeavy: boolean;
+  borderSides: boolean;
   tabBg: number;
   tabFg: number;
   tabs: string;
@@ -472,6 +473,7 @@ export class TBox extends TElement {
     this.borderStyle = "line";
     this.borderColor = -1;
     this.borderHeavy = false;
+    this.borderSides = true;
     this.tabBg = -1;
     this.tabFg = -1;
     this.tabs = "";
@@ -522,6 +524,9 @@ export class TBox extends TElement {
         return true;
       case "borderHeavy":
         this.setBorderHeavy(asBool(v));
+        return true;
+      case "borderSides":
+        this.setBorderSides(v === null ? true : asBool(v));
         return true;
       case "tabs":
         this.setTabs(asString(name, v));
@@ -642,6 +647,12 @@ export class TBox extends TElement {
     this.invalidate();
   }
 
+  setBorderSides(b: boolean) {
+    if (this.borderSides === b) return;
+    this.borderSides = b;
+    this.invalidate();
+  }
+
   setTabs(s: string) {
     if (this.tabs === s) return;
     this.tabs = s;
@@ -726,6 +737,7 @@ export class TBox extends TElement {
     if (this.borderStyle !== "line") p.push("borderStyle=" + this.borderStyle);
     if (this.borderColor !== -1) p.push("borderColor=" + colorName(this.borderColor));
     if (this.borderHeavy) p.push("borderHeavy");
+    if (!this.borderSides) p.push("borderSides=false");
     if (this.tabs !== "") p.push("tabs=" + JSON.stringify(this.tabs));
     if (this.activeTab !== -1) p.push("activeTab=" + String(this.activeTab));
     if (this.tabBg !== -1) p.push("tabBg=" + colorName(this.tabBg));

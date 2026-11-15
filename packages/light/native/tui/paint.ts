@@ -221,10 +221,10 @@ const drawCellBorder = (screen: Screen, clip: Clip, box: TBox, style: Style, inh
     putClipped(screen, clip, x + i, y + h - 1, bottom, 1, bottomStyle);
   }
   if (tabRow > 0) {
-    putClipped(screen, clip, x, edge, "🭽", 1, lid);
-    putClipped(screen, clip, x + w - 1, edge, "🭾", 1, lid);
+    putClipped(screen, clip, x, edge, box.borderSides ? "🭽" : "▔", 1, lid);
+    putClipped(screen, clip, x + w - 1, edge, box.borderSides ? "🭾" : "▔", 1, lid);
   }
-  for (let j = 1 + tabRow; j < h - 1; j++) {
+  for (let j = 1 + tabRow; j < h - 1 && box.borderSides; j++) {
     putClipped(screen, clip, x, y + j, left, 1, leftStyle);
     putClipped(screen, clip, x + w - 1, y + j, right, 1, rightStyle);
   }
