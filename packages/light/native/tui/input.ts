@@ -305,7 +305,7 @@ export class InputDecoder {
   /**
    * An SGR mouse report: `CSI < b ; x ; y M` for a press, `m` for a release.
    * The low bits of `b` are the button, 4 shift, 8 alt, 16 ctrl, 32 motion,
-   * 64 the wheel (64 up, 65 down).
+   * 64 the wheel (64 up, 65 down); motion with button 3 (none held) is `mousehover`.
    */
   emitMouse(params: string, pressed: boolean) {
     const parts = params.split(";");
@@ -323,7 +323,7 @@ export class InputDecoder {
     }
     const button = b & 3;
     const motion = (b & 32) !== 0;
-    const type = motion ? "mousemove" : pressed ? "mousedown" : "mouseup";
+    const type = motion ? (button === 3 ? "mousehover" : "mousemove") : pressed ? "mousedown" : "mouseup";
     if (this.onMouse !== null) this.onMouse(new MouseEvent(type, x, y, button === 3 ? 0 : button, ctrl, alt, shift));
   }
 }
