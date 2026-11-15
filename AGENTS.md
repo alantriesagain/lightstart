@@ -2,13 +2,43 @@
 
 Each package has its own rules where it has an `AGENTS.md` (`packages/server/AGENTS.md`, `packages/components/AGENTS.md`); this file holds what applies to all of them.
 
+## Using light
+
+Start every new project with `light new <kind> <name>`, run from a light checkout. The generator links that checkout because the packages are not on npm yet; `--light <path>` names another checkout, and `--npm` writes published version ranges once they exist.
+
+| Kind | What it gives |
+|---|---|
+| `web` | A page of light views and `lc-*` components, served by `light serve` |
+| `tui` | A terminal app on `@lightstart/light/native/tui`: a model, a controller, views, compiled by `scriptc` |
+| `desktop` | A light page in the desktop shell, with a backend `scriptc` compiles |
+| `package` | A light package: modules, tests, a README and the pack script |
+
+The project's own `AGENTS.md` is the reference for its kind: where files go, what each script does, how to test and what the host expects. Read it before changing code.
+
+The everyday commands are `pnpm dev` (web, tui, desktop), `pnpm build`, `pnpm test` and `pnpm check`. A project's own scripts are the source of truth.
+
+Conventions every kind shares:
+
+- TypeScript with erasable syntax: no `enum`, `namespace`, parameter properties or decorators, so node runs the sources after stripping types and `scriptc` can compile them.
+- No `any`. Narrow `unknown` with `typeof`, `instanceof` or `Array.isArray`.
+- Run `light check` before committing.
+- Test with `light test` in a web app, and with `node --test` (or the project's test script) elsewhere.
+- Never hand-write an importmap. `light serve` builds it from `package.json`.
+- Light's package READMEs are the reference for an API; every package under `packages/` has one.
+
+To get `light` on PATH from a checkout, link its binary:
+
+```bash
+ln -s "$PWD/packages/cli/bin/light.js" ~/.local/bin/light
+```
+
 ## Packages
 
 A new module is its own scoped package, `@lightstart/<name>` in `packages/<name>/`, as `@lightstart/server`, `@lightstart/sqlite` and `@lightstart/cli` are. Never add a subpath to light for it (`@lightstart/light/<name>`): `@lightstart/light` holds the engine, and what is built on it ships beside it.
 
 ## Workflow
 
-A big change reaches `main` through an issue and a pull request on GitHub, so each one is visible and linked to why it was made. A change is big when it adds a package or a module, changes or removes a public API, moves code across packages, needs another repository (bootstrapp, widecode) to follow, or spans more than a few files. A small change (a typo, a doc fix, a fix confined to a file or two with its test) is committed on `main` directly.
+A big change reaches `main` through an issue and a pull request on GitHub, so each one is visible and linked to why it was made. A change is big when it adds a package or a module, changes or removes a public API, moves code across packages, needs another repository to follow, or spans more than a few files. A small change (a typo, a doc fix, a fix confined to a file or two with its test) is committed on `main` directly.
 
 1. Open an issue first: what changes and why, and what is left for later.
 2. Branch from the latest `origin/main` (`git fetch origin && git switch -c <area>/<name> origin/main`). Commits keep the `<area>: <summary>` form.
