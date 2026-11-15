@@ -24,14 +24,14 @@ light new package my-package --no-install
 
 ## Kinds
 
-| Kind | What it starts |
-|---|---|
-| `web` | A page of light views and `lc-*` components |
-| `tui` | A terminal app on light's terminal host |
-| `desktop` | A page in light's desktop shell with a native backend |
-| `package` | A light package with modules, tests and a README |
+| Kind | What it starts | Its scripts |
+|---|---|---|
+| `web` | A page of light views and `lc-*` components | `light serve --watch`, `light build`, `light test`, `light check` |
+| `tui` | A terminal app on light's terminal host: a model, a controller, views | `node src/main.ts`, node's test runner, `light classes:bake`, `scriptc build` |
+| `desktop` | A page in light's desktop shell with a native backend | `light desktop run`, `light desktop build`, node's test runner, `light check` |
+| `package` | A light package with modules, tests and a README | node's test runner, `tsc`, `light check`, the pack script |
 
-Each kind is a template folder under `templates/` and a module under `kinds/`.
+Sources are TypeScript with erasable syntax, as light's own packages are, so what `scriptc` compiles in one kind reads the same in another. Each kind is a template folder under `templates/` and a module under `kinds/`.
 
 ## Where light comes from
 
