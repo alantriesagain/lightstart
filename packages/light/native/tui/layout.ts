@@ -7,7 +7,7 @@
  * changed beneath it, answers at once; a cached Size is never changed. An
  * input, whose lines may be set without a version bump, is measured afresh.
  */
-import { TAnchor, TBox, TElement, TInput, TNode, TRun, TSpan, TText } from "./node.ts";
+import { TAnchor, TBox, TElement, TInput, TNode, TRun, TSpan, TText, tabRowOf } from "./node.ts";
 import { Style } from "./style.ts";
 import { stringWidth } from "./width.ts";
 import { InlineRun, WrappedLine, wrapRuns } from "./wrap.ts";
@@ -91,8 +91,20 @@ export const inlineRuns = (el: TElement, base: Style, out: InlineRun[]) => {
 };
 
 const chrome = (box: TBox) => box.padding * 2 + (box.border ? 2 : 0);
+const chromeH = (box: TBox) => chrome(box) + tabRowOf(box);
 
-const shown = (node: TNode) => !(node instanceof TAnchor) && !(node instanceof TElement && node.hidden);
+const shown = (node: TNode) => !(node instanceof TAnchor) && !(node instanceof TElement && (node.hidden || (node instanceof TBox && node.layer)));
+
+/**
+ * Collect the overlay layers under `node` in tree order, hidden subtrees
+ * skipped.
+ */
+export const collectLayers = (node: TNode, out: TBox[]) => {
+  if (!(node instanceof TElement) || node.hidden) return out;
+  if (node instanceof TBox && node.layer) out.push(node);
+  for (let c = node.firstChild; c !== null; c = c.next) collectLayers(c, out);
+  return out;
+};
 
 const flexOf = (node: TNode) => (node instanceof TBox ? node.flex : 0);
 
@@ -213,7 +225,7 @@ const boxSize = (box: TBox, availW: number, inherited: Style) => {
     }
     if (count > 1) h += box.gap * (count - 1);
   }
-  return new Size(box.width !== null ? box.width : w + chrome(box), box.height !== null ? box.height : h + chrome(box));
+  return new Size(box.width !== null ? box.width : w + chrome(box), box.height !== null ? box.height : h + chromeH(box));
 };
 
 /**
@@ -237,9 +249,10 @@ export const arrange = (node: TNode, x: number, y: number, w: number, h: number,
   const style = box.style.inherit(inherited);
   const pad = box.padding + (box.border ? 1 : 0);
   const cx = x + pad;
-  const cy = y + pad;
+  const tabRow = tabRowOf(box);
+  const cy = y + pad + tabRow;
   const cw = Math.max(0, w - pad * 2);
-  const ch = Math.max(0, h - pad * 2);
+  const ch = Math.max(0, h - pad * 2 - tabRow);
   let count = 0;
   for (let k = box.firstChild; k !== null; k = k.next) if (shown(k)) count++;
   if (count === 0) return;
@@ -318,6 +331,23 @@ export const arrange = (node: TNode, x: number, y: number, w: number, h: number,
  */
 export const layout = (root: TBox, cols: number, rows: number, inherited: Style) => {
   arrange(root, 0, 0, cols, rows, inherited);
+  const layers = collectLayers(root, []);
+  for (const layer of layers) {
+    const size = measure(layer, cols, inherited);
+    let w = layer.width !== null ? layer.width : size.w;
+    let h = layer.height !== null ? layer.height : size.h;
+    if (w > cols) w = cols;
+    if (h > rows) h = rows;
+    if (w < 0) w = 0;
+    if (h < 0) h = 0;
+    let x = layer.layerX;
+    let y = layer.layerY;
+    if (x + w > cols) x = cols - w;
+    if (y + h > rows) y = rows - h;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    arrange(layer, x, y, w, h, inherited);
+  }
 };
 
 /**

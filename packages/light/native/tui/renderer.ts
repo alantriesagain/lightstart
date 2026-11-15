@@ -12,11 +12,11 @@
 import { CLEAR, CURSOR_HIDE, CURSOR_SHOW, cup } from "./ansi.ts";
 import { FocusEvent, KeyEvent, MouseEvent, WheelEvent } from "./events.ts";
 import { editorHandleKey } from "./editor.ts";
-import { focusStates, focusables, hitTest, isFocusable, nextFocusable, scrollBoxOf } from "./focus.ts";
+import { focusStates, focusables, hitTestLayers, isFocusable, nextFocusable, scrollBoxOf } from "./focus.ts";
 import { InputDecoder } from "./input.ts";
 import { layout, scrollBy } from "./layout.ts";
 import { TElement, TInput, TRoot } from "./node.ts";
-import { Caret, Clip, paint } from "./paint.ts";
+import { Caret, Clip, paint, paintLayers } from "./paint.ts";
 import { Screen, diffScreens } from "./screen.ts";
 import { FLUSH_RENDER, frames } from "./scheduler.ts";
 import { DEFAULT_STYLE } from "./style.ts";
@@ -106,6 +106,7 @@ export class Renderer {
     this.back.clear();
     const caret = new Caret();
     paint(this.root, this.back, new Clip(0, 0, this.back.w, this.back.h), DEFAULT_STYLE, caret, this.focus);
+    paintLayers(this.root, this.back, caret, this.focus);
     let out = diffScreens(this.front, this.back);
     if (caret.visible) {
       out += cup(caret.x, caret.y);
@@ -184,7 +185,7 @@ export class Renderer {
   }
 
   dispatchMouse(e: MouseEvent) {
-    const hit = hitTest(this.root, e.x, e.y);
+    const hit = hitTestLayers(this.root, e.x, e.y);
     // While a button is held, the element pressed gets the moves and the release: a drag that
     // leaves it (a selection running past its edge) is still its drag.
     const held = e.type !== "mousedown" && this.pressed !== null && this.attached(this.pressed) ? this.pressed : null;
@@ -214,7 +215,7 @@ export class Renderer {
   }
 
   dispatchWheel(e: WheelEvent) {
-    const target = hitTest(this.root, e.x, e.y);
+    const target = hitTestLayers(this.root, e.x, e.y);
     const consumed = target !== null && target.dispatch(e);
     if (!consumed) {
       const box = scrollBoxOf(target);

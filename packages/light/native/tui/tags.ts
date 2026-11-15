@@ -8,7 +8,7 @@
  * outside the table is a box. `class`, `id` and `style` are accepted and
  * kept inert.
  */
-import { TBox, TElement, TInput, TRun, TSpan, TText } from "./node.ts";
+import { TBox, TElement, TInput, TRun, TSpan, TText, propName } from "./node.ts";
 import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE } from "./style.ts";
 
 /**
@@ -50,7 +50,7 @@ const INLINE = new Set(["span", "b", "strong", "i", "em", "u", "s", "del", "code
 const INPUT = new Set(["input", "textarea"]);
 
 const COMMON_PROPS = ["fg", "bg", "bold", "dim", "italic", "underline", "inverse", "strike", "hidden", "class", "id", "style", "tabindex", "disabled"];
-const BOX_PROPS = ["direction", "flex", "width", "height", "padding", "gap", "border", "title", "scroll", "scrollTop", "stickToBottom", "align"];
+const BOX_PROPS = ["direction", "flex", "width", "height", "padding", "gap", "border", "borderStyle", "borderColor", "borderHeavy", "tabs", "activeTab", "tabBg", "tabFg", "title", "scroll", "scrollTop", "stickToBottom", "align", "layer", "layerX", "layerY", "backdrop", "shadow"];
 const TEXT_PROPS = ["wrap"];
 const INPUT_PROPS = ["placeholder", "minLines", "maxLines", "value"];
 export const EVENT_NAMES = ["key", "submit", "change", "click", "mousedown", "mouseup", "mousemove", "wheel", "focus", "blur"];
@@ -71,7 +71,8 @@ export const isKnownTag = (tag: string) => BLOCK.has(tag) || TEXT.has(tag) || IN
 /**
  * Whether an element of `tag` has a prop or attribute named `name`.
  */
-export const isKnownProp = (tag: string, name: string) => {
+export const isKnownProp = (tag: string, attr: string) => {
+  const name = propName(attr);
   if (COMMON_PROPS.indexOf(name) >= 0) return true;
   const kind = kindOf(tag);
   if (kind === "box") return BOX_PROPS.indexOf(name) >= 0;

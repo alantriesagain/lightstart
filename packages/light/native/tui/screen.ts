@@ -99,6 +99,18 @@ export class Screen {
   }
 
   /**
+   * Set only the background of every cell of a rectangle, keeping glyph,
+   * foreground and attributes; clipped to the grid.
+   */
+  setBg(x: number, y: number, w: number, h: number, bg: number) {
+    const x0 = x < 0 ? 0 : x;
+    const y0 = y < 0 ? 0 : y;
+    const x1 = x + w > this.w ? this.w : x + w;
+    const y1 = y + h > this.h ? this.h : y + h;
+    for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) this.bg[yy * this.w + xx] = bg;
+  }
+
+  /**
    * Set an attribute bit on every cell of a rectangle, clipped to the grid.
    */
   addAttr(x: number, y: number, w: number, h: number, bit: number) {
