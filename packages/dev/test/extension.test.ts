@@ -99,7 +99,7 @@ const main = async (): Promise<void> => {
   const before = (_ctx: CommandContext, payload: ServeBeforePayload): void => {
     seen = payload.greeting;
   };
-  const payload: ServeBeforePayload = { projectDir: "/p", port: 3000, watch: false, greeting: String(extension.payload.greeting) };
+  const payload: ServeBeforePayload = { projectDir: "/p", port: 3000, watch: false, ephemeral: false, greeting: String(extension.payload.greeting) };
   before({} as CommandContext, payload);
   eq("a serve hook reads an extension's field typed", seen, "hi-from-ext");
 

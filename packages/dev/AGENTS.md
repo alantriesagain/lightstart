@@ -15,7 +15,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `extension.ts` | `ServeExtension` and the base-path wrapper: the api `light serve` opens to extensions |
 | `types.ts` | `RouteContext`, `RouteFactory`, `ModuleTransform` |
 | `hooks.ts` | `serve:before`, `serve:after` and `serve:file-changed`, added to `Hooks` by declaration merging, and `serve` added to `Extensions` |
-| `node/` | The disk importmap, type stripping, `startServer`, the build preview, the websockets and the watcher |
+| `node/` | The disk importmap, type stripping, `startServer`, the build preview, the websockets, the watcher, the pidfile, the tunnel, the browser and what runs after listening |
 | `cli/commands/serve.ts` | `light serve`: the flags, then `startServer`, which opens the command to extensions |
 | `native/serve.ts` | The native entry: serves a folder without TypeScript |
 | `test/` | Plain scripts on `@light/test/assert.ts`; `test/fixtures/project` has a package, a page and TypeScript modules |
@@ -28,6 +28,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - The importmap is built from the project and the packages it declares, root first; the page's own map is merged on top and wins. A workspace package linked into `node_modules` is served from its real path when that path is inside the project, so a module has one URL.
 - The pipeline order is route apps, the reload client, files, the shell for `/` and extensionless paths, then a 404 for a missing asset. Route, reload, file and shell replies are `no-store`. A `.js` request probes `.ts` and `.tsx`; only modules are transformed and a `.d.ts` is left as it is.
 - The watcher ignores `node_modules`, `.git` and `.deployed`, debounces per path for 50 ms, broadcasts to the reload clients and then dispatches `serve:file-changed`.
+- A non-ephemeral server replaces a stale serve for the project before listening, writes `<project>/.light/serve.pid` after listening and clears it at shutdown; it stops the recorded process only when its command line is a `light serve`. An ephemeral server writes no pidfile and watches `LIGHT_PARENT_PID` when set.
+- Shutdown stops the tunnel and clears the pidfile before the hook teardowns, then closes the watchers, previews, sockets and server. A tunnel's origin joins `ServeOrigins` only when it answers the whole server.
 - Route apps are built once; `pass()` falls through to the next. A websocket upgrade goes to the route apps first, and the rest join the reload set.
 - `startServer` builds `ServeExtension` after the project, port and importmap are known, calls `ctx.cli.extend("serve", api)` before the hooks and before listening, and applies what setup changed: the root app, handled apps after route apps and before files, extra roots, the mutable importmap, the page renderer and page file, extra watched folders, base paths and build previews. With no extension everything is unchanged.
 - An extension's `api.payload` fields are spread into every serve hook payload. The hook payloads stay interfaces so another package widens them by declaration merging.
@@ -41,7 +43,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | Contract | Who relies on it |
 |---|---|
 | `startServer(ctx, args)` and the `serve` command flags | `light serve`, and the hooks a project contributes under `cli/hooks/` |
-| The hook names and payloads (`serve:before`, `serve:after`, `serve:file-changed`) declared on `@lightstart/cli`'s `Hooks`, and the `serve` extension api on `Extensions` | project hook and extension files, and any package that dispatches or listens to `light serve` |
+| The hook names and payloads (`serve:before`, `serve:after`, `serve:file-changed`) declared on `@lightstart/cli`'s `Hooks`, including `ephemeral` and `origins.tunnel`, and the `serve` extension api on `Extensions` | project hook and extension files, and any package that dispatches or listens to `light serve` |
+| `<project>/.light/serve.pid` as `{ pid, port }`, and `light.dev.tunnel` as a hostname or `{ hostname, paths }` | the next `light serve` of the project, and any tool that reads the dev server's tunnel |
 | `ServeExtension` and its methods (`app`, `handle`, `root`, `importmap`, `page`, `pageFile`, `watch`, `basePath`, `preview`, `payload`) | extension files under a project's scopes |
 | `resolvePort`, `DEFAULT_PORT` and `MAX_PORT_ATTEMPTS` | the serve command's port behavior and the build preview |
 | `createPipeline`, `renderShell`, `RELOAD_CLIENT`, `buildImportMap` and `createModuleTransform` | `@lightstart/dev/node`, the native entry, and the pipeline tests |

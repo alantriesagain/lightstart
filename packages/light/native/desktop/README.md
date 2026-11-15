@@ -38,8 +38,9 @@ runtime libraries, which a desktop already has (`libwebkit2gtk-4.1-0`).
 `light serve` on `--port`, or the project's `light.dev.port`, or the port a desktop
 extension names with `defaultPort`, or 3500; it waits
 until the origin answers and then opens the shell on it, taking both down
-together. `--attach` reuses a server already answering there and leaves it
-running. The shell is light's own, built from `shell/backend.js`; when it cannot
+together. Its server is ephemeral: no pidfile, and it stops when `dev` ends
+because `dev` passes its own pid as `LIGHT_PARENT_PID`. `--attach` reuses a
+server already answering there and leaves it running. The shell is light's own, built from `shell/backend.js`; when it cannot
 be built (no WebKitGTK, no scriptc), a desktop extension must name one.
 
 ## Extending light desktop

@@ -5,6 +5,7 @@
 import { readFileSync, existsSync, realpathSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { declaredPackages, importMapFor, type ImportMap, type PackageManifest } from "../importmap.ts";
+import { tunnelOf, type DevTunnel } from "./tunnel.ts";
 
 /** The project's `package.json`, or null when it has none or it is not JSON. */
 export const readPackageJson = (dir: string): PackageManifest | null => {
@@ -28,6 +29,16 @@ export const devPortOf = (pkg: PackageManifest | null): number | null => {
   const dev = light["dev"];
   if (!isRecord(dev)) return null;
   return typeof dev["port"] === "number" ? dev["port"] : null;
+};
+
+/** `light.dev.tunnel` from a manifest: a hostname, or `{ hostname, paths }`. */
+export const devTunnelOf = (pkg: PackageManifest | null): DevTunnel | null => {
+  if (pkg === null) return null;
+  const light = (pkg as Record<string, unknown>)["light"];
+  if (!isRecord(light)) return null;
+  const dev = light["dev"];
+  if (!isRecord(dev)) return null;
+  return tunnelOf(dev["tunnel"]);
 };
 
 /**

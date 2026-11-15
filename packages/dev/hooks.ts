@@ -9,13 +9,15 @@ import type { ServeExtension } from "./extension.ts";
 export interface ServeOrigins {
   local: string;
   lan?: string;
+  tunnel?: string;
 }
 
-/** What `serve:before` receives: the project, the port it will try, and whether it watches. */
+/** What `serve:before` receives: the project, the port it will try, whether it watches, and whether it is ephemeral. */
 export interface ServeBeforePayload {
   projectDir: string;
   port: number;
   watch: boolean;
+  ephemeral: boolean;
 }
 
 /** What `serve:after` receives once the server is listening; its teardown runs at shutdown. */
@@ -47,6 +49,9 @@ declare module "@lightstart/cli" {
       host: string;
       watch: boolean;
       build: boolean;
+      open: boolean;
+      tunnel: boolean;
+      ephemeral: boolean;
     };
   }
 }

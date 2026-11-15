@@ -15,9 +15,11 @@ import type { ServeAfterPayload, ServeBeforePayload, ServeFileChangedPayload } f
 import { importmapFromHtml, mergeImportMaps, type ImportMap } from "../importmap.ts";
 import { createPipeline } from "../pipeline.ts";
 import type { RouteFactory } from "../types.ts";
+import { afterListen } from "./after.ts";
 import { createDeployedServer, type DeployedServer } from "./deployed.ts";
 import { attachSockets } from "./hmr.ts";
-import { buildImportMap, devPortOf, readPackageJson } from "./importmap.ts";
+import { buildImportMap, devPortOf, devTunnelOf, readPackageJson } from "./importmap.ts";
+import { replaceStaleServe, watchParent } from "./single-instance.ts";
 import { createModuleTransform } from "./transform.ts";
 import { startWatcher, type Watcher } from "./watch.ts";
 
@@ -28,6 +30,9 @@ export type ServeArgs = {
   host?: string;
   watch?: boolean;
   build?: boolean;
+  open?: boolean;
+  tunnel?: boolean;
+  ephemeral?: boolean;
 };
 
 const bindHostFor = (host: string): string => (host === "localhost" ? "127.0.0.1" : host);
@@ -82,10 +87,13 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
   const pkg = readPackageJson(projectDir);
   const host = bindHostFor(args.host ?? "127.0.0.1");
   const watch = args.watch === true;
+  const ephemeral = args.ephemeral === true;
+  const namedTunnel = devTunnelOf(pkg);
+  if (!ephemeral) await replaceStaleServe(projectDir);
   const extension = new ServeExtension(projectDir, await projectImportMap(projectDir));
   await ctx.cli.extend("serve", extension);
   const basePort = resolvePort({ argsPort: args.port, pkgPort: devPortOf(pkg), env: ctx.env, fallback: extension.defaultPortValue() });
-  const beforePayload = { ...extension.payload, projectDir, port: basePort, watch } as unknown as ServeBeforePayload;
+  const beforePayload = { ...extension.payload, projectDir, port: basePort, watch, ephemeral } as unknown as ServeBeforePayload;
   const before = await ctx.cli.runHook("serve:before", beforePayload);
 
   if (args.build === true) {
@@ -100,18 +108,30 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
     const urls = urlsFor(server.port, host);
     ctx.log.log(`Serving the build at ${urls.local}`);
     for (const url of urls.lan) ctx.log.log(`LAN: ${url}`);
+    const auxiliary = await afterListen(ctx, {
+      projectDir,
+      port: server.port,
+      local: urls.local,
+      ephemeral,
+      open: args.open === true,
+      tunnel: args.tunnel === true,
+      named: namedTunnel,
+    });
+    const tunnelOrigin = auxiliary.tunnel !== null && auxiliary.tunnel.paths.length === 0 ? auxiliary.tunnel.origin : undefined;
     const after = await ctx.cli.runHook("serve:after", {
       ...extension.payload,
       projectDir,
       port: server.port,
       watch: false,
-      origins: { local: urls.local, ...(urls.lan[0] === undefined ? {} : { lan: urls.lan[0] }) },
+      ephemeral,
+      origins: { local: urls.local, ...(urls.lan[0] === undefined ? {} : { lan: urls.lan[0] }), ...(tunnelOrigin === undefined ? {} : { tunnel: tunnelOrigin }) },
     } as unknown as ServeAfterPayload);
     return await new Promise<number>((resolve: (code: number) => void) => {
       let closing = false;
       const shutdown = async (): Promise<void> => {
         if (closing) return;
         closing = true;
+        await auxiliary.stop();
         await after.teardown();
         await before.teardown();
         await server.close();
@@ -119,6 +139,8 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
       };
       process.once("SIGINT", shutdown);
       process.once("SIGTERM", shutdown);
+      const parent = Number(process.env["LIGHT_PARENT_PID"]);
+      if (ephemeral && Number.isInteger(parent) && parent > 0) watchParent(parent, () => void shutdown());
     });
   }
 
@@ -183,12 +205,23 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
   for (const url of urls.lan) ctx.log.log(`LAN: ${url}`);
   if (watch) ctx.log.log(`Watching ${projectDir} for changes`);
 
+  const auxiliary = await afterListen(ctx, {
+    projectDir,
+    port: server.port,
+    local: urls.local,
+    ephemeral,
+    open: args.open === true,
+    tunnel: args.tunnel === true,
+    named: namedTunnel,
+  });
+  const tunnelOrigin = auxiliary.tunnel !== null && auxiliary.tunnel.paths.length === 0 ? auxiliary.tunnel.origin : undefined;
   const after = await ctx.cli.runHook("serve:after", {
     ...extension.payload,
     projectDir,
     port: server.port,
     watch,
-    origins: { local: urls.local, ...(urls.lan[0] === undefined ? {} : { lan: urls.lan[0] }) },
+    ephemeral,
+    origins: { local: urls.local, ...(urls.lan[0] === undefined ? {} : { lan: urls.lan[0] }), ...(tunnelOrigin === undefined ? {} : { tunnel: tunnelOrigin }) },
   } as unknown as ServeAfterPayload);
 
   return await new Promise<number>((resolve: (code: number) => void) => {
@@ -197,6 +230,7 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
       if (closing) return;
       closing = true;
       ctx.log.log("Shutting down...");
+      await auxiliary.stop();
       await after.teardown();
       await before.teardown();
       for (const watcher of watchers) watcher.close();
@@ -207,5 +241,7 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
     };
     process.once("SIGINT", shutdown);
     process.once("SIGTERM", shutdown);
+    const parent = Number(process.env["LIGHT_PARENT_PID"]);
+    if (ephemeral && Number.isInteger(parent) && parent > 0) watchParent(parent, () => void shutdown());
   });
 };
