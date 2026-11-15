@@ -1,0 +1,14 @@
+{
+  "name": "@acme/linked",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@acme/base": "^1.0.0"
+  },
+  "native": {
+    "prepare": [
+      "printf 'linked\\n' >> \"$PREPARE_LOG\""
+    ]
+  }
+}

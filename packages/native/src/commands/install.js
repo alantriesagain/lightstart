@@ -7,19 +7,18 @@ import { execFileSync } from "node:child_process";
 import { copyFileSync, mkdirSync, renameSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { delimiter, join } from "node:path";
-import { memberByName } from "../workspace.js";
-import { binaryOf, buildApp } from "./build.js";
+import { Member, memberByName } from "../workspace.js";
+import { binaryOf, buildApp, buildProject } from "./build.js";
 
 /**
- * @param {string[]} args
+ * Put `binary` in the bin folder as `name`.
  * @param {string} root
+ * @param {Member} app
+ * @param {string} binary
+ * @param {string | undefined} name
  * @returns {Promise<number>}
  */
-export const run = async (args, root) => {
-  const [appName, name] = args.filter((a) => a !== "--strip");
-  if (appName === undefined) throw new Error("usage: light-native install <app> [name] [--strip]");
-  const app = memberByName(root, appName);
-  const binary = await buildApp(root, app, args.includes("--strip"));
+export const installBinary = async (root, app, binary, name) => {
   const target = name ?? binaryOf(app);
   const bin = process.env["BIN_DIR"] ?? join(homedir(), ".local", "bin");
   mkdirSync(bin, { recursive: true });
@@ -35,4 +34,29 @@ export const run = async (args, root) => {
   console.log("installed " + join(bin, target) + " (" + mb + " MB" + (version.length > 0 ? ", " + version : "") + "); run it in any folder: " + target);
   if (!(process.env["PATH"] ?? "").split(delimiter).includes(bin)) console.log("note: " + bin + " is not on PATH; add it to your shell profile");
   return 0;
+};
+
+/**
+ * @param {string[]} args
+ * @param {string} root
+ * @returns {Promise<number>}
+ */
+export const run = async (args, root) => {
+  const [appName, name] = args.filter((a) => a !== "--strip");
+  if (appName === undefined) throw new Error("usage: light-native install <app> [name] [--strip]");
+  const app = memberByName(root, appName);
+  const binary = await buildApp(root, app, args.includes("--strip"));
+  return installBinary(root, app, binary, name);
+};
+
+/**
+ * Build `project` and install its binary.
+ * @param {import("../project.js").Project} project
+ * @param {string | undefined} name
+ * @param {boolean} strip
+ * @returns {Promise<number>}
+ */
+export const installProject = async (project, name, strip) => {
+  const binary = await buildProject(project, strip);
+  return installBinary(project.dir, project, binary, name);
 };

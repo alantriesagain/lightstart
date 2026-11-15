@@ -2,6 +2,29 @@
 
 The tooling of a workspace of native apps and packages, a node program (nothing here is compiled by scriptc): `light-native <command>`, run from anywhere inside the workspace (the root's scripts, or `pnpm exec light-native …`). It serves light's own packages and any workspace that links light (a `light` entry in its `pnpm-workspace.yaml`, light's native and terminal packages listed after it by folder, `light/packages/lib` and the rest). A member is any folder a `pnpm-workspace.yaml` pattern names that holds a `package.json`, and the workspace root itself when its `package.json` names a `native.entry` (a workspace that is one app); light itself is none. An app is a member under `apps/` or any member with a `native.entry`. In a workspace that links light, light's packages are members the others depend on and are prepared with them, and the commands that go over every member leave them to light's gates.
 
+## A standalone project
+
+A standalone project needs no `pnpm-workspace.yaml`: its project is the nearest folder at or above the start folder whose `package.json` holds a `native` block. The start folder is the command's folder, or `LIGHT_PROJECT_DIR`. Its dependencies are found through its `node_modules` (a `link:` symlink or an installed folder alike), walked as a closure in dependency order, each package's own `dependencies` and `devDependencies` resolved from its real folder.
+
+Before a build, a test run, coverage or typecheck, the dependencies' `native.prepare` lines run in each dependency's own folder, in dependency order, each once, and then the project's own at its root, with `LIGHT_NATIVE_COMMAND` naming the command. A dependency whose real folder lies inside a `node_modules` folder is an installed package, not a link to a checkout: its prepare steps are not run, and it is reported as expected prebuilt, which is what publishing settles.
+
+`native.ffi` and a test's `// ffi: <manifest>` resolve by package path through the project's `node_modules`, and under node the manifest folder's `*-node.mjs` stand-in is preloaded with `--import`. The compiler is `$SCRIPTC` when set, else `<project>/node_modules/.bin/scriptc`, else the one installed beside `@lightstart/native`, else `scriptc` on PATH. `SCRIPTC_CACHE_MAX_MB` and the other `SCRIPTC_*` variables pass through to the compiler.
+
+## The `light` commands
+
+A project that declares `@lightstart/native` gets these commands from `light`; each works on the project of the current folder, and with `--all` (or member names) on the members of the workspace instead. A folder with neither a native project nor `--all` is one error.
+
+| Command | Does |
+|---|---|
+| `light run [-- args…]` | build the project (`scriptc build native.entry` into `dist/<native.binary>`, keeping the symbol table) and run it in the folder the command was launched from, as `light-native run` does |
+| `light selftest <scenario> [--no-build]` | build the project and run one of its `native.selftests` scenarios in a pseudo-terminal |
+| `light install [name]` | build the project and copy its binary into `~/.local/bin` (`BIN_DIR` overrides), atomically |
+| `light coverage [--apps] [--jobs N]` | scriptc's static coverage of the project's entry and, without `--apps`, of every test |
+| `light typecheck [--all]` | tsc over the project's tsconfig, or with `--all` over every workspace member |
+| `light prepare` | the prepare steps alone, the dependencies' first |
+
+## The `light-native` commands
+
 | Command | Does |
 |---|---|
 | `light-native prepare [member…]` | the prepare steps (`native.prepare`, shell lines run in the member's folder) of the members named, every app by default, and of the members they depend on, each once |
@@ -15,7 +38,7 @@ The tooling of a workspace of native apps and packages, a node program (nothing 
 | `light-native install <app> [name] [--strip]` | build and copy the binary into `~/.local/bin` (`BIN_DIR` overrides), atomically |
 | `light-native desktop <app> [--selftest]` | build a desktop app with light's desktop shell (`native.web` the page) into its dist/ and run it, or its `native.selftest` |
 
-The compiler is light's choice (`packages/light/native/scriptc.js`): `$SCRIPTC`, else the one installed at the root, else `scriptc` on PATH. scriptc caches what it built and what coverage found under `SCRIPTC_CACHE_DIR`, so an unchanged program comes back in a second (a test with the FFI manifest in a third of its time).
+The compiler is light's choice (`packages/light/native/scriptc.js`): `$SCRIPTC`, else the one installed at the root (`<root>/node_modules/.bin/scriptc`), else the one beside `@lightstart/native`, else `scriptc` on PATH. scriptc caches what it built and what coverage found under `SCRIPTC_CACHE_DIR`, so an unchanged program comes back in a second (a test with the FFI manifest in a third of its time).
 
 ## The `native` block of a member's package.json
 

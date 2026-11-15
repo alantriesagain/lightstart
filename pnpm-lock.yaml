@@ -273,6 +273,9 @@ importers:
         specifier: workspace:*
         version: link:../light
     devDependencies:
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5

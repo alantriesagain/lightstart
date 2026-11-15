@@ -17,7 +17,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { agentEnv, quote } from "../run.js";
 import { Member, memberByName } from "../workspace.js";
-import { binaryOf, binaryPath, buildApp } from "./build.js";
+import { binaryOf, binaryPath, buildApp, buildProject } from "./build.js";
 
 const makeRepo = () => {
   const repo = mkdtempSync(join(tmpdir(), "native-selftest-"));
@@ -57,6 +57,32 @@ const absolute = (app, value) => {
 };
 
 /**
+ * @typedef {object} Scenario
+ * @property {string[]} [args]
+ * @property {Record<string, unknown>} [home]
+ * @property {string} [homeEnv]
+ * @property {string} [live]
+ * @property {number} [wait]
+ * @property {[string, string][]} [checks]
+ * @property {[string, string][]} [outputChecks]
+ * @property {string} [noProcessLeft]
+ * @property {number} [exitCode]
+ */
+
+/**
+ * The scenario resolved from `app`'s `native.selftests`, or the error naming what exists.
+ * @param {Member} app
+ * @param {string} scenario
+ * @returns {Scenario}
+ */
+const scenarioOf = (app, scenario) => {
+  const scenarios = app.config.selftests ?? {};
+  const cfg = scenarios[scenario];
+  if (cfg === undefined) throw new Error(app.name + ": no selftest scenario " + scenario + " (" + Object.keys(scenarios).join(", ") + ")");
+  return cfg;
+};
+
+/**
  * @param {string[]} args
  * @param {string} root
  * @returns {Promise<number>}
@@ -65,15 +91,44 @@ export const run = async (args, root) => {
   const [name, scenario, ...rest] = args;
   if (name === undefined || scenario === undefined) throw new Error("usage: light-native selftest <app> <scenario> [--no-build] [-- flags…]");
   const app = memberByName(root, name);
-  const scenarios = app.config.selftests ?? {};
-  const cfg = scenarios[scenario];
-  if (cfg === undefined) throw new Error(app.name + ": no selftest scenario " + scenario + " (" + Object.keys(scenarios).join(", ") + ")");
+  const cfg = scenarioOf(app, scenario);
   if (typeof cfg.live === "string" && process.env["NATIVE_LIVE"] !== "1") {
     console.log("skip " + scenario + " (set NATIVE_LIVE=1 to talk to " + cfg.live + ")");
     return 0;
   }
   const extra = rest.filter((a) => a !== "--no-build" && a !== "--");
   const binary = rest.includes("--no-build") ? binaryPath(app) : await buildApp(root, app);
+  return executeScenario(app, scenario, cfg, extra, binary);
+};
+
+/**
+ * A project's selftest scenario, its binary built unless `noBuild`.
+ * @param {import("../project.js").Project} project
+ * @param {string} scenario
+ * @param {string[]} rest
+ * @returns {Promise<number>}
+ */
+export const runProject = async (project, scenario, rest) => {
+  const cfg = scenarioOf(project, scenario);
+  if (typeof cfg.live === "string" && process.env["NATIVE_LIVE"] !== "1") {
+    console.log("skip " + scenario + " (set NATIVE_LIVE=1 to talk to " + cfg.live + ")");
+    return 0;
+  }
+  const extra = rest.filter((a) => a !== "--no-build" && a !== "--");
+  const binary = rest.includes("--no-build") ? binaryPath(project) : await buildProject(project);
+  return executeScenario(project, scenario, cfg, extra, binary);
+};
+
+/**
+ * Run one scenario's checks against `app`'s binary.
+ * @param {Member} app
+ * @param {string} scenario
+ * @param {Scenario} cfg
+ * @param {string[]} extra
+ * @param {string} binary
+ * @returns {Promise<number>}
+ */
+const executeScenario = async (app, scenario, cfg, extra, binary) => {
   const log = process.env["NATIVE_LOG"] ?? join(tmpdir(), binaryOf(app) + "-selftest-" + String(process.pid) + ".log");
   rmSync(log, { force: true });
   const repo = makeRepo();
