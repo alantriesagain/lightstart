@@ -99,3 +99,21 @@ test("an empty file reports zero total so the CLI can fail it", async () => {
   const wire = await wireOf(() => {});
   assert.equal(wire.counts.total, 0);
 });
+
+test("a prelude that throws is reported as that error, not as node:test missing", async () => {
+  const { runnerPage } = await import("./page.js");
+  const html = runnerPage({ file: "/app/x.browser.test.js", importmap: {}, harnessUrl: "/harness.js", reportUrl: "/report.js", prelude: 'throw new Error("boot failed");' });
+  const script = /<script type="module">([\s\S]*)<\/script>/.exec(html)?.[1] ?? "";
+  const scope = /** @type {Record<string, unknown>} */ (globalThis);
+  const saved = { window: scope.window, document: scope.document, testResults: scope.testResults };
+  scope.window = globalThis;
+  scope.document = { getElementById: () => ({ append() {} }), createElement: () => ({}) };
+  try {
+    await import(`data:text/javascript,${encodeURIComponent(script)}`);
+    const results = /** @type {{ shimLoaded: boolean, loadError: { message: string } }} */ (scope.testResults);
+    assert.equal(results.shimLoaded, true);
+    assert.equal(results.loadError.message, "boot failed");
+  } finally {
+    Object.assign(scope, saved);
+  }
+});

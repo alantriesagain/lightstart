@@ -61,7 +61,8 @@ ${prelude}
       }
     } catch (error) {
       log("Error: " + error.message, "fail");
-      publish({ shimLoaded: false, file: filePath, loadError: { name: error.name, message: error.message, stack: [] }, durationMs: 0, counts: { pass: 0, fail: 1, skip: 0, todo: 0, total: 1, suites: 0 }, tests: [], failures: [] });
+      // The prelude or the harness failed before node:test was tried: report that error, not the shim.
+      publish({ shimLoaded: true, file: filePath, loadError: { name: error.name, message: error.message, stack: [] }, durationMs: 0, counts: { pass: 0, fail: 1, skip: 0, todo: 0, total: 1, suites: 0 }, tests: [], failures: [] });
     }
   </script>
 </body>
