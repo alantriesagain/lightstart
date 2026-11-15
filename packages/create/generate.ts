@@ -36,10 +36,11 @@ export type GenerateOptions = {
 export type GeneratedManifest = {
   name: string;
   type: "module";
-  private: true;
+  private?: true;
   scripts: Record<string, string>;
   dependencies: Record<string, string>;
   devDependencies: Record<string, string>;
+  [field: string]: unknown;
 };
 
 type PackageManifest = {
@@ -124,9 +125,10 @@ export const manifestFor = (kind: Kind, name: string, root: string, mode: Instal
 
   return {
     name,
+    ...kind.manifest,
     type: "module",
-    private: true,
-    scripts: kind.scripts,
+    ...(kind.publishable === true ? {} : { private: true as const }),
+    scripts: Object.fromEntries(Object.entries(kind.scripts).map(([script, line]) => [script, replaceTokens(line, name, titleOf(name))])),
     dependencies,
     devDependencies,
   };

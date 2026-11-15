@@ -55,7 +55,7 @@ const command: Command<typeof args> = {
         log: (message) => ctx.log.log(message),
       });
       ctx.log.log(`Created ${manifest.name} from the ${kind.name} kind.`);
-      ctx.log.log(`Next: cd ${target}${parsed.install ? ` && ${pm} run dev` : ` && ${pm} install && ${pm} run dev`}`);
+      ctx.log.log(`Next: cd ${target}${parsed.install ? "" : ` && ${pm} install`} && ${pm} run ${kind.next ?? "dev"}`);
       return 0;
     } catch (error) {
       ctx.log.error(error instanceof Error ? error.message : String(error));
