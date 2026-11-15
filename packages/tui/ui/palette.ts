@@ -78,7 +78,7 @@ export class Palette {
 
   /** Pane `id`'s background: its accent faintly over `screenBg`, a little stronger while active. */
   tintOf(id: string, active: boolean): string {
-    return mixHex(this.accentOf(id), this.screenBg, active ? 0.16 : 0.1);
+    return mixHex(this.accentOf(id), this.screenBg, active ? 0.11 : 0.07);
   }
 
   /** Pane `id`'s border: the accent while active, else the accent dimmed toward `screenBg`. */
