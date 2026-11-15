@@ -19,6 +19,7 @@ import { spawn } from "node:child_process";
 import { readFile, readdir, mkdir, writeFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { frameworkPkgUrl } from "bootstrapp/url";
 
 const website = join(dirname(fileURLToPath(import.meta.url)), "..");
 const builds = join(website, ".deployed", "builds");
@@ -173,7 +174,7 @@ async function mirrorModules(buildDir, dev) {
     if (!((isModule && /javascript/.test(mime)) || (isCss && /css/.test(mime)) || (isJson && /json/.test(mime)))) continue;
     let body = await response.text();
     if (isModule) {
-      body = body.replaceAll("/app/@lightstart/light/html/index.js", RUNTIME_SHIM);
+      body = body.replaceAll(frameworkPkgUrl("@lightstart/light", "html/index.js"), RUNTIME_SHIM);
       body = body.replace(SPECIFIER, (match, quote, specifier) => {
         const fixed = specifier.replace(/\.m?ts$/, (ext) => ext.replace("ts", "js"));
         return fixed === specifier ? match : match.replace(specifier, fixed);

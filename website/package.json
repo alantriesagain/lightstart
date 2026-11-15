@@ -39,6 +39,8 @@
   "dependencies": {
     "@lightstart/light": "workspace:*",
     "@lightstart/components": "workspace:*",
+    "@lightstart/highlight": "workspace:*",
+    "@lightstart/markdown": "workspace:*",
     "@lightstart/router": "workspace:*",
     "@bootstrapp/showcase": "workspace:*",
     "bootstrapp": "workspace:*",
@@ -49,7 +51,7 @@
   },
   "devDependencies": {
     "@bootstrapp/test": "workspace:*",
-    "@bootstrapp/cli": "workspace:*",
+    "@lightstart/cli": "workspace:*",
     "@bootstrapp/check": "workspace:*",
     "@bootstrapp/devops": "workspace:*",
     "@bootstrapp/generator": "workspace:*",

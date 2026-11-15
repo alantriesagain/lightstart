@@ -9,7 +9,8 @@
  * recognizes, and prints as `[object Object]`.
  */
 import { html, svg, render, key, element, nothing, unsafeHTML } from "@lightstart/light/html";
+import $APP from "bootstrapp";
 
 const renderer = { html, svg, render, key, element, nothing, unsafeHTML };
 globalThis.__LIGHT_RENDERER__ = renderer;
-if (globalThis.$APP) Object.assign(globalThis.$APP, renderer);
+Object.assign($APP, renderer);
