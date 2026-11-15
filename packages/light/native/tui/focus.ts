@@ -8,7 +8,8 @@
  * their ancestors, change the states their classes may depend on.
  */
 import { STATE_FOCUS, STATE_FOCUS_WITHIN, reapplyClasses } from "./classes.ts";
-import { TAnchor, TBox, TElement, TInput, TNode, TRun } from "./node.ts";
+import { collectLayers } from "./layout.ts";
+import { TAnchor, TBox, TElement, TInput, TNode, TRun, tabRowOf } from "./node.ts";
 
 const contains = (el: TElement, x: number, y: number) => x >= el.x && x < el.x + el.w && y >= el.y && y < el.y + el.h;
 
@@ -22,7 +23,7 @@ export const hitTest = (node: TNode, x: number, y: number): TElement | null => {
   if (node.hidden || !contains(node, x, y)) return null;
   if (node instanceof TBox) {
     const pad = node.padding + (node.border ? 1 : 0);
-    const inside = x >= node.x + pad && x < node.x + node.w - pad && y >= node.y + pad && y < node.y + node.h - pad;
+    const inside = x >= node.x + pad && x < node.x + node.w - pad && y >= node.y + pad + tabRowOf(node) && y < node.y + node.h - pad;
     if (inside)
       for (let c = node.lastChild; c !== null; c = c.prev) {
         const hit = hitTest(c, x, y);
@@ -30,6 +31,22 @@ export const hitTest = (node: TNode, x: number, y: number): TElement | null => {
       }
   }
   return node;
+};
+
+/**
+ * The element under the cell (x, y) with the overlay layers on top: the last
+ * layer whose rectangle holds the cell wins (its own hit test), a layer with
+ * `backdrop` catches a cell outside it, and otherwise the tree's hit test
+ * answers.
+ */
+export const hitTestLayers = (root: TNode, x: number, y: number): TElement | null => {
+  const layers = collectLayers(root, []);
+  for (let i = layers.length - 1; i >= 0; i--) {
+    const layer = layers[i];
+    if (contains(layer, x, y)) return hitTest(layer, x, y);
+    if (layer.backdrop) return layer;
+  }
+  return hitTest(root, x, y);
 };
 
 export const isFocusable = (el: TElement) => {

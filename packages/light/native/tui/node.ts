@@ -13,7 +13,7 @@
 import { parseColor } from "./color.ts";
 import { frames } from "./scheduler.ts";
 import { UIEvent } from "./events.ts";
-import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, DEFAULT_STYLE, Style } from "./style.ts";
+import { ATTR_BOLD, ATTR_DIM, ATTR_INVERSE, ATTR_ITALIC, ATTR_STRIKE, ATTR_UNDERLINE, colorName, DEFAULT_STYLE, Style } from "./style.ts";
 
 import { applyClasses, classStyler, markExplicit } from "./classes.ts";
 
@@ -152,7 +152,20 @@ export const asBool = (v: PropValue) => {
   return v !== "false";
 };
 
+/** The camelCase props: a template's attribute names arrive lowercased, and `propName` gives them back their case. */
+const CAMEL_PROPS = ["borderStyle", "borderColor", "borderHeavy", "activeTab", "tabBg", "tabFg", "scrollTop", "stickToBottom", "minLines", "maxLines", "layerX", "layerY"];
+
+/** The prop a template attribute names: `sticktobottom` is `stickToBottom`. */
+export const propName = (name: string): string => {
+  for (const p of CAMEL_PROPS) if (p.toLowerCase() === name) return p;
+  return name;
+};
+
+/** The row a cell box's tabs take above its top edge: 1 for a cell border with tabs or a title, else 0. */
+export const tabRowOf = (box: TBox): number => (box.border && box.borderStyle === "cell" && (box.tabs !== "" || box.title !== null) ? 1 : 0);
+
 const DIRECTIONS = ["column", "row"];
+const BORDER_STYLES = ["line", "cell"];
 const ALIGNS = ["stretch", "start", "end"];
 const WRAPS = ["word", "char", "none"];
 
@@ -265,7 +278,7 @@ export class TElement extends TNode {
   setProp(name: string, v: PropValue) {
     if (this.owner !== null && v !== null && this.owner.$setProp(name, v)) return;
     if (name === "class") applyClasses(this, v);
-    else if (this.setKnownExplicit(name, v)) return;
+    else if (this.setKnownExplicit(propName(name), v)) return;
     if (v === null || v === false) {
       if (this.attrs.delete(name)) this.invalidate();
     } else {
@@ -426,12 +439,24 @@ export class TBox extends TElement {
   padding: number;
   gap: number;
   border: boolean;
+  borderStyle: string;
+  borderColor: number;
+  borderHeavy: boolean;
+  tabBg: number;
+  tabFg: number;
+  tabs: string;
+  activeTab: number;
   title: string | null;
   scroll: boolean;
   scrollTop: number;
   stickToBottom: boolean;
   align: string;
   rule: boolean;
+  layer: boolean;
+  layerX: number;
+  layerY: number;
+  backdrop: boolean;
+  shadow: number;
   scrollState: ScrollState | null;
   measured: MeasureCache | null;
 
@@ -444,12 +469,24 @@ export class TBox extends TElement {
     this.padding = 0;
     this.gap = 0;
     this.border = false;
+    this.borderStyle = "line";
+    this.borderColor = -1;
+    this.borderHeavy = false;
+    this.tabBg = -1;
+    this.tabFg = -1;
+    this.tabs = "";
+    this.activeTab = -1;
     this.title = null;
     this.scroll = false;
     this.scrollTop = 0;
     this.stickToBottom = false;
     this.align = "stretch";
     this.rule = false;
+    this.layer = false;
+    this.layerX = 0;
+    this.layerY = 0;
+    this.backdrop = false;
+    this.shadow = -1;
     this.scrollState = null;
     this.measured = null;
   }
@@ -477,6 +514,27 @@ export class TBox extends TElement {
       case "border":
         this.setBorder(asBool(v));
         return true;
+      case "borderStyle":
+        this.setBorderStyle(asEnum(name, v, BORDER_STYLES));
+        return true;
+      case "borderColor":
+        this.setBorderColor(v === null ? -1 : parseColor(asString(name, v)));
+        return true;
+      case "borderHeavy":
+        this.setBorderHeavy(asBool(v));
+        return true;
+      case "tabs":
+        this.setTabs(asString(name, v));
+        return true;
+      case "activeTab":
+        this.setActiveTab(asNumber(name, v));
+        return true;
+      case "tabBg":
+        this.setTabBg(v === null ? -1 : parseColor(asString(name, v)));
+        return true;
+      case "tabFg":
+        this.setTabFg(v === null ? -1 : parseColor(asString(name, v)));
+        return true;
       case "title":
         this.setTitle(v === null ? null : asString(name, v));
         return true;
@@ -491,6 +549,21 @@ export class TBox extends TElement {
         return true;
       case "align":
         this.setAlign(asEnum(name, v, ALIGNS));
+        return true;
+      case "layer":
+        this.setLayer(asBool(v));
+        return true;
+      case "layerX":
+        this.setLayerX(asNumber(name, v));
+        return true;
+      case "layerY":
+        this.setLayerY(asNumber(name, v));
+        return true;
+      case "backdrop":
+        this.setBackdrop(asBool(v));
+        return true;
+      case "shadow":
+        this.setShadow(v === null ? -1 : parseColor(asString(name, v)));
         return true;
       default:
         return false;
@@ -551,6 +624,48 @@ export class TBox extends TElement {
     this.invalidate();
   }
 
+  setBorderStyle(s: string) {
+    if (this.borderStyle === s) return;
+    this.borderStyle = s;
+    this.invalidate();
+  }
+
+  setBorderColor(c: number) {
+    if (this.borderColor === c) return;
+    this.borderColor = c;
+    this.invalidate();
+  }
+
+  setBorderHeavy(b: boolean) {
+    if (this.borderHeavy === b) return;
+    this.borderHeavy = b;
+    this.invalidate();
+  }
+
+  setTabs(s: string) {
+    if (this.tabs === s) return;
+    this.tabs = s;
+    this.invalidate();
+  }
+
+  setActiveTab(n: number) {
+    if (this.activeTab === n) return;
+    this.activeTab = n;
+    this.invalidate();
+  }
+
+  setTabBg(c: number) {
+    if (this.tabBg === c) return;
+    this.tabBg = c;
+    this.invalidate();
+  }
+
+  setTabFg(c: number) {
+    if (this.tabFg === c) return;
+    this.tabFg = c;
+    this.invalidate();
+  }
+
   setScroll(b: boolean) {
     if (this.scroll === b) return;
     this.scroll = b;
@@ -569,6 +684,36 @@ export class TBox extends TElement {
     this.invalidate();
   }
 
+  setLayer(b: boolean) {
+    if (this.layer === b) return;
+    this.layer = b;
+    this.invalidate();
+  }
+
+  setLayerX(n: number) {
+    if (this.layerX === n) return;
+    this.layerX = n;
+    this.invalidate();
+  }
+
+  setLayerY(n: number) {
+    if (this.layerY === n) return;
+    this.layerY = n;
+    this.invalidate();
+  }
+
+  setBackdrop(b: boolean) {
+    if (this.backdrop === b) return;
+    this.backdrop = b;
+    this.invalidate();
+  }
+
+  setShadow(c: number) {
+    if (this.shadow === c) return;
+    this.shadow = c;
+    this.invalidate();
+  }
+
   propsSummary() {
     const p: string[] = [];
     if (this.direction !== "column") p.push("direction=" + this.direction);
@@ -578,11 +723,23 @@ export class TBox extends TElement {
     if (this.padding !== 0) p.push("padding=" + String(this.padding));
     if (this.gap !== 0) p.push("gap=" + String(this.gap));
     if (this.border) p.push("border");
+    if (this.borderStyle !== "line") p.push("borderStyle=" + this.borderStyle);
+    if (this.borderColor !== -1) p.push("borderColor=" + colorName(this.borderColor));
+    if (this.borderHeavy) p.push("borderHeavy");
+    if (this.tabs !== "") p.push("tabs=" + JSON.stringify(this.tabs));
+    if (this.activeTab !== -1) p.push("activeTab=" + String(this.activeTab));
+    if (this.tabBg !== -1) p.push("tabBg=" + colorName(this.tabBg));
+    if (this.tabFg !== -1) p.push("tabFg=" + colorName(this.tabFg));
     if (this.title !== null) p.push("title=" + JSON.stringify(this.title));
     if (this.scroll) p.push("scroll");
     if (this.scrollTop !== 0) p.push("scrollTop=" + String(this.scrollTop));
     if (this.stickToBottom) p.push("stickToBottom");
     if (this.align !== "stretch") p.push("align=" + this.align);
+    if (this.layer) p.push("layer");
+    if (this.layerX !== 0) p.push("layerX=" + String(this.layerX));
+    if (this.layerY !== 0) p.push("layerY=" + String(this.layerY));
+    if (this.backdrop) p.push("backdrop");
+    if (this.shadow !== -1) p.push("shadow=" + colorName(this.shadow));
     return p;
   }
 }
