@@ -15,10 +15,16 @@ export type Kind = {
   description: string;
   /** The light packages the project depends on, put under `dependencies`. */
   packages: readonly string[];
-  /** The scripts the project's package.json runs. */
+  /** The scripts the project's package.json runs; `__NAME__` is the project's name. */
   scripts: Record<string, string>;
   /** The project's devDependencies; a `@lightstart/*` name is linked like `packages`. */
   devDependencies: Record<string, string>;
+  /** More package.json fields, written after the name (a package's `version`, `exports`, `files`, `publishConfig`). */
+  manifest?: Record<string, unknown>;
+  /** A project published to a registry: its package.json is not `private`. */
+  publishable?: boolean;
+  /** The script the "Next:" line names once the project is written; `dev` by default. */
+  next?: string;
 };
 
 /** Every kind, in the order `light new` lists them. */

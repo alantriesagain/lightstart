@@ -31,7 +31,7 @@ light new package my-package --no-install
 | `desktop` | A page in light's desktop shell with a native backend |
 | `package` | A light package with modules, tests and a README |
 
-Only `web` has a template today; the table and the generator are made for all four.
+Each kind is a template folder under `templates/` and a module under `kinds/`.
 
 ## Where light comes from
 
