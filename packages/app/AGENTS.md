@@ -23,11 +23,13 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `cli/hooks/serve.file-changed.ts` | Regenerate when a named source is added, removed or renamed |
 | `cli/extend/build.ts` | A build step before `page` that generates |
 | `cli/extend/test.ts` | Generate before `light test` picks its files |
+| `test/controller-order.test.ts` | The start order: imports first, then by name, and a cycle named |
 | `test/fixtures/web/` | The fixture app: an app config, a note model, a notes controller, three views, two routes and a browser test |
 | `test/fixtures/tui/` | The terminal fixture app: a `native` block, an argument, two models in two databases, a notes controller, a root view, a row view and a `hello` mode |
 
 ## Rules the sources keep
 
+- The manifest lists the controllers in the order they start: taken by name, each after the controllers it imports for their values (`import type` does not count), read from its relative imports. A cycle is an error that names it.
 - A file name is the manifest name: without the extension and unchanged (kebab-case stays). `.ts` and `.js` are read, `.d.ts` and `*.test.*` are not. Generation sorts its input and its output.
 - `.light/app.ts` uses static imports only: relative from `.light/`, one per file, views side-effect only. `.light/main.ts` imports the host's `start`, and a terminal's modes beside it. A file is rewritten only when its content changes.
 - A folder with no `src/app.ts` is untouched by every entry point: the command, both serve hooks, the build step and the test extension.

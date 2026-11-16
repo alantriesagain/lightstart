@@ -3,12 +3,13 @@
  * `light test`: read `src/app.ts` and the project's folders, and write
  * `.light/app.ts` with a static import of every model, controller, view and
  * the routes, plus its manifest, and `.light/main.ts` with the host's start.
- * The output is sorted and written only when it changed. A folder with no
+ * The output is sorted (the controllers in the order they start: after the
+ * controllers they import) and written only when it changed. A folder with no
  * `src/app.ts` is left alone.
  */
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { basename, join, relative, resolve, sep } from "node:path";
+import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { bakeTables, collectClasses, render as renderClasses } from "@lightstart/light/theme/bake.js";
 import defaultTheme from "@lightstart/light/theme/themes/default.js";
@@ -46,6 +47,45 @@ const flatFiles = (dir: string): string[] => {
 };
 
 const nameOf = (file: string): string => basename(file).replace(/\.(ts|js)$/, "");
+
+const IMPORT = /^\s*(import|export)\s+(type\s+)?(?:[^"';]*?\sfrom\s*)?["']([^"']+)["']/gm;
+
+/** The controller files `file` imports for their values (an `import type` is not one), among `known`. */
+const importedControllers = (file: string, known: ReadonlySet<string>): string[] => {
+  const found: string[] = [];
+  for (const match of readFileSync(file, "utf8").matchAll(IMPORT)) {
+    const specifier = match[3] ?? "";
+    if (match[2] !== undefined || !specifier.startsWith(".")) continue;
+    const target = resolve(dirname(file), specifier);
+    const hit = [target, `${target}.ts`, `${target}.js`].find((candidate) => known.has(candidate));
+    if (hit !== undefined && hit !== file && !found.includes(hit)) found.push(hit);
+  }
+  return found;
+};
+
+/**
+ * The controllers in the order they start: a controller after every
+ * controller it imports, and otherwise by name. A cycle is an error naming it.
+ */
+const inStartOrder = (controllers: string[]): string[] => {
+  const known = new Set(controllers);
+  const ordered: string[] = [];
+  const visiting: string[] = [];
+  const visit = (file: string): void => {
+    if (ordered.includes(file)) return;
+    const at = visiting.indexOf(file);
+    if (at >= 0) {
+      const cycle = [...visiting.slice(at), file].map(nameOf).join(" → ");
+      throw new Error(`The controllers import each other in a cycle: ${cycle}`);
+    }
+    visiting.push(file);
+    for (const dependency of importedControllers(file, known)) visit(dependency);
+    visiting.pop();
+    ordered.push(file);
+  };
+  for (const file of controllers) visit(file);
+  return ordered;
+};
 
 const specifierFor = (from: string, to: string): string => `../${relative(from, to).split(sep).join("/")}`;
 
@@ -174,7 +214,7 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
   if (!existsSync(app)) return null;
 
   const models = flatFiles(join(project, "src", "models"));
-  const controllers = flatFiles(join(project, "src", "controllers"));
+  const controllers = inStartOrder(flatFiles(join(project, "src", "controllers")));
   const views = flatFiles(join(project, "src", "views"));
   const routes = existsSync(join(project, "src", "routes.ts")) ? join(project, "src", "routes.ts") : null;
 

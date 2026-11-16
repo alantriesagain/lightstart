@@ -14,7 +14,7 @@ light build                # generate as the build's first step
 |---|---|---|
 | `src/app.ts` | `defineApp({ name, host, theme, storage, root, args })` | reads it first |
 | `src/models/<name>.ts` | one model, default-exported | opens the store with every model |
-| `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready` |
+| `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready`, each after the controllers it imports |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
 | `src/routes.ts` | optional: `{ "/path": { view: "<tag>", name?, title? } }` | builds the router and configures navigation |
 | `src/modes/<name>.ts` | optional: `main(argv)` and maybe `matches(argv)` | runs before the terminal host when `argv` matches |
@@ -61,6 +61,10 @@ export default defineApp({
 ```
 
 `storage.dir` is the default JSONL folder (the terminal's `--data` when absent), and `storage.databases` names more stores. A model picks one through its schema's `$adapter`; the default database is the one named `jsonl` (or `memory` in a test).
+
+## The order controllers start in
+
+The host starts the controllers one after the other, each once the one before it is `$ready`, and disposes them in reverse. A controller starts after every controller it imports (`import folder from "./folder.ts"`), so the one it reads in its `connected()` is already running; an `import type` does not count. Otherwise they go by name. Controllers that import each other in a cycle are an error that names the cycle.
 
 ## What is generated
 
