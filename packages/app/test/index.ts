@@ -9,13 +9,14 @@ import { frames, runApp } from "@lightstart/light/native/tui";
 import { TestTerminal } from "@lightstart/light/native/tui/test-terminal.ts";
 import type { View } from "@lightstart/light/native/tui";
 import type { ClassStyler } from "@lightstart/light/native/tui/classes.ts";
-import type { KeyEvent, Renderer } from "@lightstart/light/native/tui";
+import type { Renderer } from "@lightstart/light/native/tui";
 import type { Store } from "@lightstart/light/model/types.ts";
 import type { StorageConfig, StorageKind } from "../index.ts";
 import { openStore } from "../storage.ts";
 import { startControllers, stopControllers } from "../controllers.ts";
 import { parseAppArgs } from "../args.ts";
 import type { AppManifest } from "../manifest.ts";
+import { callMounted, handlerOf } from "../tui/root.ts";
 
 /** What a test asks `openApp` for: the storage kind, memory when absent, and the arguments. */
 export interface OpenAppOptions {
@@ -43,6 +44,8 @@ export interface MountAppOptions {
 export interface MountedApp {
   term: TestTerminal;
   renderer: Renderer;
+  /** The root view the manifest names, as it was made. */
+  root: View;
   settle(): Promise<void>;
   text(): string;
   stop(): void;
@@ -54,12 +57,6 @@ const argsOf = (manifest: AppManifest, given: OpenAppOptions["args"]): Record<st
 };
 
 const isClass = (value: unknown): value is new () => View => typeof value === "function";
-
-const handlerOf = (value: unknown): ((renderer: Renderer, e: KeyEvent) => boolean) | null => {
-  if (typeof value !== "object" || value === null) return null;
-  const handler = (value as Record<string, unknown>)["onKey"];
-  return typeof handler === "function" ? (handler as (renderer: Renderer, e: KeyEvent) => boolean) : null;
-};
 
 /** Open the manifest's store and controllers, mounting nothing. */
 export const openApp = async (manifest: AppManifest, options: OpenAppOptions = {}): Promise<OpenedApp> => {
@@ -106,10 +103,12 @@ export const mountApp = (manifest: AppManifest, _opened: OpenedApp, options: Mou
     classes: options.classes ?? null,
     onKey: handler === null ? null : (render, e) => handler.call(root, render, e),
   });
+  callMounted(root, renderer);
 
   return {
     term,
     renderer,
+    root,
     async settle(): Promise<void> {
       for (let i = 0; i < 6; i++) await new Promise((settle) => setTimeout(settle, 0));
       frames.flush();
