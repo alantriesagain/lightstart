@@ -4,9 +4,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "lib": [
-      "es2024",
-      "dom",
-      "dom.iterable"
+      "es2024"
     ],
     "types": [
       "node"

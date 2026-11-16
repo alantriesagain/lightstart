@@ -6,14 +6,14 @@
  * the terminal.
  */
 
-import type { ModelApi } from "@lightstart/light/model/types.ts";
+import type { ModelApi, ModelSchema, Row } from "@lightstart/light/model/types.ts";
 import type { RoutesMap } from "@lightstart/router";
 import type { AppConfig } from "./index.ts";
 
 /** One model: the file's name without its extension, and the api its module default-exports. */
 export interface AppModel {
   name: string;
-  model: ModelApi;
+  model: ModelApi<Row, ModelSchema>;
 }
 
 /** One controller: the file's name without its extension, and the controller its module default-exports. */
@@ -25,6 +25,8 @@ export interface AppController {
 /** What a project's folders add up to; the generated `.light/app.ts` default-exports one. */
 export interface AppManifest {
   app: AppConfig;
+  /** The root view's class, for a terminal host; the generation reads it from the root view file's default export. */
+  rootView?: unknown;
   models: readonly AppModel[];
   controllers: readonly AppController[];
   routes: RoutesMap | null;

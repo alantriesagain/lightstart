@@ -37,7 +37,7 @@ export default defineApp({
 | Field | Default | What |
 |---|---|---|
 | `name` | required | The store's name and the document's title |
-| `host` | required | `"web"` now; `"tui"` when the terminal host arrives |
+| `host` | required | `"web"` or `"tui"` |
 | `theme` | `"default"` | A preset name, applied by the web host |
 | `storage` | `{ kind: "indexeddb" }` on the web | `indexeddb`, `memory`, or `jsonl` for the terminal |
 | `root` | `"app-root"` | The root view's tag |
@@ -108,11 +108,48 @@ const rows = await note.getAll();
 await app.stop();
 ```
 
-`openApp` uses memory storage by default and answers `{ store, controllers, stop }`.
+`openApp` uses memory storage by default and answers `{ store, controllers, stop }`. A terminal test then makes the root view and runs it on light's `TestTerminal`:
+
+```ts
+import { frames, runApp } from "@lightstart/light/native/tui";
+import { TestTerminal } from "@lightstart/light/native/tui/test-terminal.ts";
+import AppRoot from "../src/views/app-root.ts";
+
+const app = await openApp(manifest);
+const term = new TestTerminal();
+const root = new AppRoot();
+const renderer = runApp({ app: root, term, onKey: (r, e) => root.onKey(r, e) });
+```
 
 ## The terminal host
 
-`@lightstart/app/tui` will read the same manifest: a JSONL store (`--data <dir>`), the same controllers and views, the theme's classes baked into a table at generation time, no router, and `runApp` with the root view. The manifest holds plain typed records, so both hosts read it without a web API.
+`@lightstart/app/tui` reads the same manifest on a terminal. `start(manifest, options?)`:
+
+1. Reads `--data <dir>` (the current folder by default) and `--scheme dark|light` (dark by default) from `process.argv`.
+2. Opens the store over JSONL files in that folder with every model of the manifest, through light's `openJsonl` and the package's `fileIO` (`tui/file.ts`).
+3. Names and starts every controller, as the web host does.
+4. Makes the manifest's root view (`rootView`, the default export of `src/views/<root>.ts`) and runs it with `runApp`; keys go to the root view's `onKey` when it has one.
+5. Uses the baked class table the generation wrote for the scheme, so the binary carries the table and not the classes engine.
+
+It needs a TTY: without one it prints a clear message and exits 2. It answers `{ stop() }`, which stops the renderer, disposes the controllers and closes the store. There is no router; `src/routes.ts` is ignored on the terminal.
+
+The generation adds the root view's class to `.light/app.ts` as `rootView`, writes `.light/classes.baked.ts` (the same tables `light classes:bake --scheme dark,light` bakes), and starts the host from `.light/main.ts`:
+
+```ts
+import { start } from "@lightstart/app/tui";
+import manifest from "./app.ts";
+import { dark, light } from "./classes.baked.ts";
+
+await start(manifest, { classes: { dark, light } });
+```
+
+A terminal project's `package.json` names that entry and its binary:
+
+```json
+"native": { "entry": ".light/main.ts", "binary": "my-app", "prepare": ["light app"] }
+```
+
+The views, models and controllers a terminal app ships follow light's scriptc rules (`packages/light/native/README.md`): erasable TypeScript, classes for identity, no computed imports, no `Map` of functions, and `unknown` narrowed with `typeof`/`instanceof`/`Array.isArray`. A view writes its tag with `define(tag, Class)`; the root view default-exports its class.
 
 ## What is node-only
 
