@@ -18,7 +18,7 @@ import { Terminal, View, runApp } from "@lightstart/light/native/tui";
 import { BakedClasses } from "@lightstart/light/theme/baked";
 import type { BakedEntry } from "@lightstart/light/theme/baked";
 import type { ModelSchema, StorageAdapter, Store } from "@lightstart/light/model/types.ts";
-import type { KeyEvent, Renderer } from "@lightstart/light/native/tui";
+import type { Renderer } from "@lightstart/light/native/tui";
 import type { DirResolver, StorageConfig } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { MemoryAdapter } from "../memory.ts";
@@ -26,6 +26,7 @@ import { parseAppArgs } from "../args.ts";
 import { schemasOf } from "../storage.ts";
 import { startControllers, stopControllers } from "../controllers.ts";
 import { fileIO } from "./file.ts";
+import { callMounted, handlerOf } from "./root.ts";
 
 /** The baked class tables a terminal app carries, one per scheme. */
 export interface TuiClasses {
@@ -84,12 +85,6 @@ const rootOf = (manifest: AppManifest): View => {
   const value = manifest.rootView;
   if (!isClass(value)) throw new Error("The manifest has no root view: the generation records the default export of src/views/<root>.ts");
   return new value();
-};
-
-const handlerOf = (value: unknown): ((renderer: Renderer, e: KeyEvent) => boolean) | null => {
-  if (typeof value !== "object" || value === null) return null;
-  const handler = (value as Record<string, unknown>)["onKey"];
-  return typeof handler === "function" ? (handler as (renderer: Renderer, e: KeyEvent) => boolean) : null;
 };
 
 const resolveDir = (dir: DirResolver | undefined, args: Record<string, unknown>, fallback: string): string =>
@@ -187,6 +182,7 @@ export const prepare = async (manifest: AppManifest, options: TuiOptions = {}): 
       onKey: handler === null ? null : (render, e) => handler.call(root, render, e),
     });
     state.renderer = renderer;
+    callMounted(root, renderer);
     return renderer;
   };
 

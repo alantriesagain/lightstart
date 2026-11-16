@@ -161,7 +161,7 @@ mounted.stop();          // stops the renderer
 await app.stop();        // disposes the controllers and closes the store
 ```
 
-`mountApp` answers `{ term, renderer, settle, text, stop }`; `settle()` waits for the queued frames and paints one.
+`mountApp` takes the classes styler as `classes` (a baked table, or a theme's `TerminalClasses` in a node-only test; none by default) and answers `{ term, renderer, root, settle, text, stop }`; `root` is the root view it made, already told it is mounted, and `settle()` waits for the queued frames and paints one.
 
 ## The terminal host
 
@@ -175,7 +175,7 @@ await app.stop();        // disposes the controllers and closes the store
 1. Reads the app's `args` schema plus `--data <dir>` (the current folder by default) and `--scheme dark|light` (dark by default); an app that declares those names keeps its own. The parsed values land in `manifest.app.args`. An argument error prints its message and exits 2.
 2. Opens the default JSONL database (its folder from `storage.dir`, else `--data`) and each named database in `storage.databases`, each through light's `JsonlAdapter` and the package's `fileIO`. A test opens memory adapters instead. A model reaches a named database through its schema's `$adapter`.
 3. Names and starts every controller, as the web host does.
-4. Makes the manifest's root view (`rootView`, the default export of `src/views/<root>.ts`) and runs it with `runApp`; keys go to the root view's `onKey` when it has one.
+4. Makes the manifest's root view (`rootView`, the default export of `src/views/<root>.ts`) and runs it with `runApp`; keys go to the root view's `onKey` when it has one, and its `mounted(renderer)`, when it has one, runs once the renderer does, so the view reaches the renderer and its terminal (`renderer.term`) for focus, size, title or the screen's text. A restart's new root view is told the same.
 5. Uses the baked class table the generation wrote for the scheme, so the binary carries the table and not the classes engine.
 
 It needs a TTY: without one it prints a clear message and exits 2. It answers `{ stop() }`, which stops the renderer, disposes the controllers and closes the store. `app.restart(args?)` stops the renderer and controllers, closes the store, merges the new arguments, opens and starts again, then mounts a fresh root view on the same terminal. `app.quit(code?)` stops everything and exits with `code ?? 0`. Both answer promises; `defineApp`'s placeholders throw until a host or `openApp` installs them. There is no router; `src/routes.ts` is ignored on the terminal.

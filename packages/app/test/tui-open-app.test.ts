@@ -2,7 +2,7 @@
 /**
  * @file The terminal app on a test terminal: `openApp` opens the fixture's
  * store over memory, `mountApp` runs the root view on a `TestTerminal`, a key
- * it takes adds a note through the controller, and a write read back through
+ * it takes adds a note (the view told it is mounted first) through the controller, and a write read back through
  * the model is drawn.
  */
 
@@ -30,6 +30,7 @@ const main = async (): Promise<void> => {
 
   try {
     await mounted.settle();
+    ok("the root view was told it is mounted, with the renderer", mounted.root instanceof AppRoot && mounted.root.mountedCols === 50);
     ok("the empty app says so", mounted.text().includes("No notes yet."));
 
     mounted.renderer.decoder.pushText("a");
