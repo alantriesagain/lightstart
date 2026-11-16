@@ -1,15 +1,14 @@
 /**
- * @file `<todo-row .todo=${todo}>`: one todo as a focusable line, muted and struck through by its
- * classes when done and bold while focused. A click or Enter/Space toggles it, `d` removes it, each
- * a call on the todo controller.
+ * @file `<todo-row .todo=${todo}>`: one todo as a focusable line, muted and struck through
+ * when done and bold while focused. A click or Enter/Space toggles it, `d` removes it.
  */
-import { define, html, View } from "@lightstart/light/native/tui";
-import { todos } from "../controllers/todos.ts";
+import { View, define, html } from "@lightstart/light/native/tui";
+import todos from "../controllers/todos.ts";
 
 import type { KeyEvent } from "@lightstart/light/native/tui";
-import type { Todo } from "../models/todos.ts";
+import type { Todo } from "../models/todo.ts";
 
-export class TodoRow extends View {
+class TodoRow extends View {
   todo = this.prop<Todo | null>("todo", null);
 
   override render(): unknown {

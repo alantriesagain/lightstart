@@ -8,7 +8,6 @@
 import { configureModel, modelBus } from "@lightstart/light/model";
 import { hasAdapter, createAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
 import { createStore, storeRequest } from "@lightstart/light/model/store";
-import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
 import type { ModelSchema, Store } from "@lightstart/light/model/types.ts";
 import type { AppConfig, StorageConfig, StorageKind } from "./index.ts";
 import { MemoryAdapter } from "./memory.ts";
@@ -40,9 +39,8 @@ export const openStore = async (manifest: AppManifest, override?: StorageKind | 
   const kind = storage.kind === "indexeddb" && !hasIndexedDB ? "memory" : storage.kind;
   if (kind === "jsonl") throw new Error("The web host cannot open a JSONL store; use indexeddb or memory");
 
-  if (kind === "indexeddb") {
-    if (!hasAdapter("indexeddb")) registerStorageAdapter("indexeddb", IndexedDBAdapter);
-  } else if (!hasAdapter("memory")) registerStorageAdapter("memory", new MemoryAdapter());
+  if (kind === "indexeddb" && !hasAdapter("indexeddb")) throw new Error("An IndexedDB store needs the web host, which registers its adapter");
+  if (kind === "memory" && !hasAdapter("memory")) registerStorageAdapter("memory", MemoryAdapter);
 
   if (kind === "memory") {
     const db = createAdapter("memory", { name, models, isDefaultAdapter: true });

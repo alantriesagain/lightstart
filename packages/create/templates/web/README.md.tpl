@@ -1,6 +1,6 @@
 # __TITLE__
 
-A page on [light](https://lightstart.dev): a `View` with a signal counter and `lc-*` components. The page is served in development by `light serve`, bundled by `light build`, and tested in a browser by `light test`.
+A web app on [light](https://lightstart.dev): a note model, a notes controller, and views with `lc-*` components. The folders are the app; light writes the wiring into `.light/`, and the host opens the store, starts the controllers, builds the routes and mounts the root view.
 
 ## Start
 
@@ -9,7 +9,7 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` runs `light serve --watch` on the first free port from 3000 and reloads the page when a file changes.
+`pnpm dev` runs `light serve --watch` on the first free port from 3000 and reloads when a file changes.
 
 | Script | Runs |
 |---|---|
@@ -24,12 +24,16 @@ The browser tests need Chromium: `pnpm exec playwright install chromium`.
 
 | Path | What |
 |---|---|
-| `index.html` | The page: `<app-root>` and `src/main.ts` |
-| `src/main.ts` | Registers the `lc-*` components and the app's views |
-| `src/views/app-root.ts` | The app: a heading, a card and a button with a signal counter |
-| `src/styles.css` | The theme and the components' stylesheets |
+| `src/app.ts` | The app's name and host |
+| `src/models/note.ts` | The note model |
+| `src/controllers/notes.ts` | The live notes and the write that adds one |
+| `src/views/app-root.ts` | The root view: the heading, the notes, the field and the button |
+| `src/views/app-home.ts`, `src/views/app-about.ts` | The route views |
+| `src/routes.ts` | `/` and `/about` to their views |
+| `src/styles.css` | The theme and component stylesheets |
+| `.light/` | Generated wiring: never edit, never commit |
 | `test/app.test.ts` | The browser test |
 
 ## Light
 
-The packages are linked from a light checkout (`link:` with pnpm, `file:` with npm). A project started with `--npm` names published versions instead. `AGENTS.md` has the conventions, and the package READMEs in the checkout are the reference.
+The packages are linked from a light checkout (`link:` with pnpm, `file:` with npm). A project started with `--npm` names published versions instead. [AGENTS.md](AGENTS.md) has the conventions; `@lightstart/app`'s README and the other package READMEs in the checkout are the reference.

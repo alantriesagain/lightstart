@@ -4,7 +4,7 @@ The generator behind `light new`: a project of a named kind, with light's comman
 
 ```bash
 light new                          # list the kinds, one line each
-light new web my-app               # a page of light views and lc-* components
+light new web my-app               # a web app on @lightstart/app
 light new web my-app --dir sites/my-app
 light new package my-package --no-install
 ```
@@ -26,10 +26,12 @@ light new package my-package --no-install
 
 | Kind | What it starts | Its scripts |
 |---|---|---|
-| `web` | A page of light views and `lc-*` components | `light serve --watch`, `light build`, `light test`, `light check` |
-| `tui` | A terminal app on light's terminal host: a model, a controller, views | `node src/main.ts`, node's test runner, `light classes:bake`, `scriptc build` |
+| `web` | A web app on `@lightstart/app`: a model, a controller, views and routes | `light serve --watch`, `light build`, `light test`, `light check` |
+| `tui` | A terminal app on `@lightstart/app`: a model, a controller and views, compiled by `scriptc` | `light run`, `light test`, `light build`, `light check` |
 | `desktop` | A page in light's desktop shell with a native backend | `light desktop run`, `light desktop build`, node's test runner, `light check` |
 | `package` | A light package with modules, tests and a README | node's test runner, `tsc`, `light check`, the pack script |
+
+The `web` and `tui` kinds start on [`@lightstart/app`](../app/README.md): the project's `src/app.ts` names the host, its `src/models/`, `src/controllers/` and `src/views/` folders are the app, and light generates the wiring into `.light/`. Their own `AGENTS.md` explains the folders and the scripts.
 
 Sources are TypeScript with erasable syntax, as light's own packages are, so what `scriptc` compiles in one kind reads the same in another. Each kind is a template folder under `templates/` and a module under `kinds/`.
 
