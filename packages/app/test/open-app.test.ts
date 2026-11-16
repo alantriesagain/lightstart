@@ -9,9 +9,10 @@ import { openApp } from "../test/index.ts";
 import type { AppManifest } from "../manifest.ts";
 import note from "./fixtures/web/src/models/note.ts";
 import notes from "./fixtures/web/src/controllers/notes.ts";
+import { defineApp } from "../index.ts";
 
 const manifest: AppManifest = {
-  app: { name: "fixture-open-app", host: "web", storage: { kind: "memory" } },
+  app: defineApp({ name: "fixture-open-app", host: "web", storage: { kind: "memory" } }),
   models: [{ name: "note", model: note }],
   controllers: [{ name: "notes", controller: notes }],
   routes: null,

@@ -60,15 +60,14 @@ const isClass = (value: unknown): value is new () => View => typeof value === "f
 
 /** Open the manifest's store and controllers, mounting nothing. */
 export const openApp = async (manifest: AppManifest, options: OpenAppOptions = {}): Promise<OpenedApp> => {
-  manifest.app.args = argsOf(manifest, options.args);
+  manifest.app.args.values = argsOf(manifest, options.args);
   const opened: OpenedApp = {
     store: await openStore(manifest, options.storage ?? "memory"),
     controllers: [],
     async restart(next?: Record<string, unknown>): Promise<void> {
       await stopControllers(opened.controllers);
       await opened.store.close();
-      const args = { ...(manifest.app.args ?? {}), ...(next ?? {}) };
-      manifest.app.args = args;
+      manifest.app.args.values = { ...manifest.app.args.values, ...(next ?? {}) };
       opened.store = await openStore(manifest, options.storage ?? "memory");
       opened.controllers = await startControllers(manifest);
     },
@@ -83,8 +82,7 @@ export const openApp = async (manifest: AppManifest, options: OpenAppOptions = {
     },
   };
   opened.controllers = await startControllers(manifest);
-  manifest.app.restart = opened.restart;
-  manifest.app.quit = opened.quit;
+  manifest.app.lifecycle = { restart: opened.restart, quit: opened.quit };
   return opened;
 };
 

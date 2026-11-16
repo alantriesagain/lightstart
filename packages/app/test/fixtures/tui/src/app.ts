@@ -10,7 +10,7 @@ export default defineApp({
   storage: {
     kind: "jsonl",
     databases: {
-      user: { kind: "jsonl", dir: (args: Record<string, unknown>) => `${String(args.data)}/user` },
+      user: { kind: "jsonl", dir: (args) => `${args.string("data") ?? "."}/user` },
     },
   },
 });

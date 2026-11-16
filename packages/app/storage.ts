@@ -10,7 +10,7 @@ import { configureModel, modelBus } from "@lightstart/light/model";
 import { hasAdapter, createAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
 import { createStore, storeRequest } from "@lightstart/light/model/store";
 import type { ModelSchema, StorageAdapter, Store } from "@lightstart/light/model/types.ts";
-import type { AppConfig, StorageConfig, StorageKind } from "./index.ts";
+import type { App, StorageConfig, StorageKind } from "./index.ts";
 import { MemoryAdapter } from "./memory.ts";
 import type { AppManifest } from "./manifest.ts";
 
@@ -24,7 +24,7 @@ export const schemasOf = (manifest: AppManifest): Record<string, ModelSchema> =>
 };
 
 /** The store config a host asks for, with the app's defaults filled in. */
-export const storageOf = (app: Pick<AppConfig, "name" | "storage">, override?: StorageKind | StorageConfig): StorageConfig => {
+export const storageOf = (app: App, override?: StorageKind | StorageConfig): StorageConfig => {
   if (typeof override === "string") {
     return app.storage === undefined
       ? { kind: override, name: app.name }

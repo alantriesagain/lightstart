@@ -6,6 +6,7 @@
 
 import { parseArgs } from "@lightstart/cli/argv.ts";
 import type { ArgsSchema } from "@lightstart/cli/types/command.ts";
+import type { App } from "./index.ts";
 
 /** The arguments every terminal host understands. */
 export const hostArgs: ArgsSchema = {
@@ -14,8 +15,8 @@ export const hostArgs: ArgsSchema = {
 };
 
 /** The app's schema with the host's arguments added, the app's own winning a name. */
-export const argsSchemaOf = (config: { argsSchema?: ArgsSchema }): ArgsSchema => ({ ...hostArgs, ...(config.argsSchema ?? {}) });
+export const argsSchemaOf = (app: App): ArgsSchema => ({ ...hostArgs, ...app.argsSchema });
 
 /** Parse `argv` for the app: the host's arguments and the app's own. */
-export const parseAppArgs = (config: { argsSchema?: ArgsSchema }, argv: readonly string[]): Record<string, unknown> =>
-  parseArgs(argsSchemaOf(config), argv) as Record<string, unknown>;
+export const parseAppArgs = (app: App, argv: readonly string[]): Record<string, unknown> =>
+  parseArgs(argsSchemaOf(app), argv) as Record<string, unknown>;

@@ -15,7 +15,7 @@ import { applyTheme } from "@lightstart/light/theme";
 import { loadPreset } from "@lightstart/light/theme/presets.js";
 import { createBrowserAdapter, createRouter } from "@lightstart/router";
 import type { RouterCore } from "@lightstart/router";
-import type { AppConfig } from "../index.ts";
+import type { App } from "../index.ts";
 import { hasAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
 import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
 import { openStore } from "../storage.ts";
@@ -51,7 +51,7 @@ const registerOutlet = (): void => {
   registered = true;
 };
 
-const applyAppTheme = async (app: Pick<AppConfig, "theme">): Promise<void> => {
+const applyAppTheme = async (app: App): Promise<void> => {
   const theme = await loadPreset(app.theme ?? "default");
   if (theme !== null) applyTheme(theme);
 };

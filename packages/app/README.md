@@ -12,7 +12,7 @@ light build                # generate as the build's first step
 
 | Path | Holds | The app does |
 |---|---|---|
-| `src/app.ts` | `defineApp({ name, host, theme, storage, root })` | reads it first |
+| `src/app.ts` | `defineApp({ name, host, theme, storage, root, args })` | reads it first |
 | `src/models/<name>.ts` | one model, default-exported | opens the store with every model |
 | `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready` |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
@@ -44,7 +44,7 @@ export default defineApp({
 | `root` | `"app-root"` | The root view's tag |
 | `args` | `{}` | The arguments the app takes, as a `@lightstart/cli` schema |
 
-`defineApp` returns the config with an `args` record the host fills, and with `restart` and `quit` calls the host installs. Its argument values keep the schema's types, so a controller reads `app.args.dir` directly. A storage folder or a mode's `matches` sees the same record.
+`defineApp` makes the app, an `App`: the config's fields, `args` (an `AppArgs` the host fills) and `restart` and `quit`, which reach the running host. A controller imports the app and reads an argument by name: `app.args.string("dir")` for an option (`undefined` when it was not given and has no default), `app.args.flag("trust")` for a flag, `app.args.list("files")` for a rest positional. The app is one instance, the one the generated manifest holds and the host writes, so what a controller reads is what the host parsed, natively as under node (a shape scriptc would convert is a copy). A storage folder function gets the same `AppArgs`.
 
 ```ts
 import { defineApp } from "@lightstart/app";
@@ -55,7 +55,7 @@ export default defineApp({
   args: { dir: { default: "notes", description: "The notes folder" } },
   storage: {
     kind: "jsonl",
-    databases: { user: { kind: "jsonl", dir: (args) => `${String(args.dir)}/user` } },
+    databases: { user: { kind: "jsonl", dir: (args) => `${args.string("dir") ?? "notes"}/user` } },
   },
 });
 ```
@@ -170,15 +170,15 @@ await app.stop();        // disposes the controllers and closes the store
 - `prepare(manifest, options?)` parses the arguments, opens the store and starts the controllers; it touches no terminal.
 - `mount(manifest, prepared, { term, classes, scheme })` makes the root view and runs it on `term`, answers the renderer.
 
-`start(manifest, options?)` does the TTY check and both, and installs `app.restart` and `app.quit`.
+`prepare` answers a `Prepared`, which holds the store, the controllers and, once mounted, the renderer, and whose `restart` and `quit` the app's calls reach. `start(manifest, options?)` does the TTY check and both.
 
-1. Reads the app's `args` schema plus `--data <dir>` (the current folder by default) and `--scheme dark|light` (dark by default); an app that declares those names keeps its own. The parsed values land in `manifest.app.args`. An argument error prints its message and exits 2.
+1. Reads the app's `args` schema plus `--data <dir>` (the current folder by default) and `--scheme dark|light` (dark by default); an app that declares those names keeps its own. The parsed values land in `manifest.app.args`, the `AppArgs` every module reads. An argument error prints its message and exits 2.
 2. Opens the default JSONL database (its folder from `storage.dir`, else `--data`) and each named database in `storage.databases`, each through light's `JsonlAdapter` and the package's `fileIO`. A test opens memory adapters instead. A model reaches a named database through its schema's `$adapter`.
 3. Names and starts every controller, as the web host does.
 4. Makes the manifest's root view (`rootView`, the default export of `src/views/<root>.ts`) and runs it with `runApp`; keys go to the root view's `onKey` when it has one, and its `mounted(renderer)`, when it has one, runs once the renderer does, so the view reaches the renderer and its terminal (`renderer.term`) for focus, size, title or the screen's text. A restart's new root view is told the same.
 5. Uses the baked class table the generation wrote for the scheme, so the binary carries the table and not the classes engine.
 
-It needs a TTY: without one it prints a clear message and exits 2. It answers `{ stop() }`, which stops the renderer, disposes the controllers and closes the store. `app.restart(args?)` stops the renderer and controllers, closes the store, merges the new arguments, opens and starts again, then mounts a fresh root view on the same terminal. `app.quit(code?)` stops everything and exits with `code ?? 0`. Both answer promises; `defineApp`'s placeholders throw until a host or `openApp` installs them. There is no router; `src/routes.ts` is ignored on the terminal.
+It needs a TTY: without one it prints a clear message and exits 2. It answers `{ stop() }`, which stops the renderer, disposes the controllers and closes the store. `app.restart(args?)` stops the renderer and controllers, closes the store, merges the new arguments, opens and starts again, then mounts a fresh root view on the same terminal. `app.quit(code?)` stops everything and exits with `code ?? 0`. Both answer promises, and reject with "the app is not running" until a host or `openApp` runs the app. There is no router; `src/routes.ts` is ignored on the terminal.
 
 The generation adds the root view's class to `.light/app.ts` as `rootView`, writes `.light/classes.baked.ts` (the same tables `light classes:bake --scheme dark,light` bakes), and starts the host from `.light/main.ts`:
 
