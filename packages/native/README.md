@@ -10,7 +10,7 @@ A standalone project needs no `pnpm-workspace.yaml`: its project is the nearest 
 
 Before a build, a test run, coverage or typecheck, the dependencies' `native.prepare` lines run in each dependency's own folder, in dependency order, each once, and then the project's own at its root, with `LIGHT_NATIVE_COMMAND` naming the command. A dependency whose real folder lies inside a `node_modules` folder is an installed package, not a link to a checkout: its prepare steps are not run, and it is reported as expected prebuilt, which is what publishing settles.
 
-`native.ffi` and a test's `// ffi: <manifest>` resolve by package path through the project's `node_modules`, and under node the manifest folder's `*-node.mjs` stand-in is preloaded with `--import`. The compiler is `$SCRIPTC` when set, else `<project>/node_modules/.bin/scriptc`, else the one installed beside `@lightstart/native`, else `scriptc` on PATH. `SCRIPTC_CACHE_MAX_MB` and the other `SCRIPTC_*` variables pass through to the compiler.
+`native.ffi` and a test's `// ffi: <manifest>` resolve by package path through the project's `node_modules`, and under node the manifest folder's `*-node.mjs` stand-in is preloaded with `--import` (and `--experimental-vm-modules`, so a stand-in can run ES modules on `node:vm`). The compiler is `$SCRIPTC` when set, else `<project>/node_modules/.bin/scriptc`, else the one installed beside `@lightstart/native`, else `scriptc` on PATH. `SCRIPTC_CACHE_MAX_MB` and the other `SCRIPTC_*` variables pass through to the compiler.
 
 ## The `light` commands
 

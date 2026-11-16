@@ -6,7 +6,9 @@
  * error (its message, a newline, its stack), 2 the time budget run out. There is no memory limit.
  * node's timer for a call cannot pause while the core works, nested calls included, so a call gets
  * four budgets, two when made from inside a host call, one when nested deeper: a runaway plugin is
- * stopped where QuickJS stops it, later, and the calls around it go on.
+ * stopped where QuickJS stops it, later, and the calls around it go on. A plugin's ES modules are
+ * node:vm's SourceTextModule (node runs with --experimental-vm-modules), linked from the registered
+ * files and evaluated synchronously, resolved as wcjs.c resolves them.
  */
 import vm from "node:vm";
 
@@ -32,7 +34,7 @@ const run = (w, code, file, done) => {
 
 globalThis.wcjsNew = (_memoryMb, budgetMs) => {
   const handle = nextHandle++;
-  const w = { budgetMs, host: null, replies: [], context: null };
+  const w = { budgetMs, host: null, replies: [], context: null, modules: new Map(), loaded: new Map() };
   const sandbox = {
     __host: (name, args) => {
       if (w.host === null) throw new Error("plugins: no host");
@@ -66,6 +68,58 @@ globalThis.wcjsReply = (handle, json) => {
 };
 
 globalThis.wcjsEval = (handle, code, file, done) => run(contexts.get(handle), code, file, done);
+
+const plainOf = (name) => {
+  const at = name.indexOf("#");
+  return at >= 0 ? name.slice(0, at) : name;
+};
+
+const resolve = (base, spec) => {
+  if (!spec.startsWith(".")) return spec;
+  const plain = plainOf(base);
+  const suffix = base.slice(plain.length);
+  return new URL(spec, "file://" + plain).pathname + suffix;
+};
+
+const moduleOf = (w, name) => {
+  const known = w.loaded.get(name);
+  if (known !== undefined) return known;
+  const code = w.modules.get(plainOf(name));
+  if (code === undefined) throw new ReferenceError("plugins: cannot import " + plainOf(name) + ": not a file of the plugin");
+  const m = new vm.SourceTextModule(code, { identifier: name, context: w.context });
+  w.loaded.set(name, m);
+  return m;
+};
+
+const link = (w, m) => {
+  const requested = m.moduleRequests.map((r) => moduleOf(w, resolve(m.identifier, r.specifier)));
+  m.linkRequests(requested);
+  for (const r of requested) if (r.status === "unlinked") link(w, r);
+};
+
+globalThis.wcjsAddModule = (handle, name, code) => {
+  contexts.get(handle).modules.set(String(name), String(code));
+};
+
+globalThis.wcjsEvalModule = (handle, code, file, done) => {
+  const w = contexts.get(handle);
+  const depth = w.replies.length;
+  const budget = w.budgetMs > 0 ? w.budgetMs * (depth === 0 ? 4 : depth === 1 ? 2 : 1) : undefined;
+  try {
+    const entry = new vm.SourceTextModule(code, { identifier: file, context: w.context });
+    w.loaded.set(file, entry);
+    link(w, entry);
+    entry.instantiate();
+    void entry.evaluate({ timeout: budget }).catch(() => undefined);
+    if (entry.status === "errored") throw entry.error;
+    done(0, "null");
+    return 0;
+  } catch (err) {
+    const timedOut = err && err.code === "ERR_SCRIPT_EXECUTION_TIMEOUT";
+    done(timedOut ? 2 : 1, timedOut ? "plugins: the plugin ran past its time budget\n" : stackOf(err));
+    return timedOut ? 2 : 1;
+  }
+};
 
 globalThis.wcjsInvoke = (handle, id, json, done) => {
   const w = contexts.get(handle);
