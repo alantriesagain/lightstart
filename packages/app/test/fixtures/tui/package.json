@@ -1,0 +1,23 @@
+{
+  "name": "fixture-tui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "light": {
+    "scopes": ["@lightstart"]
+  },
+  "native": {
+    "entry": ".light/main.ts",
+    "binary": "fixture-tui",
+    "prepare": ["light app"]
+  },
+  "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/light": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/build": "workspace:*",
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/native": "workspace:*"
+  }
+}

@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 /**
  * @file `@lightstart/app/web`: the web host. It opens the manifest's store,
  * names and starts its controllers, applies the theme preset, builds the
