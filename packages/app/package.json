@@ -1,0 +1,43 @@
+{
+  "name": "@lightstart/app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A project's folders as an app: defineApp, the generated .light manifest, and the web host that opens the store, names the controllers, applies the theme, builds the router and mounts the root view.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/app"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "app",
+    "manifest",
+    "generator",
+    "host"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./manifest": "./manifest.ts",
+    "./web": "./web/index.ts",
+    "./test": "./test/index.ts",
+    "./memory": "./memory.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/router": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/build": "workspace:*",
+    "@lightstart/dev": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
