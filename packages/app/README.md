@@ -17,6 +17,7 @@ light build                # generate as the build's first step
 | `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready` |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
 | `src/routes.ts` | optional: `{ "/path": { view: "<tag>", name?, title? } }` | builds the router and configures navigation |
+| `src/modes/<name>.ts` | optional: `main(argv)` and maybe `matches(argv)` | runs before the terminal host when `argv` matches |
 
 A file's name is its name in the manifest, without the extension and unchanged: `src/models/note.ts` is the model `note`, `src/controllers/notes.ts` is the controller `notes`. `.ts` and `.js` files are read the same way, in sorted order; `.d.ts` and `*.test.*` are skipped. Keep a model's file name equal to the name it passes `defineModel`, and a controller's file name equal to the name its controller carries.
 
@@ -41,8 +42,25 @@ export default defineApp({
 | `theme` | `"default"` | A preset name, applied by the web host |
 | `storage` | `{ kind: "indexeddb" }` on the web | `indexeddb`, `memory`, or `jsonl` for the terminal |
 | `root` | `"app-root"` | The root view's tag |
+| `args` | `{}` | The arguments the app takes, as a `@lightstart/cli` schema |
 
-`defineApp` returns the config unchanged; it only keeps the literal's types.
+`defineApp` returns the config with an `args` record the host fills, and with `restart` and `quit` calls the host installs. Its argument values keep the schema's types, so a controller reads `app.args.dir` directly. A storage folder or a mode's `matches` sees the same record.
+
+```ts
+import { defineApp } from "@lightstart/app";
+
+export default defineApp({
+  name: "notes",
+  host: "tui",
+  args: { dir: { default: "notes", description: "The notes folder" } },
+  storage: {
+    kind: "jsonl",
+    databases: { user: { kind: "jsonl", dir: (args) => `${String(args.dir)}/user` } },
+  },
+});
+```
+
+`storage.dir` is the default JSONL folder (the terminal's `--data` when absent), and `storage.databases` names more stores. A model picks one through its schema's `$adapter`; the default database is the one named `jsonl` (or `memory` in a test).
 
 ## What is generated
 
@@ -78,6 +96,25 @@ import manifest from "./app.ts";
 await start(manifest);
 ```
 
+A terminal app with modes gets their static namespace imports and a check before the host. A mode runs when its `matches(argv)` answers true, or, without one, when `argv` contains `--<name>`; the first match exits with its code:
+
+```ts
+import { start } from "@lightstart/app/tui";
+import manifest from "./app.ts";
+import { dark, light } from "./classes.baked.ts";
+import * as mode0 from "../src/modes/hello.ts";
+
+const argv = process.argv.slice(2);
+
+const matches0 = Reflect.get(mode0, "matches");
+
+if (typeof matches0 === "function" ? (matches0 as (given: readonly string[]) => boolean)(argv) : argv.includes("--hello")) {
+  process.exit(await mode0.main(argv));
+}
+
+await start(manifest, { classes: { dark, light } });
+```
+
 The output is deterministic (sorted, relative imports from `.light/`) and a file is written only when its content changes. `.light/` is not committed: add it to the project's `.gitignore`, beside `.deployed/`.
 
 ## The web host
@@ -108,30 +145,40 @@ const rows = await note.getAll();
 await app.stop();
 ```
 
-`openApp` uses memory storage by default and answers `{ store, controllers, stop }`. A terminal test then makes the root view and runs it on light's `TestTerminal`:
+`openApp` uses memory storage by default, parses `args` against the app's schema (an array of `argv` tokens, or a record merged over the defaults), and answers `{ store, controllers, restart, quit, stop }`. `restart(args?)` disposes the controllers, closes the store, writes the merged arguments into `app.args` and opens them again; `quit(code)` is the host's exit. A terminal test then mounts the root view on light's `TestTerminal` with `mountApp`:
 
 ```ts
-import { frames, runApp } from "@lightstart/light/native/tui";
-import { TestTerminal } from "@lightstart/light/native/tui/test-terminal.ts";
-import AppRoot from "../src/views/app-root.ts";
+import { mountApp, openApp } from "@lightstart/app/test";
 
-const app = await openApp(manifest);
-const term = new TestTerminal();
-const root = new AppRoot();
-const renderer = runApp({ app: root, term, onKey: (r, e) => root.onKey(r, e) });
+const app = await openApp(manifest, { args: ["--greeting", "hi"] });
+const mounted = mountApp(manifest, app, { cols: 50, rows: 10 });
+
+await mounted.settle();
+mounted.term.out;        // what the renderer wrote
+mounted.text();          // the screen as lines
+mounted.renderer.decoder.pushText("a");
+mounted.stop();          // stops the renderer
+await app.stop();        // disposes the controllers and closes the store
 ```
+
+`mountApp` answers `{ term, renderer, settle, text, stop }`; `settle()` waits for the queued frames and paints one.
 
 ## The terminal host
 
-`@lightstart/app/tui` reads the same manifest on a terminal. `start(manifest, options?)`:
+`@lightstart/app/tui` reads the same manifest on a terminal. It is two steps:
 
-1. Reads `--data <dir>` (the current folder by default) and `--scheme dark|light` (dark by default) from `process.argv`.
-2. Opens the store over JSONL files in that folder with every model of the manifest, through light's `openJsonl` and the package's `fileIO` (`tui/file.ts`).
+- `prepare(manifest, options?)` parses the arguments, opens the store and starts the controllers; it touches no terminal.
+- `mount(manifest, prepared, { term, classes, scheme })` makes the root view and runs it on `term`, answers the renderer.
+
+`start(manifest, options?)` does the TTY check and both, and installs `app.restart` and `app.quit`.
+
+1. Reads the app's `args` schema plus `--data <dir>` (the current folder by default) and `--scheme dark|light` (dark by default); an app that declares those names keeps its own. The parsed values land in `manifest.app.args`. An argument error prints its message and exits 2.
+2. Opens the default JSONL database (its folder from `storage.dir`, else `--data`) and each named database in `storage.databases`, each through light's `JsonlAdapter` and the package's `fileIO`. A test opens memory adapters instead. A model reaches a named database through its schema's `$adapter`.
 3. Names and starts every controller, as the web host does.
 4. Makes the manifest's root view (`rootView`, the default export of `src/views/<root>.ts`) and runs it with `runApp`; keys go to the root view's `onKey` when it has one.
 5. Uses the baked class table the generation wrote for the scheme, so the binary carries the table and not the classes engine.
 
-It needs a TTY: without one it prints a clear message and exits 2. It answers `{ stop() }`, which stops the renderer, disposes the controllers and closes the store. There is no router; `src/routes.ts` is ignored on the terminal.
+It needs a TTY: without one it prints a clear message and exits 2. It answers `{ stop() }`, which stops the renderer, disposes the controllers and closes the store. `app.restart(args?)` stops the renderer and controllers, closes the store, merges the new arguments, opens and starts again, then mounts a fresh root view on the same terminal. `app.quit(code?)` stops everything and exits with `code ?? 0`. Both answer promises; `defineApp`'s placeholders throw until a host or `openApp` installs them. There is no router; `src/routes.ts` is ignored on the terminal.
 
 The generation adds the root view's class to `.light/app.ts` as `rootView`, writes `.light/classes.baked.ts` (the same tables `light classes:bake --scheme dark,light` bakes), and starts the host from `.light/main.ts`:
 
