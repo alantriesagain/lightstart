@@ -14,9 +14,10 @@ import type { AppManifest } from "../manifest.ts";
 import note from "./fixtures/tui/src/models/note.ts";
 import notes from "./fixtures/tui/src/controllers/notes.ts";
 import AppRoot from "./fixtures/tui/src/views/app-root.ts";
+import { defineApp } from "../index.ts";
 
 const manifest: AppManifest = {
-  app: { name: "fixture-tui-test", host: "tui", storage: { kind: "memory" } },
+  app: defineApp({ name: "fixture-tui-test", host: "tui", storage: { kind: "memory" } }),
   rootView: AppRoot,
   models: [{ name: "note", model: note }],
   controllers: [{ name: "notes", controller: notes }],

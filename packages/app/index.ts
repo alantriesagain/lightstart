@@ -1,11 +1,13 @@
 /**
  * @file `@lightstart/app`: the few choices a project makes about its app.
- * `defineApp` keeps the config's literal types and adds the record the host
- * fills with the arguments it parsed; the host reads the rest of the wiring
- * from the project's folders.
+ * `defineApp` makes the app from its config: one instance holding the
+ * arguments the host parsed and the host's restart and quit. The host reads
+ * the rest of the wiring from the project's folders. The app is a class, and
+ * its arguments are read by name, so the instance a controller imports is the
+ * one the host writes, natively as under node.
  */
 
-import type { ArgsSchema, ResolvedArgs } from "@lightstart/cli/types/command.ts";
+import type { ArgsSchema } from "@lightstart/cli/types/command.ts";
 
 /** The host an app runs on. */
 export type AppHost = "web" | "tui";
@@ -14,7 +16,7 @@ export type AppHost = "web" | "tui";
 export type StorageKind = "indexeddb" | "jsonl" | "memory";
 
 /** Where a database keeps its JSONL files: a folder, or one read from the parsed arguments. */
-export type DirResolver = string | ((args: Record<string, unknown>) => string);
+export type DirResolver = string | ((args: AppArgs) => string);
 
 /** Another database the store routes models to through their schema's `$adapter`. */
 export interface DatabaseConfig {
@@ -42,38 +44,78 @@ export interface AppConfig {
   storage?: StorageConfig;
   /** The root view's tag; `"app-root"` when absent. */
   root?: string;
-  /** The arguments the app takes; the host parses them and fills `args`. */
+  /** The arguments the app takes; the host parses them into `args`. */
   args?: ArgsSchema;
 }
 
-/** What a running host adds to an app: restart it with other arguments, or quit it. */
+/** The arguments the host parsed, read by name: empty until a host runs the app. */
+export class AppArgs {
+  /** Every value by its name, as the parser resolved it. */
+  values: Record<string, unknown> = {};
+
+  /** An option's value, or `undefined` when it was not given and has no default. */
+  string(name: string): string | undefined {
+    const value = this.values[name];
+    return typeof value === "string" ? value : undefined;
+  }
+
+  /** Whether a flag is on. */
+  flag(name: string): boolean {
+    return this.values[name] === true;
+  }
+
+  /** A positional that takes the rest, empty when none was given. */
+  list(name: string): string[] {
+    const value = this.values[name];
+    return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+  }
+}
+
+/** What a running host installs on its app: start it again with other arguments, or quit it. */
 export interface AppLifecycle {
   restart(args?: Record<string, unknown>): Promise<void>;
   quit(code?: number): Promise<void>;
 }
 
-type ArgsOf<C extends AppConfig> = C["args"] extends ArgsSchema ? C["args"] : Record<never, never>;
+/**
+ * The app `src/app.ts` default-exports: its config, the arguments its host
+ * parsed and the host's lifecycle calls. It is one instance every module
+ * shares, the generated manifest and a controller that imports it alike.
+ */
+export class App {
+  readonly name: string;
+  readonly host: AppHost;
+  readonly theme: string | undefined;
+  readonly storage: StorageConfig | undefined;
+  readonly root: string | undefined;
+  /** The argument schema the config declares; empty when it declares none. */
+  readonly argsSchema: ArgsSchema;
+  /** The values the host parsed. */
+  readonly args = new AppArgs();
+  /** The running host's calls; null until a host runs the app. */
+  lifecycle: AppLifecycle | null = null;
 
-/** The app's config with its argument values and lifecycle calls. */
-export type DefinedApp<C extends AppConfig> = Omit<C, "args"> & AppLifecycle & {
-  /** The values the host parsed, empty until it does. */
-  args: ResolvedArgs<ArgsOf<C>>;
-  /** The argument schema, when the config declares one. */
-  argsSchema?: ArgsSchema;
-};
+  constructor(config: AppConfig) {
+    this.name = config.name;
+    this.host = config.host;
+    this.theme = config.theme;
+    this.storage = config.storage;
+    this.root = config.root;
+    this.argsSchema = config.args ?? {};
+  }
 
-const notRunning = async (): Promise<void> => {
-  throw new Error("the app is not running");
-};
+  /** Stop the controllers and the store, then open them again with `args` merged over the current ones. */
+  restart(args?: Record<string, unknown>): Promise<void> {
+    if (this.lifecycle === null) return Promise.reject(new Error("the app is not running"));
+    return this.lifecycle.restart(args);
+  }
 
-/** The app's config, typed and with the argument record its host fills in. */
-export const defineApp = <C extends AppConfig>(config: C): DefinedApp<C> => {
-  const defined = {
-    ...config,
-    args: {},
-    argsSchema: config.args,
-    restart: notRunning,
-    quit: notRunning,
-  };
-  return defined as unknown as DefinedApp<C>;
-};
+  /** Stop the renderer, the controllers and the store, then exit with `code`. */
+  quit(code?: number): Promise<void> {
+    if (this.lifecycle === null) return Promise.reject(new Error("the app is not running"));
+    return this.lifecycle.quit(code);
+  }
+}
+
+/** The app of the config `src/app.ts` declares. */
+export const defineApp = (config: AppConfig): App => new App(config);

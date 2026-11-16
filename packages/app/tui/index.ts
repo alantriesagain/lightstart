@@ -19,7 +19,7 @@ import { BakedClasses } from "@lightstart/light/theme/baked";
 import type { BakedEntry } from "@lightstart/light/theme/baked";
 import type { ModelSchema, StorageAdapter, Store } from "@lightstart/light/model/types.ts";
 import type { Renderer } from "@lightstart/light/native/tui";
-import type { DirResolver, StorageConfig } from "../index.ts";
+import type { AppArgs, DirResolver, StorageConfig } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { MemoryAdapter } from "../memory.ts";
 import { parseAppArgs } from "../args.ts";
@@ -53,30 +53,9 @@ export interface MountOptions {
   scheme?: "dark" | "light";
 }
 
-/** A prepared app: the store and controllers of a manifest, with no terminal yet. */
-export interface Prepared {
-  store: Store;
-  controllers: readonly unknown[];
-  args: Record<string, unknown>;
-  data: string;
-  scheme: "dark" | "light";
-  stop(): Promise<void>;
-}
-
 /** A running app: `stop()` stops the renderer, disposes its controllers and closes its store. */
 export interface AppHandle {
   stop(): Promise<void>;
-}
-
-interface Lifecycle {
-  renderer: Renderer | null;
-  term: Terminal | null;
-  classes: TuiClasses | null;
-  scheme: "dark" | "light";
-}
-
-interface Attachable {
-  attach(term: Terminal, classes: TuiClasses | null, scheme: "dark" | "light"): Renderer;
 }
 
 const isClass = (value: unknown): value is new () => View => typeof value === "function";
@@ -87,7 +66,7 @@ const rootOf = (manifest: AppManifest): View => {
   return new value();
 };
 
-const resolveDir = (dir: DirResolver | undefined, args: Record<string, unknown>, fallback: string): string =>
+const resolveDir = (dir: DirResolver | undefined, args: AppArgs, fallback: string): string =>
   typeof dir === "function" ? dir(args) : dir ?? fallback;
 
 const openDatabase = async (kind: "jsonl" | "memory", name: string, dir: string, models: Record<string, ModelSchema>): Promise<StorageAdapter> => {
@@ -103,7 +82,8 @@ const openDatabase = async (kind: "jsonl" | "memory", name: string, dir: string,
   return db;
 };
 
-const openTerminalStore = async (manifest: AppManifest, args: Record<string, unknown>, data: string): Promise<Store> => {
+const openTerminalStore = async (manifest: AppManifest, data: string): Promise<Store> => {
+  const args = manifest.app.args;
   const models = schemasOf(manifest);
   const storage: StorageConfig = manifest.app.storage ?? { kind: "jsonl" };
   if (storage.kind === "indexeddb") throw new Error("The terminal host cannot open an IndexedDB store; use jsonl or memory");
@@ -128,6 +108,83 @@ const openTerminalStore = async (manifest: AppManifest, args: Record<string, unk
   return store;
 };
 
+/**
+ * A prepared app: the manifest's store and controllers, and once it is
+ * mounted the terminal, its classes and the renderer. Its `restart` and `quit`
+ * are the app's lifecycle while it runs.
+ */
+export class Prepared {
+  readonly manifest: AppManifest;
+  store: Store;
+  controllers: readonly unknown[] = [];
+  /** The folder of the default JSONL database. */
+  data: string;
+  scheme: "dark" | "light";
+  term: Terminal | null = null;
+  classes: TuiClasses | null = null;
+  renderer: Renderer | null = null;
+
+  constructor(manifest: AppManifest, store: Store, data: string, scheme: "dark" | "light") {
+    this.manifest = manifest;
+    this.store = store;
+    this.data = data;
+    this.scheme = scheme;
+  }
+
+  /** Put a new root view on `term` with the tables for `scheme`; answers the renderer. */
+  mount(term: Terminal, classes: TuiClasses | null, scheme: "dark" | "light"): Renderer {
+    this.term = term;
+    this.classes = classes;
+    this.scheme = scheme;
+    return this.mountRoot(term);
+  }
+
+  private mountRoot(term: Terminal): Renderer {
+    const root = rootOf(this.manifest);
+    const handler = handlerOf(root);
+    const classes = this.classes;
+    const table = classes === null ? null : this.scheme === "light" ? classes.light : classes.dark;
+    const renderer = runApp({
+      app: root,
+      term,
+      classes: table === null ? null : new BakedClasses(table),
+      onKey: handler === null ? null : (render, e) => handler.call(root, render, e),
+    });
+    this.renderer = renderer;
+    callMounted(root, renderer);
+    return renderer;
+  }
+
+  /** Stop the renderer, dispose the controllers in reverse order and close the store. */
+  async stop(): Promise<void> {
+    const renderer = this.renderer;
+    if (renderer !== null) {
+      renderer.stop();
+      this.renderer = null;
+    }
+    await stopControllers(this.controllers);
+    await this.store.close();
+  }
+
+  /** Stop, merge `next` over the app's arguments, then open the store, start the controllers and mount a new root view again. */
+  async restart(next?: Record<string, unknown>): Promise<void> {
+    await this.stop();
+    const args = this.manifest.app.args;
+    args.values = { ...args.values, ...(next ?? {}) };
+    this.data = args.string("data") ?? this.data;
+    this.store = await openTerminalStore(this.manifest, this.data);
+    this.controllers = await startControllers(this.manifest);
+    const term = this.term;
+    if (term !== null) this.mountRoot(term);
+  }
+
+  /** Stop, then exit with `code`. */
+  async quit(code?: number): Promise<void> {
+    await this.stop();
+    process.exit(code ?? 0);
+  }
+}
+
 /** Parse the arguments, open the store and start the controllers; no terminal is touched. */
 export const prepare = async (manifest: AppManifest, options: TuiOptions = {}): Promise<Prepared> => {
   const argv = options.argv ?? process.argv.slice(2);
@@ -150,84 +207,20 @@ export const prepare = async (manifest: AppManifest, options: TuiOptions = {}): 
   }
   parsed["data"] = data;
   parsed["scheme"] = scheme;
-  manifest.app.args = parsed;
+  manifest.app.args.values = parsed;
 
-  const state: Lifecycle = { renderer: null, term: null, classes: null, scheme };
-  const prepared: Prepared = {
-    store: await openTerminalStore(manifest, parsed, data),
-    controllers: [],
-    args: parsed,
-    data,
-    scheme,
-    async stop(): Promise<void> {
-      if (state.renderer !== null) {
-        state.renderer.stop();
-        state.renderer = null;
-      }
-      await stopControllers(prepared.controllers);
-      await prepared.store.close();
-    },
-  };
+  const prepared = new Prepared(manifest, await openTerminalStore(manifest, data), data, scheme);
   prepared.controllers = await startControllers(manifest);
-
-  const mountRoot = (): Renderer => {
-    if (state.term === null) throw new Error("The app has no terminal to mount on");
-    const root = rootOf(manifest);
-    const handler = handlerOf(root);
-    const table = state.classes === null ? null : state.scheme === "light" ? state.classes.light : state.classes.dark;
-    const renderer = runApp({
-      app: root,
-      term: state.term,
-      classes: table === null ? null : new BakedClasses(table),
-      onKey: handler === null ? null : (render, e) => handler.call(root, render, e),
-    });
-    state.renderer = renderer;
-    callMounted(root, renderer);
-    return renderer;
+  manifest.app.lifecycle = {
+    restart: (next?: Record<string, unknown>): Promise<void> => prepared.restart(next),
+    quit: (code?: number): Promise<void> => prepared.quit(code),
   };
-
-  const attach = (term: Terminal, classes: TuiClasses | null, attached: "dark" | "light"): Renderer => {
-    state.term = term;
-    state.classes = classes;
-    state.scheme = attached;
-    return mountRoot();
-  };
-
-  manifest.app.restart = async (next?: Record<string, unknown>): Promise<void> => {
-    if (state.renderer !== null) {
-      state.renderer.stop();
-      state.renderer = null;
-    }
-    await stopControllers(prepared.controllers);
-    await prepared.store.close();
-    const args = { ...(manifest.app.args ?? {}), ...(next ?? {}) };
-    manifest.app.args = args;
-    prepared.args = args;
-    prepared.data = String(args["data"] ?? prepared.data);
-    prepared.store = await openTerminalStore(manifest, args, prepared.data);
-    prepared.controllers = await startControllers(manifest);
-    if (state.term !== null) mountRoot();
-  };
-
-  manifest.app.quit = async (code?: number): Promise<void> => {
-    if (state.renderer !== null) {
-      state.renderer.stop();
-      state.renderer = null;
-    }
-    await stopControllers(prepared.controllers);
-    await prepared.store.close();
-    process.exit(code ?? 0);
-  };
-
-  return { ...prepared, attach } as Prepared & Attachable;
+  return prepared;
 };
 
 /** Put the prepared app's root view on the terminal; answers the renderer. */
-export const mount = (_manifest: AppManifest, prepared: Prepared, options: MountOptions): Renderer => {
-  const attach = (prepared as Prepared & Partial<Attachable>).attach;
-  if (attach === undefined) throw new Error("The app was not prepared by @lightstart/app/tui");
-  return attach.call(prepared, options.term, options.classes ?? null, options.scheme ?? prepared.scheme);
-};
+export const mount = (_manifest: AppManifest, prepared: Prepared, options: MountOptions): Renderer =>
+  prepared.mount(options.term, options.classes ?? null, options.scheme ?? prepared.scheme);
 
 /** Start the app on the terminal; answers the handle that stops it. */
 export const start = async (manifest: AppManifest, options: TuiOptions = {}): Promise<AppHandle> => {
