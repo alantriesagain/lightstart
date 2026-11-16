@@ -8,12 +8,14 @@ Start every new project with `light new <kind> <name>`, run from a light checkou
 
 | Kind | What it gives |
 |---|---|
-| `web` | A page of light views and `lc-*` components, served by `light serve` |
-| `tui` | A terminal app on `@lightstart/light/native/tui`: a model, a controller, views, compiled by `scriptc` |
+| `web` | A web app on `@lightstart/app`: views, a model, a controller and routes, served by `light serve` |
+| `tui` | A terminal app on `@lightstart/app`: a model, a controller and views, compiled by `scriptc` |
 | `desktop` | A light page in the desktop shell, with a backend `scriptc` compiles |
 | `package` | A light package: modules, tests, a README and the pack script |
 
 The project's own `AGENTS.md` is the reference for its kind: where files go, what each script does, how to test and what the host expects. Read it before changing code.
+
+A web or terminal project is an app on `@lightstart/app`: `src/app.ts` names its host, `src/models/`, `src/controllers/` and `src/views/` hold its pieces, and `src/routes.ts` maps paths to view tags on the web. Light writes the wiring into `.light/`, which is generated and never committed or edited. A view imports its controller, a controller imports its models, and one controller reaches another by name with `sync:`.
 
 The everyday commands are `pnpm dev` (web, tui, desktop), `pnpm build`, `pnpm test` and `pnpm check`. A project's own scripts are the source of truth.
 

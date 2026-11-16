@@ -8,6 +8,6 @@
 </head>
 <body>
   <app-root></app-root>
-  <script type="module" src="./src/main.ts"></script>
+  <script type="module" src="./.light/main.ts"></script>
 </body>
 </html>

@@ -6,8 +6,8 @@ import type { Kind } from "../kinds.ts";
 /** The `web` kind. */
 export const web: Kind = {
   name: "web",
-  description: "A page of light views and lc-* components",
-  packages: ["@lightstart/light", "@lightstart/components"],
+  description: "A web app on @lightstart/app: views, a model, a controller and routes",
+  packages: ["@lightstart/light", "@lightstart/components", "@lightstart/app"],
   scripts: {
     dev: "light serve --watch",
     build: "light build",

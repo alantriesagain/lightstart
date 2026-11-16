@@ -1,9 +1,9 @@
 // node-only
 /**
- * @file End to end: `light new tui demo` with the install, then the new project's own scripts. The
- * tree holds the model, the controller, the two views and the baked class table; `test` drives the
- * app on light's test terminal, `bake` writes the table, `check` passes light's conventions, and
- * `build` compiles the app to one native binary with scriptc.
+ * @file End to end: `light new tui demo` with the install, then the new project's own scripts.
+ * The tree holds an app config, a model, a controller, the root view and its row view; `test`
+ * drives the app on a test terminal, `check` passes light's native conventions, and `build`
+ * compiles the generated entry to one native binary with scriptc.
  */
 import { spawn } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
@@ -44,13 +44,11 @@ const main = async (): Promise<void> => {
       "tsconfig.json",
       ".npmrc",
       ".gitignore",
-      "src/main.ts",
-      "src/models/todos.ts",
+      "src/app.ts",
+      "src/models/todo.ts",
       "src/controllers/todos.ts",
-      "src/views/todo-app.ts",
+      "src/views/app-root.ts",
       "src/views/todo-row.ts",
-      "src/lib/file-io.ts",
-      "src/classes.baked.ts",
       "test/app.test.ts",
       "README.md",
       "AGENTS.md",
@@ -61,16 +59,23 @@ const main = async (): Promise<void> => {
       scripts: Record<string, string>;
       dependencies: Record<string, string>;
       devDependencies: Record<string, string>;
+      native: { entry: string; binary: string; prepare: string[] };
     };
     ok("the manifest links light", manifest.dependencies["@lightstart/light"]?.startsWith("link:") === true);
-    eq("the scripts are the kind's", Object.keys(manifest.scripts).join(","), "dev,test,bake,build,check");
-    eq("dev runs the entry", manifest.scripts["dev"], "node src/main.ts");
-    eq("test runs the node test", manifest.scripts["test"], "node --test test/*.test.ts");
-    ok("bake runs light classes:bake", manifest.scripts["bake"]?.includes("light classes:bake") === true);
-    ok("build runs scriptc", manifest.scripts["build"]?.startsWith("scriptc build src/main.ts") === true);
+    ok("the manifest links the app layer", manifest.dependencies["@lightstart/app"]?.startsWith("link:") === true);
+    eq("the native entry is the generated one", manifest.native?.entry, ".light/main.ts");
+    eq("the binary is named after the project", manifest.native?.binary, "demo");
+    eq("the prepare step generates the app", JSON.stringify(manifest.native?.prepare), JSON.stringify(["light app"]));
+    eq("the scripts are the kind's", Object.keys(manifest.scripts).join(","), "dev,test,build,check");
+    eq("dev runs the app", manifest.scripts["dev"], "light run");
+    eq("test runs light test under node and natively", manifest.scripts["test"], "light test");
+    eq("build runs light build", manifest.scripts["build"], "light build");
     eq("check runs light check", manifest.scripts["check"], "light check");
+    ok("native is a devDependency", manifest.devDependencies["@lightstart/native"] !== undefined);
+    ok("build is a devDependency", manifest.devDependencies["@lightstart/build"] !== undefined);
     eq("scriptc is pinned", manifest.devDependencies["scriptc"], "0.4.12");
 
+    await run("pnpm", ["rebuild", "scriptc", "--config.ignore-scripts=false"], target);
     const tested = await run("pnpm", ["run", "test"], target);
     ok("the project's test exits 0", tested.code === 0);
     if (tested.code !== 0) console.log(tested.output);
@@ -79,12 +84,6 @@ const main = async (): Promise<void> => {
     ok("the project's check exits 0", checked.code === 0);
     if (checked.code !== 0) console.log(checked.output);
 
-    const baked = await run("pnpm", ["run", "bake"], target);
-    ok("the project's bake exits 0", baked.code === 0);
-    if (baked.code !== 0) console.log(baked.output);
-    ok("the baked table is written", existsSync(join(target, "src", "classes.baked.ts")));
-
-    await run("pnpm", ["rebuild", "scriptc", "--config.ignore-scripts=false"], target);
     const built = await run("pnpm", ["run", "build"], target);
     ok("the project's build exits 0", built.code === 0);
     if (built.code !== 0) console.log(built.output);

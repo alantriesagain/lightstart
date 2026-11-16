@@ -1,8 +1,9 @@
 // node-only
 /**
- * @file End to end: `light new web demo` with the install, then `light build` and `light serve` in
- * the new project. The build writes `.deployed/current/index.html` with a hashed script, and the
- * server answers `/` and `/src/main.ts`.
+ * @file End to end: `light new web demo` with the install, then the new project's own scripts.
+ * The tree holds an app config, a model, a controller, three views, routes and a browser test;
+ * `light build` writes `.deployed/current`, `light test` passes the browser test, `light check`
+ * passes light's conventions, and the server answers `/` and the generated `/.light/main.ts`.
  */
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
@@ -65,10 +66,26 @@ const main = async (): Promise<void> => {
       console.log(created.output);
       return;
     }
-    for (const file of ["package.json", "index.html", "src/main.ts", "src/views/app-root.ts", "test/app.test.ts", "README.md", "AGENTS.md", ".gitignore"]) ok(`the project has ${file}`, existsSync(join(target, file)));
+    for (const file of [
+      "package.json",
+      "index.html",
+      "src/app.ts",
+      "src/models/note.ts",
+      "src/controllers/notes.ts",
+      "src/routes.ts",
+      "src/views/app-root.ts",
+      "src/views/app-home.ts",
+      "src/views/app-about.ts",
+      "test/app.test.ts",
+      "README.md",
+      "AGENTS.md",
+      ".gitignore",
+    ])
+      ok(`the project has ${file}`, existsSync(join(target, file)));
 
     const manifest = JSON.parse(readFileSync(join(target, "package.json"), "utf8")) as { dependencies: Record<string, string> };
     ok("the manifest links light", manifest.dependencies["@lightstart/light"]?.startsWith("link:") === true);
+    ok("the manifest links the app layer", manifest.dependencies["@lightstart/app"]?.startsWith("link:") === true);
 
     const built = await run(process.execPath, [join(root, "packages", "cli", "bin", "light.js"), "build"], target);
     ok("light build exits 0", built.code === 0);
@@ -82,6 +99,14 @@ const main = async (): Promise<void> => {
     ok("the page points at a hashed script", /src="\.?\/?[^"]*module-[^"]+\.js"/.test(html));
     ok("the stylesheet is hashed too", /href="[^"]*style-[^"]+\.css"/.test(html));
 
+    const tested = await run("pnpm", ["run", "test"], target);
+    ok("the project's browser test passes", tested.code === 0);
+    if (tested.code !== 0) console.log(tested.output);
+
+    const checked = await run("pnpm", ["run", "check"], target);
+    ok("the project's check passes", checked.code === 0);
+    if (checked.code !== 0) console.log(checked.output);
+
     const port = await freePort();
     server = spawn(process.execPath, [join(root, "packages", "cli", "bin", "light.js"), "serve", "--port", String(port), "--host", "127.0.0.1"], { cwd: target, stdio: ["ignore", "pipe", "pipe"] });
     let log = "";
@@ -90,8 +115,8 @@ const main = async (): Promise<void> => {
 
     const rootResponse = await waitFor(`http://127.0.0.1:${port}/`);
     ok("the server answers /", rootResponse.status === 200);
-    const moduleResponse = await waitFor(`http://127.0.0.1:${port}/src/main.ts`);
-    ok("the server answers /src/main.ts", moduleResponse.status === 200);
+    const moduleResponse = await waitFor(`http://127.0.0.1:${port}/.light/main.ts`);
+    ok("the server answers the generated .light/main.ts", moduleResponse.status === 200);
     serves = rootResponse.ok && moduleResponse.ok;
     if (!serves) console.log(log);
   } finally {

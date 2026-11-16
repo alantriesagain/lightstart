@@ -16,6 +16,8 @@ import { loadPreset } from "@lightstart/light/theme/presets.js";
 import { createBrowserAdapter, createRouter } from "@lightstart/router";
 import type { RouterCore } from "@lightstart/router";
 import type { AppConfig } from "../index.ts";
+import { hasAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
+import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
 import { openStore } from "../storage.ts";
 import { startControllers, stopControllers } from "../controllers.ts";
 import type { AppManifest } from "../manifest.ts";
@@ -68,6 +70,7 @@ const mount = (tag: string): void => {
 export const start = async (manifest: AppManifest): Promise<AppHandle> => {
   registerOutlet();
   currentView.value = null;
+  if (!hasAdapter("indexeddb")) registerStorageAdapter("indexeddb", IndexedDBAdapter);
   const store = await openStore(manifest);
   const controllers = await startControllers(manifest);
   await applyAppTheme(manifest.app);

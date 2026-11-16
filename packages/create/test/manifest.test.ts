@@ -35,9 +35,11 @@ for (const mode of ["link", "file", "npm"] as const) {
   eq(`${mode}: the scripts`, JSON.stringify(manifest.scripts), JSON.stringify(web.scripts));
   eq(`${mode}: light is a dependency`, manifest.dependencies["@lightstart/light"], mode === "npm" ? "^0.1.0" : `${mode}:${light}`);
   eq(`${mode}: components is a dependency`, manifest.dependencies["@lightstart/components"], mode === "npm" ? "^0.1.0" : `${mode}:${components}`);
+  eq(`${mode}: app is a dependency`, manifest.dependencies["@lightstart/app"], mode === "npm" ? "^0.1.0" : `${mode}:${join(root, "packages", "app")}`);
+  eq(`${mode}: router comes with the app`, manifest.dependencies["@lightstart/router"], mode === "npm" ? "^0.1.0" : `${mode}:${join(root, "packages", "router")}`);
   eq(`${mode}: markdown is in the closure`, manifest.dependencies["@lightstart/markdown"], mode === "npm" ? "^0.1.0" : `${mode}:${join(root, "packages", "markdown")}`);
   eq(`${mode}: highlight is in the closure`, manifest.dependencies["@lightstart/highlight"], mode === "npm" ? "^0.1.0" : `${mode}:${join(root, "packages", "highlight")}`);
-  ok(`${mode}: cli is a devDependency`, manifest.devDependencies["@lightstart/cli"] !== undefined);
+  eq(`${mode}: the cli comes with the app`, manifest.dependencies["@lightstart/cli"], mode === "npm" ? "^0.1.0" : `${mode}:${join(root, "packages", "cli")}`);
   ok(`${mode}: dev is a devDependency`, manifest.devDependencies["@lightstart/dev"] !== undefined);
   ok(`${mode}: build is a devDependency`, manifest.devDependencies["@lightstart/build"] !== undefined);
   ok(`${mode}: server is a devDependency`, manifest.devDependencies["@lightstart/server"] !== undefined);

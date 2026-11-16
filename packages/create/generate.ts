@@ -109,6 +109,13 @@ const installValue = (root: string, name: string, mode: InstallMode): string => 
   return `${mode}:${lightPackageDir(root, name)}`;
 };
 
+const mapTokens = (value: unknown, name: string, title: string): unknown => {
+  if (typeof value === "string") return replaceTokens(value, name, title);
+  if (Array.isArray(value)) return value.map((entry) => mapTokens(entry, name, title));
+  if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, mapTokens(entry, name, title)]));
+  return value;
+};
+
 /** The package.json for a kind, with light linked (`link`/`file`) or named by version (`npm`). */
 export const manifestFor = (kind: Kind, name: string, root: string, mode: InstallMode): GeneratedManifest => {
   const dependencies: Record<string, string> = {};
@@ -125,7 +132,7 @@ export const manifestFor = (kind: Kind, name: string, root: string, mode: Instal
 
   return {
     name,
-    ...kind.manifest,
+    ...(kind.manifest === undefined ? {} : mapTokens(kind.manifest, name, titleOf(name)) as Record<string, unknown>),
     type: "module",
     ...(kind.publishable === true ? {} : { private: true as const }),
     scripts: Object.fromEntries(Object.entries(kind.scripts).map(([script, line]) => [script, replaceTokens(line, name, titleOf(name))])),
