@@ -51,7 +51,7 @@ const registerOutlet = (): void => {
   registered = true;
 };
 
-const applyAppTheme = async (app: AppConfig): Promise<void> => {
+const applyAppTheme = async (app: Pick<AppConfig, "theme">): Promise<void> => {
   const theme = await loadPreset(app.theme ?? "default");
   if (theme !== null) applyTheme(theme);
 };

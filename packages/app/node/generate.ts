@@ -30,6 +30,7 @@ export interface Generated {
   models: string[];
   controllers: string[];
   views: string[];
+  modes: string[];
   routes: boolean;
   /** Whether a file was written; false when every file already held this content. */
   changed: boolean;
@@ -109,7 +110,21 @@ const manifestSource = (project: string, models: string[], controllers: string[]
   return lines.join("\n");
 };
 
-const mainSource = (host: string): string => {
+const modeImport = (project: string, file: string, index: number): string =>
+  `import * as mode${String(index)} from "${specifierFor(project, file)}";`;
+
+const modeDispatch = (file: string, index: number): string[] => {
+  const name = nameOf(file);
+  return [
+    `const matches${String(index)} = Reflect.get(mode${String(index)}, "matches");`,
+    "",
+    `if (typeof matches${String(index)} === "function" ? (matches${String(index)} as (given: readonly string[]) => boolean)(argv) : argv.includes(${JSON.stringify(`--${name}`)})) {`,
+    `  process.exit(await mode${String(index)}.main(argv));`,
+    "}",
+  ];
+};
+
+const mainSource = (project: string, host: string, modes: string[]): string => {
   if (host !== "tui") {
     return [
       `import { start } from "@lightstart/app/${host}";`,
@@ -119,14 +134,19 @@ const mainSource = (host: string): string => {
       "",
     ].join("\n");
   }
-  return [
+  const lines: string[] = [
     'import { start } from "@lightstart/app/tui";',
     'import manifest from "./app.ts";',
     'import { dark, light } from "./classes.baked.ts";',
-    "",
-    "await start(manifest, { classes: { dark, light } });",
-    "",
-  ].join("\n");
+  ];
+  modes.forEach((file, index) => lines.push(modeImport(project, file, index)));
+  if (modes.length > 0) {
+    lines.push("", "const argv = process.argv.slice(2);", "");
+    modes.forEach((file, index) => lines.push(...modeDispatch(file, index)));
+    lines.push("");
+  }
+  lines.push("await start(manifest, { classes: { dark, light } });", "");
+  return lines.join("\n");
 };
 
 const rootFileOf = (views: string[], root: string): string => {
@@ -163,10 +183,11 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
   const manifest = join(dir, "app.ts");
   const main = join(dir, "main.ts");
   const info = await infoOf(app);
+  const modes = info.host === "tui" ? flatFiles(join(project, "src", "modes")) : [];
   const rootFile = info.host === "tui" ? rootFileOf(views, info.root) : null;
   const classes = info.host === "tui" ? join(dir, "classes.baked.ts") : null;
   const wroteManifest = writeWhenChanged(manifest, manifestSource(project, models, controllers, views, routes, rootFile));
-  const wroteMain = writeWhenChanged(main, mainSource(info.host));
+  const wroteMain = writeWhenChanged(main, mainSource(project, info.host, modes));
   const wroteClasses = classes === null ? false : writeWhenChanged(classes, await bakedSource(main));
 
   return {
@@ -179,6 +200,7 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
     models: models.map(nameOf),
     controllers: controllers.map(nameOf),
     views: views.map(nameOf),
+    modes: modes.map(nameOf),
     routes: routes !== null,
     changed: wroteManifest || wroteMain || wroteClasses,
   };
