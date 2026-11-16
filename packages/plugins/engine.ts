@@ -1,6 +1,7 @@
 /**
  * @file One QuickJS context as the core uses it: evaluating a plugin's source, invoking a plugin's
- * function by the id the prelude gave it, running promise jobs, and answering a plugin's
+ * function by the id the prelude gave it, a plugin that is ES modules (its files registered, its
+ * entry evaluated), running promise jobs, and answering a plugin's
  * `__host(name, json)` through a HostHandler. The wcjs functions are bound natively by the FFI
  * manifest (native/ffi.json); under node the tests preload wcjs-node.mjs, the same
  * calls on node's own engine. Every value crosses as text, JSON by convention.
@@ -14,6 +15,8 @@ declare function wcjsFree(ctx: bigint): void;
 declare function wcjsSetHost(ctx: bigint, host: (name: string, args: string) => number): void;
 declare function wcjsReply(ctx: bigint, json: string): void;
 declare function wcjsEval(ctx: bigint, code: string, file: string, done: (status: number, text: string) => void): number;
+declare function wcjsAddModule(ctx: bigint, name: string, code: string): void;
+declare function wcjsEvalModule(ctx: bigint, code: string, file: string, done: (status: number, text: string) => void): number;
 declare function wcjsInvoke(ctx: bigint, id: number, json: string, done: (status: number, text: string) => void): number;
 declare function wcjsJobs(ctx: bigint, done: (status: number, text: string) => void): number;
 
@@ -86,6 +89,31 @@ export class JsEngine {
     let out = new JsResult(FAILED, "plugins: no result");
     if (!this.live) return out;
     wcjsEval(this.ctx, code, file, (status: number, text: string) => {
+      out = new JsResult(status, text);
+    });
+    return out;
+  }
+
+  /**
+   * Register the file at absolute path `file` with source `code`, for a plugin's imports (a file
+   * registered again is replaced). A relative import resolves against the importing file's folder
+   * and loads only a registered file; a bare specifier is an error.
+   */
+  addModule(file: string, code: string): void {
+    if (this.live) wcjsAddModule(this.ctx, file, code);
+  }
+
+  /**
+   * Evaluate `code` as the ES module named `file`: a plugin's entry, its imports the registered
+   * files, the promise jobs it starts run before the result (OK and "null", or the error it threw
+   * or rejected with). QuickJS keeps a module by its name: an entry evaluated again names a new
+   * generation (`/p/index.js#2`), which its imports carry, so they compile again from the files
+   * registered now.
+   */
+  evalModule(code: string, file: string): JsResult {
+    let out = new JsResult(FAILED, "plugins: no result");
+    if (!this.live) return out;
+    wcjsEvalModule(this.ctx, code, file, (status: number, text: string) => {
       out = new JsResult(status, text);
     });
     return out;

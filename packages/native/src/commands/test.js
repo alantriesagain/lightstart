@@ -129,7 +129,7 @@ const runFiles = async (tests, flags, root) => {
     if (!onlyNative) {
       const preload = manifest === null ? null : nodePreload(manifest);
       const nodeArgs = ["--no-warnings"];
-      if (preload !== null) nodeArgs.push("--import", preload);
+      if (preload !== null) nodeArgs.push("--experimental-vm-modules", "--import", preload);
       nodeArgs.push(t.path);
       node = await capture("node", nodeArgs, { cwd: t.member.dir, env });
     }

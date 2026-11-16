@@ -15,6 +15,13 @@
 // an async function), measure from where they are, and the host call puts the caller's limit back
 // when it returns. A plugin recursing past WCJS_STACK (about 230 calls deep, a QuickJS frame taking
 // about 1.1 KB) gets a RangeError it can catch.
+//
+// A plugin may be ES modules: the core registers each of its files (`wcjs_add_module`, by its
+// absolute path) and evaluates its entry (`wcjs_eval_module`). A relative import resolves against
+// the importing file's folder and loads only a registered file, so a plugin reaches nothing the
+// core did not hand it; a bare specifier is an error. QuickJS keeps a module by its name, so the
+// core names an entry with a generation (`/p/index.js#2`): the files it imports carry the same
+// suffix and are compiled again, from the sources registered now.
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +36,14 @@ typedef void (*wcjs_result_cb)(int32_t status, const uint8_t *text, size_t len, 
 #define WCJS_STACK (256 * 1024)
 /** The host CPU time one call may exclude from its budget; past it, the budget runs. */
 #define WCJS_HOST_MAX 5000
+
+/** A file a plugin may import: its absolute path and its source. */
+typedef struct wcjs_module {
+  char *name;
+  char *code;
+  size_t len;
+  struct wcjs_module *next;
+} wcjs_module;
 
 typedef struct {
   JSRuntime *rt;
@@ -48,7 +63,82 @@ typedef struct {
   /** The stack QuickJS measures now, as the shim sees it: where it was measured from, and its limit. */
   uintptr_t stack_top;
   uintptr_t stack_limit;
+  /** The files plugins may import. */
+  wcjs_module *modules;
 } wcjs;
+
+/** The length of `name` without its generation (`#…`). */
+static size_t plain_len(const char *name) {
+  const char *hash = strchr(name, '#');
+  return hash != NULL ? (size_t)(hash - name) : strlen(name);
+}
+
+/** `name` relative to the folder of `base` (`./x`, `../x`), its `.` and `..` segments resolved, with `base`'s generation; anything else as it is. */
+static char *wcjs_normalize(JSContext *ctx, const char *base, const char *name, void *opaque) {
+  (void)opaque;
+  if (name[0] != '.') return js_strdup(ctx, name);
+  size_t base_len = plain_len(base);
+  const char *suffix = base + base_len;
+  size_t dir_len = base_len;
+  while (dir_len > 0 && base[dir_len - 1] != '/') dir_len--;
+  size_t name_len = strlen(name);
+  size_t cap = dir_len + name_len + strlen(suffix) + 2;
+  char *joined = (char *)js_malloc(ctx, cap);
+  char *out = (char *)js_malloc(ctx, cap);
+  if (joined == NULL || out == NULL) {
+    js_free(ctx, joined);
+    js_free(ctx, out);
+    return NULL;
+  }
+  memcpy(joined, base, dir_len);
+  memcpy(joined + dir_len, name, name_len);
+  joined[dir_len + name_len] = 0;
+  // Resolve the segments: "." goes, ".." drops the segment before it.
+  size_t o = 0;
+  const char *p = joined;
+  while (*p != 0) {
+    const char *end = strchr(p, '/');
+    size_t seg = end != NULL ? (size_t)(end - p) : strlen(p);
+    if (seg == 1 && p[0] == '.') {
+      // nothing
+    } else if (seg == 2 && p[0] == '.' && p[1] == '.') {
+      if (o > 0) o--;
+      while (o > 0 && out[o - 1] != '/') o--;
+    } else if (seg > 0 || o == 0) {
+      memcpy(out + o, p, seg);
+      o += seg;
+      if (end != NULL) out[o++] = '/';
+    }
+    if (end == NULL) break;
+    p = end + 1;
+  }
+  out[o] = 0;
+  if (out[0] != '/' && joined[0] == '/') {
+    memmove(out + 1, out, o + 1);
+    out[0] = '/';
+    o++;
+  }
+  strcpy(out + o, suffix);
+  js_free(ctx, joined);
+  return out;
+}
+
+/** Compile the registered file `name` names (its generation kept in the module's name); an error for one not registered. */
+static JSModuleDef *wcjs_load(JSContext *ctx, const char *name, void *opaque) {
+  wcjs *w = (wcjs *)opaque;
+  size_t len = plain_len(name);
+  wcjs_module *m = w->modules;
+  while (m != NULL && !(strlen(m->name) == len && memcmp(m->name, name, len) == 0)) m = m->next;
+  if (m == NULL) {
+    JS_ThrowReferenceError(ctx, "plugins: cannot import %.*s: not a file of the plugin", (int)len, name);
+    return NULL;
+  }
+  JSValue fn = JS_Eval(ctx, m->code, m->len, name, JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
+  if (JS_IsException(fn)) return NULL;
+  JSModuleDef *def = (JSModuleDef *)JS_VALUE_GET_PTR(fn);
+  JS_FreeValue(ctx, fn);
+  return def;
+}
 
 static int64_t cpu_ms(void) {
   struct timespec ts;
@@ -162,6 +252,7 @@ void *wcjs_new(int32_t memory_mb, int32_t budget_ms) {
   JS_SetContextOpaque(w->ctx, w);
   w->budget_ms = budget_ms;
   JS_SetHostPromiseRejectionTracker(w->rt, on_rejection, w);
+  JS_SetModuleLoaderFunc(w->rt, wcjs_normalize, wcjs_load, w);
   JSValue global = JS_GetGlobalObject(w->ctx);
   JS_SetPropertyStr(w->ctx, global, "__host", JS_NewCFunction(w->ctx, js_host, "__host", 2));
   JS_FreeValue(w->ctx, global);
@@ -174,6 +265,14 @@ void wcjs_free(void *p) {
   JS_FreeContext(w->ctx);
   JS_FreeRuntime(w->rt);
   free(w->rejection);
+  wcjs_module *m = w->modules;
+  while (m != NULL) {
+    wcjs_module *next = m->next;
+    free(m->name);
+    free(m->code);
+    free(m);
+    m = next;
+  }
   free(w);
 }
 
@@ -293,6 +392,84 @@ int32_t wcjs_eval(void *p, const uint8_t *code, size_t code_len, const uint8_t *
   name[file_len] = 0;
   wcjs_budget saved = enter(w);
   JSValue v = JS_Eval(w->ctx, src, code_len, name, JS_EVAL_TYPE_GLOBAL);
+  int32_t status = deliver(w, v, done, context);
+  leave(w, saved);
+  free(src);
+  free(name);
+  return status;
+}
+
+/** Register (or replace) the file at absolute path `name` with source `code`, for a plugin's imports. */
+void wcjs_add_module(void *p, const uint8_t *name, size_t name_len, const uint8_t *code, size_t code_len) {
+  wcjs *w = (wcjs *)p;
+  wcjs_module *m = w->modules;
+  while (m != NULL && !(strlen(m->name) == name_len && memcmp(m->name, name, name_len) == 0)) m = m->next;
+  char *text = (char *)malloc(code_len + 1);
+  if (text == NULL) return;
+  memcpy(text, code, code_len);
+  text[code_len] = 0;
+  if (m != NULL) {
+    free(m->code);
+    m->code = text;
+    m->len = code_len;
+    return;
+  }
+  m = (wcjs_module *)calloc(1, sizeof(wcjs_module));
+  char *key = (char *)malloc(name_len + 1);
+  if (m == NULL || key == NULL) {
+    free(m);
+    free(key);
+    free(text);
+    return;
+  }
+  memcpy(key, name, name_len);
+  key[name_len] = 0;
+  m->name = key;
+  m->code = text;
+  m->len = code_len;
+  m->next = w->modules;
+  w->modules = m;
+}
+
+/**
+ * Evaluate `code` as the ES module named `file` (a plugin's entry): its imports load the registered
+ * files, its body runs, and the promise jobs it starts run before the result (a module that awaits
+ * at its top level settles then). A module that throws, or whose evaluation rejects, is an error.
+ */
+int32_t wcjs_eval_module(void *p, const uint8_t *code, size_t code_len, const uint8_t *file, size_t file_len, wcjs_result_cb done, void *context) {
+  wcjs *w = (wcjs *)p;
+  JSContext *ctx = w->ctx;
+  char *src = (char *)malloc(code_len + 1);
+  char *name = (char *)malloc(file_len + 1);
+  if (src == NULL || name == NULL) {
+    free(src);
+    free(name);
+    return 1;
+  }
+  memcpy(src, code, code_len);
+  src[code_len] = 0;
+  memcpy(name, file, file_len);
+  name[file_len] = 0;
+  wcjs_budget saved = enter(w);
+  JSValue v = JS_Eval(ctx, src, code_len, name, JS_EVAL_TYPE_MODULE);
+  if (!JS_IsException(v)) {
+    for (;;) {
+      JSContext *job_ctx = NULL;
+      if (JS_ExecutePendingJob(w->rt, &job_ctx) <= 0) break;
+    }
+    JSPromiseStateEnum state = JS_PromiseState(ctx, v);
+    if (state == JS_PROMISE_REJECTED) {
+      JSValue reason = JS_PromiseResult(ctx, v);
+      JS_FreeValue(ctx, v);
+      v = JS_Throw(ctx, reason);
+      // Delivered here as the module's error, not again as an unhandled rejection.
+      free(w->rejection);
+      w->rejection = NULL;
+    } else {
+      JS_FreeValue(ctx, v);
+      v = JS_NULL;
+    }
+  }
   int32_t status = deliver(w, v, done, context);
   leave(w, saved);
   free(src);
