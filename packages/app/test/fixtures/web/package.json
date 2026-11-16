@@ -1,0 +1,19 @@
+{
+  "name": "fixture-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "light": {
+    "scopes": ["@lightstart"]
+  },
+  "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/router": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/build": "workspace:*",
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/dev": "workspace:*"
+  }
+}

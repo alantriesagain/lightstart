@@ -15,6 +15,7 @@ packages:
   - 'packages/cli'
   - 'packages/create'
   - 'packages/dev'
+  - 'packages/app'
   - 'packages/build'
   - 'packages/sqlite'
   - 'packages/markdown'
