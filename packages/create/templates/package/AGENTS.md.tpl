@@ -9,7 +9,11 @@ A light package: TypeScript with erasable syntax, one module entry, tests under 
 | `pnpm test` | `node --test test/*.test.ts`: the tests, printed as node's own report |
 | `pnpm typecheck` | `tsc -p tsconfig.json`: the compiler over the sources and tests |
 | `pnpm check` | `light check`: light's conventions over the sources |
+| `pnpm lint` | `light lint`: eslint with the project's config |
+| `pnpm verify` | `light verify`: check, lint, typecheck and test in order |
 | `pnpm pack` | `node scripts/pack.js`: stages `dist/` and runs `npm pack` there |
+
+Run `pnpm verify` before committing.
 
 ## Where things are
 

@@ -17,13 +17,13 @@ The project's own `AGENTS.md` is the reference for its kind: where files go, wha
 
 A web or terminal project is an app on `@lightstart/app`: `src/app.ts` names its host, `src/models/`, `src/controllers/` and `src/views/` hold its pieces, and `src/routes.ts` maps paths to view tags on the web. Light writes the wiring into `.light/`, which is generated and never committed or edited. A view imports its controller, a controller imports its models, and one controller reaches another by name with `sync:`.
 
-The everyday commands are `pnpm dev` (web, tui, desktop), `pnpm build`, `pnpm test` and `pnpm check`. A project's own scripts are the source of truth.
+The everyday commands are `pnpm dev` (web, tui, desktop), `pnpm build`, `pnpm test`, `pnpm check`, `pnpm lint`, `pnpm typecheck` and `pnpm verify` (all four gates). A project's own scripts are the source of truth.
 
 Conventions every kind shares:
 
 - TypeScript with erasable syntax: no `enum`, `namespace`, parameter properties or decorators, so node runs the sources after stripping types and `scriptc` can compile them.
 - No `any`. Narrow `unknown` with `typeof`, `instanceof` or `Array.isArray`.
-- Run `light check` before committing.
+- Run `pnpm verify` before committing: `light verify` runs `check`, `lint`, `typecheck` and `test` in order.
 - Test with `light test` in a web app, and with `node --test` (or the project's test script) elsewhere.
 - Never hand-write an importmap. `light serve` builds it from `package.json`.
 - Light's package READMEs are the reference for an API; every package under `packages/` has one.

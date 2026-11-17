@@ -17,6 +17,11 @@ pnpm dev
 | `test` | `light test`: the app on light's test terminal, under node and natively, the outputs equal |
 | `build` | `light build`: the release binary at `dist/__NAME__` |
 | `check` | `light check`: light's native conventions over the sources |
+| `lint` | `light lint`: eslint with the project's config |
+| `typecheck` | `light typecheck`: the prepare steps, then `tsc --noEmit` |
+| `verify` | `light verify`: check, lint, typecheck and test in order |
+
+Run `pnpm verify` before committing.
 
 `dev` needs an interactive terminal; the test does not. `test` and `build` need scriptc's native compiler: `.npmrc` lets pnpm run its install script. With `ignore-scripts` on, run `pnpm rebuild scriptc --config.ignore-scripts=false` once before `build`.
 

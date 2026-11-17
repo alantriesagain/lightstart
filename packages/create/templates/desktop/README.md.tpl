@@ -17,6 +17,11 @@ pnpm dev
 | `build` | `light desktop build backend.ts --web web --out dist` |
 | `test` | `node --test test/*.test.ts`: the backend's logic, without a window |
 | `check` | `light check` |
+| `lint` | `light lint`: eslint with the project's config |
+| `typecheck` | `light typecheck`: `tsc --noEmit` over the backend and its tests |
+| `verify` | `light verify`: check, lint, typecheck and test in order |
+
+Run `pnpm verify` before committing.
 
 `build` leaves `dist/backend` (the executable) and `dist/web/` (the page, light's own files under `web/light/`, the components under `web/components/`, and the import map that maps the bare `@lightstart/…` specifiers onto them). The executable looks for `web/` beside itself.
 

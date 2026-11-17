@@ -32,7 +32,11 @@ slugger.slug("Hello, World!"); // "hello-world-2"
 | `test` | `node --test test/*.test.ts`, node's own runner over the tests |
 | `typecheck` | `tsc -p tsconfig.json`, the TypeScript compiler over the sources |
 | `check` | `light check`, light's conventions over the sources |
+| `lint` | `light lint`, eslint with the project's config |
+| `verify` | `light verify`, check, lint, typecheck and test in order |
 | `pack` | `node scripts/pack.js`, stages `dist/` and runs `npm pack` there |
+
+Run `pnpm verify` before committing.
 
 ## Where things are
 

@@ -74,6 +74,11 @@ define("todo-row", TodoRow);
 | `pnpm test` | `light test`: drives the app on a test terminal, under node and natively, the outputs equal; `--node-only` for node alone |
 | `pnpm build` | `light build`: the release binary at `dist/__NAME__` |
 | `pnpm check` | `light check`: light's native conventions over the sources |
+| `pnpm lint` | `light lint`: eslint with the project's config |
+| `pnpm typecheck` | `light typecheck`: the prepare steps, then `tsc --noEmit` |
+| `pnpm verify` | `light verify`: check, lint, typecheck and test in order |
+
+Run `pnpm verify` before committing.
 
 `dev` needs an interactive terminal; the test does not. `test` and `build` need scriptc's native compiler: `.npmrc` lets pnpm run its install script.
 

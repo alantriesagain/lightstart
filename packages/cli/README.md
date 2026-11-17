@@ -33,6 +33,10 @@ The prefix is the `envPrefix` given to `createCli` (`LIGHT` for the `light` bina
 
 The project folder is the shell's logical path, not `process.cwd()`'s realpath, so a symlinked workspace member keeps the path the shell names.
 
+## verify
+
+`light verify [--fail-fast]` runs `check`, `lint`, `typecheck` and `test` in that order. A step the project's `package.json` declares a script for runs that script through its package manager; a step without one runs as a child process of the same CLI, so it finds the implementation for the project. A step with neither is skipped. Every step's name and result is printed as it runs, then a summary of each step's pass or fail and its seconds; the exit code is 1 when any step failed. `--fail-fast` stops at the first failure. The command lives in this package's [`cli/commands/`](cli/commands/verify.js) and is found by discovery like any other.
+
 ## The `cli/` convention
 
 A project or a package contributes by putting files under `cli/`. Nothing is registered anywhere: the folder is the API.

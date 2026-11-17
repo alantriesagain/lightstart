@@ -13,7 +13,10 @@
     "dev": "light run",
     "test": "light test",
     "build": "light build",
-    "check": "light check"
+    "check": "light check",
+    "lint": "light lint",
+    "typecheck": "light typecheck",
+    "verify": "light verify"
   },
   "dependencies": {
     "@lightstart/light": "link:../../packages/light",
@@ -28,6 +31,10 @@
     "typescript": "^6.0.3",
     "@lightstart/native": "link:../../packages/native",
     "@lightstart/build": "link:../../packages/build",
-    "@lightstart/test": "link:../../packages/test"
+    "@lightstart/test": "link:../../packages/test",
+    "@stylistic/eslint-plugin": "^2.13.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-lit": "^2.3.1",
+    "globals": "^15.14.0"
   }
 }
