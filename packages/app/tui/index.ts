@@ -1,7 +1,7 @@
 /**
  * @file `@lightstart/app/tui`: the terminal host. Its store kinds are `jsonl`
- * (the default: files in the store's folder, `at`, else `--data`, the current
- * folder by default) and `memory`, and a project's own. The arguments come
+ * (the default: files in the store's folder, `at`, else `--data`, `.data` in
+ * the current folder by default) and `memory`, and a project's own. The arguments come
  * from argv: the app's, and the host's own `--data`, `--scheme dark|light`
  * (dark by default) and `--route` (the path the routes start at, `/` by
  * default), each unless the app declares that name itself; an argument error
@@ -55,7 +55,7 @@ export interface AppHandle {
 
 /** The arguments the terminal host takes beside the app's. */
 export const hostArgs: ArgsSchema = {
-  data: { default: ".", description: "The folder that holds the JSONL files" },
+  data: { default: ".data", description: "The folder that holds the JSONL files" },
   scheme: { choices: ["dark", "light"], default: "dark", description: "The theme's side" },
   route: { default: "/", description: "The path the routes start at" },
 };
@@ -72,7 +72,7 @@ export class JsonlKind extends StoreKind {
   readonly name = "jsonl";
 
   open(app: App, store: string, at: string, _models: Record<string, ModelSchema>, _main: boolean): Promise<StorageAdapter> {
-    return openJsonl(store, at.length > 0 ? at : app.args.string("data") ?? ".");
+    return openJsonl(store, at.length > 0 ? at : app.args.string("data") ?? ".data");
   }
 }
 
