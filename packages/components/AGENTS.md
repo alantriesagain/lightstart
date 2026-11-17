@@ -112,7 +112,7 @@ own value, and a microtask queued during a dispatch runs once that dispatch has 
 control's `name` is a **path**, not a key (`links[0].url`), so `collectFormData` reassembles a
 nested shape from the names alone; `form/path.js` is that reader.
 
-Deciding what a field list contains is not this package's: `@bootstrapp/form` reads a model's
+Deciding what a field list contains is not this package's: `@lightstart/form` reads a model's
 `$form` block, a schema that has none, or a variable spec. `FormField` stays here because it is
 `<lc-form>`'s prop contract, and that package extends it as a type-only edge.
 

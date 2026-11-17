@@ -20,4 +20,5 @@ packages:
   - 'packages/sqlite'
   - 'packages/markdown'
   - 'packages/highlight'
+  - 'packages/form'
   - 'benchmarks'

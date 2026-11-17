@@ -143,7 +143,7 @@ export default defineComponent({
    * `cmsType` or a `typeHandlers` widget has no native control at all, so its
    * `required` is invisible to the platform.
    *
-   * This is the control-level check, not the schema's: `@bootstrapp/form`
+   * This is the control-level check, not the schema's: `@lightstart/form`
    * runs the model's own rules on a payload that may never have had a DOM.
    *
    * @returns {Record<string, string>}
