@@ -57,6 +57,7 @@ An app keeps rows in stores by name, several at once. A model picks one through 
 
 - A store's `kind` is an adapter: light has `memory`, `indexeddb`, `jsonl` and `sql` (SQLite over `@lightstart/sqlite`). The host says which it runs and which is its default: the web host runs `indexeddb` (its default where the page has IndexedDB, else memory) and `memory`; the terminal host runs `jsonl` (its default) and `memory`; every host runs `memory`, and a test opens every store in memory.
 - A store whose kind its host cannot run is an error naming the host and the kinds it has; so is a model naming a store the app does not declare, before anything opens.
+- `kind` may be a function of the arguments, as `at` may: `kind: (args) => (args.flag("ephemeral") ? "memory" : "jsonl")` keeps nothing for a run that asks so.
 - `at` is what the kind opens: a folder for `jsonl` (the terminal's `--data` when absent), a database's name for `indexeddb` (the app's name for `main`, `<name>:<store>` for another), nothing for `memory`. It may be a function of the arguments.
 - A project brings a kind of its own (an adapter over its server's API, SQLite with its driver) by registering a `StoreKind` before the run: `registerStoreKind(new MyKind())`. Its `open(app, store, at, models, main)` answers the opened adapter.
 

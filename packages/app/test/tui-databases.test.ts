@@ -74,6 +74,24 @@ const main = async (): Promise<void> => {
     missing = error instanceof Error ? error.message : String(error);
   }
   ok("a model naming a store the app does not declare is an error", missing.includes('keeps its rows in the store "user"'));
+
+  const chosen = defineApp({ name: "chosen", host: "tui", args: { keep: { flag: true, description: "Keep the rows" } }, stores: { main: { kind: (args) => (args.flag("keep") ? "jsonl" : "memory") } } });
+  const kept = mkdtempSync(join(tmpdir(), "light-app-kind-"));
+  try {
+    const keepHost = new TuiHost({ argv: ["--keep", "--data", kept] });
+    chosen.args.values = keepHost.args(chosen);
+    const onDisk = await keepHost.openStores({ app: chosen, models: [{ name: "note", model: note }], controllers: [], routes: null, views: [] }, false);
+    await note.add({ text: "kept" });
+    await onDisk.close();
+    ok("a kind read from the arguments: jsonl when they ask to keep", existsSync(join(kept, "note.jsonl")));
+    const memoryHost = new TuiHost({ argv: ["--data", kept] });
+    chosen.args.values = memoryHost.args(chosen);
+    const inMemory = await memoryHost.openStores({ app: chosen, models: [{ name: "note", model: note }], controllers: [], routes: null, views: [] }, false);
+    ok("and memory when they do not", inMemory.databases["main"] !== undefined && (await note.getAll()).length === 0);
+    await inMemory.close();
+  } finally {
+    rmSync(kept, { recursive: true, force: true });
+  }
   done();
 };
 

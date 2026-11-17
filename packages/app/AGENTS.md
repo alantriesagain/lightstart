@@ -57,7 +57,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Contract | Who relies on it |
 |---|---|
-| `defineApp`, `AppConfig` and its fields (`name`, `host`, `theme`, `stores`, `root`, `args`), `StoreConfig` (`kind`, `at`), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers and the generator |
+| `defineApp`, `AppConfig` and its fields (`name`, `host`, `theme`, `stores`, `root`, `args`), `StoreConfig` (`kind`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers and the generator |
 | `StoreKind` and `registerStoreKind` | a project bringing a store kind of its own |
 | `AppHost` and `HostGeneration` | the hosts, and a host a project would bring later |
 | `AppManifest` and its records (`app`, `rootView`, `models`, `controllers`, `routes`, `views`) | the generated `.light/app.ts` and the run |
