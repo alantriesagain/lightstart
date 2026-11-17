@@ -46,7 +46,7 @@ const walk = (dir) =>
  */
 const stage = () => {
   rmSync(DIST, { recursive: true, force: true });
-  const sources = walk(PKG).map((file) => relative(PKG, file)).filter((file) => (/\.(js|ts|css)$/.test(file) || file === "package.json") && !SIDE_FILE.test(file));
+  const sources = walk(PKG).map((file) => relative(PKG, file)).filter((file) => (/\.(js|ts|css)$/.test(file) || file === "package.json" || file === "tags.json") && !SIDE_FILE.test(file));
   const docs = ["README.md", "LICENSE"].filter((file) => existsSync(join(PKG, file)));
   for (const file of [...sources, ...docs]) {
     mkdirSync(dirname(join(DIST, file)), { recursive: true });
@@ -70,7 +70,7 @@ const stage = () => {
     exclude: sources.filter((file) => file.endsWith(".js") && sources.includes(file.replace(/\.js$/, ".d.ts"))),
   }));
   const { scripts: _, devDependencies: __, ...manifest } = /** @type {{ name: string, exports: Record<string, string | { types: string, default: string }>, scripts?: unknown, devDependencies?: unknown, [key: string]: unknown }} */ (JSON.parse(readFileSync(join(PKG, "package.json"), "utf8")));
-  const files = ["**/*.js", "**/*.d.ts", "**/*.css"];
+  const files = ["**/*.js", "**/*.d.ts", "**/*.css", "tags.json"];
   writeFileSync(join(DIST, "package.json"), `${JSON.stringify({ ...manifest, files }, null, 2)}\n`);
   execFileSync(join(PKG, "node_modules/.bin/tsc"), ["-p", DIST], { stdio: "inherit" });
   for (const file of walk(DIST))

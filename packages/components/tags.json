@@ -1,0 +1,967 @@
+{
+  "lc-about-section": {
+    "module": "page/about-section.js",
+    "style": "page/about-section.css",
+    "extends": null,
+    "uses": [
+      "lc-markdown"
+    ]
+  },
+  "lc-accordion": {
+    "module": "navigation/accordion.js",
+    "style": "navigation/accordion.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-alert": {
+    "module": "feedback/alert.js",
+    "style": "feedback/alert.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-alert-dialog": {
+    "module": "overlay/alert-dialog.js",
+    "style": "overlay/alert-dialog.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-app-container": {
+    "module": "app/app-container.js",
+    "style": "app/app-container.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-app-header": {
+    "module": "app/app-header.js",
+    "style": "app/app-header.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-app-shell": {
+    "module": "app/app-shell.js",
+    "style": "app/app-shell.css",
+    "extends": null,
+    "uses": [
+      "lc-drawer",
+      "lc-icon"
+    ]
+  },
+  "lc-auth-form": {
+    "module": "form/auth-form.js",
+    "style": "form/auth-form.css",
+    "extends": null,
+    "uses": [
+      "lc-button",
+      "lc-input",
+      "lc-tabs"
+    ]
+  },
+  "lc-avatar": {
+    "module": "display/avatar.js",
+    "style": "display/avatar.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-avatar-group": {
+    "module": "display/avatar-group.js",
+    "style": "display/avatar-group.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-badge": {
+    "module": "display/badge.js",
+    "style": "display/badge.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-bar-chart": {
+    "module": "display/bar-chart.js",
+    "style": "display/bar-chart.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-bottom-nav": {
+    "module": "app/bottom-nav.js",
+    "style": "app/bottom-nav.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-bottom-sheet": {
+    "module": "overlay/bottom-sheet.js",
+    "style": "overlay/bottom-sheet.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-breadcrumbs": {
+    "module": "navigation/breadcrumbs.js",
+    "style": "navigation/breadcrumbs.css",
+    "extends": null,
+    "uses": [
+      "lc-link"
+    ]
+  },
+  "lc-button": {
+    "module": "display/button.js",
+    "style": "display/button.css",
+    "extends": "lc-link",
+    "uses": []
+  },
+  "lc-calendar": {
+    "module": "display/calendar.js",
+    "style": "display/calendar.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-card": {
+    "module": "layout/card.js",
+    "style": "layout/card.css",
+    "extends": "lc-container",
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-checkbox": {
+    "module": "form/checkbox.js",
+    "style": "form/checkbox.css",
+    "extends": null,
+    "uses": [
+      "lc-label"
+    ]
+  },
+  "lc-circle": {
+    "module": "display/circle.js",
+    "style": "display/circle.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-clipboard": {
+    "module": "utility/clipboard.js",
+    "style": "utility/clipboard.css",
+    "extends": null,
+    "uses": [
+      "lc-button"
+    ]
+  },
+  "lc-code-block": {
+    "module": "display/code-block.js",
+    "style": "display/code-block.css",
+    "extends": null,
+    "uses": [
+      "lc-button",
+      "lc-clipboard"
+    ]
+  },
+  "lc-color-picker": {
+    "module": "form/color-picker.js",
+    "style": "form/color-picker.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-command-palette": {
+    "module": "overlay/command-palette.js",
+    "style": "overlay/command-palette.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-kbd",
+      "lc-modal",
+      "lc-search"
+    ]
+  },
+  "lc-comment": {
+    "module": "display/comment.js",
+    "style": "display/comment.css",
+    "extends": null,
+    "uses": [
+      "lc-avatar",
+      "lc-badge",
+      "lc-link"
+    ]
+  },
+  "lc-container": {
+    "module": "layout/container.js",
+    "style": "layout/container.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-context-menu": {
+    "module": "overlay/context-menu.js",
+    "style": "overlay/context-menu.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-menu"
+    ]
+  },
+  "lc-cta-section": {
+    "module": "page/cta-section.js",
+    "style": "page/cta-section.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-darkmode": {
+    "module": "utility/darkmode.js",
+    "style": "utility/darkmode.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-nav-item",
+      "lc-switch"
+    ]
+  },
+  "lc-data-table": {
+    "module": "display/data-table.js",
+    "style": "display/data-table.css",
+    "extends": null,
+    "uses": [
+      "lc-pagination",
+      "lc-select",
+      "lc-table"
+    ]
+  },
+  "lc-day-strip": {
+    "module": "form/day-strip.js",
+    "style": "form/day-strip.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-device": {
+    "module": "utility/device.js",
+    "style": "utility/device.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-divider": {
+    "module": "layout/divider.js",
+    "style": "layout/divider.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-draggable": {
+    "module": "utility/draggable.js",
+    "style": "utility/draggable.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-drawer": {
+    "module": "overlay/drawer.js",
+    "style": "overlay/drawer.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-droparea": {
+    "module": "utility/droparea.js",
+    "style": "utility/droparea.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-dropdown": {
+    "module": "overlay/dropdown.js",
+    "style": "overlay/dropdown.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-editable": {
+    "module": "display/editable.js",
+    "style": null,
+    "extends": null,
+    "uses": [
+      "lc-button",
+      "lc-input",
+      "lc-join"
+    ]
+  },
+  "lc-empty-state": {
+    "module": "feedback/empty-state.js",
+    "style": "feedback/empty-state.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-example": {
+    "module": "display/example.js",
+    "style": "display/example.css",
+    "extends": null,
+    "uses": [
+      "lc-clipboard",
+      "lc-code-block",
+      "lc-segmented"
+    ]
+  },
+  "lc-faq-section": {
+    "module": "page/faq-section.js",
+    "style": "page/faq-section.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-feature-grid": {
+    "module": "page/feature-grid.js",
+    "style": "page/feature-grid.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-file-upload": {
+    "module": "form/file-upload.js",
+    "style": "form/file-upload.css",
+    "extends": null,
+    "uses": [
+      "lc-button",
+      "lc-icon"
+    ]
+  },
+  "lc-flex": {
+    "module": "layout/flex.js",
+    "style": "layout/flex.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-float-card": {
+    "module": "page/float-card.js",
+    "style": "page/float-card.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-float-panel": {
+    "module": "overlay/float-panel.js",
+    "style": "overlay/float-panel.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-flow": {
+    "module": "display/flow.js",
+    "style": "display/flow.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-footer": {
+    "module": "page/footer.js",
+    "style": "page/footer.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-form": {
+    "module": "form/form.js",
+    "style": "form/form.css",
+    "extends": null,
+    "uses": [
+      "lc-label"
+    ]
+  },
+  "lc-grid": {
+    "module": "layout/grid.js",
+    "style": "layout/grid.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-hero-section": {
+    "module": "page/hero-section.js",
+    "style": "page/hero-section.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-icon": {
+    "module": "display/icon.js",
+    "style": "display/icon.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-icon-picker": {
+    "module": "form/icon-picker.js",
+    "style": "form/icon-picker.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-image": {
+    "module": "display/image.js",
+    "style": null,
+    "extends": null,
+    "uses": []
+  },
+  "lc-image-crop": {
+    "module": "form/image-crop.js",
+    "style": "form/image-crop.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-slider",
+      "lc-spinner"
+    ]
+  },
+  "lc-input": {
+    "module": "form/input.js",
+    "style": "form/input.css",
+    "extends": null,
+    "uses": [
+      "lc-label"
+    ]
+  },
+  "lc-join": {
+    "module": "form/join.js",
+    "style": "form/join.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-kanban": {
+    "module": "display/kanban.js",
+    "style": "display/kanban.css",
+    "extends": null,
+    "uses": [
+      "lc-card",
+      "lc-draggable",
+      "lc-droparea",
+      "lc-icon"
+    ]
+  },
+  "lc-kbd": {
+    "module": "display/kbd.js",
+    "style": "display/kbd.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-label": {
+    "module": "form/label.js",
+    "style": "form/label.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-line-chart": {
+    "module": "display/line-chart.js",
+    "style": "display/line-chart.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-link": {
+    "module": "display/link.js",
+    "style": "display/link.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-tooltip"
+    ]
+  },
+  "lc-link-preview": {
+    "module": "display/link-preview.js",
+    "style": "display/link-preview.css",
+    "extends": null,
+    "uses": [
+      "lc-card"
+    ]
+  },
+  "lc-list": {
+    "module": "display/list.js",
+    "style": "display/list.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-list-item": {
+    "module": "display/list-item.js",
+    "style": null,
+    "extends": null,
+    "uses": []
+  },
+  "lc-list-row": {
+    "module": "display/list-row.js",
+    "style": "display/list-row.css",
+    "extends": null,
+    "uses": [
+      "lc-badge",
+      "lc-icon"
+    ]
+  },
+  "lc-markdown": {
+    "module": "display/markdown.js",
+    "style": "display/markdown.css",
+    "extends": null,
+    "uses": [
+      "lc-code-block"
+    ]
+  },
+  "lc-media-card": {
+    "module": "display/media-card.js",
+    "style": "display/media-card.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-menu": {
+    "module": "navigation/menu.js",
+    "style": "navigation/menu.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-modal": {
+    "module": "overlay/modal.js",
+    "style": "overlay/modal.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-month-picker": {
+    "module": "form/month-picker.js",
+    "style": "form/month-picker.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-nav-item": {
+    "module": "navigation/nav-item.js",
+    "style": "navigation/nav-item.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-tooltip"
+    ]
+  },
+  "lc-nav-tree": {
+    "module": "navigation/nav-tree.js",
+    "style": "navigation/nav-tree.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-nav-item"
+    ]
+  },
+  "lc-navbar": {
+    "module": "navigation/navbar.js",
+    "style": "navigation/navbar.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-number-input": {
+    "module": "form/number-input.js",
+    "style": "form/number-input.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-page": {
+    "module": "layout/page.js",
+    "style": "layout/page.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-page-header": {
+    "module": "app/page-header.js",
+    "style": "app/page-header.css",
+    "extends": null,
+    "uses": [
+      "lc-breadcrumbs"
+    ]
+  },
+  "lc-pagination": {
+    "module": "navigation/pagination.js",
+    "style": "navigation/pagination.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-link"
+    ]
+  },
+  "lc-palette": {
+    "module": "display/palette.js",
+    "style": "display/palette.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-panel": {
+    "module": "layout/panel.js",
+    "style": "layout/panel.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-pattern": {
+    "module": "display/pattern.js",
+    "style": "display/pattern.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-pie-chart": {
+    "module": "display/pie-chart.js",
+    "style": "display/pie-chart.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-popover": {
+    "module": "overlay/popover.js",
+    "style": "overlay/popover.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-pricing-card": {
+    "module": "page/pricing-card.js",
+    "style": "page/pricing-card.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-pricing-table": {
+    "module": "page/pricing-table.js",
+    "style": "page/pricing-table.css",
+    "extends": null,
+    "uses": [
+      "lc-pricing-card"
+    ]
+  },
+  "lc-progress-bar": {
+    "module": "feedback/progress-bar.js",
+    "style": "feedback/progress-bar.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-prose": {
+    "module": "layout/prose.js",
+    "style": "layout/prose.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-pull-indicator": {
+    "module": "feedback/pull-indicator.js",
+    "style": "feedback/pull-indicator.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-spinner"
+    ]
+  },
+  "lc-radio": {
+    "module": "form/radio.js",
+    "style": "form/radio.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-radio-group": {
+    "module": "form/radio-group.js",
+    "style": "form/radio-group.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-rating": {
+    "module": "form/rating.js",
+    "style": "form/rating.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-ruler": {
+    "module": "form/ruler.js",
+    "style": "form/ruler.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-scroller": {
+    "module": "app/scroller.js",
+    "style": "app/scroller.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-search": {
+    "module": "form/search.js",
+    "style": "form/search.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-join"
+    ]
+  },
+  "lc-section": {
+    "module": "layout/section.js",
+    "style": "layout/section.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-segmented": {
+    "module": "form/segmented.js",
+    "style": "form/segmented.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-select": {
+    "module": "form/select.js",
+    "style": "form/select.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-label",
+      "lc-tag"
+    ]
+  },
+  "lc-showcase-section": {
+    "module": "page/showcase-section.js",
+    "style": "page/showcase-section.css",
+    "extends": null,
+    "uses": [
+      "lc-markdown"
+    ]
+  },
+  "lc-sidebar": {
+    "module": "navigation/sidebar.js",
+    "style": "navigation/sidebar.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-sidebar-section": {
+    "module": "navigation/sidebar-section.js",
+    "style": "navigation/sidebar-section.css",
+    "extends": null,
+    "uses": [
+      "lc-badge",
+      "lc-icon"
+    ]
+  },
+  "lc-site-header": {
+    "module": "page/site-header.js",
+    "style": "page/site-header.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-skeleton": {
+    "module": "feedback/skeleton.js",
+    "style": "feedback/skeleton.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-slider": {
+    "module": "form/slider.js",
+    "style": "form/slider.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-sparkline": {
+    "module": "display/sparkline.js",
+    "style": "display/sparkline.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-spinner": {
+    "module": "feedback/spinner.js",
+    "style": "feedback/spinner.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-split-pane": {
+    "module": "layout/split-pane.js",
+    "style": "layout/split-pane.css",
+    "extends": "lc-flex",
+    "uses": []
+  },
+  "lc-stat": {
+    "module": "display/stat.js",
+    "style": "display/stat.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-stats-section": {
+    "module": "page/stats-section.js",
+    "style": "page/stats-section.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-stepper": {
+    "module": "feedback/stepper.js",
+    "style": "feedback/stepper.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-spinner"
+    ]
+  },
+  "lc-steps-section": {
+    "module": "page/steps-section.js",
+    "style": "page/steps-section.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-stories": {
+    "module": "app/stories.js",
+    "style": "app/stories.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-story-circle": {
+    "module": "display/story-circle.js",
+    "style": "display/story-circle.css",
+    "extends": null,
+    "uses": [
+      "lc-avatar",
+      "lc-icon"
+    ]
+  },
+  "lc-swipe-deck": {
+    "module": "app/swipe-deck.js",
+    "style": "app/swipe-deck.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-switch": {
+    "module": "form/switch.js",
+    "style": "form/switch.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-table": {
+    "module": "display/table.js",
+    "style": "display/table.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-tabs": {
+    "module": "navigation/tabs.js",
+    "style": "navigation/tabs.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-tag": {
+    "module": "display/tag.js",
+    "style": "display/tag.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-testimonial-section": {
+    "module": "page/testimonial-section.js",
+    "style": "page/testimonial-section.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-text": {
+    "module": "display/text.js",
+    "style": "display/text.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-textarea": {
+    "module": "form/textarea.js",
+    "style": "form/textarea.css",
+    "extends": null,
+    "uses": [
+      "lc-label"
+    ]
+  },
+  "lc-tile": {
+    "module": "display/tile.js",
+    "style": "display/tile.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-time": {
+    "module": "form/time.js",
+    "style": null,
+    "extends": null,
+    "uses": []
+  },
+  "lc-timeline": {
+    "module": "display/timeline.js",
+    "style": "display/timeline.css",
+    "extends": null,
+    "uses": [
+      "lc-icon",
+      "lc-link"
+    ]
+  },
+  "lc-title-bar": {
+    "module": "app/title-bar.js",
+    "style": "app/title-bar.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-toast": {
+    "module": "feedback/toast.js",
+    "style": "feedback/toast.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-toc": {
+    "module": "navigation/toc.js",
+    "style": "navigation/toc.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-toolbar": {
+    "module": "layout/toolbar.js",
+    "style": "layout/toolbar.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-tooltip": {
+    "module": "overlay/tooltip.js",
+    "style": "overlay/tooltip.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-tree": {
+    "module": "navigation/tree.js",
+    "style": "navigation/tree.css",
+    "extends": null,
+    "uses": []
+  },
+  "lc-tree-item": {
+    "module": "navigation/tree-item.js",
+    "style": "navigation/tree-item.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ]
+  },
+  "lc-week-hours": {
+    "module": "form/week-hours.js",
+    "style": "form/week-hours.css",
+    "extends": null,
+    "uses": [
+      "lc-switch"
+    ]
+  },
+  "lc-wizard": {
+    "module": "navigation/wizard.js",
+    "style": "navigation/wizard.css",
+    "extends": null,
+    "uses": []
+  }
+}
