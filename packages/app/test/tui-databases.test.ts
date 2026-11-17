@@ -84,6 +84,13 @@ const main = async (): Promise<void> => {
     await note.add({ text: "kept" });
     await onDisk.close();
     ok("a kind read from the arguments: jsonl when they ask to keep", existsSync(join(kept, "note.jsonl")));
+    const untouched = join(kept, "untouched");
+    const quietHost = new TuiHost({ argv: ["--keep", "--data", untouched] });
+    chosen.args.values = quietHost.args(chosen);
+    const quiet = await quietHost.openStores({ app: chosen, models: [{ name: "note", model: note }], controllers: [], routes: null, views: [] }, false);
+    await note.getAll();
+    await quiet.close();
+    ok("a store nothing was written to leaves no folder", !existsSync(untouched));
     const memoryHost = new TuiHost({ argv: ["--data", kept] });
     chosen.args.values = memoryHost.args(chosen);
     const inMemory = await memoryHost.openStores({ app: chosen, models: [{ name: "note", model: note }], controllers: [], routes: null, views: [] }, false);

@@ -18,7 +18,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `tui/generate.ts` | The terminal host's part of the generation: the modes dispatch in `.light/main.ts`, and `.light/classes.baked.ts` |
 | `tui/outlet.ts` | `AppOutlet`: `<app-outlet>` as a terminal view, defined on import |
 | `tui/root.ts` | `handlerOf` and `callMounted`: the root view's `onKey` and `mounted(renderer)`, for the terminal host and its test mount |
-| `tui/file.ts` | `fileIO`: the JSONL adapter's files through `node:fs` |
+| `tui/file.ts` | `fileIO`: the JSONL adapter's files through `node:fs`, the folder made on the first write |
 | `tui/test.ts` | `mountApp`: the root view on a `TestTerminal` over an opened app |
 | `test/index.ts` | `openApp(manifest, { args })`: a run over memory stores with no surface, and `OpenedApp` |
 | `node/generate.ts` | The generator's core: read `src/app.ts`, the folders and the routes, write `.light/app.ts`, then hand `.light/main.ts` to the host's `generate.ts` (`HostGeneration`) |
