@@ -28,8 +28,12 @@ const fixtures = resolve(import.meta.dirname, "fixtures");
 const schemaOf = (command) => command.args ?? {};
 
 test("run takes the app's arguments after --", () => {
-  assert.deepEqual(parseArgs(schemaOf(runCommand), ["--", "--dir", "x"]), { appArgs: ["--dir", "x"] });
-  assert.deepEqual(parseArgs(schemaOf(runCommand), []), { appArgs: [] });
+  assert.deepEqual(parseArgs(schemaOf(runCommand), ["--", "--dir", "x"]), { "no-build": false, release: false, appArgs: ["--dir", "x"] });
+  assert.deepEqual(parseArgs(schemaOf(runCommand), []), { "no-build": false, release: false, appArgs: [] });
+});
+
+test("run parses --release and does not pass it to the app", () => {
+  assert.deepEqual(parseArgs(schemaOf(runCommand), ["--release", "--", "--flag"]), { "no-build": false, release: true, appArgs: ["--flag"] });
 });
 
 test("selftest names a scenario, may skip the build and pass app arguments", () => {
@@ -73,10 +77,19 @@ const makeApp = () => {
   return app;
 };
 
-test("light run builds the fixture app and runs it", async () => {
+test("light run builds the fixture app into dist/dev and runs it", async () => {
   const app = makeApp();
   const project = findProject(app);
   assert.equal(await runProject(project, [], app), 0);
+  const result = spawnSync(join(app, "dist", "dev", "fixture-app"), [], { encoding: "utf8" });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /hello from fixture/);
+});
+
+test("light run --release builds the fixture app into dist", async () => {
+  const app = makeApp();
+  const project = findProject(app);
+  assert.equal(await runProject(project, [], app, { release: true }), 0);
   const result = spawnSync(join(app, "dist", "fixture-app"), [], { encoding: "utf8" });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /hello from fixture/);

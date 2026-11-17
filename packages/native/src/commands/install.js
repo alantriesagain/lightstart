@@ -52,7 +52,7 @@ export const run = async (args, root) => {
   const [appName, name] = args.filter((a) => a !== "--strip");
   if (appName === undefined) throw new Error("usage: light install [name] [--strip]");
   const app = memberByName(root, appName);
-  const binary = await buildApp(root, app, args.includes("--strip"));
+  const binary = await buildApp(root, app, { strip: args.includes("--strip") });
   return installBinary(root, app, binary, name);
 };
 
@@ -64,6 +64,6 @@ export const run = async (args, root) => {
  * @returns {Promise<number>}
  */
 export const installProject = async (project, name, strip) => {
-  const binary = await buildProject(project, strip);
+  const binary = await buildProject(project, { strip });
   return installBinary(project.dir, project, binary, name);
 };
