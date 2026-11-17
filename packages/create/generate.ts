@@ -5,7 +5,7 @@
  */
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { titleOf } from "./kinds.ts";
 import type { Kind } from "./kinds.ts";
@@ -104,9 +104,18 @@ export const dependencyClosure = (root: string, names: readonly string[]): strin
   return found;
 };
 
-const installValue = (root: string, name: string, mode: InstallMode): string => {
+/** `dir` from the project `target`: relative when the two share a folder below the root (they move together), else absolute. */
+const linkPath = (target: string, dir: string): string => {
+  const from = resolve(target);
+  const shared = from.split(sep)[1];
+  if (shared === undefined || shared.length === 0 || shared !== dir.split(sep)[1]) return dir;
+  const path = relative(from, dir);
+  return path.startsWith(".") ? path : `./${path}`;
+};
+
+const installValue = (root: string, name: string, mode: InstallMode, target: string): string => {
   if (mode === "npm") return `^${versionOf(root, name)}`;
-  return `${mode}:${lightPackageDir(root, name)}`;
+  return `${mode}:${linkPath(target, lightPackageDir(root, name))}`;
 };
 
 const mapTokens = (value: unknown, name: string, title: string): unknown => {
@@ -117,9 +126,9 @@ const mapTokens = (value: unknown, name: string, title: string): unknown => {
 };
 
 /** The package.json for a kind, with light linked (`link`/`file`) or named by version (`npm`). */
-export const manifestFor = (kind: Kind, name: string, root: string, mode: InstallMode): GeneratedManifest => {
+export const manifestFor = (kind: Kind, name: string, root: string, mode: InstallMode, target: string): GeneratedManifest => {
   const dependencies: Record<string, string> = {};
-  for (const pkg of dependencyClosure(root, kind.packages)) dependencies[pkg] = installValue(root, pkg, mode);
+  for (const pkg of dependencyClosure(root, kind.packages)) dependencies[pkg] = installValue(root, pkg, mode, target);
 
   const devDependencies: Record<string, string> = {};
   const devLight: string[] = [];
@@ -128,7 +137,7 @@ export const manifestFor = (kind: Kind, name: string, root: string, mode: Instal
     else devDependencies[pkg] = range;
   }
   for (const pkg of dependencyClosure(root, devLight))
-    if (dependencies[pkg] === undefined && devDependencies[pkg] === undefined) devDependencies[pkg] = installValue(root, pkg, mode);
+    if (dependencies[pkg] === undefined && devDependencies[pkg] === undefined) devDependencies[pkg] = installValue(root, pkg, mode, target);
 
   return {
     name,
@@ -223,7 +232,7 @@ export const generate = async (options: GenerateOptions): Promise<GeneratedManif
   const templateDir = join(here, "templates", options.kind.name);
   if (!existsSync(templateDir)) throw new Error(`The "${options.kind.name}" template is not here yet.`);
   ensureTarget(options.target, options.force);
-  const manifest = manifestFor(options.kind, options.name, options.lightRoot, options.mode);
+  const manifest = manifestFor(options.kind, options.name, options.lightRoot, options.mode, options.target);
   const written = copyTemplate(templateDir, options.target, options.name, titleOf(options.name));
   writeFileSync(join(options.target, "package.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   options.log?.(`Wrote ${String(written.length + 1)} files in ${options.target}`);
