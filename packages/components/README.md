@@ -131,7 +131,7 @@ registerFormFieldRenderer("colour", (field, value, onChange, html) => html`
 
 The key is `field.cmsType` when there is one, else `field.type`, so registering under a built-in type replaces that control everywhere. A built-in control labels itself; a registered one draws only the control, and `<lc-form>` draws its label above it (`drawsOwnLabel` is the distinction). A view that draws its own chrome around a control asks `renderFormControl(field, value, onChange, html)` for one instead of dispatching on the type itself, which is what `check/field-list-through-form` holds it to.
 
-The field list itself usually comes from a schema: `@bootstrapp/form` reads a model's `$form` block, a schema with none, or a variable spec, and answers one of these.
+The field list itself usually comes from a schema: `@lightstart/form`'s `fieldsForModel` reads a model's `$form` block, `inferFields` a schema with none, and `variableFields` a variable spec, and each answers one of these.
 
 ## The words the components draw
 

@@ -1,0 +1,42 @@
+{
+  "name": "@lightstart/form",
+  "version": "0.1.0",
+  "description": "The fields a form shows, from a light model's schema or a variable spec, and the validation of what it submits.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/form"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "form",
+    "fields",
+    "schema",
+    "validation",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "pack": "node scripts/pack.js"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/light": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/components": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
