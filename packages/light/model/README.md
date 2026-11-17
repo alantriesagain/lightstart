@@ -15,7 +15,7 @@ Each entry loads only its own code; nothing is a barrel.
 | `@lightstart/light/model/jsonl` | the JSON Lines adapter: a file per model, through the IO its host hands it |
 | `@lightstart/light/model/sql` | the SQLite adapter: the model schema as tables, reads and writes as parameterized SQL, over an injected `@lightstart/sqlite` driver |
 | `@lightstart/light/model/sql-builder` | the SQL generator: DDL, additive columns, indexes, where/order and CRUD |
-| `@lightstart/light/model/binder` | `modelQuery`, `bindModelQuery`, `modelBinder` |
+| `@lightstart/light/model/binder` | `modelQuery`, `bindModelQuery`, `modelBinder`, `LiveRows`, `liveRows` |
 | `@lightstart/light/model/slug` | `slugify`, `slugHooks` |
 | `@lightstart/light/model/events` | the event names the model emits |
 
@@ -105,6 +105,8 @@ const rows = modelQuery(sessions, { where, order, limit });
 ```
 
 An array property runs `modelQuery()`; any other keeps one row (`query.id`, or a `where`). `query` may be a function of the host; `dependsOn: ["month"]` rebuilds the query when those properties change. The resource behind a property is `this.$queries.<key>` (`pending`, `error`, `total`, `refresh()`), a controller's `$ready` waits for the first load of every model-bound property, and a component with a `query`-backed property gets `dataPending`.
+
+For a `Controller` subclass, `liveRows(controller, model, build)` is the same query as a `sync:` entry, its rows read through a `LiveRows<T>`. It registers the query with `controller.$onStart`, so it starts with `start()` against the stores the run opened, its first load counts in `$ready`, a `dispose()` tears it down and a second `start()` follows it again; `build` is a function, so the signals it reads rebuild the query.
 
 ## Hooks
 

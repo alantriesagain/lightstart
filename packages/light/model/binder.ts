@@ -310,20 +310,24 @@ export class LiveRows<T> {
 /**
  * The rows of a live query of `model` for `controller`: its options built by
  * `build` and built again whenever a signal `build` read changes, followed
- * until the controller is disposed. Made before `start()`, its first load
- * counts in `$ready`. The signals `build` reads are declared above the field
+ * from every `start()` until the controller is disposed. Registered through
+ * `controller.$onStart`, the query starts with `start()`, against the stores
+ * the run opened; its first load counts in `$ready`, and a second `start()`
+ * follows it again. The signals `build` reads are declared above the field
  * that holds the rows.
  */
 export const liveRows = <T>(controller: Controller, model: ModelApi, build: () => ModelQueryOptions): LiveRows<T> => {
   const rows = new LiveRows<T>();
-  const run = effect(() => {
-    const options = build();
-    untracked(() => rows.use(modelQuery<Record<string, unknown>>(model, options)));
+  controller.$onStart(() => {
+    const run = effect(() => {
+      const options = build();
+      untracked(() => rows.use(modelQuery<Record<string, unknown>>(model, options)));
+    });
+    controller.$own(() => {
+      run.dispose();
+      rows.dispose();
+    });
+    controller.$wait(rows.loaded());
   });
-  controller.$own(() => {
-    run.dispose();
-    rows.dispose();
-  });
-  controller.$wait(rows.loaded());
   return rows;
 };
