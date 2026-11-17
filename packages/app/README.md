@@ -167,7 +167,7 @@ const rows = await note.getAll();
 await app.stop();
 ```
 
-`openApp` fills the arguments (an array of `argv` tokens, or a record merged over the defaults), opens every store in memory, starts the controllers and the routes (in memory), and answers an `OpenedApp`: `run`, `store`, `controllers`, `restart`, `quit` and `stop`. A terminal test mounts the root view on light's `TestTerminal` with `@lightstart/app/tui/test`'s `mountApp`:
+`openApp` fills the arguments (an array of `argv` tokens, or a record merged over the defaults), opens every store in memory (or, given `kinds: [new JsonlKind()]`, with the kinds a test names, so what lands on disk can be checked), starts the controllers and the routes (in memory), and answers an `OpenedApp`: `run`, `store`, `controllers`, `restart`, `quit` and `stop`. A terminal test mounts the root view on light's `TestTerminal` with `@lightstart/app/tui/test`'s `mountApp`:
 
 ```ts
 import { openApp } from "@lightstart/app/test";
