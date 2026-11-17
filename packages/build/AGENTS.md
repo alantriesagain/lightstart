@@ -56,7 +56,7 @@ light typecheck @lightstart/build
 light check --all
 npx eslint packages/build
 node benchmarks/build/run.js               # then the ratios (benchmarks/build/README.md)
-node packages/build/test/browser-smoke.ts  # builds examples/todomvc and checks it in Chromium
+node packages/build/test/browser-smoke.ts  # builds examples/tasks-web and checks it in Chromium
 ```
 
-`test/examples.test.ts` builds `examples/todomvc` and `examples/starter`; a change to the bundler or the page scanner must keep both building.
+`test/examples.test.ts` builds the `todomvc` and `starter` pages in `test/fixtures/` (their importmaps, stylesheets and module scripts are the scanner's cases) and `examples/tasks-web`; a change to the bundler or the page scanner must keep all three building.

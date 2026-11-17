@@ -12,14 +12,13 @@
     "check": "npm run check:root && npm --prefix packages/light run check && npm --prefix packages/components run check",
     "test": "npm --prefix packages/light test",
     "bench": "node benchmarks/run.js",
-    "coverage:tasks": "node packages/light/native/coverage.js examples/tasks/main.js --allow-dynamic",
-    "bake:tasks": "node packages/light/bin/light.js classes:bake examples/tasks/main.js -o examples/tasks/classes.baked.js --scheme dark,light",
+    "coverage:tasks": "cd examples/tasks-tui && node ../../packages/cli/bin/light.js app && cd ../.. && node packages/light/native/coverage.js examples/tasks-tui/.light/main.ts --allow-dynamic",
     "packages:check": "light check --all",
     "packages:typecheck": "light typecheck --all",
     "packages:test": "light test --all",
     "packages:coverage": "light coverage --all",
     "verify:packages": "npm run packages:check && npm run packages:typecheck && npm run packages:test && npm run packages:coverage",
-    "verify": "npm run lint && npm run typecheck && npm run check:root && npm --prefix packages/light run verify && npm run coverage:tasks && npm run bake:tasks -- --check && npm run verify:packages"
+    "verify": "npm run lint && npm run typecheck && npm run check:root && npm --prefix packages/light run verify && npm run coverage:tasks && npm run verify:packages"
   },
   "dependencies": {
     "@lightstart/light": "workspace:*",

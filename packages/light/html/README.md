@@ -50,8 +50,6 @@ before then adopts, and a region still drifted at settle renders fresh.
 
 ## The render-once pattern
 
-`examples/grand-octave/` is the living demo (with the lit
-original beside it for comparison; both show a `render() ×N` counter).
 Every dynamic binding is a thunk over a signal, so `render()` runs once at
 connect and stays at ×1 while you play; the lit version's counter climbs
 with every note. What the comparison actually teaches: **DOM writes are

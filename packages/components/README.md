@@ -38,7 +38,7 @@ A browser resolves the bare specifiers through an importmap (`"@lightstart/light
 
 `applyTheme` writes the design tokens the stylesheets read; `configureIcons` says where `<lc-icon>` fetches an icon (the public Iconify API here; a page that has the icons in its own stylesheet leaves it unset). Three more hooks matter only when you have the thing they connect: `configureNavigation` from `@lightstart/light/navigation` for a router (links are plain anchors without one), `configureView({ translate })` for translations (the components speak English without one), and `configureHighlight` from `utils/highlight.js` for a tokenizer behind `<lc-code-block>` (which otherwise colours with `@lightstart/highlight`'s built-in languages, or leaves an unknown language plain).
 
-A component that draws other tags needs them defined too, or they stay inert; the table at the end lists what each one renders. `examples/starter` and `examples/indexeddb-explorer` are whole pages built this way.
+A component that draws other tags needs them defined too, or they stay inert; the table at the end lists what each one renders. `examples/tasks-web` is an app built this way, each view defining the components it writes.
 
 ## Inside a Bootstrapp app
 
