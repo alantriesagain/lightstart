@@ -46,7 +46,7 @@ const main = async (): Promise<void> => {
       dependencies: Record<string, string>;
       devDependencies: Record<string, string>;
     };
-    eq("the scripts", Object.keys(manifest.scripts).join(","), "dev,build,test,check");
+    eq("the scripts", Object.keys(manifest.scripts).join(","), "dev,build,test,check,lint,typecheck,verify");
     ok("dev runs the app", manifest.scripts.dev?.startsWith("light desktop run") === true);
     ok("build runs the desktop build", manifest.scripts.build?.startsWith("light desktop build") === true);
     ok("the manifest links light", manifest.dependencies["@lightstart/light"]?.startsWith("link:") === true);

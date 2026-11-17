@@ -17,8 +17,11 @@ pnpm dev
 | `build` | `light build` into `.deployed/current` |
 | `test` | `light test test/*.test.ts` in headless Chromium |
 | `check` | `light check` |
+| `lint` | `light lint`: eslint with the project's config |
+| `typecheck` | `light typecheck`: `tsc --noEmit` over the sources, the tests and `.light/` |
+| `verify` | `light verify`: check, lint, typecheck and test in order |
 
-The browser tests need Chromium: `pnpm exec playwright install chromium`.
+The browser tests need Chromium: `pnpm exec playwright install chromium`. Run `pnpm verify` before committing.
 
 ## Where things are
 

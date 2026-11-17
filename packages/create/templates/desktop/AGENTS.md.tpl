@@ -10,6 +10,11 @@ A light desktop app: a page in the system's web view and a backend compiled by `
 | `pnpm build` | `light desktop build backend.ts --web web --out dist`: `dist/backend` and `dist/web/` |
 | `pnpm test` | `node --test test/*.test.ts`: the backend's logic under node, no window |
 | `pnpm check` | `light check`: light's conventions over the sources |
+| `pnpm lint` | `light lint`: eslint with the project's config |
+| `pnpm typecheck` | `light typecheck`: `tsc --noEmit` over the backend and its tests |
+| `pnpm verify` | `light verify`: check, lint, typecheck and test in order |
+
+Run `pnpm verify` before committing.
 
 `dev` and `build` pass `--npm-static @lightstart/light` so `scriptc` compiles light's native desktop modules as program source instead of treating the bare import as an npm package. The first build needs WebKitGTK's development package, `pkg-config`, `g++`, `cc` and `ar` (see `README.md`); once the shim archive exists, later builds reuse it.
 

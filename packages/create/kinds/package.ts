@@ -20,12 +20,18 @@ export const pkg: Kind = {
     test: "node --test test/*.test.ts",
     typecheck: "tsc -p tsconfig.json",
     check: "light check",
+    lint: "light lint",
+    verify: "light verify",
     pack: "node scripts/pack.js",
   },
   devDependencies: {
     "@lightstart/cli": "^0.1.0",
     "@lightstart/light": "^0.1.0",
     "@types/node": "^26.6.5",
+    "@stylistic/eslint-plugin": "^2.13.0",
+    eslint: "^9.17.0",
+    "eslint-plugin-lit": "^2.3.1",
+    globals: "^15.14.0",
     typescript: "^6.0.3",
   },
 };

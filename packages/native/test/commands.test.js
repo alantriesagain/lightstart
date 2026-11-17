@@ -12,7 +12,7 @@ import installCommand from "../cli/commands/install.js";
 import prepareCommand from "../cli/commands/prepare.js";
 import runCommand from "../cli/commands/run.js";
 import selftestCommand from "../cli/commands/selftest.js";
-import typecheckCommand from "../cli/commands/typecheck.js";
+import typecheckExtension from "../cli/extend/typecheck.ts";
 import { findProject } from "../src/project.js";
 import { runProject as coverageProject } from "../src/commands/coverage.js";
 import { runProject as runProject } from "../src/commands/run.js";
@@ -57,8 +57,8 @@ test("coverage takes --apps, --jobs and workspace members", () => {
 });
 
 test("typecheck and prepare take --all and workspace members", () => {
-  assert.deepEqual(parseArgs(schemaOf(typecheckCommand), ["--all"]), { all: true, members: [] });
-  assert.deepEqual(parseArgs(schemaOf(typecheckCommand), ["a", "b"]), { all: false, members: ["a", "b"] });
+  assert.deepEqual(parseArgs(schemaOf(typecheckExtension), ["--all"]), { all: true, members: [] });
+  assert.deepEqual(parseArgs(schemaOf(typecheckExtension), ["a", "b"]), { all: false, members: ["a", "b"] });
   assert.deepEqual(parseArgs(schemaOf(prepareCommand), ["a"]), { all: false, members: ["a"] });
 });
 

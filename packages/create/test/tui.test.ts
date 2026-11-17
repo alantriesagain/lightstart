@@ -66,7 +66,7 @@ const main = async (): Promise<void> => {
     eq("the native entry is the generated one", manifest.native?.entry, ".light/main.ts");
     eq("the binary is named after the project", manifest.native?.binary, "demo");
     eq("the prepare step generates the app", JSON.stringify(manifest.native?.prepare), JSON.stringify(["light app"]));
-    eq("the scripts are the kind's", Object.keys(manifest.scripts).join(","), "dev,test,build,check");
+    eq("the scripts are the kind's", Object.keys(manifest.scripts).join(","), "dev,test,build,check,lint,typecheck,verify");
     eq("dev runs the app", manifest.scripts["dev"], "light run");
     eq("test runs light test under node and natively", manifest.scripts["test"], "light test");
     eq("build runs light build", manifest.scripts["build"], "light build");

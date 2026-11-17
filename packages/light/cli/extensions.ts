@@ -75,6 +75,12 @@ export interface TestExtension {
   runnerPage(render: (options: RunnerPageOptions) => string): void;
 }
 
+/** What `light typecheck` hands a `cli/extend/typecheck.ts`. */
+export interface TypecheckExtension {
+  /** Replace the whole run; `fn` answers whether it passed. */
+  run(fn: () => Promise<boolean> | boolean): void;
+}
+
 /** What a desktop host resolver, and the argument builders, receive. */
 export interface DesktopInput {
   args: Record<string, unknown>;
@@ -102,6 +108,7 @@ declare module "@lightstart/cli" {
   interface Extensions {
     check: CheckExtension;
     test: TestExtension;
+    typecheck: TypecheckExtension;
     desktop: DesktopExtension;
   }
 

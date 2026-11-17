@@ -26,12 +26,14 @@ light new package my-package --no-install
 
 | Kind | What it starts | Its scripts |
 |---|---|---|
-| `web` | A web app on `@lightstart/app`: a model, a controller, views and routes | `light serve --watch`, `light build`, `light test`, `light check` |
-| `tui` | A terminal app on `@lightstart/app`: a model, a controller and views, compiled by `scriptc` | `light run`, `light test`, `light build`, `light check` |
-| `desktop` | A page in light's desktop shell with a native backend | `light desktop run`, `light desktop build`, node's test runner, `light check` |
-| `package` | A light package with modules, tests and a README | node's test runner, `tsc`, `light check`, the pack script |
+| `web` | A web app on `@lightstart/app`: a model, a controller, views and routes | `light serve --watch`, `light build`, `light test`, `light check`, `light lint`, `light typecheck`, `light verify` |
+| `tui` | A terminal app on `@lightstart/app`: a model, a controller and views, compiled by `scriptc` | `light run`, `light test`, `light build`, `light check`, `light lint`, `light typecheck`, `light verify` |
+| `desktop` | A page in light's desktop shell with a native backend | `light desktop run`, `light desktop build`, node's test runner, `light check`, `light lint`, `light typecheck`, `light verify` |
+| `package` | A light package with modules, tests and a README | node's test runner, `tsc`, `light check`, `light lint`, `light verify`, the pack script |
 
 The `web` and `tui` kinds start on [`@lightstart/app`](../app/README.md): the project's `src/app.ts` names the host, its `src/models/`, `src/controllers/` and `src/views/` folders are the app, and light generates the wiring into `.light/`. Their own `AGENTS.md` explains the folders and the scripts.
+
+Every kind gets `eslint.config.js`, which re-exports light's recommended config with the generated and build folders ignored, a `tsconfig.json` covering what `light typecheck` reads, and the `lint`, `typecheck` and `verify` scripts beside `check` and `test`.
 
 Sources are TypeScript with erasable syntax, as light's own packages are, so what `scriptc` compiles in one kind reads the same in another. Each kind is a template folder under `templates/` and a module under `kinds/`.
 

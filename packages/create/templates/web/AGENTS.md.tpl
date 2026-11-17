@@ -30,6 +30,11 @@ The app layer opens the stores (a model picks one with its schema's `$adapter`, 
 | `pnpm build` | `light build`: bundles into `.deployed/builds/<id>` and points `.deployed/current` at it |
 | `pnpm test` | `light test test/*.test.ts`: the browser tests in headless Chromium (`pnpm exec playwright install chromium` once) |
 | `pnpm check` | `light check`: light's conventions over the sources |
+| `pnpm lint` | `light lint`: eslint with the project's config |
+| `pnpm typecheck` | `light typecheck`: `tsc --noEmit` over `src/`, `test/` and the generated `.light/` |
+| `pnpm verify` | `light verify`: check, lint, typecheck and test in order |
+
+Run `pnpm verify` before committing.
 
 The dev server builds the page's importmap from `package.json`; the build resolves bare specifiers through `node_modules`. Never write an importmap in `index.html`.
 
