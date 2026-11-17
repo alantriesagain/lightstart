@@ -30,7 +30,7 @@ The browser tests need Chromium: `pnpm exec playwright install chromium`.
 | `src/views/app-root.ts` | The root view: the heading, the notes, the field and the button |
 | `src/views/app-home.ts`, `src/views/app-about.ts` | The route views |
 | `src/routes.ts` | `/` and `/about` to their views |
-| `src/styles.css` | The theme and component stylesheets |
+| `src/styles.css` | The generated components' stylesheet, and the page's own rules |
 | `.light/` | Generated wiring: never edit, never commit |
 | `test/app.test.ts` | The browser test |
 

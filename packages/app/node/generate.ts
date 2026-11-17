@@ -52,10 +52,18 @@ export interface HostWritten {
   modes: string[];
 }
 
+/** What a host's files for `.light/app.ts` wrote: whether a file changed, and the side-effect imports the manifest adds before the views. */
+export interface HostPrepared {
+  changed: boolean;
+  imports: readonly string[];
+}
+
 /** A host's part of the generation: `@lightstart/app/<host>/generate.ts`'s default export. */
 export interface HostGeneration {
   /** Whether the manifest carries the root view's class (`rootView`), for a host that makes it. */
   readonly rootView: boolean;
+  /** Write the host's files `.light/app.ts` imports, and answer those side-effect imports, before the manifest is written. */
+  prepare?(project: string, dir: string, helpers: GenerationHelpers): Promise<HostPrepared>;
   /** Write `.light/main.ts` (`main`) and the host's own files into `dir`. */
   write(project: string, dir: string, main: string, helpers: GenerationHelpers): Promise<HostWritten>;
 }
@@ -137,12 +145,13 @@ const infoOf = async (app: string): Promise<AppInfo> => {
   }
 };
 
-const manifestSource = (project: string, models: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null): string => {
+const manifestSource = (project: string, models: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[]): string => {
   const lines: string[] = ['import type { AppManifest } from "@lightstart/app/manifest.ts";'];
   lines.push(`import app from "${specifierFor(project, join(project, "src", "app.ts"))}";`);
   models.forEach((file, index) => lines.push(`import model${String(index)} from "${specifierFor(project, file)}";`));
   controllers.forEach((file, index) => lines.push(`import controller${String(index)} from "${specifierFor(project, file)}";`));
   if (routes !== null) lines.push(`import routes from "${specifierFor(project, routes)}";`);
+  for (const specifier of appImports) lines.push(`import ${JSON.stringify(specifier)};`);
   for (const file of views) {
     if (rootFile !== null && file === rootFile) lines.push(`import rootView from "${specifierFor(project, file)}";`);
     else lines.push(`import "${specifierFor(project, file)}";`);
@@ -211,8 +220,10 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
   const info = await infoOf(app);
   const part = await hostGeneration(info.host);
   const rootFile = part.rootView ? rootFileOf(views, info.root) : null;
-  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, models, controllers, views, routes, rootFile));
-  const written = await part.write(project, dir, main, { flatFiles, specifierFor, nameOf, writeWhenChanged });
+  const helpers = { flatFiles, specifierFor, nameOf, writeWhenChanged };
+  const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
+  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, models, controllers, views, routes, rootFile, prepared.imports));
+  const written = await part.write(project, dir, main, helpers);
 
   return {
     dir,
@@ -226,6 +237,6 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
     views: views.map(nameOf),
     modes: written.modes,
     routes: routes !== null,
-    changed: wroteManifest || written.changed,
+    changed: wroteManifest || prepared.changed || written.changed,
   };
 };

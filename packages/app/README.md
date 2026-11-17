@@ -117,6 +117,8 @@ import manifest from "./app.ts";
 await start(manifest);
 ```
 
+A web project that declares `@lightstart/components` and writes an `lc-*` tag in `src/` gets two more files. `.light/components.ts` imports each component module, follows every `extends` and `uses`, and defines each base and used tag before the tag that needs it; `.light/components.css` imports the theme and each component's stylesheet in the same order. `.light/app.ts` imports `./components.ts` before the views. A project without the package, or writing no tag, gets neither file.
+
 On the terminal, the manifest also carries the root view's class (`rootView`), `.light/classes.baked.ts` holds the theme's classes the views use baked into a table per scheme, and the entry runs the first run mode that matches before the host (`matches(argv)` when the mode has one, else `argv` holding `--<name>`; it exits with its code):
 
 ```ts
@@ -141,6 +143,8 @@ The output is deterministic (sorted, relative imports from `.light/`) and a file
 ## The web host
 
 `@lightstart/app/web`'s `start(manifest)` runs the app in the page: its kinds `indexeddb` and `memory`, the arguments from the URL query (`?name=value`, a bare `?flag`; a parameter the app does not declare is left out), the browser's history for the routes with `configureNavigation(router.navigation)`, the theme preset applied, and the root view mounted (an existing `<app-root>` replaced by a fresh one, another placeholder replaced, or appended to `<body>`). `<app-outlet>` is a component drawing `currentView`. It answers `{ stop() }`.
+
+A project on `@lightstart/components` has its tags defined by the generated `.light/components.ts`, which `.light/app.ts` imports before the views, so every component exists before the root view is made. The stylesheets come from `.light/components.css` through the app's own stylesheet.
 
 ## The terminal host
 
@@ -167,7 +171,25 @@ const rows = await note.getAll();
 await app.stop();
 ```
 
-`openApp` fills the arguments (an array of `argv` tokens, or a record merged over the defaults), opens every store in memory (or, given `kinds: [new JsonlKind()]`, with the kinds a test names, so what lands on disk can be checked), starts the controllers and the routes (in memory), and answers an `OpenedApp`: `run`, `store`, `controllers`, `restart`, `quit` and `stop`. A terminal test mounts the root view on light's `TestTerminal` with `@lightstart/app/tui/test`'s `mountApp`:
+`openApp` fills the arguments (an array of `argv` tokens, or a record merged over the defaults), opens every store in memory (or, given `kinds: [new JsonlKind()]`, with the kinds a test names, so what lands on disk can be checked), starts the controllers and the routes (in memory), and answers an `OpenedApp`: `run`, `store`, `controllers`, `restart`, `quit` and `stop`. A web test opens the page itself with `@lightstart/app/web/test`'s `openPage`:
+
+```ts
+import { openPage } from "@lightstart/app/web/test";
+import manifest from "../.light/app.ts";
+
+const page = await openPage(manifest, { path: "/lists", args: { list: "Work" } });
+
+const tasks = await page.find("tasks-page");
+await page.navigate("/lists");
+await page.shows("0/1 done");
+page.text();             // the root view's text now
+await page.settle();     // pending updates and microtasks
+await page.stop();       // stops the run and removes the root element
+```
+
+`openPage` mounts the root view as the web host does, with the theme applied and the routes drawn by `<app-outlet>` over a history in memory that starts at `path` (`"/"` by default), so the test page's URL is no route of the app's. It takes the app's arguments as `openApp` does (`args`, rather than the URL's) and opens every store in memory unless `kinds` names others. It answers an `OpenedPage`: `run`, `root` (the mounted root element), `find(selector, { timeout })` (waits for the element, waits for its pending update, then answers it), `text()`, `shows(text, { timeout })`, `navigate(path)`, `settle()` and `stop()`. A helper waits 2 s by default and throws naming what it wanted beside the page's text.
+
+A terminal test mounts the root view on light's `TestTerminal` with `@lightstart/app/tui/test`'s `mountApp`:
 
 ```ts
 import { openApp } from "@lightstart/app/test";

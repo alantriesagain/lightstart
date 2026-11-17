@@ -4,11 +4,7 @@
  */
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
-import button from "@lightstart/components/display/button.js";
-import card from "@lightstart/components/layout/card.js";
 import tasks from "../controllers/tasks.ts";
-
-for (const component of [button, card]) View.define(component);
 
 class TasksPage extends View {
   private add(event: Event): void {

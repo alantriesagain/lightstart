@@ -78,12 +78,24 @@ const queryArgv = (app: App): string[] => {
   return out;
 };
 
+/** What a web host may start with instead of the page's: the kinds it runs and its default kind (a test's kinds and memory). */
+export interface WebHostOptions {
+  kinds?: readonly StoreKind[];
+  defaultKind?: string;
+}
+
 /** The web host. */
 export class WebHost extends AppHost {
   readonly name = "web";
   readonly kinds: readonly StoreKind[] = [new IndexedDBKind(), new MemoryKind()];
-  readonly defaultKind = (globalThis as { indexedDB?: unknown }).indexedDB !== undefined ? "indexeddb" : "memory";
+  readonly defaultKind: string = (globalThis as { indexedDB?: unknown }).indexedDB !== undefined ? "indexeddb" : "memory";
   private mounted: Element | null = null;
+
+  constructor(options: WebHostOptions = {}) {
+    super();
+    if (options.kinds !== undefined) this.kinds = options.kinds;
+    if (options.defaultKind !== undefined) this.defaultKind = options.defaultKind;
+  }
 
   args(app: App): Record<string, unknown> {
     return parseArgs(app.argsSchema, queryArgv(app)) as Record<string, unknown>;

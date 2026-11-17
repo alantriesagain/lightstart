@@ -24,6 +24,7 @@
     ".": "./index.ts",
     "./manifest": "./manifest.ts",
     "./web": "./web/index.ts",
+    "./web/test": "./web/test.ts",
     "./tui": "./tui/index.ts",
     "./tui/test": "./tui/test.ts",
     "./test": "./test/index.ts",

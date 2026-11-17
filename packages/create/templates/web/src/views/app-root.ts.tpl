@@ -1,12 +1,6 @@
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
-import button from "@lightstart/components/display/button.js";
-import link from "@lightstart/components/display/link.js";
-import text from "@lightstart/components/display/text.js";
-import card from "@lightstart/components/layout/card.js";
 import notes from "../controllers/notes.ts";
-
-for (const component of [link, button, text, card]) View.define(component);
 
 class AppRoot extends View {
   private add(event: Event): void {
