@@ -4,6 +4,7 @@
  */
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
+import { t } from "@lightstart/i18n";
 import activity from "../controllers/activity.ts";
 
 class ActivityPage extends View {
@@ -11,7 +12,7 @@ class ActivityPage extends View {
     const rows = activity.rows.value;
     return html`
       <lc-card padding="lg">
-        ${rows.length === 0 ? html`<p class="muted">Nothing done yet on this page.</p>` : html`<ul class="activity">${rows.map((row) => html`<li>${String(row.text)}</li>`)}</ul>`}
+        ${rows.length === 0 ? html`<p class="muted">${t("activity.empty")}</p>` : html`<ul class="activity">${rows.map((row) => html`<li>${String(row.text)}</li>`)}</ul>`}
       </lc-card>
     `;
   }

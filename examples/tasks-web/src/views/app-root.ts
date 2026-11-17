@@ -4,6 +4,7 @@
  */
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
+import { t } from "@lightstart/i18n";
 import lists from "../controllers/lists.ts";
 import "./tasks-page.ts";
 import "./lists-page.ts";
@@ -15,13 +16,14 @@ class AppRoot extends View {
     return html`
       <main class="page">
         <header class="bar">
-          <lc-text tag="h1" size="2xl" weight="bold">Tasks</lc-text>
+          <lc-text tag="h1" size="2xl" weight="bold">${t("app.title")}</lc-text>
           <lc-text color="muted">${open !== null ? String(open.name) : ""}</lc-text>
+          <lc-language-switcher></lc-language-switcher>
         </header>
         <nav class="tabs">
-          <a href="/">Tasks</a>
-          <a href="/lists">Lists</a>
-          <a href="/activity">Activity</a>
+          <a href="/">${t("nav.tasks")}</a>
+          <a href="/lists">${t("nav.lists")}</a>
+          <a href="/activity">${t("nav.activity")}</a>
         </nav>
         <app-outlet></app-outlet>
       </main>

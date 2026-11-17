@@ -194,6 +194,7 @@
         "light/declare-instance-surface": "error"
       },
       "noAny": {}
-    }
+    },
+    "locales": true
   }
 }

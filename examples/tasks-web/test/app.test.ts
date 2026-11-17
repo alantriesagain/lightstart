@@ -40,4 +40,19 @@ describe("tasks", () => {
       await page.stop();
     }
   });
+
+  it("switches to Portuguese", async () => {
+    const page = await openPage(manifest, { args: { list: "Work" } });
+    try {
+      const switcher = await page.find("lc-language-switcher");
+      const select = switcher.querySelector("select");
+      assert.ok(select instanceof HTMLSelectElement, "the switcher has its select");
+      select.value = "pt";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      const text = await page.shows("Tarefas");
+      assert.ok(text.includes("Tarefas"), "the page is in Portuguese");
+    } finally {
+      await page.stop();
+    }
+  });
 });

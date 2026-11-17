@@ -4,6 +4,7 @@
  */
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
+import { t } from "@lightstart/i18n";
 import { navigate } from "@lightstart/app/web";
 import lists from "../controllers/lists.ts";
 import tasks from "../controllers/tasks.ts";
@@ -35,13 +36,13 @@ class ListsPage extends View {
             const count = tasks.countOf(id);
             return html`<li class=${id === current ? "current" : ""}>
               <lc-button variant="secondary" size="sm" @click=${() => this.open(id)}>${String(row.name)}</lc-button>
-              <span class="muted">${String(count.done)}/${String(count.all)} done</span>
+              <span class="muted">${t("lists.count", { done: count.done, all: count.all })}</span>
             </li>`;
           })}
         </ul>
         <form class="add" @submit=${(event: Event) => this.add(event)}>
-          <input name="list" aria-label="A new list" placeholder="A new list" />
-          <lc-button type="submit">Make list</lc-button>
+          <input name="list" aria-label=${t("lists.field")} placeholder=${t("lists.field")} />
+          <lc-button type="submit">${t("lists.add")}</lc-button>
         </form>
       </lc-card>
     `;

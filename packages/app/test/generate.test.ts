@@ -14,6 +14,7 @@ import { generate } from "../node/generate.ts";
 
 const fixture = fileURLToPath(new URL("./fixtures/web", import.meta.url));
 const components = fileURLToPath(new URL("../../components", import.meta.url));
+const i18n = fileURLToPath(new URL("../../i18n", import.meta.url));
 
 const copy = (): string => {
   const project = mkdtempSync(join(tmpdir(), "light-app-generate-"));
@@ -44,6 +45,22 @@ const copyWithComponents = (): string => {
   return project;
 };
 
+/** A copy of the components fixture that also depends on `@lightstart/i18n` and has words of its own. */
+const copyWithI18n = (): string => {
+  const project = copyWithComponents();
+  const modules = join(project, "node_modules");
+  symlinkSync(i18n, join(modules, "@lightstart", "i18n"), "dir");
+  const manifest = readFileSync(join(project, "package.json"), "utf8");
+  const pkg = JSON.parse(manifest) as { dependencies?: Record<string, string> };
+  pkg.dependencies = { ...(pkg.dependencies ?? {}), "@lightstart/i18n": "workspace:*" };
+  writeFileSync(join(project, "package.json"), `${JSON.stringify(pkg, null, 2)}\n`);
+  const locales = join(project, "src", "locales");
+  mkdirSync(locales);
+  writeFileSync(join(locales, "en.ts"), 'export default { greeting: "Hello" };\n');
+  writeFileSync(join(locales, "pt.ts"), 'export default { greeting: "Olá" };\n');
+  return project;
+};
+
 const main = async (): Promise<void> => {
   const project = copy();
   try {
@@ -67,6 +84,7 @@ const main = async (): Promise<void> => {
     ok("the views are named", source.includes('views: ["app-about", "app-home", "app-legal", "app-root"]'));
     eq("the entry starts the web host", readFileSync(first.main, "utf8"), 'import { start } from "@lightstart/app/web";\nimport manifest from "./app.ts";\n\nawait start(manifest);\n');
     ok("a project without the components writes none", !existsSync(join(first.dir, "components.ts")) && !existsSync(join(first.dir, "components.css")));
+    ok("a project without i18n writes no locales", !existsSync(join(first.dir, "locales.ts")) && !source.includes('import "./locales.ts";'));
 
     const before = statSync(first.manifest).mtimeMs;
     const second = await generate(project);
@@ -111,6 +129,43 @@ const main = async (): Promise<void> => {
     ok("and app.ts no longer imports them", cleared !== null && !readFileSync(cleared.manifest, "utf8").includes('import "./components.ts";'));
   } finally {
     rmSync(withComponents, { recursive: true, force: true });
+  }
+
+  const withI18n = copyWithI18n();
+  try {
+    const first = await generate(withI18n);
+    ok("the i18n app has an app", first !== null);
+    if (first === null) return done();
+
+    const path = join(first.dir, "locales.ts");
+    ok("a project on i18n gets .light/locales.ts", existsSync(path));
+    const source = readFileSync(path, "utf8");
+    ok("it configures i18n", source.includes('import { configureI18n } from "@lightstart/i18n";'));
+    ok("it imports each package's language file", source.includes('import locale0 from "@lightstart/components/locales/en.js";'));
+    ok("it imports the project's own words", source.includes('import locale3 from "../src/locales/en.ts";'));
+    ok("the package's words come before the project's", source.indexOf('"@lightstart/components/locales/en.js"') < source.indexOf('"../src/locales/en.ts"'));
+    ok("the project's key wins over the package's", source.includes("en: merge(merge({}, locale0), locale3),"));
+    ok("a language only the package has is still there", source.includes("es: merge({}, locale1),"));
+    ok("the locales are every language found", source.includes('locales: ["en", "es", "pt"],'));
+    ok("the default is the app's locale", source.includes('defaultLocale: "en",'));
+
+    const manifest = readFileSync(first.manifest, "utf8");
+    const importAt = manifest.indexOf('import "./locales.ts";');
+    ok("app.ts imports the locales", importAt >= 0);
+    ok("the locales import is before the views", importAt < manifest.indexOf('import "../src/views/app-about.ts";'));
+
+    const second = await generate(withI18n);
+    ok("a second i18n run changes nothing", second !== null && !second.changed);
+
+    const manifestPath = join(withI18n, "package.json");
+    const pkg = JSON.parse(readFileSync(manifestPath, "utf8")) as { dependencies?: Record<string, string> };
+    if (pkg.dependencies !== undefined) delete pkg.dependencies["@lightstart/i18n"];
+    writeFileSync(manifestPath, `${JSON.stringify(pkg, null, 2)}\n`);
+    const cleared = await generate(withI18n);
+    ok("a project no longer on i18n removes the file", cleared !== null && cleared.changed && !existsSync(path));
+    ok("and app.ts no longer imports it", cleared !== null && !readFileSync(cleared.manifest, "utf8").includes('import "./locales.ts";'));
+  } finally {
+    rmSync(withI18n, { recursive: true, force: true });
   }
   done();
 };

@@ -14,7 +14,7 @@ light build                # generate as the build's first step
 
 | Path | Holds | The app does |
 |---|---|---|
-| `src/app.ts` | `defineApp({ name, host, theme, stores, root, args })` | reads it first |
+| `src/app.ts` | `defineApp({ name, host, theme, locale, stores, root, args })` | reads it first |
 | `src/models/<name>.ts` | one model, default-exported | opens its store with every model |
 | `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready`, each after the controllers it imports |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
@@ -45,6 +45,7 @@ export default defineApp({
 | `name` | required | The stores' default name and the document's title |
 | `host` | required | The host's name: `"web"` or `"tui"` (`@lightstart/app/<host>`) |
 | `theme` | `"default"` | A preset name, applied by the web host |
+| `locale` | `"en"` | The default language the app's words are in |
 | `stores` | `{ main: {} }` | The stores by name, several at once: `{ kind?, at? }` each |
 | `root` | `"app-root"` | The root view's tag |
 | `args` | `{}` | The arguments the app takes, as a `@lightstart/cli` schema |
@@ -118,6 +119,8 @@ await start(manifest);
 ```
 
 A web project that declares `@lightstart/components` and writes an `lc-*` tag in `src/` gets two more files. `.light/components.ts` imports each component module, follows every `extends` and `uses`, and defines each base and used tag before the tag that needs it; `.light/components.css` imports the theme and each component's stylesheet in the same order. `.light/app.ts` imports `./components.ts` before the views. A project without the package, or writing no tag, gets neither file.
+
+A project that declares `@lightstart/i18n` gets `.light/locales.ts`, imported by `.light/app.ts` before the views. It imports `locales/<lang>.js` from every dependency whose `package.json` says `light.locales: true`, and the project's own `src/locales/<lang>.ts`/`.js`, then calls `configureI18n({ locales, defaultLocale, dictionaries })`: every language found, the app's `locale` as the default, and each language's dictionary the packages' merged first with the project's over them (a deep merge, so a key the project writes wins). A project without the package gets no file, and may plug another library into `configureTranslation` itself.
 
 On the terminal, the manifest also carries the root view's class (`rootView`), `.light/classes.baked.ts` holds the theme's classes the views use baked into a table per scheme, and the entry runs the first run mode that matches before the host (`matches(argv)` when the mode has one, else `argv` holding `--<name>`; it exits with its code):
 

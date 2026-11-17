@@ -23,6 +23,9 @@ importers:
       '@lightstart/highlight':
         specifier: link:../../packages/highlight
         version: link:../../packages/highlight
+      '@lightstart/i18n':
+        specifier: link:../../packages/i18n
+        version: link:../../packages/i18n
       '@lightstart/light':
         specifier: link:../../packages/light
         version: link:../../packages/light

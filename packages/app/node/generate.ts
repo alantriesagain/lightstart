@@ -10,7 +10,8 @@
  * `src/app.ts` is left alone.
  */
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -79,6 +80,22 @@ const flatFiles = (dir: string): string[] => {
 
 const nameOf = (file: string): string => basename(file).replace(/\.(ts|js)$/, "");
 
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
+
+const readJson = (path: string): unknown => {
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return null;
+  }
+};
+
+const remove = (path: string): boolean => {
+  if (!existsSync(path)) return false;
+  rmSync(path, { force: true });
+  return true;
+};
+
 const IMPORT = /^\s*(import|export)\s+(type\s+)?(?:[^"';]*?\sfrom\s*)?["']([^"']+)["']/gm;
 
 /** The controller files `file` imports for their values (an `import type` is not one), among `known`. */
@@ -130,18 +147,20 @@ const writeWhenChanged = (path: string, content: string): boolean => {
 interface AppInfo {
   host: string;
   root: string;
+  locale: string;
 }
 
 const infoOf = async (app: string): Promise<AppInfo> => {
   try {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
-    const config = (module as { default?: { host?: unknown; root?: unknown } }).default;
+    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown } }).default;
     return {
       host: config !== undefined && typeof config.host === "string" && config.host.length > 0 ? config.host : "web",
       root: config !== undefined && typeof config.root === "string" ? config.root : "app-root",
+      locale: config !== undefined && typeof config.locale === "string" && config.locale.length > 0 ? config.locale : "en",
     };
   } catch {
-    return { host: "web", root: "app-root" };
+    return { host: "web", root: "app-root", locale: "en" };
   }
 };
 
@@ -188,6 +207,153 @@ const rootFileOf = (views: string[], root: string): string => {
   return found;
 };
 
+const declaresI18n = (project: string): boolean => {
+  const pkg = readJson(join(project, "package.json"));
+  if (!isRecord(pkg)) return false;
+  for (const field of [pkg["dependencies"], pkg["devDependencies"]]) {
+    if (isRecord(field) && Object.prototype.hasOwnProperty.call(field, "@lightstart/i18n")) return true;
+  }
+  return false;
+};
+
+/** Every dependency the project's manifest names, sorted. */
+const dependencyNames = (project: string): string[] => {
+  const pkg = readJson(join(project, "package.json"));
+  if (!isRecord(pkg)) return [];
+  const names = new Set<string>();
+  for (const field of [pkg["dependencies"], pkg["devDependencies"]]) {
+    if (!isRecord(field)) continue;
+    for (const name of Object.keys(field)) names.add(name);
+  }
+  return [...names].sort();
+};
+
+/** The path of a dependency's package.json, resolved from the project, or null when it does not resolve. */
+const packageJsonOf = (require: ReturnType<typeof createRequire>, name: string): string | null => {
+  try {
+    return require.resolve(`${name}/package.json`);
+  } catch {
+    // A package whose exports hide package.json is found from its entry.
+  }
+  try {
+    let dir = dirname(require.resolve(name));
+    while (true) {
+      const candidate = join(dir, "package.json");
+      if (existsSync(candidate)) return candidate;
+      const parent = dirname(dir);
+      if (parent === dir) return null;
+      dir = parent;
+    }
+  } catch {
+    return null;
+  }
+};
+
+interface LocalePackage {
+  name: string;
+  languages: string[];
+}
+
+/** The dependencies whose package.json says `light.locales: true`, with the languages they ship, sorted by name. */
+const localePackages = (project: string): LocalePackage[] => {
+  const require = createRequire(join(project, "package.json"));
+  const found: LocalePackage[] = [];
+  for (const name of dependencyNames(project)) {
+    const path = packageJsonOf(require, name);
+    if (path === null) continue;
+    const pkg = readJson(path);
+    if (!isRecord(pkg) || !isRecord(pkg["light"]) || pkg["light"]["locales"] !== true) continue;
+    const dir = join(dirname(path), "locales");
+    if (!existsSync(dir)) continue;
+    const languages = readdirSync(dir)
+      .filter((file) => file.endsWith(".js"))
+      .sort();
+    if (languages.length > 0) found.push({ name, languages });
+  }
+  return found;
+};
+
+interface LocaleImport {
+  language: string;
+  alias: string;
+}
+
+/**
+ * Write `.light/locales.ts`, which imports the language files of every package shipping
+ * `light.locales: true` and the project's own `src/locales`, and gives them to
+ * `configureI18n` (a package's words first, the project's over them); remove it when the
+ * project does not depend on `@lightstart/i18n`.
+ */
+const writeLocales = (project: string, dir: string, locale: string, helpers: GenerationHelpers): HostPrepared => {
+  const path = join(dir, "locales.ts");
+  if (!declaresI18n(project)) return { changed: remove(path), imports: [] };
+
+  const imports: string[] = [];
+  const fromPackages: LocaleImport[] = [];
+  const fromProject: LocaleImport[] = [];
+  let count = 0;
+  for (const pkg of localePackages(project)) {
+    for (const file of pkg.languages) {
+      const alias = `locale${String(count)}`;
+      count += 1;
+      imports.push(`import ${alias} from ${JSON.stringify(`${pkg.name}/locales/${file}`)};`);
+      fromPackages.push({ language: file.replace(/\.js$/, ""), alias });
+    }
+  }
+  for (const file of flatFiles(join(project, "src", "locales"))) {
+    const alias = `locale${String(count)}`;
+    count += 1;
+    imports.push(`import ${alias} from ${JSON.stringify(helpers.specifierFor(project, file))};`);
+    fromProject.push({ language: nameOf(file), alias });
+  }
+
+  const languages = [...new Set([...fromPackages.map((entry) => entry.language), ...fromProject.map((entry) => entry.language)])].sort();
+  const dictionaryFor = (language: string): string => {
+    const aliases = [
+      ...fromPackages.filter((entry) => entry.language === language).map((entry) => entry.alias),
+      ...fromProject.filter((entry) => entry.language === language).map((entry) => entry.alias),
+    ];
+    let expression = "{}";
+    for (const alias of aliases) expression = `merge(${expression}, ${alias})`;
+    return expression;
+  };
+
+  const lines: string[] = ['import { configureI18n } from "@lightstart/i18n";'];
+  if (languages.length > 0) lines.push('import type { TranslationTree } from "@lightstart/i18n";');
+  lines.push(...imports);
+  if (languages.length > 0) {
+    lines.push("");
+    lines.push('const isRecord = (value: unknown): value is TranslationTree => typeof value === "object" && value !== null && !Array.isArray(value);');
+    lines.push("");
+    lines.push("const merge = (base: TranslationTree, over: TranslationTree): TranslationTree => {");
+    lines.push("  const merged: TranslationTree = {};");
+    lines.push("  for (const key of Object.keys(base)) merged[key] = base[key];");
+    lines.push("  for (const key of Object.keys(over)) {");
+    lines.push("    const before = merged[key];");
+    lines.push("    const after = over[key];");
+    lines.push("    merged[key] = isRecord(before) && isRecord(after) ? merge(before, after) : after;");
+    lines.push("  }");
+    lines.push("  return merged;");
+    lines.push("};");
+  }
+  lines.push("");
+  lines.push("configureI18n({");
+  lines.push(`  locales: [${languages.map((language) => JSON.stringify(language)).join(", ")}],`);
+  lines.push(`  defaultLocale: ${JSON.stringify(locale)},`);
+  if (languages.length === 0) lines.push("  dictionaries: {},");
+  else {
+    lines.push("  dictionaries: {");
+    for (const language of languages) {
+      const key = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(language) ? language : JSON.stringify(language);
+      lines.push(`    ${key}: ${dictionaryFor(language)},`);
+    }
+    lines.push("  },");
+  }
+  lines.push("});");
+  lines.push("");
+  return { changed: helpers.writeWhenChanged(path, lines.join("\n")), imports: ["./locales.ts"] };
+};
+
 /** The generation of host `host` (`@lightstart/app/<host>/generate.ts`); an error naming it when there is none. */
 const hostGeneration = async (host: string): Promise<HostGeneration> => {
   if (!/^[a-z][a-z0-9-]*$/.test(host)) throw new Error(`The app's host "${host}" is not a host's name (web, tui)`);
@@ -221,8 +387,10 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
   const part = await hostGeneration(info.host);
   const rootFile = part.rootView ? rootFileOf(views, info.root) : null;
   const helpers = { flatFiles, specifierFor, nameOf, writeWhenChanged };
+  const locales = writeLocales(project, dir, info.locale, helpers);
   const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
-  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, models, controllers, views, routes, rootFile, prepared.imports));
+  const appImports = [...locales.imports, ...prepared.imports];
+  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, models, controllers, views, routes, rootFile, appImports));
   const written = await part.write(project, dir, main, helpers);
 
   return {
@@ -237,6 +405,6 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
     views: views.map(nameOf),
     modes: written.modes,
     routes: routes !== null,
-    changed: wroteManifest || prepared.changed || written.changed,
+    changed: wroteManifest || locales.changed || prepared.changed || written.changed,
   };
 };
