@@ -26,6 +26,7 @@
   },
   "scripts": {
     "pack": "node scripts/pack.js",
+    "tags": "node scripts/tags.js",
     "test": "node --test $(find . -path ./node_modules -prune -o -name \"*.test.js\" -not -name \"*.browser.test.js\" -print) && node ../light/bin/light.js test */*.browser.test.js",
     "check": "node ../light/bin/light.js check",
     "typecheck": "tsc --noEmit"
