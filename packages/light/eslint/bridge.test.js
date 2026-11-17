@@ -13,7 +13,7 @@ export default defineComponent({ tag: "fx-card", props: { click: T.function() },
 
 const project = () => {
   const dir = mkdtempSync(path.join(tmpdir(), "light-eslint-"));
-  writeFileSync(path.join(dir, "package.json"), JSON.stringify({ name: "fixture", type: "module", bootstrapp: { components: { fx: "views/" } } }));
+  writeFileSync(path.join(dir, "package.json"), JSON.stringify({ name: "fixture", type: "module", light: { components: { fx: "views/" } } }));
   mkdirSync(path.join(dir, "views"));
   writeFileSync(path.join(dir, "views", "card.js"), SOURCE);
   return dir;

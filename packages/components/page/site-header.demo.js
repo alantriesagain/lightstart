@@ -1,12 +1,12 @@
 import { html } from "@lightstart/light/html";
-import sample from "./sample-bootstrapp.js";
+import sample from "./sample-page.js";
 
 const props = sample.header.props;
 
 export default {
   description: "A marketing site's header, with navigation and a call to action.",
   preview: () => html`
-    <lc-site-header .brand=${{ name: "Bootstrapp", href: "#" }} .links=${[{ label: "Features", href: "#" }, { label: "Pricing", href: "#" }, { label: "FAQ", href: "#" }]} .actions=${[{ label: "Get started", href: "#", variant: "primary" }]}></lc-site-header>
+    <lc-site-header .brand=${{ name: "light", href: "#" }} .links=${[{ label: "Features", href: "#" }, { label: "Pricing", href: "#" }, { label: "FAQ", href: "#" }]} .actions=${[{ label: "Get started", href: "#", variant: "primary" }]}></lc-site-header>
   `,
   previewWidth: 960,
   examples: [

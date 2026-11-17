@@ -1,6 +1,6 @@
 /**
  * What the slow-code rules share: the project's `perf` block (under
- * `bootstrapp.check` in package.json), which turns the rules on and says which
+ * `light.check` in package.json), which turns the rules on and says which
  * folders they cover, which functions are hot and which sites are allowed
  * with a reason; the files in scope; and one parse per file per run.
  *

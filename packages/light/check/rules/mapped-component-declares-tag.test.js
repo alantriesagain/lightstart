@@ -5,7 +5,7 @@ import rule from "./mapped-component-declares-tag.js";
 
 const pkgJson = {
   name: "fixture",
-  bootstrapp: { prefix: "fx", components: { fx: { card: "layout/card.js" } } },
+  light: { prefix: "fx", components: { fx: { card: "layout/card.js" } } },
 };
 
 const component = (body) => `import { defineComponent } from "@lightstart/light";
@@ -52,14 +52,14 @@ export default defineComponent({ style: true });
 
 test("does not apply to a package with no components map", async () => {
   const reason = appliesOn(rule, { "views/a.js": "export default {};\n" }, {
-    pkgJson: { name: "plain", bootstrapp: {} },
+    pkgJson: { name: "plain", light: {} },
   });
   assert.ok(reason, "the gate keeps it off packages that map nothing");
 });
 
 const folderPkg = {
   name: "fixture",
-  bootstrapp: { prefix: "fx", components: { fx: "views/" } },
+  light: { prefix: "fx", components: { fx: "views/" } },
 };
 
 test("under the folder form, a tag that disagrees with its path resolves to nothing", async () => {
@@ -86,7 +86,7 @@ test("a helper under views/ declares no tag and is not a component", async () =>
 });
 
 test("a second prefix over a subfolder gives the file another valid tag", async () => {
-  const pkg = { name: "fixture", bootstrapp: { prefix: "fx", components: { fx: "views/", template: "views/templates/" } } };
+  const pkg = { name: "fixture", light: { prefix: "fx", components: { fx: "views/", template: "views/templates/" } } };
   const findings = await runRuleOn(rule, {
     "views/templates/site.js": component('  tag: "template-site",'),
     "views/templates/stray.js": component('  tag: "fx-nope",'),

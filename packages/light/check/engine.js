@@ -1,7 +1,7 @@
 /**
  * @lightstart/light/check/engine.js: run a set of rules over a project
  * context. Each rule passes its gate, takes its effective severity from the
- * project's `bootstrapp.check.rules` overrides, and reports through a
+ * project's `light.check.rules` overrides, and reports through a
  * closure that resolves offsets to lines; a crash in a rule is a warning,
  * never the run's. An override naming a rule of an owner this run loaded
  * nothing from is left alone: it is for another host's pass over the same
@@ -32,9 +32,9 @@ const plan = ({ context: ctx, rules, ruleFilter, overrides = ctx.config.check?.r
   const owners = new Set(rules.map((r) => r.owner));
   for (const [id, level] of Object.entries(overrides))
     if (!knownIds.has(id)) {
-      if (owners.has(id.split("/")[0])) configWarnings.push(`bootstrapp.check.rules: unknown rule id "${id}", typo?`);
+      if (owners.has(id.split("/")[0])) configWarnings.push(`light.check.rules: unknown rule id "${id}", typo?`);
     }
-    else if (!LEVELS.has(level)) configWarnings.push(`bootstrapp.check.rules: invalid level "${level}" for "${id}" (off | warn | error)`);
+    else if (!LEVELS.has(level)) configWarnings.push(`light.check.rules: invalid level "${level}" for "${id}" (off | warn | error)`);
 
   if (ruleFilter && !knownIds.has(ruleFilter)) configWarnings.push(`unknown rule id "${ruleFilter}"`);
 

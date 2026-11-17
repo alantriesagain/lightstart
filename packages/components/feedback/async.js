@@ -13,7 +13,7 @@ import { lcText } from "../utils/text.js";
  * land in `res.error` and render); pass `ensure: false` to opt out.
  *
  * @template T
- * @param {{ value: { value: T | null | undefined }, error: { value: unknown }, pending: { value: boolean }, ensure(): unknown }} res a resource: `bootstrapp/controller`'s, or anything of that shape
+ * @param {{ value: { value: T | null | undefined }, error: { value: unknown }, pending: { value: boolean }, ensure(): unknown }} res a resource: light's controller `resource()`, or anything of that shape
  * @param {(value: T) => unknown} render
  * @param {{ loading?: () => unknown, empty?: () => unknown, error?: (err: unknown) => unknown, ensure?: boolean }} [opts]
  * @returns {() => unknown}

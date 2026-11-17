@@ -1,5 +1,5 @@
 /**
- * @file A child process run to its end, adapted from bootstrapp's desktop shell: its output gathered
+ * @file A child process run to its end: its output gathered
  * as Buffers and decoded once (a multi-byte character can straddle two chunks), nothing trimmed
  * (a file's content from `git show` keeps its last newline), output past `maxBytes` dropped and
  * the run marked truncated, a run past `timeoutMs` killed and answered at once with what it

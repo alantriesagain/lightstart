@@ -8,6 +8,10 @@
  * out, the hooks and events its plugins give every component, its own notion
  * of a dependency and of the styling engine, the controllers of its
  * dependencies and the sync adapter names it registers itself.
+ *
+ * The manifest's `light` block configures the project. A project not yet moved
+ * to that key still works: `check` falls back to `bootstrapp.check`, and the
+ * component map to `bootstrapp.components`.
  */
 
 import { existsSync, readFileSync, statSync } from "node:fs";
@@ -106,8 +110,8 @@ export function createContext({ projectDir, fileMap = null, pkg: givenPkg = null
       return {};
     }
   })();
-  const config = pkg.bootstrapp ?? {};
-  const check = config.check ?? {};
+  const config = { ...(pkg.bootstrapp ?? {}), ...(pkg.light ?? {}) };
+  const check = pkg.light?.check ?? pkg.bootstrapp?.check ?? {};
   const ignoredDirs = new Set([...DEFAULT_IGNORED_DIRS, ...(host.ignore?.dirs ?? [])]);
   const ignoredPrefixes = [...(host.ignore?.prefixes ?? []), ...(check.ignore ?? [])];
   const extensions = host.extensions ?? TEXT_EXTENSIONS;
@@ -336,7 +340,7 @@ export function createContext({ projectDir, fileMap = null, pkg: givenPkg = null
     styling,
     pluginHooks,
     pluginEvents,
-    hasDep: (dep) => (host.hasDep ? host.hasDep(dep, model) : !!(deps[`@lightstart/${dep}`] || deps[`@bootstrapp/${dep}`])),
+    hasDep: (dep) => (host.hasDep ? host.hasDep(dep, model) : !!deps[`@lightstart/${dep}`]),
     files,
     read,
     code,

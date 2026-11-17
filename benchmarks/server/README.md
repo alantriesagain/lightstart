@@ -5,7 +5,7 @@ scriptc's `http-api` workload (a JSON API with routing, query parsing, a seeded 
 | Variant | What it is |
 |---|---|
 | `variants/raw.ts` | The workload as scriptc ships it, on bare `node:http` |
-| `variants/bridge.ts` | The same API as a Fetch handler, `(Request) => Promise<Response>`, behind the node-to-Fetch bridge bootstrapp's dev server uses (`bootstrapp/packages/serve/src/http.ts`) |
+| `variants/bridge.ts` | The same API as a Fetch handler, `(Request) => Promise<Response>`, behind a hand-written node-to-Fetch bridge |
 | `variants/light.ts` | The same API on `@lightstart/server` and its node adapter |
 | `variants/express.ts` | On Express 5, its routes as an Express user writes them; its own ETag off, the body read by hand (`express.json()` answers a malformed body with its own 400 before the API's checks) |
 | `variants/fastify.ts` | On Fastify 5 with its JSON body parser; its error handler answers a malformed body as raw does and keeps the connection open |

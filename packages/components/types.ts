@@ -644,13 +644,13 @@ export interface CatalogEntry {
   icon: string;
 }
 
-/** page/sample-bootstrapp.js: one section of the sample page, with the props it hands its component. */
+/** page/sample-page.js: one section of the sample page, with the props it hands its component. */
 export interface SampleSection {
   type: string;
   props: Record<string, Renderable>;
 }
 
-/** page/sample-bootstrapp.js: the sample page the showcase previews render from. */
+/** page/sample-page.js: the sample page the showcase previews render from. */
 export interface SamplePage {
   header: SampleSection;
   footer: SampleSection;

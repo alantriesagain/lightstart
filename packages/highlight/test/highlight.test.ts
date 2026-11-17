@@ -1,6 +1,5 @@
 /**
- * @file The code column's tokenizers against @bootstrapp/editor's own test cases (lang/*.test.js), one
- * letter per character as the editor's `annotate` paints them: the same JavaScript, CSS and HTML
+ * @file The code column's tokenizers, one letter per character: the same JavaScript, CSS and HTML
  * sources must tokenize the same here, natively and under node. Plus TypeScript's keywords, the
  * language of a path or a fence, Markdown (block and inline marks, front matter, fences), and a
  * large file's time.

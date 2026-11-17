@@ -4,7 +4,7 @@ import { appliesOn, runRuleOn } from "../test-utils.js";
 import rule from "./no-any.js";
 
 /** @param {Record<string, unknown>} [check] */
-const pkg = (check = { noAny: {} }) => ({ pkgJson: { name: "fixture", bootstrapp: { check } } });
+const pkg = (check = { noAny: {} }) => ({ pkgJson: { name: "fixture", light: { check } } });
 
 test("finds any in TypeScript types, casts and generics", async () => {
   const findings = await runRuleOn(rule, { "src/a.ts": "let a: any = 1;\nconst b = a as any;\nconst c: Map<string, any> = new Map();\n" }, pkg());

@@ -22,9 +22,9 @@ test("a copy prop that fell back to the locale file still lets a caller's own wo
 });
 
 test("every tag named in the locale files is a real component", async () => {
-  const { default: pkg } = await import("../package.json", { with: { type: "json" } });
-  const tags = new Set(Object.keys(pkg.bootstrapp.components.lc).map((n) => `lc-${n}`));
+  const { default: tags } = await import("../tags.json", { with: { type: "json" } });
+  const known = new Set(Object.keys(tags));
   const own = new Set(["lc-chart", "lc-async", "lc-field", "lc-icon-picker"]);
   for (const tag of Object.keys(en))
-    assert.ok(tags.has(tag) || own.has(tag), `${tag} names no component and is not a declared shared block`);
+    assert.ok(known.has(tag) || own.has(tag), `${tag} names no component and is not a declared shared block`);
 });

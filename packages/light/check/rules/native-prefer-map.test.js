@@ -3,7 +3,7 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./native-prefer-map.js";
 
-const pkg = { pkgJson: { name: "fixture", bootstrapp: { check: { perf: { scope: ["src/"], native: ["src/"] } } } } };
+const pkg = { pkgJson: { name: "fixture", light: { check: { perf: { scope: ["src/"], native: ["src/"] } } } } };
 
 test("finds computed-key writes, in tests and deletes on a Record dictionary in native code", async () => {
   const source = [

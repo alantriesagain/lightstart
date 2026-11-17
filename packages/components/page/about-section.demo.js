@@ -2,16 +2,16 @@ import { html } from "@lightstart/light/html";
 
 const props = {
   "eyebrow": "About",
-  "headline": "A framework sized like a library",
-  "subheadline": "Bootstrapp bundles components, data, routing and caching without the framework tax.",
-  "body": "Most modern frameworks ship megabytes of code for features you may never use. Bootstrapp takes the opposite bet: a small set of primitives that compose into real applications.\n\n**Light DOM components.** No shadow DOM, no template wars, just web components that play well with CSS.\n\n**Reactive data.** A data layer with hooks, sync and offline caching that reads like an ORM you already know.",
+  "headline": "A framework built from small pieces",
+  "subheadline": "light bundles components, data and routing without hiding the platform.",
+  "body": "light is built from a small set of primitives that compose into real applications.\n\n**Light DOM components.** No shadow DOM, no template wars, just web components that play well with CSS.\n\n**Reactive data.** A data layer with hooks and sync that reads like an ORM you already know.",
   "variant": "prose",
 };
 
 export default {
   description: "A page band for the long explanation, in prose or in columns.",
   preview: () => html`
-    <lc-about-section eyebrow="About" headline="A framework sized like a library" body="A small set of primitives that compose into real applications."></lc-about-section>
+    <lc-about-section eyebrow="About" headline="A framework built from small pieces" body="A small set of primitives that compose into real applications."></lc-about-section>
   `,
   previewWidth: 960,
   examples: [

@@ -13,7 +13,7 @@ receives the adapter through `configure({ effect })`.
 Notes that earn their place here:
 
 - **`Signal.$sync`** exposes the keyed `{ adapter, get, set, subscribe }`
-  contract a binding layer consumes (Bootstrapp's `sync:` properties take a
+  contract a binding layer consumes (a controller's `sync:` properties take a
   signal that way: `count: T.number({ sync: sig })`). A `Computed` bound this
   way is read-only; a write through it throws.
 - **`selector(sig)`** holds a subscription on its source for its lifetime;

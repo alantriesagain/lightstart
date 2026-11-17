@@ -1,5 +1,5 @@
 import { html } from "@lightstart/light/html";
-import sample from "./sample-bootstrapp.js";
+import sample from "./sample-page.js";
 
 const props = sample.sections.find((section) => section.type === "lc-steps-section")?.props ?? {};
 

@@ -143,7 +143,7 @@ import { lcText } from "../utils/text.js";
 html`<div class="chart-empty">${lcText("lc-chart", "noData")}</div>`
 ```
 
-`bootstrapp.locales: true` in this package's `package.json` is what makes a Bootstrapp app pick the files up: the manifest records which languages the package ships, the runtime merges them beneath the project's own file, and a build merges every contribution into one file per language. A key the project defines wins. Without a translator `lcText` answers the English in `locales/en.js`, interpolation included, so that file is both the contribution and the default. A component outside this package hands its own words in as the fourth argument.
+`bootstrapp.locales: true` in this package's `package.json` is read by the website's build, for now. Without a translator `lcText` answers the English in `locales/en.js`, interpolation included, so that file is both the contribution and the default. A component outside this package hands its own words in as the fourth argument.
 
 A component that takes copy as a prop (`loadmoreText`, `confirmText`, `nextLabel`, the auth form's labels) defaults it to empty and falls through to the locale file. Set the prop and it wins: it is the caller's word for this one instance, the locale file is the language everywhere else.
 
@@ -250,11 +250,11 @@ Every component renders into light DOM, and a `<slot>` in its template projects 
 - A slotted child is the slot element's child: `& slot > [slot="figure"]`.
 - Expose what a consumer may restyle through a part and `--lc-*` variables.
 
-`::part()`, `::slotted()` and `:host` match nothing in light DOM; `bootstrapp check` enforces all of this.
+`::part()`, `::slotted()` and `:host` match nothing in light DOM; `light check` enforces all of this.
 
 ## Developing
 
-Authoring rules, the citizen decisions behind the mixins and stores, and the conventions the checker enforces are in [AGENTS.md](./AGENTS.md). From the monorepo, `cd packages/components && bootstrapp check && bootstrapp test`; from the light repo alone, `pnpm test`.
+Authoring rules, the citizen decisions behind the mixins and stores, and the conventions the checker enforces are in [AGENTS.md](./AGENTS.md). From the monorepo, `cd packages/components && light check && light test`; from the light repo alone, `pnpm test`.
 
 ## What each component renders
 

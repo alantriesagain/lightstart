@@ -4,7 +4,7 @@ import { runRuleOn } from "../test-utils.js";
 import rule from "./perf-config.js";
 
 /** @param {Record<string, unknown>} perf @param {Record<string, unknown>} [allow] */
-const pkg = (perf, allow = {}) => ({ pkgJson: { name: "fixture", bootstrapp: { check: { perf: { scope: ["src/"], ...perf }, allow } } } });
+const pkg = (perf, allow = {}) => ({ pkgJson: { name: "fixture", light: { check: { perf: { scope: ["src/"], ...perf }, allow } } } });
 
 const FILES = { "src/view.js": "class View {\n  adopt() {\n    delete this.a;\n  }\n  idle() {}\n}\n" };
 

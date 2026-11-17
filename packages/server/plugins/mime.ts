@@ -1,7 +1,6 @@
 /**
  * @file Content types by file extension, the one table the static plugin and any other server of
- * files reads: the union of the tables light's test and desktop servers and bootstrapp's dev and
- * desktop servers each kept. Text types carry `charset=utf-8`; an unknown extension is an octet
+ * files reads: the union of the tables light's test, dev and desktop servers each kept. Text types carry `charset=utf-8`; an unknown extension is an octet
  * stream. Runtime-neutral: it reads the extension off the name itself.
  */
 const TYPES = new Map<string, string>([

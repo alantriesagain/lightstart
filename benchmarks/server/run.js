@@ -1,6 +1,6 @@
 /**
  * @file The server benchmark: scriptc's http-api workload written six ways (`variants/raw.ts` on
- * bare `node:http`, `variants/bridge.ts` as a Fetch handler behind bootstrapp's node-to-Fetch
+ * bare `node:http`, `variants/bridge.ts` as a Fetch handler behind a hand-written node-to-Fetch
  * bridge, `variants/light.ts` on @lightstart/server, and `express.ts`, `fastify.ts` and `hono.ts`
  * on those frameworks), and Fastify's two hello workloads (`hello/raw.ts`, `hello/light.ts` and the
  * frameworks), each run under node and, when a scriptc

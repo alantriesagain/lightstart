@@ -1,6 +1,5 @@
 /**
- * @file Markdown against @bootstrapp/editor's own test cases (lang/markdown.test.js), one letter per
- * character as the editor's `annotate` paints them, plus the block, quote and inline structure the
+ * @file Markdown tokens, one letter per character, plus the block, quote and inline structure the
  * tokenizer answers beside its tokens. Runs the same under node and scriptc.
  */
 import { FenceState, TableState } from "../state.ts";

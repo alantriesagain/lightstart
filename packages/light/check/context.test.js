@@ -116,9 +116,9 @@ const mod = await import("./lazy.js");
 
 test("imports() ignores a specifier quoted inside a comment", () => {
   const ctx = contextFromFiles({
-    "views/a.js": '/** consumers import { X } from "@bootstrapp/camera/commands.js" */\n// import "@bootstrapp/nope";\nimport T from "@lightstart/light/types";\nconst m = () => import("@bootstrapp/anim");',
+    "views/a.js": '/** consumers import { X } from "@lightstart/camera/commands.js" */\n// import "@lightstart/nope";\nimport T from "@lightstart/light/types";\nconst m = () => import("@lightstart/anim");',
   });
-  assert.deepEqual(ctx.imports("views/a.js").map((i) => [i.spec, i.kind]), [["@lightstart/light/types", "default"], ["@bootstrapp/anim", "dynamic"]]);
+  assert.deepEqual(ctx.imports("views/a.js").map((i) => [i.spec, i.kind]), [["@lightstart/light/types", "default"], ["@lightstart/anim", "dynamic"]]);
 });
 
 test("classAttrs() captures literal, mixed, bound and object-key class values, from templates only", () => {
@@ -133,7 +133,7 @@ test("classAttrs() captures literal, mixed, bound and object-key class values, f
 
 test("markup() answers each template as a tree, cached until the file is invalidated", () => {
   const map = {
-    "package.json": JSON.stringify({ name: "fixture", bootstrapp: { components: { fx: "views/" } } }),
+    "package.json": JSON.stringify({ name: "fixture", light: { components: { fx: "views/" } } }),
     "views/x.js": 'import { html, svg } from "@lightstart/light/html";\nexport default { tag: "fx-x", render() { return html`<lc-y ?open=${this.o}><i part="fx-x-dot"></i></lc-y>`; }, icon() { return svg`<circle r="1"></circle>`; } };',
   };
   const ctx = createContext({ projectDir: "/fixture", fileMap: map });
@@ -150,8 +150,8 @@ test("markup() answers each template as a tree, cached until the file is invalid
 });
 
 test("deps merge the manifest's dependency blocks and the check.from names; hasDep reads them", () => {
-  const ctx = contextFromFiles({}, { pkgJson: { name: "x", dependencies: { "@lightstart/light": "^1" }, devDependencies: { typescript: "^5" }, bootstrapp: { check: { from: ["@bootstrapp/check"] } } } });
-  assert.deepEqual(ctx.deps, { "@lightstart/light": "^1", typescript: "^5", "@bootstrapp/check": "workspace:*" });
+  const ctx = contextFromFiles({}, { pkgJson: { name: "x", dependencies: { "@lightstart/light": "^1" }, devDependencies: { typescript: "^5" }, light: { check: { from: ["@lightstart/check"] } } } });
+  assert.deepEqual(ctx.deps, { "@lightstart/light": "^1", typescript: "^5", "@lightstart/check": "workspace:*" });
   assert.equal(ctx.hasDep("light"), true);
   assert.equal(ctx.hasDep("check"), true);
   assert.equal(ctx.hasDep("tw"), false);
@@ -159,10 +159,18 @@ test("deps merge the manifest's dependency blocks and the check.from names; hasD
   assert.deepEqual([...ctx.pluginHooks], []);
 });
 
+test("a project not yet moved to the light key still configures check under bootstrapp", () => {
+  const ctx = contextFromFiles(
+    { "views/a.js": "", "website/index.html": "" },
+    { pkgJson: { name: "x", bootstrapp: { check: { ignore: ["website/"] } } } },
+  );
+  assert.deepEqual(ctx.files(), ["package.json", "views/a.js"]);
+});
+
 test("a host supplies its own notion of a dependency, the styling and the plugin hooks and events", () => {
   const ctx = contextFromFiles({}, {
-    pkgJson: { name: "x", dependencies: { bootstrapp: "^1" } },
-    host: { hasDep: (dep, model) => dep === "view" && !!model.deps.bootstrapp, styling: "tailwind", pluginHooks: ["dataLoaded"], pluginEvents: ["dataLoaded"] },
+    pkgJson: { name: "x", dependencies: { "@lightstart/widget": "^1" } },
+    host: { hasDep: (dep, model) => dep === "view" && !!model.deps["@lightstart/widget"], styling: "tailwind", pluginHooks: ["dataLoaded"], pluginEvents: ["dataLoaded"] },
   });
   assert.equal(ctx.hasDep("view"), true);
   assert.equal(ctx.hasDep("light"), false);
@@ -174,7 +182,7 @@ test("a host supplies its own notion of a dependency, the styling and the plugin
 test("files() leaves out the ignored directories, the check.ignore prefixes and what the host prunes", () => {
   const ctx = contextFromFiles(
     { "views/a.js": "", "node_modules/x/index.js": "", "dist/out.js": "", "website/index.html": "", "native/android/x.kt": "", "lib/b.js": "" },
-    { pkgJson: { name: "x", bootstrapp: { check: { ignore: ["website/"] } } }, host: { ignore: { dirs: ["native"] } } },
+    { pkgJson: { name: "x", light: { check: { ignore: ["website/"] } } }, host: { ignore: { dirs: ["native"] } } },
   );
   assert.deepEqual(ctx.files(), ["lib/b.js", "package.json", "views/a.js"]);
 });
@@ -187,7 +195,7 @@ test("a scope restricts files() to one directory", () => {
 
 test("invalidate() refreshes every cached view of a file, and the file set when it changes", () => {
   const map = {
-    "package.json": JSON.stringify({ name: "fixture", bootstrapp: { components: { fx: "views/" } } }),
+    "package.json": JSON.stringify({ name: "fixture", light: { components: { fx: "views/" } } }),
     "views/card.js": 'export default { tag: "fx-card", props: { a: T.string() } };',
     "index.js": '/* x */ import "./lib.js";',
     "lib.js": "",
@@ -220,7 +228,7 @@ test("invalidate() refreshes every cached view of a file, and the file set when 
 test("views() covers a components map given in the nested name -> path form", () => {
   const pkgJson = {
     name: "@lightstart/light",
-    bootstrapp: { components: { lc: { button: "display/button.js", modal: "overlay/modal.js" } } },
+    light: { components: { lc: { button: "display/button.js", modal: "overlay/modal.js" } } },
   };
   const ctx = contextFromFiles(
     {
@@ -236,7 +244,7 @@ test("views() covers a components map given in the nested name -> path form", ()
 });
 
 test("views() falls back to views/ only when no components map resolves a directory, and a host adds directories", () => {
-  const pkgJson = { name: "fixture", bootstrapp: { components: {} } };
+  const pkgJson = { name: "fixture", light: { components: {} } };
   const files = { "views/card.js": 'export default { tag: "fx-card" };', "display/button.js": 'export default { tag: "fx-button" };' };
   assert.deepEqual(contextFromFiles(files, { pkgJson }).views().map((v) => v.file), ["views/card.js"]);
   const hosted = contextFromFiles(files, { pkgJson, host: { componentDirs: () => ["display/"] } });
@@ -292,7 +300,7 @@ View.define("fx-hero", { title: "" }, (el) => html\`<h1 part="fx-hero-title">\${
 
 test("invalidate() of a define file outside the component directories refreshes the index", () => {
   const map = {
-    "package.json": JSON.stringify({ name: "fixture", bootstrapp: { components: { fx: "views/" } } }),
+    "package.json": JSON.stringify({ name: "fixture", light: { components: { fx: "views/" } } }),
     "lib/page.js": `${LIGHT}View.define("fx-page", { a: 1 }, (el) => html\`<p></p>\`);\n`,
   };
   const ctx = createContext({ projectDir: "/fixture", fileMap: map });
@@ -304,7 +312,7 @@ test("invalidate() of a define file outside the component directories refreshes 
 
 test("invalidate(rel, text) stands the text in for the file until invalidated without it", () => {
   const map = {
-    "package.json": JSON.stringify({ name: "fixture", bootstrapp: { components: { fx: "views/" } } }),
+    "package.json": JSON.stringify({ name: "fixture", light: { components: { fx: "views/" } } }),
     "views/card.js": 'export default { tag: "fx-card", props: { a: 1 } };',
   };
   const ctx = createContext({ projectDir: "/fixture", fileMap: map });
@@ -338,10 +346,10 @@ test("controllers() reads every defineController call in the project's scripts, 
 
 test("a host's controller files are the dependency controllers; its adapter names join the ones the project registers", () => {
   const ctx = contextFromFiles({
-    "node_modules/@bootstrapp/devices/controllers/devices.js": 'export default defineController({ name: "devices" });',
+    "node_modules/@lightstart/devices/controllers/devices.js": 'export default defineController({ name: "devices" });',
     "frontend.js": 'registerAdapter("custom", makeAdapter());\n// registerAdapter("commented", x);',
     "lib/doc.js": 'export const doc = createDocumentAdapter("notes-doc");',
-  }, { host: { controllerFiles: () => ["node_modules/@bootstrapp/devices/controllers/devices.js"], syncAdapters: ["local"] } });
+  }, { host: { controllerFiles: () => ["node_modules/@lightstart/devices/controllers/devices.js"], syncAdapters: ["local"] } });
   assert.deepEqual(ctx.dependencyControllers().map((c) => c.name), ["devices"]);
   assert.deepEqual(ctx.controllers(), []);
   assert.deepEqual([...ctx.syncAdapters()].sort(), ["custom", "local", "notes-doc"]);

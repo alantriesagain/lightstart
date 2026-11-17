@@ -30,7 +30,7 @@ scriptc compiles the core, the matcher, the adapters, the helpers and the naviga
 - A spread of `RouteValue` (a function or a route record) is refused (SC1090), so `flattenRoutes` narrows the branch and copies through a `RouteConfig` binding.
 - `nextFrame` uses `requestAnimationFrame` when it exists and `setTimeout` otherwise, so a host's `track` settles after the frame a route change renders in.
 - The router's complaints go through `this.logger` (`logger.ts`), never `console` directly: a test's output must be the same under node and natively, and stderr interleaves with stdout differently on the two, so the tests give every router a `MemoryLogger` and assert on its lines.
-- The navigation stack is replaced on every change, never changed in place: a signal holding `router.stack` (bootstrapp's signal plugin) only sees a new array.
+- The navigation stack is replaced on every change, never changed in place: a signal holding `router.stack` (from a signal plugin) only sees a new array.
 
 ## Contracts others depend on
 

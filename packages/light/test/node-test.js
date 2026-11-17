@@ -69,7 +69,7 @@ export const assert = assertStrict;
 export const run = NOT_SUPPORTED(
   "run()",
   "the programmatic runner spawns processes and globs the filesystem",
-  "a runner page (light's `test/run.js`, or `bootstrapp test --browser`) runs the files in the browser.",
+  "a runner page (light's `test/run.js`) runs the files in the browser.",
 );
 
 export const snapshot = {
