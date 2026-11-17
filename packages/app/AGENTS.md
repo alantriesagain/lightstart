@@ -66,7 +66,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `currentView`, `navigate` and `<app-outlet>` | root views and controllers of web and terminal apps |
 | `start(manifest)` and `{ stop() }` | web apps |
 | `start(manifest, { classes, argv, term })` and `{ stop() }` | terminal apps and their generated entry |
-| `openApp(manifest, { args })` and `mountApp(manifest, opened, { cols, rows, classes })` | a project's tests |
+| `openApp(manifest, { args, kinds })` and `mountApp(manifest, opened, { cols, rows, classes })` | a project's tests |
 | A mode's `main(argv: readonly string[])` and optional `matches(argv)` | the terminal generation and `.light/main.ts` |
 
 ## Gates

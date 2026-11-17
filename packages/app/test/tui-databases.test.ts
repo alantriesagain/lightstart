@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { done, eq, ok } from "@lightstart/test/assert.ts";
 import { openApp } from "../test/index.ts";
-import { TuiHost } from "../tui/index.ts";
+import { JsonlKind, TuiHost } from "../tui/index.ts";
 import { defineApp } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import app from "./fixtures/tui/src/app.ts";
@@ -65,6 +65,17 @@ const main = async (): Promise<void> => {
     refused = error instanceof Error ? error.message : String(error);
   }
   ok("a kind the host cannot run is an error naming the host and its kinds", refused.includes('The tui host cannot run the "indexeddb" store "cache"') && refused.includes("jsonl, memory"));
+
+  const onDiskDir = mkdtempSync(join(tmpdir(), "light-app-kinds-"));
+  try {
+    const onDisk = defineApp({ name: "on-disk", host: "tui", stores: { main: { at: onDiskDir } } });
+    const opened = await openApp({ app: onDisk, models: [{ name: "note", model: note }], controllers: [], routes: null, views: [] }, { kinds: [new JsonlKind()] });
+    await note.add({ text: "written" });
+    await opened.stop();
+    ok("a test opens the stores with the kinds it names: the row is on disk", readFileSync(join(onDiskDir, "note.jsonl"), "utf8").includes("written"));
+  } finally {
+    rmSync(onDiskDir, { recursive: true, force: true });
+  }
 
   const undeclared = defineApp({ name: "undeclared", host: "tui" });
   let missing = "";

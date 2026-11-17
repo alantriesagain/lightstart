@@ -32,8 +32,8 @@ export const currentView = signal<string | null>(null);
  */
 export class AppHost implements StoreHost {
   readonly name: string = "none";
-  readonly kinds: readonly StoreKind[] = [];
-  readonly defaultKind: string = "memory";
+  kinds: readonly StoreKind[] = [];
+  defaultKind: string = "memory";
 
   /** The app's argument values, from the host's source (argv, the URL); an error for arguments it cannot take. */
   args(app: App): Record<string, unknown> {
