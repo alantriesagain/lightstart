@@ -1,0 +1,51 @@
+:where(.lc-language-switcher, lc-language-switcher) {
+  display: inline-flex;
+  align-items: center;
+
+  & [part~=lc-language-switcher-label] {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--lc-language-switcher-gap, var(--spacing-sm, 0.5rem));
+    color: var(--lc-language-switcher-label-color, var(--text-secondary));
+    font-size: var(--lc-language-switcher-label-font-size, var(--text-sm, 0.875rem));
+    font-weight: var(--lc-language-switcher-label-font-weight, var(--control-weight, var(--font-medium, 500)));
+    letter-spacing: var(--lc-language-switcher-label-letter-spacing, var(--control-tracking, normal));
+  }
+
+  & [part~=lc-language-switcher-select] {
+    appearance: none;
+    box-sizing: border-box;
+    padding: var(
+      --lc-language-switcher-padding,
+      var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem)
+    );
+    border: var(--lc-language-switcher-border-width, var(--border-width, 1px)) solid
+      var(--lc-language-switcher-border-color, var(--border-color));
+    border-radius: var(
+      --lc-language-switcher-border-radius,
+      var(--radius-field, var(--radius-md, 0.375rem))
+    );
+    box-shadow: var(--lc-language-switcher-shadow, var(--shadow-field, var(--shadow-sm, none)));
+    background: var(--lc-language-switcher-background, var(--canvas-background));
+    color: var(--lc-language-switcher-color, var(--text-color));
+    font-family: inherit;
+    font-size: var(--lc-language-switcher-font-size, var(--text-sm, 0.875rem));
+    font-weight: var(--lc-language-switcher-font-weight, var(--control-weight, var(--font-medium, 500)));
+    letter-spacing: var(--lc-language-switcher-letter-spacing, var(--control-tracking, normal));
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      border-color: var(--lc-language-switcher-hover-border-color, var(--color-primary-light));
+    }
+
+    &:focus-visible {
+      outline: none;
+      border-color: var(--lc-language-switcher-focus-border-color, var(--color-primary));
+      box-shadow: var(
+        --lc-language-switcher-focus-shadow,
+        var(--shadow-focus, 0 0 0 3px rgba(250, 189, 47, 0.1))
+      );
+    }
+  }
+}

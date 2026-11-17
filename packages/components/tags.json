@@ -443,6 +443,12 @@
     "extends": null,
     "uses": []
   },
+  "lc-language-switcher": {
+    "module": "navigation/language-switcher.js",
+    "style": "navigation/language-switcher.css",
+    "extends": null,
+    "uses": []
+  },
   "lc-line-chart": {
     "module": "display/line-chart.js",
     "style": "display/line-chart.css",

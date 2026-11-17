@@ -241,6 +241,25 @@ importers:
         specifier: ^26.6.5
         version: 26.6.5
 
+  packages/i18n:
+    dependencies:
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/router':
+        specifier: workspace:*
+        version: link:../router
+    devDependencies:
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/kernel:
     dependencies:
       '@lightstart/lib':

@@ -15,6 +15,7 @@ in browsers, under server-side prerendering, and on native targets.
 | `@lightstart/light/model` | Models: schemas, a store over IndexedDB or another adapter, live queries ([README](model/README.md)) |
 | `@lightstart/light/env` | The page environment: viewport, breakpoint, OS, color scheme, `subscribe` |
 | `@lightstart/light/navigation` | The host's router as components see it; plain anchors until one is configured |
+| `@lightstart/light/i18n` | The host's translation as components see it; the components' own words until one is configured |
 | `@lightstart/light/theme` | Design tokens from a theme object, presets, `theme.css`, the color scheme, icons ([README](theme/README.md)) |
 | `@lightstart/light/theme/classes` | The utility classes a theme provides: `createEngine`, `buildTheme`, the rule table ([README](theme/README.md#classes)) |
 
@@ -345,8 +346,16 @@ once.
   `click(event)`, `path()`, `subscribe(fn)`. Without a router, a link is a plain
   anchor; `configureNavigation({ href, go, click, path, subscribe })` plugs one
   in.
+- **`translation`** (`@lightstart/light/i18n`): `translate(key, params)`,
+  `language()`, `languages()`, `setLanguage(language)`, `subscribe(fn)`. Without
+  a library, a component keeps its own words and the language is the
+  document's; `configureTranslation({ translate, language, languages,
+  setLanguage, subscribe })` plugs one in (`@lightstart/i18n` is light's own, any
+  other works the same), and a render that read the translation draws again
+  when the language changes.
 - **`translate(key, params)`**: the host's text for a key, or `undefined` so a
-  component falls back to its own words. Set through `configureView({ translate })`.
+  component falls back to its own words: `translation.translate`.
+  `configureView({ translate })` plugs a library that has only sentences.
 - **`trackWork(promise, label)`**: hands async work to the host's `wrap`, so a
   host that waits for a quiet page counts it.
 - **`configureView({ track, wrap, settle, translate, dev })`**: `track(label)`

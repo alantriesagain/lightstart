@@ -12,6 +12,7 @@
 import { currentHost } from "../html/host.ts";
 import { configure } from "../html/reactive.ts";
 import { Reactive, effect, swapCurrent } from "../signals/index.ts";
+import { configureTranslation, translation } from "../i18n/index.ts";
 
 configure({ effect });
 
@@ -20,7 +21,6 @@ class Config {
   tracked: boolean;
   wrap: (work: Promise<unknown>, label: string) => void;
   settle: (() => Promise<unknown>) | undefined;
-  translate: (key: string, params?: Record<string, unknown>) => string | undefined;
   dev: boolean;
 
   constructor() {
@@ -28,7 +28,6 @@ class Config {
     this.tracked = false;
     this.wrap = () => {};
     this.settle = undefined;
-    this.translate = () => undefined;
     this.dev = true;
   }
 }
@@ -42,16 +41,17 @@ export const config = new Config();
  * ran; `wrap(promise, label)` receives every async lifecycle hook, plugin
  * init and the work components pass to `trackWork`; `settle()` resolves when
  * a served region the client cannot adopt may be rendered over; `translate`
- * answers the host's text for a key; `dev` turns on diagnostics.
+ * answers the host's text for a key (a translation of its own: what
+ * `configureTranslation` takes whole); `dev` turns on diagnostics.
  */
-export const configureView = (options: Partial<Omit<Config, "tracked">>) => {
+export const configureView = (options: Partial<Omit<Config, "tracked">> & { translate?: (key: string, params?: Record<string, unknown>) => string | undefined }) => {
   if (options.track !== undefined) {
     config.track = options.track;
     config.tracked = true;
   }
   if (options.wrap !== undefined) config.wrap = options.wrap;
   if (options.settle !== undefined) config.settle = options.settle;
-  if (options.translate !== undefined) config.translate = options.translate;
+  if (options.translate !== undefined) configureTranslation({ translate: options.translate });
   if (options.dev !== undefined) config.dev = options.dev;
 };
 
@@ -66,9 +66,10 @@ export const trackWork = <T>(work: Promise<T>, label: string): Promise<T> => {
 
 /**
  * The host's text for `key`, or undefined when it has none, so a component
- * falls back to its own.
+ * falls back to its own; a render that asks draws again when the language
+ * changes (`@lightstart/light/i18n`).
  */
-export const translate = (key: string, params?: Record<string, unknown>): string | undefined => config.translate(key, params);
+export const translate = (key: string, params?: Record<string, unknown>): string | undefined => translation.translate(key, params);
 
 let queue: ViewCore[] = [];
 let flushing: ViewCore[] | null = null;
