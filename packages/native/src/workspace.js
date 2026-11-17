@@ -28,6 +28,7 @@ import { basename, dirname, join, relative, resolve } from "node:path";
  * @property {string} [binary]
  * @property {string | string[]} [ffi]
  * @property {string[]} [prepare]
+ * @property {string[]} [install]
  * @property {Record<string, Selftest>} [selftests]
  * @property {string} [web]
  * @property {{ wait?: number, checks?: [string, string][] }} [selftest]

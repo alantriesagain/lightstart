@@ -1,7 +1,9 @@
 /**
  * @file `light install [name]`: build the app and put it on PATH as a copy in ~/.local/bin ($BIN_DIR
  * overrides), written beside the one in use and moved over it, so a rebuild never touches the
- * binary a running session uses.
+ * binary a running session uses. Then the app's `native.install` lines run in its folder, with
+ * `LIGHT_NATIVE_COMMAND=install` and `LIGHT_INSTALLED` naming the binary installed: what goes with
+ * it (its plugins, its data).
  */
 import { execFileSync } from "node:child_process";
 import { copyFileSync, mkdirSync, renameSync, statSync } from "node:fs";
@@ -9,6 +11,7 @@ import { homedir } from "node:os";
 import { delimiter, join } from "node:path";
 import { Member, memberByName } from "../workspace.js";
 import { binaryOf, buildApp, buildProject } from "./build.js";
+import { shell } from "../run.js";
 
 /**
  * Put `binary` in the bin folder as `name`.
@@ -32,6 +35,10 @@ export const installBinary = async (root, app, binary, name) => {
     version = "";
   }
   console.log("installed " + join(bin, target) + " (" + mb + " MB" + (version.length > 0 ? ", " + version : "") + "); run it in any folder: " + target);
+  for (const step of app.config.install ?? []) {
+    const code = await shell(step, { cwd: app.dir, env: { ...process.env, LIGHT_NATIVE_COMMAND: "install", LIGHT_INSTALLED: join(bin, target) } });
+    if (code !== 0) throw new Error(app.name + ": install step failed (" + step + ")");
+  }
   if (!(process.env["PATH"] ?? "").split(delimiter).includes(bin)) console.log("note: " + bin + " is not on PATH; add it to your shell profile");
   return 0;
 };

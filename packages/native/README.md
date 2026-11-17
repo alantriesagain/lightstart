@@ -23,7 +23,7 @@ A project that declares `@lightstart/native` gets these commands from `light`; e
 | `light check [--all]` | the native conventions: tsconfig options, declared imports, test layout; with `--all` the workspace members light check's targets name |
 | `light run [-- args…]` | build the project (`scriptc build native.entry` into `dist/<native.binary>`, keeping the symbol table) and run it in the folder the command was launched from |
 | `light selftest <scenario> [--no-build]` | build the project and run one of its `native.selftests` scenarios in a pseudo-terminal |
-| `light install [name]` | build the project and copy its binary into `~/.local/bin` (`BIN_DIR` overrides), atomically |
+| `light install [name]` | build the project and copy its binary into `~/.local/bin` (`BIN_DIR` overrides), atomically, then run its `native.install` lines |
 | `light coverage [--apps] [--jobs N] [--all] [member…]` | scriptc's static coverage of the project's entry and, without `--apps`, of every test; with `--all` or member names, of the workspace members |
 | `light typecheck [--all] [member…]` | tsc over the project's tsconfig, or with `--all` over every workspace member |
 | `light prepare [--all] [member…]` | the prepare steps alone, the dependencies' first |
@@ -38,6 +38,7 @@ The compiler is light's choice (`packages/light/native/scriptc.js`): `$SCRIPTC`,
 | `binary` | the binary's name (the folder's name by default) |
 | `ffi` | the FFI manifest the app links: a package path (`@lightstart/plugins/native/ffi.json`, reached through the app's `node_modules`) or a path relative to the app; an array of them is merged into one under the app's `dist/`, each library named by its absolute path |
 | `prepare` | shell lines run in the member's folder before a build, a test run, coverage or typecheck, with `LIGHT_NATIVE_COMMAND` naming the command (`build`, `test`, `coverage`, `typecheck`, `desktop`, `prepare`), so a step can generate what a test run compiles apart from what a build does |
+| `install` | shell lines run in the member's folder after `light install` put its binary in place, with `LIGHT_NATIVE_COMMAND=install` and `LIGHT_INSTALLED` naming the binary: what goes with it (its plugins, its data) |
 | `selftests` | the selftest scenarios: `args`, `home` (files of a temp folder given through `homeEnv`), `live`, `wait`, `checks` (`[label, grep pattern]` pairs over the log), `outputChecks` (the same over what the terminal showed), `noProcessLeft`, `exitCode` (the code the app ends with, 0 by default) |
 | `web`, `selftest` | a desktop app's page folder and its selftest (`wait`, `checks`) |
 | `tooling` | a node-only package: no `.ts` exports, no native gate |
