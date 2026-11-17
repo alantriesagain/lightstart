@@ -11,7 +11,7 @@ A web app on `@lightstart/app`: the folders are the app, and light writes the wi
 | `src/controllers/<name>.ts` | One controller, default-exported; the file name is its name |
 | `src/views/<tag>.ts` | One view, registering its tag; the file name is the tag |
 | `src/routes.ts` | Optional: `{ "/path": { view: "<tag>", name?, title? } }` |
-| `src/styles.css` | The theme and the components' stylesheets, then the app's own rules |
+| `src/styles.css` | The generated components' stylesheet, then the app's own rules |
 | `test/` | Browser tests, run by `light test` |
 
 A view reaches its controller with an import, `import notes from "../controllers/notes.ts"`. A controller imports its models the same way, `import note from "../models/note.ts"`. One controller reaches another by name with `sync:` (the file name is the name), never by importing its instance.
@@ -20,7 +20,7 @@ A view reaches its controller with an import, `import notes from "../controllers
 
 `.light/app.ts`, `.light/main.ts` and the manifest are written by `light app` (and by `serve`, `build` and `test` before they start). Never edit them, and never commit them: `.light/` is in `.gitignore` beside `.deployed/`.
 
-The app layer opens the stores (a model picks one with its schema's `$adapter`, `main` when it names none), names and starts the controllers, applies the theme, builds the router from `src/routes.ts` and mounts the root view. It does not register `lc-*` components or load their stylesheets: a view imports and registers each component it writes, and `src/styles.css` imports the matching `*.css` files.
+The app layer opens the stores (a model picks one with its schema's `$adapter`, `main` when it names none), names and starts the controllers, applies the theme, builds the router from `src/routes.ts` and mounts the root view. It also writes `.light/components.ts` and `.light/components.css` for a project on `@lightstart/components`: the views write `lc-*` tags and the generation defines them and imports their stylesheets, so a view imports no component and calls no `View.define`.
 
 ## Scripts
 

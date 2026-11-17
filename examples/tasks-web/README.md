@@ -30,8 +30,8 @@ pnpm dev                       # light serve --watch, then open the page
 | Models, one per file, the file's name the model's | `src/models/list.ts`, `task.ts`, `event.ts` |
 | Controllers starting in the order their imports give: `activity`, then `lists` (which reads `list` and says what it made), then `tasks`; the same files as the terminal app's | `src/controllers/` |
 | Routes: three pages, `<app-outlet>` in the root view drawing the one the path answers, links and `navigate` going to them | `src/routes.ts`, `src/views/app-root.ts`, `src/views/lists-page.ts` |
-| Light's components (`lc-button`, `lc-card`, `lc-text`), each registered by the view that writes it, its stylesheet imported in `src/styles.css` | `src/views/`, `src/styles.css` |
-| A test: the generated entry booted in the page, the form filled, `navigate` between routes, the text read back | `test/app.test.ts` |
+| Light's components (`lc-button`, `lc-card`, `lc-text`), written in the views: `.light/components.ts` defines them and `.light/components.css` loads their stylesheets | `src/views/`, `src/styles.css` |
+| A test: the app opened with `openPage` (memory stores, the `list` argument), the form filled, `navigate` between routes, the text read back | `test/app.test.ts` |
 
 ## Where things are
 
@@ -42,7 +42,7 @@ pnpm dev                       # light serve --watch, then open the page
 | `src/controllers/` | `activity`, `lists`, `tasks`: the live rows and the writes |
 | `src/routes.ts` | `/`, `/lists`, `/activity` to their pages |
 | `src/views/` | `app-root` (the header, the nav, `<app-outlet>`) and the three pages |
-| `src/styles.css` | The theme and the components' stylesheets, and the page's own rules |
+| `src/styles.css` | The generated components' stylesheet, and the page's own rules |
 | `index.html` | The page: `<app-root>` and `.light/main.ts` |
 | `.light/` | Generated wiring: never edit, never commit |
-| `test/app.test.ts` | The app driven in the browser |
+| `test/app.test.ts` | The app opened in the browser with `openPage` and driven through its pages |

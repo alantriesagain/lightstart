@@ -4,10 +4,7 @@
  */
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
-import card from "@lightstart/components/layout/card.js";
 import activity from "../controllers/activity.ts";
-
-View.define(card);
 
 class ActivityPage extends View {
   render() {

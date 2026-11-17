@@ -1,8 +1,4 @@
-@import "../node_modules/@lightstart/light/theme/theme.css";
-@import "../node_modules/@lightstart/components/display/link.css";
-@import "../node_modules/@lightstart/components/display/button.css";
-@import "../node_modules/@lightstart/components/display/text.css";
-@import "../node_modules/@lightstart/components/layout/card.css";
+@import "../.light/components.css";
 
 body {
   margin: 0;

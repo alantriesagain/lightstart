@@ -4,13 +4,10 @@
  */
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
-import text from "@lightstart/components/display/text.js";
 import lists from "../controllers/lists.ts";
 import "./tasks-page.ts";
 import "./lists-page.ts";
 import "./activity-page.ts";
-
-View.define(text);
 
 class AppRoot extends View {
   render() {
