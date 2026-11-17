@@ -14,13 +14,16 @@ import type { ArgsSchema } from "@lightstart/cli/types/command.ts";
 /** Where a store keeps its rows, as its kind takes it: a folder, a file, a database's name; or one read from the parsed arguments. */
 export type StoreAt = string | ((args: AppArgs) => string);
 
+/** A store's kind, or one read from the parsed arguments (memory for a run that keeps nothing, say). */
+export type StoreKindOf = string | ((args: AppArgs) => string);
+
 /**
  * One store an app keeps rows in. `kind` is an adapter its host can run (`memory`, `indexeddb`,
  * `jsonl`, `sql`, or one the project registers), the host's default when absent; `at` is what that
- * kind opens.
+ * kind opens. Either may be a function of the arguments.
  */
 export interface StoreConfig {
-  kind?: string;
+  kind?: StoreKindOf;
   at?: StoreAt;
 }
 

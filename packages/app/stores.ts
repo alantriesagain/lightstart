@@ -87,7 +87,8 @@ const plan = (manifest: AppManifest, host: StoreHost, memoryOnly: boolean): { st
   const out: { store: string; kind: StoreKind; at: string }[] = [];
   for (const store of Object.keys(app.stores)) {
     const config = app.stores[store] ?? {};
-    const wanted = config.kind ?? host.defaultKind;
+    const given = config.kind;
+    const wanted = typeof given === "function" ? given(app.args) : given ?? host.defaultKind;
     const kind = memoryOnly ? new MemoryKind() : kindNamed(host, wanted);
     if (kind === null) throw new Error(`The ${host.name} host cannot run the "${wanted}" store "${store}"; it runs ${kindsOf(host)}`);
     const at = config.at;
