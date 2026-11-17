@@ -72,9 +72,9 @@ if (!current) {
   run("cc", [...flags, "-c", source, "-o", join(out, "sqlite3.o")]);
   run("cc", [...flags, "-c", shim, "-o", join(out, "shim.o")]);
   run("ar", ["rcs", archive, join(out, "sqlite3.o"), join(out, "shim.o")]);
+  console.log("sqlite: built " + archive);
 }
 
 const systemLibraries = process.platform === "darwin" ? ["m"] : ["m", "dl", "pthread"];
 const manifest = { ffi_format: 7, functions: FUNCTIONS, libraries: ["./out/libsqlite.a"], system_libraries: systemLibraries };
 writeFileSync(join(here, "ffi.json"), `${JSON.stringify(manifest, null, 2)}\n`);
-console.log("sqlite: " + archive);
