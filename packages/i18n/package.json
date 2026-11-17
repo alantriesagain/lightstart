@@ -1,0 +1,42 @@
+{
+  "name": "@lightstart/i18n",
+  "version": "0.1.0",
+  "description": "Translations for a light app: dictionaries per language, a current language signal, plural forms and interpolation.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/i18n"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "i18n",
+    "translations",
+    "locale",
+    "plural",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "pack": "node scripts/pack.js"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/light": "workspace:*",
+    "@lightstart/router": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
