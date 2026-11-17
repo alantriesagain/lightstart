@@ -1,7 +1,9 @@
 // node-only
 /**
- * @file More than one store: a model whose schema names the `user` database
- * writes there in memory and on disk, beside the default database.
+ * @file More than one store: a model whose schema names the `user` store
+ * writes there in memory and on disk, beside `main`; a store of a kind the
+ * host cannot run, and a model naming a store the app does not declare, are
+ * errors before anything opens.
  */
 
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -9,7 +11,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { done, eq, ok } from "@lightstart/test/assert.ts";
 import { openApp } from "../test/index.ts";
-import { prepare } from "../tui/index.ts";
+import { TuiHost } from "../tui/index.ts";
+import { defineApp } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import app from "./fixtures/tui/src/app.ts";
 import note from "./fixtures/tui/src/models/note.ts";
@@ -24,25 +27,27 @@ const manifest: AppManifest = {
 };
 
 const main = async (): Promise<void> => {
-  const memory = await openApp(manifest, { storage: "memory" });
+  const memory = await openApp(manifest);
   try {
     await note.add({ text: "memo" });
     await profile.add({ name: "Ada" });
     eq("the default database has the note", String((await note.getAll()).length), "1");
     eq("the named database has the profile", String((await profile.getAll()).length), "1");
-    ok("the two databases are different adapters", memory.store.databases["memory"] !== memory.store.databases["user"]);
+    ok("the two databases are different adapters", memory.store.databases["main"] !== memory.store.databases["user"]);
   } finally {
     await memory.stop();
   }
 
   const dir = mkdtempSync(join(tmpdir(), "light-app-databases-"));
   try {
-    const prepared = await prepare(manifest, { data: dir, argv: [] });
+    const host = new TuiHost({ argv: ["--data", dir] });
+    app.args.values = host.args(app);
+    const store = await host.openStores(manifest, false);
     try {
       await note.add({ text: "on disk" });
       await profile.add({ name: "Grace" });
     } finally {
-      await prepared.stop();
+      await store.close();
     }
     ok("the default folder has the note file", existsSync(join(dir, "note.jsonl")));
     ok("with the note", readFileSync(join(dir, "note.jsonl"), "utf8").includes("on disk"));
@@ -51,6 +56,24 @@ const main = async (): Promise<void> => {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+
+  const browserOnly = defineApp({ name: "browser-only", host: "tui", stores: { cache: { kind: "indexeddb" } } });
+  let refused = "";
+  try {
+    await new TuiHost({ argv: [] }).openStores({ app: browserOnly, models: [], controllers: [], routes: null, views: [] }, false);
+  } catch (error) {
+    refused = error instanceof Error ? error.message : String(error);
+  }
+  ok("a kind the host cannot run is an error naming the host and its kinds", refused.includes('The tui host cannot run the "indexeddb" store "cache"') && refused.includes("jsonl, memory"));
+
+  const undeclared = defineApp({ name: "undeclared", host: "tui" });
+  let missing = "";
+  try {
+    await openApp({ app: undeclared, models: [{ name: "profile", model: profile }], controllers: [], routes: null, views: [] });
+  } catch (error) {
+    missing = error instanceof Error ? error.message : String(error);
+  }
+  ok("a model naming a store the app does not declare is an error", missing.includes('keeps its rows in the store "user"'));
   done();
 };
 

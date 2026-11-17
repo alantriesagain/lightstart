@@ -1,40 +1,53 @@
 /// <reference lib="dom" />
 /**
- * @file `@lightstart/app/web`: the web host. It opens the manifest's store,
- * names and starts its controllers, applies the theme preset, builds the
- * router when the project has routes, and mounts the root view in the page.
- * The views were imported by the generated manifest, so every tag exists
- * before the root view is made.
+ * @file `@lightstart/app/web`: the web host. Its store kinds are `indexeddb`
+ * (the default where the page has IndexedDB, memory where it has none) and
+ * `memory`, and a project's own. The arguments come from the page's URL
+ * query (`?greeting=hi&trust`). The routes follow the browser's history, the
+ * theme preset is applied as CSS variables, and the root view is mounted in
+ * the page, `<app-outlet>` drawing the view the routes answer. The views were
+ * imported by the generated manifest, so every tag exists before the root
+ * view is made.
  */
 
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
-import { signal } from "@lightstart/light/signals";
 import { configureNavigation } from "@lightstart/light/navigation";
 import { applyTheme } from "@lightstart/light/theme";
 import { loadPreset } from "@lightstart/light/theme/presets.js";
-import { createBrowserAdapter, createRouter } from "@lightstart/router";
-import type { RouterCore } from "@lightstart/router";
-import type { App } from "../index.ts";
-import { hasAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
+import { createAdapter, hasAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
 import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
-import { openStore } from "../storage.ts";
-import { startControllers, stopControllers } from "../controllers.ts";
+import type { ModelSchema, StorageAdapter } from "@lightstart/light/model/types.ts";
+import { createBrowserAdapter } from "@lightstart/router/adapters/browser";
+import type { RouterAdapter } from "@lightstart/router/contracts.ts";
+import { parseArgs } from "@lightstart/cli/argv.ts";
+import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
+import { AppHost, AppRun, currentView } from "../run.ts";
+import { MemoryKind, StoreKind } from "../stores.ts";
 
-/** A running app: `stop()` disposes its controllers, stops following the router and closes its store. */
+export { currentView, navigate } from "../run.ts";
+
+/** A running app: `stop()` takes the view down, disposes its controllers, stops following the routes and closes its stores. */
 export interface AppHandle {
   stop(): Promise<void>;
 }
 
-/** The tag the router currently answers, or null when the app has no routes or no view for the path. */
-export const currentView = signal<string | null>(null);
-
-const viewOf = (route: unknown): string | null => {
-  if (typeof route !== "object" || route === null) return null;
-  const view = (route as { view?: unknown }).view;
-  return typeof view === "string" ? view : null;
+const openIndexedDB = async (name: string, models: Record<string, ModelSchema>, main: boolean): Promise<StorageAdapter> => {
+  if (!hasAdapter("indexeddb")) registerStorageAdapter("indexeddb", IndexedDBAdapter);
+  const db = createAdapter("indexeddb", { name, version: 1, models, isDefaultAdapter: main });
+  await db.init();
+  return db;
 };
+
+/** The page's IndexedDB: a database per store, the app's name for `main` unless the store names one (`at`). */
+export class IndexedDBKind extends StoreKind {
+  readonly name = "indexeddb";
+
+  open(app: App, store: string, at: string, models: Record<string, ModelSchema>, main: boolean): Promise<StorageAdapter> {
+    return openIndexedDB(at.length > 0 ? at : main ? app.name : app.name + ":" + store, models, main);
+  }
+}
 
 class AppOutlet extends View {
   render(): unknown {
@@ -51,54 +64,64 @@ const registerOutlet = (): void => {
   registered = true;
 };
 
-const applyAppTheme = async (app: App): Promise<void> => {
-  const theme = await loadPreset(app.theme ?? "default");
-  if (theme !== null) applyTheme(theme);
+/** The URL query as argv tokens for the app's own arguments: `?name=value` and a bare `?flag`; a parameter the app does not declare is left out. */
+const queryArgv = (app: App): string[] => {
+  const out: string[] = [];
+  const query = new URLSearchParams(globalThis.location?.search ?? "");
+  for (const [key, value] of query) {
+    const spec = app.argsSchema[key];
+    if (spec === undefined) continue;
+    if ("flag" in spec && spec.flag === true) {
+      if (value === "" || value === "true") out.push("--" + key);
+    } else out.push("--" + key, value);
+  }
+  return out;
 };
 
-const mount = (tag: string): void => {
-  const placeholder = document.querySelector(tag);
-  if (placeholder === null) {
-    document.body.append(document.createElement(tag));
-    return;
+/** The web host. */
+export class WebHost extends AppHost {
+  readonly name = "web";
+  readonly kinds: readonly StoreKind[] = [new IndexedDBKind(), new MemoryKind()];
+  readonly defaultKind = (globalThis as { indexedDB?: unknown }).indexedDB !== undefined ? "indexeddb" : "memory";
+  private mounted: Element | null = null;
+
+  args(app: App): Record<string, unknown> {
+    return parseArgs(app.argsSchema, queryArgv(app)) as Record<string, unknown>;
   }
-  if (placeholder.tagName.toLowerCase() === tag.toLowerCase()) return;
-  placeholder.replaceWith(document.createElement(tag));
-};
+
+  history(): RouterAdapter {
+    return createBrowserAdapter();
+  }
+
+  mount(run: AppRun): Promise<void> {
+    return this.put(run);
+  }
+
+  private async put(run: AppRun): Promise<void> {
+    registerOutlet();
+    const theme = await loadPreset(run.app.theme ?? "default");
+    if (theme !== null) applyTheme(theme);
+    if (run.router !== null) configureNavigation(run.router.navigation);
+    const tag = run.app.root ?? "app-root";
+    const made = document.createElement(tag);
+    const placeholder = document.querySelector(tag);
+    if (placeholder === null) document.body.append(made);
+    else placeholder.replaceWith(made);
+    this.mounted = made;
+  }
+
+  unmount(_run: AppRun): void {
+    const mounted = this.mounted;
+    this.mounted = null;
+    if (mounted !== null) mounted.replaceWith(document.createElement(mounted.tagName.toLowerCase()));
+  }
+
+  exit(_code: number): void {}
+}
 
 /** Start the app on the web; answers the handle that stops it. */
 export const start = async (manifest: AppManifest): Promise<AppHandle> => {
-  registerOutlet();
-  currentView.value = null;
-  if (!hasAdapter("indexeddb")) registerStorageAdapter("indexeddb", IndexedDBAdapter);
-  const store = await openStore(manifest);
-  const controllers = await startControllers(manifest);
-  await applyAppTheme(manifest.app);
-
-  let router: RouterCore | null = null;
-  let following: (() => void) | null = null;
-  if (manifest.routes !== null) {
-    router = createRouter(createBrowserAdapter(), {
-      routes: manifest.routes,
-      appName: manifest.app.name,
-      onRouteChange: (matched) => {
-        currentView.value = viewOf(matched.route);
-      },
-    });
-    configureNavigation(router.navigation);
-    following = router.subscribe((matched) => {
-      currentView.value = viewOf(matched.route);
-    });
-    currentView.value = router.currentRoute === null ? null : viewOf(router.currentRoute.route);
-  }
-
-  mount(manifest.app.root ?? "app-root");
-
-  return {
-    async stop(): Promise<void> {
-      if (following !== null) following();
-      await stopControllers(controllers);
-      await store.close();
-    },
-  };
+  const run = new AppRun(manifest, new WebHost());
+  await run.start();
+  return { stop: () => run.stop() };
 };

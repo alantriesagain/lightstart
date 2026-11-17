@@ -12,7 +12,7 @@ import notes from "./fixtures/web/src/controllers/notes.ts";
 import { defineApp } from "../index.ts";
 
 const manifest: AppManifest = {
-  app: defineApp({ name: "fixture-open-app", host: "web", storage: { kind: "memory" } }),
+  app: defineApp({ name: "fixture-open-app", host: "web" }),
   models: [{ name: "note", model: note }],
   controllers: [{ name: "notes", controller: notes }],
   routes: null,
@@ -20,7 +20,7 @@ const manifest: AppManifest = {
 };
 
 const main = async (): Promise<void> => {
-  const app = await openApp(manifest, { storage: "memory" });
+  const app = await openApp(manifest);
   try {
     await notes.add("first");
     await notes.add("second");
