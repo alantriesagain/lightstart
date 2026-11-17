@@ -7,10 +7,7 @@ export default defineApp({
   args: {
     greeting: { default: "hello", description: "The greeting the app prints" },
   },
-  storage: {
-    kind: "jsonl",
-    databases: {
-      user: { kind: "jsonl", dir: (args) => `${args.string("data") ?? "."}/user` },
-    },
+  stores: {
+    user: { at: (args) => `${args.string("data") ?? "."}/user` },
   },
 });

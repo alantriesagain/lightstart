@@ -2,7 +2,9 @@
  * @file The generation behind `light app`, `light serve`, `light build` and
  * `light test`: read `src/app.ts` and the project's folders, and write
  * `.light/app.ts` with a static import of every model, controller, view and
- * the routes, plus its manifest, and `.light/main.ts` with the host's start.
+ * the routes, plus its manifest, the same for every host; the host's own
+ * generation (`@lightstart/app/<host>/generate.ts`) writes `.light/main.ts`
+ * with its start, and any files of its own.
  * The output is sorted (the controllers in the order they start: after the
  * controllers they import) and written only when it changed. A folder with no
  * `src/app.ts` is left alone.
@@ -11,8 +13,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
-import { bakeTables, collectClasses, render as renderClasses } from "@lightstart/light/theme/bake.js";
-import defaultTheme from "@lightstart/light/theme/themes/default.js";
 
 /** What one generation found and wrote. */
 export interface Generated {
@@ -35,6 +35,29 @@ export interface Generated {
   routes: boolean;
   /** Whether a file was written; false when every file already held this content. */
   changed: boolean;
+}
+
+/** What a host's generation reaches of the core's: the folder listing, the specifiers, the names and the writes. */
+export interface GenerationHelpers {
+  flatFiles(dir: string): string[];
+  specifierFor(from: string, to: string): string;
+  nameOf(file: string): string;
+  writeWhenChanged(path: string, content: string): boolean;
+}
+
+/** What a host's generation wrote: whether a file changed, its baked class table (the terminal's), and the run modes it found. */
+export interface HostWritten {
+  changed: boolean;
+  classes: string | null;
+  modes: string[];
+}
+
+/** A host's part of the generation: `@lightstart/app/<host>/generate.ts`'s default export. */
+export interface HostGeneration {
+  /** Whether the manifest carries the root view's class (`rootView`), for a host that makes it. */
+  readonly rootView: boolean;
+  /** Write `.light/main.ts` (`main`) and the host's own files into `dir`. */
+  write(project: string, dir: string, main: string, helpers: GenerationHelpers): Promise<HostWritten>;
 }
 
 const flatFiles = (dir: string): string[] => {
@@ -106,7 +129,7 @@ const infoOf = async (app: string): Promise<AppInfo> => {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
     const config = (module as { default?: { host?: unknown; root?: unknown } }).default;
     return {
-      host: config !== undefined && config.host === "tui" ? "tui" : "web",
+      host: config !== undefined && typeof config.host === "string" && config.host.length > 0 ? config.host : "web",
       root: config !== undefined && typeof config.root === "string" ? config.root : "app-root",
     };
   } catch {
@@ -150,61 +173,24 @@ const manifestSource = (project: string, models: string[], controllers: string[]
   return lines.join("\n");
 };
 
-const modeImport = (project: string, file: string, index: number): string =>
-  `import * as mode${String(index)} from "${specifierFor(project, file)}";`;
-
-const modeDispatch = (file: string, index: number): string[] => {
-  const name = nameOf(file);
-  return [
-    `const matches${String(index)} = Reflect.get(mode${String(index)}, "matches");`,
-    "",
-    `if (typeof matches${String(index)} === "function" ? (matches${String(index)} as (given: readonly string[]) => boolean)(argv) : argv.includes(${JSON.stringify(`--${name}`)})) {`,
-    `  process.exit(await mode${String(index)}.main(argv));`,
-    "}",
-  ];
-};
-
-const mainSource = (project: string, host: string, modes: string[]): string => {
-  if (host !== "tui") {
-    return [
-      `import { start } from "@lightstart/app/${host}";`,
-      'import manifest from "./app.ts";',
-      "",
-      "await start(manifest);",
-      "",
-    ].join("\n");
-  }
-  const lines: string[] = [
-    'import { start } from "@lightstart/app/tui";',
-    'import manifest from "./app.ts";',
-    'import { dark, light } from "./classes.baked.ts";',
-  ];
-  modes.forEach((file, index) => lines.push(modeImport(project, file, index)));
-  if (modes.length > 0) {
-    lines.push("", "const argv = process.argv.slice(2);", "");
-    modes.forEach((file, index) => lines.push(...modeDispatch(file, index)));
-    lines.push("");
-  }
-  lines.push("await start(manifest, { classes: { dark, light } });", "");
-  return lines.join("\n");
-};
-
 const rootFileOf = (views: string[], root: string): string => {
   const found = views.find((file) => nameOf(file) === root);
-  if (found === undefined) throw new Error(`The terminal app's root view is src/views/${root}.ts, and it is not there`);
+  if (found === undefined) throw new Error(`The app's root view is src/views/${root}.ts, and it is not there`);
   return found;
 };
 
-const bakedSource = async (main: string): Promise<string> => {
-  const ts = (await import("@lightstart/light/check/parse/typescript.js")).default;
-  const found = collectClasses(main, ts);
-  const baked = bakeTables(found.classes, defaultTheme, ["dark", "light"]);
-  const problems = [...found.problems, ...baked.problems];
-  if (problems.length > 0) throw new Error(problems.join("\n"));
-  return renderClasses(baked.tables, ".light/main.ts", "light classes:bake .light/main.ts -o .light/classes.baked.ts --scheme dark,light")
-    .replace('/** @import { BakedEntry } from "@lightstart/light/theme/baked" */', 'import type { BakedEntry } from "@lightstart/light/theme/baked";')
-    .replaceAll("/** @type {BakedEntry[]} */\n", "")
-    .replace(/^export const (\w+) = \[$/gm, "export const $1: BakedEntry[] = [");
+/** The generation of host `host` (`@lightstart/app/<host>/generate.ts`); an error naming it when there is none. */
+const hostGeneration = async (host: string): Promise<HostGeneration> => {
+  if (!/^[a-z][a-z0-9-]*$/.test(host)) throw new Error(`The app's host "${host}" is not a host's name (web, tui)`);
+  let module: unknown;
+  try {
+    module = await import(`../${host}/generate.ts`);
+  } catch {
+    throw new Error(`The app's host "${host}" has no generation: @lightstart/app/${host}/generate.ts is not there`);
+  }
+  const part = (module as { default?: HostGeneration }).default;
+  if (part === undefined) throw new Error(`@lightstart/app/${host}/generate.ts default-exports no host generation`);
+  return part;
 };
 
 /** Generate the project's `.light` manifest and entry; null when there is no `src/app.ts`. */
@@ -223,25 +209,23 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
   const manifest = join(dir, "app.ts");
   const main = join(dir, "main.ts");
   const info = await infoOf(app);
-  const modes = info.host === "tui" ? flatFiles(join(project, "src", "modes")) : [];
-  const rootFile = info.host === "tui" ? rootFileOf(views, info.root) : null;
-  const classes = info.host === "tui" ? join(dir, "classes.baked.ts") : null;
+  const part = await hostGeneration(info.host);
+  const rootFile = part.rootView ? rootFileOf(views, info.root) : null;
   const wroteManifest = writeWhenChanged(manifest, manifestSource(project, models, controllers, views, routes, rootFile));
-  const wroteMain = writeWhenChanged(main, mainSource(project, info.host, modes));
-  const wroteClasses = classes === null ? false : writeWhenChanged(classes, await bakedSource(main));
+  const written = await part.write(project, dir, main, { flatFiles, specifierFor, nameOf, writeWhenChanged });
 
   return {
     dir,
     app,
     manifest,
     main,
-    classes,
+    classes: written.classes,
     host: info.host,
     models: models.map(nameOf),
     controllers: controllers.map(nameOf),
     views: views.map(nameOf),
-    modes: modes.map(nameOf),
+    modes: written.modes,
     routes: routes !== null,
-    changed: wroteManifest || wroteMain || wroteClasses,
+    changed: wroteManifest || written.changed,
   };
 };

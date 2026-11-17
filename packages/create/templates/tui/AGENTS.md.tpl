@@ -1,15 +1,16 @@
 # Working in __TITLE__
 
-A terminal app on `@lightstart/app`: the folders are the app, and light writes the wiring. `src/app.ts` names the host, the models, controllers and views live in their folders, and `light` generates `.light/app.ts` and `.light/main.ts`. The terminal host opens the JSONL store, starts the controllers, makes the root view and runs it with the baked class table.
+A terminal app on `@lightstart/app`: the folders are the app, and light writes the wiring. `src/app.ts` names the host, the models, controllers and views live in their folders, and `light` generates `.light/app.ts` and `.light/main.ts`. The terminal host opens the stores (JSONL files by default), starts the controllers and the routes, makes the root view and runs it with the baked class table.
 
 ## The folders
 
 | Path | Holds |
 |---|---|
-| `src/app.ts` | `defineApp({ name, host: "tui", theme?, storage?, root?, args? })` |
+| `src/app.ts` | `defineApp({ name, host: "tui", theme?, stores?, root?, args? })`: `stores` by name (`main` is JSONL files under `--data` unless it names another kind or folder, `at`), `args` from argv beside the host's `--data`, `--scheme` and `--route` |
 | `src/models/<name>.ts` | One model, default-exported; the file name is the model's name |
 | `src/controllers/<name>.ts` | One controller, default-exported; the file name is its name |
 | `src/views/<tag>.ts` | One view; the file name is its tag, and the root view default-exports its class |
+| `src/routes.ts` | Optional: `{ "/path": { view: "<tag>", name?, title? } }`, drawn by `<app-outlet>` in the root view; `navigate(path)` from `@lightstart/app/tui` goes to a path |
 | `src/modes/<name>.ts` | Optional: exports `main(argv)` before the host when argv has `--<name>`, and may export `matches(argv)` |
 | `test/` | Tests that drive the app on light's `TestTerminal` |
 | `tsconfig.json` | The editor's settings and the options `scriptc` compiles with |

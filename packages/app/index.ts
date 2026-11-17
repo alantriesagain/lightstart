@@ -1,50 +1,46 @@
 /**
- * @file `@lightstart/app`: the few choices a project makes about its app.
- * `defineApp` makes the app from its config: one instance holding the
- * arguments the host parsed and the host's restart and quit. The host reads
- * the rest of the wiring from the project's folders. The app is a class, and
- * its arguments are read by name, so the instance a controller imports is the
- * one the host writes, natively as under node.
+ * @file `@lightstart/app`: the few choices a project makes about its app, the
+ * same whatever it runs on. `defineApp` makes the app from its config: one
+ * instance holding the arguments its host filled and the run's restart and
+ * quit. The run (run.ts) opens its stores, starts its controllers and its
+ * routes, and a host (`@lightstart/app/web`, `@lightstart/app/tui`) puts it on
+ * its surface. The app is a class, and its arguments are read by name, so the
+ * instance a controller imports is the one the host writes, natively as under
+ * node.
  */
 
 import type { ArgsSchema } from "@lightstart/cli/types/command.ts";
 
-/** The host an app runs on. */
-export type AppHost = "web" | "tui";
+/** Where a store keeps its rows, as its kind takes it: a folder, a file, a database's name; or one read from the parsed arguments. */
+export type StoreAt = string | ((args: AppArgs) => string);
 
-/** Where an app keeps its rows. */
-export type StorageKind = "indexeddb" | "jsonl" | "memory";
-
-/** Where a database keeps its JSONL files: a folder, or one read from the parsed arguments. */
-export type DirResolver = string | ((args: AppArgs) => string);
-
-/** Another database the store routes models to through their schema's `$adapter`. */
-export interface DatabaseConfig {
-  kind: "jsonl" | "memory";
-  dir?: DirResolver;
-}
-
-/** The store an app opens. `name` defaults to the app's name; a JSONL store also takes a folder. */
-export interface StorageConfig {
-  kind: StorageKind;
-  name?: string;
-  dir?: DirResolver;
-  databases?: Record<string, DatabaseConfig>;
+/**
+ * One store an app keeps rows in. `kind` is an adapter its host can run (`memory`, `indexeddb`,
+ * `jsonl`, `sql`, or one the project registers), the host's default when absent; `at` is what that
+ * kind opens.
+ */
+export interface StoreConfig {
+  kind?: string;
+  at?: StoreAt;
 }
 
 /** What `src/app.ts` declares: the few choices a project makes. */
 export interface AppConfig {
-  /** The app's name, used as the store's database name and the document title. */
+  /** The app's name, used as its stores' default name and the document title. */
   name: string;
-  /** The host the generated entry starts. */
-  host: AppHost;
+  /** The host the generated entry starts: `@lightstart/app/<host>` (`web`, `tui`). */
+  host: string;
   /** A theme preset name; `"default"` when absent. */
   theme?: string;
-  /** The store to open; IndexedDB on the web and JSONL files on the terminal when absent. */
-  storage?: StorageConfig;
+  /**
+   * The stores by name, several at once of any kinds the host runs; a model picks one with its
+   * schema's `$adapter`, and gets `main` when it names none. `main` is the host's default kind when
+   * the app declares no store of that name.
+   */
+  stores?: Record<string, StoreConfig>;
   /** The root view's tag; `"app-root"` when absent. */
   root?: string;
-  /** The arguments the app takes; the host parses them into `args`. */
+  /** The arguments the app takes; the host fills them from its source (argv, the URL) into `args`. */
   args?: ArgsSchema;
 }
 
@@ -84,9 +80,10 @@ export interface AppLifecycle {
  */
 export class App {
   readonly name: string;
-  readonly host: AppHost;
+  readonly host: string;
   readonly theme: string | undefined;
-  readonly storage: StorageConfig | undefined;
+  /** The stores the config declares, `main` among them (of the host's default kind unless it says). */
+  readonly stores: Record<string, StoreConfig>;
   readonly root: string | undefined;
   /** The argument schema the config declares; empty when it declares none. */
   readonly argsSchema: ArgsSchema;
@@ -99,18 +96,22 @@ export class App {
     this.name = config.name;
     this.host = config.host;
     this.theme = config.theme;
-    this.storage = config.storage;
+    const stores: Record<string, StoreConfig> = {};
+    stores["main"] = {};
+    const declared = config.stores ?? {};
+    for (const name of Object.keys(declared)) stores[name] = declared[name] ?? {};
+    this.stores = stores;
     this.root = config.root;
     this.argsSchema = config.args ?? {};
   }
 
-  /** Stop the controllers and the store, then open them again with `args` merged over the current ones. */
+  /** Stop the run (its controllers, its stores, its view), then start it again with `args` merged over the current ones. */
   restart(args?: Record<string, unknown>): Promise<void> {
     if (this.lifecycle === null) return Promise.reject(new Error("the app is not running"));
     return this.lifecycle.restart(args);
   }
 
-  /** Stop the renderer, the controllers and the store, then exit with `code`. */
+  /** Stop the run, then leave as the host does (a terminal app exits with `code`). */
   quit(code?: number): Promise<void> {
     if (this.lifecycle === null) return Promise.reject(new Error("the app is not running"));
     return this.lifecycle.quit(code);

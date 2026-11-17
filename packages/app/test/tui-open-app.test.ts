@@ -9,7 +9,8 @@
 import { done, eq, ok } from "@lightstart/test/assert.ts";
 import { TerminalClasses } from "@lightstart/light/theme/terminal";
 import theme from "@lightstart/light/theme/themes/default.js";
-import { openApp, mountApp } from "../test/index.ts";
+import { openApp } from "../test/index.ts";
+import { mountApp } from "../tui/test.ts";
 import type { AppManifest } from "../manifest.ts";
 import note from "./fixtures/tui/src/models/note.ts";
 import notes from "./fixtures/tui/src/controllers/notes.ts";
@@ -17,7 +18,7 @@ import AppRoot from "./fixtures/tui/src/views/app-root.ts";
 import { defineApp } from "../index.ts";
 
 const manifest: AppManifest = {
-  app: defineApp({ name: "fixture-tui-test", host: "tui", storage: { kind: "memory" } }),
+  app: defineApp({ name: "fixture-tui-test", host: "tui" }),
   rootView: AppRoot,
   models: [{ name: "note", model: note }],
   controllers: [{ name: "notes", controller: notes }],
@@ -26,7 +27,7 @@ const manifest: AppManifest = {
 };
 
 const main = async (): Promise<void> => {
-  const app = await openApp(manifest, { storage: "memory" });
+  const app = await openApp(manifest);
   const mounted = mountApp(manifest, app, { cols: 50, rows: 10, classes: new TerminalClasses(theme, "dark") });
 
   try {
