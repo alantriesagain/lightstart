@@ -1,13 +1,10 @@
 /**
  * @file `light run [--no-build] [-- flags…]`: build the app, then run it in the folder the command was
- * launched from, logging to $NATIVE_LOG (else /tmp/<binary>.log), with the environment the agents'
- * CLIs expect.
+ * launched from, with the flags given after `--` and nothing else.
  */
-import { rmSync } from "node:fs";
-import { join } from "node:path";
-import { agentEnv, exec } from "../run.js";
+import { exec } from "../run.js";
 import { memberByName } from "../workspace.js";
-import { binaryOf, binaryPath, buildApp, buildProject } from "./build.js";
+import { binaryPath, buildApp, buildProject } from "./build.js";
 
 /**
  * Build `project` and run it in `launchDir`; answers the app's exit code.
@@ -18,9 +15,7 @@ import { binaryOf, binaryPath, buildApp, buildProject } from "./build.js";
  */
 export const runProject = async (project, extra, launchDir) => {
   const binary = await buildProject(project);
-  const log = process.env["NATIVE_LOG"] ?? join("/tmp", binaryOf(project) + ".log");
-  rmSync(log, { force: true });
-  return exec(binary, ["--dir", launchDir, "--log", log, ...extra], { env: agentEnv() });
+  return exec(binary, extra, { cwd: launchDir });
 };
 
 /**
@@ -34,7 +29,5 @@ export const run = async (args, root) => {
   const app = memberByName(root, name);
   const extra = rest.filter((a) => a !== "--no-build" && a !== "--");
   const binary = rest.includes("--no-build") ? binaryPath(app) : await buildApp(root, app);
-  const log = process.env["NATIVE_LOG"] ?? join("/tmp", binaryOf(app) + ".log");
-  rmSync(log, { force: true });
-  return exec(binary, ["--dir", process.cwd(), "--log", log, ...extra], { env: agentEnv() });
+  return exec(binary, extra);
 };
