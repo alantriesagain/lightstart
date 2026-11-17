@@ -34,7 +34,7 @@ export default defineExtension("build", {
     api.steps.add({
       name: "native",
       async run() {
-        console.log(await buildProject(project, strip));
+        console.log(await buildProject(project, { strip }));
       },
     });
   },

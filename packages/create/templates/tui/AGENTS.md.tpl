@@ -70,9 +70,9 @@ define("todo-row", TodoRow);
 
 | Command | Does |
 |---|---|
-| `pnpm dev` | `light run`: builds with scriptc and runs the app; `--data <dir>` names the data folder, `--scheme light` the theme's light side |
+| `pnpm dev` | `light run`: a dev build with scriptc, fast when nothing changed, and runs the app; `pnpm dev -- --flag` passes flags to the app, `--data <dir>` names the data folder and `--scheme light` the theme's light side |
 | `pnpm test` | `light test`: drives the app on a test terminal, under node and natively, the outputs equal; `--node-only` for node alone |
-| `pnpm build` | `light build`: one native binary at `dist/__NAME__` |
+| `pnpm build` | `light build`: the release binary at `dist/__NAME__` |
 | `pnpm check` | `light check`: light's native conventions over the sources |
 
 `dev` needs an interactive terminal; the test does not. `test` and `build` need scriptc's native compiler: `.npmrc` lets pnpm run its install script.

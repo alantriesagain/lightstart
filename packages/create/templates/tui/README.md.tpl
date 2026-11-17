@@ -9,13 +9,13 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` runs `light run`: the todos live in the current folder by default, `--data <dir>` names another, and `--scheme light` picks the theme's light side (dark by default). Type a todo and press Enter; Tab moves the focus, Space toggles a todo, `d` removes it, Esc returns to the editor and Ctrl+C quits.
+`pnpm dev` runs `light run`: a dev build, fast when nothing changed, run in the current folder. `pnpm dev -- --flag` passes flags to the app. The todos live in `.data/` in the current folder by default, `--data <dir>` names another, and `--scheme light` picks the theme's light side (dark by default). Type a todo and press Enter; Tab moves the focus, Space toggles a todo, `d` removes it, Esc returns to the editor and Ctrl+C quits. `light build` makes the release binary at `dist/__NAME__`.
 
 | Script | Runs |
 |---|---|
-| `dev` | `light run`: build with scriptc and run the app |
+| `dev` | `light run`: a dev build with scriptc, fast when nothing changed, and run the app; `pnpm dev -- --flag` passes flags to the app |
 | `test` | `light test`: the app on light's test terminal, under node and natively, the outputs equal |
-| `build` | `light build`: one native binary at `dist/__NAME__` |
+| `build` | `light build`: the release binary at `dist/__NAME__` |
 | `check` | `light check`: light's native conventions over the sources |
 
 `dev` needs an interactive terminal; the test does not. `test` and `build` need scriptc's native compiler: `.npmrc` lets pnpm run its install script. With `ignore-scripts` on, run `pnpm rebuild scriptc --config.ignore-scripts=false` once before `build`.

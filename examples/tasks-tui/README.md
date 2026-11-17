@@ -9,7 +9,7 @@ A project of its own, as `light new` makes one, its packages linked from this ch
 ```bash
 cd examples/tasks-tui
 pnpm install
-pnpm dev                       # light run: build with scriptc and run here
+pnpm dev                       # light run: a dev build, run here
 pnpm dev -- --list Work        # open the list Work, made when it is not there yet
 pnpm dev -- --data ~/tasks     # keep the files in ~/tasks
 ./dist/tasks-tui --export      # every task as one JSON line, then exit
@@ -19,9 +19,9 @@ Type a task and press Enter. Tab moves the focus, Space toggles the focused task
 
 | Script | Runs |
 |---|---|
-| `dev` | `light run`: build with scriptc and run the app |
+| `dev` | `light run`: a dev build with scriptc, fast when nothing changed, and run the app; `pnpm dev -- --flag` passes flags to the app |
 | `test` | `light test`: the app on light's test terminal, under node and natively, the outputs equal |
-| `build` | `light build`: one native binary at `dist/tasks-tui` |
+| `build` | `light build`: the release binary at `dist/tasks-tui` |
 | `check` | `light check`: light's native conventions over the sources |
 
 ## What it shows
