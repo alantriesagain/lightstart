@@ -54,6 +54,8 @@ globalThis.wcjsSetBudget = (handle, budgetMs) => {
   contexts.get(handle).budgetMs = budgetMs;
 };
 
+globalThis.wcjsMemoryUsage = (_handle) => BigInt(process.memoryUsage().heapUsed);
+
 globalThis.wcjsFree = (handle) => {
   contexts.delete(handle);
 };
