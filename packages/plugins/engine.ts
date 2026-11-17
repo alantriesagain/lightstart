@@ -12,6 +12,7 @@ import { errorMessage } from "@lightstart/lib/json.ts";
 declare function wcjsNew(memoryMb: number, budgetMs: number): bigint;
 declare function wcjsSetBudget(ctx: bigint, budgetMs: number): void;
 declare function wcjsFree(ctx: bigint): void;
+declare function wcjsMemoryUsage(ctx: bigint): bigint;
 declare function wcjsSetHost(ctx: bigint, host: (name: string, args: string) => number): void;
 declare function wcjsReply(ctx: bigint, json: string): void;
 declare function wcjsEval(ctx: bigint, code: string, file: string, done: (status: number, text: string) => void): number;
@@ -142,6 +143,11 @@ export class JsEngine {
       errors.push(new JsResult(status, text));
     });
     return errors;
+  }
+
+  /** The bytes the engine holds now, what its memory limit counts; 0 once freed. Under node, the process's heap. */
+  memory(): number {
+    return this.live ? Number(wcjsMemoryUsage(this.ctx)) : 0;
   }
 
   free(): void {

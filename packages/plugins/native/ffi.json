@@ -19,6 +19,14 @@
       "returns": "void"
     },
     {
+      "name": "wcjsMemoryUsage",
+      "symbol": "wcjs_memory_usage",
+      "params": [
+        "pointer"
+      ],
+      "returns": "i64"
+    },
+    {
       "name": "wcjsSetBudget",
       "symbol": "wcjs_set_budget",
       "params": [

@@ -259,6 +259,15 @@ void *wcjs_new(int32_t memory_mb, int32_t budget_ms) {
   return w;
 }
 
+/** The bytes the runtime holds now: what its memory limit counts. */
+int64_t wcjs_memory_usage(void *p) {
+  wcjs *w = (wcjs *)p;
+  if (w == NULL) return 0;
+  JSMemoryUsage usage;
+  JS_ComputeMemoryUsage(w->rt, &usage);
+  return (int64_t)usage.malloc_size;
+}
+
 void wcjs_free(void *p) {
   wcjs *w = (wcjs *)p;
   if (w == NULL) return;

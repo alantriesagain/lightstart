@@ -43,8 +43,13 @@ ok("a value JSON cannot write is an error, not null", circular.status === FAILED
 engine.eval("globalThis.after = 0; Promise.resolve().then(() => { globalThis.after = 1; });", "jobs.js");
 eqn("the jobs a call left ran before the next, none left", engine.jobs().length, 0);
 eq("and their effect shows", engine.eval("String(globalThis.after)", "after.js").text, "1");
+const held = engine.memory();
+ok("the engine says how much memory it holds", held > 0);
+engine.eval("globalThis.kept = Array.from({ length: 200000 }, (_, i) => 'row ' + String(i)); kept.length", "kept.js");
+ok("memory it keeps shows in what it holds", engine.memory() > held);
 engine.free();
 eqn("a freed engine answers nothing", engine.eval("1", "freed.js").status, FAILED);
+eqn("a freed engine holds nothing", engine.memory(), 0);
 
 const looping = new JsEngine(new Quiet(), 16, 100);
 looping.eval("globalThis.__invoke = () => { (async () => { while (true) await 0; })(); return 'ok'; }", "jobs-loop.js");
