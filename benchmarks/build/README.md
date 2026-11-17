@@ -1,9 +1,9 @@
 # Build benchmark
 
-How long `@lightstart/build`'s `build()` takes on the two examples, `examples/todomvc` and `examples/starter`. Each build runs into a fresh temporary output folder; the warm-up and the timed runs use the same example, and the temporary folder is removed after each run. Node only: esbuild does the bundling, and it is a node program.
+How long `@lightstart/build`'s `build()` takes on the web example, `examples/tasks-web` (its app's `.light/` generated first, as `light build` does). Each build runs into a fresh temporary output folder; the warm-up and the timed runs use the same example, and the temporary folder is removed after each run. Node only: esbuild does the bundling, and it is a node program.
 
 ```bash
-node benchmarks/build/run.js                # warm-up, then 10 runs per example
+node benchmarks/build/run.js                # warm-up, then 10 runs
 node benchmarks/build/run.js --runs 30      # more runs
 node benchmarks/build/run.js --json results.json
 ```

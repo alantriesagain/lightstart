@@ -33,15 +33,20 @@ const mediaMatches = (media: string): boolean => {
 
 const resolveOptions = (options: RouterOptions): RouterOptions => {
   const resolved: RouterOptions = {
-    appName: "",
-    basePath: "",
-    isProduction: false,
-    navigation: "spa",
-    locales: [],
-    defaultLocale: "en",
-    onRouteChange: null,
-    onTitleChange: null,
-    ...options,
+    appName: options.appName ?? "",
+    basePath: options.basePath ?? "",
+    isProduction: options.isProduction ?? false,
+    navigation: options.navigation ?? "spa",
+    locales: options.locales ?? [],
+    defaultLocale: options.defaultLocale ?? "en",
+    localized: options.localized,
+    origin: options.origin,
+    prerendered: options.prerendered,
+    clearPrerendered: options.clearPrerendered,
+    track: options.track,
+    beforeNavigate: options.beforeNavigate,
+    onRouteChange: options.onRouteChange ?? null,
+    onTitleChange: options.onTitleChange ?? null,
   };
   return resolved;
 };

@@ -61,8 +61,8 @@ export const PROJECTS = [
   },
   {
     name: "Tasks",
-    url: `${GITHUB_URL}/tree/main/examples/tasks`,
-    description: "The terminal reference app: boards, live model queries and a native binary with no JavaScript engine.",
+    url: `${GITHUB_URL}/tree/main/examples/tasks-tui`,
+    description: "The reference app on @lightstart/app, on a terminal: lists, live model queries, routes and a native binary with no JavaScript engine.",
     icon: "square-terminal",
     accent: "#84cc16",
     tags: ["Terminal", "Native", "Open source"],

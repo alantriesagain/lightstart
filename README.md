@@ -82,7 +82,7 @@ Read [AGENTS.md](AGENTS.md) for the rules of this repository, and each package's
 | `packages/server/`, `packages/sqlite/` | Server packages |
 | `packages/cli/`, `packages/dev/`, `packages/build/`, `packages/create/` | Tooling |
 | `packages/native/`, `packages/tui/` | Workspace packages that native apps share |
-| `examples/` | Pages and apps on light alone |
+| `examples/` | Two apps on `@lightstart/app`, the same tasks app in a page (`tasks-web`) and on a terminal (`tasks-tui`) |
 | `benchmarks/` | The engine, renderer and server under node, natively and in Chromium |
 
 ## License

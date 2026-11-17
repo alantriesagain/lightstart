@@ -1,8 +1,6 @@
 {
   "extends": "./packages/light/tsconfig.json",
   "include": [
-    "examples/**/*.js",
-    "examples/**/*.ts",
     "packages/components/**/*.js",
     "packages/components/**/*.ts",
     "eslint.config.js"

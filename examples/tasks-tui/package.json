@@ -1,0 +1,33 @@
+{
+  "name": "tasks-tui",
+  "native": {
+    "entry": ".light/main.ts",
+    "binary": "tasks-tui",
+    "prepare": [
+      "light app"
+    ]
+  },
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "light run",
+    "test": "light test",
+    "build": "light build",
+    "check": "light check"
+  },
+  "dependencies": {
+    "@lightstart/light": "link:../../packages/light",
+    "@lightstart/app": "link:../../packages/app",
+    "@lightstart/cli": "link:../../packages/cli",
+    "@lightstart/router": "link:../../packages/router",
+    "@lightstart/create": "link:../../packages/create"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "scriptc": "0.4.12",
+    "typescript": "^6.0.3",
+    "@lightstart/native": "link:../../packages/native",
+    "@lightstart/build": "link:../../packages/build",
+    "@lightstart/test": "link:../../packages/test"
+  }
+}

@@ -183,7 +183,7 @@ const db = createAdapter("jsonl", { name: "tasks", dir: "data", io });
 await db.init();
 ```
 
-`examples/tasks/` is a terminal app over it.
+`examples/tasks-tui/` and `examples/tasks-web/` are an app over it, on a terminal and in a page.
 
 The SQL adapter is the same store pipeline over one SQLite database. The schema makes the table (`id`, `created`, `updated`, JSON fields as text, booleans as integers, `index`/`unique` and `$indexes` as indexes); `applySchema` is additive, so a new field becomes `ALTER TABLE ... ADD COLUMN` and a destructive change belongs in an explicit migration. Reads translate `where`, `order`, `limit` and `fields` to SQL, with `has`/`has all` through `json_each`; writes go through the same hooks, defaults and validation as every adapter.
 

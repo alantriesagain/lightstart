@@ -214,7 +214,7 @@ const finishScriptc = async (manifest: GeneratedManifest, pm: PackageManager, ta
   const answers = async (): Promise<boolean> => (await run(scriptc, ["--version"], target).catch(() => ({ ok: false, output: "" }))).ok;
   if (await answers()) return;
   log("Finishing scriptc's install");
-  const rebuild = pm === "pnpm" ? await run("pnpm", ["rebuild", "scriptc", "--config.ignore-scripts=false"], target) : await run("npm", ["rebuild", "scriptc", "--ignore-scripts=false"], target);
+  const rebuild = pm === "pnpm" ? await run("pnpm", ["--ignore-workspace", "rebuild", "scriptc", "--config.ignore-scripts=false"], target) : await run("npm", ["rebuild", "scriptc", "--ignore-scripts=false"], target);
   if (!rebuild.ok || !(await answers())) throw new Error(`scriptc's install step failed:\n${rebuild.output}`);
 };
 

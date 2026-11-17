@@ -4,7 +4,7 @@ The dev server behind `light serve`: it serves a project's files and routes, str
 
 ```bash
 light serve                  # the working directory
-light serve examples/starter --watch
+light serve examples/tasks-web --watch
 light serve --build          # preview the last build instead
 light serve --open --tunnel  # open the browser, expose it through Cloudflare
 ```

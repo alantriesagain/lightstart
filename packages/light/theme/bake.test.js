@@ -5,7 +5,7 @@ import { STATE_FOCUS_WITHIN } from "../native/tui/classes.ts";
 import { bakeTables, classStringsOf, collectClasses, render } from "./bake.js";
 import defaultTheme from "./themes/default.js";
 
-const TASKS = ["flex-1", "flex-1 border focus-within:bg-surface", "flex-1 flex-row", "flex-1 overflow-y-auto", "focus:font-bold", "font-bold text-primary", "text-muted", "text-muted bg-surface", "text-muted line-through focus:font-bold"];
+const TASKS = ["flex-1", "flex-1 border", "flex-1 overflow-y-auto", "focus:font-bold", "font-bold", "font-bold focus:underline", "text-muted", "text-muted line-through focus:font-bold"];
 
 test("the class strings of a source: static attributes, ternaries and alternations of literals, in either quote", () => {
   const source = 'const a = html`<div class="flex-1 border"><p class=${done ? "text-muted line-through" : "focus:font-bold"}>x</p><b class=\'bold\'></b><i class=${x ? "italic" : ("plain" as string)}></i></div>`;\nconst b = html`<span class="plain">${x}</span>`;';
@@ -25,11 +25,11 @@ test("a class the baker cannot read as literals is a problem naming its site", (
   ]);
 });
 
-test("collectClasses walks the tasks app's imports and answers exactly its nine strings", () => {
-  const { classes, problems, files } = collectClasses("../../examples/tasks/main.js", ts);
+test("collectClasses walks the tasks example's imports and answers exactly its eight strings", () => {
+  const { classes, problems, files } = collectClasses("../../examples/tasks-tui/src/views/app-root.ts", ts);
   assert.deepEqual(problems, []);
   assert.deepEqual(classes, TASKS);
-  assert.ok(files.includes("../../examples/tasks/views/task-row.ts") && files.includes("native/tui/node.ts"));
+  assert.ok(files.includes("../../examples/tasks-tui/src/views/task-row.ts") && files.includes("native/tui/node.ts"));
 });
 
 test("bakeTables compiles each string per scheme through the terminal styler, states kept, and names an ignored class", () => {

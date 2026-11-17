@@ -1,11 +1,12 @@
 /**
- * @file The production build benchmark: `@lightstart/build`'s `build()` on `examples/todomvc` and
- * `examples/starter`, each into a fresh temporary output folder, once to warm up and then `--runs`
- * times. It reports the minimum and median wall time and the build's output size. Node only:
+ * @file The production build benchmark: `@lightstart/build`'s `build()` on `examples/tasks-web`
+ * (its app's `.light/` generated first, as `light build` does), into a fresh temporary output folder,
+ * once to warm up and then `--runs` times. It reports the minimum and median wall time and the build's output size. Node only:
  * esbuild, which does the bundling, is a node program.
  *
  *   node benchmarks/build/run.js [--runs 10] [--json results.json]
  */
+import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -23,6 +24,11 @@ const EXAMPLES = path.join(ROOT, "examples");
 const option = (name, fallback) => {
   const at = process.argv.indexOf("--" + name);
   return at >= 0 && process.argv[at + 1] !== undefined ? process.argv[at + 1] : fallback;
+};
+
+/** Generate the app's `.light/` in `root`, as `light build` does first: `light app`, from this checkout's CLI. @param {string} root */
+const generate = (root) => {
+  execFileSync(process.execPath, [path.join(ROOT, "packages", "cli", "bin", "light.js"), "app"], { cwd: root, stdio: "ignore" });
 };
 
 const runs = Number(option("runs", "10"));
@@ -54,8 +60,9 @@ const main = async () => {
   console.log("| example | min ms | median ms | files | output bytes | output KB |");
   console.log("|---|---:|---:|---:|---:|---:|");
   const results = [];
-  for (const name of ["todomvc", "starter"]) {
+  for (const name of ["tasks-web"]) {
     const root = path.join(EXAMPLES, name);
+    generate(root);
     const warm = await once(root);
     const times = [];
     let last = warm;

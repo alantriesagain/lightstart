@@ -1,5 +1,5 @@
 {
-  "examples/tasks/main.js": {
+  "examples/tasks-tui/.light/main.ts": {
     "failed": 0,
     "deferred": 0
   }

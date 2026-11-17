@@ -4,7 +4,7 @@ The production build behind `light build`: it reads a page, bundles its module s
 
 ```bash
 light build                       # the working directory into .deployed
-light build examples/todomvc --no-minify
+light build examples/tasks-web --no-minify
 light build --page app.html --out dist --keep 3
 ```
 
@@ -108,4 +108,4 @@ A bare specifier is resolved through the page's importmap before esbuild sees it
 
 The build is node-only: it bundles with esbuild, a native node module, and it reads and writes the disk. Its page scanner, importmap resolver, build ids and folder layout are pure functions, but the package as a whole has no browser or native entry.
 
-[`benchmarks/build/`](../../benchmarks/build/README.md) measures it. `node packages/build/test/browser-smoke.ts` builds `examples/todomvc` and checks its rendering in Chromium.
+[`benchmarks/build/`](../../benchmarks/build/README.md) measures it. `node packages/build/test/browser-smoke.ts` builds `examples/tasks-web` and checks its rendering in Chromium.
