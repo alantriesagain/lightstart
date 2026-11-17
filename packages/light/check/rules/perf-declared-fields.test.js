@@ -3,7 +3,7 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./perf-declared-fields.js";
 
-const pkg = { pkgJson: { name: "fixture", bootstrapp: { check: { perf: { scope: ["src/"] } } } } };
+const pkg = { pkgJson: { name: "fixture", light: { check: { perf: { scope: ["src/"] } } } } };
 
 test("finds an instance property first assigned in a method, once per property", async () => {
   const source = [

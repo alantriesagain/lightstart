@@ -13,7 +13,7 @@ import { resolveFinding } from "./report.js";
 /** @typedef {{ pkgJson?: PackageJson, projectDir?: string, host?: HostOptions }} FixtureOptions */
 /** @typedef {{ severity: "error" | "warn", file: string, line: number, col: number, message: string }} FixtureFinding */
 
-export const FIXTURE_PKG = { name: "fixture", bootstrapp: { prefix: "fx", components: { fx: "views/" } } };
+export const FIXTURE_PKG = { name: "fixture", light: { prefix: "fx", components: { fx: "views/" } } };
 
 /**
  * The map with a `package.json`: its own, the given one, or the fixture's default.

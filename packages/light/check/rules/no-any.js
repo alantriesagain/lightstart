@@ -54,7 +54,7 @@ export const find = (ctx) => {
 
 export default defineRule({
   severity: "warn",
-  description: "no `any` in a type, JSDoc or TypeScript, and no @ts-ignore or @ts-nocheck (opt in with a `noAny` block under bootstrapp.check)",
+  description: "no `any` in a type, JSDoc or TypeScript, and no @ts-ignore or @ts-nocheck (opt in with a `noAny` block under light.check)",
   why: "`any` turns off checking for everything it touches and spreads through inference; natively it also compiles to a dynamic value, checked at run time on every use",
   appliesTo: { when: (ctx) => noAnyConfig(/** @type {ProjectModel} */ (ctx)) !== null },
   check(ctx) {

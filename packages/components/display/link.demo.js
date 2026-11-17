@@ -6,7 +6,7 @@ export default {
   preview: () => html`
     <lc-flex gap="md" align="center">
       <lc-link href="#" icon="arrow-left">Back</lc-link>
-      <lc-link href="https://bootstrapp.ai" external>Docs</lc-link>
+      <lc-link href="https://example.com" external>Docs</lc-link>
     </lc-flex>
   `,
   examples: [
@@ -15,7 +15,7 @@ export default {
       render: () => html`
         <lc-flex gap="md" align="center">
           <lc-link href="#">Internal link</lc-link>
-          <lc-link href="https://bootstrapp.ai" external>External link</lc-link>
+          <lc-link href="https://example.com" external>External link</lc-link>
           <lc-link href="#" disabled>Disabled</lc-link>
         </lc-flex>
       `,

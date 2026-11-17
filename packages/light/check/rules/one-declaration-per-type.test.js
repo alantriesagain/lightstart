@@ -40,7 +40,7 @@ test("silent when each name is declared once", async () => {
 
 test("silent on a declare-module augmentation, where merging is the point", async () => {
   const findings = await runRuleOn(rule, {
-    "types.ts": 'declare module "bootstrapp/base" {\n  interface Manifest {\n    vps?: Creds;\n  }\n}\n\nexport interface Creds { host?: string }\n',
+    "types.ts": 'declare module "@lightstart/light/base" {\n  interface Manifest {\n    vps?: Creds;\n  }\n}\n\nexport interface Creds { host?: string }\n',
   });
   assert.equal(findings.length, 0);
 });

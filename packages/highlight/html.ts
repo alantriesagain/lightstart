@@ -1,5 +1,5 @@
 /**
- * @file HTML tokenizer, ported from @bootstrapp/editor's lang/html.js. `<script>` and `<style>` bodies
+ * @file HTML tokenizer. `<script>` and `<style>` bodies
  * go to the JavaScript and CSS tokenizers through a nested state, so they resume across lines
  * like any other multi-line construct.
  */

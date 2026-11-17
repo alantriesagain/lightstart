@@ -37,13 +37,15 @@ export const projectRoot = (dir) => {
  */
 export const openProject = (root, dir = root) => {
   const scope = dir === root ? null : `${toRel(root, dir)}/`;
+  const lightPkg = readPackageJson(LIGHT_ROOT);
   /** @type {ComponentMap} */
-  const lightMap = { owner: "light", dir: LIGHT_ROOT, components: readPackageJson(LIGHT_ROOT)?.bootstrapp?.components ?? {} };
+  const lightMap = { owner: "light", dir: LIGHT_ROOT, components: lightPkg?.light?.components ?? lightPkg?.bootstrapp?.components ?? {} };
   const rootPkg = readPackageJson(root) ?? {};
-  const { components: _, ...config } = rootPkg.bootstrapp ?? {};
+  const { components: _, ...bootstrappConfig } = rootPkg.bootstrapp ?? {};
+  const { components: __, ...lightConfig } = rootPkg.light ?? {};
   const context = createContext({
     projectDir: root,
-    pkg: scope ? { ...rootPkg, bootstrapp: config } : rootPkg,
+    pkg: scope ? { ...rootPkg, bootstrapp: bootstrappConfig, light: lightConfig } : rootPkg,
     host: { componentMaps: () => [lightMap], ...(scope ? { scope, componentDirs: () => [scope] } : {}) },
   });
   return { context, sources: [...ownRuleSources(), ...projectRuleSources(root, context.pkg)] };

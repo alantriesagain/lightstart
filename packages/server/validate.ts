@@ -14,8 +14,7 @@
  * `validateRow` does not enforce them either. `date` and `datetime` descriptors pass through
  * unchecked; `relationship` fields that a row does not own (`many`, `one`) are skipped.
  *
- * Query and path values are coerced the way bootstrapp's `coerceParam` does where the two agree:
- * a number through `Number` and a finite check; a boolean from `"true"`, `"false"`, `"1"` or `"0"`
+ * Query and path values are coerced: a number through `Number` and a finite check; a boolean from `"true"`, `"false"`, `"1"` or `"0"`
  * (another string is refused); an array from repeated query values (`c.queryAll`) or a comma list
  * (a JSON array is also accepted); an object from JSON. Unknown query and path names are ignored.
  * A body that is not an object is refused, and unknown body keys are kept, as light's model

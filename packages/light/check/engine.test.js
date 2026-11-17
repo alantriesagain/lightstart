@@ -60,7 +60,7 @@ test("runRules gates, reports, resolves offsets and survives a crashing rule", a
     ["fake/always-fires", "active", null],
     ["fake/error-rule", "active", null],
     ["fake/tailwind-only", "n/a", "tailwind-only"],
-    ["fake/needs-dep", "n/a", "needs @bootstrapp/ui"],
+    ["fake/needs-dep", "n/a", "needs @lightstart/ui"],
     ["fake/throwing-gate", "n/a", "when() threw"],
     ["fake/crashing", "active", null],
   ]);
@@ -71,13 +71,13 @@ test("runRules gates, reports, resolves offsets and survives a crashing rule", a
 });
 
 test("a dependency or the styling engine opens a gated rule", async () => {
-  const context = contextFromFiles({}, { pkgJson: { name: "my-proj", dependencies: { "@bootstrapp/ui": "^1" } }, host: { styling: "tailwind" } });
+  const context = contextFromFiles({}, { pkgJson: { name: "my-proj", dependencies: { "@lightstart/ui": "^1" } }, host: { styling: "tailwind" } });
   const result = await runRules({ context, rules: [tailwindOnly, needsDep] });
   assert.deepEqual(result.findings.map((f) => f.message), ["tailwind fired", "ui fired"]);
 });
 
 test("severity overrides apply; an unknown id or level warns", async () => {
-  const context = contextFromFiles({}, { pkgJson: { name: "my-proj", bootstrapp: { check: { rules: { "fake/always-fires": "off", "fake/error-rule": "warn", "fake/tyop": "off", "fake/crashing": "loud" } } } } });
+  const context = contextFromFiles({}, { pkgJson: { name: "my-proj", light: { check: { rules: { "fake/always-fires": "off", "fake/error-rule": "warn", "fake/tyop": "off", "fake/crashing": "loud" } } } } });
   const result = await runRules({ context, rules });
   assert.equal(result.rules.find((r) => r.id === "fake/always-fires").status, "off");
   assert.ok(!result.findings.some((f) => f.ruleId === "fake/always-fires"));
@@ -88,13 +88,13 @@ test("severity overrides apply; an unknown id or level warns", async () => {
 });
 
 test("an override for a rule of an owner this run did not load is not a typo", async () => {
-  const context = contextFromFiles({}, { pkgJson: { name: "my-proj", bootstrapp: { check: { rules: { "view/no-raw-localstorage": "off" } } } } });
+  const context = contextFromFiles({}, { pkgJson: { name: "my-proj", light: { check: { rules: { "view/no-raw-localstorage": "off" } } } } });
   const result = await runRules({ context, rules: [fires] });
   assert.deepEqual(result.configWarnings, []);
 });
 
 test("a rule filter runs only that rule, even when overridden off, and names an unknown id", async () => {
-  const context = contextFromFiles({}, { pkgJson: { name: "my-proj", bootstrapp: { check: { rules: { "fake/always-fires": "off" } } } } });
+  const context = contextFromFiles({}, { pkgJson: { name: "my-proj", light: { check: { rules: { "fake/always-fires": "off" } } } } });
   const result = await runRules({ context, rules, ruleFilter: "fake/always-fires" });
   assert.deepEqual(result.findings.map((f) => f.ruleId), ["fake/always-fires"]);
   assert.deepEqual(result.rules.filter((r) => r.status === "active").map((r) => r.id), ["fake/always-fires"]);

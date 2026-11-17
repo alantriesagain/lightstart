@@ -5,7 +5,7 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const LIGHT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const LEFT_OUT = new Set([".bootstrapp", "benchmarks", "dist", "eslint.config.js", "examples", "fixtures", "node_modules", "packages", "probes", "scripts", "skills", "website"]);
+const LEFT_OUT = new Set(["benchmarks", "dist", "eslint.config.js", "examples", "fixtures", "node_modules", "packages", "probes", "scripts", "skills", "website"]);
 const SIDE_FILE = /\.(test|demo)\.js$/;
 const TOOL_FILE = /^(native\/(run|coverage|diagnostics)\.js|native\/assert\.ts|native\/tui\/(bench|microbench|elements-bench|demo)\.js|native\/tui\/test-(terminal|views|lines)\.ts|native\/desktop\/((smoke|coverage|frameless-check)\.js|(demo|out)\/.*)|html\/conformance-hosts\.js)$/;
 const SHIM_FILE = /^native\/desktop\/shim\//;
@@ -79,7 +79,7 @@ export const stage = () => {
     include: ["**/*.js", "**/*.ts"],
     exclude: sources.filter((file) => file.endsWith(".js") && sources.includes(file.replace(/\.js$/, ".d.ts"))),
   }));
-  const { bootstrapp: _, scripts: __, devDependencies: ___, ...manifest } = /** @type {{ name: string, exports: Record<string, string | { types: string, default: string }>, bootstrapp?: unknown, scripts?: unknown, devDependencies?: unknown, [key: string]: unknown }} */ (JSON.parse(readFileSync(join(LIGHT, "package.json"), "utf8")));
+  const { light: _, bootstrapp: __, scripts: ___, devDependencies: ____, ...manifest } = /** @type {{ name: string, exports: Record<string, string | { types: string, default: string }>, light?: unknown, bootstrapp?: unknown, scripts?: unknown, devDependencies?: unknown, [key: string]: unknown }} */ (JSON.parse(readFileSync(join(LIGHT, "package.json"), "utf8")));
   const files = ["**/*.js", "**/*.d.ts", "**/*.css", "native/desktop/ffi.ts", "native/desktop/shim/**"];
   writeFileSync(join(DIST, "package.json"), `${JSON.stringify({ ...manifest, files }, null, 2)}\n`);
   execFileSync(join(LIGHT, "node_modules/.bin/tsc"), ["-p", DIST], { stdio: "inherit" });

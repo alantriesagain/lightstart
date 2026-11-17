@@ -104,10 +104,10 @@ After each route change the core calls `track` with the next-frame promise and `
 
 What the router recovers from (a route not found, a named route or param missing, a duplicate name) and what fails (a subscriber that threw) goes to a `Logger`, which writes to the console with a `[router]` prefix. A host sends it elsewhere with a subclass of `Logger`, passed as `logger` to the constructors or set with `router.logTo(logger)`. A test reads it back from a `MemoryLogger`, whose `lines` hold `"warn: …"` and `"error: …"` entries.
 
-## Differences from Bootstrapp's router
+## Differences from the router light replaced
 
 - No `URLPattern`. Matching uses the segment matcher described above, so it compiles with scriptc.
-- Precedence is literal, then parameter, then wildcard at every depth. Bootstrapp sorts by segment count and takes the first pattern that matches, so between patterns of the same depth the one declared first wins: `/post/*` declared before `/post/new` answers `/post/new` with the wildcard. Here the literal wins in either order.
+- Precedence is literal, then parameter, then wildcard at every depth. The router this replaced sorts by segment count and takes the first pattern that matches, so between patterns of the same depth the one declared first wins: `/post/*` declared before `/post/new` answers `/post/new` with the wildcard. Here the literal wins in either order.
 - The matcher does not compute `component` or `template`. Route configs keep those fields untouched, and the app decides what to render.
 - `subscribe` is the only change signal. There is no `ROUTER_CHANGED` event.
 - The MPA hard-navigation branch is the generic `beforeNavigate` hook.

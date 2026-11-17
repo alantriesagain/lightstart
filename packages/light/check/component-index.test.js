@@ -2,14 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { contextFromFiles } from "./test-utils.js";
 
-const ui = { owner: "ui", dir: "/fixture/node_modules/@bootstrapp/ui", components: { ui: "views/", lc: { widget: "./special/widget.js" } } };
+const ui = { owner: "ui", dir: "/fixture/node_modules/@lightstart/ui", components: { ui: "views/", lc: { widget: "./special/widget.js" } } };
 
 test("the index resolves the project's views and a host map's components", () => {
   const ctx = contextFromFiles({
     "views/card.js": 'export default { tag: "fx-card", props: { title: T.string() } };',
-    "node_modules/@bootstrapp/ui/views/button.js": 'export default { tag: "ui-button", props: { label: T.string() } };',
-    "node_modules/@bootstrapp/ui/views/form/field.js": "export default {};",
-    "node_modules/@bootstrapp/ui/special/widget.js": "export default { props: { size: T.number() } };",
+    "node_modules/@lightstart/ui/views/button.js": 'export default { tag: "ui-button", props: { label: T.string() } };',
+    "node_modules/@lightstart/ui/views/form/field.js": "export default {};",
+    "node_modules/@lightstart/ui/special/widget.js": "export default { props: { size: T.number() } };",
   }, { host: { componentMaps: () => [ui] } });
   const index = ctx.componentIndex();
   assert.equal(index.has("fx-card"), true);
@@ -30,7 +30,7 @@ test("a tag from the project's own folder structure is known without a literal t
   const ctx = contextFromFiles({
     "views/plain.js": "export default {};",
     "views/card.js": 'export default { tag: "fx-card" };',
-    "node_modules/@bootstrapp/ui/views/card.js": 'export default { tag: "fx-card", props: { stolen: T.string() } };',
+    "node_modules/@lightstart/ui/views/card.js": 'export default { tag: "fx-card", props: { stolen: T.string() } };',
   }, { host: { componentMaps: () => [{ ...ui, components: { fx: "views/" } }] } });
   const index = ctx.componentIndex();
   assert.equal(index.has("fx-plain"), true);
@@ -42,8 +42,8 @@ test("mixinSourcesOf follows relative mixin imports from the project and from a 
   const ctx = contextFromFiles({
     "views/menu.js": 'import { withEscape } from "../mixins/escape.js";\nexport default { tag: "fx-menu", mixins: [withEscape] };',
     "mixins/escape.js": "export const withEscape = { events: { close: T.object() } };",
-    "node_modules/@bootstrapp/ui/views/sheet.js": 'import { withDrag } from "./mixins/drag.js";\nexport default { tag: "ui-sheet", mixins: [withDrag] };',
-    "node_modules/@bootstrapp/ui/views/mixins/drag.js": "export const withDrag = { events: { dragged: T.object() } };",
+    "node_modules/@lightstart/ui/views/sheet.js": 'import { withDrag } from "./mixins/drag.js";\nexport default { tag: "ui-sheet", mixins: [withDrag] };',
+    "node_modules/@lightstart/ui/views/mixins/drag.js": "export const withDrag = { events: { dragged: T.object() } };",
   }, { host: { componentMaps: () => [ui] } });
   const index = ctx.componentIndex();
   assert.deepEqual(index.mixinSourcesOf("fx-menu").map((s) => s.includes("close")), [true]);
@@ -55,7 +55,7 @@ test("the maps are asked again after the index is cleared", () => {
   let maps = [ui];
   const ctx = contextFromFiles({
     "views/card.js": 'export default { tag: "fx-card" };',
-    "node_modules/@bootstrapp/ui/views/button.js": 'export default { tag: "ui-button" };',
+    "node_modules/@lightstart/ui/views/button.js": 'export default { tag: "ui-button" };',
   }, { host: { componentMaps: () => maps } });
   assert.equal(ctx.componentIndex().has("ui-button"), true);
   maps = [];

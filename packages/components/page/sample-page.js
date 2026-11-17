@@ -31,10 +31,10 @@ const LOGO_FOOTER = `
 `;
 
 const SITE_HEADER = {
-  brand: { logo: LOGO_HEADER, name: "Bootstrapp", href: "#" },
+  brand: { logo: LOGO_HEADER, name: "light", href: "#" },
   links: [
     { label: "How It Works", href: "#how-it-works" },
-    { label: "Why Bootstrapp?", href: "#features" },
+    { label: "Why light?", href: "#features" },
     { label: "Case Studies", href: "#testimonials" },
     { label: "FAQ", href: "#faq" },
     { label: "Pricing", href: "#" },
@@ -54,7 +54,7 @@ const HERO = {
   },
   headline: "Build Modern Web Apps <br>Without the Bloat ",
   subheadline:
-    "A ~30KB frontend framework with light DOM components, reactive data, and built-in Service Worker caching. Everything you need, nothing you don't.",
+    "A frontend framework built on light DOM components and reactive data.",
   ctas: [
     { label: "Get Started", href: "#", variant: "primary" },
     { label: "View on GitHub", href: "#", variant: "secondary" },
@@ -63,27 +63,27 @@ const HERO = {
 
 const FEATURES = {
   eyebrow: "Features",
-  headline: "Why Developers Choose Bootstrapp",
+  headline: "Why Developers Choose light",
   subheadline:
     "Everything you need to build fast, modern web apps without the complexity.",
   features: [
     {
       icon: "shield",
-      title: "~30KB Runtime",
+      title: "Small Runtime",
       description:
-        "Lightweight and tree-shakable. Load only what you use, and keep your bundle sizes tiny.",
+        "Lightweight and tree-shakable. Load only what you use.",
     },
     {
       icon: "trending-up",
       title: "Reactive Model Layer",
       description:
-        "ORM-style data with IndexedDB sync, reactive arrays, and automatic cross-tab updates.",
+        "ORM-style data with IndexedDB sync and reactive arrays.",
     },
     {
       icon: "globe",
-      title: "Service Worker Ready",
+      title: "Runs Anywhere",
       description:
-        "Built-in caching, offline support, and cross-tab messaging. No plugins required.",
+        "Ships for the web, the terminal and the desktop from one set of components.",
     },
     {
       icon: "clock",
@@ -99,9 +99,9 @@ const FEATURES = {
     },
     {
       icon: "chart-no-axes-column",
-      title: "URLPattern Router",
+      title: "Client-Side Router",
       description:
-        "Modern client-side routing built on the URLPattern API. Nested routes, params, and history just work.",
+        "Modern client-side routing with nested routes, params and history.",
     },
   ],
 };
@@ -110,11 +110,11 @@ const TESTIMONIALS = {
   eyebrow: "Testimonials",
   headline: "Loved by Developers",
   subheadline:
-    "Join developers shipping fast, lightweight apps with Bootstrapp.",
+    "Join developers shipping fast, lightweight apps with light.",
   testimonials: [
     {
       quote:
-        "Bootstrapp cut our bundle size by 80%. We replaced a 300KB stack with a 30KB framework and our pages load instantly.",
+        "light let us replace a larger stack with a framework whose components just work, and our pages load instantly.",
       author: "Sarah Chen",
       role: "Frontend Lead, Arcade",
       avatar: "https://i.pravatar.cc/100?img=5",
@@ -130,7 +130,7 @@ const TESTIMONIALS = {
     },
     {
       quote:
-        "Went from prototype to production in two weekends. The built-in Service Worker gave us offline support without writing a line of extra code.",
+        "Went from prototype to production in two weekends. The composable primitives kept the app small and easy to reason about.",
       author: "Emma Larsson",
       role: "Indie Developer",
       avatar: "https://i.pravatar.cc/100?img=9",
@@ -144,29 +144,29 @@ const FAQ = {
   headline: "Frequently Asked Questions",
   items: [
     {
-      question: "What is Bootstrapp?",
+      question: "What is light?",
       answer:
-        "Bootstrapp is a ~30KB frontend framework with light DOM web components, its own tagged-template renderer, a reactive model layer, and a built-in Service Worker for caching and cross-tab sync.",
+        "light is a frontend framework with light DOM web components, its own tagged-template renderer, a reactive model layer and a component library.",
     },
     {
-      question: "Is Bootstrapp open source?",
+      question: "Is light open source?",
       answer:
-        "Yes. Bootstrapp is AGPL-3.0 licensed and developed in the open on GitHub. You can read the source, file issues, and contribute.",
+        "Yes. light is MIT licensed and developed in the open on GitHub. You can read the source, file issues and contribute.",
     },
     {
       question: "What are the browser requirements?",
       answer:
-        "Modern evergreen browsers that support native ES modules, IndexedDB, and Service Workers. Chrome, Firefox, Safari, and Edge are all fully supported.",
+        "Modern evergreen browsers that support native ES modules and custom elements. Chrome, Firefox, Safari and Edge are supported.",
     },
     {
       question: "How does it compare to React or Vue?",
       answer:
-        "Bootstrapp is a native-web alternative. It uses standards like Custom Elements, URLPattern, and ES modules directly. No JSX, no virtual DOM, no build step required.",
+        "light is a native-web alternative. It uses standards like Custom Elements and ES modules directly. No JSX and no virtual DOM.",
     },
     {
-      question: "Can I use Bootstrapp in production?",
+      question: "Can I use light in production?",
       answer:
-        "Absolutely. Bootstrapp ships production builds with minification, bundling, and offline caching. The dev server and build pipeline are designed for real-world deployment.",
+        "Yes. light ships for the web, the terminal and the desktop, with a checker and a test runner for projects.",
     },
   ],
 };
@@ -174,7 +174,7 @@ const FAQ = {
 const CTA = {
   headline: "Ready to Ship?",
   subheadline:
-    "Join developers building fast, lightweight web apps with Bootstrapp.",
+    "Join developers building fast, lightweight web apps with light.",
   ctas: [
     { label: "Get Started", href: "#", variant: "primary" },
     { label: "Read the Docs", href: "#", variant: "secondary" },
@@ -182,8 +182,8 @@ const CTA = {
 };
 
 const FOOTER = {
-  brand: { logo: LOGO_FOOTER, name: "Bootstrapp" },
-  tagline: "The lightweight frontend framework built for speed.",
+  brand: { logo: LOGO_FOOTER, name: "light" },
+  tagline: "The frontend framework built on light DOM.",
   columns: [
     {
       title: "Product",
@@ -213,7 +213,7 @@ const FOOTER = {
       ],
     },
   ],
-  copyright: "© 2026 Bootstrapp. All rights reserved.",
+  copyright: "© 2026 light. All rights reserved.",
 };
 
 const STEPS = {
@@ -221,7 +221,7 @@ const STEPS = {
   eyebrowIcon: "circle-dot",
   headline: "Three Steps to Shipping",
   subheadline:
-    "From install to deploy, here's everything you need to ship with Bootstrapp.",
+    "From install to deploy, here's everything you need to ship with light.",
   steps: [
     {
       number: "01",
@@ -259,7 +259,7 @@ const STEPS = {
       mockupGradientTo: "#F0FCFA",
       title: "Deploy Anywhere",
       description:
-        "Ship to any static host, Cloudflare Workers, or your own server. The built-in Service Worker gives you offline support out of the box.",
+        "Ship to any static host or your own server.",
       cta: { label: "Learn more", href: "#" },
     },
   ],
@@ -304,7 +304,7 @@ const renderDashboardMockup = () => html`
               </linearGradient>
             </defs>
           </svg>
-          Bootstrapp
+          light
         </div>
         <p
           class="text-[10px] font-bold text-muted uppercase tracking-widest mb-3 px-3"

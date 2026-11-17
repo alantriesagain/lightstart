@@ -6,7 +6,7 @@ can't do: **two-stage adoption** of browser-prerendered DOM, **thunk bindings**
 (`${() => ...}`) for fine-grained updates, and the `key()` / `element()`
 primitives that replaced lit's directives. 9.1 KB min+gzip bundled with esbuild, zero dependencies.
 
-The engine is TypeScript (erasable syntax only), so scriptc compiles its classes natively without JavaScript's per-write field bookkeeping; browsers get it with the types stripped as it is served (light's test server, bootstrapp's dev server) or from the JavaScript the package ships.
+The engine is TypeScript (erasable syntax only), so scriptc compiles its classes natively without JavaScript's per-write field bookkeeping; browsers get it with the types stripped as it is served (by light's test server) or from the JavaScript the package ships.
 
 | File | What it owns |
 |---|---|

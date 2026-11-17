@@ -1,5 +1,6 @@
 .deployed/
 .bootstrapp/
+.bootstrapp.json
 node_modules/
 *.local.json
 *.local.md

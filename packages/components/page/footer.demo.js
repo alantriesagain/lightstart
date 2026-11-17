@@ -1,12 +1,12 @@
 import { html } from "@lightstart/light/html";
-import sample from "./sample-bootstrapp.js";
+import sample from "./sample-page.js";
 
 const props = sample.footer.props;
 
 export default {
   description: "The end of a page: link columns, a note and the social row.",
   preview: () => html`
-    <lc-footer .brand=${{ name: "Bootstrapp" }} tagline="The lightweight frontend framework." .columns=${[{ title: "Product", links: [{ label: "Features", href: "#" }, { label: "Pricing", href: "#" }] }, { title: "Company", links: [{ label: "About", href: "#" }, { label: "Contact", href: "#" }] }]} copyright="2026 Bootstrapp"></lc-footer>
+    <lc-footer .brand=${{ name: "light" }} tagline="The frontend framework built on light DOM." .columns=${[{ title: "Product", links: [{ label: "Features", href: "#" }, { label: "Pricing", href: "#" }] }, { title: "Company", links: [{ label: "About", href: "#" }, { label: "Contact", href: "#" }] }]} copyright="2026 light"></lc-footer>
   `,
   previewWidth: 960,
   examples: [

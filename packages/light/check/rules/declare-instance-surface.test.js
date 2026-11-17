@@ -45,7 +45,7 @@ export const withRaf = defineMixin({ props: { _raf: { reactive: false, defaultVa
 test("a field a mixin declares counts as declared through the package's own bare specifier", async () => {
   const pkgJson = {
     name: "@lightstart/components",
-    bootstrapp: { components: { fx: { list: "views/list.js" } } },
+    light: { components: { fx: { list: "views/list.js" } } },
   };
   const findings = await runRuleOn(
     rule,
@@ -66,7 +66,7 @@ export const withRaf = defineMixin({ props: { _raf: { reactive: false, defaultVa
 test("a field the extended component declares counts as declared", async () => {
   const pkgJson = {
     name: "fixture",
-    bootstrapp: { prefix: "fx", components: { fx: "views/" } },
+    light: { prefix: "fx", components: { fx: "views/" } },
   };
   const findings = await runRuleOn(
     rule,

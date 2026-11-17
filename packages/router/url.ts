@@ -1,7 +1,7 @@
 /**
  * @lightstart/router/url: the base-path and query helpers the router
- * needs. They are local copies of Bootstrapp's `bootstrapp/url` behaviour so
- * the router depends on no framework package.
+ * needs. They implement the URL behaviour the router relies on, so the router
+ * depends on no framework package.
  */
 
 /** The canonical form of a deploy base path: leading slash, no trailing slash. */

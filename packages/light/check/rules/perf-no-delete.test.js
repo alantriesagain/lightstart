@@ -4,7 +4,7 @@ import { appliesOn, runRuleOn } from "../test-utils.js";
 import rule from "./perf-no-delete.js";
 
 /** @param {Record<string, unknown>} [allow] */
-const pkg = (allow = {}) => ({ pkgJson: { name: "fixture", bootstrapp: { check: { perf: { scope: ["src/"] }, allow } } } });
+const pkg = (allow = {}) => ({ pkgJson: { name: "fixture", light: { check: { perf: { scope: ["src/"] }, allow } } } });
 
 test("finds delete and Reflect.deleteProperty in scope, not Map.delete", async () => {
   const source = ["delete obj.a;", "delete obj[key];", "Reflect.deleteProperty(obj, key);", "map.delete(key);", "set.delete(key);"].join("\n");
@@ -24,6 +24,6 @@ test("leaves out an allowed symbol", async () => {
 });
 
 test("applies only to a project with a perf block", () => {
-  assert.equal(appliesOn(rule, { "src/a.js": "" }, { pkgJson: { name: "fixture", bootstrapp: {} } }), "config-gated");
+  assert.equal(appliesOn(rule, { "src/a.js": "" }, { pkgJson: { name: "fixture", light: {} } }), "config-gated");
   assert.equal(appliesOn(rule, { "src/a.js": "" }, pkg()), null);
 });

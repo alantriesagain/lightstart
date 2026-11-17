@@ -6,8 +6,9 @@ in [README.md](./README.md); this file is what to know before editing them.
 ## Adding a component
 
 Two things must agree, and a rule fails the package if they do not: the entry in
-`bootstrapp.components.lc` in this package's `package.json`, and the `tag:` the definition declares. The loader
-takes the tag from the map, so a definition without one still registers and renders, and that is
+`tags.json`, written by `scripts/tags.js` and the tag map light reads, and the `tag:` the definition
+declares. The `bootstrapp.components` map in this package's `package.json` is read by the website's
+build. The loader takes the tag from the map, so a definition without one still registers and renders, and that is
 the trap: every rule guarded on "is this a component" answers no, and the file goes unchecked.
 Ten components sat that way until 2026-09-10.
 
@@ -79,7 +80,7 @@ comments saying so.
 | `withPointerDrag()` | divider, split-pane, float-panel (capture); drag-panel, bottom-sheet (`capture: false, touchFallback: true`); `withPullToRefresh` (also `mouse: false`, and `dragYields` handing every move but a pull back to the page's scroll) |
 | `withPullToRefresh()` | an app's own scrolling page, which draws `lc-pull-indicator` above its content |
 | `withSwipeThreshold()` | drawer, stories |
-| `withResize()` | asset-wave, asset-waveform (`@bootstrapp/assets`) |
+| `withResize()` | asset-wave, asset-waveform |
 
 A fragment that takes options is a function returning `defineMixin({...})`; one that does not is
 the object itself. Do not annotate a mixin method with `@this`: `defineMixin` already types `this`

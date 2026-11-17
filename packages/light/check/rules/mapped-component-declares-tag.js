@@ -4,11 +4,11 @@ const DECLARED_TAG = /^\s*tag:\s*["'`]([^"'`]+)/m;
 
 export default defineRule({
   severity: "error",
-  description: "a component listed in bootstrapp.components declares the tag it is listed under",
+  description: "a component listed in light.components declares the tag it is listed under",
   why: "the loader takes the tag from the map, so a definition without one still registers and every rule that asks `is this a component` answers no: the file is skipped by the whole ruleset. Ten lc components sat unchecked that way, two of them bare object literals that component-uses-define could not see. A declared tag is also what tells a reader of the file which element it is. Under the folder form (`{ prefix: \"views/\" }`) the tag comes from the path, and only a file that declares a different one is reported: a helper or a render-function module under views/ declares none and is not a component. That form hid a real break, an agent view declaring <ai-diff> while its path said <ai-diff-viewer>, so the tag resolved to a file that does not exist and the element never upgraded",
-  appliesTo: { when: (ctx) => !!ctx.pkg?.bootstrapp?.components },
+  appliesTo: { when: (ctx) => !!(ctx.pkg?.light?.components ?? ctx.pkg?.bootstrapp?.components) },
   check(ctx) {
-    const components = ctx.pkg?.bootstrapp?.components;
+    const components = ctx.pkg?.light?.components ?? ctx.pkg?.bootstrapp?.components;
     if (!components || typeof components !== "object") return;
     const files = new Set(ctx.files());
     /** @type {Map<string, Set<string>>} */

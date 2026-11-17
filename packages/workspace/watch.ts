@@ -1,5 +1,5 @@
 /**
- * @file The folder's changes as batches of paths, adapted from bootstrapp's TreeWatch. Natively
+ * @file The folder's changes as batches of paths. Natively
  * `fs.watch` is per directory and its listener gets no file name, so each watched directory
  * keeps a snapshot of its entries (mtime, or -1 for a directory) and an event only marks it
  * dirty; once a batch window passes, every dirty directory is re-read once and what differs is

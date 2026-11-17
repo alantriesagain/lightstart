@@ -3,7 +3,7 @@ import test from "node:test";
 import { runRuleOn } from "../test-utils.js";
 import rule from "./perf-record-union.js";
 
-const pkg = { pkgJson: { name: "fixture", bootstrapp: { check: { perf: { scope: ["src/"], native: ["src/"] } } } } };
+const pkg = { pkgJson: { name: "fixture", light: { check: { perf: { scope: ["src/"], native: ["src/"] } } } } };
 
 test("finds a union of records told apart by a string tag, members inline or aliased in the file", async () => {
   const source = [

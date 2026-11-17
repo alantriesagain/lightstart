@@ -4,7 +4,7 @@ import { runRuleOn } from "../test-utils.js";
 import rule from "./mapped-component-file-exists.js";
 
 const on = (/** @type {object} */ components, /** @type {Record<string, string>} */ files) =>
-  runRuleOn(rule, { "package.json": JSON.stringify({ name: "p", bootstrapp: { components } }), ...files });
+  runRuleOn(rule, { "package.json": JSON.stringify({ name: "p", light: { components } }), ...files });
 
 test("an explicit entry naming a file nothing wrote is an error", async () => {
   const findings = await on({ ui: { card: "views/card.js", ghost: "views/ghost.js" } }, { "views/card.js": "" });
@@ -34,7 +34,7 @@ test("the package root as a directory is always there", async () => {
 
 test("the finding lands on the entry's own line in package.json", async () => {
   const [finding] = await runRuleOn(rule, {
-    "package.json": '{\n  "name": "p",\n  "bootstrapp": {\n    "components": {\n      "ui": { "ghost": "views/ghost.js" }\n    }\n  }\n}\n',
+    "package.json": '{\n  "name": "p",\n  "light": {\n    "components": {\n      "ui": { "ghost": "views/ghost.js" }\n    }\n  }\n}\n',
   });
   assert.equal(finding.file, "package.json");
   assert.equal(finding.line, 5);

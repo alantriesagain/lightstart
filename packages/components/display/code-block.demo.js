@@ -1,17 +1,14 @@
 import { html } from "@lightstart/light/html";
 
-const ROUTES = `import { defineRoutes } from "bootstrapp/router";
-
-export default defineRoutes({
-  "/": { name: "home", title: "Home", component: "app-home" },
-  "/settings": { name: "settings", title: "Settings", component: "app-settings" },
-}, { spa: true });`;
+const ROUTES = `export default {
+  "/": { name: "home", title: "Home", view: "home-page" },
+};`;
 
 const LONG = Array.from({ length: 14 }, (/** @type {unknown} */ _, i) => `<lc-list-row label="Row ${i + 1}"></lc-list-row>`).join("\n");
 
 export default {
   description: "A snippet coloured by the editor's tokenizer, with a copy control and an optional fold.",
-  preview: () => html`<lc-code-block language="javascript" title="app.js" line-numbers .code=${'import { defineRoutes } from "bootstrapp/router";\n\nexport default defineRoutes({ "/": { component: "app-home" } });'}></lc-code-block>`,
+  preview: () => html`<lc-code-block language="javascript" title="app.js" line-numbers .code=${'export default { "/": { name: "home", title: "Home", view: "home-page" } };'}></lc-code-block>`,
   previewWidth: 640,
   examples: [
     {

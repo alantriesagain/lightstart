@@ -1,8 +1,6 @@
 node_modules/
 dist/
 *.tgz
-.bootstrapp/
-.bootstrapp.json
 .deployed/
 packages/light/native/desktop/out/
 benchmarks/noise.local.json

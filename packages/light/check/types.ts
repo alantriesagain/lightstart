@@ -169,7 +169,7 @@ export interface PerfOptions {
   hot?: string[];
 }
 
-/** `bootstrapp.check` in package.json. `allow` maps a rule id to `file` or `file#Symbol` keys, each with the reason the site is allowed. */
+/** `light.check` in package.json. `allow` maps a rule id to `file` or `file#Symbol` keys, each with the reason the site is allowed. */
 export interface CheckOptions {
   from?: string[];
   ignore?: string[];
@@ -179,8 +179,8 @@ export interface CheckOptions {
   noAny?: { tests?: boolean };
 }
 
-/** The `bootstrapp` block of package.json, as far as the checker reads it. Its values come from JSON, so a reader still checks their shape. */
-export interface BootstrappConfig {
+/** The `light` block of package.json, as far as the checker reads it. Its values come from JSON, so a reader still checks their shape. */
+export interface LightConfig {
   [key: string]: unknown;
   components?: Record<string, string | Record<string, string>>;
   check?: CheckOptions;
@@ -195,7 +195,9 @@ export interface PackageJson {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
-  bootstrapp?: BootstrappConfig;
+  light?: LightConfig;
+  /** A project not yet moved to the `light` key still configures under `bootstrapp`. */
+  bootstrapp?: LightConfig;
 }
 
 export interface WalkOptions {
@@ -207,7 +209,7 @@ export interface WalkOptions {
 }
 
 /**
- * A `bootstrapp.components` block and the directory its paths are relative
+ * A `light.components` block and the directory its paths are relative
  * to: a prefix names a directory (every file under it is `<prefix>-<path>`)
  * or a record of component name to file (`<prefix>-<name>`). `owner` is the
  * dependency's short name, null for the project itself.
@@ -254,7 +256,7 @@ export interface HostOptions {
 export interface ProjectModel {
   projectDir: string;
   pkg: PackageJson;
-  config: BootstrappConfig;
+  config: LightConfig;
   deps: Record<string, string>;
   componentDirs: string[];
   styling: Styling;

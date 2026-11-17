@@ -192,12 +192,8 @@
       "optional": true
     }
   },
-  "bootstrapp": {
+  "light": {
     "check": {
-      "from": [
-        "bootstrapp",
-        "@bootstrapp/check"
-      ],
       "ignore": [
         "website/",
         "native/desktop/out/"

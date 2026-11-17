@@ -2,8 +2,7 @@
  * `<lc-form>` before it grows.
  *
  * 444 lines, thirteen renderer branches, a `typeHandlers` escape hatch and a
- * `cmsType` registry hop, and the only cover anywhere was three branches
- * asserted from @bootstrapp/admin's own test. This pins the public surface
+ * `cmsType` registry hop, and no test coverage in this package. This pins the public surface
  * four consumers reach through `querySelector` (`submit`, `collectFormData`,
  * `serialize`, `deserialize`, `setErrors`, `clearErrors`) so the engine work
  * that follows has something to break.

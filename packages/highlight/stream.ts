@@ -1,7 +1,6 @@
 /**
- * @file A bounded cursor over one line, the surface a tokenizer reads through; ported from
- * @bootstrapp/editor's lang/stream.js. Every regex passed to `match` is sticky (`y`), so it is
- * tried at the cursor and a long line stays linear.
+ * @file A bounded cursor over one line, the surface a tokenizer reads through. Every regex
+ * passed to `match` is sticky (`y`), so it is tried at the cursor and a long line stays linear.
  */
 
 export class Stream {

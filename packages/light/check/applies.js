@@ -14,7 +14,7 @@ export const ruleApplies = (rule, ctx) => {
   const applies = rule.appliesTo;
   if (!applies) return null;
   if (applies.styling && applies.styling !== ctx.styling) return { reason: `${applies.styling}-only` };
-  if (applies.dep && !ctx.hasDep(applies.dep)) return { reason: `needs @bootstrapp/${applies.dep}` };
+  if (applies.dep && !ctx.hasDep(applies.dep)) return { reason: `needs @lightstart/${applies.dep}` };
   if (applies.when)
     try {
       if (!applies.when(ctx)) return { reason: "config-gated" };

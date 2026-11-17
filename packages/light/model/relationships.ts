@@ -1,5 +1,5 @@
 /**
- * @bootstrapp/model: relationship arithmetic shared by the frontend
+ * @lightstart/light/model: relationship arithmetic shared by the frontend
  * (`include()`, live includes) and the worker-side loader, so both sides
  * agree on the one foreign-key convention: `targetForeignKey`, else
  * `${modelName}Id`.

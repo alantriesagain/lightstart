@@ -6,7 +6,7 @@ Install the package and write the tag. There is **no import step**.
 
 - Components load themselves
 - Styles come from the theme
-- \`bootstrapp check\` keeps the conventions
+- \`light check\` keeps the conventions
 
 > A framework sized like a library.`;
 

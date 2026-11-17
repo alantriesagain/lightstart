@@ -1,7 +1,7 @@
 /**
  * The model layer's cross-runtime commands: what the frontend registry sends
  * the db-worker (`$APP.worker.request(MODEL_QUERY, { model, opts })`) and
- * what `bootstrapp/model/backend` answers. Import-only, like every commands.js.
+ * what the model backend answers. Import-only, like every commands.js.
  */
 
 export const MODEL_GET = "MODEL:GET";

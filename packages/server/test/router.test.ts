@@ -4,8 +4,7 @@
  * wildcards, deeper wildcards before shallower; parameters by name; the walk backing up past a
  * branch with nothing for the method; null for a path nothing matches, so a host can fall through;
  * a 405 with `Allow` for a path matched under other methods; HEAD answered by GET; `ALL` for
- * whatever else; malformed patterns and duplicate routes refused when the app is built. Ported
- * from bootstrapp's `framework/endpoints/run.test.js`, which this router replaces.
+ * whatever else; malformed patterns and duplicate routes refused when the app is built.
  * Runs under node and natively; the outputs must be identical.
  */
 import { App } from "../app.ts";

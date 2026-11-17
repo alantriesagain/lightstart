@@ -1,8 +1,7 @@
 // The http-api workload (variants/raw.ts) as a Fetch handler, `(Request) => Promise<Response>`,
-// served through the node-to-Fetch bridge bootstrapp's dev server uses today
-// (bootstrapp/packages/serve/src/http.ts): the body read in full, a `Request` built per request, the
-// `Response`'s headers written with `Object.fromEntries` and its body read as one buffer. What a
-// Fetch-first core costs on node and natively, against raw.ts and light.ts.
+// served through a hand-written node-to-Fetch bridge: the body read in full, a `Request` built per
+// request, the `Response`'s headers written with `Object.fromEntries` and its body read as one
+// buffer. What a Fetch-first core costs on node and natively, against raw.ts and light.ts.
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
 

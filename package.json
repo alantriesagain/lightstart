@@ -39,19 +39,14 @@
     "tsc-ts": "0.0.8",
     "typescript": "^6.0.3"
   },
-  "bootstrapp": {
+  "light": {
     "check": {
-      "from": [
-        "bootstrapp",
-        "@bootstrapp/check"
-      ],
       "ignore": [
         "website/",
         "packages/light/",
         "packages/components/"
       ],
       "rules": {
-        "view/no-raw-localstorage": "off",
         "light/no-any": "error",
         "light/declare-instance-surface": "error"
       },

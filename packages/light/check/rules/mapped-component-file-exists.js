@@ -4,11 +4,11 @@ const normalize = (/** @type {string} */ value) => value.replace(/^\.\//, "").re
 
 export default defineRule({
   severity: "error",
-  description: "every bootstrapp.components entry points at a file, or a directory holding files, that exists",
+  description: "every light.components entry points at a file, or a directory holding files, that exists",
   why: "the loader resolves a tag through this map and fetches whatever it names, so a stale entry is a tag that 404s the first time something renders it, with nothing at build or check time to say so. mapped-component-declares-tag skips a missing file by design, which is what let an entry survive the deletion of the directory it named",
-  appliesTo: { when: (ctx) => !!ctx.pkg?.bootstrapp?.components },
+  appliesTo: { when: (ctx) => !!(ctx.pkg?.light?.components ?? ctx.pkg?.bootstrapp?.components) },
   check(ctx) {
-    const components = /** @type {Record<string, unknown>} */ (ctx.pkg?.bootstrapp?.components);
+    const components = /** @type {Record<string, unknown>} */ (ctx.pkg?.light?.components ?? ctx.pkg?.bootstrapp?.components);
     if (!components || typeof components !== "object") return;
     const files = ctx.files();
     const known = new Set(files);
