@@ -21,8 +21,13 @@ const thenOf = (value: unknown): Promise<unknown> | null =>
 
 /** Name and start every controller the manifest carries; answers the handles it started. */
 export const startControllers = async (manifest: AppManifest): Promise<unknown[]> => {
-  const controllers = manifest.controllers.map((entry) => entry.controller);
-  const handles = controllers.filter((entry): entry is Record<string, unknown> => recordOf(entry) !== null);
+  const controllers: unknown[] = [];
+  const handles: Record<string, unknown>[] = [];
+  for (const entry of manifest.controllers) {
+    controllers.push(entry.controller);
+    const handle = recordOf(entry.controller);
+    if (handle !== null) handles.push(handle);
+  }
   nameControllers(handles);
   for (const controller of handles) {
     const start = functionOf(controller, "start");
