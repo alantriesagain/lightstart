@@ -4,7 +4,7 @@
  * the `list` argument names is made when it is not there yet, and opened.
  */
 import { Controller } from "@lightstart/light/controller/class";
-import { LiveRows, modelQuery } from "@lightstart/light/model/binder";
+import { liveRows } from "@lightstart/light/model/binder";
 import { signal } from "@lightstart/light/signals";
 import app from "../app.ts";
 import list from "../models/list.ts";
@@ -13,7 +13,7 @@ import activity from "./activity.ts";
 import type { List } from "../models/list.ts";
 
 class Lists extends Controller {
-  readonly rows = new LiveRows<List>();
+  readonly rows = liveRows<List>(this, list, () => ({ order: "addedAt" }));
   /** The id of the list open now. */
   readonly current = signal("");
 
@@ -26,16 +26,10 @@ class Lists extends Controller {
   }
 
   private async open(): Promise<void> {
-    this.rows.use(modelQuery<Record<string, unknown>>(list, { order: "addedAt" }));
     await this.rows.loaded();
     const wanted = app.args.string("list") ?? "Inbox";
     const found = this.rows.peek().find((row) => row.name === wanted);
     this.current.value = found !== undefined ? String(found.id) : await this.add(wanted);
-  }
-
-  override disconnected(): Promise<void> | null {
-    this.rows.dispose();
-    return null;
   }
 
   /** The list open now, or null before the start settled. */

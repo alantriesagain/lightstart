@@ -3,9 +3,10 @@ import { afterEach, beforeEach, describe, it } from "node:test";
 import T from "../types/index.js";
 import { MODEL_CHANGED } from "./events.ts";
 import { configureModel, modelApi, modelBus } from "./index.ts";
-import { bindModelQuery, modelBinder, modelQuery } from "./binder.ts";
+import { bindModelQuery, liveRows, modelBinder, modelQuery } from "./binder.ts";
 import { createStore } from "../signals/store.ts";
 import { defineController, registerSyncBinder } from "../controller/index.ts";
+import { Controller } from "../controller/class.ts";
 
 registerSyncBinder(modelBinder);
 
@@ -171,6 +172,62 @@ describe("bindModelQuery", () => {
     assert.equal(instance.owner.name, "X");
     assert.equal(instance.$queries.combos.total, 2);
     instance.dispose();
+  });
+});
+
+describe("liveRows", () => {
+  let backend;
+  beforeEach(() => {
+    backend = fakeBackend();
+    models = { session: { n: T.number() }, account: { name: T.string() } };
+    Model = registry(backend.request);
+  });
+
+  it("starts its query on start(), and follows it again after a dispose and a second start", async () => {
+    class Board extends Controller {
+      rows = liveRows(this, Model.session, () => ({ order: "n" }));
+
+      constructor() {
+        super("board");
+      }
+    }
+    const board = new Board();
+    await tick();
+    assert.equal(backend.calls.length, 0, "no query before start()");
+    await board.start();
+    assert.deepEqual(board.rows.value.map((r) => r.id), ["a", "b"]);
+    assert.equal(backend.calls.filter(([a]) => a === "MODEL:QUERY").length, 1);
+    await board.dispose();
+    backend.data.session = backend.data.session.concat({ id: "c", n: 9 });
+    await change("session", "add", { id: "c", n: 9 });
+    await tick();
+    assert.deepEqual(board.rows.value.map((r) => r.id), ["a", "b"], "disposed, so it stops following");
+    assert.equal(backend.calls.filter(([a]) => a === "MODEL:QUERY").length, 1);
+    await board.start();
+    assert.deepEqual(board.rows.value.map((r) => r.id), ["a", "b", "c"]);
+    await board.dispose();
+  });
+
+  it("its first load counts in $ready", async () => {
+    let release;
+    backend.hold(new Promise((resolve) => { release = resolve; }));
+    class Board extends Controller {
+      rows = liveRows(this, Model.session, () => ({ order: "n" }));
+
+      constructor() {
+        super("board");
+      }
+    }
+    const board = new Board();
+    const ready = board.start();
+    let settled = false;
+    ready.then(() => { settled = true; });
+    await tick();
+    assert.equal(settled, false, "$ready waits for the first load");
+    release();
+    await ready;
+    assert.deepEqual(board.rows.value.map((r) => r.id), ["a", "b"]);
+    await board.dispose();
   });
 });
 

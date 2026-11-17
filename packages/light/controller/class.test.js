@@ -137,4 +137,58 @@ describe("@lightstart/light/controller/class: a controller as a class", () => {
     await notes.removeAll();
     await settle();
   });
+
+  it("setups run on every start(), not on construction, and their $wait belongs to that run", async () => {
+    const log = [];
+    let release = () => {};
+    const gated = () => new Promise((resolve) => {
+      release = resolve;
+    });
+    class Probe extends Controller {
+      constructor() {
+        super("probe");
+        this.$onStart(() => {
+          log.push("setup");
+          this.$wait(gated());
+        });
+      }
+
+      connected() {
+        log.push("connected");
+        return null;
+      }
+
+      disconnected() {
+        log.push("disconnected");
+        return null;
+      }
+    }
+    const probe = new Probe();
+    assert.deepEqual(log, [], "a setup waits for start()");
+    const first = probe.start();
+    assert.deepEqual(log, ["setup", "connected"]);
+    let firstSettled = false;
+    first.then(() => {
+      firstSettled = true;
+    });
+    await tick();
+    assert.equal(firstSettled, false, "$ready waits for the setup's work");
+    release();
+    await first;
+    assert.equal(firstSettled, true);
+    await probe.dispose();
+    assert.deepEqual(log, ["setup", "connected", "disconnected"]);
+    const second = probe.start();
+    assert.deepEqual(log, ["setup", "connected", "disconnected", "setup", "connected"]);
+    let secondSettled = false;
+    second.then(() => {
+      secondSettled = true;
+    });
+    await tick();
+    assert.equal(secondSettled, false, "a second start does not wait on the first run's promise");
+    release();
+    await second;
+    assert.equal(secondSettled, true);
+    await probe.dispose();
+  });
 });

@@ -3,7 +3,7 @@
  * and activity controllers, so it starts after both.
  */
 import { Controller } from "@lightstart/light/controller/class";
-import { LiveRows, modelQuery } from "@lightstart/light/model/binder";
+import { liveRows } from "@lightstart/light/model/binder";
 import task from "../models/task.ts";
 import activity from "./activity.ts";
 import lists from "./lists.ts";
@@ -11,20 +11,10 @@ import lists from "./lists.ts";
 import type { Task } from "../models/task.ts";
 
 class Tasks extends Controller {
-  readonly rows = new LiveRows<Task>();
+  readonly rows = liveRows<Task>(this, task, () => ({ order: "addedAt" }));
 
   constructor() {
     super("tasks");
-  }
-
-  override connected(): Promise<void> | null {
-    this.rows.use(modelQuery<Record<string, unknown>>(task, { order: "addedAt" }));
-    return this.rows.loaded();
-  }
-
-  override disconnected(): Promise<void> | null {
-    this.rows.dispose();
-    return null;
   }
 
   /** The open list's tasks, in the order they were added. */
