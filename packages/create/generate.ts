@@ -205,15 +205,17 @@ const install = async (pm: PackageManager, target: string, log: (message: string
 
 /**
  * After the install, a project that compiles with scriptc needs scriptc's own install step (it puts
- * the native compiler in place). With install scripts turned off (`ignore-scripts`, often a user's
- * own choice) it did not run: say how to finish it rather than let the first native build fail.
+ * the native compiler in place). Install scripts are off by default (`ignore-scripts`), so that one
+ * step runs here, for scriptc alone; a compiler that still does not answer is an error.
  */
-const checkScriptc = async (manifest: GeneratedManifest, pm: PackageManager, target: string, log: (message: string) => void): Promise<void> => {
+const finishScriptc = async (manifest: GeneratedManifest, pm: PackageManager, target: string, log: (message: string) => void): Promise<void> => {
   if (manifest.devDependencies["scriptc"] === undefined) return;
-  const version = await run(join(target, "node_modules", ".bin", "scriptc"), ["--version"], target).catch(() => ({ ok: false, output: "" }));
-  if (version.ok) return;
-  const rebuild = pm === "pnpm" ? "pnpm rebuild scriptc --config.ignore-scripts=false" : "npm rebuild scriptc --ignore-scripts=false";
-  log(`scriptc's install step did not run (install scripts are off here); finish it with: cd ${target} && ${rebuild}`);
+  const scriptc = join(target, "node_modules", ".bin", "scriptc");
+  const answers = async (): Promise<boolean> => (await run(scriptc, ["--version"], target).catch(() => ({ ok: false, output: "" }))).ok;
+  if (await answers()) return;
+  log("Finishing scriptc's install");
+  const rebuild = pm === "pnpm" ? await run("pnpm", ["rebuild", "scriptc", "--config.ignore-scripts=false"], target) : await run("npm", ["rebuild", "scriptc", "--ignore-scripts=false"], target);
+  if (!rebuild.ok || !(await answers())) throw new Error(`scriptc's install step failed:\n${rebuild.output}`);
 };
 
 /** Generate a project: the manifest, the copied template, then the install unless it was turned off. */
@@ -227,7 +229,7 @@ export const generate = async (options: GenerateOptions): Promise<GeneratedManif
   options.log?.(`Wrote ${String(written.length + 1)} files in ${options.target}`);
   if (options.install) {
     await install(options.pm, options.target, options.log ?? (() => undefined));
-    await checkScriptc(manifest, options.pm, options.target, options.log ?? (() => undefined));
+    await finishScriptc(manifest, options.pm, options.target, options.log ?? (() => undefined));
   }
   return manifest;
 };

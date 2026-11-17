@@ -1,6 +1,6 @@
 # @lightstart/create
 
-The generator behind `light new`: a project of a named kind, with light's commands, layout and conventions already in place. It copies a kind's template, writes the `package.json`, links light's packages from a checkout, and runs the install. A kind that compiles with scriptc needs scriptc's own install step: when install scripts are off (`ignore-scripts`), the generator says how to finish it (`pnpm rebuild scriptc --config.ignore-scripts=false`). Node-only, TypeScript with no build step.
+The generator behind `light new`: a project of a named kind, with light's commands, layout and conventions already in place. It copies a kind's template, writes the `package.json`, links light's packages from a checkout, and runs the install. A kind that compiles with scriptc needs scriptc's own install step, which puts its native compiler in place: install scripts stay off for everything else, and the generator runs that one (`pnpm rebuild scriptc --config.ignore-scripts=false`, or npm's) when the compiler does not answer after the install. Node-only, TypeScript with no build step.
 
 ```bash
 light new                          # list the kinds, one line each

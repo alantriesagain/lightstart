@@ -75,7 +75,6 @@ const main = async (): Promise<void> => {
     ok("build is a devDependency", manifest.devDependencies["@lightstart/build"] !== undefined);
     eq("scriptc is pinned", manifest.devDependencies["scriptc"], "0.4.12");
 
-    await run("pnpm", ["rebuild", "scriptc", "--config.ignore-scripts=false"], target);
     const tested = await run("pnpm", ["run", "test"], target);
     ok("the project's test exits 0", tested.code === 0);
     if (tested.code !== 0) console.log(tested.output);
