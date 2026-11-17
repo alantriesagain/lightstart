@@ -37,12 +37,12 @@ Sources are TypeScript with erasable syntax, as light's own packages are, so wha
 
 ## Where light comes from
 
-Light's packages are not on npm yet. The generator links a checkout: the one it runs from (`packages/create/../..` holding `packages/light`), or the one `--light <path>` names.
+Light's packages are not on npm yet. The generator links a checkout: the one it runs from (`packages/create/../..` holding `packages/light`), or the one `--light <path>` names. The link is relative to the new project's folder when the two share a folder below the root (`~/Projects/app` beside `~/Projects/light`), so they can move together; otherwise (a project in `/tmp`) it is absolute.
 
 | Mode | package.json |
 |---|---|
-| `link` (pnpm, default) | `"@lightstart/light": "link:/abs/path/packages/light"` |
-| `file` (`--pm npm`) | `"@lightstart/light": "file:/abs/path/packages/light"` |
+| `link` (pnpm, default) | `"@lightstart/light": "link:../light/packages/light"` |
+| `file` (`--pm npm`) | `"@lightstart/light": "file:../light/packages/light"` |
 | `npm` (`--npm`) | `"@lightstart/light": "^0.1.0"` |
 
 Every package a linked package depends on from the same checkout is added too, so an outside project can resolve light's workspace dependencies: `@lightstart/components` brings `@lightstart/markdown` and `@lightstart/highlight`, `@lightstart/dev` brings `@lightstart/cli` and `@lightstart/server`.
