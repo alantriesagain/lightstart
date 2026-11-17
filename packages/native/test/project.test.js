@@ -94,3 +94,22 @@ test("the compiler is $SCRIPTC, the project's, else the one beside @lightstart/n
     else process.env["SCRIPTC"] = saved;
   }
 });
+
+test("install puts the binary in BIN_DIR, then runs the project's install steps with the binary named", async () => {
+  const { installBinary } = await import("../src/commands/install.js");
+  const dir = mkdtempSync(join(tmpdir(), "native-install-"));
+  const bin = join(dir, "bin");
+  const binary = join(dir, "built");
+  writeFileSync(binary, "binary");
+  const app = { dir, name: "fixture", config: { install: ['printf "%s %s" "$LIGHT_NATIVE_COMMAND" "$LIGHT_INSTALLED" > step.txt'] } };
+  const before = process.env["BIN_DIR"];
+  process.env["BIN_DIR"] = bin;
+  try {
+    assert.equal(await installBinary(dir, /** @type {never} */ (app), binary, "fixture"), 0);
+  } finally {
+    if (before === undefined) delete process.env["BIN_DIR"];
+    else process.env["BIN_DIR"] = before;
+  }
+  assert.equal(readFileSync(join(bin, "fixture"), "utf8"), "binary");
+  assert.equal(readFileSync(join(dir, "step.txt"), "utf8"), "install " + join(bin, "fixture"));
+});
