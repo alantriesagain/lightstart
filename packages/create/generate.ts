@@ -203,6 +203,19 @@ const install = async (pm: PackageManager, target: string, log: (message: string
   if (!result.ok) throw new Error(`npm install failed:\n${result.output}`);
 };
 
+/**
+ * After the install, a project that compiles with scriptc needs scriptc's own install step (it puts
+ * the native compiler in place). With install scripts turned off (`ignore-scripts`, often a user's
+ * own choice) it did not run: say how to finish it rather than let the first native build fail.
+ */
+const checkScriptc = async (manifest: GeneratedManifest, pm: PackageManager, target: string, log: (message: string) => void): Promise<void> => {
+  if (manifest.devDependencies["scriptc"] === undefined) return;
+  const version = await run(join(target, "node_modules", ".bin", "scriptc"), ["--version"], target).catch(() => ({ ok: false, output: "" }));
+  if (version.ok) return;
+  const rebuild = pm === "pnpm" ? "pnpm rebuild scriptc --config.ignore-scripts=false" : "npm rebuild scriptc --ignore-scripts=false";
+  log(`scriptc's install step did not run (install scripts are off here); finish it with: cd ${target} && ${rebuild}`);
+};
+
 /** Generate a project: the manifest, the copied template, then the install unless it was turned off. */
 export const generate = async (options: GenerateOptions): Promise<GeneratedManifest> => {
   const templateDir = join(here, "templates", options.kind.name);
@@ -212,6 +225,9 @@ export const generate = async (options: GenerateOptions): Promise<GeneratedManif
   const written = copyTemplate(templateDir, options.target, options.name, titleOf(options.name));
   writeFileSync(join(options.target, "package.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   options.log?.(`Wrote ${String(written.length + 1)} files in ${options.target}`);
-  if (options.install) await install(options.pm, options.target, options.log ?? (() => undefined));
+  if (options.install) {
+    await install(options.pm, options.target, options.log ?? (() => undefined));
+    await checkScriptc(manifest, options.pm, options.target, options.log ?? (() => undefined));
+  }
   return manifest;
 };
