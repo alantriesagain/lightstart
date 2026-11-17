@@ -61,6 +61,22 @@ export default View.define("lc-hello", {
 
 `configureI18n` gives the instance to light as its translation, so a component's own words (`@lightstart/components`' `lcText`, `lc-language-switcher`) resolve through the same dictionaries and draw again when the language changes. A key with no sentence answers the key, which light reads as "keep the component's own words". Another library takes this package's place by passing its own `Translation` to `configureTranslation`.
 
+## In an app on @lightstart/app
+
+An app that depends on `@lightstart/i18n` gets its dictionaries wired by the generation: `.light/locales.ts` is written and imported by `.light/app.ts` before the views. The app's own words go in `src/locales/<lang>.ts` (or `.js`), each a default-exported dictionary; a package ships its words in `locales/<lang>.js` and says so with `"light": { "locales": true }` in its `package.json` (as `@lightstart/components` does). The generated file imports every package's language files and the project's, then calls `configureI18n` with the languages it found, the app's `locale` from `defineApp` as the default (`"en"` when absent), and each language's dictionary the packages' merged first with the project's over them, deep, so the project's key wins.
+
+```ts
+// src/locales/en.ts
+export default { tasks: { add: "Add task" } };
+```
+
+```ts
+// src/app.ts
+export default defineApp({ name: "tasks", host: "web", locale: "en" });
+```
+
+A project that does not depend on this package is left alone, and may pass its own `Translation` to `configureTranslation` instead.
+
 ## Plurals
 
 Use `n` or `count` to choose the form. The plural categories are this package's own rules for English, Portuguese, French, Spanish, Arabic, Russian and Ukrainian, Polish, Czech and Slovak (scriptc compiles no `Intl.PluralRules`); another language takes English's `one`/`other`, and a fractional count is read as its integer part. A plural tree the answering language lacks is read from the fallback language, and its count is chosen there. A plural with no count is a miss, not a silent `other`.

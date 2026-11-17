@@ -15,6 +15,7 @@
     "@lightstart/light": "link:../../packages/light",
     "@lightstart/components": "link:../../packages/components",
     "@lightstart/app": "link:../../packages/app",
+    "@lightstart/i18n": "link:../../packages/i18n",
     "@lightstart/highlight": "link:../../packages/highlight",
     "@lightstart/markdown": "link:../../packages/markdown",
     "@lightstart/cli": "link:../../packages/cli",

@@ -4,6 +4,7 @@
  */
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
+import { t } from "@lightstart/i18n";
 import tasks from "../controllers/tasks.ts";
 
 class TasksPage extends View {
@@ -23,16 +24,16 @@ class TasksPage extends View {
     return html`
       <lc-card padding="lg">
         <form class="add" @submit=${(event: Event) => this.add(event)}>
-          <input name="task" aria-label="A task" placeholder="A task" />
-          <lc-button variant="primary" type="submit">Add task</lc-button>
+          <input name="task" aria-label=${t("tasks.field")} placeholder=${t("tasks.field")} />
+          <lc-button variant="primary" type="submit">${t("tasks.add")}</lc-button>
         </form>
         ${rows.length === 0
-          ? html`<p class="muted">No tasks here yet.</p>`
+          ? html`<p class="muted">${t("tasks.empty")}</p>`
           : html`<ul class="tasks">
               ${rows.map(
                 (row) => html`<li class=${row.done === true ? "done" : ""}>
                   <label><input type="checkbox" .checked=${row.done === true} @change=${() => tasks.toggle(row)} /> ${String(row.title)}</label>
-                  <lc-button variant="secondary" size="sm" @click=${() => tasks.remove(row)}>Remove</lc-button>
+                  <lc-button variant="secondary" size="sm" @click=${() => tasks.remove(row)}>${t("tasks.remove")}</lc-button>
                 </li>`,
               )}
             </ul>`}

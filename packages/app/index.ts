@@ -35,6 +35,8 @@ export interface AppConfig {
   host: string;
   /** A theme preset name; `"default"` when absent. */
   theme?: string;
+  /** The default language the app's words are in; `"en"` when absent. */
+  locale?: string;
   /**
    * The stores by name, several at once of any kinds the host runs; a model picks one with its
    * schema's `$adapter`, and gets `main` when it names none. `main` is the host's default kind when
@@ -85,6 +87,8 @@ export class App {
   readonly name: string;
   readonly host: string;
   readonly theme: string | undefined;
+  /** The default language the app's words are in. */
+  readonly locale: string;
   /** The stores the config declares, `main` among them (of the host's default kind unless it says). */
   readonly stores: Record<string, StoreConfig>;
   readonly root: string | undefined;
@@ -99,6 +103,7 @@ export class App {
     this.name = config.name;
     this.host = config.host;
     this.theme = config.theme;
+    this.locale = config.locale ?? "en";
     const stores: Record<string, StoreConfig> = {};
     stores["main"] = {};
     const declared = config.stores ?? {};
