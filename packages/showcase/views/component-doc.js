@@ -24,7 +24,7 @@ import clipboardDef from "@lightstart/components/utility/clipboard.js";
 import segmentedDef from "@lightstart/components/form/segmented.js";
 import propertyEditorDef from "./property-editor.js";
 import previewDef from "./preview.js";
-import { componentTags, loadComponent, loadDemo, modulePath, stylePath } from "../lib/load.ts";
+import { componentTags, defineTag, loadComponent, loadDemo, stylePath } from "../lib/load.ts";
 import { getDefaultValues } from "../lib/registry.ts";
 import { browsableCategories, humanize } from "../lib/categories.ts";
 import { codeOf } from "../lib/demos.ts";
@@ -61,31 +61,6 @@ View.define(previewDef);
 
 const HOST_THEME = "";
 const FOLD_VARIABLES_AT = 12;
-
-/** @type {Set<string>} */
-const defined = new Set();
-
-/**
- * Define `<lc-tag>` and everything its definition needs, once per page.
- * @param {string} tag
- * @param {import("../lib/types.ts").ComponentTags} table
- * @returns {Promise<void>}
- */
-const defineTag = async (tag, table) => {
-  if (defined.has(tag) || customElements.get(tag)) return;
-  const entry = table[tag];
-  if (entry === undefined) return;
-  defined.add(tag);
-  try {
-    if (entry.extends) await defineTag(entry.extends, table);
-    const module = await import(modulePath(tag.replace(/^lc-/, ""), table));
-    View.define(module.default);
-    await Promise.all((entry.uses ?? []).map((used) => defineTag(used, table)));
-  } catch (error) {
-    defined.delete(tag);
-    throw error;
-  }
-};
 
 const view = defineComponent({
   tag: "showcase-component-doc",

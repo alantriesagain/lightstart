@@ -8,6 +8,7 @@ const tag = (module: string): ComponentTag => ({
   style: null,
   extends: null,
   uses: [],
+  doc: { description: "", parts: [], slots: [] },
 });
 
 const tags: ComponentTags = {

@@ -5,9 +5,11 @@ in [README.md](./README.md); this file is what to know before editing them.
 
 ## Adding a component
 
-Two things must agree, and a rule fails the package if they do not: the entry in
-`tags.json`, written by `scripts/tags.js` and the tag map light reads, and the `tag:` the definition
-declares. The `bootstrapp.components` map in this package's `package.json` is read by the website's
+Two things must agree, and a rule fails the package if they do not: the generated entries in
+`tags.json` and `loaders.js`, both written by `scripts/tags.js` and the tag map light reads, and the
+`tag:` the definition declares. `tags.json` carries each module's doc text and `loaders.js` names
+every module and demo with a static `import()`, so a bundler can split them; `tags.test.js` fails
+when either is stale. The `bootstrapp.components` map in this package's `package.json` is read by the website's
 build. The loader takes the tag from the map, so a definition without one still registers and renders, and that is
 the trap: every rule guarded on "is this a component" answers no, and the file goes unchecked.
 Ten components sat that way until 2026-09-10.

@@ -18,6 +18,7 @@ import type { ComponentDefinition } from "@lightstart/light";
 import type { TypeDefinition } from "@lightstart/light/types";
 import { extractDescription, extractParts, extractSlots } from "./example-parser.ts";
 import type {
+  ComponentDoc,
   ComponentList,
   ComponentMeta,
   ComponentPropertyMeta,
@@ -49,11 +50,25 @@ export function describeComponent(
   name: string,
   sourceCode: string,
 ): LoadedComponent {
-  return {
-    ...extractMetadata(componentDef, name),
+  return describeComponentDoc(componentDef, name, {
     description: extractDescription(sourceCode),
     parts: extractParts(sourceCode),
     slots: extractSlots(sourceCode),
+  });
+}
+
+/**
+ * What a component tells the showcase about itself, from a doc entry already
+ * read off its source (the components' tags table carries it).
+ */
+export function describeComponentDoc(
+  componentDef: ComponentDefinition | undefined,
+  name: string,
+  doc: ComponentDoc,
+): LoadedComponent {
+  return {
+    ...extractMetadata(componentDef, name),
+    ...doc,
   };
 }
 

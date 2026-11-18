@@ -37,6 +37,8 @@ export interface AppConfig {
   theme?: string;
   /** The default language the app's words are in; `"en"` when absent. */
   locale?: string;
+  /** The site's address, absolute and without a trailing slash (`https://lightstart.dev`); the build writes its sitemap against it. */
+  url?: string;
   /**
    * The stores by name, several at once of any kinds the host runs; a model picks one with its
    * schema's `$adapter`, and gets `main` when it names none. `main` is the host's default kind when
@@ -89,6 +91,8 @@ export class App {
   readonly theme: string | undefined;
   /** The default language the app's words are in. */
   readonly locale: string;
+  /** The site's address, when the config names one, without a trailing slash. */
+  readonly url: string | undefined;
   /** The stores the config declares, `main` among them (of the host's default kind unless it says). */
   readonly stores: Record<string, StoreConfig>;
   readonly root: string | undefined;
@@ -104,6 +108,7 @@ export class App {
     this.host = config.host;
     this.theme = config.theme;
     this.locale = config.locale ?? "en";
+    this.url = config.url === undefined ? undefined : config.url.replace(/\/+$/, "");
     const stores: Record<string, StoreConfig> = {};
     stores["main"] = {};
     const declared = config.stores ?? {};

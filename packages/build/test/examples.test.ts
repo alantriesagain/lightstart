@@ -36,7 +36,10 @@ const main = async (): Promise<void> => {
       ok(`${name} writes its page`, existsSync(join(report.dir, "index.html")));
       const html = readFileSync(join(report.dir, "index.html"), "utf8");
       ok(`${name} has no importmap left`, !html.includes("importmap"));
-      ok(`${name} names hashed modules`, /<script type="module" src="\.\/[^"]+-[A-Z0-9]+\.js"><\/script>/.test(html));
+      ok(`${name} names hashed modules`, /<script type="module" src="\.?\/[^"]+-[A-Z0-9]+\.js"><\/script>/.test(html));
+      // tasks-web loads /.light/main.ts from the site's root, so its page loads its bundles from there, from any path an SPA serves it at.
+      if (name === "tasks-web") ok("a root-absolute source keeps its bundle at the root", /<script type="module" src="\/[^".][^"]*-[A-Z0-9]+\.js"><\/script>/.test(html) && /href="\/[^"]+\.css"/.test(html));
+      else ok(`${name} keeps a relative source relative`, !/src="\/[^/]/.test(html));
     } finally {
       rmSync(out, { recursive: true, force: true });
     }

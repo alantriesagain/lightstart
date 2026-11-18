@@ -46,9 +46,16 @@ const pageUrl = (ctx: BuildContext, output: string): string => {
   return url.startsWith(".") ? url : `./${url}`;
 };
 
+/** A source URL from the site's root keeps its output there too, so the page loads its bundles from any path it is served at (an SPA's `404.html`). */
+const outputUrl = (ctx: BuildContext, source: string | undefined, output: string): string =>
+  source !== undefined && source.startsWith("/") && !source.startsWith("//") ? `/${output}` : pageUrl(ctx, output);
+
 const writePage = async (ctx: BuildContext): Promise<void> => {
-  const modules = ctx.moduleOutputs.map((output) => (output === undefined ? undefined : pageUrl(ctx, output)));
-  const styles = ctx.styleOutputs.map((output) => (output === undefined ? undefined : pageUrl(ctx, output)));
+  const modules = ctx.moduleOutputs.map((output, index) => {
+    const module = ctx.parsed.modules[index];
+    return output === undefined ? undefined : outputUrl(ctx, module?.kind === "external" ? module.src : undefined, output);
+  });
+  const styles = ctx.styleOutputs.map((output, index) => (output === undefined ? undefined : outputUrl(ctx, ctx.parsed.stylesheets[index]?.href, output)));
   const html = renderPage(ctx.parsed, modules, styles);
   ctx.outputs.set(relative(ctx.root, ctx.pagePath).split("\\").join("/"), html);
 };

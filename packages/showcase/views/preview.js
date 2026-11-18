@@ -8,7 +8,7 @@
 import { html, nothing } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
 import View, { defineComponent, trackWork } from "@lightstart/light";
-import { componentTags, loadDemo, modulePath, stylePath } from "../lib/load.ts";
+import { componentTags, defineTag, loadDemo, stylePath } from "../lib/load.ts";
 import { applySkin, clearSkin } from "../lib/skins.ts";
 import {
   sliderFromViewport,
@@ -20,7 +20,7 @@ import {
 } from "@lightstart/components/utils/viewport.js";
 
 /** @import { ComponentDemo } from "../lib/load.ts" */
-/** @import { ComponentTags, Renderable } from "../lib/types.ts" */
+/** @import { Renderable } from "../lib/types.ts" */
 /** @import { TypeDefinition } from "@lightstart/light/types" */
 
 /**
@@ -33,32 +33,7 @@ import {
  */
 
 /** @type {Set<string>} */
-const defined = new Set();
-
-/** @type {Set<string>} */
 const styled = new Set();
-
-/**
- * Define `<lc-tag>` and everything its definition needs, once per page.
- * @param {string} tag
- * @param {ComponentTags} table
- * @returns {Promise<void>}
- */
-const defineTag = async (tag, table) => {
-  if (defined.has(tag) || customElements.get(tag)) return;
-  const entry = table[tag];
-  if (entry === undefined) return;
-  defined.add(tag);
-  try {
-    if (entry.extends) await defineTag(entry.extends, table);
-    const module = await import(modulePath(tag.replace(/^lc-/, ""), table));
-    View.define(module.default);
-    await Promise.all((entry.uses ?? []).map((used) => defineTag(used, table)));
-  } catch (error) {
-    defined.delete(tag);
-    throw error;
-  }
-};
 
 /**
  * Add a component's stylesheet to the page, once per page.

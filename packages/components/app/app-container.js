@@ -3,7 +3,7 @@ import T from "@lightstart/light/types";
 import { defineComponent } from "@lightstart/light";
 import { env } from "@lightstart/light/env";
 
-/** @import { AppRouteState, Prop } from "../types.ts" */
+/** @import { AppRouteState } from "../types.ts" */
 
 export default defineComponent({
   tag: "lc-app-container",

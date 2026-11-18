@@ -14,7 +14,7 @@ light build                # generate as the build's first step
 
 | Path | Holds | The app does |
 |---|---|---|
-| `src/app.ts` | `defineApp({ name, host, theme, locale, stores, root, args })` | reads it first |
+| `src/app.ts` | `defineApp({ name, host, theme, locale, url, stores, root, args })` | reads it first |
 | `src/models/<name>.ts` | one model, default-exported | opens its store with every model |
 | `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready`, each after the controllers it imports |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
@@ -46,6 +46,7 @@ export default defineApp({
 | `host` | required | The host's name: `"web"` or `"tui"` (`@lightstart/app/<host>`) |
 | `theme` | `"default"` | A preset name, applied by the web host |
 | `locale` | `"en"` | The default language the app's words are in |
+| `url` | none | The site's address (`https://lightstart.dev`), which the build's sitemap is written against |
 | `stores` | `{ main: {} }` | The stores by name, several at once: `{ kind?, at? }` each |
 | `root` | `"app-root"` | The root view's tag |
 | `args` | `{}` | The arguments the app takes, as a `@lightstart/cli` schema |
@@ -142,6 +143,14 @@ await start(manifest, { classes: { dark, light } });
 ```
 
 The output is deterministic (sorted, relative imports from `.light/`) and a file is written only when its content changes. `.light/` is not committed: add it to the project's `.gitignore`, beside `.deployed/`.
+
+## Building
+
+`light build` runs the same generator before it reads the page, then adds the files a static host needs after it rewrites the page, for a project with `src/app.ts`:
+
+- `404.html`, the built page itself (the same contents as `index.html`), so a path the host has no file for still boots the app and its router.
+- `sitemap.xml` and `robots.txt` when `defineApp` has a `url`: the sitemap lists every route of `src/routes.ts` whose path has no parameter (`:name`) or wildcard, as absolute URLs joined with `url`, sorted; `robots.txt` is `User-agent: *`, `Allow: /` and a `Sitemap:` line. Without a `url` there is no sitemap, and `robots.txt` has no `Sitemap:` line. A route with parameters is left out until something lists its values.
+- `_headers`, the format Cloudflare Pages and Netlify read: the hashed `.js` and `.css` outputs are cached with `Cache-Control: public, max-age=31536000, immutable`, and `/index.html`, `/404.html` and `/` with `Cache-Control: no-cache`.
 
 ## The web host
 
