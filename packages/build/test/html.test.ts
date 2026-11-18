@@ -35,4 +35,9 @@ ok("the inline script became a bundle", out.includes('<script type="module" src=
 ok("the inline code is gone", !out.includes("@app/thing.ts"));
 ok("the stylesheet points at its output", out.includes('href="./style-0.css"'));
 ok("the rest of the page is unchanged", out.includes('<p>Untouched</p>') && out.startsWith("<!DOCTYPE html>"));
+
+const rooted = parsePage('<link rel="stylesheet" href="/src/styles.css"><script type="module" src="/.light/main.ts"></script><script type="module" src="//cdn.example/x.js"></script>', "/site/docs", "/site");
+eq("a src from the site's root resolves against the root", rooted.modules[0]?.kind === "external" ? rooted.modules[0].path : "", "/site/.light/main.ts");
+eq("and so does an href", rooted.stylesheets[0]?.path ?? "", "/site/src/styles.css");
+eq("a protocol-relative src is not a root path", rooted.modules[1]?.kind === "external" ? rooted.modules[1].src : "", "//cdn.example/x.js");
 done();

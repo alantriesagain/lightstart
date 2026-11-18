@@ -45,7 +45,10 @@ const rangeOf = (match: RegExpMatchArray): PageRange => {
 };
 
 /** Scan a page's HTML for its importmap, module scripts and stylesheet links. */
-export const parsePage = (html: string, pageDir: string): ParsedPage => {
+/** A page's URL as a path: from the site's root when it starts with `/` (not `//`), else from the page's folder. */
+const pathOf = (url: string, pageDir: string, root: string): string => (url.startsWith("/") && !url.startsWith("//") ? resolve(root, "." + url) : resolve(pageDir, url));
+
+export const parsePage = (html: string, pageDir: string, root: string = pageDir): ParsedPage => {
   const parsed: ParsedPage = {
     html,
     importMapText: null,
@@ -67,7 +70,7 @@ export const parsePage = (html: string, pageDir: string): ParsedPage => {
     }
     if (type !== "module") continue;
     const src = attrs.get("src");
-    parsed.modules.push(src === undefined ? { kind: "inline", code: match[2] ?? "" } : { kind: "external", src, path: resolve(pageDir, src) });
+    parsed.modules.push(src === undefined ? { kind: "inline", code: match[2] ?? "" } : { kind: "external", src, path: pathOf(src, pageDir, root) });
     parsed.moduleRanges.push(range);
   }
 
@@ -76,7 +79,7 @@ export const parsePage = (html: string, pageDir: string): ParsedPage => {
     const rel = (attrs.get("rel") ?? "").toLowerCase().split(/\s+/);
     const href = attrs.get("href");
     if (href === undefined || !rel.includes("stylesheet")) continue;
-    parsed.stylesheets.push({ href, path: resolve(pageDir, href) });
+    parsed.stylesheets.push({ href, path: pathOf(href, pageDir, root) });
     parsed.stylesheetRanges.push(rangeOf(match));
   }
 

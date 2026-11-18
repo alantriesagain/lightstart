@@ -15,7 +15,7 @@ import { cleanupOldBuilds, updateCurrent } from "./versioning.ts";
 
 const readPage = async (ctx: BuildContext): Promise<void> => {
   const html = await fs.readFile(ctx.pagePath, "utf8");
-  ctx.parsed = parsePage(html, dirname(ctx.pagePath));
+  ctx.parsed = parsePage(html, dirname(ctx.pagePath), ctx.root);
   ctx.importMap = ctx.parsed.importMapText === null ? { imports: {} } : parseImportMap(ctx.parsed.importMapText);
   ctx.moduleOutputs = ctx.parsed.modules.map(() => undefined);
   ctx.styleOutputs = ctx.parsed.stylesheets.map(() => undefined);
