@@ -73,7 +73,7 @@ Nested `routes` flatten relative to their parent. A match on a nested path answe
 
 An adapter supplies `getLocation()`, `isSamePath(path)`, `hardNavigate(path)`, `pushState(state, path)`, `replaceState(state, path)`, `back()`, `forward()`, `setTitle(title)`, and optionally `clearPrerendered()`.
 
-`createBrowserAdapter()` reads `window.location`, `window.history` and `document.title`. `createMemoryAdapter(initialPath)` keeps its location and history in fields, for tests, server rendering and native apps, and exposes `getHistory()`.
+`createBrowserAdapter()` reads `window.location`, `window.history` and `document.title`. `createMemoryAdapter(initialPath, origin?)` keeps its location and history in fields, for tests, server rendering and native apps, and exposes `getHistory()`; `origin` (`http://memory` by default) is the one a clicked link is read against, so a history in memory inside a real page (a test's) passes the page's own.
 
 ## The Navigation bridge
 

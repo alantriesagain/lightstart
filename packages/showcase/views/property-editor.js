@@ -29,7 +29,7 @@ View.define(textareaDef);
 /** @param {string} key */
 const attributeOf = (key) => key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 
-export default defineComponent({
+const view = defineComponent({
   tag: "showcase-property-editor",
   style: true,
   props: {
@@ -107,3 +107,7 @@ export default defineComponent({
     return html`${entries.map(([key, metadata]) => this.renderRow(key, metadata))}`;
   },
 });
+
+View.define(view);
+
+export default view;

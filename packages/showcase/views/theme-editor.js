@@ -1,7 +1,7 @@
 import { html, nothing } from "@lightstart/light/html";
 import { getComponentList } from "../lib/registry.ts";
 import T from "@lightstart/light/types";
-import { defineComponent } from "@lightstart/light";
+import View, { defineComponent } from "@lightstart/light";
 import { STARTER_THEME } from "../lib/starter-theme.ts";
 import { componentTags } from "../lib/load.ts";
 
@@ -23,7 +23,7 @@ const COLOR_PREFIX = /^(?:#|rgba?\(|hsla?\()/i;
 /** @param {unknown} value */
 const isColorLike = (value) => typeof value === "string" && COLOR_PREFIX.test(value.trim());
 
-export default defineComponent({
+const view = defineComponent({
   tag: "showcase-theme-editor",
   style: true,
   props: {
@@ -528,3 +528,7 @@ export default defineComponent({
     return html`<lc-accordion variant="flush">${sections}</lc-accordion>`;
   },
 });
+
+View.define(view);
+
+export default view;

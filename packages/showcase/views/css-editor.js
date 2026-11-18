@@ -8,7 +8,7 @@ import { STARTER_THEME } from "../lib/starter-theme.ts";
 import { stylePath } from "../lib/load.ts";
 import { trackWork } from "@lightstart/light";
 import T from "@lightstart/light/types";
-import { defineComponent } from "@lightstart/light";
+import View, { defineComponent } from "@lightstart/light";
 
 /**
  * @template V
@@ -75,7 +75,7 @@ function toHex(value) {
   return null;
 }
 
-export default defineComponent({
+const view = defineComponent({
   tag: "showcase-css-editor",
   props: {
     componentTag: T.string(),
@@ -229,3 +229,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;
