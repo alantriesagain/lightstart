@@ -107,7 +107,7 @@ const defined = new Set<string>();
  * app writes.
  */
 export const defineTag = async (tag: string, table: ComponentTags = componentTags()): Promise<void> => {
-  if (defined.has(tag) || customElements.get(tag) !== undefined) return;
+  if (defined.has(tag) || View.components.get(tag)?._constructor !== undefined || globalThis.customElements?.get(tag) !== undefined) return;
   const entry = table[tag];
   const loader = loaderTable[tag];
   if (entry === undefined || loader === undefined) return;

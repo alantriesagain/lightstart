@@ -10,7 +10,7 @@ import { lcText } from "../utils/text.js";
 
 export default defineComponent({
   mixins: [
-    withOverlay({ lockScroll: true }),
+    ...(typeof document === "undefined" ? [] : [withOverlay({ lockScroll: true })]),
     withSwipeThreshold({ axisProp: "axis", ratio: 1.2, enabled: "open" }),
   ],
   tag: "lc-stories",
@@ -36,6 +36,7 @@ export default defineComponent({
       const next = nextIndex(e.key, this.index, this.items.length, { orientation: "both" });
       if (next !== null) this._to(next);
     };
+    if (typeof globalThis.addEventListener !== "function") return;
     globalThis.addEventListener("keydown", onKeydown);
     this.$own(() => globalThis.removeEventListener("keydown", onKeydown));
   },

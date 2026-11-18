@@ -48,7 +48,7 @@ export default defineComponent({
   },
   render() {
     if (!this.entries.length) return nothing;
-    const locale = document.documentElement.lang || "en";
+    const locale = typeof document === "undefined" ? "en" : document.documentElement.lang || "en";
     const today = dayKeyOf(Date.now());
     return groupByDay(this.entries, { oldestFirst: this.oldestFirst }).map(
       ({ day, entries }) => html`

@@ -99,7 +99,7 @@ export default defineComponent({
   getIcon(name, solid = false, bold = false) {
     if (!isIconName(name) || !icons.load || variantsOf(solid, bold).every((variant) => drawn.has(ruleKey(name, variant)))) return;
     return trackWork(drawIcon(name, solid, bold), "icon").then(
-      () => this.$requestUpdate(),
+      () => { if (this.isConnected) this.$requestUpdate(); },
       (/** @type {unknown} */ error) => console.error(`Error drawing icon: ${name}`, error),
     );
   },

@@ -33,7 +33,7 @@ export default defineComponent({
       this.removeEventListener("click", onMenuClick);
       this.removeEventListener("popover-open", onOpen);
       this.removeEventListener("popover-close", onClose);
-      document.removeEventListener("keydown", onKeydown, true);
+      if (typeof document !== "undefined") document.removeEventListener("keydown", onKeydown, true);
     });
   },
 

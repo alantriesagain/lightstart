@@ -17,6 +17,9 @@ export type StoreAt = string | ((args: AppArgs) => string);
 /** A store's kind, or one read from the parsed arguments (memory for a run that keeps nothing, say). */
 export type StoreKindOf = string | ((args: AppArgs) => string);
 
+/** How the build renders a prerendered page: light's markup host in node, or headless Chromium through Playwright. */
+export type PrerenderRenderer = "markup" | "browser";
+
 /**
  * One store an app keeps rows in. `kind` is an adapter its host can run (`memory`, `indexeddb`,
  * `jsonl`, `sql`, or one the project registers), the host's default when absent; `at` is what that
@@ -39,8 +42,8 @@ export interface AppConfig {
   locale?: string;
   /** The site's address, absolute and without a trailing slash (`https://lightstart.dev`); the build writes its sitemap against it. */
   url?: string;
-  /** Render every concrete route to its own `index.html` at build time; `light build --prerender` when absent. */
-  prerender?: boolean;
+  /** Render every concrete route to its own `index.html` at build time; `light build --prerender` when absent. `true` and `"markup"` render in node, `"browser"` through Playwright. */
+  prerender?: boolean | PrerenderRenderer;
   /**
    * The stores by name, several at once of any kinds the host runs; a model picks one with its
    * schema's `$adapter`, and gets `main` when it names none. `main` is the host's default kind when
@@ -97,6 +100,8 @@ export class App {
   readonly url: string | undefined;
   /** Whether the build renders every concrete route ahead of time. */
   readonly prerender: boolean;
+  /** The renderer the config names, when it names one; `undefined` asks for the build's default. */
+  readonly prerenderRenderer: PrerenderRenderer | undefined;
   /** The stores the config declares, `main` among them (of the host's default kind unless it says). */
   readonly stores: Record<string, StoreConfig>;
   readonly root: string | undefined;
@@ -113,7 +118,8 @@ export class App {
     this.theme = config.theme;
     this.locale = config.locale ?? "en";
     this.url = config.url === undefined ? undefined : config.url.replace(/\/+$/, "");
-    this.prerender = config.prerender === true;
+    this.prerender = config.prerender === true || typeof config.prerender === "string";
+    this.prerenderRenderer = config.prerender === "markup" || config.prerender === "browser" ? config.prerender : undefined;
     const stores: Record<string, StoreConfig> = {};
     stores["main"] = {};
     const declared = config.stores ?? {};

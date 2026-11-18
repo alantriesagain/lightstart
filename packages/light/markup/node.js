@@ -67,6 +67,85 @@ export class MListener {
   }
 }
 
+/** @param {string} name */
+const camelToKebab = (name) => (name.startsWith("--") ? name : name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`));
+
+/**
+ * A minimal style declaration over an element's `style` attribute: property
+ * writes and the DOM methods read and write the attribute, made on first read.
+ * @param {MElement} el
+ */
+const createStyle = (el) => {
+  /** @type {Map<string, string>} */
+  const declarations = new Map();
+  /** @param {string} text */
+  const parse = (text) => {
+    declarations.clear();
+    for (const part of text.split(";")) {
+      const at = part.indexOf(":");
+      if (at === -1) continue;
+      const name = part.slice(0, at).trim();
+      const value = part.slice(at + 1).trim();
+      if (name !== "" && value !== "") declarations.set(name, value);
+    }
+  };
+  const write = () => {
+    if (declarations.size === 0) el.attrs.delete("style");
+    else el.attrs.set("style", [...declarations].map(([name, value]) => `${name}: ${value}`).join("; "));
+  };
+  const set = (/** @type {unknown} */ prop, /** @type {unknown} */ value) => {
+    const name = camelToKebab(String(prop));
+    if (value === null || value === undefined || value === "") declarations.delete(name);
+    else declarations.set(name, String(value));
+    write();
+  };
+  parse(el.attrs.get("style") ?? "");
+  const target = {
+    /** @param {unknown} prop @param {unknown} value */
+    setProperty(prop, value) {
+      set(prop, value);
+    },
+    /** @param {unknown} prop */
+    removeProperty(prop) {
+      const name = camelToKebab(String(prop));
+      const old = declarations.get(name) ?? "";
+      declarations.delete(name);
+      write();
+      return old;
+    },
+    /** @param {unknown} prop */
+    getPropertyValue(prop) {
+      return declarations.get(camelToKebab(String(prop))) ?? "";
+    },
+    get cssText() {
+      return [...declarations].map(([name, value]) => `${name}: ${value}`).join("; ");
+    },
+    set cssText(text) {
+      parse(String(text));
+      write();
+    },
+  };
+  return new Proxy(target, {
+    /** @param {typeof target} obj @param {string | symbol} prop */
+    get(obj, prop) {
+      if (prop in obj) return Reflect.get(obj, prop, obj);
+      if (typeof prop !== "string") return undefined;
+      return declarations.get(camelToKebab(prop)) ?? "";
+    },
+    /** @param {typeof target} obj @param {string | symbol} prop @param {unknown} value */
+    set(obj, prop, value) {
+      if (prop === "cssText") {
+        parse(String(value));
+        write();
+        return true;
+      }
+      if (typeof prop !== "string") return Reflect.set(obj, prop, value);
+      set(prop, value);
+      return true;
+    },
+  });
+};
+
 export class MElement extends MNode {
   /** @param {string} tag */
   constructor(tag = "") {
@@ -83,6 +162,8 @@ export class MElement extends MNode {
     this._childNodes = [];
     /** @type {boolean} */
     this._viewConnected = false;
+    /** @type {object | undefined} */
+    this._style = undefined;
   }
 
   get nodeType() {
@@ -130,6 +211,21 @@ export class MElement extends MNode {
 
   get attributes() {
     return [...this.attrs].map(([name, value]) => ({ name, value }));
+  }
+
+  /** @returns {object} the minimal `ElementInternals` a form-associated component reads off the browser */
+  attachInternals() {
+    return {
+      setFormValue() {},
+      setValidity() {},
+      checkValidity: () => true,
+      reportValidity: () => true,
+      form: null,
+      labels: [],
+      validity: { valid: true },
+      validationMessage: "",
+      willValidate: false,
+    };
   }
 
   /** @returns {MNode[]} */
@@ -213,6 +309,11 @@ export class MElement extends MNode {
         return read().length;
       },
     };
+  }
+
+  get style() {
+    if (this._style === undefined) this._style = createStyle(this);
+    return this._style;
   }
 
   /**

@@ -33,12 +33,12 @@ export default defineComponent({
         this._sync();
       });
     };
-    const observer = new ResizeObserver(() => this._sync());
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => this._sync());
     track.addEventListener("scroll", onScroll, { passive: true });
-    observer.observe(track);
+    observer?.observe(track);
     this.$own(() => {
       track.removeEventListener("scroll", onScroll);
-      observer.disconnect();
+      observer?.disconnect();
       if (this._raf) cancelAnimationFrame(this._raf);
       this._raf = 0;
     });

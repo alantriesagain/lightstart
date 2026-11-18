@@ -23,6 +23,7 @@ import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import { parseArgs } from "@lightstart/cli/argv.ts";
 import type { MElement } from "@lightstart/light/markup/node.js";
 import { get as registeredView } from "@lightstart/light/markup/registry.js";
+import { config, configureView } from "@lightstart/light/view/core.js";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
@@ -118,6 +119,11 @@ class StaticHost extends AppHost {
     if (previous !== null) setHost(previous);
   }
 
+  /** Report an error from a view running on this host, as the markup host does. */
+  report(error: unknown): void {
+    this.markup.reportError(error);
+  }
+
   /** The root element's markup with the engine's markers, once the views settled. */
   async rendered(): Promise<string> {
     await this.markup.settle();
@@ -132,10 +138,20 @@ export const renderApp = async (manifest: AppManifest, options: RenderOptions = 
   const kinds = options.kinds ?? [];
   const host = new StaticHost(options.path ?? "/", options.args, kinds);
   const run = new AppRun(manifest, host, kinds.length === 0);
+  const previousWrap = config.wrap;
+  configureView({
+    wrap: (work, label) => {
+      previousWrap(work, label);
+      work.catch((error) => {
+        host.report(error);
+      });
+    },
+  });
   try {
     await run.start();
     return await host.rendered();
   } finally {
+    configureView({ wrap: previousWrap });
     await run.stop();
   }
 };

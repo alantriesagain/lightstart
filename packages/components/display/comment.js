@@ -35,7 +35,7 @@ export default defineComponent({
     actions: /** @type {Prop<CommentActions | null>} */ (T.function({ defaultValue: null })),
   },
   render() {
-    const locale = document.documentElement.lang || "en";
+    const locale = typeof document === "undefined" ? "en" : document.documentElement.lang || "en";
     const when = timeAgo(this.at, locale);
     return html`
       <lc-avatar class="comment-avatar" part="lc-comment-avatar" size="sm" src=${this.avatar} name=${this.author}></lc-avatar>

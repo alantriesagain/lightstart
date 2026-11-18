@@ -12,7 +12,7 @@ import { navigation } from "@lightstart/light/navigation";
 /** @import { TemplateValue } from "@lightstart/light/html" */
 
 export default defineComponent({
-  mixins: [withOverlay(), withClickOutside()],
+  mixins: [...(typeof document === "undefined" ? [] : [withOverlay()]), withClickOutside()],
   tag: "lc-search",
   style: true,
   props: {
@@ -69,7 +69,8 @@ export default defineComponent({
   },
 
   focusInput() {
-    /** @type {HTMLInputElement | null} */ (this.querySelector("input"))?.focus();
+    const input = /** @type {HTMLInputElement | null} */ (this.querySelector("input"));
+    if (typeof input?.focus === "function") input.focus();
   },
 
   async expand() {

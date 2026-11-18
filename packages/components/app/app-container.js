@@ -59,8 +59,10 @@ export default defineComponent({
         });
       }
     };
-    window.addEventListener("popstate", onPopState);
-    this.$own(() => window.removeEventListener("popstate", onPopState));
+    if (typeof window !== "undefined") {
+      window.addEventListener("popstate", onPopState);
+      this.$own(() => window.removeEventListener("popstate", onPopState));
+    }
   },
 
   /** @param {{ changedProps: Map<string, unknown> }} arg */

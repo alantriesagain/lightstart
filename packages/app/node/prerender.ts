@@ -1,9 +1,10 @@
 /**
- * @file Prerendering a built app: serve the build's outputs from memory, open
- * every concrete route in headless Chromium through Playwright, wait for the
- * page to settle, and keep its `outerHTML` as that route's `index.html`. The
- * build calls it after the shell is written and before anything is written to
- * disk; `404.html` stays the unrendered shell.
+ * @file Prerendering a built app: the default renderer runs each concrete
+ * route on light's markup host in node and writes its page; the browser
+ * renderer serves the build's outputs from memory, opens every route in
+ * headless Chromium through Playwright, and keeps its `outerHTML`. The build
+ * calls it after the shell is written and before anything is written to disk;
+ * `404.html` stays the unrendered shell.
  */
 
 /// <reference lib="dom" />
@@ -12,18 +13,32 @@ import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import type { PrerenderRenderer } from "../index.ts";
+import type { AppManifest } from "../manifest.ts";
 
 /** The marker the web host reads to adopt the served DOM instead of replacing it. */
 export const PRERENDER_SCRIPT = "<script>window.__PRERENDERED__ = true</script>";
 
-/** What the renderer needs: where the project's Playwright is, the build's outputs and the paths to render. */
+/** What the renderer needs: where the project is, the build's outputs, the paths to render and how. */
 export interface PrerenderOptions {
-  /** The project folder, whose Playwright is preferred over light's. */
+  /** The project folder, whose modules and Playwright are preferred over light's. */
   root: string;
   /** The build's outputs, path to contents; the rendered pages are added to it. */
   outputs: Map<string, Uint8Array | string>;
   /** The concrete paths to render. */
   paths: readonly string[];
+  /** `"markup"` (the default) renders in node; `"browser"` through Playwright. */
+  renderer?: PrerenderRenderer;
+  /** Where a view's error goes while rendering; printed as a warning by the build. */
+  warn?: (message: string) => void;
+}
+
+interface MarkupHostPrototype {
+  reportError(error: unknown): void;
+}
+
+interface MarkupModule {
+  MarkupHost?: { prototype: MarkupHostPrototype };
 }
 
 interface PlaywrightPage {
@@ -115,12 +130,75 @@ const outputPathOf = (path: string): string => {
 
 const markPrerendered = (html: string): string => (/<head[^>]*>/i.test(html) ? html.replace(/<head([^>]*)>/i, `<head$1>${PRERENDER_SCRIPT}`) : html);
 
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+const textOf = (content: Uint8Array | string): string => (typeof content === "string" ? content : new TextDecoder().decode(content));
+
+const importFromProject = async (root: string, specifier: string): Promise<unknown> => {
+  const resolved = createRequire(join(root, "package.json")).resolve(specifier);
+  return import(pathToFileURL(resolved).href);
+};
+
+/**
+ * Render every path on light's markup host in node and add its `index.html`
+ * to `outputs`; answers how many pages it wrote. Imports light's markup host
+ * from the project before its generated manifest, so the views register
+ * there, then renders one path after another. A page that throws fails naming
+ * its path; a view's error goes to `warn` with the path and the render goes on.
+ */
+const prerenderMarkup = async (options: PrerenderOptions): Promise<number> => {
+  const { root, outputs, paths } = options;
+  const warn = options.warn ?? ((message: string): void => console.warn(message));
+  const built = outputs.get("index.html");
+  if (built === undefined) throw new Error("Prerendering needs the build's index.html");
+
+  const markup = (await importFromProject(root, "@lightstart/light/markup")) as MarkupModule;
+  const appPath = join(root, ".light", "app.ts");
+  const module = (await import(`${pathToFileURL(appPath).href}?mtime=${String(Date.now())}`)) as { default?: AppManifest };
+  if (module.default === undefined) throw new Error(`The generated app at ${appPath} has no default export`);
+  const manifest = module.default;
+  const { renderPage } = await import("../static/index.ts");
+
+  const prototype = markup.MarkupHost?.prototype;
+  const reportError = prototype?.reportError;
+  const page = textOf(built);
+  let written = 0;
+  let rendering = "";
+  const onUnhandled = (reason: unknown): void => {
+    warn(`Prerendering ${rendering}: unhandled rejection: ${messageOf(reason)}`);
+  };
+  process.on("unhandledRejection", onUnhandled);
+  try {
+    for (const path of paths) {
+      rendering = path;
+      const errors: string[] = [];
+      const capture = (error: unknown): void => {
+        errors.push(messageOf(error));
+      };
+      if (prototype !== undefined && reportError !== undefined) prototype.reportError = capture;
+      try {
+        const html = await renderPage(manifest, page, { path });
+        outputs.set(outputPathOf(path), html);
+        written += 1;
+      } catch (error) {
+        throw new Error(`Prerendering ${path} failed: ${messageOf(error)}`);
+      } finally {
+        if (prototype !== undefined && reportError !== undefined) prototype.reportError = reportError;
+      }
+      for (const error of errors) warn(`Prerendering ${path}: ${error}`);
+    }
+  } finally {
+    process.off("unhandledRejection", onUnhandled);
+  }
+  return written;
+};
+
 /**
  * Render every path of a built app in headless Chromium and add its
  * `index.html` to `outputs`; answers how many pages it wrote. Fails naming the
  * path whose page threw.
  */
-export const prerender = async (options: PrerenderOptions): Promise<number> => {
+const prerenderBrowser = async (options: PrerenderOptions): Promise<number> => {
   const { root, outputs, paths } = options;
   if (paths.length === 0) return 0;
 
@@ -185,4 +263,14 @@ export const prerender = async (options: PrerenderOptions): Promise<number> => {
   }
 
   return written;
+};
+
+/**
+ * Render every path of a built app with the chosen renderer and add its
+ * `index.html` to `outputs`; answers how many pages it wrote. The markup
+ * renderer is the default.
+ */
+export const prerender = async (options: PrerenderOptions): Promise<number> => {
+  if (options.paths.length === 0) return 0;
+  return (options.renderer ?? "markup") === "browser" ? prerenderBrowser(options) : prerenderMarkup(options);
 };

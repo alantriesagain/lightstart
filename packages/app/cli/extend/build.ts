@@ -6,12 +6,14 @@
  * a step after that which renders every concrete route when prerendering is on.
  */
 
+import "@lightstart/light/markup";
 import { defineExtension } from "@lightstart/cli";
 import type {} from "@lightstart/build";
 import type { RoutesMap } from "@lightstart/router";
 import { existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
+import type { PrerenderRenderer } from "../../index.ts";
 import { generate, infoOf, routesOf } from "../../node/generate.ts";
 import { pathsOf } from "../../node/paths.ts";
 import { prerender } from "../../node/prerender.ts";
@@ -36,19 +38,36 @@ const headersOf = (paths: readonly string[]): string => {
   return `${rules.join("\n\n")}\n`;
 };
 
-const prerenders = async (app: string): Promise<boolean> => {
+interface PrerenderChoice {
+  prerender: boolean;
+  renderer: PrerenderRenderer | undefined;
+}
+
+const prerenders = async (app: string): Promise<PrerenderChoice> => {
   try {
-    const module = (await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`)) as { default?: { prerender?: unknown } };
-    return module.default !== undefined && module.default.prerender === true;
+    const module = (await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`)) as {
+      default?: { prerender?: unknown; prerenderRenderer?: unknown };
+    };
+    const config = module.default;
+    const renderer = config?.prerenderRenderer;
+    return {
+      prerender: config?.prerender === true,
+      renderer: renderer === "browser" || renderer === "markup" ? renderer : undefined,
+    };
   } catch {
-    return false;
+    return { prerender: false, renderer: undefined };
   }
 };
 
 export default defineExtension("build", {
-  args: { prerender: { flag: true, description: "Render every concrete route into its own index.html" } },
+  args: {
+    prerender: { flag: true, description: "Render every concrete route into its own index.html" },
+    renderer: { choices: ["markup", "browser"] as const, description: "How to prerender: light's markup host in node (default) or headless Chromium" },
+  },
   setup(_ctx, args, api) {
-    const wanted = (args as { prerender?: unknown } | undefined)?.prerender === true;
+    const given = args as { prerender?: unknown; renderer?: unknown } | undefined;
+    const wanted = given?.prerender === true;
+    const chosen = given?.renderer === "browser" || given?.renderer === "markup" ? given.renderer : undefined;
     api.steps.before("page", {
       name: "app",
       async run(ctx) {
@@ -85,15 +104,17 @@ export default defineExtension("build", {
       async run(ctx) {
         const app = join(ctx.root, "src", "app.ts");
         if (!existsSync(app)) return;
-        if (!wanted && !(await prerenders(app))) return;
+        const fromApp = await prerenders(app);
+        if (!wanted && !fromApp.prerender) return;
 
         const routes = ctx.data.get("app-routes");
         const paths = routes === null || routes === undefined ? [] : await pathsOf(routes as RoutesMap);
         if (paths.length === 0) return;
 
+        const renderer = chosen ?? fromApp.renderer ?? "markup";
         const started = Date.now();
-        const written = await prerender({ root: ctx.root, outputs: ctx.outputs, paths });
-        ctx.log(`prerendered ${String(written)} pages in ${String(Date.now() - started)} ms`);
+        const written = await prerender({ root: ctx.root, outputs: ctx.outputs, paths, renderer, warn: (message) => console.warn(message) });
+        ctx.log(`prerendered ${String(written)} pages with ${renderer} in ${String(Date.now() - started)} ms`);
       },
     });
   },

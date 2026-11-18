@@ -1,7 +1,7 @@
 // node-only
 /**
  * @file A prerendered page boots without drawing again: built with
- * `--prerender` and served as a static host serves it, the page's served
+ * `--prerender --renderer markup` and served as a static host serves it, the page's served
  * elements (the root view, the container, the route's view and what it drew) are
  * the same nodes once the app has booted, the views adopting the served DOM.
  */
@@ -28,7 +28,7 @@ writeFileSync(pagePath, readFileSync(pagePath, "utf8").replace("./.light/main.ts
 
 const main = async (): Promise<void> => {
   const api = createBuildExtension({ root: project, minify: false });
-  await appBuild.setup(undefined as never, { prerender: true } as never, api);
+  await appBuild.setup(undefined as never, { prerender: true, renderer: "markup" } as never, api);
   const dir = (await build({ root: project, minify: false }, api)).dir;
   const server = createServer((request, response) => {
     const path = new URL(request.url ?? "/", "http://x").pathname.replace(/^\/+/, "");

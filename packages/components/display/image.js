@@ -20,6 +20,7 @@ const styledSheet = () => {
  * @returns {Promise<void>}
  */
 const inlineBase64Style = async (url, className) => {
+  if (typeof FileReader === "undefined") return;
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Image request failed: ${response.status}`);
   const blob = await response.blob();
