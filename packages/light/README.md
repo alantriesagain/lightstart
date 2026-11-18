@@ -386,10 +386,12 @@ and light's own `test/serve.js` remains the test runner's server.
 `npx light check [dirs...]` checks component definitions against light's
 conventions: definitions go through `defineComponent`, props are declared under
 `props`, boolean attributes bind as `?attr`, parts are named by their tag, hooks
-use the engine's names, methods do not shadow DOM methods, and stylesheets scope
-through the component's tag. It reads templates as trees, including `<script
-type="module">` blocks in pages. Findings are reported at their file, line and
-column; `--rule <id>` runs one rule and `--json` prints the result.
+use the engine's names, methods do not shadow DOM methods, stylesheets scope
+through the component's tag, and a view's render reads no browser global (use
+`env`, `navigation`, a storage adapter or `translation.language()`, or move the
+read to `connected()` or an event handler). It reads templates as trees,
+including `<script type="module">` blocks in pages. Findings are reported at
+their file, line and column; `--rule <id>` runs one rule and `--json` prints the result.
 
 The checker reads definitions with the TypeScript 6 compiler API, which
 TypeScript 7's `typescript` no longer exports. Under TypeScript 7, install
