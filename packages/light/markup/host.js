@@ -11,6 +11,9 @@ import { Clone, Host, ListenerOptions, Prepared } from "../html/host.ts";
 import { parseTemplate } from "../html/parser.ts";
 import { TplComment, TplElement, TplNode, TplText, indexParts, tokenize } from "../html/tokenizer.ts";
 import { MComment, MElement, MFragment, MListener, MNode, MText, insertBefore, isConnected, nextSiblingOf, removeNode } from "./node.js";
+import * as registry from "./registry.js";
+
+export { dispatch } from "./node.js";
 
 /** @import { HostNode } from "../html/host.ts" */
 /** @import { EventBinding } from "../html/parts.ts" */
@@ -54,6 +57,18 @@ class CloneWalk {
 }
 
 /**
+ * @param {string} tag
+ * @returns {MElement}
+ */
+const createElementFor = (tag) => {
+  const Ctor = registry.get(tag);
+  if (Ctor === undefined) return new MElement(tag);
+  const el = /** @type {MElement} */ (/** @type {unknown} */ (new Ctor()));
+  el.tag = tag;
+  return el;
+};
+
+/**
  * @param {TplNode[]} nodes
  * @param {MElement} parent
  * @param {CloneWalk | null} walk
@@ -61,21 +76,21 @@ class CloneWalk {
 const cloneInto = (nodes, parent, walk) => {
   for (const node of nodes)
     if (node instanceof TplElement) {
-      const el = new MElement(node.tag);
+      const el = createElementFor(node.tag);
       for (const [name, value] of node.attrs) el.attrs.set(name, value);
       el.parent = parent;
-      parent.children.push(el);
+      parent.childNodes.push(el);
       if (walk !== null) walk.visit(el);
       cloneInto(node.children, el, walk);
     } else if (node instanceof TplComment) {
       const comment = new MComment(node.data);
       comment.parent = parent;
-      parent.children.push(comment);
+      parent.childNodes.push(comment);
       if (walk !== null) walk.visit(comment);
     } else if (node instanceof TplText) {
       const text = new MText(node.data);
       text.parent = parent;
-      parent.children.push(text);
+      parent.childNodes.push(text);
     }
 
 };
@@ -87,6 +102,7 @@ export class MarkupHost extends Host {
     super();
     /** @type {((error: unknown) => void) | null} */
     this.onError = null;
+    this._pending = 0;
   }
 
   /**
@@ -133,7 +149,7 @@ export class MarkupHost extends Host {
 
   /** @param {string} tag */
   createElement(tag) {
-    return new MElement(tag);
+    return createElementFor(tag);
   }
 
   createFragment() {
@@ -219,7 +235,9 @@ export class MarkupHost extends Host {
    * @param {unknown} value
    */
   setProperty(el, name, value) {
-    /** @type {MElement} */ (el).props.set(name, value);
+    const element = /** @type {MElement} */ (el);
+    element.props.set(name, value);
+    if (name in element) /** @type {Record<string, unknown>} */ (/** @type {unknown} */ (element))[name] = value;
   }
 
   /**
@@ -228,11 +246,11 @@ export class MarkupHost extends Host {
    */
   setContent(el, text) {
     const element = /** @type {MElement} */ (el);
-    for (const child of element.children) child.parent = null;
-    element.children = [];
+    for (const child of element.childNodes) child.parent = null;
+    element.childNodes = [];
     const node = new MText(text);
     node.parent = element;
-    element.children.push(node);
+    element.childNodes.push(node);
   }
 
   /** @param {unknown} handler */
@@ -301,7 +319,20 @@ export class MarkupHost extends Host {
 
   /** @param {() => void} flush */
   scheduleFlush(flush) {
-    setTimeout(flush, 0);
+    this._pending++;
+    setTimeout(() => {
+      this._pending--;
+      flush();
+    }, 0);
+  }
+
+  async settle() {
+    let quiet = 0;
+    while (quiet < 2) {
+      if (this._pending === 0) quiet++;
+      else quiet = 0;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
   }
 
   /** @param {unknown} error */
@@ -310,24 +341,3 @@ export class MarkupHost extends Host {
     else console.error(error);
   }
 }
-
-/**
- * Deliver `event` to the listeners `el` holds for `name`, in the order they
- * were added, dropping the ones added once. Answers how many ran.
- * @param {MElement} el
- * @param {string} name
- * @param {unknown} event
- */
-export const dispatch = (el, name, event) => {
-  const list = el.listeners.get(name);
-  if (list === undefined) return 0;
-  const listeners = [...list];
-  for (const listener of listeners) {
-    if (listener.options?.once) {
-      const at = list.indexOf(listener);
-      if (at >= 0) list.splice(at, 1);
-    }
-    listener.binding.handleEvent(event);
-  }
-  return listeners.length;
-};

@@ -41,7 +41,7 @@ const write = (node, comments, raw) => {
  */
 const writeChildren = (node, comments, raw) => {
   let out = "";
-  for (const child of node.children) out += write(child, comments, raw);
+  for (const child of node.childNodes) out += write(child, comments, raw);
   return out;
 };
 
@@ -67,6 +67,6 @@ export const textContent = (node) => {
   if (node instanceof MText) return node.data;
   if (!(node instanceof MElement)) return "";
   let out = "";
-  for (const child of node.children) out += textContent(child);
+  for (const child of node.childNodes) out += textContent(child);
   return out;
 };

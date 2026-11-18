@@ -6,7 +6,7 @@
  */
 import { currentHost, disposeTree, render, setHost } from "../html/core.ts";
 import { MarkupHost } from "./host.js";
-import { MRoot } from "./node.js";
+import { MRoot, disconnectTree, removeNode } from "./node.js";
 import { markupOf, serialize } from "./serialize.js";
 
 /** @type {MarkupHost | null} */
@@ -28,6 +28,33 @@ export const renderToString = (template, options) => {
     render(template, root);
     return markers ? serialize(root) : markupOf(root);
   } finally {
+    disconnectTree(root);
+    for (const child of [...root.childNodes]) removeNode(child);
+    disposeTree(root);
+    setHost(previous);
+  }
+};
+
+/**
+ * Render `template` to a string once every view it contains has rendered.
+ * @param {unknown} template
+ * @param {{ markers?: boolean, onError?: (error: unknown) => void }} [options]
+ * @returns {Promise<string>}
+ */
+export const renderToStringAsync = async (template, options) => {
+  const markers = options?.markers ?? true;
+  const previous = currentHost();
+  const markupHost = new MarkupHost();
+  if (options?.onError !== undefined) markupHost.onError = options.onError;
+  setHost(markupHost);
+  const root = new MRoot();
+  try {
+    render(template, root);
+    await markupHost.settle();
+    return markers ? serialize(root) : markupOf(root);
+  } finally {
+    disconnectTree(root);
+    for (const child of [...root.childNodes]) removeNode(child);
     disposeTree(root);
     setHost(previous);
   }
