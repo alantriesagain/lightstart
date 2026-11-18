@@ -1,6 +1,7 @@
 /**
  * @file Routes on a terminal: a root view writing `<app-outlet>` shows the
- * view the path answers, and `navigate` puts the next one in its place. It
+ * view the path answers, its path's parameters set as props, and `navigate`
+ * puts the next one in its place (the same element, a parameter changed). It
  * runs under scriptc too.
  */
 
@@ -24,6 +25,14 @@ class About extends View {
   }
 }
 
+class Note extends View {
+  id = this.prop<string>("id", "");
+
+  override render(): unknown {
+    return html`<p>note ${this.id.value}</p>`;
+  }
+}
+
 class Root extends View {
   override render(): unknown {
     return html`<div><p>routes</p><app-outlet></app-outlet></div>`;
@@ -32,6 +41,7 @@ class Root extends View {
 
 define("route-home", Home);
 define("route-about", About);
+define("route-note", Note);
 
 const manifest: AppManifest = {
   app: defineApp({ name: "tui-routes", host: "tui" }),
@@ -41,6 +51,7 @@ const manifest: AppManifest = {
   routes: {
     "/": { name: "home", view: "route-home" },
     "/about": { name: "about", view: "route-about" },
+    "/notes/:id": { name: "note", view: "route-note" },
   },
   views: [],
 };
@@ -54,6 +65,12 @@ const main = async (): Promise<void> => {
     navigate("/about");
     await mounted.settle();
     ok("navigate puts the next view in its place", mounted.text().includes("the about view") && !mounted.text().includes("the home view"));
+    navigate("/notes/7");
+    await mounted.settle();
+    ok("the path's parameters reach the view as props", mounted.text().includes("note 7"));
+    navigate("/notes/8");
+    await mounted.settle();
+    ok("a parameter that changes reaches the same view", mounted.text().includes("note 8"));
   } finally {
     mounted.stop();
     await opened.stop();

@@ -23,10 +23,10 @@ import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import { parseArgs } from "@lightstart/cli/argv.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
-import { AppHost, AppRun, currentView } from "../run.ts";
+import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
 import { MemoryKind, StoreKind } from "../stores.ts";
 
-export { currentView, navigate } from "../run.ts";
+export { currentParams, currentView, navigate } from "../run.ts";
 
 /** A running app: `stop()` takes the view down, disposes its controllers, stops following the routes and closes its stores. */
 export interface AppHandle {
@@ -49,10 +49,21 @@ export class IndexedDBKind extends StoreKind {
   }
 }
 
+/** The view the routes answer, its path's parameters set on it as props; the same element while the tag stays. */
 class AppOutlet extends View {
+  private tag = "";
+  private made: HTMLElement | null = null;
+
   render(): unknown {
     const tag = currentView.value;
-    return tag === null ? html`` : html`${document.createElement(tag)}`;
+    const params = currentParams.value;
+    if (tag === null) return html``;
+    if (tag !== this.tag || this.made === null) {
+      this.tag = tag;
+      this.made = document.createElement(tag);
+    }
+    for (const [key, value] of Object.entries(params)) Reflect.set(this.made, key, value);
+    return html`${this.made}`;
   }
 }
 

@@ -4,7 +4,8 @@
  * order, its routes followed (when `src/routes.ts` has some) over the host's
  * history, and its view put on the host's surface; then `stop`, `restart`
  * (the same run again with other arguments) and `quit`, which the run installs
- * on the app. `currentView` is the view tag the routes answer, for the
+ * on the app. `currentView` is the view tag the routes answer and
+ * `currentParams` the parameters of its path, for the
  * host's `<app-outlet>`; `navigate` goes to a path.
  */
 
@@ -22,6 +23,16 @@ import type { StoreHost, StoreKind } from "./stores.ts";
 
 /** The view tag the routes answer now; null without routes or without a view for the path. */
 export const currentView = signal<string | null>(null);
+
+/** The parameters of the path the routes answer now (`/components/:category` gives `{ category }`), which the outlet sets on the view. */
+export const currentParams = signal<Record<string, string>>({});
+
+const paramsOf = (matched: { params?: unknown } | null): Record<string, string> => {
+  const params = matched !== null && typeof matched.params === "object" && matched.params !== null ? (matched.params as Record<string, unknown>) : {};
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(params)) if (typeof value === "string") out[key] = value;
+  return out;
+};
 
 /**
  * What runs an app on a surface: the store kinds it has and its default, where the arguments come
@@ -122,17 +133,21 @@ export class AppRun {
   private route(): void {
     const routes = this.manifest.routes;
     currentView.value = null;
+    currentParams.value = {};
     if (routes === null) return;
     const router = new RouterCore(this.host.history(), { plugins: [] });
     router.init(routes, {
       appName: this.app.name,
       onRouteChange: (matched) => {
+        currentParams.value = paramsOf(matched);
         currentView.value = viewOf(matched.route);
       },
     });
     this.following = router.subscribe((matched) => {
+      currentParams.value = paramsOf(matched);
       currentView.value = viewOf(matched.route);
     });
+    currentParams.value = paramsOf(router.currentRoute);
     currentView.value = router.currentRoute === null ? null : viewOf(router.currentRoute.route);
     this.router = router;
   }
@@ -145,6 +160,7 @@ export class AppRun {
     if (following !== null) following();
     this.router = null;
     currentView.value = null;
+    currentParams.value = {};
     await stopControllers(this.controllers);
     this.controllers = [];
     const store = this.store;

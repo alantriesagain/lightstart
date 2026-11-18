@@ -32,7 +32,7 @@ import { MemoryKind, StoreKind } from "../stores.ts";
 import { fileIO } from "./file.ts";
 import { callMounted, handlerOf } from "./root.ts";
 
-export { currentView, navigate } from "../run.ts";
+export { currentParams, currentView, navigate } from "../run.ts";
 
 /** The baked class tables a terminal app carries, one per scheme. */
 export interface TuiClasses {
