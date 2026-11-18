@@ -5,7 +5,7 @@
  * `memory`, and a project's own. The arguments come from the page's URL
  * query (`?greeting=hi&trust`). The routes follow the browser's history, the
  * theme preset is applied as CSS variables, and the root view is mounted in
- * the page, `<app-outlet>` drawing the view the routes answer. The views were
+ * the page, `<app-container>` drawing the view the routes answer. The views were
  * imported by the generated manifest, so every tag exists before the root
  * view is made.
  */
@@ -87,7 +87,7 @@ if (prerenderedPage()) {
 }
 
 /** The view the routes answer, its path's parameters set on it as props; the same element while the tag stays. */
-class AppOutlet extends View {
+class AppContainer extends View {
   private tag = "";
   private made: HTMLElement | null = null;
 
@@ -97,7 +97,7 @@ class AppOutlet extends View {
     if (tag === null) return html``;
     if (tag !== this.tag || this.made === null) {
       this.tag = tag;
-      // A prerendered page's outlet already holds the served view: keep it, so its own render adopts the served DOM.
+      // A prerendered page's container already holds the served view: keep it, so its own render adopts the served DOM.
       const served = this.made === null ? this.querySelector(tag) : null;
       this.made = served instanceof HTMLElement && served.parentElement === this ? served : document.createElement(tag);
     }
@@ -108,9 +108,9 @@ class AppOutlet extends View {
 
 let registered = false;
 
-const registerOutlet = (): void => {
+const registerContainer = (): void => {
   if (registered) return;
-  View.register("app-outlet", AppOutlet);
+  View.register("app-container", AppContainer);
   registered = true;
 };
 
@@ -170,7 +170,7 @@ export class WebHost extends AppHost {
   }
 
   private async put(run: AppRun): Promise<void> {
-    registerOutlet();
+    registerContainer();
     const theme = await loadPreset(run.app.theme ?? "default");
     if (theme !== null) applyTheme(theme);
     if (run.router !== null) {

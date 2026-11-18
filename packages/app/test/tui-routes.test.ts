@@ -1,5 +1,5 @@
 /**
- * @file Routes on a terminal: a root view writing `<app-outlet>` shows the
+ * @file Routes on a terminal: a root view writing `<app-container>` shows the
  * view the path answers, its path's parameters set as props, and `navigate`
  * puts the next one in its place (the same element, a parameter changed). It
  * runs under scriptc too.
@@ -35,7 +35,7 @@ class Note extends View {
 
 class Root extends View {
   override render(): unknown {
-    return html`<div><p>routes</p><app-outlet></app-outlet></div>`;
+    return html`<div><p>routes</p><app-container></app-container></div>`;
   }
 }
 
@@ -61,7 +61,7 @@ const main = async (): Promise<void> => {
   const mounted = mountApp(manifest, opened, { cols: 30, rows: 6 });
   try {
     await mounted.settle();
-    ok("the outlet shows the first path's view", mounted.text().includes("the home view"));
+    ok("the container shows the first path's view", mounted.text().includes("the home view"));
     navigate("/about");
     await mounted.settle();
     ok("navigate puts the next view in its place", mounted.text().includes("the about view") && !mounted.text().includes("the home view"));

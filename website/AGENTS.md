@@ -21,8 +21,8 @@ holds the pages and the shell, `src/controllers/catalogue.js` the state they sha
   snippets in `lib/home-content.js` and its live `my-counter` in `lib/home-demos.js`),
   `/components`, `/components/:category`, `/components/:category/:name`, `/built-with-light`,
   `/theming`, `/skins`, `/native`, `/native/comparison`, `/native/:topic`, every one inside the
-  `template-shell` root view's `<app-outlet>`, which drops the rail and the outline on the landing
-  page and the built-with gallery. The outlet sets `category`, `name` and `topic` on the page as props.
+  `template-shell` root view's `<app-container>`, which drops the rail and the outline on the landing
+  page and the built-with gallery. The container sets `category`, `name` and `topic` on the page as props.
 - `/native` (`src/views/native.js`) introduces the section and lists its pages in two groups,
   light's native build and the background, as `lib/native/pages.js` orders them (the nav
   column inside the section, the pager, the palette; `nav` is a shorter label where the full

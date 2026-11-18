@@ -2,7 +2,7 @@
 /**
  * @file `@lightstart/app/web/test`: a web app opened in the page for a test.
  * `openPage` mounts the root view as the web host does (the theme applied,
- * `<app-outlet>` drawing the routes, links going through the router) over
+ * `<app-container>` drawing the routes, links going through the router) over
  * stores in memory and a history in memory starting at a path, with the
  * arguments the test gives rather than the URL's. It answers an `OpenedPage`
  * with helpers to wait for an element or a text, go to a path and settle.

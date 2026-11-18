@@ -1,5 +1,5 @@
 /**
- * @file The root view: the open list's name, the pages the keys go to, and `<app-outlet>`, which
+ * @file The root view: the open list's name, the pages the keys go to, and `<app-container>`, which
  * draws the page the path answers (src/routes.ts). F1, F2 and F3 go to the tasks, the lists and
  * the activity; Ctrl+C quits.
  */
@@ -28,7 +28,7 @@ export default class AppRoot extends View {
     const open = lists.currentList();
     return html`<div class="flex-1 border">
       <p><span class="font-bold">Tasks</span> <span class="text-muted">· ${open !== null ? String(open.name) : ""}</span></p>
-      <app-outlet class="flex-1"></app-outlet>
+      <app-container class="flex-1"></app-container>
       <p class="text-muted">F1 tasks · F2 lists · F3 activity · Ctrl+C quits</p>
     </div>`;
   }

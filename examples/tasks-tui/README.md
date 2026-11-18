@@ -32,7 +32,7 @@ Type a task and press Enter. Tab moves the focus, Space toggles the focused task
 | Two stores at once: `main` (JSON Lines files under `--data`, the terminal's default kind) for lists and tasks; `activity` (memory) for the run's events, a model naming it with `$adapter` | `src/app.ts`, `src/models/event.ts` |
 | Models, one per file, the file's name the model's | `src/models/list.ts`, `task.ts`, `event.ts` |
 | Controllers starting in the order their imports give: `activity`, then `lists` (which reads `--list` and says what it made), then `tasks` | `src/controllers/` |
-| Routes on a terminal: three pages, `<app-outlet>` in the root view drawing the one the path answers, `navigate` from a key | `src/routes.ts`, `src/views/app-root.ts`, `src/views/lists-page.ts` |
+| Routes on a terminal: three pages, `<app-container>` in the root view drawing the one the path answers, `navigate` from a key | `src/routes.ts`, `src/views/app-root.ts`, `src/views/lists-page.ts` |
 | A run mode: `--export` runs before the host and exits, the terminal never started | `src/modes/export.ts` |
 | A test: `openApp` with arguments over memory stores, `mountApp` on a test terminal, keys pushed, the screen and the models read back | `test/app.test.ts` |
 
@@ -44,7 +44,7 @@ Type a task and press Enter. Tab moves the focus, Space toggles the focused task
 | `src/models/` | `list`, `task` (in `main`) and `event` (in `activity`) |
 | `src/controllers/` | `activity`, `lists`, `tasks`: the live rows and the writes |
 | `src/routes.ts` | `/`, `/lists`, `/activity` to their pages |
-| `src/views/` | `app-root` (the header, the keys, `<app-outlet>`), the three pages, `task-row` |
+| `src/views/` | `app-root` (the header, the keys, `<app-container>`), the three pages, `task-row` |
 | `src/modes/export.ts` | `--export` |
 | `.light/` | Generated wiring and the baked class table: never edit, never commit |
 | `test/app.test.ts` | The app driven on a test terminal |

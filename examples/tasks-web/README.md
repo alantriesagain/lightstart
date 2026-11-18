@@ -1,6 +1,6 @@
 # Tasks, in a page
 
-A web app on `@lightstart/app`, started with `light new web` and grown to show what an app has: lists of tasks kept in IndexedDB, what the page did kept in memory beside them, three routes drawn by `<app-outlet>`, an argument read from the URL, and a test in headless Chromium. [tasks-tui](../tasks-tui) is the same app on a terminal: its models and controllers are the same files, only the views differ.
+A web app on `@lightstart/app`, started with `light new web` and grown to show what an app has: lists of tasks kept in IndexedDB, what the page did kept in memory beside them, three routes drawn by `<app-container>`, an argument read from the URL, and a test in headless Chromium. [tasks-tui](../tasks-tui) is the same app on a terminal: its models and controllers are the same files, only the views differ.
 
 ## Start
 
@@ -29,7 +29,7 @@ pnpm dev                       # light serve --watch, then open the page
 | Two stores at once: `main` (IndexedDB, the web host's default kind) for lists and tasks; `activity` (memory) for the page's events, a model naming it with `$adapter` | `src/app.ts`, `src/models/event.ts` |
 | Models, one per file, the file's name the model's | `src/models/list.ts`, `task.ts`, `event.ts` |
 | Controllers starting in the order their imports give: `activity`, then `lists` (which reads `list` and says what it made), then `tasks`; the same files as the terminal app's | `src/controllers/` |
-| Routes: three pages, `<app-outlet>` in the root view drawing the one the path answers, links and `navigate` going to them | `src/routes.ts`, `src/views/app-root.ts`, `src/views/lists-page.ts` |
+| Routes: three pages, `<app-container>` in the root view drawing the one the path answers, links and `navigate` going to them | `src/routes.ts`, `src/views/app-root.ts`, `src/views/lists-page.ts` |
 | Light's components (`lc-button`, `lc-card`, `lc-text`), written in the views: `.light/components.ts` defines them and `.light/components.css` loads their stylesheets | `src/views/`, `src/styles.css` |
 | The app's words in English and Portuguese, `t()` in the views and a `<lc-language-switcher>` in the header: `.light/locales.ts` merges `@lightstart/components`' locales under the app's own | `src/locales/en.ts`, `src/locales/pt.ts`, `src/views/` |
 | A test: the app opened with `openPage` (memory stores, the `list` argument), the form filled, `navigate` between routes, the text read back | `test/app.test.ts` |
@@ -43,7 +43,7 @@ pnpm dev                       # light serve --watch, then open the page
 | `src/controllers/` | `activity`, `lists`, `tasks`: the live rows and the writes |
 | `src/routes.ts` | `/`, `/lists`, `/activity` to their pages |
 | `src/locales/` | `en` and `pt`: the words the views write, merged over the components' locales |
-| `src/views/` | `app-root` (the header, the nav, `<app-outlet>`) and the three pages |
+| `src/views/` | `app-root` (the header, the nav, `<app-container>`) and the three pages |
 | `src/styles.css` | The generated components' stylesheet, and the page's own rules |
 | `index.html` | The page: `<app-root>` and `.light/main.ts` |
 | `.light/` | Generated wiring: never edit, never commit |

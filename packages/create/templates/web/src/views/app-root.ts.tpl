@@ -33,7 +33,7 @@ class AppRoot extends View {
             ${rows.map((row) => html`<li>${String(row.text)}</li>`)}
           </ul>
         </lc-card>
-        <app-outlet></app-outlet>
+        <app-container></app-container>
       </main>
     `;
   }
