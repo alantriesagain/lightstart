@@ -1,0 +1,42 @@
+{
+  "name": "@lightstart/showcase",
+  "version": "0.1.0",
+  "description": "light's component catalogue: the components by category, each one's props, examples and stylesheet, and the theme tools.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/showcase"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "components",
+    "catalogue",
+    "showcase",
+    "theme",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "pack": "node scripts/pack.js"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/components": "workspace:*",
+    "@lightstart/light": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}

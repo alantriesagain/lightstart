@@ -22,4 +22,5 @@ packages:
   - 'packages/highlight'
   - 'packages/form'
   - 'packages/i18n'
+  - 'packages/showcase'
   - 'benchmarks'
