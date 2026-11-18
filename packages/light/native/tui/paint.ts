@@ -161,15 +161,25 @@ const tabSpans = (box: TBox): TabSpans => {
   return { start: start, end: end, index: index };
 };
 
+type TabSpan = { index: number; start: number; end: number };
+
+/**
+ * The tab under screen column `x` on the box's top row, with its label's start and end columns (end exclusive), or null.
+ */
+export const tabSpanAt = (box: TBox, x: number): TabSpan | null => {
+  const spans = tabSpans(box);
+  for (let i = 0; i < spans.start.length; i++) {
+    if (x >= spans.start[i] && x < spans.end[i]) return { index: spans.index[i], start: spans.start[i], end: spans.end[i] };
+  }
+  return null;
+};
+
 /**
  * The tab index under screen column `x` on the box's top row, or -1.
  */
 export const tabAt = (box: TBox, x: number): number => {
-  const spans = tabSpans(box);
-  for (let i = 0; i < spans.start.length; i++) {
-    if (x >= spans.start[i] && x < spans.end[i]) return spans.index[i];
-  }
-  return -1;
+  const span = tabSpanAt(box, x);
+  return span !== null ? span.index : -1;
 };
 
 const drawCellBorder = (screen: Screen, clip: Clip, box: TBox, style: Style, inherited: Style) => {

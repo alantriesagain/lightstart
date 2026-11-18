@@ -1,4 +1,4 @@
-import { ATTR_BOLD, Caret, Clip, DEFAULT_STYLE, Screen, TBox, TRoot, childNodes, html, layout, paint, parseColor, render, tabAt } from "./index.ts";
+import { ATTR_BOLD, Caret, Clip, DEFAULT_STYLE, Screen, TBox, TRoot, childNodes, html, layout, paint, parseColor, render, tabAt, tabSpanAt } from "./index.ts";
 import { done, eq, eqn, ok } from "../assert.ts";
 
 const OUTER = parseColor("#202020");
@@ -98,6 +98,11 @@ const tabs = "one\ntwo\nthree";
   eqn("tabAt third tab", tabAt(inner, 16), 2);
   eqn("tabAt past the tabs", tabAt(inner, 17), -1);
   eqn("tabAt past the box", tabAt(inner, 30), -1);
+  const second = tabSpanAt(inner, 6);
+  eq("tabSpanAt gives the label's index and its screen columns", second !== null ? second.index + " " + String(second.start) + " " + String(second.end) : "none", "1 5 10");
+  const third = tabSpanAt(inner, 16);
+  eq("its end is exclusive", third !== null ? third.index + " " + String(third.start) + " " + String(third.end) : "none", "2 10 17");
+  eq("tabSpanAt past the tabs is null", tabSpanAt(inner, 17) === null ? "null" : "a span", "null");
 }
 
 {

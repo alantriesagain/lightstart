@@ -14,5 +14,5 @@ export * from "../../html/core.ts";
 export * from "../../signals/index.ts";
 export { ViewCore, configureView, trackWork, translate } from "../../view/core.ts";
 export * from "./tdom.ts";
-export { tabAt } from "./paint.ts";
+export { tabAt, tabSpanAt } from "./paint.ts";
 export { runApp } from "./app.ts";
