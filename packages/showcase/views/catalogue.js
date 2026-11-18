@@ -39,7 +39,7 @@ View.define(sinkDef);
 const HOST_THEME = "";
 const CARD_WIDTH = 200;
 
-export default defineComponent({
+const view = defineComponent({
   tag: "showcase-catalogue",
   style: true,
   props: {
@@ -190,3 +190,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

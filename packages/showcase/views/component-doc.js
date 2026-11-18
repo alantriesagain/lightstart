@@ -87,7 +87,7 @@ const defineTag = async (tag, table) => {
   }
 };
 
-export default defineComponent({
+const view = defineComponent({
   tag: "showcase-component-doc",
   style: true,
   props: {
@@ -441,3 +441,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

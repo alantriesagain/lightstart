@@ -9,7 +9,7 @@
 import { applyTheme, loadFont } from "@lightstart/light/theme";
 import { html } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
-import { defineComponent } from "@lightstart/light";
+import View, { defineComponent } from "@lightstart/light";
 import { STARTER_THEME } from "../lib/starter-theme.ts";
 
 /**
@@ -19,7 +19,7 @@ import { STARTER_THEME } from "../lib/starter-theme.ts";
 /** @typedef {Record<string, Record<string, unknown>>} ThemeTokenMap */
 /** @typedef {import("@lightstart/light/theme").FontValue} FontValue */
 
-export default defineComponent({
+const view = defineComponent({
   tag: "showcase-theme-generator",
   props: {
     themeName: "custom-theme",
@@ -109,3 +109,7 @@ export default ${JSON.stringify(theme, null, 2)};
     `;
   },
 });
+
+View.define(view);
+
+export default view;

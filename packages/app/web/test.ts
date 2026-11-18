@@ -75,7 +75,7 @@ class PageHost extends WebHost {
   }
 
   history(): RouterAdapter {
-    return createMemoryAdapter(this.path);
+    return createMemoryAdapter(this.path, location.origin);
   }
 
   mount(run: AppRun): Promise<void> {
@@ -86,6 +86,7 @@ class PageHost extends WebHost {
   }
 
   unmount(_run: AppRun): void {
+    this.stopListening();
     const root = this.mountedRoot;
     this.mountedRoot = null;
     if (root !== null) root.remove();

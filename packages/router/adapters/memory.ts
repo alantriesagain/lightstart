@@ -8,14 +8,16 @@ import type { AdapterLocation, HistoryEntry, RouterAdapter } from "../contracts.
 /** A router adapter that keeps its location and history in fields. */
 export class MemoryAdapter implements RouterAdapter {
   readonly type = "memory";
-  private readonly origin = "http://memory";
+  private readonly origin: string;
   private pathname: string;
   private search: string;
   private hash: string;
   private readonly history: HistoryEntry[] = [];
   private index = -1;
 
-  constructor(initialPath = "/") {
+  /** `origin` is the one links are read against: a page's own, for one in memory inside a real page (a test's), `http://memory` elsewhere. */
+  constructor(initialPath = "/", origin = "http://memory") {
+    this.origin = origin;
     const url = new URL(initialPath, this.origin);
     this.pathname = url.pathname;
     this.search = url.search;
@@ -92,4 +94,4 @@ export class MemoryAdapter implements RouterAdapter {
 }
 
 /** Create a memory adapter at `initialPath`. */
-export const createMemoryAdapter = (initialPath = "/"): RouterAdapter => new MemoryAdapter(initialPath);
+export const createMemoryAdapter = (initialPath = "/", origin = "http://memory"): RouterAdapter => new MemoryAdapter(initialPath, origin);

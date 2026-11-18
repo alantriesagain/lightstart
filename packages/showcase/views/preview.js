@@ -77,7 +77,7 @@ const loadStyle = async (name) => {
   document.head.append(link);
 };
 
-export default defineComponent({
+const view = defineComponent({
   tag: "showcase-preview",
   style: true,
   props: {
@@ -219,3 +219,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

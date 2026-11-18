@@ -13,6 +13,7 @@
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
 import { configureNavigation } from "@lightstart/light/navigation";
+import { listen } from "@lightstart/router/listen";
 import { applyTheme } from "@lightstart/light/theme";
 import { loadPreset } from "@lightstart/light/theme/presets.js";
 import { createAdapter, hasAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
@@ -101,6 +102,8 @@ export class WebHost extends AppHost {
   readonly kinds: readonly StoreKind[] = [new IndexedDBKind(), new MemoryKind()];
   readonly defaultKind: string = (globalThis as { indexedDB?: unknown }).indexedDB !== undefined ? "indexeddb" : "memory";
   private mounted: Element | null = null;
+  /** Stops handing the page's link clicks to the run's router. */
+  private unlisten: (() => void) | null = null;
 
   constructor(options: WebHostOptions = {}) {
     super();
@@ -124,7 +127,12 @@ export class WebHost extends AppHost {
     registerOutlet();
     const theme = await loadPreset(run.app.theme ?? "default");
     if (theme !== null) applyTheme(theme);
-    if (run.router !== null) configureNavigation(run.router.navigation);
+    if (run.router !== null) {
+      configureNavigation(run.router.navigation);
+      // A plain link to a path of the app goes through the router too, not only an lc-link.
+      this.unlisten?.();
+      this.unlisten = listen(document, run.router);
+    }
     const tag = run.app.root ?? "app-root";
     const made = document.createElement(tag);
     const placeholder = document.querySelector(tag);
@@ -133,7 +141,14 @@ export class WebHost extends AppHost {
     this.mounted = made;
   }
 
+  /** Stop handing the page's link clicks to the router of the run that is going. */
+  stopListening(): void {
+    this.unlisten?.();
+    this.unlisten = null;
+  }
+
   unmount(_run: AppRun): void {
+    this.stopListening();
     const mounted = this.mounted;
     this.mounted = null;
     if (mounted !== null) mounted.replaceWith(document.createElement(mounted.tagName.toLowerCase()));
