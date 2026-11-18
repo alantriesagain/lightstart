@@ -5,6 +5,7 @@
  * back, so a browser that renders a string for a moment keeps its own host.
  */
 import { currentHost, disposeTree, render, setHost } from "../html/core.ts";
+import { config, configureView } from "../view/core.ts";
 import { MarkupHost } from "./host.js";
 import { MRoot, disconnectTree, removeNode } from "./node.js";
 import { markupOf, serialize } from "./serialize.js";
@@ -46,6 +47,15 @@ export const renderToStringAsync = async (template, options) => {
   const previous = currentHost();
   const markupHost = new MarkupHost();
   if (options?.onError !== undefined) markupHost.onError = options.onError;
+  const previousWrap = config.wrap;
+  configureView({
+    wrap: (work, label) => {
+      previousWrap(work, label);
+      work.catch((error) => {
+        markupHost.reportError(error);
+      });
+    },
+  });
   setHost(markupHost);
   const root = new MRoot();
   try {
@@ -53,6 +63,7 @@ export const renderToStringAsync = async (template, options) => {
     await markupHost.settle();
     return markers ? serialize(root) : markupOf(root);
   } finally {
+    configureView({ wrap: previousWrap });
     disconnectTree(root);
     for (const child of [...root.childNodes]) removeNode(child);
     disposeTree(root);

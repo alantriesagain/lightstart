@@ -55,6 +55,7 @@ export default defineComponent({
 
   connected() {
     this._pointers = new Map();
+    if (typeof window === "undefined") return;
     const move = (/** @type {PointerEvent} */ e) => this._moved(e);
     const up = (/** @type {PointerEvent} */ e) => this._lifted(e);
     window.addEventListener("pointermove", move);
@@ -68,6 +69,7 @@ export default defineComponent({
   },
 
   firstUpdated() {
+    if (typeof ResizeObserver === "undefined") return;
     const frame = this._frame();
     if (!frame) return;
     const wheel = (/** @type {WheelEvent} */ e) => this._wheeled(e);

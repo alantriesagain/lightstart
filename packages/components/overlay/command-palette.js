@@ -60,6 +60,7 @@ export default defineComponent({
       e.preventDefault();
       this.open = !this.open;
     });
+    if (typeof document === "undefined") return;
     document.addEventListener("keydown", onKey);
     this.$own(() => document.removeEventListener("keydown", onKey));
   },

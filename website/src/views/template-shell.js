@@ -56,8 +56,8 @@ const view = defineComponent({
     this.$own(env.subscribe(() => {
       this.phone = !matchesBreakpoint("md");
     }));
-    applyTheme(theme);
-    configureIcons({ load: iconify(theme.font.icon.family) });
+    if (typeof CSSStyleSheet !== "undefined") applyTheme(theme);
+    if (typeof document !== "undefined") configureIcons({ load: iconify(theme.font.icon.family) });
     this._follow();
     this.$own(navigation.subscribe(() => this._follow()));
   },

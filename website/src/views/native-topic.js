@@ -81,6 +81,7 @@ const view = defineComponent({
   },
 
   _reveal() {
+    if (typeof window === "undefined") return;
     const id = decodeURIComponent(location.hash.slice(1));
     if (!id) return window.scrollTo({ top: 0 });
     requestAnimationFrame(() => this.querySelector(`#${CSS.escape(id)}`)?.scrollIntoView({ block: "start" }));

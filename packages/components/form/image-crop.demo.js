@@ -1,6 +1,7 @@
 import { html } from "@lightstart/light/html";
 
 const sample = () => {
+  if (typeof document === "undefined") return "";
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
   canvas.height = 800;

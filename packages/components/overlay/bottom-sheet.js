@@ -15,7 +15,7 @@ const EXPANDED_TOP = "calc(max(env(safe-area-inset-top, 0px), var(--sat, 0px)) +
 
 export default defineComponent({
   mixins: [
-    withOverlay({ lockScroll: true }),
+    ...(typeof document === "undefined" ? [] : [withOverlay({ lockScroll: true })]),
     withPointerDrag({ handle: "[part~=lc-bottom-sheet-nav]", capture: false, touchFallback: true }),
   ],
   tag: "lc-bottom-sheet",

@@ -170,6 +170,7 @@ const view = defineComponent({
 
   /** @param {string} name */
   async _loadStylesheet(name) {
+    if (typeof document === "undefined") return "";
     const path = stylePath(name);
     if (path === null) return "";
     try {

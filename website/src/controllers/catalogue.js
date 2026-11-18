@@ -1,6 +1,7 @@
 import { defineController, registerAdapter } from "@lightstart/light/controller";
-import { localStorage } from "@lightstart/light/controller/storage";
+import { localStorage, memoryStorage } from "@lightstart/light/controller/storage";
 import { navigate } from "@lightstart/app/web";
+import app from "../app.ts";
 import presets, { loadPreset } from "@lightstart/light/theme/presets.js";
 import { componentPath } from "../../lib/paths.js";
 
@@ -20,7 +21,7 @@ const token = (theme, group, key) => {
   return typeof value === "string" ? value : "";
 };
 
-registerAdapter("local", localStorage);
+registerAdapter("local", typeof window === "undefined" ? memoryStorage : localStorage);
 
 export default defineController({
   name: "catalogue",
@@ -33,8 +34,8 @@ export default defineController({
   sync: { skin: { to: "local", key: "lc:skin" } },
 
   async connected() {
-    const fromQuery = new URLSearchParams(location.search).get("skin");
-    if (fromQuery !== null) this.skin = fromQuery;
+    const fromQuery = app.args.string("skin");
+    if (fromQuery !== undefined) this.skin = fromQuery;
     this.skins = await Promise.all(
       presets.map(async (preset) => {
         const theme = await loadPreset(preset.name);

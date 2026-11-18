@@ -37,6 +37,25 @@ describe("renderToStringAsync with views", () => {
     assert.ok(out.endsWith("<!--/r--></x-test-card><!--/r-->"));
   });
 
+  it("reports a rejected async lifecycle hook through onError", async () => {
+    View.define(
+      defineComponent({
+        tag: "x-test-rejecter",
+        render() {
+          return html`<p>kept</p>`;
+        },
+        async connected() {
+          throw new Error("async hook failed");
+        },
+      }),
+    );
+    const errors = [];
+    const out = await renderToStringAsync(html`<x-test-rejecter></x-test-rejecter>`, { onError: (error) => errors.push(error) });
+    assert.ok(out.includes("<p>kept</p>"));
+    assert.equal(errors.length, 1);
+    assert.match(String(errors[0]), /async hook failed/);
+  });
+
   it("reports a throwing lifecycle hook without stopping the render", async () => {
     View.define(
       defineComponent({

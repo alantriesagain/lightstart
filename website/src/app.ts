@@ -16,6 +16,9 @@ export default defineApp({
   url: "https://lightstart.dev",
   host: "web",
   root: "template-shell",
+  args: {
+    skin: { description: "The skin the site renders in" },
+  },
   stores: {
     main: { kind: "memory" },
   },

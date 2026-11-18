@@ -1,8 +1,9 @@
 // node-only
 /**
- * @file What `light build --prerender` writes: every concrete route's
- * `index.html` holds the rendered page and the adopt marker, while `404.html`
- * stays the unrendered shell. Parameter routes are filled from `params`.
+ * @file What `light build --prerender --renderer markup` writes: every
+ * concrete route's `index.html` holds the rendered page and the adopt marker,
+ * while `404.html` stays the unrendered shell. Parameter routes are filled from
+ * `params`. The markup renderer runs in node, so this test needs no Playwright.
  */
 
 import { cpSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
@@ -30,7 +31,7 @@ const copy = (): string => {
 
 const buildOf = async (project: string): Promise<string> => {
   const api = createBuildExtension({ root: project, minify: false });
-  await appBuild.setup(undefined as never, { prerender: true } as never, api);
+  await appBuild.setup(undefined as never, { prerender: true, renderer: "markup" } as never, api);
   const report = await build({ root: project, minify: false }, api);
   return report.dir;
 };

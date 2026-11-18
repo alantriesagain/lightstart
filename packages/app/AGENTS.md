@@ -6,7 +6,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Where | What |
 |---|---|
-| `index.ts` | `defineApp`, `AppConfig` (including the site's `url`), `StoreConfig`, the `App` and `AppArgs` classes, `AppLifecycle` |
+| `index.ts` | `defineApp`, `AppConfig` (including the site's `url` and how it `prerender`s), `PrerenderRenderer`, `StoreConfig`, the `App` and `AppArgs` classes, `AppLifecycle` |
 | `manifest.ts` | `AppManifest`, `AppModel`, `AppController`: the plain records `.light/app.ts` exports |
 | `stores.ts` | `StoreKind`, `MemoryKind`, `registerStoreKind`, `schemasOf` and `openStores`: every declared store opened by its kind over one engine store, checked against the host's kinds and the models' `$adapter` |
 | `memory.ts` | `MemoryAdapter`, the in-memory storage adapter |
@@ -27,7 +27,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `cli/commands/app.ts` | `light app` |
 | `cli/hooks/serve.before.ts` | Generate before `light serve` starts |
 | `cli/hooks/serve.file-changed.ts` | Regenerate when a named source is added, removed or renamed |
-| `cli/extend/build.ts` | A build step before `page` that generates, and a step after `html` that writes `404.html`, `sitemap.xml`, `robots.txt` and `_headers` for a static host |
+| `cli/extend/build.ts` | A build step before `page` that generates, a step after `html` that writes `404.html`, `sitemap.xml`, `robots.txt` and `_headers` for a static host, and a step after that which prerenders with the app's or `--renderer`'s choice (`markup` by default, `browser` for Playwright) |
 | `cli/extend/test.ts` | Generate before `light test` picks its files |
 | `test/routes.test.ts`, `test/tui-routes.test.ts` | Routes without a page, and drawn by the terminal's `<app-container>`, under node and scriptc |
 | `test/fixtures/web/` | The fixture app: an app config, a note model, a notes controller, three views, two routes and a browser test that opens it with `openPage` |
@@ -53,6 +53,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - `openPage` and `OpenedPage` are the web host's and the page's DOM, so they run in a browser test.
 - `static` renders on light's markup host: a caller imports `@lightstart/light/markup` before the app's manifest, the root view and `<app-container>` are markup-host views, the markup carries the engine's markers, and a root view the markup registry does not know is a clear error. `renderPage` replaces the root placeholder and puts the prerender marker first in `<head>`.
 - The build's static files read the app's `url` and the routes through the generator's `infoOf` and `routesOf`, never the generated manifest (which imports the views): `404.html` is the built page, the sitemap leaves out a path with a parameter or wildcard, and `_headers` caches the hashed `.js` and `.css` outputs but not the pages.
+- Prerendering defaults to the markup renderer in `node/prerender.ts`: it imports `@lightstart/light/markup` from the project before its generated `.light/app.ts`, renders each path with `renderPage` one after another, fails naming the path whose render throws, and passes a view's error to the build as a warning with the path. `--renderer browser` (or `defineApp({ prerender: "browser" })`) keeps the Playwright path.
 - `.light/` is not committed; the fixture's `.gitignore` names it beside `.deployed/`.
 - Tests are plain scripts on `@lightstart/test/assert.ts`, not a test framework. Most are node-only because they walk the disk and spawn the CLI.
 - Comments are a JSDoc module header and JSDoc on exported symbols, nothing else.
@@ -62,7 +63,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Contract | Who relies on it |
 |---|---|
-| `defineApp`, `AppConfig` and its fields (`name`, `host`, `theme`, `locale`, `url`, `stores`, `root`, `args`), `StoreConfig` (`kind`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static files |
+| `defineApp`, `AppConfig` and its fields (`name`, `host`, `theme`, `locale`, `url`, `prerender`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`kind`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
 | `StoreKind` and `registerStoreKind` | a project bringing a store kind of its own |
 | `AppHost` and `HostGeneration` | the hosts, and a host a project would bring later |
 | `AppManifest` and its records (`app`, `rootView`, `models`, `controllers`, `routes`, `views`) | the generated `.light/app.ts` and the run |

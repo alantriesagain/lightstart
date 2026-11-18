@@ -42,7 +42,7 @@ const view = defineComponent({
     this._measure();
     this.$own(env.subscribe(() => this._measure()));
     this.$own(() => clearSkin(THEME_SKIN));
-    return applySkin(THEME_SKIN);
+    return typeof CSSStyleSheet === "undefined" ? false : applySkin(THEME_SKIN);
   },
 
   _measure() {

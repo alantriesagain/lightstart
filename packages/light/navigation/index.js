@@ -10,10 +10,11 @@
 /** @type {Navigation} */
 const plain = {
   href: (path) => path,
-  go: (path) => globalThis.location.assign(path),
+  go: (path) => globalThis.location?.assign(path),
   click: () => false,
   path: () => globalThis.location?.pathname ?? "/",
   subscribe(fn) {
+    if (typeof globalThis.addEventListener !== "function" || globalThis.location === undefined) return () => {};
     globalThis.addEventListener("popstate", fn);
     return () => globalThis.removeEventListener("popstate", fn);
   },

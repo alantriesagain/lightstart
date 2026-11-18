@@ -51,7 +51,7 @@ export const breakpointWidth = (breakpoint) =>
 export const matchesBreakpoint = (breakpoint) => {
   const minWidth = BREAKPOINTS[/** @type {keyof typeof BREAKPOINTS} */ (breakpoint)];
   if (minWidth === undefined) return false;
-  return window.innerWidth >= minWidth;
+  return env.width >= minWidth;
 };
 
 /**

@@ -38,22 +38,24 @@ export default defineComponent({
       w: this.panelWidth,
       h: this.panelHeight,
     };
-    const stored = this.storageKey ? loadRect(localStorage, this.storageKey, fallback) : fallback;
+    const stored = this.storageKey && typeof window !== "undefined" ? loadRect(localStorage, this.storageKey, fallback) : fallback;
     this._rect = clampRect(stored, viewport, this._mins());
     this._apply();
 
-    const observer = new ResizeObserver(() => {
-      if (this._drag) return;
-      const w = this.offsetWidth;
-      const h = this.offsetHeight;
-      if (!w || !h || (w === this._rect.w && h === this._rect.h)) return;
-      this._rect.w = Math.max(this.minWidth, w);
-      this._rect.h = Math.max(this.minHeight, h);
-      this._persist();
-      this.$emit("panel-resized", { w: this._rect.w, h: this._rect.h });
-    });
-    observer.observe(this);
-    this.$own(() => observer.disconnect());
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => {
+        if (this._drag) return;
+        const w = this.offsetWidth;
+        const h = this.offsetHeight;
+        if (!w || !h || (w === this._rect.w && h === this._rect.h)) return;
+        this._rect.w = Math.max(this.minWidth, w);
+        this._rect.h = Math.max(this.minHeight, h);
+        this._persist();
+        this.$emit("panel-resized", { w: this._rect.w, h: this._rect.h });
+      });
+      observer.observe(this);
+      this.$own(() => observer.disconnect());
+    }
 
     this.$own(env.subscribe(() => {
       this._rect = clampRect(this._rect, this._viewport(), this._mins());
@@ -101,7 +103,7 @@ export default defineComponent({
   },
 
   _persist() {
-    if (this.storageKey) saveRect(localStorage, this.storageKey, this._rect);
+    if (this.storageKey && typeof window !== "undefined") saveRect(localStorage, this.storageKey, this._rect);
   },
 });
 

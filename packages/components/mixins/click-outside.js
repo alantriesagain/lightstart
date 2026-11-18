@@ -41,6 +41,7 @@ export const withClickOutside = ({ events = "click", capture = true, defer = tru
         this.onClickOutside?.(e);
       };
       const attach = () => {
+        if (typeof document === "undefined") return;
         for (const name of names) {
           document.addEventListener(name, handler, { capture });
           this.$own(() => document.removeEventListener(name, handler, { capture }));

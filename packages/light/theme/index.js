@@ -40,7 +40,7 @@ const loadedCSSFiles = new Set();
  * @param {boolean} [prepend] put it first, under every other stylesheet
  */
 const loadCSS = (href, prepend = false) => {
-  if (loadedCSSFiles.has(href))
+  if (loadedCSSFiles.has(href) || typeof document === "undefined")
     return;
 
   const link = document.createElement("link");
@@ -65,9 +65,10 @@ const themeSheets = new Map();
 
 /**
  * @param {string} styleId
- * @returns {CSSStyleSheet}
+ * @returns {CSSStyleSheet | null} null off the browser, where there is no document to style
  */
 const styleSheetFor = (styleId) => {
+  if (typeof document === "undefined" || typeof CSSStyleSheet === "undefined") return null;
   let sheet = themeSheets.get(styleId);
   if (!sheet) {
     sheet = new CSSStyleSheet();
@@ -82,7 +83,7 @@ const styleSheetFor = (styleId) => {
  * @param {string} css
  */
 const writeSheet = (styleId, css) => {
-  styleSheetFor(styleId).replaceSync(css);
+  styleSheetFor(styleId)?.replaceSync(css);
 };
 
 /**
@@ -95,6 +96,7 @@ const removeThemeCSS = (styleId) => {
   const sheet = themeSheets.get(styleId);
   if (!sheet) return;
   themeSheets.delete(styleId);
+  if (typeof document === "undefined") return;
   document.adoptedStyleSheets = document.adoptedStyleSheets.filter((adopted) => adopted !== sheet);
 };
 
