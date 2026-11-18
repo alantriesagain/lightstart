@@ -47,6 +47,7 @@ export default defineApp({
 | `theme` | `"default"` | A preset name, applied by the web host |
 | `locale` | `"en"` | The default language the app's words are in |
 | `url` | none | The site's address (`https://lightstart.dev`), which the build's sitemap is written against |
+| `prerender` | `false` | Render every concrete route into its own `index.html` during `light build` |
 | `stores` | `{ main: {} }` | The stores by name, several at once: `{ kind?, at? }` each |
 | `root` | `"app-root"` | The root view's tag |
 | `args` | `{}` | The arguments the app takes, as a `@lightstart/cli` schema |
@@ -66,6 +67,8 @@ An app keeps rows in stores by name, several at once. A model picks one through 
 ## Routes and views
 
 `src/routes.ts` maps paths to view tags on every host. The run makes the router (`@lightstart/router`'s core) over the host's history: the browser's on the web, one in memory on the terminal (starting at `/`, or the path `--route` names). `currentView` is the view tag the path answers, `currentParams` the parameters of its path (`/components/:category` gives `{ category }`), and `navigate(path)` goes to another; all come from the host's subpath. A root view that shows routes writes `<app-outlet>`, which the host gives: a component in the page, a terminal view on the terminal. The outlet sets the parameters on the view as props, keeping the same element while the tag stays, so a view declares a prop for each parameter its path has. An app without `routes.ts` mounts its root view alone.
+
+A route with parameters may list their values with `params: () => Array<Record<string, string>>` (or a promise of one), as the site's `/components/:category` does. `pathsOf` (`@lightstart/app/node/paths.ts`) answers every concrete path of a routes table, sorted and unique: a path without parameters is itself, and a path with them is filled from the entries `params` answers, each value URL-encoded, an entry missing a parameter skipped. A wildcard path, a route marked `spa: true` and a redirect are left out, and nested `routes` join their parent's path. The build's sitemap and prerendering read it.
 
 ## The run
 
@@ -149,12 +152,14 @@ The output is deterministic (sorted, relative imports from `.light/`) and a file
 `light build` runs the same generator before it reads the page, then adds the files a static host needs after it rewrites the page, for a project with `src/app.ts`:
 
 - `404.html`, the built page itself (the same contents as `index.html`), so a path the host has no file for still boots the app and its router.
-- `sitemap.xml` and `robots.txt` when `defineApp` has a `url`: the sitemap lists every route of `src/routes.ts` whose path has no parameter (`:name`) or wildcard, as absolute URLs joined with `url`, sorted; `robots.txt` is `User-agent: *`, `Allow: /` and a `Sitemap:` line. Without a `url` there is no sitemap, and `robots.txt` has no `Sitemap:` line. A route with parameters is left out until something lists its values.
+- `sitemap.xml` and `robots.txt` when `defineApp` has a `url`: the sitemap lists every concrete path of `src/routes.ts`, as absolute URLs joined with `url`, sorted. A static route is its own path; a route with parameters (`/notes/:id`) is filled from the values its `params` answers, when it has one (`params: () => [{ id: "1" }, { id: "2" }]`), so a parameter route without `params`, a wildcard, a `spa: true` route and a redirect are left out. `robots.txt` is `User-agent: *`, `Allow: /` and a `Sitemap:` line. Without a `url` there is no sitemap, and `robots.txt` has no `Sitemap:` line.
 - `_headers`, the format Cloudflare Pages and Netlify read: the hashed `.js` and `.css` outputs are cached with `Cache-Control: public, max-age=31536000, immutable`, and `/index.html`, `/404.html` and `/` with `Cache-Control: no-cache`.
+
+`light build --prerender` (or `defineApp({ prerender: true })`) also renders every path the sitemap lists, each into its own `index.html` (`/` stays at the root, `/about` goes to `about/index.html`). After the shell is written, the build serves its outputs from memory on a local port, opens each path in headless Chromium through [Playwright](https://playwright.dev) (four pages at a time), waits for `networkidle`, two animation frames and a short settle, and keeps the page's `outerHTML` with `<!doctype html>` and a `<script>window.__PRERENDERED__ = true</script>` first in `<head>`. The page's markup is then served to a reader, and the web host adopts it instead of replacing the root element; the first client navigation clears the marker. A page that throws fails the build naming its path. The renderer is Playwright found in the project, or beside light: a project using it needs `pnpm add -D playwright` and `npx playwright install chromium`. `404.html` stays the unrendered shell so the router still boots on a path the static host has no file for.
 
 ## The web host
 
-`@lightstart/app/web`'s `start(manifest)` runs the app in the page: its kinds `indexeddb` and `memory`, the arguments from the URL query (`?name=value`, a bare `?flag`; a parameter the app does not declare is left out), the browser's history for the routes with `configureNavigation(router.navigation)`, the theme preset applied, and the root view mounted (an existing `<app-root>` replaced by a fresh one, another placeholder replaced, or appended to `<body>`). `<app-outlet>` is a component drawing `currentView`. It answers `{ stop() }`.
+`@lightstart/app/web`'s `start(manifest)` runs the app in the page: its kinds `indexeddb` and `memory`, the arguments from the URL query (`?name=value`, a bare `?flag`; a parameter the app does not declare is left out), the browser's history for the routes with `configureNavigation(router.navigation)`, the theme preset applied, and the root view mounted (an existing `<app-root>` replaced by a fresh one, another placeholder replaced, or appended to `<body>`). On a prerendered page (`window.__PRERENDERED__ === true` and the root already holding markup) the host keeps that element, so light's views adopt the served DOM; the first client navigation clears the marker. `<app-outlet>` is a component drawing `currentView`. It answers `{ stop() }`.
 
 A project on `@lightstart/components` has its tags defined by the generated `.light/components.ts`, which `.light/app.ts` imports before the views, so every component exists before the root view is made. The stylesheets come from `.light/components.css` through the app's own stylesheet.
 
