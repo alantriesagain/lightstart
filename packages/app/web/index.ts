@@ -10,7 +10,7 @@
  * view is made.
  */
 
-import View from "@lightstart/light";
+import View, { configureView } from "@lightstart/light";
 import { html } from "@lightstart/light/html";
 import { configureNavigation } from "@lightstart/light/navigation";
 import { listen } from "@lightstart/router/listen";
@@ -50,6 +50,42 @@ export class IndexedDBKind extends StoreKind {
   }
 }
 
+/** Whether this page was rendered ahead of time (`light build --prerender` marks it). */
+const prerenderedPage = (): boolean => (globalThis as { __PRERENDERED__?: unknown }).__PRERENDERED__ === true;
+
+let markStarted: () => void = () => {};
+const started = new Promise<void>((resolve) => {
+  markStarted = resolve;
+});
+/** The work views hand over with `trackWork` while a prerendered page boots. */
+const pending = new Set<Promise<unknown>>();
+
+const twoFrames = (): Promise<void> => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+
+/** Resolves once the run has mounted and the work its views handed over is done: a prerendered region a render cannot adopt before then is held until it. */
+const idle = async (): Promise<void> => {
+  await started;
+  for (;;) {
+    await twoFrames();
+    if (pending.size === 0) return;
+    await Promise.allSettled([...pending]);
+  }
+};
+
+// On a prerendered page a view's first renders come before its data: light holds what does not match the served DOM until the app is idle, instead of drawing it fresh. Configured as this module loads, before the manifest defines the views.
+if (prerenderedPage()) {
+  configureView({
+    wrap: (work: Promise<unknown>) => {
+      pending.add(work);
+      const done = (): void => {
+        pending.delete(work);
+      };
+      work.then(done, done);
+    },
+    settle: idle,
+  });
+}
+
 /** The view the routes answer, its path's parameters set on it as props; the same element while the tag stays. */
 class AppOutlet extends View {
   private tag = "";
@@ -61,7 +97,9 @@ class AppOutlet extends View {
     if (tag === null) return html``;
     if (tag !== this.tag || this.made === null) {
       this.tag = tag;
-      this.made = document.createElement(tag);
+      // A prerendered page's outlet already holds the served view: keep it, so its own render adopts the served DOM.
+      const served = this.made === null ? this.querySelector(tag) : null;
+      this.made = served instanceof HTMLElement && served.parentElement === this ? served : document.createElement(tag);
     }
     for (const [key, value] of Object.entries(params)) Reflect.set(this.made, key, value);
     return html`${this.made}`;
@@ -120,7 +158,7 @@ export class WebHost extends AppHost {
   }
 
   prerendered(): boolean {
-    return (globalThis as { __PRERENDERED__?: unknown }).__PRERENDERED__ === true;
+    return prerenderedPage();
   }
 
   clearPrerendered(): void {
@@ -146,12 +184,14 @@ export class WebHost extends AppHost {
     const adopt = this.prerendered() && placeholder !== null && placeholder.childNodes.length > 0;
     if (adopt && placeholder !== null) {
       this.mounted = placeholder;
+      markStarted();
       return;
     }
     const made = document.createElement(tag);
     if (placeholder === null) document.body.append(made);
     else placeholder.replaceWith(made);
     this.mounted = made;
+    markStarted();
   }
 
   /** Stop handing the page's link clicks to the router of the run that is going. */
