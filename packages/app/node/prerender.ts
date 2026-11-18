@@ -30,6 +30,7 @@ interface PlaywrightPage {
   on(event: "pageerror", handler: (error: unknown) => void): void;
   goto(url: string, options?: { waitUntil?: string; timeout?: number }): Promise<unknown>;
   evaluate<T>(run: () => T | Promise<T>): Promise<T>;
+  addInitScript(script: string): Promise<void>;
   close(): Promise<void>;
 }
 
