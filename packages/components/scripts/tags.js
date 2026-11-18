@@ -1,6 +1,8 @@
 /**
  * @file Write `tags.json`: every component tag and the module, stylesheet,
- * base and tags its source names, read from the files beside it.
+ * base and tags its source names, read from the files beside it. The tags a
+ * component writes include those of the helper modules it imports (the form's
+ * table of controls), so a page that defines the component defines them too.
  */
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
@@ -14,6 +16,7 @@ const TAG = /tag:\s*"([^"]+)"/;
 const EXTENDS = /\bextends:\s*"([^"]+)"/;
 const STYLE = /\bstyle:\s*true\b/;
 const WRITTEN = /<\s*(lc-[a-z0-9-]+)/g;
+const IMPORTED = /(?:\bfrom\s+|^\s*import\s+)"(\.{1,2}\/[^"]+\.js)"/gm;
 
 /** @param {string} source */
 const stripComments = (source) =>
@@ -87,6 +90,27 @@ const extractSlots = (sourceCode) => {
   return slots;
 };
 
+/**
+ * The tags `file` writes, with those of the helper modules it imports statically,
+ * followed through each; a component's module is left out, its tags are its own.
+ * @param {string} file
+ * @param {Set<string>} [seen]
+ * @returns {Set<string>}
+ */
+const writtenTags = (file, seen = new Set()) => {
+  const tags = new Set();
+  if (seen.has(file)) return tags;
+  seen.add(file);
+  const source = stripComments(readFileSync(file, "utf8"));
+  for (const match of source.matchAll(WRITTEN)) tags.add(match[1]);
+  for (const match of source.matchAll(IMPORTED)) {
+    const target = join(dirname(file), match[1]);
+    if (!existsSync(target) || COMPONENT.test(stripComments(readFileSync(target, "utf8")))) continue;
+    for (const tag of writtenTags(target, seen)) tags.add(tag);
+  }
+  return tags;
+};
+
 /** @param {string} dir @returns {string[]} */
 const modules = (dir) =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -113,7 +137,7 @@ export const buildTags = () => {
     if (tag === undefined) continue;
     const style = file.replace(/\.js$/, ".css");
     const used = new Set();
-    for (const match of source.matchAll(WRITTEN)) if (match[1] !== tag) used.add(match[1]);
+    for (const written of writtenTags(file)) if (written !== tag) used.add(written);
     tags[tag] = {
       module: relative(PKG, file).split(sep).join("/"),
       style: STYLE.test(block) && existsSync(style) ? relative(PKG, style).split(sep).join("/") : null,

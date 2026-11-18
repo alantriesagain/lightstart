@@ -1123,7 +1123,16 @@
     "style": "form/form.css",
     "extends": null,
     "uses": [
-      "lc-label"
+      "lc-accordion",
+      "lc-button",
+      "lc-checkbox",
+      "lc-color-picker",
+      "lc-file-upload",
+      "lc-input",
+      "lc-label",
+      "lc-select",
+      "lc-textarea",
+      "lc-week-hours"
     ],
     "doc": {
       "description": "",
