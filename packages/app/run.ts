@@ -56,6 +56,16 @@ export class AppHost implements StoreHost {
     return createMemoryAdapter("/");
   }
 
+  /** Whether the page on screen was rendered ahead of time; only a host with a page answers true. */
+  prerendered(): boolean {
+    return false;
+  }
+
+  /** Clear the prerender flag before a client navigation; nothing without one. */
+  clearPrerendered(): void {
+    return;
+  }
+
   /** Put the run's view on the surface. */
   mount(_run: AppRun): Promise<void> {
     return Promise.resolve();
@@ -138,6 +148,8 @@ export class AppRun {
     const router = new RouterCore(this.host.history(), { plugins: [] });
     router.init(routes, {
       appName: this.app.name,
+      prerendered: () => this.host.prerendered(),
+      clearPrerendered: () => this.host.clearPrerendered(),
       onRouteChange: (matched) => {
         currentParams.value = paramsOf(matched);
         currentView.value = viewOf(matched.route);

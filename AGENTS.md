@@ -69,7 +69,7 @@ Follow the shape `light new` gave the project and the choices it already made (i
 
 ## Building and publishing
 
-`light build` bundles the page into `.deployed/builds/<id>`. For an app it also writes `404.html` (so a static host boots the app on any path), `robots.txt`, `_headers` (hashed bundles cached for good) and, given `defineApp({ url })`, `sitemap.xml` from the routes without parameters. A terminal app's `light run` is a dev build (`dist/dev/`, fast when nothing changed); `light build` makes the release binary.
+`light build` bundles the page into `.deployed/builds/<id>`. For an app it also writes `404.html` (so a static host boots the app on any path), `robots.txt`, `_headers` (hashed bundles cached for good) and, given `defineApp({ url })`, `sitemap.xml` from the routes' concrete paths (a `params` route filled from its values, `spa: true`, wildcards and redirects left out). `light build --prerender` (or `defineApp({ prerender: true })`) renders each of those paths into its own `index.html` with Playwright in headless Chromium, and the web host adopts the served DOM on a `__PRERENDERED__` page; `404.html` stays the shell. A terminal app's `light run` is a dev build (`dist/dev/`, fast when nothing changed); `light build` makes the release binary.
 
 To get `light` on PATH from a checkout, link its binary:
 

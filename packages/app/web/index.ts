@@ -119,6 +119,14 @@ export class WebHost extends AppHost {
     return createBrowserAdapter();
   }
 
+  prerendered(): boolean {
+    return (globalThis as { __PRERENDERED__?: unknown }).__PRERENDERED__ === true;
+  }
+
+  clearPrerendered(): void {
+    (globalThis as { __PRERENDERED__?: boolean }).__PRERENDERED__ = false;
+  }
+
   mount(run: AppRun): Promise<void> {
     return this.put(run);
   }
@@ -134,8 +142,13 @@ export class WebHost extends AppHost {
       this.unlisten = listen(document, run.router);
     }
     const tag = run.app.root ?? "app-root";
-    const made = document.createElement(tag);
     const placeholder = document.querySelector(tag);
+    const adopt = this.prerendered() && placeholder !== null && placeholder.childNodes.length > 0;
+    if (adopt && placeholder !== null) {
+      this.mounted = placeholder;
+      return;
+    }
+    const made = document.createElement(tag);
     if (placeholder === null) document.body.append(made);
     else placeholder.replaceWith(made);
     this.mounted = made;
