@@ -3,11 +3,12 @@
  * a preset sets can be compared at a glance.
  */
 import { html } from "@lightstart/light/html";
-import { defineComponent } from "@lightstart/light";
+import View, { defineComponent } from "@lightstart/light";
 import presets from "@lightstart/light/theme/presets.js";
-import { applySkin, clearSkin } from "@bootstrapp/showcase/lib/skins.js";
+import { applySkin, clearSkin } from "@lightstart/showcase";
+import "@lightstart/showcase/views/sink.js";
 
-export default defineComponent({
+const view = defineComponent({
   tag: "docs-skins",
   style: true,
   props: {
@@ -40,3 +41,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

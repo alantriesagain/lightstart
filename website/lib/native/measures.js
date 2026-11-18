@@ -13,7 +13,7 @@ export default {
     "runs": 15,
     "capturedAt": "2026-10-18",
     "load": 2.9,
-    "cpus": 8
+    "cpus": 8,
   },
   "typecheck": {
     "files": 807,
@@ -26,7 +26,7 @@ export default {
         "ms": 4668.6,
         "rssKb": 563248,
         "errors": 6,
-        "sizeBytes": null
+        "sizeBytes": null,
       },
       {
         "id": "tsgo",
@@ -35,7 +35,7 @@ export default {
         "ms": 800.9,
         "rssKb": 354432,
         "errors": 6,
-        "sizeBytes": 24101026
+        "sizeBytes": 24101026,
       },
       {
         "id": "tsc-ts",
@@ -44,43 +44,43 @@ export default {
         "ms": 485.2,
         "rssKb": 298156,
         "errors": 6,
-        "sizeBytes": 17367152
-      }
-    ]
+        "sizeBytes": 17367152,
+      },
+    ],
   },
   "bench": {
     "steps": [
       {
         "step": "create 10k keyed rows",
         "node": 78.7,
-        "native": 92.9
+        "native": 92.9,
       },
       {
         "step": "layout 10k rows",
         "node": 44,
-        "native": 15
+        "native": 15,
       },
       {
         "step": "update every 10th row",
         "node": 10.6,
-        "native": 24.8
+        "native": 24.8,
       },
       {
         "step": "reverse 10k keyed rows",
         "node": 22.6,
-        "native": 38.3
+        "native": 38.3,
       },
       {
         "step": "clear",
         "node": 15.3,
-        "native": 26.4
-      }
+        "native": 26.4,
+      },
     ],
-    "sizeBytes": 1495328
+    "sizeBytes": 1495328,
   },
   "coverage": {
     "statements": 2167,
-    "text": "scriptc coverage native/index.js\n\n  statements analyzed   2167\n  compile statically    2167  (100%)\n\n  fully static — all analyzed statements compile to native code."
+    "text": "scriptc coverage native/index.js\n\n  statements analyzed   2167\n  compile statically    2167  (100%)\n\n  fully static — all analyzed statements compile to native code.",
   },
-  "corpus": 2874
+  "corpus": 2874,
 };

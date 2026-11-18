@@ -2,59 +2,31 @@
   "name": "light-website",
   "version": "0.1.0",
   "type": "module",
-  "bootstrapp": {
-    "prefix": "docs",
-    "name": "Light",
-    "short_name": "Light",
-    "description": "The site of light: every component, its examples and its props, in any skin",
-    "theme_color": "#101210",
-    "bodyClasses": "bg-canvas text-default min-h-screen",
-    "dev": {
-      "port": 3530
-    },
-    "database": {
-      "name": "light-website",
-      "version": 1,
-      "defaultAdapter": "indexeddb"
-    },
-    "components": {
-      "docs": "views/",
-      "template": "views/templates/"
-    },
-    "generator": {
-      "styling": "css"
-    },
-    "theme": {
-      "path": "/theme.js",
-      "runtime": true,
-      "icon": {
-        "family": "lucide"
-      }
-    }
-  },
+  "private": true,
   "scripts": {
-    "dev": "bootstrapp serve",
-    "test": "bootstrapp test"
+    "dev": "light serve --watch",
+    "build": "light build",
+    "test": "node --test tests/css-scale.test.js lib/*.test.js lib/native/*.test.js check/rules/*.test.js && light test tests/*.browser.test.js",
+    "check": "light check",
+    "lint": "light lint",
+    "typecheck": "light typecheck",
+    "verify": "light verify"
   },
   "dependencies": {
-    "@lightstart/light": "workspace:*",
-    "@lightstart/components": "workspace:*",
-    "@lightstart/highlight": "workspace:*",
-    "@lightstart/markdown": "workspace:*",
-    "@lightstart/router": "workspace:*",
-    "@bootstrapp/showcase": "workspace:*",
-    "bootstrapp": "workspace:*",
-    "@bootstrapp/theme": "workspace:*",
-    "@bootstrapp/editor": "workspace:*",
-    "@bootstrapp/anim": "workspace:*",
-    "@bootstrapp/qr": "workspace:*"
+    "@lightstart/light": "link:../packages/light",
+    "@lightstart/components": "link:../packages/components",
+    "@lightstart/app": "link:../packages/app",
+    "@lightstart/showcase": "link:../packages/showcase",
+    "@lightstart/highlight": "link:../packages/highlight",
+    "@lightstart/markdown": "link:../packages/markdown",
+    "@lightstart/router": "link:../packages/router",
+    "@lightstart/cli": "link:../packages/cli"
   },
   "devDependencies": {
-    "@bootstrapp/test": "workspace:*",
-    "@lightstart/cli": "workspace:*",
-    "@bootstrapp/check": "workspace:*",
-    "@bootstrapp/devops": "workspace:*",
-    "@bootstrapp/generator": "workspace:*",
-    "@bootstrapp/serve": "workspace:*"
+    "@lightstart/dev": "link:../packages/dev",
+    "@lightstart/build": "link:../packages/build",
+    "@lightstart/server": "link:../packages/server",
+    "@lightstart/test": "link:../packages/test",
+    "playwright": "^1.58.2"
   }
 }

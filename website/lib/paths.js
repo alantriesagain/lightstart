@@ -3,7 +3,7 @@
  * component in category order, alphabetical within a category.
  */
 
-/** @import { ShowcaseCategoryListing } from "@bootstrapp/showcase/types.ts" */
+/** @import { ShowcaseCategoryListing } from "@lightstart/showcase" */
 
 /** @typedef {{ category: string, name: string }} ComponentRef */
 

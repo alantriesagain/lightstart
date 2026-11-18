@@ -4,10 +4,10 @@
  * background), each with what it covers. The pages are `lib/native/pages.js`.
  */
 import { html } from "@lightstart/light/html";
-import $APP from "bootstrapp";
-import { defineComponent } from "@lightstart/light";
+import View, { defineComponent } from "@lightstart/light";
+import catalogue from "../controllers/catalogue.js";
 import navigation from "@lightstart/light/navigation";
-import { NATIVE_GROUPS, NATIVE_PAGES, nativeNeighbours } from "../lib/native/pages.js";
+import { NATIVE_GROUPS, NATIVE_PAGES, nativeNeighbours } from "../../lib/native/pages.js";
 
 /** @import { TocItem } from "@lightstart/components/types.ts" */
 
@@ -19,16 +19,16 @@ const GROUP_TEXT = {
 /** @type {TocItem[]} */
 const OUTLINE = NATIVE_GROUPS.map((group) => ({ id: group.id, label: group.label }));
 
-export default defineComponent({
+const view = defineComponent({
   tag: "docs-native",
   style: true,
 
   connected() {
-    $APP.catalogue.toc = OUTLINE;
+    catalogue.toc = OUTLINE;
   },
 
   disconnected() {
-    $APP.catalogue.toc = [];
+    catalogue.toc = [];
   },
 
   render() {
@@ -61,3 +61,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

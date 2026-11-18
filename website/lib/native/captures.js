@@ -13,7 +13,7 @@ export default {
     "runs": 15,
     "capturedAt": "2026-10-18",
     "load": 9.2,
-    "cpus": 8
+    "cpus": 8,
   },
   "examples": {
     "counter": {
@@ -31,18 +31,18 @@ export default {
           "not a Smi",
           "overflow",
           "not a Smi",
-          "(unknown)"
-        ]
+          "(unknown)",
+        ],
       },
       "ir": {
         "class": "{\n  \"name\": \"Counter\",\n  \"jsName\": \"Counter\",\n  \"jsLength\": 0,\n  \"fields\": [\n    {\n      \"name\": \"count\",\n      \"type\": {\n        \"kind\": \"f64\"\n      }\n    }\n  ],\n  \"methods\": [\n    \"increment\"\n  ],\n  \"prototypeNames\": [\n    \"increment\"\n  ]\n}",
-        "method": "{\n  \"name\": \"%Counter.increment\",\n  \"params\": [\n    {\n      \"localId\": \"this.0\",\n      \"name\": \"this\",\n      \"type\": {\n        \"kind\": \"object\",\n        \"className\": \"Counter\"\n      }\n    },\n    {\n      \"localId\": \"by.0\",\n      \"name\": \"by\",\n      \"type\": {\n        \"kind\": \"f64\"\n      }\n    }\n  ],\n  \"returnType\": {\n    \"kind\": \"f64\"\n  },\n  \"locals\": [\n    {\n      \"id\": \"this.0\",\n      \"name\": \"this\",\n      \"type\": {\n        \"kind\": \"object\",\n        \"className\": \"Counter\"\n      },\n      \"mutable\": false\n    },\n    {\n      \"id\": \"by.0\",\n      \"name\": \"by\",\n      \"type\": {\n        \"kind\": \"f64\"\n      },\n      \"mutable\": true\n    },\n    {\n      \"id\": \"%compoundReceiver.0\",\n      \"name\": \"%compoundReceiver\",\n      \"type\": {\n        \"kind\": \"object\",\n        \"className\": \"Counter\"\n      },\n      \"mutable\": false\n    },\n    {\n      \"id\": \"%compoundOld.0\",\n      \"name\": \"%compoundOld\",\n      \"type\": {\n        \"kind\": \"f64\"\n      },\n      \"mutable\": false\n    },\n    {\n      \"id\": \"%compoundRhs.0\",\n      \"name\": \"%compoundRhs\",\n      \"type\": {\n        \"kind\": \"f64\"\n      },\n      \"mutable\": false\n    },\n    {\n      \"id\": \"%compoundResult.0\",\n      \"name\": \"%compoundResult\",\n      \"type\": {\n        \"kind\": \"f64\"\n      },\n      \"mutable\": false\n    }\n  ],\n  \"body\": [\n    {\n      \"kind\": \"exprStmt\",\n      \"expr\": {\n        \"kind\": \"seqExpr\",\n        \"stmts\": [\n          {\n            \"kind\": \"varDecl\",\n            \"localId\": \"%compoundReceiver.0\",\n            \"init\": {\n              \"kind\": \"varRef\",\n              \"localId\": \"this.0\",\n              \"type\": {\n                \"kind\": \"object\",\n                \"className\": \"Counter\"\n              }\n            }\n          },\n          {\n            \"kind\": \"varDecl\",\n            \"localId\": \"%compoundOld.0\",\n            \"init\": {\n              \"kind\": \"fieldGet\",\n              \"obj\": {\n                \"kind\": \"varRef\",\n                \"localId\": \"%compoundReceiver.0\",\n                \"type\": {\n                  \"kind\": \"object\",\n                  \"className\": \"Counter\"\n                }\n              },\n              \"className\": \"Counter\",\n              \"field\": \"count\",\n              \"type\": {\n                \"kind\": \"f64\"\n              }\n            }\n          },\n          {\n            \"kind\": \"varDecl\",\n            \"localId\": \"%compoundRhs.0\",\n            \"init\": {\n              \"kind\": \"varRef\",\n              \"localId\": \"by.0\",\n              \"type\": {\n                \"kind\": \"f64\"\n              }\n            }\n          },\n          {\n            \"kind\": \"varDecl\",\n            \"localId\": \"%compoundResult.0\",\n            \"init\": {\n              \"kind\": \"bin\",\n              \"op\": \"+\",\n              \"left\": {\n                \"kind\": \"varRef\",\n                \"localId\": \"%compoundOld.0\",\n                \"type\": {\n                  \"kind\": \"f64\"\n                }\n              },\n              \"right\": {\n                \"kind\": \"varRef\",\n                \"localId\": \"%compoundRhs.0\",\n                \"type\": {\n                  \"kind\": \"f64\"\n                }\n              },\n              \"type\": {\n                \"kind\": \"f64\"\n              }\n            }\n          },\n          {\n            \"kind\": \"fieldSet\",\n            \"obj\": {\n              \"kind\": \"varRef\",\n              \"localId\": \"%compoundReceiver.0\",\n              \"type\": {\n                \"kind\": \"object\",\n                \"className\": \"Counter\"\n              }\n            },\n            \"className\": \"Counter\",\n            \"field\": \"count\",\n            \"value\": {\n              \"kind\": \"varRef\",\n              \"localId\": \"%compoundResult.0\",\n              \"type\": {\n                \"kind\": \"f64\"\n              }\n            }\n          }\n        ],\n        \"result\": {\n          \"kind\": \"varRef\",\n          \"localId\": \"%compoundResult.0\",\n          \"type\": {\n            \"kind\": \"f64\"\n          }\n        },\n        \"type\": {\n          \"kind\": \"f64\"\n        }\n      }\n    },\n    {\n      \"kind\": \"return\",\n      \"value\": {\n        \"kind\": \"fieldGet\",\n        \"obj\": {\n          \"kind\": \"varRef\",\n          \"localId\": \"this.0\",\n          \"type\": {\n            \"kind\": \"object\",\n            \"className\": \"Counter\"\n          }\n        },\n        \"className\": \"Counter\",\n        \"field\": \"count\",\n        \"type\": {\n          \"kind\": \"f64\"\n        }\n      }\n    }\n  ]\n}"
+        "method": "{\n  \"name\": \"%Counter.increment\",\n  \"params\": [\n    {\n      \"localId\": \"this.0\",\n      \"name\": \"this\",\n      \"type\": {\n        \"kind\": \"object\",\n        \"className\": \"Counter\"\n      }\n    },\n    {\n      \"localId\": \"by.0\",\n      \"name\": \"by\",\n      \"type\": {\n        \"kind\": \"f64\"\n      }\n    }\n  ],\n  \"returnType\": {\n    \"kind\": \"f64\"\n  },\n  \"locals\": [\n    {\n      \"id\": \"this.0\",\n      \"name\": \"this\",\n      \"type\": {\n        \"kind\": \"object\",\n        \"className\": \"Counter\"\n      },\n      \"mutable\": false\n    },\n    {\n      \"id\": \"by.0\",\n      \"name\": \"by\",\n      \"type\": {\n        \"kind\": \"f64\"\n      },\n      \"mutable\": true\n    },\n    {\n      \"id\": \"%compoundReceiver.0\",\n      \"name\": \"%compoundReceiver\",\n      \"type\": {\n        \"kind\": \"object\",\n        \"className\": \"Counter\"\n      },\n      \"mutable\": false\n    },\n    {\n      \"id\": \"%compoundOld.0\",\n      \"name\": \"%compoundOld\",\n      \"type\": {\n        \"kind\": \"f64\"\n      },\n      \"mutable\": false\n    },\n    {\n      \"id\": \"%compoundRhs.0\",\n      \"name\": \"%compoundRhs\",\n      \"type\": {\n        \"kind\": \"f64\"\n      },\n      \"mutable\": false\n    },\n    {\n      \"id\": \"%compoundResult.0\",\n      \"name\": \"%compoundResult\",\n      \"type\": {\n        \"kind\": \"f64\"\n      },\n      \"mutable\": false\n    }\n  ],\n  \"body\": [\n    {\n      \"kind\": \"exprStmt\",\n      \"expr\": {\n        \"kind\": \"seqExpr\",\n        \"stmts\": [\n          {\n            \"kind\": \"varDecl\",\n            \"localId\": \"%compoundReceiver.0\",\n            \"init\": {\n              \"kind\": \"varRef\",\n              \"localId\": \"this.0\",\n              \"type\": {\n                \"kind\": \"object\",\n                \"className\": \"Counter\"\n              }\n            }\n          },\n          {\n            \"kind\": \"varDecl\",\n            \"localId\": \"%compoundOld.0\",\n            \"init\": {\n              \"kind\": \"fieldGet\",\n              \"obj\": {\n                \"kind\": \"varRef\",\n                \"localId\": \"%compoundReceiver.0\",\n                \"type\": {\n                  \"kind\": \"object\",\n                  \"className\": \"Counter\"\n                }\n              },\n              \"className\": \"Counter\",\n              \"field\": \"count\",\n              \"type\": {\n                \"kind\": \"f64\"\n              }\n            }\n          },\n          {\n            \"kind\": \"varDecl\",\n            \"localId\": \"%compoundRhs.0\",\n            \"init\": {\n              \"kind\": \"varRef\",\n              \"localId\": \"by.0\",\n              \"type\": {\n                \"kind\": \"f64\"\n              }\n            }\n          },\n          {\n            \"kind\": \"varDecl\",\n            \"localId\": \"%compoundResult.0\",\n            \"init\": {\n              \"kind\": \"bin\",\n              \"op\": \"+\",\n              \"left\": {\n                \"kind\": \"varRef\",\n                \"localId\": \"%compoundOld.0\",\n                \"type\": {\n                  \"kind\": \"f64\"\n                }\n              },\n              \"right\": {\n                \"kind\": \"varRef\",\n                \"localId\": \"%compoundRhs.0\",\n                \"type\": {\n                  \"kind\": \"f64\"\n                }\n              },\n              \"type\": {\n                \"kind\": \"f64\"\n              }\n            }\n          },\n          {\n            \"kind\": \"fieldSet\",\n            \"obj\": {\n              \"kind\": \"varRef\",\n              \"localId\": \"%compoundReceiver.0\",\n              \"type\": {\n                \"kind\": \"object\",\n                \"className\": \"Counter\"\n              }\n            },\n            \"className\": \"Counter\",\n            \"field\": \"count\",\n            \"value\": {\n              \"kind\": \"varRef\",\n              \"localId\": \"%compoundResult.0\",\n              \"type\": {\n                \"kind\": \"f64\"\n              }\n            }\n          }\n        ],\n        \"result\": {\n          \"kind\": \"varRef\",\n          \"localId\": \"%compoundResult.0\",\n          \"type\": {\n            \"kind\": \"f64\"\n          }\n        },\n        \"type\": {\n          \"kind\": \"f64\"\n        }\n      }\n    },\n    {\n      \"kind\": \"return\",\n      \"value\": {\n        \"kind\": \"fieldGet\",\n        \"obj\": {\n          \"kind\": \"varRef\",\n          \"localId\": \"this.0\",\n          \"type\": {\n            \"kind\": \"object\",\n            \"className\": \"Counter\"\n          }\n        },\n        \"className\": \"Counter\",\n        \"field\": \"count\",\n        \"type\": {\n          \"kind\": \"f64\"\n        }\n      }\n    }\n  ]\n}",
       },
       "llvm": {
         "struct": "%sc_o_Counter = type { i64, double } ; class Counter { count }",
         "functions": "define internal double @sc_bf__x25_Counter_increment.i32(ptr %p_sc_l_this_0, i32 %p_sc_l_by_0.i32) #0 { ; %Counter.increment\nentry:\n  %sc_l_this_0 = alloca ptr ; this\n  %sc_l_by_0 = alloca i32 ; by\n  %sc_l__x25_compoundReceiver_0 = alloca ptr ; %compoundReceiver\n  %sc_l__x25_compoundOld_0 = alloca double ; %compoundOld\n  %sc_l__x25_compoundRhs_0 = alloca i32 ; %compoundRhs\n  %sc_l__x25_compoundResult_0 = alloca double ; %compoundResult\n  %p_sc_l_by_0 = sitofp i32 %p_sc_l_by_0.i32 to double\n  store ptr null, ptr %sc_l__x25_compoundReceiver_0\n  store ptr %p_sc_l_this_0, ptr %sc_l_this_0\n  store i32 %p_sc_l_by_0.i32, ptr %sc_l_by_0\n  %t0 = load ptr, ptr %sc_l_this_0\n  store ptr %t0, ptr %sc_l__x25_compoundReceiver_0\n  %t1 = load ptr, ptr %sc_l__x25_compoundReceiver_0\n  %t2 = getelementptr inbounds %sc_o_Counter, ptr %t1, i64 0, i32 1\n  %t3 = load double, ptr %t2, !tbaa !2\n  store double %t3, ptr %sc_l__x25_compoundOld_0\n  %t4 = load i32, ptr %sc_l_by_0\n  store i32 %t4, ptr %sc_l__x25_compoundRhs_0\n  %t5 = load double, ptr %sc_l__x25_compoundOld_0\n  %t6 = load i32, ptr %sc_l__x25_compoundRhs_0\n  %t7 = sitofp i32 %t6 to double\n  %t8 = fadd double %t5, %t7\n  store double %t8, ptr %sc_l__x25_compoundResult_0\n  %t9 = load ptr, ptr %sc_l__x25_compoundReceiver_0\n  %t10 = load double, ptr %sc_l__x25_compoundResult_0\n  %t11 = getelementptr inbounds %sc_o_Counter, ptr %t9, i64 0, i32 1\n  store double %t10, ptr %t11, !tbaa !2\n  %t12 = load double, ptr %sc_l__x25_compoundResult_0\n  %t13 = load ptr, ptr %sc_l_this_0\n  %t14 = getelementptr inbounds %sc_o_Counter, ptr %t13, i64 0, i32 1\n  %t15 = load double, ptr %t14, !tbaa !2\n  ret double %t15\n}\n\ndefine internal double @sc_bf__x25_Counter_increment(ptr %p0, double %p1) #0 {\nentry:\n  %a1 = fptosi double %p1 to i32\n  %r = call double @sc_bf__x25_Counter_increment.i32(ptr %p0, i32 %a1)\n  ret double %r\n}\n\ndefine internal double @sc_f__x25_Counter_increment(ptr %p0, double %p1) #0 {\nentry:\n  %result = call double @sc_bf__x25_Counter_increment(ptr %p0, double %p1)\n  call void @sc_release_Counter(ptr %p0)\n  ret double %result\n}",
         "call": "%t8 = call double @sc_bf__x25_Counter_increment.i32(ptr %t7, i32 2)",
-        "release": "define internal void @sc_release_Counter(ptr %o) #0 { ; release Counter (fast path)\nentry:\n  %isnull = icmp eq ptr %o, null\n  br i1 %isnull, label %done, label %check\ncheck:\n  %rc = load i64, ptr %o\n  %rcm2 = sub i64 %rc, 2\n  %shared = icmp ult i64 %rcm2, -3\n  br i1 %shared, label %dec, label %slow\ndec:\n  %n = sub i64 %rc, 1\n  store i64 %n, ptr %o\n  br label %done\nslow:\n  %imm = icmp eq i64 %rc, -1\n  br i1 %imm, label %done, label %slowcall\nslowcall:\n  call void @sc_release_Counter_slow(ptr %o)\n  br label %done\ndone:\n  ret void\n}"
+        "release": "define internal void @sc_release_Counter(ptr %o) #0 { ; release Counter (fast path)\nentry:\n  %isnull = icmp eq ptr %o, null\n  br i1 %isnull, label %done, label %check\ncheck:\n  %rc = load i64, ptr %o\n  %rcm2 = sub i64 %rc, 2\n  %shared = icmp ult i64 %rcm2, -3\n  br i1 %shared, label %dec, label %slow\ndec:\n  %n = sub i64 %rc, 1\n  store i64 %n, ptr %o\n  br label %done\nslow:\n  %imm = icmp eq i64 %rc, -1\n  br i1 %imm, label %done, label %slowcall\nslowcall:\n  call void @sc_release_Counter_slow(ptr %o)\n  br label %done\ndone:\n  ret void\n}",
       },
       "loop": "\tmovsd\t8(%rbx), %xmm0\n\tmovl\t$100000, %eax\n\tmovsd\t.LCPI2_0(%rip), %xmm1\n.LBB2_12:\n\taddsd\t%xmm1, %xmm0\n\taddsd\t%xmm1, %xmm0\n\taddsd\t%xmm1, %xmm0\n\taddsd\t%xmm1, %xmm0\n\taddsd\t%xmm1, %xmm0\n\taddsd\t%xmm1, %xmm0\n\taddsd\t%xmm1, %xmm0\n\taddsd\t%xmm1, %xmm0\n\taddsd\t%xmm1, %xmm0\n\taddsd\t%xmm1, %xmm0\n\taddl\t$-10, %eax\n\tjne\t.LBB2_12\n\tmovsd\t%xmm0, 8(%rbx)",
       "link": {
@@ -51,7 +51,7 @@ export default {
         "target": "linux-x64-gnu",
         "objects": 34,
         "bytes": 2898240,
-        "abi": "scr_runtime_abi_v22"
+        "abi": "scr_runtime_abi_v22",
       },
       "coverage": "scriptc coverage counter.ts\n\n  statements analyzed   7\n  compile statically    7  (100%)\n\n  fully static — all analyzed statements compile to native code.",
       "runs": {
@@ -59,19 +59,19 @@ export default {
         "node": {
           "ms": 54.7,
           "rssKb": 48256,
-          "sizeBytes": 123785160
+          "sizeBytes": 123785160,
         },
         "nodeEmpty": {
           "ms": 38.9,
-          "rssKb": 39424
+          "rssKb": 39424,
         },
         "native": {
           "ms": 2.2,
           "rssKb": 1792,
           "sizeBytes": 90544,
-          "strippedBytes": 76728
-        }
-      }
+          "strippedBytes": 76728,
+        },
+      },
     },
     "shapes": {
       "file": "shapes.ts",
@@ -81,9 +81,9 @@ export default {
       "ir": {
         "unions": "[\n  {\n    \"id\": \"u0\",\n    \"arms\": [\n      {\n        \"kind\": \"record\",\n        \"shapeId\": \"r0\"\n      },\n      {\n        \"kind\": \"record\",\n        \"shapeId\": \"r1\"\n      }\n    ],\n    \"discriminant\": {\n      \"field\": \"kind\",\n      \"cases\": [\n        {\n          \"tag\": 0,\n          \"values\": [\n            \"circle\"\n          ]\n        },\n        {\n          \"tag\": 1,\n          \"values\": [\n            \"square\"\n          ]\n        }\n      ]\n    }\n  }\n]",
         "records": "[\n  {\n    \"id\": \"r0\",\n    \"fields\": [\n      {\n        \"name\": \"kind\",\n        \"type\": {\n          \"kind\": \"string\"\n        }\n      },\n      {\n        \"name\": \"radius\",\n        \"type\": {\n          \"kind\": \"f64\"\n        }\n      }\n    ],\n    \"declaredOrder\": [\n      \"kind\",\n      \"radius\"\n    ]\n  },\n  {\n    \"id\": \"r1\",\n    \"fields\": [\n      {\n        \"name\": \"kind\",\n        \"type\": {\n          \"kind\": \"string\"\n        }\n      },\n      {\n        \"name\": \"side\",\n        \"type\": {\n          \"kind\": \"f64\"\n        }\n      }\n    ],\n    \"declaredOrder\": [\n      \"kind\",\n      \"side\"\n    ]\n  }\n]",
-        "signatures": "area(u0): f64\ntotal%0(u0[], (u0) => f64): f64"
+        "signatures": "area(u0): f64\ntotal%0(u0[], (u0) => f64): f64",
       },
-      "stdout": "4476769.53\n5901769.53\n"
+      "stdout": "4476769.53\n5901769.53\n",
     },
     "dynamic": {
       "file": "dynamic.ts",
@@ -91,27 +91,27 @@ export default {
       "node": {
         "stdout": "LIGHT\nmany1\n",
         "stderr": "",
-        "status": 0
+        "status": 0,
       },
       "native": {
         "stdout": "",
         "stderr": "Uncaught TypeError: expected number at $.stars, got string\n",
-        "status": 1
+        "status": 1,
       },
-      "coverage": "scriptc coverage dynamic.ts\n\n  statements analyzed   4\n  compile statically    4  (100%)\n\n  fully static — all analyzed statements compile to native code."
+      "coverage": "scriptc coverage dynamic.ts\n\n  statements analyzed   4\n  compile statically    4  (100%)\n\n  fully static — all analyzed statements compile to native code.",
     },
     "refused": {
       "file": "refused.ts",
       "source": "const source = \"1 + 1\";\nconsole.log(eval(source));\n",
       "node": {
         "stdout": "2\n",
-        "status": 0
+        "status": 0,
       },
       "build": {
         "stderr": "refused.ts:2:13 - error SC2020: 'eval' is part of the standard library types but has no scriptc lowering yet\n\n  1 | const source = \"1 + 1\";\n  2 | console.log(eval(source));\n    |             ^~~~\n  3 | \n\n  hint: runtime code evaluation cannot be compiled ahead of time\n\n1 error.\n",
-        "status": 1
+        "status": 1,
       },
-      "coverage": "scriptc coverage refused.ts\n\n  statements analyzed   1\n  compile statically    0  (0%)\n\n  blockers:\n      ×1  SC2020  'eval' is part of the standard library types but has no scriptc lowering yet\n          at refused.ts:2:13\n          hint: runtime code evaluation cannot be compiled ahead of time"
+      "coverage": "scriptc coverage refused.ts\n\n  statements analyzed   1\n  compile statically    0  (0%)\n\n  blockers:\n      ×1  SC2020  'eval' is part of the standard library types but has no scriptc lowering yet\n          at refused.ts:2:13\n          hint: runtime code evaluation cannot be compiled ahead of time",
     },
     "methods": {
       "direct": {
@@ -119,22 +119,22 @@ export default {
         "source": "class Counter {\n  count = 0;\n\n  increment(by: number): number {\n    this.count += by;\n    return this.count;\n  }\n}\n\nconst counter = new Counter();\nconst start = performance.now();\nfor (let i = 0; i < 10_000_000; i++) counter.increment(2);\nconsole.log(counter.count);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
         "nativeMs": 23.3,
         "nodeMs": 36.7,
-        "coverage": "scriptc coverage methods-direct.ts\n\n  statements analyzed   9\n  compile statically    9  (100%)\n\n  fully static — all analyzed statements compile to native code."
+        "coverage": "scriptc coverage methods-direct.ts\n\n  statements analyzed   9\n  compile statically    9  (100%)\n\n  fully static — all analyzed statements compile to native code.",
       },
       "replaceable": {
         "file": "methods-replaceable.ts",
         "source": "class Counter {\n  count = 0;\n\n  increment(by: number): number {\n    this.count += by;\n    return this.count;\n  }\n}\n\nfunction save(settings: Record<string, unknown>, key: string, value: unknown): void {\n  settings[key] = value;\n}\nsave({}, \"theme\", \"dark\");\n\nconst counter = new Counter();\nconst start = performance.now();\nfor (let i = 0; i < 10_000_000; i++) counter.increment(2);\nconsole.log(counter.count);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
         "nativeMs": 3864.1,
         "nodeMs": 30.8,
-        "coverage": "scriptc coverage methods-replaceable.ts\n\n  statements analyzed   11\n  compile statically    11  (100%)\n\n  fully static — all analyzed statements compile to native code.\n\n  slower natively   1 site (compiles and behaves like Node; makes calls slower)\n      ×1  SC6901  this write's key can name any property, so calls to method 'increment' dispatch dynamically: each call reads the method from the instance and boxes the receiver\n          at methods-replaceable.ts:11:3\n          hint: type the key as a number or a string literal, write into an object created in this scope, or keep the entries in a Map"
+        "coverage": "scriptc coverage methods-replaceable.ts\n\n  statements analyzed   11\n  compile statically    11  (100%)\n\n  fully static — all analyzed statements compile to native code.\n\n  slower natively   1 site (compiles and behaves like Node; makes calls slower)\n      ×1  SC6901  this write's key can name any property, so calls to method 'increment' dispatch dynamically: each call reads the method from the instance and boxes the receiver\n          at methods-replaceable.ts:11:3\n          hint: type the key as a number or a string literal, write into an object created in this scope, or keep the entries in a Map",
       },
       "map": {
         "file": "methods-map.ts",
         "source": "class Counter {\n  count = 0;\n\n  increment(by: number): number {\n    this.count += by;\n    return this.count;\n  }\n}\n\nfunction save(settings: Map<string, unknown>, key: string, value: unknown): void {\n  settings.set(key, value);\n}\nsave(new Map(), \"theme\", \"dark\");\n\nconst counter = new Counter();\nconst start = performance.now();\nfor (let i = 0; i < 10_000_000; i++) counter.increment(2);\nconsole.log(counter.count);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
         "nativeMs": 18.4,
         "nodeMs": 29.2,
-        "coverage": "scriptc coverage methods-map.ts\n\n  statements analyzed   11\n  compile statically    11  (100%)\n\n  fully static — all analyzed statements compile to native code."
-      }
-    }
-  }
+        "coverage": "scriptc coverage methods-map.ts\n\n  statements analyzed   11\n  compile statically    11  (100%)\n\n  fully static — all analyzed statements compile to native code.",
+      },
+    },
+  },
 };

@@ -1,38 +1,46 @@
 import assert from "node:assert/strict";
 import { describe, it, before, after } from "node:test";
-import { bootApp, disposeApp, until } from "@bootstrapp/test/app.js";
+import { openPage } from "@lightstart/app/web/test";
+import { navigate } from "@lightstart/app/web";
+import manifest from "../.light/app.ts";
+import { until, watchErrors } from "./light-page.js";
 
 const counted = (doc) => [...doc.querySelectorAll("lc-nav-tree .nav-tree-count")].reduce((sum, el) => sum + Number(el.textContent), 0);
 
 describe("the overview and a category", () => {
-  let app;
+  let page;
+  let raised;
 
   before(async () => {
-    app = await bootApp("/components");
-    await until(() => app.doc.querySelectorAll(".catalogue-card").length > 0);
+    raised = watchErrors();
+    page = await openPage(manifest, { path: "/components" });
+    await until(() => document.querySelectorAll(".catalogue-card").length > 0);
   });
 
-  after(() => disposeApp(app));
+  after(async () => {
+    await page.stop();
+    raised.stop();
+  });
 
   it("shows one card per component and a sink in the hero", () => {
-    assert.equal(app.doc.querySelectorAll(".catalogue-card").length, counted(app.doc));
-    assert.ok(app.doc.querySelector("showcase-catalogue showcase-sink"));
-    assert.match(app.doc.querySelector("showcase-catalogue h1").textContent, /components/);
+    assert.equal(document.querySelectorAll(".catalogue-card").length, counted(document));
+    assert.ok(document.querySelector("showcase-catalogue showcase-sink"));
+    assert.match(document.querySelector("showcase-catalogue h1").textContent, /components/);
   });
 
   it("opens a component from its card", async () => {
-    app.doc.querySelector(".catalogue-card").click();
-    await until(() => app.$APP.Router.path === "/components/form/auth-form");
-    await until(() => app.doc.querySelector("docs-component h1")?.textContent === "Auth Form");
+    document.querySelector(".catalogue-card").click();
+    await until(() => page.run.router.path === "/components/form/auth-form");
+    await until(() => document.querySelector("docs-component h1")?.textContent === "Auth Form");
   });
 
   it("narrows a category page to its own components", async () => {
-    app.$APP.Router.go("/components/display");
-    await until(() => app.doc.querySelector("docs-category h1")?.textContent === "Display");
-    const count = Number([...app.doc.querySelectorAll("lc-nav-tree .nav-tree-group")].find((group) => group.textContent.includes("Display")).querySelector(".nav-tree-count").textContent);
-    await until(() => app.doc.querySelectorAll(".catalogue-card").length === count);
-    assert.equal(app.doc.querySelector("showcase-catalogue .catalogue-lead"), null);
-    assert.ok(app.doc.querySelector("docs-category lc-pagination[variant=pager]"));
-    assert.deepEqual(app.errors, []);
+    navigate("/components/display");
+    await until(() => document.querySelector("docs-category h1")?.textContent === "Display");
+    const count = Number([...document.querySelectorAll("lc-nav-tree .nav-tree-group")].find((group) => group.textContent.includes("Display")).querySelector(".nav-tree-count").textContent);
+    await until(() => document.querySelectorAll(".catalogue-card").length === count);
+    assert.equal(document.querySelector("showcase-catalogue .catalogue-lead"), null);
+    assert.ok(document.querySelector("docs-category lc-pagination[variant=pager]"));
+    assert.deepEqual(raised.errors, []);
   });
 });

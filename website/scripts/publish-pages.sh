@@ -25,7 +25,7 @@ for arg in "$@"; do
 done
 
 echo "▸ building $website"
-(cd "$website" && node scripts/static-export.mjs)
+(cd "$website" && light build)
 
 build="$(ls -1dt "$website"/.deployed/builds/*/ | head -1)"
 [ -n "$build" ] || { echo "no build in $website/.deployed/builds" >&2; exit 1; }
