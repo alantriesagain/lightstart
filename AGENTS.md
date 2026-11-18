@@ -35,7 +35,7 @@ Reach for these before writing your own; each package's README is its reference.
 | A project needs | Package | The part to know |
 |---|---|---|
 | The app's folders, wiring and run | `@lightstart/app` | `defineApp`, stores by name (`memory`, `indexeddb`, `jsonl`, `sql`, a `StoreKind` of the project's own), routes, `<app-container>`, `navigate`, `currentView`, `currentParams`; hosts `@lightstart/app/web` and `/tui`, and `@lightstart/app/static` rendering a page in node |
-| Views, templates, signals, models, controllers, the theme | `@lightstart/light` | `View`, `html`, `signal`, `defineModel` with `T` fields, `defineController` and the `Controller` class, `liveRows`, `applyTheme` |
+| Views, templates, signals, models, controllers, the theme | `@lightstart/light` | `View`, `html`, `signal`, `event`, `defineModel` with `T` fields, `defineController` and the `Controller` class, `liveRows`, `applyTheme` |
 | UI components | `@lightstart/components` | the `lc-*` tags; in an app the generation defines the tags a view writes and their stylesheets |
 | Forms from a model | `@lightstart/form` | `fieldsForModel(schema)` for `<lc-form .fields>`, `inferFields`, `validateForm` on submit |
 | Translations | `@lightstart/i18n` | `configureI18n`, `t`, `setLanguage`; plugs into light's contract `@lightstart/light/i18n`, which any library can implement; `lc-language-switcher` |
