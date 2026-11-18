@@ -71,6 +71,9 @@ export interface ParsedComponent {
   keyOffsets: Record<string, number>;
   propertyNames: PropertyInfo[];
   propsOffset: number | null;
+  /** A `View.define(tag, props, render)` call's props and render function; null otherwise. */
+  props: import("typescript").ObjectLiteralExpression | null;
+  render: import("typescript").Expression | null;
   /** The definition object; null for a component defined by a render function alone. */
   literal: import("typescript").ObjectLiteralExpression | null;
   sf: import("typescript").SourceFile | null;

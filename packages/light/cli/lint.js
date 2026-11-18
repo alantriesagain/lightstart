@@ -80,6 +80,7 @@ export const lintProject = async (projectDir, options = {}) => {
     return 1;
   }
   const config = configOf(projectDir);
+  /** @type {string[]} */
   const args = [];
   if (config !== null) args.push("--config", config);
   else args.push("--config", path.resolve(HERE, "../eslint/recommended.js"));

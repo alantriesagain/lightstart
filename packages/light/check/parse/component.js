@@ -80,6 +80,8 @@ export const parseComponentSources = (source, filename) => {
       keyOffsets,
       propertyNames,
       propsOffset,
+      props: site.props,
+      render: site.render,
       literal,
       sf,
       offset: site.offset,

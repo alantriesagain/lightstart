@@ -189,7 +189,7 @@ export function createContext({ projectDir, fileMap = null, pkg: givenPkg = null
     /** @type {View[]} */
     const views = parsed.length
       ? parsed.map((p) => ({ file: rel, source, isComponent: !!p.tag, ...p }))
-      : [{ file: rel, source, isComponent: false, tag: null, extends: null, styleTrue: false, styleKnown: true, mixins: [], topLevelKeys: [], keyOffsets: {}, propertyNames: [], propsOffset: null, literal: null, sf: null, offset: 0, defined: false }];
+      : [{ file: rel, source, isComponent: false, tag: null, extends: null, styleTrue: false, styleKnown: true, mixins: [], topLevelKeys: [], keyOffsets: {}, propertyNames: [], propsOffset: null, props: null, render: null, literal: null, sf: null, offset: 0, defined: false }];
     viewCache.set(rel, views);
     return views;
   };

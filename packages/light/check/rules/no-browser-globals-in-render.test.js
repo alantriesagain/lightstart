@@ -131,3 +131,13 @@ export const el = document.body;
   });
   assert.equal(findings.length, 0);
 });
+
+test("fires in a render function and its props given to View.define", async () => {
+  const findings = await runRuleOn(rule, {
+    "views/a.js": `import View from "@lightstart/light";
+View.define("fx-a", { width: T.number({ defaultValue: window.innerWidth }) }, () => html\`<p>\${document.title}</p>\`);
+`,
+  });
+  assert.equal(findings.length, 2);
+  assert.match(findings.map((finding) => finding.message).join("\n"), /window\.innerWidth[\s\S]*document|document[\s\S]*window\.innerWidth/);
+});

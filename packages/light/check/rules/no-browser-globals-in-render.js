@@ -44,7 +44,8 @@ const isTypeofOperand = (node) => {
 const isName = (node) => {
   const parent = node.parent;
   if (!parent) return false;
-  if ((ts.isPropertyAccessExpression(parent) || ts.isQualifiedName(parent)) && parent.name === node) return true;
+  if (ts.isPropertyAccessExpression(parent) && parent.name === node) return true;
+  if (ts.isQualifiedName(parent) && parent.right === node) return true;
   if (ts.isPropertyAssignment(parent) && parent.name === node) return true;
   if (ts.isMethodDeclaration(parent) && parent.name === node) return true;
   if (ts.isPropertyDeclaration(parent) && parent.name === node) return true;

@@ -104,7 +104,7 @@ export const typecheckProject = async (projectDir, options = {}) => {
       const { own, foreign } = attribute(output, projectDir);
       if (own.length > 0) {
         for (const line of own) options.log?.error(line);
-        resolve(code === 0 ? 1 : code);
+        resolve(code === 0 || code === null ? 1 : code);
         return;
       }
       if (foreign.length > 0) options.log?.warn?.(`${String(foreign.length)} error${foreign.length === 1 ? "" : "s"} outside ${projectDir} (ignored)`);
