@@ -70,7 +70,8 @@ const contentTypeOf = (path: string): string => {
 
 const isChromium = (value: unknown): value is Chromium => typeof value === "object" && value !== null && typeof (value as { launch?: unknown }).launch === "function";
 
-const chromiumFrom = async (root: string): Promise<Chromium> => {
+/** Playwright's Chromium: the project's, else light's; fails naming what to install. */
+export const chromiumFrom = async (root: string): Promise<Chromium> => {
   const bases: string[] = [join(root, "package.json")];
   try {
     bases.push(createRequire(import.meta.url).resolve("@lightstart/light"));
