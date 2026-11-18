@@ -14,6 +14,15 @@ import { assertDefinitionKeys, composeDefinition, isThenable, LIFECYCLE_HOOKS } 
 import { UNSLOTTED_TAG, hasRootPart, isMoving, projectSlots, render, topLevelPair, unprojectUnits } from "../html/index.js";
 import { untracked } from "../signals/index.ts";
 import { CORE_METHODS, ViewCore, config } from "../view/core.ts";
+/**
+ * Off the browser, a host that renders views on its own tree (`@lightstart/light/markup`,
+ * imported before the views) names its element class and its registry here, so the browser
+ * bundle carries none of it.
+ * @type {{ element?: typeof HTMLElement, registry?: CustomElementRegistry }}
+ */
+const offBrowser = /** @type {Record<symbol, unknown>} */ (/** @type {unknown} */ (globalThis))[Symbol.for("lightstart.markup")] ?? {};
+
+const elements = /** @type {CustomElementRegistry} */ (globalThis.customElements ?? offBrowser.registry);
 
 /**
  * Store field specs from a properties schema. Defaults are wrapped in a
@@ -219,7 +228,7 @@ const pluginsFor = (base) => [...new Map([...View.plugins, ...base.plugins].map(
  */
 const hooksOf = (plugins) => [...LIFECYCLE_HOOKS, ...plugins.flatMap((plugin) => plugin.hooks ?? [])];
 
-const BaseElement = /** @type {typeof HTMLElement} */ (globalThis.HTMLElement ?? class {});
+const BaseElement = /** @type {typeof HTMLElement} */ (globalThis.HTMLElement ?? offBrowser.element ?? class {});
 
 /**
  * A render written as a function of the element. Method-style, so a render
@@ -359,7 +368,7 @@ class View extends BaseElement {
     installProps(component, base, normalizeProperties(declared ?? {}), tag, plugins, definition);
     component.plugins = plugins.filter((plugin) => !plugin.test || plugin.test({ component, definition }));
     component._hookLists = null;
-    customElements.define(tag, component);
+    elements.define(tag, component);
     config.wrap(View.initPlugins(component, definition, tag), `view:${tag}:init`);
     View.components.set(tag, { ...View.components.get(tag), _constructor: component });
     return component;
@@ -528,7 +537,7 @@ class View extends BaseElement {
    */
   static _define(tag, raw) {
     const registered = View.components.get(tag);
-    const existing = /** @type {ViewConstructor | undefined} */ (/** @type {unknown} */ (customElements.get(tag)));
+    const existing = /** @type {ViewConstructor | undefined} */ (/** @type {unknown} */ (elements.get(tag)));
     if (existing) {
       if (registered?.definition && registered.definition !== raw)
         throw new Error(`[View.define] <${tag}> is already defined with another definition`);
@@ -538,17 +547,17 @@ class View extends BaseElement {
     const definition = composeDefinition(raw, hooksOf(View.plugins));
     const extendsTag = typeof definition?.extends === "string" ? definition.extends : null;
     const BaseClass = extendsTag
-      ? /** @type {ViewConstructor | undefined} */ (/** @type {unknown} */ (customElements.get(extendsTag)) ?? View.components.get(extendsTag)?._constructor)
+      ? /** @type {ViewConstructor | undefined} */ (/** @type {unknown} */ (elements.get(extendsTag)) ?? View.components.get(extendsTag)?._constructor)
       : undefined;
     if (extendsTag && !BaseClass) {
       View.components.set(tag, { ...registered, definition: raw });
-      const pending = customElements.whenDefined(extendsTag).then(() => View._define(tag, raw));
+      const pending = elements.whenDefined(extendsTag).then(() => View._define(tag, raw));
       config.wrap(pending, `view:${tag}:extends`);
       return pending;
     }
     const component = View.createClass(tag, definition, BaseClass);
     config.wrap(View.initPlugins(component, definition, tag), `view:${tag}:init`);
-    customElements.define(tag, component);
+    elements.define(tag, component);
     View.components.set(tag, { ...registered, _constructor: component, definition: raw });
     return component;
   }
@@ -669,7 +678,7 @@ class View extends BaseElement {
   connectedMoveCallback() {}
 
   $connect() {
-    const w = /** @type {Window & { __PRERENDERED__?: boolean }} */ (window);
+    const w = /** @type {Window & { __PRERENDERED__?: boolean }} */ (globalThis.window ?? {});
     if (w.__PRERENDERED__ && this.hasAttribute("client:render")) {
       this.removeAttribute("client:render");
       unprojectUnits(this);
@@ -814,7 +823,7 @@ class View extends BaseElement {
 
   /** @param {unknown} value */
   $commit(value) {
-    const w = /** @type {Window & { __PRERENDERED__?: boolean }} */ (window);
+    const w = /** @type {Window & { __PRERENDERED__?: boolean }} */ (globalThis.window ?? {});
     const adopt = !this.$hasUpdated && w.__PRERENDERED__ === true && !hasRootPart(this) && this.childNodes.length > 0;
     this.$root = render(value, this, adopt ? { host: this, adopt: "bind", settle: config.settle } : { host: this });
     this.$project();

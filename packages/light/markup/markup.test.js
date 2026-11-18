@@ -78,6 +78,109 @@ describe("light/markup/node", () => {
   });
 });
 
+describe("light/markup/element surface", () => {
+  it("reads and writes attributes, their names and the class list", () => {
+    const el = new MElement("div");
+    assert.equal(el.getAttribute("a"), null);
+    el.setAttribute("a", "1");
+    el.setAttribute("b", 2);
+    assert.equal(el.getAttribute("a"), "1");
+    assert.equal(el.getAttribute("b"), "2");
+    assert.ok(el.hasAttribute("a"));
+    assert.deepEqual(el.getAttributeNames(), ["a", "b"]);
+    assert.deepEqual(el.attributes, [{ name: "a", value: "1" }, { name: "b", value: "2" }]);
+    assert.equal(el.toggleAttribute("hidden"), true);
+    assert.equal(el.toggleAttribute("hidden"), false);
+    assert.equal(el.toggleAttribute("hidden", true), true);
+    assert.equal(el.getAttribute("hidden"), "");
+    el.toggleAttribute("hidden", false);
+    assert.equal(el.hasAttribute("hidden"), false);
+    el.removeAttribute("a");
+    assert.equal(el.hasAttribute("a"), false);
+
+    el.classList.add("x", "y");
+    assert.equal(el.getAttribute("class"), "x y");
+    assert.ok(el.classList.contains("x"));
+    assert.equal(el.classList.toggle("x"), false);
+    assert.equal(el.classList.toggle("z", true), true);
+    el.classList.remove("y");
+    assert.equal(el.getAttribute("class"), "z");
+  });
+
+  it("advances the child list, parents and connectivity like a DOM node", () => {
+    const root = new MRoot();
+    const parent = new MElement("ul");
+    const first = new MElement("li");
+    const second = new MElement("li");
+    parent.append(first, "text", second);
+    root.appendChild(parent);
+    assert.equal(parent.childNodes.length, 3);
+    assert.deepEqual(parent.children, [first, second]);
+    assert.equal(parent.firstChild, first);
+    assert.equal(first.parentNode, parent);
+    assert.equal(first.parentElement, parent);
+    assert.equal(first.isConnected, true);
+    assert.equal(root.localName, "#root");
+    assert.equal(first.localName, "li");
+    assert.equal(first.tagName, "LI");
+    assert.equal(first.getRootNode(), root);
+
+    const third = new MElement("li");
+    parent.insertBefore(third, second);
+    assert.equal(parent.childNodes[2], third);
+    third.replaceWith(new MElement("li"));
+    assert.equal(third.parentNode, null);
+    assert.equal(parent.children[2].localName, "li");
+    parent.removeChild(second);
+    assert.equal(second.parentNode, null);
+    parent.remove();
+    assert.equal(parent.isConnected, false);
+    assert.equal(root.childNodes.length, 0);
+  });
+
+  it("matches tag, class, id, attribute and descendant selectors", () => {
+    const root = new MRoot();
+    const outer = new MElement("div");
+    outer.setAttribute("class", "card main");
+    const span = new MElement("span");
+    span.setAttribute("id", "title");
+    const link = new MElement("a");
+    link.setAttribute("href", "/x");
+    span.appendChild(link);
+    outer.appendChild(span);
+    root.appendChild(outer);
+    assert.equal(root.querySelector("div"), outer);
+    assert.equal(root.querySelector(".card"), outer);
+    assert.equal(root.querySelector("#title"), span);
+    assert.equal(root.querySelector("[href]"), link);
+    assert.equal(root.querySelector("div span a"), link);
+    assert.equal(root.querySelector("div > span"), span);
+    assert.equal(root.querySelector("span > a"), link);
+    assert.equal(root.querySelector("div > a"), null);
+    assert.deepEqual(root.querySelectorAll("a"), [link]);
+    assert.equal(outer.querySelector("div"), null);
+  });
+
+  it("adds, removes and dispatches listeners, and reads and writes text", () => {
+    const el = new MElement("p");
+    /** @type {string[]} */
+    const seen = [];
+    const listener = (event) => seen.push(event.type);
+    el.addEventListener("go", listener);
+    assert.equal(el.dispatchEvent({ type: "go" }), true);
+    el.dispatchEvent({ type: "go" });
+    el.removeEventListener("go", listener);
+    el.dispatchEvent({ type: "go" });
+    assert.deepEqual(seen, ["go", "go"]);
+
+    el.childNodes.push(new MText("x"));
+    assert.equal(el.textContent, "x");
+    el.textContent = "y & z";
+    assert.equal(el.childNodes.length, 1);
+    assert.equal(el.textContent, "y & z");
+  });
+});
+
 describe("light/markup/serialize", () => {
   it("escapes text and attributes, keeps script text raw, and writes void elements without end tags", () => {
     const host = new MarkupHost();
