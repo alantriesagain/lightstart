@@ -1,13 +1,11 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
-import { modelBus } from "./config.ts";
 import T from "../types/index.js";
 import { createStore } from "./store.ts";
+import { modelChanged } from "./events.ts";
 import { registerAdapterDecorator } from "./factory.ts";
 import { setFileStorage } from "./file-storage.ts";
 import { buildQueryResult } from "./query-builder.ts";
-
-const events = modelBus();
 
 const memoryAdapter = (extra = {}) => {
   /** @type {Map<string, Map<string, any>>} */
@@ -62,7 +60,7 @@ const setup = ({ hooks = {}, extra = {} } = {}) => {
     models: schemas,
     databases: { indexeddb: main, file, "ext:unit": ext },
     defaultAdapter: "indexeddb",
-    emit: (event, data) => emitted.push([event, data]),
+    changed: (change) => emitted.push(change),
   });
   return { store, main, file, ext, emitted, schemas };
 };
@@ -108,7 +106,7 @@ describe("store: add", () => {
     assert.deepEqual(row.tags, []);
     assert.equal("transactions" in row, false);
     assert.deepEqual(main.calls.at(-1), ["insert", "account", row]);
-    assert.deepEqual(emitted, [["model:changed", { model: "account", action: "add", row }]]);
+    assert.deepEqual(emitted, [{ model: "account", action: "add", row }]);
     assert.deepEqual(seen, [["before", "add", true, false], ["after", row.id, "account"]]);
   });
 
@@ -184,7 +182,7 @@ describe("store: addMany, edit, remove, removeAll", () => {
     assert.deepEqual(edited, { id: tx.id, accountId: "a2", amount: 2, slug: "first" });
     assert.deepEqual(seen, [[{ amount: 2, accountId: "a2", id: tx.id }, tx.id], ["after", 2]]);
     assert.deepEqual(main.calls.at(-1), ["update", "transaction", edited]);
-    assert.deepEqual(emitted, [["model:changed", { model: "transaction", action: "edit", row: edited }]]);
+    assert.deepEqual(emitted, [{ model: "transaction", action: "edit", row: edited }]);
     await assert.rejects(store.edit("transaction", "ghost", { amount: 1 }), /not found/);
     await assert.rejects(store.edit("transaction", tx.id, { amount: {} }), (error) => error.name === "ValidationError");
   });
@@ -204,11 +202,11 @@ describe("store: addMany, edit, remove, removeAll", () => {
     main.calls.length = 0;
     assert.equal(await store.remove("account", row.id), true);
     assert.deepEqual(main.calls.map(([op]) => op), ["get", "delete"], "a remove hook is handed the row, so it is read first");
-    assert.deepEqual(emitted, [["model:changed", { model: "account", action: "remove", row }]]);
+    assert.deepEqual(emitted, [{ model: "account", action: "remove", row }]);
     assert.deepEqual(seen, [["before", "a"], ["before", "a"], ["after", "a", row.id]]);
     emitted.length = 0;
     await store.remove("account", "ghost");
-    assert.deepEqual(emitted, [["model:changed", { model: "account", action: "remove", row: { id: "ghost" } }]]);
+    assert.deepEqual(emitted, [{ model: "account", action: "remove", row: { id: "ghost" } }]);
   });
 
   it("remove without a remove hook deletes without reading and emits { id }", async () => {
@@ -218,7 +216,7 @@ describe("store: addMany, edit, remove, removeAll", () => {
     emitted.length = 0;
     assert.equal(await store.remove("account", row.id), true);
     assert.deepEqual(main.calls.map(([op]) => op), ["delete"]);
-    assert.deepEqual(emitted, [["model:changed", { model: "account", action: "remove", row: { id: row.id } }]]);
+    assert.deepEqual(emitted, [{ model: "account", action: "remove", row: { id: row.id } }]);
   });
 
   it("removeAll resolves the ids a where matches and removes each through remove", async () => {
@@ -312,10 +310,20 @@ describe("store: import, export, close", () => {
     assert.deepEqual(main.calls.at(-1), ["close"]);
   });
 
-  it("a store without emit stays silent", async () => {
-    const store = createStore({ models: { thing: { n: T.number() } }, databases: { indexeddb: memoryAdapter() } });
-    const row = await store.add("thing", { n: 1 });
-    assert.equal(row.n, 1);
+  it("a store announces on modelChanged by default, a changed function takes every change, and null silences it", async () => {
+    const heard = [];
+    const off = modelChanged.on((change) => heard.push(change.action));
+    const silent = createStore({ models: { thing: { n: T.number() } }, databases: { indexeddb: memoryAdapter() }, changed: null });
+    const loud = createStore({ models: { thing: { n: T.number() } }, databases: { indexeddb: memoryAdapter() } });
+    const seen = [];
+    const taken = createStore({ models: { thing: { n: T.number() } }, databases: { indexeddb: memoryAdapter() }, changed: (change) => seen.push(change.action) });
+    await silent.add("thing", { n: 1 });
+    assert.deepEqual(heard, []);
+    await loud.add("thing", { n: 2 });
+    off();
+    await taken.add("thing", { n: 3 });
+    assert.deepEqual(heard, ["add"]);
+    assert.deepEqual(seen, ["add"]);
   });
 });
 

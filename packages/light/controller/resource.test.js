@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { event } from "../signals/index.ts";
 import { resource, keyedResource } from "./resource.ts";
 
 const deferred = () => {
@@ -12,20 +13,6 @@ const deferred = () => {
 };
 
 const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
-
-const fakeBus = () => {
-  const listeners = new Map();
-  return {
-    on(key, cb) {
-      if (!listeners.has(key)) listeners.set(key, new Set());
-      listeners.get(key).add(cb);
-      return () => listeners.get(key)?.delete(cb);
-    },
-    emit(key, payload) {
-      return Promise.all([...(listeners.get(key) ?? [])].map((cb) => cb(payload)));
-    },
-  };
-};
 
 describe("@lightstart/light/controller/resource: resource() semantics", () => {
   describe("ensure()", () => {
@@ -99,20 +86,21 @@ describe("@lightstart/light/controller/resource: resource() semantics", () => {
   });
 
   describe("invalidateOn + filter", () => {
-    it("refreshes on a matching event and the emit awaits the refetch", async () => {
+    it("refreshes on a matching event", async () => {
       let calls = 0;
-      const bus = fakeBus();
+      const changed = event();
       const res = resource(() => Promise.resolve(++calls), {
         ready: false,
-        events: bus,
-        invalidateOn: "content:updated",
+        invalidateOn: changed,
         filter: (p) => p?.collection === "map",
       });
       await res.ensure();
       assert.equal(res.peek(), 1);
-      await bus.emit("content:updated", { collection: "other" });
+      changed.emit({ collection: "other" });
+      await tick();
       assert.equal(res.peek(), 1);
-      await bus.emit("content:updated", { collection: "map" });
+      changed.emit({ collection: "map" });
+      await tick();
       assert.equal(res.peek(), 2);
       res.dispose();
     });

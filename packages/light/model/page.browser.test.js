@@ -5,7 +5,7 @@ import T from "@lightstart/light/types";
 import { html } from "@lightstart/light/html";
 import { registerSyncBinder } from "@lightstart/light/controller";
 import { syncPlugin } from "@lightstart/light/controller/view";
-import { configureModel, defineModel, modelBus } from "@lightstart/light/model";
+import { configureModel, defineModel } from "@lightstart/light/model";
 import { createStore, storeRequest } from "@lightstart/light/model/store";
 import { createAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
 import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
@@ -35,7 +35,7 @@ describe("@lightstart/light/model: a page with no framework", () => {
     const name = `light-model-page-${Date.now()}`;
     const db = createAdapter("indexeddb", { name, version: 1, models, isDefaultAdapter: true });
     await db.init();
-    const store = createStore({ models, databases: { indexeddb: db }, defaultAdapter: "indexeddb", emit: (event, data) => modelBus().emit(event, data) });
+    const store = createStore({ models, databases: { indexeddb: db }, defaultAdapter: "indexeddb" });
     configureModel({ request: storeRequest(store) });
     const first = await todo.add({ title: "write the test" });
     assert.equal(first.done, false, "the store applies the default");

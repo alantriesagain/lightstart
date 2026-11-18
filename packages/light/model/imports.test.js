@@ -66,7 +66,7 @@ describe("@lightstart/light/model: nothing loads what it did not ask for", () =>
       "./model": ["model/index.ts", "model/changes.ts", "model/config.ts"],
       "./model/store": ["model/store.ts", "model/factory.ts"],
       "./model/adapter": ["model/adapter.ts", "model/factory.ts"],
-      "./model/indexeddb": ["model/indexeddb.ts", "model/config.ts"],
+      "./model/indexeddb": ["model/indexeddb.ts", "model/events.ts"],
       "./model/binder": ["model/binder.ts", "controller/resource.ts"],
       "./model/slug": ["model/slug.ts"],
     };

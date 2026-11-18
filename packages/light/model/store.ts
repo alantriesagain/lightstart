@@ -3,13 +3,13 @@
  * adapter that holds it, in the page or in a worker. The write pipeline runs
  * once here for every adapter: hooks, id, relation stripping, defaults,
  * validation, file uploads, then the adapter's own insert/update/delete, then
- * the `model:changed` event live queries follow. Adapters store rows; the store knows the
+ * the `modelChanged` event live queries follow. Adapters store rows; the store knows the
  * schema. A model's adapter is the routed one wrapped by the decorators its
  * schema directives call for (`registerAdapterDecorator`); a `$shadow`
  * directive names a second, device-local adapter a decorator may use.
  */
 
-import { MODEL_CHANGED } from "./events.ts";
+import { modelChanged } from "./events.ts";
 import { decoratorsFor } from "./factory.ts";
 import { uploadFiles } from "./file-storage.ts";
 import { loadRelationships, loadRelationshipsForMany } from "./relationship-loader.ts";
@@ -19,7 +19,7 @@ import { forStorage, prepareAddRow, prepareEditRow, rowOf, withId, withoutImmuta
 
 export { createModelHandlers, storeRequest } from "./handlers.ts";
 
-import type { FacetResult, HookContext, ModelHooks, ModelSchema, QueryOptions, QueryPage, Row, StorageAdapter, Store, StoreConfig, WriteOptions } from "./types.ts";
+import type { FacetResult, HookContext, ModelChanged, ModelHooks, ModelSchema, QueryOptions, QueryPage, Row, StorageAdapter, Store, StoreConfig, WriteOptions } from "./types.ts";
 
 const isId = (value: unknown): value is string | number => typeof value === "string" || typeof value === "number";
 
@@ -46,7 +46,8 @@ const writeOf = (options: WriteOptions | undefined): WriteOptions => (options ==
 const merged = (...rows: Row[]): Row => rowOf(rows.flatMap((row) => Object.entries(row)));
 
 /** The store over `models` and the adapters in `databases`, routing each model to its adapter. */
-export function createStore({ models, databases = {}, defaultAdapter = "indexeddb", emit = null }: StoreConfig): Store {
+export function createStore({ models, databases = {}, defaultAdapter = "indexeddb", changed = (change) => modelChanged.emit(change) }: StoreConfig): Store {
+  const announce: (change: ModelChanged) => void = changed ?? (() => undefined);
   const routes: Map<string, string> = new Map();
   const decorated: Map<string, StorageAdapter> = new Map();
 
@@ -81,7 +82,7 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
     const schema = schemaOf(model);
     let adapter = baseAdapterFor(model);
     for (const decorate of decoratorsFor(schema))
-      adapter = decorate(adapter, { model, schema, store, shadow: shadowFor(model), emit: emit ?? (() => undefined) });
+      adapter = decorate(adapter, { model, schema, store, shadow: shadowFor(model), changed: announce });
     decorated.set(model, adapter);
     return adapter;
   };
@@ -90,8 +91,8 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
 
   const hookOf = (model: string, name: keyof ModelHooks): unknown => schemaOf(model)?.$hooks?.[name];
 
-  const changed = (model: string, action: "add" | "edit" | "remove", row: Row): void => {
-    if (emit) emit(MODEL_CHANGED, { model, action, row });
+  const emitChange = (model: string, action: "add" | "edit" | "remove", row: Row): void => {
+    announce({ model, action, row });
   };
 
   const context = (model: string, operation: HookContext["operation"], extra: Partial<HookContext> = {}): HookContext => ({ model, store, operation, ...extra });
@@ -200,7 +201,7 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
       const options = writeOf(given);
       const row = await prepareAdd(model, data, options);
       const stored = await adapterFor(model).insert(model, row, options);
-      changed(model, "add", stored);
+      emitChange(model, "add", stored);
       await runAfter(model, "afterAdd", stored, context(model, "add", { importing: Boolean(options.importing) }));
       return stored;
     },
@@ -226,7 +227,7 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
             throw at(error, index);
           }
       const ctx = context(model, "add", { importing: Boolean(options.importing) });
-      for (const row of stored) changed(model, "add", row);
+      for (const row of stored) emitChange(model, "add", row);
       for (const row of stored) await runAfter(model, "afterAdd", row, ctx);
       return stored;
     },
@@ -248,7 +249,7 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
         write = options.direct !== undefined ? { direct: options.direct, patch: patchOnly } : { patch: patchOnly };
       }
       const stored = await adapter.update(model, row, write);
-      changed(model, "edit", stored);
+      emitChange(model, "edit", stored);
       await runAfter(model, "afterEdit", stored, ctx);
       return stored;
     },
@@ -261,7 +262,7 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
       const current = before || hookOf(model, "afterRemove") ? await adapter.get(model, id) : null;
       if (before && (await callHook("beforeRemove", before, current, ctx)) === false) return false;
       await adapter.delete(model, id, options);
-      changed(model, "remove", current ?? { id });
+      emitChange(model, "remove", current ?? { id });
       await runAfter(model, "afterRemove", current, ctx);
       return true;
     },

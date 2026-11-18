@@ -4,8 +4,7 @@
  * the loaded rows are plain objects.
  */
 
-import { modelBus } from "./config.ts";
-import { MODEL_ERROR, MODEL_WARN } from "./events.ts";
+import { modelError, modelWarn } from "./events.ts";
 import { relationValueToId, relationWhere } from "./relationships.ts";
 import { entryOf, schemaEntry } from "./fields.ts";
 import { rowOf } from "./pipeline.ts";
@@ -14,7 +13,7 @@ import type { ModelSchema, Row, RelationshipDefinition, RowReader } from "./type
 
 /**
  * Enrich `record` with the relations listed in `includes`. An unknown name
- * warns and is skipped; a failed load emits `MODEL_ERROR` and leaves `[]` or
+ * warns and is skipped; a failed load emits `modelError` and leaves `[]` or
  * `null` per the relation's cardinality.
  */
 export async function loadRelationships<R extends RowReader>(reader: R, models: Record<string, ModelSchema>, modelName: string, record: Row, includes: string[]): Promise<Row> {
@@ -22,7 +21,7 @@ export async function loadRelationships<R extends RowReader>(reader: R, models: 
 
   const modelSchema = entryOf(models, modelName);
   if (!modelSchema) {
-    modelBus().emit(MODEL_WARN, { type: "model_not_found", model: modelName });
+    modelWarn.emit({ type: "model_not_found", model: modelName });
     return record;
   }
 
@@ -32,19 +31,19 @@ export async function loadRelationships<R extends RowReader>(reader: R, models: 
     const relationDef = schemaEntry(modelSchema, relationName) as RelationshipDefinition | undefined;
 
     if (!relationDef) {
-      modelBus().emit(MODEL_WARN, { type: "relationship_not_found", model: modelName, relationship: relationName });
+      modelWarn.emit({ type: "relationship_not_found", model: modelName, relationship: relationName });
       continue;
     }
 
     if (!relationDef.relationship) {
-      modelBus().emit(MODEL_WARN, { type: "not_a_relationship", model: modelName, field: relationName });
+      modelWarn.emit({ type: "not_a_relationship", model: modelName, field: relationName });
       continue;
     }
 
     try {
       loaded.push([relationName, await loadRelationship(reader, models, modelName, record, relationName, relationDef)]);
     } catch (error) {
-      modelBus().emit(MODEL_ERROR, { type: "relationship_load_failed", model: modelName, relationship: relationName, error });
+      modelError.emit({ type: "relationship_load_failed", model: modelName, relationship: relationName, error });
       loaded.push([relationName, relationDef.many ? [] : null]);
     }
   }
@@ -127,12 +126,12 @@ async function loadRelationship<R extends RowReader>(reader: R, models: Record<s
     const contentType = record[typeFieldName] as string | undefined;
 
     if (!contentType) {
-      modelBus().emit(MODEL_WARN, { type: "polymorphic_type_missing", model: modelName, field: relationName, typeField: typeFieldName });
+      modelWarn.emit({ type: "polymorphic_type_missing", model: modelName, field: relationName, typeField: typeFieldName });
       return null;
     }
 
     if (!entryOf(models, contentType)) {
-      modelBus().emit(MODEL_WARN, { type: "polymorphic_model_not_found", model: modelName, field: relationName, targetModel: contentType });
+      modelWarn.emit({ type: "polymorphic_model_not_found", model: modelName, field: relationName, targetModel: contentType });
       return null;
     }
 
@@ -161,7 +160,7 @@ async function loadRelationship<R extends RowReader>(reader: R, models: Record<s
     return related[0] ?? null;
   }
 
-  modelBus().emit(MODEL_WARN, { type: "unknown_relationship_type", relationship: relationDef.relationship });
+  modelWarn.emit({ type: "unknown_relationship_type", relationship: relationDef.relationship });
   const none: Row[] = [];
   return many ? none : null;
 }

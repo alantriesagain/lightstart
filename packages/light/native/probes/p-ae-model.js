@@ -7,7 +7,7 @@
  */
 
 import T from "../../types/index.js";
-import { configureModel, defineModel, modelBus, onChange } from "../../model/index.ts";
+import { configureModel, defineModel, onChange } from "../../model/index.ts";
 import { createStore, storeRequest } from "../../model/store.ts";
 import { buildQueryResult, createAdapter, registerStorageAdapter } from "../../model/adapter.ts";
 
@@ -59,7 +59,7 @@ registerStorageAdapter("memory", {
 const todos = defineModel("todo", { title: T.string({ required: true }), done: T.boolean({ defaultValue: false }), rank: T.number({ defaultValue: 0 }) });
 const db = createAdapter("memory", { name: "probe" });
 await db.init();
-const store = createStore({ models: { todo: todos.schema }, databases: { memory: db }, defaultAdapter: "memory", emit: (event, data) => modelBus().emit(event, data) });
+const store = createStore({ models: { todo: todos.schema }, databases: { memory: db }, defaultAdapter: "memory" });
 configureModel({ request: storeRequest(store) });
 
 /** @type {string[]} */

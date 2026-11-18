@@ -297,12 +297,12 @@ See [controller/README.md](controller/README.md).
 `@lightstart/light/model` is the data layer. A model has a schema written with
 `T` and an api created by `defineModel`. A store applies every write the same
 way (hooks, defaults, validation, file uploads, the adapter, then
-`model:changed`) over any storage adapter. A page can keep rows in IndexedDB
+`modelChanged`) over any storage adapter. A page can keep rows in IndexedDB
 and bind components and controllers to live queries:
 
 ```js
 import T from "@lightstart/light/types";
-import { configureModel, defineModel, modelBus } from "@lightstart/light/model";
+import { configureModel, defineModel } from "@lightstart/light/model";
 import { createStore, storeRequest } from "@lightstart/light/model/store";
 import { createAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
 import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
@@ -324,7 +324,6 @@ await db.init();
 const store = createStore({
   models,
   databases: { indexeddb: db },
-  emit: (event, data) => modelBus().emit(event, data),
 });
 configureModel({ request: storeRequest(store) });
 ```

@@ -9,8 +9,8 @@
  * does both for a process that holds its own models and store.
  */
 
-import { configureModel, modelBus } from "./config.ts";
-import { MODEL_CHANGED } from "./events.ts";
+import { configureModel } from "./config.ts";
+import { modelChanged } from "./events.ts";
 import { createAdapter, hasAdapter, registerStorageAdapter } from "./factory.ts";
 import { needsUpload } from "./file-storage.ts";
 import { forStorage, prepareAddRow, prepareEditRow, withId, withoutImmutable } from "./pipeline.ts";
@@ -22,7 +22,7 @@ import {
 } from "./sql-builder.ts";
 
 import type { SqlDatabase } from "@lightstart/sqlite";
-import type { HookContext, ModelApi, ModelHooks, ModelSchema, QueryOptions, QueryPage, Row, StorageAdapter, Store, WhereClause, WriteOptions } from "./types.ts";
+import type { HookContext, ModelApi, ModelChanged, ModelHooks, ModelSchema, QueryOptions, QueryPage, Row, StorageAdapter, Store, WhereClause, WriteOptions } from "./types.ts";
 
 const OPERATORS: string[] = [">", ">=", "<", "<=", "!=", "<>", "=", "in", "not in", "has", "has all", "like", "ilike", "is null", "is not null"];
 
@@ -195,12 +195,12 @@ export interface SyncWriteOptions {
   current?: Row | null;
 }
 
-/** What a `SqlWriter` writes through: the database, the schemas, the store its hooks see, and where `model:changed` goes. */
+/** What a `SqlWriter` writes through: the database, the schemas, the store its hooks see, and where its changes go (`modelChanged` when absent, nowhere when null). */
 export interface SqlWriterConfig {
   db: SqlDatabase;
   models: Record<string, ModelSchema>;
   store: Store;
-  changes?: ((event: string, data: unknown) => void) | null;
+  changed?: ((change: ModelChanged) => void) | null;
 }
 
 const runNow = (work: () => void): void => {
@@ -210,7 +210,7 @@ const runNow = (work: () => void): void => {
 /**
  * The store's write pipeline, synchronous, over one SQLite database: the
  * before hook, the id, relations reduced, defaults, validation, the write,
- * then `model:changed` and the after hook. It runs inside a caller's
+ * then `modelChanged` and the after hook. It runs inside a caller's
  * transaction, so a hook must answer at once (a promise is refused), and a
  * row whose file would be uploaded is refused too; the async store does both.
  * The SQL adapter's reads see what it writes, since both use one database.
@@ -220,14 +220,14 @@ export class SqlWriter {
   readonly models: Record<string, ModelSchema>;
   readonly store: Store;
   private readonly schemas: Map<string, ModelSchema>;
-  private readonly announce: ((event: string, data: unknown) => void) | null;
+  private readonly announce: ((change: ModelChanged) => void) | null;
 
   constructor(config: SqlWriterConfig) {
     this.db = config.db;
     this.models = config.models;
     this.store = config.store;
     this.schemas = new Map(Object.entries(config.models));
-    this.announce = config.changes ?? null;
+    this.announce = config.changed === undefined ? (change) => modelChanged.emit(change) : config.changed;
   }
 
   private schemaOf(model: string): ModelSchema {
@@ -254,7 +254,7 @@ export class SqlWriter {
 
   private changed(model: string, action: "add" | "edit" | "remove", row: Row): void {
     const announce = this.announce;
-    if (announce !== null) announce(MODEL_CHANGED, { model, action, row });
+    if (announce !== null) announce({ model, action, row });
   }
 
   /** The stored row, decoded, or null. */
@@ -323,7 +323,7 @@ export interface SqlOpen {
 /**
  * The store of a process that holds its own models, over one SQLite database:
  * the adapter registered once, opened on `db`, a store over the models'
- * schemas with the model bus as its emitter, and the store's request as what
+ * schemas announcing on `modelChanged`, and the store's request as what
  * every model call goes through from here on. Answers the store.
  */
 export const openSql = async ({ name, db, models }: SqlOpen): Promise<Store> => {
@@ -335,7 +335,6 @@ export const openSql = async ({ name, db, models }: SqlOpen): Promise<Store> => 
     models: schemas,
     databases: { sql: adapter },
     defaultAdapter: "sql",
-    emit: (event, data) => modelBus().emit(event, data),
   });
   configureModel({ request: storeRequest(store) });
   return store;

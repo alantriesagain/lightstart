@@ -10,9 +10,8 @@
  * built.
  */
 
-import { IDB_ERROR, IDB_LOG, IDB_WARN } from "./events.ts";
+import { idbError, idbLog, idbWarn } from "./events.ts";
 import { buildQueryResult, validateQueryOptions } from "./query-builder.ts";
-import { modelBus } from "./config.ts";
 import { schemaField } from "./fields.ts";
 
 import type { ModelField, ModelSchema, QueryOptions, Row, StorageAdapter, WhereClause } from "./types.ts";
@@ -129,7 +128,7 @@ const IndexedDBAdapter: StorageAdapter = {
           this.init().then((db) => resolve(db as IDBDatabase), reject);
           return;
         }
-        modelBus().emit(IDB_ERROR, { type: "open_failed", error: request.error });
+        idbError.emit({ type: "open_failed", error: request.error });
         reject(new Error(`Failed to open database: ${request.error}`));
       };
 
@@ -138,7 +137,7 @@ const IndexedDBAdapter: StorageAdapter = {
         const missing = this._expectedStores().filter((s) => !db.objectStoreNames.contains(s));
         if (missing.length) {
           const nextVersion = db.version + 1;
-          modelBus().emit(IDB_LOG, { type: "upgrading", name: this.name, version: nextVersion, missing });
+          idbLog.emit({ type: "upgrading", name: this.name, version: nextVersion, missing });
           db.close();
           this.connectionPromise = null;
           this.version = nextVersion;
@@ -148,10 +147,10 @@ const IndexedDBAdapter: StorageAdapter = {
         this.db = db;
         this.version = db.version;
         db.onversionchange = () => {
-          modelBus().emit(IDB_WARN, { type: "version_changed", name: this.name });
+          idbWarn.emit({ type: "version_changed", name: this.name });
           this.close();
         };
-        modelBus().emit(IDB_LOG, { type: "connected", name: this.name, version: this.version });
+        idbLog.emit({ type: "connected", name: this.name, version: this.version });
         resolve(db);
       };
 
@@ -196,14 +195,14 @@ const IndexedDBAdapter: StorageAdapter = {
     const idField = schemaField(schema, "id");
     const store = db.createObjectStore(storeName, { keyPath: "id", autoIncrement: !idField || idField.$type === "number" });
     this._updateObjectStore(store, schema);
-    modelBus().emit(IDB_LOG, { type: "store_created", store: storeName, fields: Object.keys(schema).length });
+    idbLog.emit({ type: "store_created", store: storeName, fields: Object.keys(schema).length });
   },
 
   _updateObjectStore(store: IDBObjectStore, schema: ModelSchema) {
     for (const [field, def] of fieldsOf(schema)) {
       if ((def.index !== true && def.unique !== true) || store.indexNames.contains(field)) continue;
       store.createIndex(field, field, { unique: def.unique === true, multiEntry: def.$type === "array" });
-      modelBus().emit(IDB_LOG, { type: "index_added", index: field, store: store.name });
+      idbLog.emit({ type: "index_added", index: field, store: store.name });
     }
   },
 
@@ -267,7 +266,7 @@ const IndexedDBAdapter: StorageAdapter = {
 
   async delete(this: IdbAdapter, model: string, id: string | number) {
     await tx(this, model, "readwrite", (store) => done(store.delete(id)));
-    modelBus().emit(IDB_LOG, { type: "record_deleted", model, id });
+    idbLog.emit({ type: "record_deleted", model, id });
   },
 
   async count(this: IdbAdapter, model: string, where?: WhereClause) {
@@ -282,7 +281,7 @@ const IndexedDBAdapter: StorageAdapter = {
 
   async truncate(this: IdbAdapter, model: string) {
     await tx(this, model, "readwrite", (store) => done(store.clear()));
-    modelBus().emit(IDB_LOG, { type: "store_truncated", model });
+    idbLog.emit({ type: "store_truncated", model });
   },
 
   async close(this: IdbAdapter) {
@@ -290,7 +289,7 @@ const IndexedDBAdapter: StorageAdapter = {
     this.db.close();
     this.db = null;
     this.connectionPromise = null;
-    modelBus().emit(IDB_LOG, { type: "connection_closed", name: this.name });
+    idbLog.emit({ type: "connection_closed", name: this.name });
   },
 };
 

@@ -149,9 +149,9 @@ export interface SyncBinder {
   options?: readonly string[];
 }
 
-/** The bus a resource's `invalidateOn` listens on. */
-export interface EventBus {
-  on(key: string, cb: (payload: unknown) => unknown): () => void;
+/** An occurrence a resource's `invalidateOn` listens to: any `Emitter<T>`. */
+export interface Occurrence {
+  on(listener: (value: never) => void): () => void;
 }
 
 /** What controllers read from their host; see `configureControllers`. */
@@ -160,8 +160,6 @@ export interface ControllerConfig {
   track: (label: string) => (() => void) | void;
   /** What a resource waits for before its first fetch. */
   ready: () => Promise<unknown> | undefined;
-  /** The bus `invalidateOn` listens on. */
-  events: EventBus | null;
 }
 
 export type ListenerFn = (
@@ -235,11 +233,10 @@ export interface ResourceOptions {
   eager?: boolean;
   /** What the first fetch waits for; `false` waits for nothing, absent waits for the host's `ready`. */
   ready?: false | (() => Promise<unknown> | undefined);
-  /** The bus `invalidateOn` listens on; absent takes the host's. */
-  events?: EventBus | null;
-  invalidateOn?: string | string[];
-  /** Whether an `invalidateOn` event refreshes the resource; the event key tells the events apart. Method-style, so a filter typed for its event's payload is accepted. */
-  filter?(payload: unknown, eventKey: string): boolean;
+  /** The events that refresh the resource, heard from its first fetch on. */
+  invalidateOn?: Occurrence | Array<Occurrence>;
+  /** Whether an `invalidateOn` event refreshes the resource; the emitter that fired tells the events apart. Method-style, so a filter typed for its event's payload is accepted. */
+  filter?(payload: unknown, source: Occurrence): boolean;
   /**
    * Resources whose change refetches this one. A change that lands while the
    * first load is in flight refetches once that load lands; a dependency's own

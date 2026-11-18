@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { event } from "../signals/index.ts";
 import { createStore } from "../signals/store.ts";
 import { defineController } from "./define.ts";
 import { configureControllers } from "./config.ts";
@@ -27,23 +28,7 @@ registerSyncBinder({
   },
 });
 
-const bus = () => {
-  /** @type {Map<string, Set<(payload: unknown) => unknown>>} */
-  const listeners = new Map();
-  return {
-    listeners,
-    /** @param {string} key @param {(payload: unknown) => unknown} cb */
-    on(key, cb) {
-      if (!listeners.has(key)) listeners.set(key, new Set());
-      listeners.get(key)?.add(cb);
-      return () => listeners.get(key)?.delete(cb);
-    },
-    /** @param {string} key @param {unknown} payload */
-    emit(key, payload) {
-      return Promise.all([...(listeners.get(key) ?? [])].map((cb) => cb(payload)));
-    },
-  };
-};
+const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("@lightstart/light/controller: the binder seam", () => {
   it("hands a target a binder claims to that binder, with the query and the host", async () => {
@@ -113,22 +98,19 @@ describe("@lightstart/light/controller: the host's hooks", () => {
     }
   });
 
-  it("listens for invalidateOn on the host's bus from its first fetch, so a resource made before the host configures still hears it", async () => {
+  it("listens for invalidateOn from its first fetch, so a resource made before the first event still hears it", async () => {
     let n = 0;
-    const early = resource(async () => ++n, { name: "early", ready: false, invalidateOn: "thing:changed" });
-    const events = bus();
-    configureControllers({ events });
-    try {
-      assert.equal(events.listeners.size, 0, "nothing listens before the first fetch");
-      assert.equal(await early.ensure(), 1);
-      await events.emit("thing:changed", {});
-      assert.equal(early.peek(), 2, "the event refreshed the loaded value");
-      early.dispose();
-      await events.emit("thing:changed", {});
-      assert.equal(early.peek(), 2, "a disposed resource stops listening");
-    } finally {
-      configureControllers({ events: null });
-    }
+    const changed = event();
+    const early = resource(async () => ++n, { name: "early", ready: false, invalidateOn: changed });
+    assert.equal(changed.size, 0, "nothing listens before the first fetch");
+    assert.equal(await early.ensure(), 1);
+    changed.emit({});
+    await tick();
+    assert.equal(early.peek(), 2, "the event refreshed the loaded value");
+    early.dispose();
+    changed.emit({});
+    await tick();
+    assert.equal(early.peek(), 2, "a disposed resource stops listening");
   });
 
   it("counts a resource's fetch with the host's track", async () => {

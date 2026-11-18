@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import T from "../types/index.js";
 import { signal } from "../signals/index.ts";
-import { configureModel, defineModel, modelBus } from "../model/index.ts";
+import { configureModel, defineModel } from "../model/index.ts";
 import { createStore, storeRequest } from "../model/store.ts";
 import { buildQueryResult, createAdapter, registerStorageAdapter } from "../model/adapter.ts";
 import { liveRows } from "../model/binder.ts";
@@ -49,7 +49,7 @@ registerStorageAdapter("memory", {
 const notes = defineModel("notes", { title: T.string({ required: true }), done: T.boolean({ defaultValue: false }), at: T.number({ defaultValue: 0 }) });
 const db = createAdapter("memory", { name: "class-test" });
 await db.init();
-const store = createStore({ models: { notes: notes.schema }, databases: { memory: db }, defaultAdapter: "memory", emit: (event, data) => modelBus().emit(event, data) });
+const store = createStore({ models: { notes: notes.schema }, databases: { memory: db }, defaultAdapter: "memory" });
 configureModel({ request: storeRequest(store) });
 
 class Board extends Controller {

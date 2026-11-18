@@ -8,7 +8,7 @@ Each entry loads only its own code; nothing is a barrel.
 
 | Entry | Holds |
 |---|---|
-| `@lightstart/light/model` | `defineModel`, `modelApi`, `isModelApi`, `onChange`, `ValidationError`, `registerQueryHook`, `setFileStorage`, `configureModel`, `modelRequest`, `modelBus` |
+| `@lightstart/light/model` | `defineModel`, `modelApi`, `isModelApi`, `onChange`, `ValidationError`, `registerQueryHook`, `setFileStorage`, `configureModel`, `modelRequest`, the events |
 | `@lightstart/light/model/store` | `createStore`, `storeRequest`, `createModelHandlers` |
 | `@lightstart/light/model/adapter` | the storage SPI: `registerStorageAdapter`, `createAdapter`, `registerAdapterDecorator`, `validateRow`, the query helpers |
 | `@lightstart/light/model/indexeddb` | the IndexedDB adapter |
@@ -17,7 +17,7 @@ Each entry loads only its own code; nothing is a barrel.
 | `@lightstart/light/model/sql-builder` | the SQL generator: DDL, additive columns, indexes, where/order and CRUD |
 | `@lightstart/light/model/binder` | `modelQuery`, `bindModelQuery`, `modelBinder`, `LiveRows`, `liveRows` |
 | `@lightstart/light/model/slug` | `slugify`, `slugHooks` |
-| `@lightstart/light/model/events` | the event names the model emits |
+| `@lightstart/light/model/events` | the typed events the model reports: `modelChanged`, `modelError`, `modelWarn`, `adapterRegistered`, `databaseCreated`, `idbError`, `idbLog`, `idbWarn` |
 
 `@lightstart/light/model` is what a page that talks to a store elsewhere loads: it reaches no store, no adapter and no binding.
 
@@ -25,7 +25,7 @@ Each entry loads only its own code; nothing is a barrel.
 
 ```javascript
 import T from "@lightstart/light/types";
-import { configureModel, defineModel, modelBus } from "@lightstart/light/model";
+import { configureModel, defineModel } from "@lightstart/light/model";
 import { createStore, storeRequest } from "@lightstart/light/model/store";
 import { createAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
 import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
@@ -38,11 +38,11 @@ registerStorageAdapter("indexeddb", IndexedDBAdapter);
 const models = { todos: todos.schema };
 const db = createAdapter("indexeddb", { name: "todos", version: 1, models, isDefaultAdapter: true });
 await db.init();
-const store = createStore({ models, databases: { indexeddb: db }, defaultAdapter: "indexeddb", emit: (event, data) => modelBus().emit(event, data) });
+const store = createStore({ models, databases: { indexeddb: db }, defaultAdapter: "indexeddb" });
 configureModel({ request: storeRequest(store) });
 ```
 
-Importing the IndexedDB adapter registers nothing; the page names it. `emit` is how the store's writes reach `onChange` and every live query; a store built without it writes silently. The store holds schemas by model name, the same names the models were defined with.
+Importing the IndexedDB adapter registers nothing; the page names it. A store announces every write on `modelChanged` by default, which is how `onChange` and every live query hear it; pass `changed: null` to a store that announces nothing, or a function to take its changes elsewhere. The store holds schemas by model name, the same names the models were defined with.
 
 ## API
 
@@ -88,9 +88,9 @@ Every method sends through the request `configureModel({ request })` set, read w
 
 ## Live queries
 
-The store emits `model:changed` (`{ model, action: "add" | "edit" | "remove", row }`) after every write, through its `emit`. A fourth action, `sync`, carries no row and means the whole collection changed. `onChange(model, where, cb)` runs `cb` for every matching change (a removal and a sync always match) and answers the unsubscribe. A `remove` carries the stored row when the model declares a remove hook, `{ id }` otherwise: the store reads nothing it does not need.
+The store emits `modelChanged` (`{ model, action: "add" | "edit" | "remove", row }` from `/model/events`) after every write. A fourth action, `sync`, carries no row and means the whole collection changed. `onChange(model, where, cb)` runs `cb` for every matching change (a removal and a sync always match) and answers the unsubscribe. A `remove` carries the stored row when the model declares a remove hook, `{ id }` otherwise: the store reads nothing it does not need.
 
-`onChange` listens on the model's bus. With no host the model keeps its own; `configureModel({ events })` hands it the host's (anything with `on(key, cb)` answering the unsubscribe and `emit(key, data)`), which is where a host forwards changes made elsewhere. `modelBus()` is the bus in use. `configureModel({ makeId })` is where a new row's id comes from: light's default draws from `Math.random`, which every runtime it compiles to has, and a host that wants ids from the platform's crypto source passes one.
+`onChange` listens on `modelChanged`, so a host that runs the store elsewhere (a worker) emits its changes there. `createStore({ changed })` takes them instead of announcing on `modelChanged`: absent announces by default, `null` announces nothing. `configureModel({ makeId })` is where a new row's id comes from: light's default draws from `Math.random`, which every runtime it compiles to has, and a host that wants ids from the platform's crypto source passes one.
 
 Everything above `onChange` is one implementation, `modelQuery(api, opts)` in `/model/binder`: a `query()` inside a light `resource()` that refetches, coalesced per tick, when its model or an included relation's model changes. `limit`, `offset` and `total` are live-safe. `modelBinder` teaches light's sync binding the model; a page registers it with `registerSyncBinder(modelBinder)`, and then a property binds to a model's api:
 
@@ -129,7 +129,7 @@ Define lifecycle hooks in schema's `$hooks`. Each receives the store, so a hook 
 
 ## The write pipeline
 
-The store runs every write the same way for every adapter, in this order: `beforeAdd`/`beforeEdit`, the id (the adapter's `nextId` when it has one, else a 15-character id from the configured source, else the adapter's own key for a `T.number()` id), relation stripping (a `many`/`one` value is dropped, a loaded `belongs` row goes back to its id), schema defaults (add only), `validateRow`, file uploads through the registered `setFileStorage` provider, the adapter's `insert`/`update`/`delete`, the `model:changed` event, then `afterAdd`/`afterEdit`/`afterRemove`. `edit` strips `immutable: true` fields from the patch and merges it over the stored row.
+The store runs every write the same way for every adapter, in this order: `beforeAdd`/`beforeEdit`, the id (the adapter's `nextId` when it has one, else a 15-character id from the configured source, else the adapter's own key for a `T.number()` id), relation stripping (a `many`/`one` value is dropped, a loaded `belongs` row goes back to its id), schema defaults (add only), `validateRow`, file uploads through the registered `setFileStorage` provider, the adapter's `insert`/`update`/`delete`, the `modelChanged` event, then `afterAdd`/`afterEdit`/`afterRemove`. `edit` strips `immutable: true` fields from the patch and merges it over the stored row.
 
 ## Relationships
 
@@ -162,7 +162,7 @@ registerStorageAdapter("custom", {
 });
 ```
 
-`createAdapter(type, config)` makes an instance with `config` as its own fields. Optional methods: `insertMany(model, rows)`, `nextId(model, row)`, `exists(model, where)`, `facets(model, fields, opts)`, `truncate(model)`, `supportsOperator(op)`, `invalidate(model)` (drop what the adapter caches for a model, so the next read fetches again), `subscribe(model, cb)` (a remote adapter with push feeds `model:changed` through it). A local adapter matches and pages with `buildQueryResult`; a remote one translates `where` itself.
+`createAdapter(type, config)` makes an instance with `config` as its own fields. Optional methods: `insertMany(model, rows)`, `nextId(model, row)`, `exists(model, where)`, `facets(model, fields, opts)`, `truncate(model)`, `supportsOperator(op)`, `invalidate(model)` (drop what the adapter caches for a model, so the next read fetches again), `subscribe(model, cb)` (a remote adapter with push feeds `modelChanged` through it). A local adapter matches and pages with `buildQueryResult`; a remote one translates `where` itself.
 
 Every write hands the adapter a third argument, the write options: `insert(model, row, opts)`, `insertMany(model, rows, opts)`, `update(model, merged, opts)`, `delete(model, id, opts)`. `opts.importing` marks an import, `opts.direct` a caller that asked to bypass whatever a decorator would do (`users.add(row, { direct: true })`, `edit(id, patch, { direct: true })`, `remove(id, { direct: true })`), and on `update`, `opts.patch` is the normalised patch beside the merged row. A plain adapter ignores them.
 
@@ -202,7 +202,7 @@ await sql.init();
 
 `openSql({ name, db, models })` registers the adapter, applies the schema, builds the store and binds the model request in one call.
 
-`new SqlWriter({ db, models, store, changes })` is the same write pipeline, synchronous, for code that writes inside one SQLite transaction (a backend procedure): `add`, `edit` and `remove` run the before hook, the id, relation reduction, defaults, validation, the write, then `model:changed` (through `changes`) and the after hook, and answer at once. A hook must answer at once there, and a row with a file to upload is refused, since neither can be waited for inside a transaction. Each call takes `{ user, shape, defer, current }`: `user` reaches the hooks as `ctx.user`, `shape` changes the row of an add or the changes of an edit after the before hook (an owner stamp), `defer` holds the change event and the after hook until the caller's commit, and `current` is the stored row a caller already read. The steps both pipelines share are in `model/pipeline.ts`.
+`new SqlWriter({ db, models, store, changed })` is the same write pipeline, synchronous, for code that writes inside one SQLite transaction (a backend procedure): `add`, `edit` and `remove` run the before hook, the id, relation reduction, defaults, validation, the write, then `modelChanged` (or `changed`, as `createStore` takes it) and the after hook, and answer at once. A hook must answer at once there, and a row with a file to upload is refused, since neither can be waited for inside a transaction. Each call takes `{ user, shape, defer, current }`: `user` reaches the hooks as `ctx.user`, `shape` changes the row of an add or the changes of an edit after the before hook (an owner stamp), `defer` holds the change event and the after hook until the caller's commit, and `current` is the stored row a caller already read. The steps both pipelines share are in `model/pipeline.ts`.
 
 ### Decorators and the shadow
 
@@ -211,7 +211,7 @@ A package may wrap the adapter of every model whose schema declares a directive 
 ```javascript
 import { registerAdapterDecorator } from "@lightstart/light/model/adapter";
 
-registerAdapterDecorator("$moderated", (base, { model, schema, store, shadow, emit }) => ({
+registerAdapterDecorator("$moderated", (base, { model, schema, store, shadow, changed }) => ({
   init: () => base.init(),
   get: (model, id, opts) => base.get(model, id, opts),
   insert: async (model, row, opts) => (opts?.direct ? base.insert(model, row, opts) : ...),

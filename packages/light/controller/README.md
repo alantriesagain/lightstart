@@ -125,7 +125,7 @@ declare module "@lightstart/light/controller" {
 
 ## `resource()`
 
-`resource(fetcher, { name, eager?, ready?, events?, invalidateOn?, filter?, dependsOn? })` (from `/controller/resource`) is the async primitive for a value something fetches. It returns `{ value, pending, error }` signals plus:
+`resource(fetcher, { name, eager?, ready?, invalidateOn?, filter?, dependsOn? })` (from `/controller/resource`) is the async primitive for a value something fetches. It returns `{ value, pending, error }` signals plus:
 
 - `ensure()`: fetch once if never loaded.
 - `refresh()`: stale-while-revalidate refetch.
@@ -134,11 +134,11 @@ declare module "@lightstart/light/controller" {
 - `own(teardown)`: a teardown `dispose()` runs, for what was subscribed on the resource's behalf.
 - `peek()`, `subscribe(cb)`, `dispose()`.
 
-`invalidateOn` takes one event or a list on the host's bus (or `events`), heard from the first fetch on; `filter(payload, eventKey)` decides per event. `dependsOn` lists resources whose change refetches this one; a change that lands while the first load is in flight refetches once it lands. `ready` is what the first fetch waits for (the host's `ready` by default, `false` for nothing). `keyedResource(fetcherForKey)` memoizes one resource per key; `invalidate(key)` drops the entry.
+`invalidateOn` takes one event or a list (`event<T>()` from `/signals`), heard from the first fetch on; `filter(payload, source)` decides per emitter, the one that fired. `dependsOn` lists resources whose change refetches this one; a change that lands while the first load is in flight refetches once it lands. `ready` is what the first fetch waits for (the host's `ready` by default, `false` for nothing). `keyedResource(fetcherForKey)` memoizes one resource per key; `invalidate(key)` drops the entry.
 
 ## The host
 
-`configureControllers({ track, ready, events })` hands the controllers what their host knows: `track(label)` is called when async work starts (a controller connecting, a resource fetching) and answers what ends it; `ready()` answers what a resource waits for before its first fetch; `events` is the bus `invalidateOn` listens on. A page with no host keeps the defaults: nothing tracked, no gate, no bus.
+`configureControllers({ track, ready })` hands the controllers what their host knows: `track(label)` is called when async work starts (a controller connecting, a resource fetching) and answers what ends it; `ready()` answers what a resource waits for before its first fetch. A page with no host keeps the defaults: nothing tracked, no gate.
 
 ## Checking
 

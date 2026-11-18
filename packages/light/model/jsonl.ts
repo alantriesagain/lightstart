@@ -14,7 +14,7 @@
  * both for a process that holds its own models and store.
  */
 
-import { configureModel, modelBus } from "./config.ts";
+import { configureModel } from "./config.ts";
 import { createAdapter, hasAdapter, registerStorageAdapter } from "./factory.ts";
 import { buildQueryResult, validateQueryOptions } from "./query-builder.ts";
 import { createStore, storeRequest } from "./store.ts";
@@ -177,7 +177,7 @@ export interface JsonlOpen {
 /**
  * The store of a process that holds its own models, over JSONL files: the
  * adapter registered once, opened on `dir` through `io`, a store over the
- * models' schemas with the model bus as its emitter, and the store's request
+ * models' schemas announcing on `modelChanged`, and the store's request
  * as what every model call goes through from here on. Answers the store.
  */
 export const openJsonl = async ({ name, dir, io, models }: JsonlOpen): Promise<Store> => {
@@ -188,7 +188,6 @@ export const openJsonl = async ({ name, dir, io, models }: JsonlOpen): Promise<S
     models: Object.fromEntries(models.map((model): [string, ModelSchema] => [model.name, model.schema])),
     databases: { jsonl: db },
     defaultAdapter: "jsonl",
-    emit: (event, data) => modelBus().emit(event, data),
   });
   configureModel({ request: storeRequest(store) });
   return store;
