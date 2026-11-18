@@ -15,6 +15,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `web/index.ts` | The web host: `WebHost`, `IndexedDBKind`, the URL-query arguments, the browser history, the theme, `<app-container>` as a component, the root mount, `start` |
 | `web/test.ts` | `openPage(manifest, { path, args, kinds })`: the web host's root mount, theme and routed links over memory stores and a history in memory, and `OpenedPage` (`run`, `root`, `find`, `text`, `shows`, `navigate`, `settle`, `stop`) |
 | `web/generate.ts` | The web host's part of the generation: `.light/main.ts`, and `.light/components.ts` and `.light/components.css` for a project on `@lightstart/components` |
+| `static/index.ts` | `renderApp(manifest, { path, args, kinds })` and `renderPage(manifest, page, options)`: the app's root view rendered on light's markup host over memory stores and a history in memory, with `<app-container>` as a markup view, and that markup put in a built page with the prerender marker |
 | `tui/index.ts` | The terminal host: `TuiHost`, `JsonlKind`, `hostArgs` (`--data`, `--scheme`, `--route`), argv, the history in memory, `<app-container>` as a terminal view, the baked table, `runApp`, `start` |
 | `tui/generate.ts` | The terminal host's part of the generation: the modes dispatch in `.light/main.ts`, and `.light/classes.baked.ts` |
 | `tui/container.ts` | `AppContainer`: `<app-container>` as a terminal view, defined on import |
@@ -50,6 +51,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - A terminal app's code follows light's scriptc rules: erasable TypeScript, classes for identity, no computed imports, no `Map` of functions, and `unknown` narrowed with `typeof`, `instanceof` or `Array.isArray`. Its `package.json` `native.entry` is `.light/main.ts`.
 - `openApp` and `mountApp` import no IndexedDB and no node-only module, so both run natively.
 - `openPage` and `OpenedPage` are the web host's and the page's DOM, so they run in a browser test.
+- `static` renders on light's markup host: a caller imports `@lightstart/light/markup` before the app's manifest, the root view and `<app-container>` are markup-host views, the markup carries the engine's markers, and a root view the markup registry does not know is a clear error. `renderPage` replaces the root placeholder and puts the prerender marker first in `<head>`.
 - The build's static files read the app's `url` and the routes through the generator's `infoOf` and `routesOf`, never the generated manifest (which imports the views): `404.html` is the built page, the sitemap leaves out a path with a parameter or wildcard, and `_headers` caches the hashed `.js` and `.css` outputs but not the pages.
 - `.light/` is not committed; the fixture's `.gitignore` names it beside `.deployed/`.
 - Tests are plain scripts on `@lightstart/test/assert.ts`, not a test framework. Most are node-only because they walk the disk and spawn the CLI.
@@ -73,6 +75,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `start(manifest, { classes, argv, term })` and `{ stop() }` | terminal apps and their generated entry |
 | `openApp(manifest, { args, kinds })` and `mountApp(manifest, opened, { cols, rows, classes })` | a project's tests |
 | `openPage(manifest, { path, args, kinds })` and `OpenedPage` | a web project's tests |
+| `renderApp(manifest, { path, args, kinds })` and `renderPage(manifest, page, options)` | the build's prerenderer and a server rendering a page in node |
 | A mode's `main(argv: readonly string[])` and optional `matches(argv)` | the terminal generation and `.light/main.ts` |
 
 ## Gates

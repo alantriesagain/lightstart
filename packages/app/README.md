@@ -175,6 +175,20 @@ A terminal project's `package.json` names the entry and its binary:
 
 The views, models and controllers a terminal app ships follow light's scriptc rules (`packages/light/native/README.md`): erasable TypeScript, classes for identity, no computed imports, no `Map` of functions, and `unknown` narrowed with `typeof`/`instanceof`/`Array.isArray`. A view writes its tag with `define(tag, Class)`; the root view default-exports its class.
 
+## Rendering in node
+
+`@lightstart/app/static` renders an app's page in node, without a browser: the build prerenders from it, and a server can render a page with it. `renderApp` runs the app as `openApp` does (the arguments, every store in memory unless `kinds`, the controllers started and ready) over a history in memory at `path`, and mounts the root view (`app.root`, `"app-root"` by default) on light's markup host. It answers the root element's serialized markup with the engine's markers. `renderPage` puts that markup into the app's built HTML in place of the root placeholder (`<app-root></app-root>`, or the app's own tag) and inserts `<script>window.__PRERENDERED__ = true</script>` first in `<head>`.
+
+```ts
+import "@lightstart/light/markup";
+import manifest from "./.light/app.ts";
+import { renderPage } from "@lightstart/app/static";
+
+const page = await renderPage(manifest, indexHtml, { path: "/about" });
+```
+
+Import `@lightstart/light/markup` before the app's manifest: it names the markup element and registry to light's views, and a view registers when its module loads, which the generated manifest does. A root view that is not registered on the markup host is an error naming the tag. A markup host does not have a browser's `document` or `window`, so a view or component that reads one reports its error rather than rendering that part, as `renderToStringAsync` does.
+
 ## Tests
 
 `@lightstart/app/test` opens a run without a surface:
@@ -226,4 +240,4 @@ await app.stop();        // disposes the controllers and closes the stores
 
 ## What is node-only
 
-The generator (`node/generate.ts`, and each host's `generate.ts`) reads the disk. The core, the hosts and the test helpers are plain modules the browser and the terminal compile.
+The generator (`node/generate.ts`, and each host's `generate.ts`) reads the disk. The core, the hosts and the test helpers are plain modules the browser and the terminal compile. `static/index.ts` is node-only: it renders on light's markup host, and its prerender marker is the build's.
