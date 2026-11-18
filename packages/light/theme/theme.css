@@ -180,16 +180,6 @@ dialog::backdrop {
   flex-shrink: 0;
 }
 
-body:not(.production) {
-  *:not(:defined) {
-    display: block;
-    height: 100%;
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-    border: 1px solid red;
-  }
-}
-
 @view-transition {
   navigation: auto;
 }
