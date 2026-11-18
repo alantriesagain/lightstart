@@ -1,12 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { modelBus } from "./config.ts";
-import { MODEL_CHANGED, MODEL_ERROR } from "./events.ts";
+import { modelChanged, modelError } from "./events.ts";
 import { onChange } from "./changes.ts";
 
-const events = modelBus();
-
-const change = (model, action, row) => events.emit(MODEL_CHANGED, { model, action, row });
+const change = (model, action, row) => modelChanged.emit({ model, action, row });
 
 describe("onChange", () => {
   it("delivers adds and edits that match the where, every removal, and nothing after unsubscribing", async () => {
@@ -25,7 +22,7 @@ describe("onChange", () => {
   it("an undefined where hears every change; a throwing callback is reported, not fatal", async () => {
     const seen = [];
     const errors = [];
-    const offError = events.on(MODEL_ERROR, (data) => errors.push(data.type));
+    const offError = modelError.on((data) => errors.push(data.type));
     const offAll = onChange("post", undefined, (event) => seen.push(event.row.id));
     const offBad = onChange("post", undefined, () => { throw new Error("boom"); });
     await change("post", "edit", { id: 9 });
@@ -40,7 +37,7 @@ describe("onChange", () => {
     const seen = [];
     const off = onChange("post", { status: "live" }, (event) => seen.push(event.action));
     const offAll = onChange("post", undefined, (event) => seen.push(`all:${event.action}`));
-    await events.emit(MODEL_CHANGED, { model: "post", action: "sync" });
+    await modelChanged.emit({ model: "post", action: "sync" });
     assert.deepEqual(seen, ["sync", "all:sync"]);
     off();
     offAll();

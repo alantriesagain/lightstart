@@ -1,11 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { modelBus } from "./config.ts";
-import { MODEL_ERROR } from "./events.ts";
+import { modelError } from "./events.ts";
 import { compileMatcher } from "./query-builder.ts";
 import { loadRelationships, loadRelationshipsForMany } from "./relationship-loader.ts";
-
-const events = modelBus();
 
 const makeAdapter = (data) => ({
   async getAll(model, options) {
@@ -150,7 +147,7 @@ describe("Relationship Loader", () => {
     it("a load that throws reports a model error and leaves [] for a many, null for a one", async () => {
       const failing = { ...adapter, getAll: async () => { throw new Error("offline"); } };
       const errors = [];
-      const off = events.on(MODEL_ERROR, (payload) => errors.push(payload));
+      const off = modelError.on((payload) => errors.push(payload));
       const user = await loadRelationships(failing, models, "user", { id: "u1", name: "n" }, ["posts", "profile"]);
       off();
       assert.deepEqual(user, { id: "u1", name: "n", posts: [], profile: null });

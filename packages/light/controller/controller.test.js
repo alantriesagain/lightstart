@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it, beforeEach } from "node:test";
 
-import { signal } from "../signals/index.ts";
+import { event, signal } from "../signals/index.ts";
 import { createStore } from "../signals/store.ts";
 import { mergeDefinitions, composeDefinition } from "../view/definition.js";
 import T from "../types/index.js";
@@ -1310,20 +1310,6 @@ const deferred = () => {
   return { promise, resolve, reject };
 };
 
-const fakeBus = () => {
-  const listeners = new Map();
-  return {
-    on(key, cb) {
-      if (!listeners.has(key)) listeners.set(key, new Set());
-      listeners.get(key).add(cb);
-      return () => listeners.get(key)?.delete(cb);
-    },
-    async emit(key, payload) {
-      return Promise.all([...(listeners.get(key) ?? [])].map((cb) => cb(payload)));
-    },
-  };
-};
-
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
 describe("@lightstart/light/controller/resource.ts", () => {
@@ -1333,7 +1319,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
       const r = resource(async () => {
         calls++;
         return ["a"];
-      }, { ready: false, events: null });
+      }, { ready: false });
       const [first, second] = await Promise.all([r.ensure(), r.ensure()]);
       assert.deepEqual(first, ["a"]);
       assert.deepEqual(second, ["a"]);
@@ -1344,7 +1330,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
 
     it("transitions pending and clears error on success", async () => {
       const d = deferred();
-      const r = resource(() => d.promise, { ready: false, events: null });
+      const r = resource(() => d.promise, { ready: false });
       const p = r.ensure();
       await tick();
       assert.equal(r.pending.value, true);
@@ -1362,7 +1348,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
         calls++;
         if (calls === 1) throw new Error("boom");
         return "recovered";
-      }, { ready: false, events: null });
+      }, { ready: false });
       let threw = null;
       try {
         await r.ensure();
@@ -1384,7 +1370,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
       const r = resource(async () => {
         fetched = true;
         return 1;
-      }, { ready: () => gate.promise, events: null });
+      }, { ready: () => gate.promise });
       const p = r.ensure();
       await tick();
       assert.equal(fetched, false);
@@ -1398,7 +1384,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
     it("keeps the old value visible until the new answer resolves", async () => {
       const answers = [deferred(), deferred()];
       let call = 0;
-      const r = resource(() => answers[call++].promise, { ready: false, events: null });
+      const r = resource(() => answers[call++].promise, { ready: false });
       const p1 = r.ensure();
       answers[0].resolve("old");
       await p1;
@@ -1418,7 +1404,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
         call++;
         if (call === 2) throw new Error("refresh-fail");
         return "good";
-      }, { ready: false, events: null });
+      }, { ready: false });
       await r.ensure();
       let threw = null;
       try {
@@ -1437,7 +1423,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
       const r = resource(() => {
         calls++;
         return first.promise;
-      }, { ready: false, events: null });
+      }, { ready: false });
       const p1 = r.ensure();
       const p2 = r.refresh();
       first.resolve("initial");
@@ -1449,7 +1435,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
     it("drops a stale in-flight answer when a newer refresh resolves first", async () => {
       const answers = [deferred(), deferred(), deferred()];
       let call = 0;
-      const r = resource(() => answers[call++].promise, { ready: false, events: null });
+      const r = resource(() => answers[call++].promise, { ready: false });
       const p0 = r.ensure();
       answers[0].resolve("base");
       await p0;
@@ -1467,7 +1453,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
 
   describe("mutate()", () => {
     it("applies a synchronous local write that subscribers observe", async () => {
-      const r = resource(async () => ["a"], { ready: false, events: null });
+      const r = resource(async () => ["a"], { ready: false });
       await r.ensure();
       const seen = [];
       const off = r.subscribe((v) => seen.push(v));
@@ -1480,50 +1466,53 @@ describe("@lightstart/light/controller/resource.ts", () => {
   });
 
   describe("invalidateOn", () => {
-    it("refreshes on a matching event and the emit awaits the refetch", async () => {
-      const bus = fakeBus();
+    it("refreshes on a matching event", async () => {
+      const changed = event();
       let call = 0;
       const r = resource(async () => ++call, {
         ready: false,
-        events: bus,
-        invalidateOn: "content:updated",
+        invalidateOn: changed,
         filter: (p) => p?.collection === "likes",
       });
       await r.ensure();
       assert.equal(r.value.value, 1);
-      await bus.emit("content:updated", { collection: "other" });
+      changed.emit({ collection: "other" });
+      await tick();
       assert.equal(r.value.value, 1);
-      await bus.emit("content:updated", { collection: "likes" });
+      changed.emit({ collection: "likes" });
+      await tick();
       assert.equal(r.value.value, 2);
     });
 
     it("is a no-op before the first fetch", async () => {
-      const bus = fakeBus();
+      const changed = event();
       let calls = 0;
-      resource(async () => ++calls, { ready: false, events: bus, invalidateOn: "x" });
-      await bus.emit("x", {});
+      resource(async () => ++calls, { ready: false, invalidateOn: changed });
+      changed.emit({});
+      await tick();
       assert.equal(calls, 0);
     });
 
     it("detaches on dispose()", async () => {
-      const bus = fakeBus();
+      const changed = event();
       let calls = 0;
-      const r = resource(async () => ++calls, { ready: false, events: bus, invalidateOn: "x" });
+      const r = resource(async () => ++calls, { ready: false, invalidateOn: changed });
       await r.ensure();
       r.dispose();
-      await bus.emit("x", {});
+      changed.emit({});
+      await tick();
       assert.equal(calls, 1);
     });
   });
 
   describe("dependsOn", () => {
     it("refreshes when a dependency's value changes, but only after its own first resolve", async () => {
-      const dep = resource(async () => "dep-v1", { ready: false, events: null });
+      const dep = resource(async () => "dep-v1", { ready: false });
       let calls = 0;
       const derived = resource(async () => {
         calls++;
         return `derived-of-${dep.peek()}`;
-      }, { ready: false, events: null, dependsOn: [dep] });
+      }, { ready: false, dependsOn: [dep] });
       await dep.ensure();
       await tick();
       assert.equal(calls, 0);
@@ -1536,7 +1525,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
     });
 
     it("a dependency that moves while the first load is in flight refreshes once that load lands", async () => {
-      const dep = resource(async () => "dep-v1", { ready: false, events: null });
+      const dep = resource(async () => "dep-v1", { ready: false });
       await dep.ensure();
       const gate = Promise.withResolvers();
       let calls = 0;
@@ -1545,7 +1534,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
         const seen = dep.peek();
         if (calls === 1) await gate.promise;
         return `derived-of-${seen}`;
-      }, { ready: false, events: null, dependsOn: [dep] });
+      }, { ready: false, dependsOn: [dep] });
       const first = derived.ensure();
       await tick();
       dep.mutate(() => "dep-v2");
@@ -1562,12 +1551,12 @@ describe("@lightstart/light/controller/resource.ts", () => {
       const dep = resource(async () => {
         await gate.promise;
         return "dep-v1";
-      }, { ready: false, events: null });
+      }, { ready: false });
       let calls = 0;
       const derived = resource(async () => {
         calls++;
         return `derived-of-${await dep.ensure()}`;
-      }, { ready: false, events: null, dependsOn: [dep] });
+      }, { ready: false, dependsOn: [dep] });
       const done = derived.ensure();
       await tick();
       gate.resolve(undefined);
@@ -1581,7 +1570,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
   describe("eager", () => {
     it("kicks the first load without an ensure() call", async () => {
       let calls = 0;
-      const r = resource(async () => ++calls, { ready: false, events: null, eager: true });
+      const r = resource(async () => ++calls, { ready: false, eager: true });
       await tick();
       assert.equal(calls, 1);
       assert.equal(r.value.value, 1);
@@ -1594,7 +1583,7 @@ describe("@lightstart/light/controller/resource.ts", () => {
       const keyed = keyedResource(async (key) => {
         calls[key]++;
         return `${key}:${calls[key]}`;
-      }, { ready: false, events: null });
+      }, { ready: false });
       assert.equal(await keyed.get("a").ensure(), "a:1");
       assert.equal(await keyed.get("b").ensure(), "b:1");
       assert.equal(keyed.get("a"), keyed.get("a"));

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import T from "../types/index.js";
-import { MODEL_CHANGED } from "./events.ts";
-import { configureModel, modelApi, modelBus } from "./index.ts";
+import { modelChanged } from "./events.ts";
+import { configureModel, modelApi } from "./index.ts";
 import { bindModelQuery, liveRows, modelBinder, modelQuery } from "./binder.ts";
 import { createStore } from "../signals/store.ts";
 import { defineController, registerSyncBinder } from "../controller/index.ts";
@@ -31,7 +31,7 @@ const fakeBackend = () => {
   return { calls, data, request, hold: (/** @type {Promise<void>} */ promise) => { gate = promise; } };
 };
 
-const change = (model, action, row) => modelBus().emit(MODEL_CHANGED, { model, action, row });
+const change = (model, action, row) => modelChanged.emit({ model, action, row });
 
 let models = {};
 let Model;

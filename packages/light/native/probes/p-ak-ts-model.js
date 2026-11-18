@@ -4,7 +4,7 @@
  * the schema rejects.
  */
 
-import { configureModel, modelBus } from "../../model/index.ts";
+import { configureModel } from "../../model/index.ts";
 import { createStore, storeRequest } from "../../model/store.ts";
 import { buildQueryResult, createAdapter, registerStorageAdapter } from "../../model/adapter.ts";
 import { notes } from "./p-ak-ts-model.schema.ts";
@@ -45,7 +45,7 @@ registerStorageAdapter("memory", {
 
 const db = createAdapter("memory", { name: "probe" });
 await db.init();
-const store = createStore({ models: { notes: notes.schema }, databases: { memory: db }, defaultAdapter: "memory", emit: (event, data) => modelBus().emit(event, data) });
+const store = createStore({ models: { notes: notes.schema }, databases: { memory: db }, defaultAdapter: "memory" });
 configureModel({ request: storeRequest(store) });
 
 const first = await notes.add({ title: "first" });

@@ -29,7 +29,7 @@ export default {
       title: "Note and tip",
       render: () => html`
         <lc-flex direction="column" gap="sm">
-          <lc-alert variant="note" title="Note">Every write emits <code>model:changed</code>.</lc-alert>
+          <lc-alert variant="note" title="Note">Every write emits <code>modelChanged</code>.</lc-alert>
           <lc-alert variant="tip" title="Tip">Ask for the rows you draw: push filters into <code>where</code>.</lc-alert>
         </lc-flex>
       `,

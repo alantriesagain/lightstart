@@ -6,7 +6,7 @@
  * `json_each`. The same module is held to node by light's own model tests.
  */
 import { defineModel } from "@lightstart/light/model";
-import type { ModelSchema } from "@lightstart/light/model";
+import type { ModelChanged, ModelSchema } from "@lightstart/light/model";
 import { SqlWriter, openSql } from "@lightstart/light/model/sql";
 import { Database } from "../native.ts";
 import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
@@ -27,7 +27,7 @@ const main = async (): Promise<void> => {
   eqn("has reads a JSON array", (await note.getAll({ where: { tags: { has: "a" } } })).length, 1);
   eqn("count follows the same where", await note.count({ where: { tags: { "has all": ["a", "b"] } } }), 1);
   const changes: string[] = [];
-  const writer = new SqlWriter({ db, models: store.models, store, changes: (event: string) => { changes.push(event); } });
+  const writer = new SqlWriter({ db, models: store.models, store, changed: (change: ModelChanged) => { changes.push(change.action); } });
   const written = writer.add("note", { title: "three", tags: ["c"] });
   eq("the writer runs the pipeline at once", String(written["done"]), "false");
   eq("and the store reads its row", String((await note.get(String(written.id)))?.title), "three");

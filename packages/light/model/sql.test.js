@@ -109,7 +109,7 @@ describe("the synchronous writer", () => {
   const writerOver = async (models) => {
     const { db, store } = await open(models);
     const events = [];
-    const writer = new SqlWriter({ db, models, store, changes: (event, data) => events.push([event, data.action, data.model]) });
+    const writer = new SqlWriter({ db, models, store, changed: (change) => events.push(change) });
     return { db, store, writer, events };
   };
 
@@ -143,7 +143,7 @@ describe("the synchronous writer", () => {
     assert.equal(writer.remove("note", row.id), true);
     assert.equal(writer.remove("note", row.id), false, "a second remove finds nothing");
     assert.deepEqual(seen, [["afterAdd", "one", true, "u1"], ["afterEdit", "two"], ["afterRemove", "two"]]);
-    assert.deepEqual(events.map(([, action]) => action), ["add", "edit", "remove"]);
+    assert.deepEqual(events.map((change) => change.action), ["add", "edit", "remove"]);
     await store.close();
   });
 
@@ -156,7 +156,7 @@ describe("the synchronous writer", () => {
     db.transaction(() => writer.add("note", { title: "held" }, { defer: (work) => held.push(work) }));
     assert.equal(events.length, 0);
     for (const work of held) work();
-    assert.deepEqual(events.map(([, action]) => action), ["add"]);
+    assert.deepEqual(events.map((change) => change.action), ["add"]);
     const shaped = writer.add("note", { title: "shaped" }, { shape: (row) => ({ ...row, score: 9 }) });
     assert.equal(shaped.score, 9);
     await store.close();

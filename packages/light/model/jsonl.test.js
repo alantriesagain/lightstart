@@ -4,7 +4,7 @@ import T from "../types/index.js";
 import JsonlAdapter from "./jsonl.ts";
 import { createAdapter, registerStorageAdapter } from "./adapter.ts";
 import { createStore, storeRequest } from "./store.ts";
-import { configureModel, defineModel, modelBus, onChange } from "./index.ts";
+import { configureModel, defineModel, onChange } from "./index.ts";
 
 registerStorageAdapter("jsonl", JsonlAdapter);
 
@@ -112,7 +112,7 @@ describe("the JSONL adapter", () => {
     const tasks = defineModel("tasks", { title: T.string({ required: true }), done: T.boolean({ defaultValue: false }) });
     const start = async () => {
       const db = await open(io);
-      const store = createStore({ models: { tasks: tasks.schema }, databases: { jsonl: db }, defaultAdapter: "jsonl", emit: (event, data) => modelBus().emit(event, data) });
+      const store = createStore({ models: { tasks: tasks.schema }, databases: { jsonl: db }, defaultAdapter: "jsonl" });
       configureModel({ request: storeRequest(store) });
     };
     await start();

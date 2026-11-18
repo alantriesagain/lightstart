@@ -174,7 +174,7 @@ export interface FileStorage {
 // ---------------------------------------------------------------------
 
 /**
- * The `model:changed` payload the store emits after every write. A `sync`
+ * The `modelChanged` payload the store emits after every write. A `sync`
  * carries no row: the whole collection changed and every follower re-reads.
  * A `remove` carries the stored row when the model declares a remove hook,
  * `{ id }` otherwise: the store reads nothing it does not need.
@@ -186,6 +186,12 @@ export interface ModelChanged<R = Row> {
 }
 
 export type ChangeCallback<R = Row> = (event: ModelChanged<R>) => void;
+
+/** A warning, an error or a log line the model reports: `type` names it, the rest is its detail. */
+export interface ModelNote {
+  type: string;
+  [detail: string]: unknown;
+}
 
 /** One `onChange` follower: the matcher its `where` compiled to, and its callback. */
 export interface ChangeSubscriber {
@@ -311,7 +317,7 @@ export interface StorageAdapter {
   facets?(model: string, fields?: string[], opts?: QueryOptions): Promise<FacetResult>;
   truncate?(model: string): Promise<unknown>;
   supportsOperator?(operator: string): boolean;
-  /** A remote adapter with push feeds `model:changed` through this; the store never calls it. */
+  /** A remote adapter with push feeds `modelChanged` through this; the store never calls it. */
   subscribe?(model: string, cb: ChangeCallback): () => void;
   [extra: string]: unknown;
 }
@@ -323,7 +329,8 @@ export interface AdapterDecoratorContext {
   store: Store;
   /** The model's `$shadow` adapter, or null when it declares none. */
   shadow: StorageAdapter | null;
-  emit: (event: string, data: unknown) => unknown;
+  /** Announce a change; a no-op when the store announces nothing. */
+  changed: (change: ModelChanged) => void;
 }
 
 /**
@@ -368,8 +375,8 @@ export interface StoreConfig {
   models: Record<string, ModelSchema>;
   databases?: Record<string, StorageAdapter>;
   defaultAdapter?: string;
-  /** Receives `model:changed` after every write; omit for a store nothing follows. */
-  emit?: ((event: string, data: unknown) => unknown) | null;
+  /** Receives every change after a write; omit to announce on `modelChanged`, `null` to announce nothing, a function to take them instead. */
+  changed?: ((change: ModelChanged) => void) | null;
 }
 
 /** The store: every model's reads and writes over the adapter that holds it. */
@@ -414,12 +421,6 @@ export interface RelationshipDefinition extends ModelField {
   belongs?: boolean;
   polymorphic?: boolean;
   as?: string;
-}
-
-/** The bus the model emits its warnings, its logs and `model:changed` on; see `configureModel`. */
-export interface ModelBus {
-  on(key: string, cb: (data: unknown) => unknown): () => void;
-  emit(key: string, data?: unknown): unknown;
 }
 
 /** `modelQuery()`'s answer: the resource, and the size of the whole match. */

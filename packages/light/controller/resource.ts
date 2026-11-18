@@ -4,14 +4,15 @@
  * JSON, a join across sources. It holds the value, whether it is loading and
  * the last error as signals, dedupes concurrent loads, and never shows an
  * empty middle state: a refresh keeps the last good value until the new
- * answer lands (stale-while-revalidate). The ready gate, the event bus behind
- * `invalidateOn` and work tracking come from `configureControllers`.
+ * answer lands (stale-while-revalidate). The ready gate and work tracking
+ * come from `configureControllers`; the events behind `invalidateOn` are
+ * handed in.
  */
 
 import { batch, signal } from "../signals/index.ts";
 import { config } from "./config.ts";
 
-import type { EventBus, KeyedResource, KeyedResourceOptions, Resource, ResourceOptions } from "./types.ts";
+import type { KeyedResource, KeyedResourceOptions, Occurrence, Resource, ResourceOptions } from "./types.ts";
 
 type Dependency = { readonly value: { peek(): unknown, subscribe(callback: (value: unknown) => void): () => void } };
 
@@ -19,9 +20,8 @@ type LoadOptions = {
   name?: string;
   eager?: boolean;
   ready?: false | (() => Promise<unknown> | undefined);
-  events?: EventBus | null;
-  invalidateOn?: string | string[];
-  filter?: (payload: unknown, eventKey: string) => boolean;
+  invalidateOn?: Occurrence | Occurrence[];
+  filter?: (payload: unknown, source: Occurrence) => boolean;
   dependsOn?: readonly Dependency[];
 };
 
@@ -32,7 +32,6 @@ const createResource = (fetcher: () => unknown, options: LoadOptions): Resource<
     name = "resource",
     eager = false,
     ready,
-    events,
     invalidateOn,
     filter,
     dependsOn,
@@ -59,14 +58,12 @@ const createResource = (fetcher: () => unknown, options: LoadOptions): Resource<
   const listen = () => {
     if (listening || disposed || !invalidateOn) return;
     listening = true;
-    const bus = events !== undefined ? events : config.events;
-    if (!bus) return;
-    for (const eventKey of Array.isArray(invalidateOn) ? invalidateOn : [invalidateOn])
+    for (const source of Array.isArray(invalidateOn) ? invalidateOn : [invalidateOn])
       offs.push(
-        bus.on(eventKey, (payload) => {
-          if (filter && !filter(payload, eventKey)) return undefined;
-          if (!resolvedOnce) return undefined;
-          return self.refresh().catch(swallow);
+        source.on((payload) => {
+          if (filter && !filter(payload, source)) return;
+          if (!resolvedOnce) return;
+          self.refresh().catch(swallow);
         }),
       );
   };
@@ -199,7 +196,7 @@ export function resource(fetcher: () => unknown, options: LoadOptions = {}): Res
  * singular Resource.invalidate, which refreshes in place.
  */
 export function keyedResource<T>(fetcherForKey: (key: string) => Promise<T> | T, options?: KeyedResourceOptions): KeyedResource<T>;
-export function keyedResource(fetcherForKey: (key: string) => unknown, options: LoadOptions = {}): KeyedResource<unknown> {
+export function keyedResource(fetcherForKey: (key: string) => unknown, options: KeyedResourceOptions = {}): KeyedResource<unknown> {
   const entries: Map<string, Resource<unknown>> = new Map();
   const invalidateAll = (): void => {
     for (const entry of entries.values()) entry.dispose();

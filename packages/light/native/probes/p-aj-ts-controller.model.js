@@ -4,7 +4,7 @@
  */
 
 import T from "../../types/index.js";
-import { configureModel, defineModel, modelBus } from "../../model/index.ts";
+import { configureModel, defineModel } from "../../model/index.ts";
 import { createStore, storeRequest } from "../../model/store.ts";
 import { buildQueryResult, createAdapter, registerStorageAdapter } from "../../model/adapter.ts";
 
@@ -48,6 +48,6 @@ export const tasks = defineModel("tasks", { title: T.string({ required: true }),
 export const openStore = async () => {
   const db = createAdapter("memory", { name: "probe" });
   await db.init();
-  const store = createStore({ models: { tasks: tasks.schema }, databases: { memory: db }, defaultAdapter: "memory", emit: (event, data) => modelBus().emit(event, data) });
+  const store = createStore({ models: { tasks: tasks.schema }, databases: { memory: db }, defaultAdapter: "memory" });
   configureModel({ request: storeRequest(store) });
 };

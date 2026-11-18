@@ -9,7 +9,7 @@
  * every model api the store in this runtime.
  */
 
-import { configureModel, modelBus } from "@lightstart/light/model";
+import { configureModel } from "@lightstart/light/model";
 import { createAdapter, hasAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
 import { createStore, storeRequest } from "@lightstart/light/model/store";
 import type { ModelSchema, StorageAdapter, Store } from "@lightstart/light/model/types.ts";
@@ -112,7 +112,6 @@ export const openStores = async (manifest: AppManifest, host: StoreHost, memoryO
     models,
     databases,
     defaultAdapter: "main",
-    emit: (event, data) => modelBus().emit(event, data),
   });
   configureModel({ request: storeRequest(store) });
   return store;
