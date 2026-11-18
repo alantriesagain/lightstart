@@ -1,7 +1,8 @@
 import { html } from "@lightstart/light/html";
-import { defineComponent } from "@lightstart/light";
+import View, { defineComponent } from "@lightstart/light";
+import "@lightstart/showcase/views/theme-generator.js";
 
-export default defineComponent({
+const view = defineComponent({
   tag: "docs-theming",
   style: true,
   render() {
@@ -14,3 +15,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

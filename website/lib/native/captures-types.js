@@ -13,7 +13,7 @@ export default {
     "runs": 15,
     "capturedAt": "2026-10-18",
     "load": 10.5,
-    "cpus": 8
+    "cpus": 8,
   },
   "examples": {
     "numbers": {
@@ -24,13 +24,13 @@ export default {
       "classes": [],
       "signatures": [
         "countMultiples(limit: f64, step: f64): f64",
-        "mean(values: f64[]): f64"
+        "mean(values: f64[]): f64",
       ],
       "calls": {
         "countMultiples": [],
         "mean": [
-          "scr_arr_get_f64"
-        ]
+          "scr_arr_get_f64",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -38,29 +38,29 @@ export default {
       "node": {
         "stdout": "3927500\n",
         "status": 0,
-        "ms": 105.5
+        "ms": 105.5,
       },
       "native": {
         "stdout": "3927500\n",
         "status": 0,
-        "ms": 24.9
-      }
+        "ms": 24.9,
+      },
     },
     "union": {
       "file": "union.ts",
       "source": "function weight(value: boolean | string): number {\n  return typeof value === \"string\" ? value.length : value ? 1 : 0;\n}\n\nconst values: (boolean | string)[] = [];\nfor (let i = 0; i < 1000; i++) values.push(i % 3 === 0 ? \"abc\" : i % 3 === 1);\n\nconst start = performance.now();\nlet total = 0;\nfor (let round = 0; round < 10_000; round++) for (const value of values) total += weight(value);\nconsole.log(total);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
       "unions": [
-        "u0 = bool | string"
+        "u0 = bool | string",
       ],
       "records": [],
       "classes": [],
       "signatures": [
         "weight(value: u0): f64",
-        "%init.0(): void"
+        "%init.0(): void",
       ],
       "calls": {
         "weight": [
-          "str_utf16_len"
+          "str_utf16_len",
         ],
         "%init.0": [
           "scr_arr_new_ops_small",
@@ -74,61 +74,61 @@ export default {
           "scr_console_log",
           "scr_num_to_fixed",
           "scr_str_release",
-          "scr_console_error_parts"
-        ]
+          "scr_console_error_parts",
+        ],
       },
       "llvm": {
-        "weight": "define internal i32 @sc_bf_weight.i32(ptr %p_sc_l_value_0) #0 { ; weight\nentry:\n  %sc_l_value_0 = alloca ptr ; value\n  %s4 = alloca double\n  %s5 = alloca i32\n  %s14 = alloca double\n  %s15 = alloca i32\n  store ptr %p_sc_l_value_0, ptr %sc_l_value_0\n  %t0 = load ptr, ptr %sc_l_value_0\n  %t3 = getelementptr inbounds %ScrUnion, ptr %t0, i64 0, i32 1\n  %t2 = load i32, ptr %t3\n  %t1 = icmp eq i32 %t2, 1\n  br i1 %t1, label %tern.t0, label %tern.f1\ntern.t0:\n  %t6 = load ptr, ptr %sc_l_value_0\n  %t7 = getelementptr inbounds %ScrUnion, ptr %t6, i64 0, i32 5\n  %t8 = load ptr, ptr %t7\n  %t9 = call double @sc_str_utf16_len(ptr %t8)\n  store double %t9, ptr %s4\n  br label %tern.j2\ntern.f1:\n  %t10 = load ptr, ptr %sc_l_value_0\n  %t11 = getelementptr inbounds %ScrUnion, ptr %t10, i64 0, i32 5\n  %t12 = load i64, ptr %t11\n  %t13 = icmp ne i64 %t12, 0\n  br i1 %t13, label %tern.t3, label %tern.f4\ntern.t3:\n  store double 0x3FF0000000000000, ptr %s14\n  store i32 1, ptr %s15\n  br label %tern.j5\ntern.f4:\n  store double 0x0000000000000000, ptr %s14\n  store i32 0, ptr %s15\n  br label %tern.j5\ntern.j5:\n  %t16 = load double, ptr %s14\n  %t17 = load i32, ptr %s15\n  store double %t16, ptr %s4\n  store i32 %t17, ptr %s5\n  br label %tern.j2\ntern.j2:\n  %t18 = load double, ptr %s4\n  %t19 = fptosi double %t18 to i32\n  ret i32 %t19\n}"
+        "weight": "define internal i32 @sc_bf_weight.i32(ptr %p_sc_l_value_0) #0 { ; weight\nentry:\n  %sc_l_value_0 = alloca ptr ; value\n  %s4 = alloca double\n  %s5 = alloca i32\n  %s14 = alloca double\n  %s15 = alloca i32\n  store ptr %p_sc_l_value_0, ptr %sc_l_value_0\n  %t0 = load ptr, ptr %sc_l_value_0\n  %t3 = getelementptr inbounds %ScrUnion, ptr %t0, i64 0, i32 1\n  %t2 = load i32, ptr %t3\n  %t1 = icmp eq i32 %t2, 1\n  br i1 %t1, label %tern.t0, label %tern.f1\ntern.t0:\n  %t6 = load ptr, ptr %sc_l_value_0\n  %t7 = getelementptr inbounds %ScrUnion, ptr %t6, i64 0, i32 5\n  %t8 = load ptr, ptr %t7\n  %t9 = call double @sc_str_utf16_len(ptr %t8)\n  store double %t9, ptr %s4\n  br label %tern.j2\ntern.f1:\n  %t10 = load ptr, ptr %sc_l_value_0\n  %t11 = getelementptr inbounds %ScrUnion, ptr %t10, i64 0, i32 5\n  %t12 = load i64, ptr %t11\n  %t13 = icmp ne i64 %t12, 0\n  br i1 %t13, label %tern.t3, label %tern.f4\ntern.t3:\n  store double 0x3FF0000000000000, ptr %s14\n  store i32 1, ptr %s15\n  br label %tern.j5\ntern.f4:\n  store double 0x0000000000000000, ptr %s14\n  store i32 0, ptr %s15\n  br label %tern.j5\ntern.j5:\n  %t16 = load double, ptr %s14\n  %t17 = load i32, ptr %s15\n  store double %t16, ptr %s4\n  store i32 %t17, ptr %s5\n  br label %tern.j2\ntern.j2:\n  %t18 = load double, ptr %s4\n  %t19 = fptosi double %t18 to i32\n  ret i32 %t19\n}",
       },
       "same": true,
       "coverage": "scriptc coverage union.ts\n\n  statements analyzed   11\n  compile statically    11  (100%)\n\n  fully static — all analyzed statements compile to native code.",
       "node": {
         "stdout": "13350000\n",
         "status": 0,
-        "ms": 46.8
+        "ms": 46.8,
       },
       "native": {
         "stdout": "13350000\n",
         "status": 0,
-        "ms": 47.9
-      }
+        "ms": 47.9,
+      },
     },
     "optional": {
       "file": "optional.ts",
       "source": "interface User {\n  name: string;\n  nickname?: string;\n  manager: User | null;\n}\n\nfunction label(user: User): string {\n  return user.nickname ?? user.name;\n}\n\nfunction managerName(user: User): string {\n  return user.manager?.name ?? \"none\";\n}\n\nconst boss: User = { name: \"Ada\", manager: null };\nconst users: User[] = [];\nfor (let i = 0; i < 1000; i++) users.push(i % 2 ? { name: \"Bo\", nickname: \"b\", manager: boss } : { name: \"Cy\", manager: null });\n\nconst start = performance.now();\nlet size = 0;\nfor (let round = 0; round < 10_000; round++) for (const user of users) size += label(user).length + managerName(user).length;\nconsole.log(size);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
       "unions": [
         "u0 = string | undefined",
-        "u1 = null | r0"
+        "u1 = null | r0",
       ],
       "records": [
-        "r0 = { manager: u1, name: string, nickname: u0 }"
+        "r0 = { manager: u1, name: string, nickname: u0 }",
       ],
       "classes": [],
       "signatures": [
         "label(user: r0): string",
-        "managerName(user: r0): string"
+        "managerName(user: r0): string",
       ],
       "calls": {
         "label": [
-          "scr_str_release"
+          "scr_str_release",
         ],
-        "managerName": []
+        "managerName": [],
       },
       "llvm": {
-        "label": "define internal ptr @sc_bf_label(ptr %p_sc_l_user_0) #0 { ; label\nentry:\n  %sc_l_user_0 = alloca ptr ; user\n  %s6 = alloca ptr\n  store ptr %p_sc_l_user_0, ptr %sc_l_user_0\n  %t0 = load ptr, ptr %sc_l_user_0\n  %t1 = getelementptr inbounds %sc_rs_r0, ptr %t0, i64 0, i32 3\n  %t2 = load ptr, ptr %t1\n  %t3 = icmp eq ptr %t2, @sc_nullable_absent\n  %t4 = select i1 %t3, ptr null, ptr %t2\n  %t5 = call ptr @sc_nretain_string(ptr %t4)\n  %t8 = icmp eq ptr %t5, null\n  %t7 = select i1 %t8, i32 1, i32 0\n  %t9 = icmp eq i32 %t7, 1\n  br i1 %t9, label %nul.u0, label %nul.v1\nnul.u0:\n  call void @scr_str_release(ptr %t5)\n  %t10 = load ptr, ptr %sc_l_user_0\n  %t11 = getelementptr inbounds %sc_rs_r0, ptr %t10, i64 0, i32 2\n  %t12 = load ptr, ptr %t11\n  %t13 = call ptr @sc_rc_retain_str(ptr %t12)\n  store ptr %t13, ptr %s6\n  br label %nul.j2\nnul.v1:\n  store ptr %t5, ptr %s6\n  br label %nul.j2\nnul.j2:\n  %t14 = load ptr, ptr %s6\n  ret ptr %t14\n}"
+        "label": "define internal ptr @sc_bf_label(ptr %p_sc_l_user_0) #0 { ; label\nentry:\n  %sc_l_user_0 = alloca ptr ; user\n  %s6 = alloca ptr\n  store ptr %p_sc_l_user_0, ptr %sc_l_user_0\n  %t0 = load ptr, ptr %sc_l_user_0\n  %t1 = getelementptr inbounds %sc_rs_r0, ptr %t0, i64 0, i32 3\n  %t2 = load ptr, ptr %t1\n  %t3 = icmp eq ptr %t2, @sc_nullable_absent\n  %t4 = select i1 %t3, ptr null, ptr %t2\n  %t5 = call ptr @sc_nretain_string(ptr %t4)\n  %t8 = icmp eq ptr %t5, null\n  %t7 = select i1 %t8, i32 1, i32 0\n  %t9 = icmp eq i32 %t7, 1\n  br i1 %t9, label %nul.u0, label %nul.v1\nnul.u0:\n  call void @scr_str_release(ptr %t5)\n  %t10 = load ptr, ptr %sc_l_user_0\n  %t11 = getelementptr inbounds %sc_rs_r0, ptr %t10, i64 0, i32 2\n  %t12 = load ptr, ptr %t11\n  %t13 = call ptr @sc_rc_retain_str(ptr %t12)\n  store ptr %t13, ptr %s6\n  br label %nul.j2\nnul.v1:\n  store ptr %t5, ptr %s6\n  br label %nul.j2\nnul.j2:\n  %t14 = load ptr, ptr %s6\n  ret ptr %t14\n}",
       },
       "same": true,
       "coverage": "scriptc coverage optional.ts\n\n  statements analyzed   13\n  compile statically    13  (100%)\n\n  fully static — all analyzed statements compile to native code.",
       "node": {
         "stdout": "50000000\n",
         "status": 0,
-        "ms": 111.3
+        "ms": 111.3,
       },
       "native": {
         "stdout": "50000000\n",
         "status": 0,
-        "ms": 170.3
-      }
+        "ms": 170.3,
+      },
     },
     "literals": {
       "file": "literals.ts",
@@ -137,40 +137,40 @@ export default {
       "records": [],
       "classes": [],
       "signatures": [
-        "apply(op: string, a: f64, b: f64): f64"
+        "apply(op: string, a: f64, b: f64): f64",
       ],
       "calls": {
         "apply": [
           "scr_str_release",
-          "scr_throw_error_msg_code"
-        ]
+          "scr_throw_error_msg_code",
+        ],
       },
       "llvm": {
-        "apply": "define internal double @sc_bf_apply.i32(ptr %p_sc_l_op_0, double %p_sc_l_a_0, i32 %p_sc_l_b_0.i32) #0 { ; apply\nentry:\n  %sc_l_op_0 = alloca ptr ; op\n  %sc_l_a_0 = alloca double ; a\n  %sc_l_b_0 = alloca i32 ; b\n  %p_sc_l_b_0 = sitofp i32 %p_sc_l_b_0.i32 to double\n  store ptr %p_sc_l_op_0, ptr %sc_l_op_0\n  store double %p_sc_l_a_0, ptr %sc_l_a_0\n  store i32 %p_sc_l_b_0.i32, ptr %sc_l_b_0\n  %t0 = load ptr, ptr %sc_l_op_0\n  %t1 = call ptr @sc_rc_retain_str(ptr %t0)\n  %t2 = getelementptr inbounds i64, ptr %t1, i32 1\n  %t3 = load i64, ptr %t2\n  switch i64 %t3, label %sw.e0 [ i64 3, label %sw.length4 ]\nsw.length4:\n  %t4 = getelementptr inbounds %ScrStr, ptr %t1, i32 1\n  %t5 = load i24, ptr %t4, align 1\n  switch i24 %t5, label %sw.e0 [ i24 6579297, label %sw.c1 i24 6452595, label %sw.c2 i24 7107949, label %sw.c3 ]\nsw.c1:\n  %t6 = load double, ptr %sc_l_a_0\n  %t7 = load i32, ptr %sc_l_b_0\n  %t8 = fadd double %t6, %p_sc_l_b_0\n  call void @scr_str_release(ptr %t1)\n  ret double %t8\nsw.c2:\n  %t9 = load double, ptr %sc_l_a_0\n  %t10 = load i32, ptr %sc_l_b_0\n  %t11 = fsub double %t9, %p_sc_l_b_0\n  call void @scr_str_release(ptr %t1)\n  ret double %t11\nsw.c3:\n  %t12 = load double, ptr %sc_l_a_0\n  %t13 = load i32, ptr %sc_l_b_0\n  %t14 = fmul double %t12, %p_sc_l_b_0\n  call void @scr_str_release(ptr %t1)\n  ret double %t14\nsw.e0:\n  call void @scr_str_release(ptr %t1)\n  call void @scr_throw_error_msg_code(i32 0, ptr @sc_cs_492252702126034, i64 123, ptr @sc_cs_4391986516593320)\n  ret double 0x0000000000000000\n}"
+        "apply": "define internal double @sc_bf_apply.i32(ptr %p_sc_l_op_0, double %p_sc_l_a_0, i32 %p_sc_l_b_0.i32) #0 { ; apply\nentry:\n  %sc_l_op_0 = alloca ptr ; op\n  %sc_l_a_0 = alloca double ; a\n  %sc_l_b_0 = alloca i32 ; b\n  %p_sc_l_b_0 = sitofp i32 %p_sc_l_b_0.i32 to double\n  store ptr %p_sc_l_op_0, ptr %sc_l_op_0\n  store double %p_sc_l_a_0, ptr %sc_l_a_0\n  store i32 %p_sc_l_b_0.i32, ptr %sc_l_b_0\n  %t0 = load ptr, ptr %sc_l_op_0\n  %t1 = call ptr @sc_rc_retain_str(ptr %t0)\n  %t2 = getelementptr inbounds i64, ptr %t1, i32 1\n  %t3 = load i64, ptr %t2\n  switch i64 %t3, label %sw.e0 [ i64 3, label %sw.length4 ]\nsw.length4:\n  %t4 = getelementptr inbounds %ScrStr, ptr %t1, i32 1\n  %t5 = load i24, ptr %t4, align 1\n  switch i24 %t5, label %sw.e0 [ i24 6579297, label %sw.c1 i24 6452595, label %sw.c2 i24 7107949, label %sw.c3 ]\nsw.c1:\n  %t6 = load double, ptr %sc_l_a_0\n  %t7 = load i32, ptr %sc_l_b_0\n  %t8 = fadd double %t6, %p_sc_l_b_0\n  call void @scr_str_release(ptr %t1)\n  ret double %t8\nsw.c2:\n  %t9 = load double, ptr %sc_l_a_0\n  %t10 = load i32, ptr %sc_l_b_0\n  %t11 = fsub double %t9, %p_sc_l_b_0\n  call void @scr_str_release(ptr %t1)\n  ret double %t11\nsw.c3:\n  %t12 = load double, ptr %sc_l_a_0\n  %t13 = load i32, ptr %sc_l_b_0\n  %t14 = fmul double %t12, %p_sc_l_b_0\n  call void @scr_str_release(ptr %t1)\n  ret double %t14\nsw.e0:\n  call void @scr_str_release(ptr %t1)\n  call void @scr_throw_error_msg_code(i32 0, ptr @sc_cs_492252702126034, i64 123, ptr @sc_cs_4391986516593320)\n  ret double 0x0000000000000000\n}",
       },
       "same": true,
       "coverage": "scriptc coverage literals.ts\n\n  statements analyzed   14\n  compile statically    14  (100%)\n\n  fully static — all analyzed statements compile to native code.",
       "node": {
         "stdout": "0\n",
         "status": 0,
-        "ms": 114.8
+        "ms": 114.8,
       },
       "native": {
         "stdout": "0\n",
         "status": 0,
-        "ms": 178.9
-      }
+        "ms": 178.9,
+      },
     },
     "any": {
       "file": "any.ts",
       "source": "function total(items: any[]): number {\n  let sum = 0;\n  for (const item of items) sum += item.price * item.quantity;\n  return sum;\n}\n\nconst items: any[] = [];\nfor (let i = 0; i < 1000; i++) items.push({ price: i % 10, quantity: 2 });\n\nconst start = performance.now();\nlet result = 0;\nfor (let round = 0; round < 10_000; round++) result += total(items);\nconsole.log(result);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
       "unions": [],
       "records": [
-        "r0 = { price: f64, quantity: f64 }"
+        "r0 = { price: f64, quantity: f64 }",
       ],
       "classes": [],
       "signatures": [
-        "total(items: dyn): f64"
+        "total(items: dyn): f64",
       ],
       "calls": {
         "total": [
@@ -199,8 +199,8 @@ export default {
           "scr_exc_clear",
           "scr_caught_retain",
           "scr_rethrow",
-          "scr_caught_release"
-        ]
+          "scr_caught_release",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -208,13 +208,13 @@ export default {
       "node": {
         "stdout": "90000000\n",
         "status": 0,
-        "ms": 60.4
+        "ms": 60.4,
       },
       "native": {
         "stdout": "90000000\n",
         "status": 0,
-        "ms": 1908.8
-      }
+        "ms": 1908.8,
+      },
     },
     "unknown": {
       "file": "unknown.ts",
@@ -223,7 +223,7 @@ export default {
       "records": [],
       "classes": [],
       "signatures": [
-        "size(value: dyn): f64"
+        "size(value: dyn): f64",
       ],
       "calls": {
         "size": [
@@ -232,8 +232,8 @@ export default {
           "str_utf16_len",
           "check f64",
           "scr_dyn_ref_is_array",
-          "%dyn.class.property.0"
-        ]
+          "%dyn.class.property.0",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -241,33 +241,33 @@ export default {
       "node": {
         "stdout": "1681690000\n",
         "status": 0,
-        "ms": 44.8
+        "ms": 44.8,
       },
       "native": {
         "stdout": "1681690000\n",
         "status": 0,
-        "ms": 287.6
-      }
+        "ms": 287.6,
+      },
     },
     "records": {
       "file": "records.ts",
       "source": "interface Point {\n  x: number;\n  y: number;\n}\n\nfunction distance(a: Point, b: Point): number {\n  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);\n}\n\nconst points: Point[] = [];\nfor (let i = 0; i < 1000; i++) points.push({ x: i % 17, y: i % 29 });\n\nconst start = performance.now();\nlet chars = 0;\nfor (let round = 0; round < 10_000; round++) for (let i = 1; i < points.length; i++) chars += distance(points[i - 1]!, points[i]!);\nconsole.log(chars.toFixed(2));\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
       "unions": [
-        "u0 = r0 | undefined"
+        "u0 = r0 | undefined",
       ],
       "records": [
-        "r0 = { x: f64, y: f64 }"
+        "r0 = { x: f64, y: f64 }",
       ],
       "classes": [],
       "signatures": [
-        "distance(a: u0, b: r0): f64"
+        "distance(a: u0, b: r0): f64",
       ],
       "calls": {
         "distance": [
           "scr_throw_node_coded",
           "pow",
-          "sqrt"
-        ]
+          "sqrt",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -275,13 +275,13 @@ export default {
       "node": {
         "stdout": "31443377.30\n",
         "status": 0,
-        "ms": 111.5
+        "ms": 111.5,
       },
       "native": {
         "stdout": "31443377.30\n",
         "status": 0,
-        "ms": 54
-      }
+        "ms": 54,
+      },
     },
     "classes": {
       "file": "classes.ts",
@@ -289,23 +289,23 @@ export default {
       "unions": [],
       "records": [],
       "classes": [
-        "class Vector { x: f64, y: f64 }"
+        "class Vector { x: f64, y: f64 }",
       ],
       "signatures": [
         "%Vector.add(this: Vector, other: Vector): Vector",
-        "%Vector.get:length(this: Vector): f64"
+        "%Vector.get:length(this: Vector): f64",
       ],
       "calls": {
         "%Vector.add": [
           "new Vector",
-          "%Vector.constructor"
+          "%Vector.constructor",
         ],
         "%Vector.get:length": [
           "scr_arr_new",
           "scr_arr_push_many",
           "scr_math_hypot_arr",
-          "scr_arr_release"
-        ]
+          "scr_arr_release",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -313,13 +313,13 @@ export default {
       "node": {
         "stdout": "5590169.94\n",
         "status": 0,
-        "ms": 97.2
+        "ms": 97.2,
       },
       "native": {
         "stdout": "5590169.94\n",
         "status": 0,
-        "ms": 36.5
-      }
+        "ms": 36.5,
+      },
     },
     "interfaces": {
       "file": "interfaces.ts",
@@ -328,11 +328,11 @@ export default {
       "records": [],
       "classes": [
         "class Circle { radius: f64, %dynProperties: dyn }",
-        "class Square { side: f64, %dynProperties: dyn }"
+        "class Square { side: f64, %dynProperties: dyn }",
       ],
       "signatures": [
         "%init.0(): void",
-        "%dyn.class.protocol.0(receiver: dyn, calleeName: string): f64"
+        "%dyn.class.protocol.0(receiver: dyn, calleeName: string): f64",
       ],
       "calls": {
         "%init.0": [
@@ -353,42 +353,42 @@ export default {
           "scr_num_to_fixed",
           "scr_str_release",
           "scr_console_log",
-          "scr_console_error_parts"
+          "scr_console_error_parts",
         ],
         "%dyn.class.protocol.0": [
           "%Square.area",
           "%Circle.area",
-          "%dyn.class.protocol.fallback.0"
-        ]
+          "%dyn.class.protocol.fallback.0",
+        ],
       },
       "llvm": {
-        "%dyn.class.protocol.0": "define internal double @sc_bf__x25_dyn_class_protocol_0(ptr %p_sc_l_p_0, ptr %p_sc_l_p_calleeName) inlinehint #0 { ; %dyn.class.protocol.0\nentry:\n  %sc_l_p_0 = alloca ptr ; receiver\n  %sc_l_p_calleeName = alloca ptr ; calleeName\n  %s1 = alloca i1\n  %s15 = alloca i1\n  %exc.cell = load ptr, ptr @scr_exc_active\n  store ptr %p_sc_l_p_0, ptr %sc_l_p_0\n  store ptr %p_sc_l_p_calleeName, ptr %sc_l_p_calleeName\n  %t0 = load ptr, ptr %sc_l_p_0\n  store i1 false, ptr %s1\n  %t2 = icmp ne ptr %t0, null\n  br i1 %t2, label %brand.inspect0, label %brand.done2\nbrand.inspect0:\n  %t3 = getelementptr inbounds i8, ptr %t0, i64 8 ; ->kind\n  %t4 = load i32, ptr %t3\n  %t5 = icmp eq i32 %t4, 12\n  br i1 %t5, label %brand.capsule1, label %brand.done2\nbrand.capsule1:\n  %t6 = getelementptr inbounds i8, ptr %t0, i64 40 ; ->v.typed_ref.type_key\n  %t7 = load ptr, ptr %t6\n  %t8 = icmp eq ptr %t7, @sc_cs_225904391454030\n  store i1 %t8, ptr %s1\n  br label %brand.done2\nbrand.done2:\n  %t9 = load i1, ptr %s1\n  br i1 %t9, label %if.t3, label %if.j4\nif.t3:\n  %t10 = load ptr, ptr %sc_l_p_0\n  %t11 = getelementptr inbounds i8, ptr %t10, i64 16 ; ->v.typed_ref.ptr\n  %t12 = load ptr, ptr %t11\n  %t13 = call double @sc_bf__x25_Square_area(ptr %t12)\n  ret double %t13\nif.j4:\n  %t14 = load ptr, ptr %sc_l_p_0\n  store i1 false, ptr %s15\n  %t16 = icmp ne ptr %t14, null\n  br i1 %t16, label %brand.inspect5, label %brand.done7\nbrand.inspect5:\n  %t17 = getelementptr inbounds i8, ptr %t14, i64 8 ; ->kind\n  %t18 = load i32, ptr %t17\n  %t19 = icmp eq i32 %t18, 12\n  br i1 %t19, label %brand.capsule6, label %brand.done7\nbrand.capsule6:\n  %t20 = getelementptr inbounds i8, ptr %t14, i64 40 ; ->v.typed_ref.type_key\n  %t21 = load ptr, ptr %t20\n  %t22 = icmp eq ptr %t21, @sc_cs_600194779950275\n  store i1 %t22, ptr %s15\n  br label %brand.done7\nbrand.done7:\n  %t23 = load i1, ptr %s15\n  br i1 %t23, label %if.t8, label %if.j9\nif.t8:\n  %t24 = load ptr, ptr %sc_l_p_0\n  %t25 = getelementptr inbounds i8, ptr %t24, i64 16 ; ->v.typed_ref.ptr\n  %t26 = load ptr, ptr %t25\n  %t27 = call double @sc_bf__x25_Circle_area(ptr %t26)\n  ret double %t27\nif.j9:\n  %t28 = load ptr, ptr %sc_l_p_0\n  %t29 = call ptr @sc_rc_retain_dyn(ptr %t28)\n  %t30 = load ptr, ptr %sc_l_p_calleeName\n  %t31 = call double @sc_bf__x25_dyn_class_protocol_fallback_0(ptr %t29, ptr %t30)\n  %t32 = load i32, ptr %exc.cell\n  %t33 = icmp ne i32 %t32, 0\n  %t34 = call i1 @llvm.expect.i1(i1 %t33, i1 false)\n  br i1 %t34, label %exc.u10, label %exc.k11\nexc.u10:\n  ret double %t31\nexc.k11:\n  ret double %t31\n}"
+        "%dyn.class.protocol.0": "define internal double @sc_bf__x25_dyn_class_protocol_0(ptr %p_sc_l_p_0, ptr %p_sc_l_p_calleeName) inlinehint #0 { ; %dyn.class.protocol.0\nentry:\n  %sc_l_p_0 = alloca ptr ; receiver\n  %sc_l_p_calleeName = alloca ptr ; calleeName\n  %s1 = alloca i1\n  %s15 = alloca i1\n  %exc.cell = load ptr, ptr @scr_exc_active\n  store ptr %p_sc_l_p_0, ptr %sc_l_p_0\n  store ptr %p_sc_l_p_calleeName, ptr %sc_l_p_calleeName\n  %t0 = load ptr, ptr %sc_l_p_0\n  store i1 false, ptr %s1\n  %t2 = icmp ne ptr %t0, null\n  br i1 %t2, label %brand.inspect0, label %brand.done2\nbrand.inspect0:\n  %t3 = getelementptr inbounds i8, ptr %t0, i64 8 ; ->kind\n  %t4 = load i32, ptr %t3\n  %t5 = icmp eq i32 %t4, 12\n  br i1 %t5, label %brand.capsule1, label %brand.done2\nbrand.capsule1:\n  %t6 = getelementptr inbounds i8, ptr %t0, i64 40 ; ->v.typed_ref.type_key\n  %t7 = load ptr, ptr %t6\n  %t8 = icmp eq ptr %t7, @sc_cs_225904391454030\n  store i1 %t8, ptr %s1\n  br label %brand.done2\nbrand.done2:\n  %t9 = load i1, ptr %s1\n  br i1 %t9, label %if.t3, label %if.j4\nif.t3:\n  %t10 = load ptr, ptr %sc_l_p_0\n  %t11 = getelementptr inbounds i8, ptr %t10, i64 16 ; ->v.typed_ref.ptr\n  %t12 = load ptr, ptr %t11\n  %t13 = call double @sc_bf__x25_Square_area(ptr %t12)\n  ret double %t13\nif.j4:\n  %t14 = load ptr, ptr %sc_l_p_0\n  store i1 false, ptr %s15\n  %t16 = icmp ne ptr %t14, null\n  br i1 %t16, label %brand.inspect5, label %brand.done7\nbrand.inspect5:\n  %t17 = getelementptr inbounds i8, ptr %t14, i64 8 ; ->kind\n  %t18 = load i32, ptr %t17\n  %t19 = icmp eq i32 %t18, 12\n  br i1 %t19, label %brand.capsule6, label %brand.done7\nbrand.capsule6:\n  %t20 = getelementptr inbounds i8, ptr %t14, i64 40 ; ->v.typed_ref.type_key\n  %t21 = load ptr, ptr %t20\n  %t22 = icmp eq ptr %t21, @sc_cs_600194779950275\n  store i1 %t22, ptr %s15\n  br label %brand.done7\nbrand.done7:\n  %t23 = load i1, ptr %s15\n  br i1 %t23, label %if.t8, label %if.j9\nif.t8:\n  %t24 = load ptr, ptr %sc_l_p_0\n  %t25 = getelementptr inbounds i8, ptr %t24, i64 16 ; ->v.typed_ref.ptr\n  %t26 = load ptr, ptr %t25\n  %t27 = call double @sc_bf__x25_Circle_area(ptr %t26)\n  ret double %t27\nif.j9:\n  %t28 = load ptr, ptr %sc_l_p_0\n  %t29 = call ptr @sc_rc_retain_dyn(ptr %t28)\n  %t30 = load ptr, ptr %sc_l_p_calleeName\n  %t31 = call double @sc_bf__x25_dyn_class_protocol_fallback_0(ptr %t29, ptr %t30)\n  %t32 = load i32, ptr %exc.cell\n  %t33 = icmp ne i32 %t32, 0\n  %t34 = call i1 @llvm.expect.i1(i1 %t33, i1 false)\n  br i1 %t34, label %exc.u10, label %exc.k11\nexc.u10:\n  ret double %t31\nexc.k11:\n  ret double %t31\n}",
       },
       "same": true,
       "coverage": "scriptc coverage interfaces.ts\n\n  statements analyzed   14\n  compile statically    14  (100%)\n\n  fully static — all analyzed statements compile to native code.",
       "node": {
         "stdout": "159057779.61\n",
         "status": 0,
-        "ms": 33.6
+        "ms": 33.6,
       },
       "native": {
         "stdout": "159057779.61\n",
         "status": 0,
-        "ms": 24.3
-      }
+        "ms": 24.3,
+      },
     },
     "dictionary": {
       "file": "dictionary.ts",
       "source": "function countWords(words: string[]): Record<string, number> {\n  const counts: Record<string, number> = {};\n  for (const word of words) counts[word] = (counts[word] ?? 0) + 1;\n  return counts;\n}\n\nconst words: string[] = [];\nfor (let i = 0; i < 1000; i++) words.push(`w${i % 50}`);\n\nconst start = performance.now();\nlet distinct = 0;\nfor (let round = 0; round < 10_000; round++) distinct += Object.keys(countWords(words)).length;\nconsole.log(distinct);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
       "unions": [
-        "u0 = f64 | undefined"
+        "u0 = f64 | undefined",
       ],
       "records": [
-        "r0 = {  }"
+        "r0 = {  }",
       ],
       "classes": [],
       "signatures": [
-        "countWords(words: string[]): r0"
+        "countWords(words: string[]): r0",
       ],
       "calls": {
         "countWords": [
@@ -398,8 +398,8 @@ export default {
           "scr_union_new_f64",
           "scr_union_release",
           "scr_map_set_str_f64",
-          "scr_str_release"
-        ]
+          "scr_str_release",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -407,32 +407,32 @@ export default {
       "node": {
         "stdout": "500000\n",
         "status": 0,
-        "ms": 169.7
+        "ms": 169.7,
       },
       "native": {
         "stdout": "500000\n",
         "status": 0,
-        "ms": 318
-      }
+        "ms": 318,
+      },
     },
     "map": {
       "file": "map.ts",
       "source": "function countWords(words: string[]): Map<string, number> {\n  const counts = new Map<string, number>();\n  for (const word of words) counts.set(word, (counts.get(word) ?? 0) + 1);\n  return counts;\n}\n\nconst words: string[] = [];\nfor (let i = 0; i < 1000; i++) words.push(`w${i % 50}`);\n\nconst start = performance.now();\nlet distinct = 0;\nfor (let round = 0; round < 10_000; round++) distinct += countWords(words).size;\nconsole.log(distinct);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
       "unions": [
-        "u0 = f64 | undefined"
+        "u0 = f64 | undefined",
       ],
       "records": [],
       "classes": [],
       "signatures": [
-        "countWords(words: string[]): Map<string, f64>"
+        "countWords(words: string[]): Map<string, f64>",
       ],
       "calls": {
         "countWords": [
           "scr_map_new",
           "scr_arr_borrow_ref",
           "map_entry_str",
-          "scr_map_set_str_f64"
-        ]
+          "scr_map_set_str_f64",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -440,26 +440,26 @@ export default {
       "node": {
         "stdout": "500000\n",
         "status": 0,
-        "ms": 360.3
+        "ms": 360.3,
       },
       "native": {
         "stdout": "500000\n",
         "status": 0,
-        "ms": 114
-      }
+        "ms": 114,
+      },
     },
     "keyof": {
       "file": "keyof.ts",
       "source": "interface Settings {\n  width: number;\n  height: number;\n  depth: number;\n}\n\nfunction bump(settings: Settings, key: keyof Settings): void {\n  settings[key] = settings[key] + 1;\n}\n\nconst keys: (keyof Settings)[] = [\"width\", \"height\", \"depth\"];\nconst settings: Settings = { width: 0, height: 0, depth: 0 };\n\nconst start = performance.now();\nfor (let i = 0; i < 10_000_000; i++) bump(settings, keys[i % 3]!);\nconsole.log(settings.width + settings.height + settings.depth);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
       "unions": [
-        "u0 = string | undefined"
+        "u0 = string | undefined",
       ],
       "records": [
-        "r0 = { depth: f64, height: f64, width: f64 }"
+        "r0 = { depth: f64, height: f64, width: f64 }",
       ],
       "classes": [],
       "signatures": [
-        "bump(settings: r0, key: u0): void"
+        "bump(settings: r0, key: u0): void",
       ],
       "calls": {
         "bump": [
@@ -470,8 +470,8 @@ export default {
           "streq_1018213785519006",
           "streq_3918723871058439",
           "bad_key",
-          "scr_record_key_miss"
-        ]
+          "scr_record_key_miss",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -479,26 +479,26 @@ export default {
       "node": {
         "stdout": "10000000\n",
         "status": 0,
-        "ms": 208.6
+        "ms": 208.6,
       },
       "native": {
         "stdout": "10000000\n",
         "status": 0,
-        "ms": 260.4
-      }
+        "ms": 260.4,
+      },
     },
     "expando": {
       "file": "expando.ts",
       "source": "interface Item {\n  name: string;\n}\n\nfunction tag(item: Item, index: number): void {\n  (item as unknown as Record<string, unknown>)[\"slot\" + (index % 4)] = index;\n}\n\nconst items: Item[] = [];\nfor (let i = 0; i < 1000; i++) items.push({ name: `item ${i}` });\n\nconst start = performance.now();\nfor (let round = 0; round < 1000; round++) for (let i = 0; i < items.length; i++) tag(items[i]!, i + round);\nconsole.log(Object.keys(items[0]!).join(\",\"), (items[0] as unknown as Record<string, unknown>)[\"slot0\"]);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
       "unions": [
-        "u0 = r0 | undefined"
+        "u0 = r0 | undefined",
       ],
       "records": [
-        "r0 = { name: string }"
+        "r0 = { name: string }",
       ],
       "classes": [],
       "signatures": [
-        "tag(item: r0, index: f64): void"
+        "tag(item: r0, index: f64): void",
       ],
       "calls": {
         "tag": [
@@ -508,8 +508,8 @@ export default {
           "to-dyn string",
           "scr_str_release",
           "to-dyn f64",
-          "%dyn.class.computed.0"
-        ]
+          "%dyn.class.computed.0",
+        ],
       },
       "llvm": {},
       "same": false,
@@ -517,34 +517,34 @@ export default {
       "node": {
         "stdout": "name,slot0,slot1,slot2,slot3 996\n",
         "status": 0,
-        "ms": 89.1
+        "ms": 89.1,
       },
       "native": {
         "stdout": "name undefined\n",
         "status": 0,
-        "ms": 669.6
-      }
+        "ms": 669.6,
+      },
     },
     "arrays": {
       "file": "arrays.ts",
       "source": "function sum(values: number[]): number {\n  let total = 0;\n  for (let i = 0; i < values.length; i++) total += values[i]!;\n  return total;\n}\n\nfunction sumMixed(values: (number | string)[]): number {\n  let total = 0;\n  for (const value of values) total += typeof value === \"number\" ? value : value.length;\n  return total;\n}\n\nconst numbers: number[] = [];\nconst mixed: (number | string)[] = [];\nfor (let i = 0; i < 1000; i++) {\n  numbers.push(i);\n  mixed.push(i % 2 ? i : \"ab\");\n}\n\nconst start = performance.now();\nlet result = 0;\nfor (let round = 0; round < 10_000; round++) result += sum(numbers) + sumMixed(mixed);\nconsole.log(result);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
       "unions": [
-        "u0 = f64 | string"
+        "u0 = f64 | string",
       ],
       "records": [],
       "classes": [],
       "signatures": [
         "sum(values: f64[]): f64",
-        "sumMixed(values: u0[]): f64"
+        "sumMixed(values: u0[]): f64",
       ],
       "calls": {
         "sum": [
-          "scr_arr_get_f64"
+          "scr_arr_get_f64",
         ],
         "sumMixed": [
           "scr_arr_borrow_ref",
-          "str_utf16_len"
-        ]
+          "str_utf16_len",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -552,31 +552,31 @@ export default {
       "node": {
         "stdout": "7505000000\n",
         "status": 0,
-        "ms": 97.7
+        "ms": 97.7,
       },
       "native": {
         "stdout": "7505000000\n",
         "status": 0,
-        "ms": 62
-      }
+        "ms": 62,
+      },
     },
     "closures": {
       "file": "closures.ts",
       "source": "function makeCounter(step: number): () => number {\n  let count = 0;\n  return () => (count += step);\n}\n\nconst numbers: number[] = [];\nfor (let i = 0; i < 1000; i++) numbers.push(i);\n\nconst start = performance.now();\nconst next = makeCounter(2);\nlet result = 0;\nfor (let round = 0; round < 10_000; round++) {\n  result += numbers\n    .filter((n) => n % 3 === 0)\n    .map((n) => n * 2)\n    .reduce((a, b) => a + b, 0);\n  result += next();\n}\nconsole.log(result);\nconsole.error(`${(performance.now() - start).toFixed(1)} ms`);\n",
       "unions": [
-        "u0 = f64 | undefined"
+        "u0 = f64 | undefined",
       ],
       "records": [],
       "classes": [],
       "signatures": [
         "makeCounter(step: f64): () => f64",
-        "%init.0(): void"
+        "%init.0(): void",
       ],
       "calls": {
         "makeCounter": [
           "scr_box_new",
           "scr_closure_new",
-          "scr_box_release"
+          "scr_box_release",
         ],
         "%init.0": [
           "scr_arr_new_small",
@@ -594,8 +594,8 @@ export default {
           "scr_console_log",
           "scr_num_to_fixed",
           "scr_str_release",
-          "scr_console_error_parts"
-        ]
+          "scr_console_error_parts",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -603,13 +603,13 @@ export default {
       "node": {
         "stdout": "3436670000\n",
         "status": 0,
-        "ms": 81.5
+        "ms": 81.5,
       },
       "native": {
         "stdout": "3436670000\n",
         "status": 0,
-        "ms": 24
-      }
+        "ms": 24,
+      },
     },
     "strings": {
       "file": "strings.ts",
@@ -618,15 +618,15 @@ export default {
       "records": [],
       "classes": [],
       "signatures": [
-        "render(names: string[]): string"
+        "render(names: string[]): string",
       ],
       "calls": {
         "render": [
           "scr_arr_borrow_ref",
           "scr_str_to_upper",
           "scr_str_concat_mixed_move",
-          "scr_str_release"
-        ]
+          "scr_str_release",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -634,13 +634,13 @@ export default {
       "node": {
         "stdout": "14900000\n",
         "status": 0,
-        "ms": 51.6
+        "ms": 51.6,
       },
       "native": {
         "stdout": "14900000\n",
         "status": 0,
-        "ms": 32.4
-      }
+        "ms": 32.4,
+      },
     },
     "json": {
       "file": "json.ts",
@@ -648,17 +648,17 @@ export default {
       "unions": [],
       "records": [
         "r0 = { qty: f64, sku: string }",
-        "r1 = { id: f64, items: r0[] }"
+        "r1 = { id: f64, items: r0[] }",
       ],
       "classes": [],
       "signatures": [
-        "quantity(json: string): f64"
+        "quantity(json: string): f64",
       ],
       "calls": {
         "quantity": [
           "JSON.parse as record:r1",
-          "scr_arr_borrow_ref"
-        ]
+          "scr_arr_borrow_ref",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -666,13 +666,13 @@ export default {
       "node": {
         "stdout": "500000 {\"id\":7,\"items\":[{\"sku\":\"a\",\"qty\":2},{\"sku\":\"b\",\"qty\":3}]}\n",
         "status": 0,
-        "ms": 72.4
+        "ms": 72.4,
       },
       "native": {
         "stdout": "500000 {\"id\":7,\"items\":[{\"sku\":\"a\",\"qty\":2},{\"sku\":\"b\",\"qty\":3}]}\n",
         "status": 0,
-        "ms": 18.7
-      }
+        "ms": 18.7,
+      },
     },
     "exceptions": {
       "file": "exceptions.ts",
@@ -681,7 +681,7 @@ export default {
       "records": [],
       "classes": [],
       "signatures": [
-        "parsePositive(text: string): f64"
+        "parsePositive(text: string): f64",
       ],
       "calls": {
         "parsePositive": [
@@ -693,8 +693,8 @@ export default {
           "scr_dyn_retain_v",
           "scr_error_new_options",
           "scr_error_release",
-          "scr_throw_obj"
-        ]
+          "scr_throw_obj",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -702,13 +702,13 @@ export default {
       "node": {
         "stdout": "450000000 100000\n",
         "status": 0,
-        "ms": 313.1
+        "ms": 313.1,
       },
       "native": {
         "stdout": "450000000 100000\n",
         "status": 0,
-        "ms": 24.9
-      }
+        "ms": 24.9,
+      },
     },
     "async": {
       "file": "async.ts",
@@ -718,7 +718,7 @@ export default {
       "classes": [],
       "signatures": [
         "load(id: f64): f64",
-        "main(): void"
+        "main(): void",
       ],
       "calls": {
         "await load": [
@@ -729,19 +729,19 @@ export default {
           "scr_promise_new",
           "scr_promise_reject_pending",
           "scr_await_f64",
-          "scr_promise_release"
+          "scr_promise_release",
         ],
         "fiberless load": [
           "scr_async_inline_enter",
           "load",
           "scr_async_inline_leave",
           "scr_promise_fulfill_f64",
-          "scr_promise_reject_pending"
+          "scr_promise_reject_pending",
         ],
         "spawn main": [
           "scr_rt_calloc",
           "oom",
-          "scr_async_spawn"
+          "scr_async_spawn",
         ],
         "load": [],
         "main": [
@@ -761,8 +761,8 @@ export default {
           "scr_console_log",
           "scr_str_release",
           "scr_num_to_fixed",
-          "scr_console_error_parts"
-        ]
+          "scr_console_error_parts",
+        ],
       },
       "llvm": {},
       "same": true,
@@ -770,13 +770,13 @@ export default {
       "node": {
         "stdout": "9999900000 2,4,6\n",
         "status": 0,
-        "ms": 11.4
+        "ms": 11.4,
       },
       "native": {
         "stdout": "9999900000 2,4,6\n",
         "status": 0,
-        "ms": 1
-      }
-    }
-  }
+        "ms": 1,
+      },
+    },
+  },
 };

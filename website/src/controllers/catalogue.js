@@ -1,9 +1,10 @@
-import $APP from "bootstrapp";
-import { defineController } from "@lightstart/light/controller";
+import { defineController, registerAdapter } from "@lightstart/light/controller";
+import { localStorage } from "@lightstart/light/controller/storage";
+import { navigate } from "@lightstart/app/web";
 import presets, { loadPreset } from "@lightstart/light/theme/presets.js";
-import { componentPath } from "../lib/paths.js";
+import { componentPath } from "../../lib/paths.js";
 
-/** @import { SkinOption } from "../types.ts" */
+/** @import { SkinOption } from "../../types.ts" */
 /** @import { SearchDoc, TocItem } from "@lightstart/components/types.ts" */
 
 const HOST_THEME = "";
@@ -18,6 +19,8 @@ const token = (theme, group, key) => {
   const value = block?.[key];
   return typeof value === "string" ? value : "";
 };
+
+registerAdapter("local", localStorage);
 
 export default defineController({
   name: "catalogue",
@@ -60,12 +63,12 @@ export default defineController({
    * @param {string} name
    */
   open(category, name) {
-    $APP.Router.go(componentPath(category, name));
+    navigate(componentPath(category, name));
   },
 
   /** @param {SearchDoc} doc */
   select(doc) {
     if (doc.kind === "skin") return this.chooseSkin(String(doc.skin));
-    if (doc.href) $APP.Router.go(doc.href);
+    if (doc.href) navigate(doc.href);
   },
 });

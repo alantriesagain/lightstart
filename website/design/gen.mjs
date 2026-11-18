@@ -1,7 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 const OUT = new URL("./frames/", import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
-const MANIFEST = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")).bootstrapp.components.lc;
+const TAGS = JSON.parse(readFileSync(new URL("../../packages/components/tags.json", import.meta.url), "utf8"));
+const MANIFEST = Object.fromEntries(Object.entries(TAGS).map(([tag, entry]) => [tag.slice("lc-".length), entry.module]));
 const COMPONENTS = Object.entries(MANIFEST).reduce((acc, [name, file]) => { (acc[file.split("/").at(-2)] ??= []).push(name); return acc; }, {});
 const TOTAL = Object.keys(MANIFEST).length;
 const humanize = (name) => name.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");

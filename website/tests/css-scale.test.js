@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 
 const ALLOWED = new Set(["0px", "1px", "2px"]);
-const root = new URL("../views/", import.meta.url).pathname;
+const root = new URL("../src/views/", import.meta.url).pathname;
 
 /** @param {string} dir @returns {string[]} */
 const cssFiles = (dir) =>

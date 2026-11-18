@@ -7,15 +7,15 @@
  * code on its own keeps its lines.
  */
 import { html, nothing } from "@lightstart/light/html";
-import $APP from "bootstrapp";
 import T from "@lightstart/light/types";
-import { defineComponent } from "@lightstart/light";
+import View, { defineComponent } from "@lightstart/light";
+import catalogue from "../controllers/catalogue.js";
 import navigation from "@lightstart/light/navigation";
-import { prose } from "../lib/native/prose-html.js";
-import { nativeNeighbours } from "../lib/native/pages.js";
-import { TOPICS } from "../lib/native/topics.js";
+import { prose } from "../../lib/native/prose-html.js";
+import { nativeNeighbours } from "../../lib/native/pages.js";
+import { TOPICS } from "../../lib/native/topics.js";
 
-/** @import { Block, CodeBlock } from "../lib/native/topics.js" */
+/** @import { Block, CodeBlock } from "../../lib/native/topics.js" */
 
 /**
  * @param {CodeBlock} block
@@ -63,7 +63,7 @@ const blockOf = (block) => {
   }
 };
 
-export default defineComponent({
+const view = defineComponent({
   tag: "docs-native-topic",
   style: true,
   props: {
@@ -87,13 +87,13 @@ export default defineComponent({
   },
 
   disconnected() {
-    $APP.catalogue.toc = [];
+    catalogue.toc = [];
   },
 
   _outline() {
     const page = TOPICS[this.topic];
     const toc = page ? page.sections.map((section) => ({ id: section.id, label: section.title })) : [];
-    if (JSON.stringify(toc) !== JSON.stringify($APP.catalogue.toc)) $APP.catalogue.toc = toc;
+    if (JSON.stringify(toc) !== JSON.stringify(catalogue.toc)) catalogue.toc = toc;
   },
 
   render() {
@@ -124,3 +124,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

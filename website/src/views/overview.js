@@ -1,9 +1,10 @@
 import { html } from "@lightstart/light/html";
-import $APP from "bootstrapp";
 import T from "@lightstart/light/types";
-import { defineComponent } from "@lightstart/light";
+import View, { defineComponent } from "@lightstart/light";
+import catalogue from "../controllers/catalogue.js";
+import "@lightstart/showcase/views/catalogue.js";
 
-export default defineComponent({
+const view = defineComponent({
   tag: "docs-overview",
   props: {
     search: T.string({ sync: "catalogue", defaultValue: "" }),
@@ -14,8 +15,12 @@ export default defineComponent({
       <showcase-catalogue
         .search=${this.search}
         skin=${this.skin}
-        @open=${(/** @type {CustomEvent} */ e) => $APP.catalogue.open(e.detail.category, e.detail.name)}
+        @open=${(/** @type {CustomEvent} */ e) => catalogue.open(e.detail.category, e.detail.name)}
       ></showcase-catalogue>
     `;
   },
 });
+
+View.define(view);
+
+export default view;

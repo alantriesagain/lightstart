@@ -5,7 +5,6 @@ import { NATIVE_PAGES } from "./pages.js";
 import { runsOf } from "./prose.js";
 import { TOPICS } from "./topics.js";
 
-/** The sections of the pages with views of their own: the introduction and the comparison. */
 const VIEW_SECTIONS = { "": ["native", "background"], comparison: ["comparison", "differences"] };
 
 /** Every string a native page draws as words. @param {import("./topics.js").TopicPage} page */

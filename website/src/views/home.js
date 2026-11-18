@@ -5,19 +5,17 @@
  * the total, the form validates, the second sign-in card wears a skin.
  */
 import { html, key, nothing } from "@lightstart/light/html";
-import $APP from "bootstrapp";
 import T from "@lightstart/light/types";
-import { defineComponent } from "@lightstart/light";
+import View, { defineComponent } from "@lightstart/light";
 import { env } from "@lightstart/light/env";
 import { matchesBreakpoint } from "@lightstart/components/utils/breakpoints.js";
-import { browsableCategories } from "@bootstrapp/showcase/lib/categories.js";
-import { applySkin, clearSkin } from "@bootstrapp/showcase/lib/skins.js";
-import { BUILT_WITH_LIGHT_PATH, COMPONENTS_PATH, GITHUB_URL, NPM_URL, README_URL } from "../lib/paths.js";
-import { PROJECTS } from "../lib/built-with-light.js";
-import { FACTS, FORM_FIELDS, LIST_ITEMS, PAIRS, PRICE, PRINCIPLES, SNIPPETS, TAGLINE, TERMINAL, THEME_SKIN } from "../lib/home-content.js";
-import { defineDemos } from "../lib/home-demos.js";
+import { applySkin, browsableCategories, clearSkin, componentTags } from "@lightstart/showcase";
+import { BUILT_WITH_LIGHT_PATH, COMPONENTS_PATH, GITHUB_URL, NPM_URL, README_URL } from "../../lib/paths.js";
+import { PROJECTS } from "../../lib/built-with-light.js";
+import { FACTS, FORM_FIELDS, LIST_ITEMS, PAIRS, PRICE, PRINCIPLES, SNIPPETS, TAGLINE, TERMINAL, THEME_SKIN } from "../../lib/home-content.js";
+import { defineDemos } from "../../lib/home-demos.js";
 
-/** @import { Prop } from "../types.ts" */
+/** @import { Prop } from "../../types.ts" */
 
 const TABS = [{ value: "code", label: "Code" }, { value: "result", label: "Result" }];
 const INSTALL = "npm i @lightstart/light";
@@ -28,7 +26,7 @@ const FOOTER = [
 
 const envLabel = () => `${env.width}×${env.height} · ${env.breakpoint} · ${env.os} · ${env.dark ? "dark" : "light"}`;
 
-export default defineComponent({
+const view = defineComponent({
   tag: "docs-home",
   style: true,
   props: {
@@ -158,7 +156,7 @@ export default defineComponent({
   },
 
   render() {
-    const total = browsableCategories($APP.manifest).reduce((sum, category) => sum + category.components.length, 0);
+    const total = browsableCategories(componentTags()).reduce((sum, category) => sum + category.components.length, 0);
     return html`
       <section class="home-hero">
         <h1 class="home-title">Light<span class="home-tagline">${TAGLINE}</span></h1>
@@ -218,3 +216,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

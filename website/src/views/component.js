@@ -3,28 +3,29 @@
  * breadcrumbs and its pager, with the outline handed to the shell's aside.
  */
 import { html } from "@lightstart/light/html";
-import $APP from "bootstrapp";
 import T from "@lightstart/light/types";
-import { defineComponent } from "@lightstart/light";
-import { browsableCategories, categoryById, humanize } from "@bootstrapp/showcase/lib/categories.js";
-import { categoryPath, componentPath, COMPONENTS_PATH, neighbours } from "../lib/paths.js";
+import View, { defineComponent } from "@lightstart/light";
+import catalogue from "../controllers/catalogue.js";
+import { browsableCategories, categoryById, componentTags, humanize } from "@lightstart/showcase";
+import "@lightstart/showcase/views/component-doc.js";
+import { categoryPath, componentPath, COMPONENTS_PATH, neighbours } from "../../lib/paths.js";
 
-/** @import { ComponentRef } from "../lib/paths.js" */
+/** @import { ComponentRef } from "../../lib/paths.js" */
 /** @import { TocItem } from "@lightstart/components/types.ts" */
 
 /** @param {ComponentRef | null} ref */
 const pagerLink = (ref) => (ref ? { label: humanize(ref.name), href: componentPath(ref.category, ref.name), hint: humanize(ref.category) } : null);
 
-export default defineComponent({
+const view = defineComponent({
   tag: "docs-component",
   props: {
+    skin: T.string({ sync: "catalogue", defaultValue: "" }),
     category: T.string(),
     name: T.string(),
-    skin: T.string({ sync: "catalogue", defaultValue: "" }),
   },
 
   disconnected() {
-    $APP.catalogue.toc = [];
+    catalogue.toc = [];
   },
 
   /** @param {CustomEvent<{ examples: string[] }>} e */
@@ -36,12 +37,12 @@ export default defineComponent({
       { id: "playground", label: "Playground" },
       { id: "api", label: "API" },
     ];
-    $APP.catalogue.toc = items;
+    catalogue.toc = items;
   },
 
   render() {
     const category = categoryById(this.category);
-    const { previous, next } = neighbours(browsableCategories($APP.manifest), this.category, this.name);
+    const { previous, next } = neighbours(browsableCategories(componentTags()), this.category, this.name);
     return html`
       <div class="docs-page">
         <lc-breadcrumbs
@@ -56,7 +57,7 @@ export default defineComponent({
           category=${this.category}
           name=${this.name}
           skin=${this.skin}
-          @open=${(/** @type {CustomEvent} */ e) => $APP.catalogue.open(e.detail.category, e.detail.name)}
+          @open=${(/** @type {CustomEvent} */ e) => catalogue.open(e.detail.category, e.detail.name)}
           @loaded=${this._loaded}
         ></showcase-component-doc>
         <lc-pagination class="docs-pager" variant="pager" .previousLink=${pagerLink(previous)} .nextLink=${pagerLink(next)}></lc-pagination>
@@ -64,3 +65,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

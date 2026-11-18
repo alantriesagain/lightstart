@@ -3,17 +3,17 @@
  * link for the next one. The projects are `lib/built-with-light.js`.
  */
 import { html } from "@lightstart/light/html";
-import $APP from "bootstrapp";
-import { defineComponent } from "@lightstart/light";
-import { PROJECTS, SUBMIT_PROJECT_URL } from "../lib/built-with-light.js";
-import { COMPONENTS_PATH, GITHUB_URL } from "../lib/paths.js";
+import View, { defineComponent } from "@lightstart/light";
+import catalogue from "../controllers/catalogue.js";
+import { PROJECTS, SUBMIT_PROJECT_URL } from "../../lib/built-with-light.js";
+import { COMPONENTS_PATH, GITHUB_URL } from "../../lib/paths.js";
 
-export default defineComponent({
+const view = defineComponent({
   tag: "docs-built-with-light",
   style: true,
 
   connected() {
-    $APP.catalogue.toc = [];
+    catalogue.toc = [];
   },
 
   render() {
@@ -48,3 +48,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

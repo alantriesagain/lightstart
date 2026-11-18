@@ -1,116 +1,135 @@
 import assert from "node:assert/strict";
 import { describe, it, before, after } from "node:test";
-import { bootApp, disposeApp, until } from "@bootstrapp/test/app.js";
+import { openPage } from "@lightstart/app/web/test";
+import { navigate } from "@lightstart/app/web";
+import manifest from "../.light/app.ts";
+import catalogue from "../src/controllers/catalogue.js";
+import { until, watchErrors } from "./light-page.js";
 
 describe("the native introduction", () => {
-  let app;
+  let page;
+  let raised;
 
   before(async () => {
-    app = await bootApp("/native");
-    await until(() => app.doc.querySelectorAll("docs-native .native-index li").length > 0);
+    raised = watchErrors();
+    page = await openPage(manifest, { path: "/native" });
+    await until(() => document.querySelectorAll("docs-native .native-index li").length > 0);
   });
 
-  after(() => disposeApp(app));
+  after(async () => {
+    await page.stop();
+    raised.stop();
+  });
 
   it("lists the section's pages in their two groups, both in the nav column", async () => {
-    assert.deepEqual([...app.doc.querySelectorAll("docs-native .native-group h2")].map((node) => node.textContent), ["Native", "Background"]);
-    const links = [...app.doc.querySelectorAll("docs-native .native-index a")].map((node) => node.textContent);
+    assert.deepEqual([...document.querySelectorAll("docs-native .native-group h2")].map((node) => node.textContent), ["Native", "Background"]);
+    const links = [...document.querySelectorAll("docs-native .native-index a")].map((node) => node.textContent);
     assert.ok(links.includes("How it works") && links.includes("How to use") && links.includes("Concepts"));
-    const nav = () => app.doc.querySelector("template-shell lc-nav-tree")?.textContent ?? "";
+    const nav = () => document.querySelector("template-shell lc-nav-tree")?.textContent ?? "";
     await until(() => nav().includes("Background"));
     assert.ok(nav().includes("Writing fast code"), nav());
-    assert.deepEqual(app.errors, []);
+    assert.deepEqual(raised.errors, []);
   });
 });
 
 describe("the comparison page", () => {
-  let app;
+  let page;
+  let raised;
 
   before(async () => {
-    app = await bootApp("/native/comparison");
-    await until(() => app.doc.querySelectorAll("docs-native-comparison lc-flow .flow-step").length > 0);
+    raised = watchErrors();
+    page = await openPage(manifest, { path: "/native/comparison" });
+    await until(() => document.querySelectorAll("docs-native-comparison lc-flow .flow-step").length > 0);
   });
 
-  after(() => disposeApp(app));
+  after(async () => {
+    await page.stop();
+    raised.stop();
+  });
 
   /** @param {string} label */
-  const step = (label) => [...app.doc.querySelectorAll("docs-native-comparison .flow-step")].find((node) => node.querySelector(".flow-step-label")?.textContent === label);
-  const panelTitle = () => app.doc.querySelector("docs-native-comparison .native-step h3")?.textContent;
+  const step = (label) => [...document.querySelectorAll("docs-native-comparison .flow-step")].find((node) => node.querySelector(".flow-step-label")?.textContent === label);
+  const panelTitle = () => document.querySelector("docs-native-comparison .native-step h3")?.textContent;
 
   it("draws the three roads under four phases, and opens on the source", () => {
-    assert.deepEqual([...app.doc.querySelectorAll("docs-native-comparison .flow-lane-label b")].map((node) => node.textContent), ["Browser", "Node", "Native (scriptc)"]);
-    assert.deepEqual([...app.doc.querySelectorAll("docs-native-comparison .flow-phase")].map((node) => node.textContent), ["Source", "Types", "Build", "Run"]);
+    assert.deepEqual([...document.querySelectorAll("docs-native-comparison .flow-lane-label b")].map((node) => node.textContent), ["Browser", "Node", "Native (scriptc)"]);
+    assert.deepEqual([...document.querySelectorAll("docs-native-comparison .flow-phase")].map((node) => node.textContent), ["Source", "Types", "Build", "Run"]);
     assert.equal(panelTitle(), "counter.ts");
-    assert.match(app.doc.querySelector("docs-native-comparison .native-step lc-code-block")?.code ?? "", /class Counter/);
+    assert.match(document.querySelector("docs-native-comparison .native-step lc-code-block")?.code ?? "", /class Counter/);
   });
 
   it("shows the step a reader picks with its captured output", async () => {
     step("Machine code").click();
     await until(() => panelTitle() === "Native (scriptc): machine code");
-    const blocks = [...app.doc.querySelectorAll("docs-native-comparison .native-step lc-code-block")];
+    const blocks = [...document.querySelectorAll("docs-native-comparison .native-step lc-code-block")];
     assert.equal(blocks.length, 1);
     assert.match(blocks[0].code, /addsd/);
     step("Bytecode").click();
     await until(() => panelTitle() === "V8: bytecode");
-    assert.match(app.doc.querySelector("docs-native-comparison .native-step lc-code-block").code, /GetNamedProperty/);
+    assert.match(document.querySelector("docs-native-comparison .native-step lc-code-block").code, /GetNamedProperty/);
   });
 
   it("drops the marked lines when the next step marks none", async () => {
     step("Type checker").click();
-    await until(() => app.doc.querySelectorAll("docs-native-comparison .native-step .code-block-line[data-marked]").length === 2);
+    await until(() => document.querySelectorAll("docs-native-comparison .native-step .code-block-line[data-marked]").length === 2);
     step("Typed IR").click();
     await until(() => panelTitle() === "Native (scriptc): typed IR");
-    assert.equal(app.doc.querySelectorAll("docs-native-comparison .native-step .code-block-line[data-marked]").length, 0);
-    assert.deepEqual(app.errors, []);
+    assert.equal(document.querySelectorAll("docs-native-comparison .native-step .code-block-line[data-marked]").length, 0);
+    assert.deepEqual(raised.errors, []);
   });
 
   it("lists the native pages in the nav column and the outline in the aside", async () => {
-    await until(() => app.doc.querySelector("template-shell lc-nav-tree") !== null);
-    await until(() => (app.doc.querySelector("template-shell lc-nav-tree")?.textContent ?? "").includes("Comparison"));
-    await until(() => app.$APP.catalogue.toc.length === 2);
-    assert.deepEqual(app.$APP.catalogue.toc.map((item) => item.id), ["comparison", "differences"]);
-    assert.deepEqual(app.errors, []);
+    await until(() => document.querySelector("template-shell lc-nav-tree") !== null);
+    await until(() => (document.querySelector("template-shell lc-nav-tree")?.textContent ?? "").includes("Comparison"));
+    await until(() => catalogue.toc.length === 2);
+    assert.deepEqual(catalogue.toc.map((item) => item.id), ["comparison", "differences"]);
+    assert.deepEqual(raised.errors, []);
   });
 });
 
 describe("the native topic pages", () => {
-  let app;
+  let page;
+  let raised;
 
   before(async () => {
-    app = await bootApp("/native");
-    await until(() => app.doc.querySelectorAll("docs-native .native-index li").length > 0);
+    raised = watchErrors();
+    page = await openPage(manifest, { path: "/native" });
+    await until(() => document.querySelectorAll("docs-native .native-index li").length > 0);
   });
 
-  after(() => disposeApp(app));
+  after(async () => {
+    await page.stop();
+    raised.stop();
+  });
 
   const topics = ["how-it-works", "how-to-use", "issues", "concepts", "javascript", "scriptc", "types", "performance", "tsc-ts"];
 
   it("draws every page with its sections, its outline and a pager", async () => {
     for (const topic of topics) {
-      app.$APP.Router.go(`/native/${topic}`);
-      await until(() => app.doc.querySelector("docs-native-topic")?.getAttribute("topic") === topic || app.doc.querySelector("docs-native-topic")?.topic === topic);
-      await until(() => app.doc.querySelectorAll("docs-native-topic .topic-section").length > 0);
-      const sections = [...app.doc.querySelectorAll("docs-native-topic .topic-section")];
-      await until(() => app.$APP.catalogue.toc.length === sections.length);
-      assert.deepEqual(app.$APP.catalogue.toc.map((item) => item.id), sections.map((section) => section.id), `${topic}: the outline lists the sections`);
-      assert.ok(app.doc.querySelector("docs-native-topic lc-pagination"), `${topic}: a pager`);
-      assert.ok(app.doc.querySelectorAll("docs-native-topic lc-code-block, docs-native-topic lc-table").length > 0, `${topic}: captured output or a table`);
+      navigate(`/native/${topic}`);
+      await until(() => document.querySelector("docs-native-topic")?.getAttribute("topic") === topic || document.querySelector("docs-native-topic")?.topic === topic);
+      await until(() => document.querySelectorAll("docs-native-topic .topic-section").length > 0);
+      const sections = [...document.querySelectorAll("docs-native-topic .topic-section")];
+      await until(() => catalogue.toc.length === sections.length);
+      assert.deepEqual(catalogue.toc.map((item) => item.id), sections.map((section) => section.id), `${topic}: the outline lists the sections`);
+      assert.ok(document.querySelector("docs-native-topic lc-pagination"), `${topic}: a pager`);
+      assert.ok(document.querySelectorAll("docs-native-topic lc-code-block, docs-native-topic lc-table").length > 0, `${topic}: captured output or a table`);
     }
-    assert.deepEqual(app.errors, []);
+    assert.deepEqual(raised.errors, []);
   });
 
   it("opens a step's deeper page at the section it names, with one page lit in the nav", async () => {
-    app.$APP.Router.go("/native/comparison");
-    await until(() => app.doc.querySelectorAll("docs-native-comparison lc-flow .flow-step").length > 0);
-    const asm = [...app.doc.querySelectorAll("docs-native-comparison .flow-step")].find((node) => node.querySelector(".flow-step-label")?.textContent === "Machine code");
+    navigate("/native/comparison");
+    await until(() => document.querySelectorAll("docs-native-comparison lc-flow .flow-step").length > 0);
+    const asm = [...document.querySelectorAll("docs-native-comparison .flow-step")].find((node) => node.querySelector(".flow-step-label")?.textContent === "Machine code");
     asm.click();
-    await until(() => app.doc.querySelector("docs-native-comparison .native-more") !== null);
-    app.doc.querySelector("docs-native-comparison .native-more a, docs-native-comparison .native-more").click();
-    await until(() => app.doc.querySelector("docs-native-topic #machine-code") !== null);
-    assert.equal(app.win.location.pathname, "/native/scriptc");
-    assert.equal(app.win.location.hash, "#machine-code");
-    await until(() => app.doc.querySelectorAll("template-shell lc-nav-tree [active]").length === 1);
-    assert.match(app.doc.querySelector("template-shell lc-nav-tree [active]").textContent, /How scriptc works/);
-    assert.deepEqual(app.errors, []);
+    await until(() => document.querySelector("docs-native-comparison .native-more") !== null);
+    document.querySelector("docs-native-comparison .native-more a, docs-native-comparison .native-more").click();
+    await until(() => document.querySelector("docs-native-topic #machine-code") !== null);
+    assert.equal(page.run.router.path, "/native/scriptc");
+    assert.equal(page.run.router.adapter.getLocation().hash, "#machine-code");
+    await until(() => document.querySelectorAll("template-shell lc-nav-tree [active]").length === 1);
+    assert.match(document.querySelector("template-shell lc-nav-tree [active]").textContent, /How scriptc works/);
+    assert.deepEqual(raised.errors, []);
   });
 });

@@ -3,12 +3,12 @@
  * and author. The whole card links to the project and opens in a new tab.
  */
 import { html, nothing } from "@lightstart/light/html";
-import { defineComponent } from "@lightstart/light";
+import View, { defineComponent } from "@lightstart/light";
 
-/** @import { Prop } from "../types.ts" */
-/** @import { Project } from "../lib/built-with-light.js" */
+/** @import { Prop } from "../../types.ts" */
+/** @import { Project } from "../../lib/built-with-light.js" */
 
-export default defineComponent({
+const view = defineComponent({
   tag: "docs-project-card",
   style: true,
   props: {
@@ -52,3 +52,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

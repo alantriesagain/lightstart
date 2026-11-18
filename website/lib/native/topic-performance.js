@@ -10,7 +10,6 @@ const { tools, pairs, deleteProbe, stacklessThrow } = captured;
 
 /** @typedef {(typeof pairs)[keyof typeof pairs]} Pair */
 
-/** A change counts as faster or slower at 1.25 times or more either way. */
 const THRESHOLD = 1.25;
 
 /** @param {number} ms */

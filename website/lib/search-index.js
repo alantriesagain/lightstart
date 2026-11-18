@@ -6,7 +6,7 @@ import { BUILT_WITH_LIGHT_PATH, componentPath } from "./paths.js";
 import { NATIVE_PAGES } from "./native/pages.js";
 
 /** @import { SearchDoc } from "@lightstart/components/types.ts" */
-/** @import { ShowcaseCategoryListing } from "@bootstrapp/showcase/types.ts" */
+/** @import { ShowcaseCategoryListing } from "@lightstart/showcase" */
 /** @import { ThemePreset } from "@lightstart/light/theme" */
 
 export const GROUPS = ["Components", "Pages", "Skins"];

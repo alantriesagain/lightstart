@@ -5,11 +5,11 @@
  * words are in `lib/native/overview.js`.
  */
 import { html } from "@lightstart/light/html";
-import $APP from "bootstrapp";
-import { defineComponent } from "@lightstart/light";
-import { DIFFERENCES, EXAMPLE, LANES, PHASES, RUNS, STEPS, TOOLS, megabytes } from "../lib/native/overview.js";
-import { nativeNeighbours } from "../lib/native/pages.js";
-import { prose } from "../lib/native/prose-html.js";
+import View, { defineComponent } from "@lightstart/light";
+import catalogue from "../controllers/catalogue.js";
+import { DIFFERENCES, EXAMPLE, LANES, PHASES, RUNS, STEPS, TOOLS, megabytes } from "../../lib/native/overview.js";
+import { nativeNeighbours } from "../../lib/native/pages.js";
+import { prose } from "../../lib/native/prose-html.js";
 
 /** @import { TocItem } from "@lightstart/components/types.ts" */
 
@@ -25,7 +25,7 @@ const COLUMNS = [
   { name: "scriptc", label: "Native (scriptc)" },
 ];
 
-export default defineComponent({
+const view = defineComponent({
   tag: "docs-native-comparison",
   style: true,
   props: {
@@ -33,11 +33,11 @@ export default defineComponent({
   },
 
   connected() {
-    $APP.catalogue.toc = OUTLINE;
+    catalogue.toc = OUTLINE;
   },
 
   disconnected() {
-    $APP.catalogue.toc = [];
+    catalogue.toc = [];
   },
 
   /**
@@ -117,3 +117,7 @@ export default defineComponent({
     `;
   },
 });
+
+View.define(view);
+
+export default view;

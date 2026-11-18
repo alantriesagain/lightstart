@@ -13,7 +13,6 @@ const { counter, shapes, dynamic, refused } = captures.examples;
 /** @param {string} text */
 const trimmed = (text) => text.trimEnd();
 
-/** The lines of V8's code that jump to a deoptimization exit, as a highlight. */
 const deoptJumps = counter.optimized.code
   .split("\n")
   .flatMap((line, index) => (line.includes(";; deopt:") ? [String(index + 1)] : []))
