@@ -1,8 +1,9 @@
 # @lightstart/light/signals
 
-The reactive primitives everything else builds on: `signal`, `computed`,
-`effect`, `batch`, `untracked`, and `selector` (keyed O(2) selection fan-out).
-Zero dependencies, environment-agnostic. Safe at module eval in any runtime.
+The reactive primitives everything else builds on: `signal`, `event`,
+`computed`, `effect`, `batch`, `untracked`, and `selector` (keyed O(2)
+selection fan-out). Zero dependencies, environment-agnostic. Safe at module
+eval in any runtime.
 
 The layering: **signals → store → views.** `store.js` is the keyed reactive
 store behind a component's `$state`; the view engine wires the renderer's
@@ -12,6 +13,13 @@ receives the adapter through `configure({ effect })`.
 
 Notes that earn their place here:
 
+- **`event()`** is an occurrence, not state: every value goes to every
+  listener. Delivery snapshots the listeners, so one added during a pass
+  misses the current value and one removed before its turn is skipped. An
+  emit from inside a listener is queued for the outer emit, so passes never
+  nest; more than 100 queued values in one delivery throws, and the emitter
+  is usable again afterwards. A throwing listener does not stop the others:
+  the first error is rethrown once delivery ends.
 - **`Signal.$sync`** exposes the keyed `{ adapter, get, set, subscribe }`
   contract a binding layer consumes (a controller's `sync:` properties take a
   signal that way: `count: T.number({ sync: sig })`). A `Computed` bound this

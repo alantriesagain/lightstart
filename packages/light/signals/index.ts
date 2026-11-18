@@ -416,3 +416,5 @@ export function selector<T>(source: Signal<T>): (key: T) => boolean {
     return key === currentKey;
   };
 }
+
+export { event, Emitter } from "./event.ts";
