@@ -1,4 +1,3 @@
-import { html } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
 import { defineComponent } from "@lightstart/light";
 

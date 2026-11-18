@@ -1,5 +1,5 @@
 import T from "@lightstart/light/types";
-import View, { defineComponent, trackWork } from "@lightstart/light";
+import { defineComponent, trackWork } from "@lightstart/light";
 import { icons } from "@lightstart/light/theme/icons.js";
 import { ICON_NAME, iconSizeRule, maskRule } from "./icon-mask.js";
 /** @import { IconEntry } from "@lightstart/light/theme" */
