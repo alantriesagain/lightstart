@@ -2,7 +2,7 @@
  * @lightstart/light: the view engine's public type declarations.
  */
 
-import type { PropertyDeclaration, PropertyDeclarations, PropsToThis, TypeDefinition } from "../types/types.ts";
+import type { PropertyDeclarations, PropsToThis, TypeDefinition } from "../types/types.ts";
 import type View from "./index.js";
 
 export type { PropertyDeclarations, PropsToThis, PropertyValue } from "../types/types.ts";

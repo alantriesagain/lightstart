@@ -174,11 +174,11 @@ const holdUnslotted = (host, ref) => {
 
 export class SlotPart {
   /**
-   * @param {PartSpec} spec
+   * @param {PartSpec} _spec
    * @param {Element} el
    * @param {object | undefined} host
    */
-  constructor(spec, el, host) {
+  constructor(_spec, el, host) {
     this.el = el;
     /** @type {ChildNode[]} */
     this.units = [];
