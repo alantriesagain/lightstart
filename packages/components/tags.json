@@ -5,13 +5,23 @@
     "extends": null,
     "uses": [
       "lc-markdown"
-    ]
+    ],
+    "doc": {
+      "description": "About section",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-accordion": {
     "module": "navigation/accordion.js",
     "style": "navigation/accordion.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Accordion Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-alert": {
     "module": "feedback/alert.js",
@@ -19,7 +29,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-alert-dialog": {
     "module": "overlay/alert-dialog.js",
@@ -27,19 +42,150 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Alert Dialog Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-app-container": {
     "module": "app/app-container.js",
     "style": "app/app-container.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "App Container Component",
+      "parts": [
+        {
+          "name": "container",
+          "description": "The main container"
+        },
+        {
+          "name": "header",
+          "description": "Mobile: the header component"
+        },
+        {
+          "name": "content",
+          "description": "The main content area"
+        },
+        {
+          "name": "bottom-nav",
+          "description": "Mobile: the bottom navigation"
+        },
+        {
+          "name": "titlebar",
+          "description": "Desktop: the title bar"
+        },
+        {
+          "name": "sidebar",
+          "description": "Desktop: the sidebar"
+        },
+        {
+          "name": "body",
+          "description": "Desktop: the body container"
+        },
+        {
+          "name": "main",
+          "description": "Desktop: the main content area"
+        },
+        {
+          "name": "toolbar",
+          "description": "Desktop: the toolbar area"
+        },
+        {
+          "name": "panel",
+          "description": "Desktop: the secondary panel"
+        },
+        {
+          "name": "statusbar",
+          "description": "Desktop: the status bar"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "Main content area (shared)"
+        },
+        {
+          "name": "header",
+          "description": "Mobile: header component (e.g., lc-app-header)"
+        },
+        {
+          "name": "bottom",
+          "description": "nav - Mobile: bottom navigation component"
+        },
+        {
+          "name": "floating",
+          "description": "action - Mobile: floating action button"
+        },
+        {
+          "name": "titlebar",
+          "description": "Desktop: title bar component (e.g., lc-title-bar); also in the mobile layout inside a frameless desktop window, which has no other way to close"
+        },
+        {
+          "name": "sidebar",
+          "description": "Desktop: sidebar component (e.g., lc-sidebar)"
+        },
+        {
+          "name": "toolbar",
+          "description": "Desktop: top toolbar/breadcrumbs"
+        },
+        {
+          "name": "panel",
+          "description": "secondary - Desktop: secondary panel (multi-pane mode)"
+        },
+        {
+          "name": "status",
+          "description": "bar - Desktop: bottom status bar"
+        }
+      ]
+    }
   },
   "lc-app-header": {
     "module": "app/app-header.js",
     "style": "app/app-header.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "App Header Component",
+      "parts": [
+        {
+          "name": "header",
+          "description": "The header container"
+        },
+        {
+          "name": "start",
+          "description": "The start/left section"
+        },
+        {
+          "name": "title",
+          "description": "The title section"
+        },
+        {
+          "name": "end",
+          "description": "The end/right section"
+        },
+        {
+          "name": "back-button",
+          "description": "The back button (when showBackButton is true)"
+        }
+      ],
+      "slots": [
+        {
+          "name": "start",
+          "description": "Left side content (menu button, back button, etc.)"
+        },
+        {
+          "name": "title",
+          "description": "Header title content"
+        },
+        {
+          "name": "end",
+          "description": "Right side content (action buttons)"
+        }
+      ]
+    }
   },
   "lc-app-shell": {
     "module": "app/app-shell.js",
@@ -48,7 +194,41 @@
     "uses": [
       "lc-drawer",
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "App Shell Component",
+      "parts": [],
+      "slots": [
+        {
+          "name": "header",
+          "description": "Mobile: top header/toolbar, in place of the navbar"
+        },
+        {
+          "name": "navbar",
+          "description": "The navigation bar: desktop always, mobile when no header slot is given"
+        },
+        {
+          "name": "nav",
+          "description": "Desktop: the left column; mobile: the drawer"
+        },
+        {
+          "name": "default",
+          "description": "Main content area (shared between layouts)"
+        },
+        {
+          "name": "aside",
+          "description": "Desktop: the right column"
+        },
+        {
+          "name": "footer",
+          "description": "Desktop: footer content"
+        },
+        {
+          "name": "bottom",
+          "description": "nav - Mobile: bottom navigation"
+        }
+      ]
+    }
   },
   "lc-auth-form": {
     "module": "form/auth-form.js",
@@ -58,7 +238,81 @@
       "lc-button",
       "lc-input",
       "lc-tabs"
-    ]
+    ],
+    "doc": {
+      "description": "Auth Form Component",
+      "parts": [
+        {
+          "name": "tabs",
+          "description": "Tab container for login/register toggle"
+        },
+        {
+          "name": "tab",
+          "description": "Individual tab button"
+        },
+        {
+          "name": "tab-active",
+          "description": "Active tab button"
+        },
+        {
+          "name": "form",
+          "description": "Main form container"
+        },
+        {
+          "name": "field",
+          "description": "Form field wrapper"
+        },
+        {
+          "name": "label",
+          "description": "Field label"
+        },
+        {
+          "name": "input",
+          "description": "Input field"
+        },
+        {
+          "name": "error",
+          "description": "Error message container"
+        },
+        {
+          "name": "submit",
+          "description": "Submit button"
+        },
+        {
+          "name": "oauth",
+          "description": "OAuth section container"
+        },
+        {
+          "name": "divider",
+          "description": "\"Or continue with\" divider"
+        },
+        {
+          "name": "oauth-buttons",
+          "description": "OAuth buttons wrapper"
+        },
+        {
+          "name": "oauth-btn",
+          "description": "OAuth button"
+        },
+        {
+          "name": "oauth-btn-google",
+          "description": "Google OAuth button"
+        },
+        {
+          "name": "oauth-btn-apple",
+          "description": "Apple OAuth button"
+        },
+        {
+          "name": "guest",
+          "description": "Guest section container"
+        },
+        {
+          "name": "guest-btn",
+          "description": "Guest option button"
+        }
+      ],
+      "slots": []
+    }
   },
   "lc-avatar": {
     "module": "display/avatar.js",
@@ -66,37 +320,96 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Avatar Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-avatar-group": {
     "module": "display/avatar-group.js",
     "style": "display/avatar-group.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Avatar Group Component",
+      "parts": [
+        {
+          "name": "group",
+          "description": "The row"
+        },
+        {
+          "name": "more",
+          "description": "The \"+n\" tail avatar"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "The `lc-avatar` children"
+        }
+      ]
+    }
   },
   "lc-badge": {
     "module": "display/badge.js",
     "style": "display/badge.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Badge Component",
+      "parts": [],
+      "slots": [
+        {
+          "name": "default",
+          "description": "Badge text content"
+        }
+      ]
+    }
   },
   "lc-bar-chart": {
     "module": "display/bar-chart.js",
     "style": "display/bar-chart.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Bar Chart Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-bottom-nav": {
     "module": "app/bottom-nav.js",
     "style": "app/bottom-nav.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Bottom Navigation Component",
+      "parts": [
+        {
+          "name": "nav",
+          "description": "The navigation container"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "Navigation items"
+        }
+      ]
+    }
   },
   "lc-bottom-sheet": {
     "module": "overlay/bottom-sheet.js",
     "style": "overlay/bottom-sheet.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Bottom Sheet Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-breadcrumbs": {
     "module": "navigation/breadcrumbs.js",
@@ -104,19 +417,236 @@
     "extends": null,
     "uses": [
       "lc-link"
-    ]
+    ],
+    "doc": {
+      "description": "Breadcrumbs Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-button": {
     "module": "display/button.js",
     "style": "display/button.css",
     "extends": "lc-link",
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Button Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-calendar": {
     "module": "display/calendar.js",
     "style": "display/calendar.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Calendar Component",
+      "parts": [
+        {
+          "name": "container",
+          "description": "Main calendar container"
+        },
+        {
+          "name": "view-toggle",
+          "description": "View mode toggle container"
+        },
+        {
+          "name": "toggle-btn",
+          "description": "Toggle button"
+        },
+        {
+          "name": "toggle-btn-active",
+          "description": "Active toggle button"
+        },
+        {
+          "name": "header",
+          "description": "Grid view header with navigation"
+        },
+        {
+          "name": "nav-btn",
+          "description": "Navigation buttons"
+        },
+        {
+          "name": "month-label",
+          "description": "Current month/year label"
+        },
+        {
+          "name": "today-btn",
+          "description": "Jump to today button"
+        },
+        {
+          "name": "grid",
+          "description": "Calendar grid container"
+        },
+        {
+          "name": "weekday-header",
+          "description": "Weekday names row"
+        },
+        {
+          "name": "weekday",
+          "description": "Individual weekday name"
+        },
+        {
+          "name": "days-grid",
+          "description": "Grid of day cells"
+        },
+        {
+          "name": "day",
+          "description": "Individual day cell"
+        },
+        {
+          "name": "day-today",
+          "description": "Today's day cell"
+        },
+        {
+          "name": "day-selected",
+          "description": "Selected day cell"
+        },
+        {
+          "name": "day-other-month",
+          "description": "Day cell from adjacent month"
+        },
+        {
+          "name": "day-number",
+          "description": "Day number text"
+        },
+        {
+          "name": "day-events",
+          "description": "Container for event indicators"
+        },
+        {
+          "name": "event",
+          "description": "Event indicator in grid"
+        },
+        {
+          "name": "more-events",
+          "description": "\"+N more\" indicator"
+        },
+        {
+          "name": "list",
+          "description": "List view container"
+        },
+        {
+          "name": "list-section",
+          "description": "Date section in list view"
+        },
+        {
+          "name": "list-section-title",
+          "description": "Section title (TODAY, TOMORROW, etc.)"
+        },
+        {
+          "name": "list-item",
+          "description": "Event item in list view"
+        },
+        {
+          "name": "list-item-image",
+          "description": "Event image in list"
+        },
+        {
+          "name": "list-item-content",
+          "description": "Event content container"
+        },
+        {
+          "name": "list-item-title",
+          "description": "Event title"
+        },
+        {
+          "name": "list-item-meta",
+          "description": "Event time/venue info"
+        },
+        {
+          "name": "recurring-badge",
+          "description": "Recurring event indicator"
+        },
+        {
+          "name": "panel",
+          "description": "Day detail panel"
+        },
+        {
+          "name": "panel-overlay",
+          "description": "Panel backdrop overlay"
+        },
+        {
+          "name": "panel-header",
+          "description": "Panel header"
+        },
+        {
+          "name": "panel-title",
+          "description": "Panel date title"
+        },
+        {
+          "name": "panel-close",
+          "description": "Panel close button"
+        },
+        {
+          "name": "panel-content",
+          "description": "Panel event list"
+        },
+        {
+          "name": "panel-item",
+          "description": "Event item in panel"
+        },
+        {
+          "name": "panel-empty",
+          "description": "Empty panel message"
+        },
+        {
+          "name": "empty",
+          "description": "Empty state container"
+        },
+        {
+          "name": "week-view",
+          "description": "Week view container"
+        },
+        {
+          "name": "week-label",
+          "description": "The week's date range in the week header (also part `month-label`)"
+        },
+        {
+          "name": "week-day",
+          "description": "One day row of the week view; also `week-day-today`, `week-day-selected`"
+        },
+        {
+          "name": "week-day-label",
+          "description": "The left column of a week row"
+        },
+        {
+          "name": "week-day-number",
+          "description": "The large day numeral (also part `day-number`); also `week-day-number-today`"
+        },
+        {
+          "name": "weekday-name",
+          "description": "The weekday under the numeral"
+        },
+        {
+          "name": "week-events",
+          "description": "The right column of a week row"
+        },
+        {
+          "name": "week-event",
+          "description": "The wrapper around one event in a week row"
+        },
+        {
+          "name": "week-event-card",
+          "description": "The default event card (time and title)"
+        },
+        {
+          "name": "week-event-time",
+          "description": "The default card's time"
+        },
+        {
+          "name": "week-event-title",
+          "description": "The default card's title"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "Default slot for additional content"
+        }
+      ]
+    }
   },
   "lc-card": {
     "module": "layout/card.js",
@@ -124,7 +654,58 @@
     "extends": "lc-container",
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Copyright (c) Alan Carlos Meira Leal\n\nCard Component",
+      "parts": [
+        {
+          "name": "header",
+          "description": "The card header container"
+        },
+        {
+          "name": "body",
+          "description": "The card body container"
+        },
+        {
+          "name": "footer",
+          "description": "The card footer container"
+        },
+        {
+          "name": "header-row",
+          "description": "The header row drawn when `heading` or `icon` is set (also part `header`)"
+        },
+        {
+          "name": "icon",
+          "description": "The soft square around the icon"
+        },
+        {
+          "name": "heading",
+          "description": "The heading text"
+        },
+        {
+          "name": "actions",
+          "description": "The wrapper around the actions slot"
+        }
+      ],
+      "slots": [
+        {
+          "name": "header",
+          "description": "Optional header content, when neither `heading` nor `icon` is set"
+        },
+        {
+          "name": "actions",
+          "description": "Right end of the header row drawn by `heading` or `icon`"
+        },
+        {
+          "name": "default",
+          "description": "Default slot for card body content"
+        },
+        {
+          "name": "footer",
+          "description": "Optional footer content"
+        }
+      ]
+    }
   },
   "lc-checkbox": {
     "module": "form/checkbox.js",
@@ -132,13 +713,23 @@
     "extends": null,
     "uses": [
       "lc-label"
-    ]
+    ],
+    "doc": {
+      "description": "Checkbox Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-circle": {
     "module": "display/circle.js",
     "style": "display/circle.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-clipboard": {
     "module": "utility/clipboard.js",
@@ -146,7 +737,12 @@
     "extends": null,
     "uses": [
       "lc-button"
-    ]
+    ],
+    "doc": {
+      "description": "Clipboard Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-code-block": {
     "module": "display/code-block.js",
@@ -155,7 +751,12 @@
     "uses": [
       "lc-button",
       "lc-clipboard"
-    ]
+    ],
+    "doc": {
+      "description": "Code Block Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-color-picker": {
     "module": "form/color-picker.js",
@@ -163,7 +764,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Color Picker Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-command-palette": {
     "module": "overlay/command-palette.js",
@@ -174,7 +780,12 @@
       "lc-kbd",
       "lc-modal",
       "lc-search"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-comment": {
     "module": "display/comment.js",
@@ -184,13 +795,23 @@
       "lc-avatar",
       "lc-badge",
       "lc-link"
-    ]
+    ],
+    "doc": {
+      "description": "Comment Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-container": {
     "module": "layout/container.js",
     "style": "layout/container.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Container Component\nGeneric container component with padding, overflow, and variant support",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-context-menu": {
     "module": "overlay/context-menu.js",
@@ -199,13 +820,23 @@
     "uses": [
       "lc-icon",
       "lc-menu"
-    ]
+    ],
+    "doc": {
+      "description": "Context Menu Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-cta-section": {
     "module": "page/cta-section.js",
     "style": "page/cta-section.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-darkmode": {
     "module": "utility/darkmode.js",
@@ -215,7 +846,12 @@
       "lc-icon",
       "lc-nav-item",
       "lc-switch"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-data-table": {
     "module": "display/data-table.js",
@@ -225,43 +861,104 @@
       "lc-pagination",
       "lc-select",
       "lc-table"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-day-strip": {
     "module": "form/day-strip.js",
     "style": "form/day-strip.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Day strip",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-device": {
     "module": "utility/device.js",
     "style": "utility/device.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Device Frame Component",
+      "parts": [
+        {
+          "name": "container",
+          "description": "The device outer frame"
+        },
+        {
+          "name": "screen",
+          "description": "The device screen area"
+        },
+        {
+          "name": "notch",
+          "description": "The iPhone notch element"
+        },
+        {
+          "name": "home-indicator",
+          "description": "The iPhone home indicator"
+        }
+      ],
+      "slots": []
+    }
   },
   "lc-divider": {
     "module": "layout/divider.js",
     "style": "layout/divider.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-draggable": {
     "module": "utility/draggable.js",
     "style": "utility/draggable.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-drawer": {
     "module": "overlay/drawer.js",
     "style": "overlay/drawer.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Drawer Component",
+      "parts": [
+        {
+          "name": "backdrop",
+          "description": "The backdrop overlay"
+        },
+        {
+          "name": "panel",
+          "description": "The drawer panel container"
+        }
+      ],
+      "slots": []
+    }
   },
   "lc-droparea": {
     "module": "utility/droparea.js",
     "style": "utility/droparea.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-dropdown": {
     "module": "overlay/dropdown.js",
@@ -269,7 +966,17 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Copyright (c) Alan Carlos Meira Leal\n\nDropdown Component\nMenu popover with two content modes: a structured `items` array (rendered\nrows with icons, check marks, group headers, dividers, danger styling and\nkeyboard navigation) or raw slotted HTML. `withPopover()` gives it\npositioning, open state, and outside-click handling.",
+      "parts": [],
+      "slots": [
+        {
+          "name": "default",
+          "description": "Raw menu content (used only when `items` and `content` are not set)"
+        }
+      ]
+    }
   },
   "lc-editable": {
     "module": "display/editable.js",
@@ -279,7 +986,12 @@
       "lc-button",
       "lc-input",
       "lc-join"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-empty-state": {
     "module": "feedback/empty-state.js",
@@ -287,7 +999,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-example": {
     "module": "display/example.js",
@@ -297,7 +1014,12 @@
       "lc-clipboard",
       "lc-code-block",
       "lc-segmented"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-faq-section": {
     "module": "page/faq-section.js",
@@ -305,7 +1027,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-feature-grid": {
     "module": "page/feature-grid.js",
@@ -313,7 +1040,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-file-upload": {
     "module": "form/file-upload.js",
@@ -322,31 +1054,56 @@
     "uses": [
       "lc-button",
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "File Upload Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-flex": {
     "module": "layout/flex.js",
     "style": "layout/flex.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Flex Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-float-card": {
     "module": "page/float-card.js",
     "style": "page/float-card.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-float-panel": {
     "module": "overlay/float-panel.js",
     "style": "overlay/float-panel.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Float Panel Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-flow": {
     "module": "display/flow.js",
     "style": "display/flow.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Flow Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-footer": {
     "module": "page/footer.js",
@@ -354,7 +1111,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-form": {
     "module": "form/form.js",
@@ -362,25 +1124,45 @@
     "extends": null,
     "uses": [
       "lc-label"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-grid": {
     "module": "layout/grid.js",
     "style": "layout/grid.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Grid Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-hero-section": {
     "module": "page/hero-section.js",
     "style": "page/hero-section.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-icon": {
     "module": "display/icon.js",
     "style": "display/icon.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Copyright (c) Alan Carlos Meira Leal\n\nIcon Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-icon-picker": {
     "module": "form/icon-picker.js",
@@ -388,13 +1170,23 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-image": {
     "module": "display/image.js",
     "style": null,
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-image-crop": {
     "module": "form/image-crop.js",
@@ -404,7 +1196,12 @@
       "lc-icon",
       "lc-slider",
       "lc-spinner"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-input": {
     "module": "form/input.js",
@@ -412,13 +1209,23 @@
     "extends": null,
     "uses": [
       "lc-label"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-join": {
     "module": "form/join.js",
     "style": "form/join.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Join Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-kanban": {
     "module": "display/kanban.js",
@@ -429,31 +1236,61 @@
       "lc-draggable",
       "lc-droparea",
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-kbd": {
     "module": "display/kbd.js",
     "style": "display/kbd.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Kbd Component",
+      "parts": [],
+      "slots": [
+        {
+          "name": "default",
+          "description": "The key's label"
+        }
+      ]
+    }
   },
   "lc-label": {
     "module": "form/label.js",
     "style": "form/label.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Label Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-language-switcher": {
     "module": "navigation/language-switcher.js",
     "style": "navigation/language-switcher.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Language Switcher Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-line-chart": {
     "module": "display/line-chart.js",
     "style": "display/line-chart.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-link": {
     "module": "display/link.js",
@@ -462,7 +1299,12 @@
     "uses": [
       "lc-icon",
       "lc-tooltip"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-link-preview": {
     "module": "display/link-preview.js",
@@ -470,19 +1312,34 @@
     "extends": null,
     "uses": [
       "lc-card"
-    ]
+    ],
+    "doc": {
+      "description": "Link Preview Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-list": {
     "module": "display/list.js",
     "style": "display/list.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-list-item": {
     "module": "display/list-item.js",
     "style": null,
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-list-row": {
     "module": "display/list-row.js",
@@ -491,7 +1348,12 @@
     "uses": [
       "lc-badge",
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "List Row Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-markdown": {
     "module": "display/markdown.js",
@@ -499,25 +1361,83 @@
     "extends": null,
     "uses": [
       "lc-code-block"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-media-card": {
     "module": "display/media-card.js",
     "style": "display/media-card.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Media Card Component",
+      "parts": [
+        {
+          "name": "media",
+          "description": "The image box"
+        },
+        {
+          "name": "image",
+          "description": "The image"
+        },
+        {
+          "name": "scrim",
+          "description": "The gradient over the image"
+        },
+        {
+          "name": "top",
+          "description": "The top-left wrapper"
+        },
+        {
+          "name": "bottom",
+          "description": "The wrapper over the scrim"
+        },
+        {
+          "name": "body",
+          "description": "The wrapper under the image"
+        }
+      ],
+      "slots": [
+        {
+          "name": "top",
+          "description": "Pinned to the image's top-left corner (a badge)"
+        },
+        {
+          "name": "bottom",
+          "description": "Over the scrim at the image's foot (a title)"
+        },
+        {
+          "name": "default",
+          "description": "Under the image (meta text); the space collapses when empty"
+        }
+      ]
+    }
   },
   "lc-menu": {
     "module": "navigation/menu.js",
     "style": "navigation/menu.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Menu Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-modal": {
     "module": "overlay/modal.js",
     "style": "overlay/modal.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Modal Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-month-picker": {
     "module": "form/month-picker.js",
@@ -525,7 +1445,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Month picker",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-nav-item": {
     "module": "navigation/nav-item.js",
@@ -534,7 +1459,33 @@
     "uses": [
       "lc-icon",
       "lc-tooltip"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [
+        {
+          "name": "container",
+          "description": "The main container element (button or anchor)"
+        },
+        {
+          "name": "icon",
+          "description": "The icon wrapper"
+        },
+        {
+          "name": "label",
+          "description": "The label wrapper"
+        },
+        {
+          "name": "badge",
+          "description": "The badge wrapper"
+        },
+        {
+          "name": "dot",
+          "description": "The dot on the icon's corner"
+        }
+      ],
+      "slots": []
+    }
   },
   "lc-nav-tree": {
     "module": "navigation/nav-tree.js",
@@ -543,7 +1494,12 @@
     "uses": [
       "lc-icon",
       "lc-nav-item"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-navbar": {
     "module": "navigation/navbar.js",
@@ -551,7 +1507,29 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Navbar Component",
+      "parts": [],
+      "slots": [
+        {
+          "name": "brand",
+          "description": "Logo or brand content (left side on desktop)"
+        },
+        {
+          "name": "start",
+          "description": "Navigation items (left side after brand on desktop)"
+        },
+        {
+          "name": "center",
+          "description": "Centered navigation items"
+        },
+        {
+          "name": "end",
+          "description": "Navigation items (right side on desktop)"
+        }
+      ]
+    }
   },
   "lc-number-input": {
     "module": "form/number-input.js",
@@ -559,13 +1537,23 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Number Input Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-page": {
     "module": "layout/page.js",
     "style": "layout/page.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-page-header": {
     "module": "app/page-header.js",
@@ -573,7 +1561,62 @@
     "extends": null,
     "uses": [
       "lc-breadcrumbs"
-    ]
+    ],
+    "doc": {
+      "description": "Page Header Component",
+      "parts": [
+        {
+          "name": "row",
+          "description": "The row"
+        },
+        {
+          "name": "heading",
+          "description": "Crumbs, title and subtitle"
+        },
+        {
+          "name": "crumbs",
+          "description": "The breadcrumbs"
+        },
+        {
+          "name": "title",
+          "description": "The title"
+        },
+        {
+          "name": "subtitle",
+          "description": "The subtitle"
+        },
+        {
+          "name": "controls",
+          "description": "The controls wrapper"
+        },
+        {
+          "name": "divider",
+          "description": "The rule between controls and tools, drawn only when tools are slotted"
+        },
+        {
+          "name": "tools",
+          "description": "The tools wrapper"
+        }
+      ],
+      "slots": [
+        {
+          "name": "start",
+          "description": "Before the crumbs (a menu button, a back arrow)"
+        },
+        {
+          "name": "title",
+          "description": "Replaces the title text"
+        },
+        {
+          "name": "controls",
+          "description": "Right of the spacer (filters, a scope dropdown)"
+        },
+        {
+          "name": "tools",
+          "description": "After the divider (icon buttons, the primary action)"
+        }
+      ]
+    }
   },
   "lc-pagination": {
     "module": "navigation/pagination.js",
@@ -582,37 +1625,106 @@
     "uses": [
       "lc-icon",
       "lc-link"
-    ]
+    ],
+    "doc": {
+      "description": "Pagination Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-palette": {
     "module": "display/palette.js",
     "style": "display/palette.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Palette Component",
+      "parts": [
+        {
+          "name": "stripes",
+          "description": "The rounded row"
+        },
+        {
+          "name": "stripe",
+          "description": "One colour"
+        },
+        {
+          "name": "line",
+          "description": "The label and meta line"
+        },
+        {
+          "name": "label",
+          "description": "The text on the left"
+        },
+        {
+          "name": "meta",
+          "description": "The text on the right"
+        }
+      ],
+      "slots": []
+    }
   },
   "lc-panel": {
     "module": "layout/panel.js",
     "style": "layout/panel.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Panel Component",
+      "parts": [],
+      "slots": [
+        {
+          "name": "header",
+          "description": "Panel header content"
+        },
+        {
+          "name": "default",
+          "description": "Panel body content"
+        },
+        {
+          "name": "footer",
+          "description": "Panel footer content"
+        }
+      ]
+    }
   },
   "lc-pattern": {
     "module": "display/pattern.js",
     "style": "display/pattern.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-pie-chart": {
     "module": "display/pie-chart.js",
     "style": "display/pie-chart.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-popover": {
     "module": "overlay/popover.js",
     "style": "overlay/popover.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Copyright (c) Alan Carlos Meira Leal\n\nPopover Component\nShows popover content on click using custom popover system.\nSimilar to dropdown but can contain any content (not just menu items).\n`withPopover()` gives it positioning and state management.",
+      "parts": [],
+      "slots": [
+        {
+          "name": "default",
+          "description": "Default slot for popover content"
+        }
+      ]
+    }
   },
   "lc-pricing-card": {
     "module": "page/pricing-card.js",
@@ -620,7 +1732,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-pricing-table": {
     "module": "page/pricing-table.js",
@@ -628,19 +1745,34 @@
     "extends": null,
     "uses": [
       "lc-pricing-card"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-progress-bar": {
     "module": "feedback/progress-bar.js",
     "style": "feedback/progress-bar.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Progress Bar Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-prose": {
     "module": "layout/prose.js",
     "style": "layout/prose.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Prose Component\nReading container: caps the line measure, centers it, and sets the\nlong-form typography scale (defaults to the lg reading size) that\ncascades into any contained lc-markdown.",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-pull-indicator": {
     "module": "feedback/pull-indicator.js",
@@ -649,19 +1781,34 @@
     "uses": [
       "lc-icon",
       "lc-spinner"
-    ]
+    ],
+    "doc": {
+      "description": "The hint a pull to refresh draws above the list: a band as tall as the pull\nso far, with an arrow that turns once a release would refresh, and a\nspinner while the refresh runs. It holds no gesture; a host with\n`withPullToRefresh` hands it `pullY` and `refreshing`.\n\n<lc-pull-indicator .pull=${this.pullY} ?refreshing=${this.refreshing}></lc-pull-indicator>",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-radio": {
     "module": "form/radio.js",
     "style": "form/radio.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Radio Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-radio-group": {
     "module": "form/radio-group.js",
     "style": "form/radio-group.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Radio Group Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-rating": {
     "module": "form/rating.js",
@@ -669,13 +1816,23 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-ruler": {
     "module": "form/ruler.js",
     "style": "form/ruler.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Ruler",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-scroller": {
     "module": "app/scroller.js",
@@ -683,7 +1840,26 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Horizontal scroller",
+      "parts": [
+        {
+          "name": "track",
+          "description": "The scrolling container."
+        },
+        {
+          "name": "nav",
+          "description": "Either chevron button."
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "The row items (each should be `shrink-0`)."
+        }
+      ]
+    }
   },
   "lc-search": {
     "module": "form/search.js",
@@ -692,13 +1868,23 @@
     "uses": [
       "lc-icon",
       "lc-join"
-    ]
+    ],
+    "doc": {
+      "description": "Search Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-section": {
     "module": "layout/section.js",
     "style": "layout/section.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Section Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-segmented": {
     "module": "form/segmented.js",
@@ -706,7 +1892,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Segmented Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-select": {
     "module": "form/select.js",
@@ -716,7 +1907,12 @@
       "lc-icon",
       "lc-label",
       "lc-tag"
-    ]
+    ],
+    "doc": {
+      "description": "Copyright (c) Alan Carlos Meira Leal\n\nSelect Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-showcase-section": {
     "module": "page/showcase-section.js",
@@ -724,7 +1920,12 @@
     "extends": null,
     "uses": [
       "lc-markdown"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-sidebar": {
     "module": "navigation/sidebar.js",
@@ -732,7 +1933,25 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Sidebar Component",
+      "parts": [],
+      "slots": [
+        {
+          "name": "header",
+          "description": "Content for the sidebar header (logo, brand)"
+        },
+        {
+          "name": "default",
+          "description": "Main sidebar content (navigation, lc-menu)"
+        },
+        {
+          "name": "footer",
+          "description": "Content for the sidebar footer (user info, settings)"
+        }
+      ]
+    }
   },
   "lc-sidebar-section": {
     "module": "navigation/sidebar-section.js",
@@ -741,43 +1960,100 @@
     "uses": [
       "lc-badge",
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-site-header": {
     "module": "page/site-header.js",
     "style": "page/site-header.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-skeleton": {
     "module": "feedback/skeleton.js",
     "style": "feedback/skeleton.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Skeleton Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-slider": {
     "module": "form/slider.js",
     "style": "form/slider.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Slider Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-sparkline": {
     "module": "display/sparkline.js",
     "style": "display/sparkline.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-spinner": {
     "module": "feedback/spinner.js",
     "style": "feedback/spinner.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Spinner Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-split-pane": {
     "module": "layout/split-pane.js",
     "style": "layout/split-pane.css",
     "extends": "lc-flex",
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Copyright (c) Alan Carlos Meira Leal\n\nSplit Pane Component",
+      "parts": [
+        {
+          "name": "primary",
+          "description": "Primary panel container"
+        },
+        {
+          "name": "divider",
+          "description": "Divider between panels"
+        },
+        {
+          "name": "secondary",
+          "description": "Secondary panel container"
+        }
+      ],
+      "slots": [
+        {
+          "name": "primary",
+          "description": "Primary (left/top) panel content"
+        },
+        {
+          "name": "secondary",
+          "description": "Secondary (right/bottom) panel content"
+        }
+      ]
+    }
   },
   "lc-stat": {
     "module": "display/stat.js",
@@ -785,7 +2061,50 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Stat Component",
+      "parts": [
+        {
+          "name": "figure",
+          "description": "Container for the figure slot"
+        },
+        {
+          "name": "body",
+          "description": "Container for title, value, and description"
+        },
+        {
+          "name": "title",
+          "description": "The stat title/label"
+        },
+        {
+          "name": "value",
+          "description": "The main stat value (hero element)"
+        },
+        {
+          "name": "desc",
+          "description": "Description text below the value"
+        },
+        {
+          "name": "headline",
+          "description": "The row holding the value and the delta pill, when `delta` is set"
+        },
+        {
+          "name": "delta",
+          "description": "The delta pill; also `delta-up`, `delta-down` or `delta-flat` by `trend`"
+        }
+      ],
+      "slots": [
+        {
+          "name": "default",
+          "description": "Description content below the value"
+        },
+        {
+          "name": "figure",
+          "description": "Icon, avatar, or image to display alongside the stat"
+        }
+      ]
+    }
   },
   "lc-stats-section": {
     "module": "page/stats-section.js",
@@ -793,7 +2112,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-stepper": {
     "module": "feedback/stepper.js",
@@ -802,7 +2126,12 @@
     "uses": [
       "lc-icon",
       "lc-spinner"
-    ]
+    ],
+    "doc": {
+      "description": "Stepper Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-steps-section": {
     "module": "page/steps-section.js",
@@ -810,7 +2139,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-stories": {
     "module": "app/stories.js",
@@ -818,7 +2152,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Fullscreen story viewer",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-story-circle": {
     "module": "display/story-circle.js",
@@ -827,7 +2166,12 @@
     "uses": [
       "lc-avatar",
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Story circle",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-swipe-deck": {
     "module": "app/swipe-deck.js",
@@ -835,13 +2179,23 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Swipe deck",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-switch": {
     "module": "form/switch.js",
     "style": "form/switch.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Switch Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-table": {
     "module": "display/table.js",
@@ -849,13 +2203,23 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-tabs": {
     "module": "navigation/tabs.js",
     "style": "navigation/tabs.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Tabs Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-tag": {
     "module": "display/tag.js",
@@ -863,7 +2227,21 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Tag Component",
+      "parts": [],
+      "slots": [
+        {
+          "name": "icon",
+          "description": "Icon to display before the tag label"
+        },
+        {
+          "name": "default",
+          "description": "Tag label content"
+        }
+      ]
+    }
   },
   "lc-testimonial-section": {
     "module": "page/testimonial-section.js",
@@ -871,13 +2249,23 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-text": {
     "module": "display/text.js",
     "style": "display/text.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Text Component\n\nThe one text primitive: inline text, headings (`level`) and section labels\n(`eyebrow`). Light DOM with no render: the children are already the content,\nso there is nothing to wrap. Styling lands on the host, the way `lc-badge`\ndoes it, which also means a class on the call site still wins.",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-textarea": {
     "module": "form/textarea.js",
@@ -885,7 +2273,12 @@
     "extends": null,
     "uses": [
       "lc-label"
-    ]
+    ],
+    "doc": {
+      "description": "Textarea Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-tile": {
     "module": "display/tile.js",
@@ -893,13 +2286,23 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Tile Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-time": {
     "module": "form/time.js",
     "style": null,
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-timeline": {
     "module": "display/timeline.js",
@@ -908,13 +2311,73 @@
     "uses": [
       "lc-icon",
       "lc-link"
-    ]
+    ],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-title-bar": {
     "module": "app/title-bar.js",
     "style": "app/title-bar.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Title Bar Component",
+      "parts": [
+        {
+          "name": "titlebar",
+          "description": "The title bar container"
+        },
+        {
+          "name": "left",
+          "description": "The left section"
+        },
+        {
+          "name": "center",
+          "description": "The center section"
+        },
+        {
+          "name": "right",
+          "description": "The right section"
+        },
+        {
+          "name": "title",
+          "description": "The title text"
+        },
+        {
+          "name": "controls",
+          "description": "The window controls container"
+        },
+        {
+          "name": "minimize",
+          "description": "The minimize button"
+        },
+        {
+          "name": "maximize",
+          "description": "The maximize button"
+        },
+        {
+          "name": "close",
+          "description": "The close button"
+        }
+      ],
+      "slots": [
+        {
+          "name": "left",
+          "description": "Left side content (app icon, menu, etc.)"
+        },
+        {
+          "name": "center",
+          "description": "Center content (window title, tabs, etc.)"
+        },
+        {
+          "name": "right",
+          "description": "Right side content (before window controls)"
+        }
+      ]
+    }
   },
   "lc-toast": {
     "module": "feedback/toast.js",
@@ -922,31 +2385,61 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Toast Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-toc": {
     "module": "navigation/toc.js",
     "style": "navigation/toc.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-toolbar": {
     "module": "layout/toolbar.js",
     "style": "layout/toolbar.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Toolbar Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-tooltip": {
     "module": "overlay/tooltip.js",
     "style": "overlay/tooltip.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Copyright (c) Alan Carlos Meira Leal\n\nTooltip Component - CSS-First",
+      "parts": [],
+      "slots": [
+        {
+          "name": "default",
+          "description": "Tooltip content text"
+        }
+      ]
+    }
   },
   "lc-tree": {
     "module": "navigation/tree.js",
     "style": "navigation/tree.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Tree Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-tree-item": {
     "module": "navigation/tree-item.js",
@@ -954,7 +2447,12 @@
     "extends": null,
     "uses": [
       "lc-icon"
-    ]
+    ],
+    "doc": {
+      "description": "Tree Item Component",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-week-hours": {
     "module": "form/week-hours.js",
@@ -962,12 +2460,80 @@
     "extends": null,
     "uses": [
       "lc-switch"
-    ]
+    ],
+    "doc": {
+      "description": "Week hours",
+      "parts": [],
+      "slots": []
+    }
   },
   "lc-wizard": {
     "module": "navigation/wizard.js",
     "style": "navigation/wizard.css",
     "extends": null,
-    "uses": []
+    "uses": [],
+    "doc": {
+      "description": "Wizard Component",
+      "parts": [
+        {
+          "name": "overlay",
+          "description": "Modal backdrop (when modal=true)"
+        },
+        {
+          "name": "container",
+          "description": "Main wizard container"
+        },
+        {
+          "name": "header",
+          "description": "Header with back button and step counter"
+        },
+        {
+          "name": "btn-back",
+          "description": "Back/cancel button"
+        },
+        {
+          "name": "step-counter",
+          "description": "Step X/Y indicator"
+        },
+        {
+          "name": "progress",
+          "description": "Progress bar container"
+        },
+        {
+          "name": "progress-fill",
+          "description": "Progress bar fill element"
+        },
+        {
+          "name": "content",
+          "description": "Step content area"
+        },
+        {
+          "name": "footer",
+          "description": "Footer with navigation button"
+        },
+        {
+          "name": "btn-next",
+          "description": "Next/finish button"
+        }
+      ],
+      "slots": [
+        {
+          "name": "step",
+          "description": "1 - Content for step 1"
+        },
+        {
+          "name": "step",
+          "description": "2 - Content for step 2"
+        },
+        {
+          "name": "step",
+          "description": "N - Content for step N (up to totalSteps)"
+        },
+        {
+          "name": "footer",
+          "description": "Custom footer content (replaces default next button)"
+        }
+      ]
+    }
   }
 }

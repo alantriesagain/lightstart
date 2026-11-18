@@ -13,6 +13,7 @@ View.use(syncPlugin);
 
 export default defineApp({
   name: "light-website",
+  url: "https://lightstart.dev",
   host: "web",
   root: "template-shell",
   stores: {

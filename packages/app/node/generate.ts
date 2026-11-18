@@ -144,23 +144,39 @@ const writeWhenChanged = (path: string, content: string): boolean => {
   return true;
 };
 
-interface AppInfo {
+/** What reading `src/app.ts` answers: the choices generation and the build's static files need. */
+export interface AppInfo {
   host: string;
   root: string;
   locale: string;
+  /** The site's address without a trailing slash, or `undefined` when the app names none. */
+  url: string | undefined;
 }
 
-const infoOf = async (app: string): Promise<AppInfo> => {
+/** Read `src/app.ts` without its views: the app module imports only `@lightstart/app`. */
+export const infoOf = async (app: string): Promise<AppInfo> => {
   try {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
-    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown } }).default;
+    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; url?: unknown } }).default;
     return {
       host: config !== undefined && typeof config.host === "string" && config.host.length > 0 ? config.host : "web",
       root: config !== undefined && typeof config.root === "string" ? config.root : "app-root",
       locale: config !== undefined && typeof config.locale === "string" && config.locale.length > 0 ? config.locale : "en",
+      url: config !== undefined && typeof config.url === "string" && config.url.length > 0 ? config.url.replace(/\/+$/, "") : undefined,
     };
   } catch {
-    return { host: "web", root: "app-root", locale: "en" };
+    return { host: "web", root: "app-root", locale: "en", url: undefined };
+  }
+};
+
+/** Read `src/routes.ts` without its views: a route's view is a tag, not an import. */
+export const routesOf = async (routes: string): Promise<Record<string, unknown> | null> => {
+  try {
+    const module = await import(`${pathToFileURL(routes).href}?mtime=${String(Date.now())}`);
+    const config = (module as { default?: unknown }).default;
+    return isRecord(config) ? config : null;
+  } catch {
+    return null;
   }
 };
 

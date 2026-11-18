@@ -1,7 +1,7 @@
 import { html } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
 import { getFormFieldRenderer, renderFormControl, drawsOwnLabel } from "./field-renderers.js";
-import { getPath, setPath } from "./path.js";
+import { setPath } from "./path.js";
 import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
 

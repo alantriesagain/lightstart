@@ -11,12 +11,20 @@ export interface DocEntry {
   description: string;
 }
 
-/** One row of the components' tags table: where a tag's module and stylesheet live. */
+/** One component's doc comment: its description, parts and slots. */
+export interface ComponentDoc {
+  description: string;
+  parts: DocEntry[];
+  slots: DocEntry[];
+}
+
+/** One row of the components' tags table: where a tag's module and stylesheet live, and what its doc says. */
 export interface ComponentTag {
   module: string;
   style: string | null;
   extends: string | null;
   uses: string[];
+  doc: ComponentDoc;
 }
 
 /** The components' tags table: a `lc-<name>` tag to what it is made of. */
