@@ -1,5 +1,5 @@
 /**
- * @file The root view: the open list's name, the nav to the three pages, and `<app-outlet>`,
+ * @file The root view: the open list's name, the nav to the three pages, and `<app-container>`,
  * which draws the page the path answers (src/routes.ts).
  */
 import View from "@lightstart/light";
@@ -25,7 +25,7 @@ class AppRoot extends View {
           <a href="/lists">${t("nav.lists")}</a>
           <a href="/activity">${t("nav.activity")}</a>
         </nav>
-        <app-outlet></app-outlet>
+        <app-container></app-container>
       </main>
     `;
   }

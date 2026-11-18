@@ -6,7 +6,7 @@
  * (the same run again with other arguments) and `quit`, which the run installs
  * on the app. `currentView` is the view tag the routes answer and
  * `currentParams` the parameters of its path, for the
- * host's `<app-outlet>`; `navigate` goes to a path.
+ * host's `<app-container>`; `navigate` goes to a path.
  */
 
 import { signal } from "@lightstart/light/signals";
@@ -24,7 +24,7 @@ import type { StoreHost, StoreKind } from "./stores.ts";
 /** The view tag the routes answer now; null without routes or without a view for the path. */
 export const currentView = signal<string | null>(null);
 
-/** The parameters of the path the routes answer now (`/components/:category` gives `{ category }`), which the outlet sets on the view. */
+/** The parameters of the path the routes answer now (`/components/:category` gives `{ category }`), which the container sets on the view. */
 export const currentParams = signal<Record<string, string>>({});
 
 const paramsOf = (matched: { params?: unknown } | null): Record<string, string> => {

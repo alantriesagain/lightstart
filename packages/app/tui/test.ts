@@ -12,7 +12,7 @@ import type { ClassStyler } from "@lightstart/light/native/tui/classes.ts";
 import type { AppManifest } from "../manifest.ts";
 import type { OpenedApp } from "../test/index.ts";
 import { callMounted, handlerOf } from "./root.ts";
-import "./outlet.ts";
+import "./container.ts";
 
 /** What `mountApp` takes: the test terminal's size, and the classes styler (the baked table, or a theme's classes in a node-only test); none by default. */
 export interface MountAppOptions {

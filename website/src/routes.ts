@@ -1,5 +1,5 @@
 /**
- * @file The site's pages. The shell's `<app-outlet>` draws the one the path answers, its path's
+ * @file The site's pages. The shell's `<app-container>` draws the one the path answers, its path's
  * parameters (`category`, `name`, `topic`) set on the page as props. `params` lists the concrete
  * values of each parameter, so the build can list the site's paths.
  */

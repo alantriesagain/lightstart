@@ -157,7 +157,7 @@ const view = defineComponent({
                 <lc-nav-tree .groups=${this._groups()} .open=${this.native ? NATIVE_GROUPS.map((group) => `native-${group.id}`) : this.openGroups} collapse-at=${COLLAPSE_AT} @nav-tree-toggle=${(/** @type {CustomEvent} */ e) => { this.openGroups = e.detail.open ? [...this.openGroups, e.detail.id] : this.openGroups.filter((id) => id !== e.detail.id); }}></lc-nav-tree>
               </div>
             `}
-        <div class=${this.wide ? "shell-main shell-main-landing" : "shell-main"}><app-outlet></app-outlet></div>
+        <div class=${this.wide ? "shell-main shell-main-landing" : "shell-main"}><app-container></app-container></div>
         ${this.wide || !toc.length
           ? nothing
           : html`<aside slot="aside" class="shell-aside"><lc-toc .items=${toc} offset="56"></lc-toc></aside>`}

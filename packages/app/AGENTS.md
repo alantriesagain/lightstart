@@ -12,12 +12,12 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `memory.ts` | `MemoryAdapter`, the in-memory storage adapter |
 | `controllers.ts` | `startControllers` and `stopControllers`: name, start, await `$ready`, dispose |
 | `run.ts` | `AppHost` (the host contract, with a surface-less default for each method), `AppRun` (the run: arguments, stores, controllers, routes, mount; `stop`, `restart`, `quit`), `currentView` and `navigate` |
-| `web/index.ts` | The web host: `WebHost`, `IndexedDBKind`, the URL-query arguments, the browser history, the theme, `<app-outlet>` as a component, the root mount, `start` |
+| `web/index.ts` | The web host: `WebHost`, `IndexedDBKind`, the URL-query arguments, the browser history, the theme, `<app-container>` as a component, the root mount, `start` |
 | `web/test.ts` | `openPage(manifest, { path, args, kinds })`: the web host's root mount, theme and routed links over memory stores and a history in memory, and `OpenedPage` (`run`, `root`, `find`, `text`, `shows`, `navigate`, `settle`, `stop`) |
 | `web/generate.ts` | The web host's part of the generation: `.light/main.ts`, and `.light/components.ts` and `.light/components.css` for a project on `@lightstart/components` |
-| `tui/index.ts` | The terminal host: `TuiHost`, `JsonlKind`, `hostArgs` (`--data`, `--scheme`, `--route`), argv, the history in memory, `<app-outlet>` as a terminal view, the baked table, `runApp`, `start` |
+| `tui/index.ts` | The terminal host: `TuiHost`, `JsonlKind`, `hostArgs` (`--data`, `--scheme`, `--route`), argv, the history in memory, `<app-container>` as a terminal view, the baked table, `runApp`, `start` |
 | `tui/generate.ts` | The terminal host's part of the generation: the modes dispatch in `.light/main.ts`, and `.light/classes.baked.ts` |
-| `tui/outlet.ts` | `AppOutlet`: `<app-outlet>` as a terminal view, defined on import |
+| `tui/container.ts` | `AppContainer`: `<app-container>` as a terminal view, defined on import |
 | `tui/root.ts` | `handlerOf` and `callMounted`: the root view's `onKey` and `mounted(renderer)`, for the terminal host and its test mount |
 | `tui/file.ts` | `fileIO`: the JSONL adapter's files through `node:fs`, the folder made on the first write |
 | `tui/test.ts` | `mountApp`: the root view on a `TestTerminal` over an opened app |
@@ -28,7 +28,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `cli/hooks/serve.file-changed.ts` | Regenerate when a named source is added, removed or renamed |
 | `cli/extend/build.ts` | A build step before `page` that generates, and a step after `html` that writes `404.html`, `sitemap.xml`, `robots.txt` and `_headers` for a static host |
 | `cli/extend/test.ts` | Generate before `light test` picks its files |
-| `test/routes.test.ts`, `test/tui-routes.test.ts` | Routes without a page, and drawn by the terminal's `<app-outlet>`, under node and scriptc |
+| `test/routes.test.ts`, `test/tui-routes.test.ts` | Routes without a page, and drawn by the terminal's `<app-container>`, under node and scriptc |
 | `test/fixtures/web/` | The fixture app: an app config, a note model, a notes controller, three views, two routes and a browser test that opens it with `openPage` |
 | `test/fixtures/tui/` | The terminal fixture app: a `native` block, an argument, two models in two stores, a notes controller, a root view, a row view and a `hello` mode |
 
@@ -43,7 +43,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - `.light/app.ts` uses static imports only: relative from `.light/`, one per file, views side-effect only, the same for every host but `rootView`, which a host that makes the root view (`HostGeneration.rootView`) gets, the core's `.light/locales.ts` for a project on `@lightstart/i18n`, and the host's own side-effect imports (`HostGeneration.prepare`), all before the views. A file is rewritten only when its content changes.
 - A folder with no `src/app.ts` is untouched by every entry point: the command, both serve hooks, the build steps and the test extension.
 - The manifest is a plain typed record of arrays, never a `Map` of functions. Controllers cross as `unknown` and are narrowed by the run.
-- Routes are the core's on every host: the router's core (`@lightstart/router/core`) over the host's `history()`; `currentView` follows the match and is null once a run stops; `<app-outlet>` is each host's. The browser adapter and `configureNavigation` stay the web host's.
+- Routes are the core's on every host: the router's core (`@lightstart/router/core`) over the host's `history()`; `currentView` follows the match and is null once a run stops; `<app-container>` is each host's. The browser adapter and `configureNavigation` stay the web host's.
 - The terminal host takes argv with its own `--data` (default `.data`), `--scheme` (default `dark`) and `--route` (default `/`) merged in, an app declaring those names keeping its own; an `ArgError` prints its message and exits 2. Without a TTY it exits 2. Keys go to the root view's `onKey` when it has one, and its `mounted(renderer)` is called once `runApp` answers.
 - A mode file exports `main(argv)` (answering the exit code) and may export `matches(argv)`. The terminal generation imports modes with `import * as modeN`, checks the optional export with `Reflect.get` and `typeof` (scriptc rejects a direct optional property read), runs the first match before the host and exits with its code.
 - The app is one `App` instance and its arguments are read by name through `AppArgs`: a host writes `app.args.values`, never replaces `app` or casts it to another shape, because scriptc copies a value it converts and the controllers would read the copy. `test/tui-args.test.ts` and `test/routes.test.ts` run natively for that reason.
@@ -68,7 +68,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `.light/app.ts`, `.light/main.ts` and, for a terminal, `.light/classes.baked.ts` | `light serve`, `light build`, `light test`, `light app`, and a project's page or native entry |
 | `.light/components.ts` and `.light/components.css` | a web project on `@lightstart/components`, imported by `.light/app.ts` and its own stylesheet |
 | `.light/locales.ts` | a project on `@lightstart/i18n`, imported by `.light/app.ts` before the views |
-| `currentView`, `navigate` and `<app-outlet>` | root views and controllers of web and terminal apps |
+| `currentView`, `navigate` and `<app-container>` | root views and controllers of web and terminal apps |
 | `start(manifest)` and `{ stop() }` | web apps |
 | `start(manifest, { classes, argv, term })` and `{ stop() }` | terminal apps and their generated entry |
 | `openApp(manifest, { args, kinds })` and `mountApp(manifest, opened, { cols, rows, classes })` | a project's tests |

@@ -1,7 +1,7 @@
 /**
  * @file The site of light: every component with its examples and its props, in any skin, and the
  * pages on light native. A web app on `@lightstart/app`; its root view is the shell (the header,
- * the component tree, the search palette) around `<app-outlet>`. Nothing is stored: the skin a
+ * the component tree, the search palette) around `<app-container>`. Nothing is stored: the skin a
  * reader picks is kept in localStorage by the catalogue controller.
  */
 import View from "@lightstart/light";

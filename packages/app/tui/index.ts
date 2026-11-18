@@ -6,7 +6,7 @@
  * (dark by default) and `--route` (the path the routes start at, `/` by
  * default), each unless the app declares that name itself; an argument error
  * prints its message and exits 2. The routes follow a history in memory, and
- * `<app-outlet>` is a terminal view drawing the view they answer. The root
+ * `<app-container>` is a terminal view drawing the view they answer. The root
  * view (the manifest's `rootView`) runs on the terminal with the baked class
  * table for the scheme; keys go to its `onKey`, and its `mounted(renderer)`
  * is told once it runs. It needs a TTY (exit 2 without one); everything
@@ -27,7 +27,7 @@ import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { AppHost, AppRun } from "../run.ts";
-import "./outlet.ts";
+import "./container.ts";
 import { MemoryKind, StoreKind } from "../stores.ts";
 import { fileIO } from "./file.ts";
 import { callMounted, handlerOf } from "./root.ts";

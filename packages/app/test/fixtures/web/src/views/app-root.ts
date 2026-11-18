@@ -16,7 +16,7 @@ class AppRoot extends View {
         <ul>
           ${rows.map((row) => html`<li>${String(row.text)}</li>`)}
         </ul>
-        <app-outlet></app-outlet>
+        <app-container></app-container>
       </main>
     `;
   }

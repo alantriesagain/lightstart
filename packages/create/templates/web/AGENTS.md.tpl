@@ -59,7 +59,7 @@ View.register("my-counter", Counter);
 
 ## Routes, tests, forms and words
 
-`<app-outlet>` in the root view draws the view the path answers; `navigate(path)` from `@lightstart/app/web` goes to another, and a plain `<a href="/path">` does too. A view that a path with parameters answers declares a prop for each one.
+`<app-container>` in the root view draws the view the path answers; `navigate(path)` from `@lightstart/app/web` goes to another, and a plain `<a href="/path">` does too. A view that a path with parameters answers declares a prop for each one.
 
 A test opens the app in the page with `openPage(manifest, { path, args })` from `@lightstart/app/web/test` (stores and history in memory): `await page.find(selector)`, `await page.shows(text)`, `await page.navigate(path)`, then `await page.stop()`.
 

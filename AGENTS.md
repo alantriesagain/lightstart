@@ -34,7 +34,7 @@ Reach for these before writing your own; each package's README is its reference.
 
 | A project needs | Package | The part to know |
 |---|---|---|
-| The app's folders, wiring and run | `@lightstart/app` | `defineApp`, stores by name (`memory`, `indexeddb`, `jsonl`, `sql`, a `StoreKind` of the project's own), routes, `<app-outlet>`, `navigate`, `currentView`, `currentParams`; hosts `@lightstart/app/web` and `/tui` |
+| The app's folders, wiring and run | `@lightstart/app` | `defineApp`, stores by name (`memory`, `indexeddb`, `jsonl`, `sql`, a `StoreKind` of the project's own), routes, `<app-container>`, `navigate`, `currentView`, `currentParams`; hosts `@lightstart/app/web` and `/tui` |
 | Views, templates, signals, models, controllers, the theme | `@lightstart/light` | `View`, `html`, `signal`, `defineModel` with `T` fields, `defineController` and the `Controller` class, `liveRows`, `applyTheme` |
 | UI components | `@lightstart/components` | the `lc-*` tags; in an app the generation defines the tags a view writes and their stylesheets |
 | Forms from a model | `@lightstart/form` | `fieldsForModel(schema)` for `<lc-form .fields>`, `inferFields`, `validateForm` on submit |
