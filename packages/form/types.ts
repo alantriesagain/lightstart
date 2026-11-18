@@ -7,6 +7,13 @@
  */
 import type { FormField } from "@lightstart/components/types.ts";
 
+declare module "@lightstart/light/model/types.ts" {
+  interface ModelSchemaDirectives {
+    /** The fields a form shows, from this schema. */
+    $form?: ModelFormBlock;
+  }
+}
+
 /** A field derived from a schema always carries its label and whether it is required. */
 export interface ModelFormField extends FormField {
   label: string;
@@ -24,6 +31,8 @@ export interface ModelFieldDef {
   rows?: number;
   enum?: readonly string[];
   $type?: string;
+  props?: Record<string, unknown>;
+  itemType?: unknown;
   required?: boolean;
   fieldType?: string;
   relationship?: string;

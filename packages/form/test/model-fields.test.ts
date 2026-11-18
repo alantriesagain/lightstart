@@ -1,6 +1,8 @@
 /** @file fieldsForModel and formDefaults: a model's `$form` block as the fields `<lc-form>` draws. */
 import { assert, done, same, test } from "./check.ts";
 import { fieldsForModel, formDefaults } from "../index.ts";
+import T from "@lightstart/light/types";
+import type { ModelSchema } from "@lightstart/light/model";
 
 const MODEL = {
   $adapter: "file",
@@ -76,6 +78,22 @@ test("a file field renders a file input, and an array of them renders many", () 
   same(fields.map((f) => f.type), ["file", "files", "url"]);
 });
 
+test("an array of strings gives an itemField named for the array", () => {
+  const [tags] = fieldsForModel({ $form: { fields: ["tags"] }, tags: T.array({ itemType: T.string() }) });
+  assert.equal(tags?.type, "array");
+  assert.equal(tags?.itemField?.name, "tags");
+  assert.equal(tags?.itemField?.type, "text");
+});
+
+test("an array of objects gives itemFields for the item's props", () => {
+  const [links] = fieldsForModel({
+    $form: { fields: ["links"] },
+    links: T.array({ itemType: T.object({ props: { label: T.string(), count: T.number() } }) }),
+  });
+  assert.equal(links?.type, "array");
+  same(links?.itemFields?.map((f) => [f.name, f.type]), [["label", "text"], ["count", "number"]]);
+});
+
 test("formDefaults returns $form.defaults and is empty-safe", () => {
   same(formDefaults(MODEL), { city: "Rio de Janeiro" });
   same(formDefaults({}), {});
@@ -86,7 +104,19 @@ test("multi-select without enum takes options from the labels map", () => {
   const labels = { themes: { food: { label: "Food" }, beaches: "Beaches" } };
   const fields = fieldsForModel({ $form: { fields: ["themes"] }, themes: { $type: "array", input: "multi-select", label: "Themes" } }, { labels });
   assert.equal(fields[0]?.type, "multi-select");
+  assert.equal(fields[0]?.itemField, undefined);
   same(fields[0]?.options, [{ value: "food", label: "Food" }, { value: "beaches", label: "Beaches" }]);
+});
+
+const TYPED: ModelSchema = {
+  $form: { fields: ["title"] },
+  title: T.string({ label: "Title" }),
+};
+
+test("a ModelSchema declares $form without a cast", () => {
+  const [title] = fieldsForModel(TYPED);
+  assert.equal(title?.name, "title");
+  assert.equal(title?.label, "Title");
 });
 
 test("empty-safe on missing $form", () => {

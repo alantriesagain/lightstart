@@ -4,7 +4,7 @@ The fields a form shows, from a light model's schema, and the validation of what
 
 | Function | What |
 |---|---|
-| `fieldsForModel(schema, { labels? })` | The fields `schema.$form.fields` names, in order; a field's `label`, `placeholder`, `input`, `rows` and `cmsType` come from its `T.*` definition, a `select`'s option labels from `labels` |
+| `fieldsForModel(schema, { labels? })` | The fields `schema.$form.fields` names, in order; a field's `label`, `placeholder`, `input`, `rows` and `cmsType` come from its `T.*` definition, a `select`'s option labels from `labels`; an array field becomes `type: "array"`, its scalar item an `itemField` and an object item's props `itemFields` |
 | `formDefaults(schema)` | The payload defaults `schema.$form.defaults` declares |
 | `inferFields(schema, { operation? })` | Every editable field of a schema with no `$form` block, in schema order: `id` and `updatedAt` never, `createdAt` and `immutable` fields only on `"add"` or `"edit"` as they allow |
 | `inferInput(def)` | The control a field definition asks for: what it describes first, then what its name suggests |
@@ -14,7 +14,7 @@ The fields a form shows, from a light model's schema, and the validation of what
 | `validateForm(models, model, data, fields, { operation? })` | The model's `validateRow` on the whole row, its errors narrowed to `fields` and keyed to their labels |
 | `validateRequired(data, fields)` | The required fields a form checks without a model |
 
-A schema is any object: a light `ModelSchema`, with its `$adapter` and hooks, or a plain record.
+A schema is any object: a light `ModelSchema`, with its `$adapter` and hooks, or a plain record. Importing `@lightstart/form` also types a `ModelSchema`'s `$form` block, so a model's schema declares it without a cast.
 
 ```ts
 import T from "@lightstart/light/types";
