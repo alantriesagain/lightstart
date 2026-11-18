@@ -64,7 +64,7 @@ An app keeps rows in stores by name, several at once. A model picks one through 
 
 ## Routes and views
 
-`src/routes.ts` maps paths to view tags on every host. The run makes the router (`@lightstart/router`'s core) over the host's history: the browser's on the web, one in memory on the terminal (starting at `/`, or the path `--route` names). `currentView` is the view tag the path answers, and `navigate(path)` goes to another; both come from the host's subpath. A root view that shows routes writes `<app-outlet>`, which the host gives: a component in the page, a terminal view on the terminal. An app without `routes.ts` mounts its root view alone.
+`src/routes.ts` maps paths to view tags on every host. The run makes the router (`@lightstart/router`'s core) over the host's history: the browser's on the web, one in memory on the terminal (starting at `/`, or the path `--route` names). `currentView` is the view tag the path answers, `currentParams` the parameters of its path (`/components/:category` gives `{ category }`), and `navigate(path)` goes to another; all come from the host's subpath. A root view that shows routes writes `<app-outlet>`, which the host gives: a component in the page, a terminal view on the terminal. The outlet sets the parameters on the view as props, keeping the same element while the tag stays, so a view declares a prop for each parameter its path has. An app without `routes.ts` mounts its root view alone.
 
 ## The run
 

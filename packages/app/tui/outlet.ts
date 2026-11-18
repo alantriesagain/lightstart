@@ -6,20 +6,22 @@
 
 import { View, createElement, define, html } from "@lightstart/light/native/tui";
 import type { TElement } from "@lightstart/light/native/tui";
-import { currentView } from "../run.ts";
+import { currentParams, currentView } from "../run.ts";
 
-/** The view the routes answer, drawn as its tag's element. */
+/** The view the routes answer, drawn as its tag's element, its path's parameters set on it as props. */
 export class AppOutlet extends View {
   private tag = "";
   private element: TElement | null = null;
 
   override render(): unknown {
     const tag = currentView.value;
+    const params = currentParams.value;
     if (tag === null) return html``;
     if (tag !== this.tag || this.element === null) {
       this.tag = tag;
       this.element = createElement(tag);
     }
+    for (const [key, value] of Object.entries(params)) this.element.setProp(key, value);
     return html`${this.element}`;
   }
 }
