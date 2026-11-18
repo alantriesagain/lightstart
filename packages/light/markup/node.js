@@ -80,7 +80,7 @@ export class MElement extends MNode {
     /** @type {Map<string, MListener[]>} */
     this.listeners = new Map();
     /** @type {MNode[]} */
-    this.childNodes = [];
+    this._childNodes = [];
     /** @type {boolean} */
     this._viewConnected = false;
   }
@@ -132,12 +132,13 @@ export class MElement extends MNode {
     return [...this.attrs].map(([name, value]) => ({ name, value }));
   }
 
+  /** @returns {MNode[]} */
   get childNodes() {
     return this._childNodes;
   }
 
+  /** @param {MNode[]} nodes */
   set childNodes(nodes) {
-    /** @type {MNode[]} */
     this._childNodes = nodes;
   }
 
