@@ -28,6 +28,49 @@ Conventions every kind shares:
 - Never hand-write an importmap. `light serve` builds it from `package.json`.
 - Light's package READMEs are the reference for an API; every package under `packages/` has one.
 
+## What light has
+
+Reach for these before writing your own; each package's README is its reference.
+
+| A project needs | Package | The part to know |
+|---|---|---|
+| The app's folders, wiring and run | `@lightstart/app` | `defineApp`, stores by name (`memory`, `indexeddb`, `jsonl`, `sql`, a `StoreKind` of the project's own), routes, `<app-outlet>`, `navigate`, `currentView`, `currentParams`; hosts `@lightstart/app/web` and `/tui` |
+| Views, templates, signals, models, controllers, the theme | `@lightstart/light` | `View`, `html`, `signal`, `defineModel` with `T` fields, `defineController` and the `Controller` class, `liveRows`, `applyTheme` |
+| UI components | `@lightstart/components` | the `lc-*` tags; in an app the generation defines the tags a view writes and their stylesheets |
+| Forms from a model | `@lightstart/form` | `fieldsForModel(schema)` for `<lc-form .fields>`, `inferFields`, `validateForm` on submit |
+| Translations | `@lightstart/i18n` | `configureI18n`, `t`, `setLanguage`; plugs into light's contract `@lightstart/light/i18n`, which any library can implement; `lc-language-switcher` |
+| A routes table outside an app | `@lightstart/router` | `RouterCore` over a browser or memory history; light's `Navigation` contract |
+| A component catalogue | `@lightstart/showcase` | `showcase-catalogue`, `showcase-component-doc` and the theme tools, over the components' `tags.json` and demos |
+| An HTTP backend | `@lightstart/server` | routes, middleware and plugins over one `Context`; node, fetch and lambda adapters |
+| SQLite | `@lightstart/sqlite` | one synchronous driver, node's or native |
+| Markdown, syntax colours | `@lightstart/markdown`, `@lightstart/highlight` | `parse`; a line tokenizer for terminal views and `lc-code-block` |
+| Terminal UI pieces | `@lightstart/tui`, `@lightstart/tui-markdown` | the palette and what package views draw with |
+| The `light` commands | `@lightstart/cli` with `@lightstart/dev`, `@lightstart/build`, `@lightstart/native` | `serve`, `build`, `run`, `test`, `check`, `lint`, `typecheck`, `verify`, `new` |
+| Tests that run under node and natively | `@lightstart/test` | `ok`, `eq`, `done` in `assert.ts` |
+
+## Patterns an app keeps
+
+Follow the shape `light new` gave the project and the choices it already made (its host, its store kinds, its controller style); extend them rather than introduce a second way.
+
+- **One file, one piece.** `src/models/<name>.ts`, `src/controllers/<name>.ts`, `src/views/<tag>.ts`: the file name is the name, a view module defines its tag (`View.register(tag, Class)` or `View.define(definition)`), and `.light/` picks them all up. Never import a view's module by hand to make it exist.
+- **Controllers.** A `Controller` subclass compiles natively and follows a model with `readonly rows = liveRows<Row>(this, model, () => query)`, which starts with the controller and comes back after a restart. A `defineController` literal is a sync target: a view's prop declared `T.string({ sync: "<controller>" })` follows it, once the page installs `View.use(syncPlugin)` (`@lightstart/light/controller/view`) before its views are defined. Its own `sync: { prop: "local" }` needs the page to `registerAdapter("local", localStorage)`.
+- **Views and signals.** A `View` subclass's render follows the signals it reads. A definition view (`defineComponent` then `View.define`) does not: it reads shared state through `sync:` props, or it is written as a class.
+- **Routes.** `src/routes.ts` maps a path to a view tag; `/notes/:id` sets `id` on the view as a prop (declare it), and the same view updates when only a parameter changes. Go with `navigate(path)`; a plain `<a href>` to an app path goes through the router too.
+- **Components.** A web view writes `<lc-*>` tags and imports nothing; `src/styles.css` starts with `@import "../.light/components.css"`. `index.html` loads `/src/styles.css` and `/.light/main.ts` from the root, so nested routes and a built `404.html` find them.
+- **Words.** With `@lightstart/i18n` installed, `src/locales/<lang>.ts` holds the app's words, merged over the `locales/` of every package that declares `light.locales: true`, and `defineApp({ locale })` names the default.
+- **Arguments.** `defineApp({ args })` declares them; a controller reads `app.args.string("name")`. The web host fills them from the URL query, the terminal from argv (with its own `--data`, `.data` by default, `--scheme` and `--route`).
+
+## Testing
+
+- An app's logic: `openApp(manifest, { args, kinds })` from `@lightstart/app/test`, over memory stores.
+- A terminal app's screen: `mountApp(manifest, opened, { cols, rows })` from `@lightstart/app/tui/test`, keys through `renderer.decoder.pushText`.
+- A web app's page: `openPage(manifest, { path, args })` from `@lightstart/app/web/test`, in headless Chromium: `find`, `shows`, `navigate`, `stop`. It mounts in the test page with memory stores and a history in memory; link the app's stylesheet when a test measures layout.
+- A package's tests are plain scripts on `@lightstart/test/assert.ts` (`ok`, `eq`, `done`) that `light test` runs under node and natively, the outputs equal: no `node:test` reporter (its timings differ), no `assert.deepEqual` (compare JSON), typed fallback arrays (`const xs: string[] = c ? a : []`). `// node-only` as a test's first line skips the native run.
+
+## Building and publishing
+
+`light build` bundles the page into `.deployed/builds/<id>`. For an app it also writes `404.html` (so a static host boots the app on any path), `robots.txt`, `_headers` (hashed bundles cached for good) and, given `defineApp({ url })`, `sitemap.xml` from the routes without parameters. A terminal app's `light run` is a dev build (`dist/dev/`, fast when nothing changed); `light build` makes the release binary.
+
 To get `light` on PATH from a checkout, link its binary:
 
 ```bash

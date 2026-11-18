@@ -25,21 +25,16 @@ The class table comes from the generation. A theme class in a template must be a
 
 ## A model and a controller
 
-`defineModel` reads `T` descriptors. Hold the schema in a `const schema: ModelSchema`, so the rows read as dynamic data through `unknown` fields. A controller is a `Controller` subclass, default-exported as one instance; `LiveRows` holds its live query.
+`defineModel` reads `T` descriptors. Hold the schema in a `const schema: ModelSchema`, so the rows read as dynamic data through `unknown` fields. A controller is a `Controller` subclass, default-exported as one instance; `liveRows(this, model, () => query)` follows a model's rows from the controller's start, its first load counted before the controller is ready.
 
 ```ts
 import { Controller } from "@lightstart/light/controller/class";
-import { LiveRows, modelQuery } from "@lightstart/light/model/binder";
+import { liveRows } from "@lightstart/light/model/binder";
 import todo from "../models/todo.ts";
 
 class Todos extends Controller {
-  readonly rows = new LiveRows<Todo>();
+  readonly rows = liveRows<Todo>(this, todo, () => ({ order: "addedAt" }));
   constructor() { super("todos"); }
-  override connected() {
-    this.rows.use(modelQuery<Record<string, unknown>>(todo, { order: "addedAt" }));
-    return this.rows.loaded();
-  }
-  override disconnected() { this.rows.dispose(); return null; }
   async add(title: string) { await todo.add({ title, addedAt: Date.now() }); }
 }
 
@@ -97,3 +92,9 @@ Run `pnpm verify` before committing.
 | Models, queries, the JSONL adapter and the binder | `@lightstart/light/model` |
 | Controllers, sync, resources and adapters | `@lightstart/light/controller` |
 | The engine: views, `html`, signals, props, the theme | `@lightstart/light`'s README |
+
+## Routes and tests
+
+`src/routes.ts` maps paths to view tags on the terminal too: the root view writes `<app-outlet>`, `navigate(path)` from `@lightstart/app/tui` goes to another, and a path's parameters (`/notes/:id`) arrive as the view's props (`this.prop<string>("id", "")`). `--route <path>` starts the app at a path.
+
+A test opens the app with `openApp(manifest, { args })` from `@lightstart/app/test` (stores in memory) and draws it with `mountApp(manifest, opened, { cols, rows })` from `@lightstart/app/tui/test`: push keys with `mounted.renderer.decoder.pushText(text)`, then `await mounted.settle()` and read `mounted.text()`. Tests run under node and natively with the same output, so they print through `@lightstart/test/assert.ts` (`ok`, `eq`, `done`).

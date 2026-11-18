@@ -6,11 +6,12 @@ A web app on `@lightstart/app`: the folders are the app, and light writes the wi
 
 | Path | Holds |
 |---|---|
-| `src/app.ts` | `defineApp({ name, host: "web", theme?, stores?, root?, args? })`: `stores` by name (`main` is IndexedDB unless it names another kind, `{ cache: { kind: "memory" } }` beside it), `args` read from the URL query |
+| `src/app.ts` | `defineApp({ name, host: "web", theme?, stores?, root?, args?, url?, locale? })`: `url` is the site's address (the build's sitemap), `locale` the default language; `stores` by name (`main` is IndexedDB unless it names another kind, `{ cache: { kind: "memory" } }` beside it), `args` read from the URL query |
 | `src/models/<name>.ts` | One model, default-exported; the file name is the model's name |
 | `src/controllers/<name>.ts` | One controller, default-exported; the file name is its name |
 | `src/views/<tag>.ts` | One view, registering its tag; the file name is the tag |
-| `src/routes.ts` | Optional: `{ "/path": { view: "<tag>", name?, title? } }` |
+| `src/routes.ts` | Optional: `{ "/path": { view: "<tag>", name?, title? } }`; `/notes/:id` sets `id` on the view as a prop |
+| `src/locales/<lang>.ts` | With `@lightstart/i18n` installed: the app's words, read with `t(key)`, merged over the words its packages ship |
 | `src/styles.css` | The generated components' stylesheet, then the app's own rules |
 | `test/` | Browser tests, run by `light test` |
 
@@ -27,7 +28,7 @@ The app layer opens the stores (a model picks one with its schema's `$adapter`, 
 | Command | Does |
 |---|---|
 | `pnpm dev` | `light serve --watch`: the app on the first free port from 3000, reloading on a change |
-| `pnpm build` | `light build`: bundles into `.deployed/builds/<id>` and points `.deployed/current` at it |
+| `pnpm build` | `light build`: bundles into `.deployed/builds/<id>`, with `404.html`, `robots.txt`, `_headers` and (given `url`) `sitemap.xml` for a static host, and points `.deployed/current` at it |
 | `pnpm test` | `light test test/*.test.ts`: the browser tests in headless Chromium (`pnpm exec playwright install chromium` once) |
 | `pnpm check` | `light check`: light's conventions over the sources |
 | `pnpm lint` | `light lint`: eslint with the project's config |
@@ -56,6 +57,16 @@ class Counter extends View {
 View.register("my-counter", Counter);
 ```
 
+## Routes, tests, forms and words
+
+`<app-outlet>` in the root view draws the view the path answers; `navigate(path)` from `@lightstart/app/web` goes to another, and a plain `<a href="/path">` does too. A view that a path with parameters answers declares a prop for each one.
+
+A test opens the app in the page with `openPage(manifest, { path, args })` from `@lightstart/app/web/test` (stores and history in memory): `await page.find(selector)`, `await page.shows(text)`, `await page.navigate(path)`, then `await page.stop()`.
+
+A form over a model is `<lc-form .fields=${fieldsForModel(schema)}>` with `@lightstart/form`, its submit checked with `validateForm`. Words go through `t(key)` from `@lightstart/i18n`, and `<lc-language-switcher>` changes the language.
+
+A `View` subclass's render follows the signals it reads. A view written as a definition (`View.define({ tag, props, render })`) does not: it reads a `defineController`'s state through props declared `sync: "<controller>"`, which needs `View.use(syncPlugin)` from `@lightstart/light/controller/view` in `src/app.ts`.
+
 ## Read more
 
 | What | Where |
@@ -63,4 +74,5 @@ View.register("my-counter", Counter);
 | The app layer: `defineApp`, the folders, the generated wiring, the web host, the test helper | `@lightstart/app`'s README |
 | Views, `html`, signals, props, models, controllers, the theme | `@lightstart/light`'s README |
 | Every `lc-*` tag, its props and its stylesheet | `@lightstart/components`'s README |
+| Forms from a model; translations | `@lightstart/form`'s and `@lightstart/i18n`'s READMEs |
 | `light serve`, `light build`, `light test`, `light check` | `@lightstart/dev`, `@lightstart/build`, `@lightstart/cli` |
