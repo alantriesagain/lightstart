@@ -72,8 +72,16 @@ const idle = async (): Promise<void> => {
   }
 };
 
-// On a prerendered page a view's first renders come before its data: light holds what does not match the served DOM until the app is idle, instead of drawing it fresh. Configured as this module loads, before the manifest defines the views.
+// On a prerendered page a view's first renders come before its data: light holds what does not match the served DOM until the app is idle, instead of drawing it fresh. The user's first input ends that wait too, so what they asked for shows at once while loads continue. Configured as this module loads, before the manifest defines the views.
 if (prerenderedPage()) {
+  const firstInput = new Promise<void>((resolve) => {
+    const events = ["input", "change", "pointerdown", "keydown"];
+    const done = (): void => {
+      for (const event of events) document.removeEventListener(event, done, { capture: true });
+      resolve();
+    };
+    for (const event of events) document.addEventListener(event, done, { capture: true, once: true, passive: true });
+  });
   configureView({
     wrap: (work: Promise<unknown>) => {
       pending.add(work);
@@ -82,7 +90,7 @@ if (prerenderedPage()) {
       };
       work.then(done, done);
     },
-    settle: idle,
+    settle: () => Promise.race([idle(), firstInput]),
   });
 }
 

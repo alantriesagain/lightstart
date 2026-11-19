@@ -70,7 +70,7 @@ const main = async (): Promise<void> => {
 
     ok("it finds the note model", first.models.join(",") === "note");
     ok("it finds the notes controller", first.controllers.join(",") === "notes");
-    eq("it sorts the views", first.views.join(","), "app-about,app-home,app-legal,app-root");
+    eq("it sorts the views", first.views.join(","), "app-about,app-home,app-legal,app-root,app-search");
     ok("it finds the routes", first.routes);
     ok("the first run wrote", first.changed);
 
@@ -81,7 +81,7 @@ const main = async (): Promise<void> => {
     ok("a view import is relative and side-effect only", source.includes('import "../src/views/app-root.ts";'));
     ok("the model keeps its file name", source.includes('{ name: "note", model: model0 }'));
     ok("the controller keeps its file name", source.includes('{ name: "notes", controller: controller0 }'));
-    ok("the views are named", source.includes('views: ["app-about", "app-home", "app-legal", "app-root"]'));
+    ok("the views are named", source.includes('views: ["app-about", "app-home", "app-legal", "app-root", "app-search"]'));
     eq("the entry starts the web host", readFileSync(first.main, "utf8"), 'import { start } from "@lightstart/app/web";\nimport manifest from "./app.ts";\n\nawait start(manifest);\n');
     ok("a project without the components writes none", !existsSync(join(first.dir, "components.ts")) && !existsSync(join(first.dir, "components.css")));
     ok("a project without i18n writes no locales", !existsSync(join(first.dir, "locales.ts")) && !source.includes('import "./locales.ts";'));
