@@ -164,12 +164,13 @@ const moduleSource = (order: readonly string[], onDemand: readonly string[], tab
   lines.push("");
   for (const tag of order) lines.push(`View.define(${identifier(tag)});`);
   if (onDemand.length > 0) {
-    lines.push("", "const onDemand = {");
+    // One branch per tag, each import typed on its own, in a TypeScript app and a JavaScript one alike.
+    lines.push("", "configureOnDemand((tag) => {");
     for (const tag of onDemand) {
       const entry = table[tag];
-      if (entry !== undefined) lines.push(`  ${JSON.stringify(tag)}: () => import("@lightstart/components/${entry.module}"),`);
+      if (entry !== undefined) lines.push(`  if (tag === ${JSON.stringify(tag)}) return import("@lightstart/components/${entry.module}").then((module) => View.define(module.default));`);
     }
-    lines.push("};", "", "configureOnDemand((tag) => {", "  const load = onDemand[tag];", "  return load === undefined ? Promise.resolve() : load().then((module) => View.define(module.default));", "});");
+    lines.push("  return Promise.resolve();", "});");
   }
   lines.push("");
   return lines.join("\n");
