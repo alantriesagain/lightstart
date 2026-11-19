@@ -377,6 +377,13 @@ class View extends BaseElement {
   /** @type {import("../signals/types.ts").Store} */
   $state = /** @type {import("../signals/types.ts").Store} */ (createStore(this.$ctor._storeDefs ?? {}, { name: this.$ctor.tag ?? "view", accessors: false }));
   /**
+   * The live query behind each model-bound property (`sync:` to a model, with
+   * `query`): `pending`, `error`, `total`, `refresh()`. The binding makes the
+   * record on the first such property, so a view without one has none.
+   * @type {Record<string, import("../controller/types.ts").ResourceHandle & { total?: number }> | undefined}
+   */
+  $queries;
+  /**
    * The values of the props declared `reactive: false`, made on first use.
    * @type {Record<string, unknown> | null}
    */
