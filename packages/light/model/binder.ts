@@ -237,7 +237,7 @@ export const modelBinder: SyncBinder = {
 };
 
 /** A resource of rows, with a `total` when its source is a model query. */
-type RowsResource = Resource<Record<string, unknown>[]> & { readonly total?: number };
+type RowsResource = ModelQueryResource<Record<string, unknown>>;
 
 const isRowObject = (value: unknown): boolean => typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -309,8 +309,7 @@ export class LiveRows<T> {
   /** The size of the whole match, past `limit`. */
   get total(): number {
     const res = this.res;
-    if (res === null || res.total === undefined) return 0;
-    return res.total;
+    return res !== null ? res.total : 0;
   }
 
   /** Follow `res` from now on, its rows replacing these as they land; the resource before is disposed. */

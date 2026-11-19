@@ -6,8 +6,11 @@
  */
 
 import { TaskRow } from "./p-am-row-class.rows.ts";
-import { LiveRows } from "../../model/binder.ts";
-import { resource } from "../../controller/resource.ts";
+import { LiveRows, modelQuery } from "../../model/binder.ts";
+import { configureModel, defineModel } from "../../model/index.ts";
+import { createStore, storeRequest } from "../../model/store.ts";
+import { buildQueryResult, createAdapter, registerStorageAdapter } from "../../model/adapter.ts";
+import T from "../../types/index.js";
 
 /** @type {Array<Record<string, unknown>>} */
 const source = [
@@ -72,9 +75,51 @@ for (const value of incoming) {
   if (typeof value !== "object" || value === null || Array.isArray(value)) continue;
   feed.push(/** @type {Record<string, unknown>} */ (value));
 }
+// The rows reach LiveRows through a real model query over a store in memory, as an app's do; the
+// damaged ones are written into the adapter directly, as a file damaged on disk would hold them.
+/** @type {Map<string, Record<string, unknown>>} */
+const stored = new Map();
+registerStorageAdapter("memory", {
+  async init() {},
+  /** @param {string} _model @param {string | number} id */
+  async get(_model, id) {
+    return stored.get(String(id)) ?? null;
+  },
+  /** @param {string} _model @param {Record<string, unknown>} opts */
+  async query(_model, opts) {
+    const result = buildQueryResult([...stored.values()], opts);
+    return { rows: result.items, total: result.total };
+  },
+  /** @param {string} _model @param {Record<string, unknown>} row */
+  async insert(_model, row) {
+    stored.set(String(row.id), row);
+    return row;
+  },
+  /** @param {string} _model @param {Record<string, unknown>} row */
+  async update(_model, row) {
+    stored.set(String(row.id), row);
+    return row;
+  },
+  /** @param {string} _model @param {string | number} id */
+  async delete(_model, id) {
+    return stored.delete(String(id));
+  },
+  async count() {
+    return stored.size;
+  },
+  async close() {},
+});
+const task = defineModel("task", { title: T.string({ required: true }), done: T.boolean({ defaultValue: false }), list: T.string(), addedAt: T.number({ required: true }) });
+const db = createAdapter("memory", { name: "probe-am" });
+await db.init();
+const store = createStore({ models: { task: task.schema }, databases: { memory: db }, defaultAdapter: "memory" });
+configureModel({ request: storeRequest(store) });
+let n = 0;
+for (const row of feed) stored.set(typeof row.id === "string" ? row.id : "row" + String(n++), row);
 const live = new LiveRows(TaskRow.of, "task");
-live.use(resource(() => feed, { eager: true, ready: false }));
+live.use(modelQuery(task, { order: "addedAt" }));
 await live.loaded();
+console.log("query total", live.total);
 let liveTotal = 0;
 let liveLabel = "";
 for (const row of live.value) {
