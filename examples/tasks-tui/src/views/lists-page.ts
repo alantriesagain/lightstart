@@ -27,7 +27,7 @@ class ListsPage extends View {
     const current = lists.current.value;
     return html`<div class="flex-1" @submit=${(e: SubmitEvent) => lists.add(e.value)}>
       <div class="flex-1 overflow-y-auto">${lists.rows.value.map((row) => {
-        const id = String(row.id);
+        const id = row.id;
         const count = tasks.countOf(id);
         return key(id, html`<p
           @click=${() => this.open(id)}
@@ -37,7 +37,7 @@ class ListsPage extends View {
             this.open(id);
           }}
           class=${id === current ? "font-bold focus:underline" : "focus:font-bold"}
-        >${String(row.name)} <span class="text-muted">${String(count.done)}/${String(count.all)} done</span></p>`);
+        >${row.name} <span class="text-muted">${count.done}/${count.all} done</span></p>`);
       })}</div>
       ${this.input}
     </div>`;

@@ -5,10 +5,10 @@ import { Controller } from "@lightstart/light/controller/class";
 import { liveRows } from "@lightstart/light/model/binder";
 import todo from "../models/todo.ts";
 
-import type { Todo } from "../models/todo.ts";
+import { TodoRow } from "../../.light/models.ts";
 
 class Todos extends Controller {
-  readonly rows = liveRows<Todo>(this, todo, () => ({ order: "addedAt" }));
+  readonly rows = liveRows<TodoRow>(this, todo, () => ({ order: "addedAt" }), TodoRow.of);
 
   constructor() {
     super("todos");
@@ -19,12 +19,12 @@ class Todos extends Controller {
     if (text.length > 0) await todo.add({ title: text, addedAt: Date.now() });
   }
 
-  async toggle(row: Todo): Promise<void> {
-    await todo.edit(String(row.id), { done: row.done !== true });
+  async toggle(row: TodoRow): Promise<void> {
+    await todo.edit(row.id, { done: !row.done });
   }
 
-  async remove(row: Todo): Promise<void> {
-    await todo.remove(String(row.id));
+  async remove(row: TodoRow): Promise<void> {
+    await todo.remove(row.id);
   }
 }
 

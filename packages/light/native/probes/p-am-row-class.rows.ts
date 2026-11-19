@@ -9,13 +9,17 @@ export class TaskRow {
   done: boolean;
   list: string | null;
   addedAt: number;
+  tags: unknown[];
+  meta: Record<string, unknown> | null;
 
-  constructor(id: string, title: string, done: boolean, list: string | null, addedAt: number) {
+  constructor(id: string, title: string, done: boolean, list: string | null, addedAt: number, tags: unknown[], meta: Record<string, unknown> | null) {
     this.id = id;
     this.title = title;
     this.done = done;
     this.list = list;
     this.addedAt = addedAt;
+    this.tags = tags;
+    this.meta = meta;
   }
 
   static of(row: Record<string, unknown>): TaskRow | null {
@@ -37,7 +41,19 @@ export class TaskRow {
       listValue = list;
     }
     if (typeof addedAt !== "number") return null;
+    const tags = row.tags;
+    let tagsValue: unknown[] = [];
+    if (tags !== undefined) {
+      if (!Array.isArray(tags)) return null;
+      tagsValue = tags;
+    }
+    const meta = row.meta;
+    let metaValue: Record<string, unknown> | null = null;
+    if (meta !== undefined && meta !== null) {
+      if (typeof meta !== "object" || Array.isArray(meta)) return null;
+      metaValue = meta as Record<string, unknown>;
+    }
 
-    return new TaskRow(id, title, doneValue, listValue, addedAt);
+    return new TaskRow(id, title, doneValue, listValue, addedAt, tagsValue, metaValue);
   }
 }

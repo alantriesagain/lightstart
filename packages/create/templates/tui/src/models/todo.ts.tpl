@@ -13,11 +13,3 @@ const schema: ModelSchema = {
 };
 
 export default defineModel("todo", schema);
-
-/** A todo as the query answers it: dynamic data, read through unknown-typed fields. */
-export interface Todo {
-  id: unknown;
-  title: unknown;
-  done: unknown;
-  addedAt: unknown;
-}

@@ -82,3 +82,7 @@ for (const row of live.value) {
   liveLabel += row.title.charAt(0);
 }
 console.log("live", live.value.length, "skipped", live.skipped, "total", liveTotal, "label", liveLabel);
+const rich = TaskRow.of(/** @type {Record<string, unknown>} */ ({ id: "r", title: "rich", addedAt: 1, tags: ["a", "b"], meta: { k: 1 } }));
+console.log("rich", rich === null ? "null" : String(rich.tags.length) + " " + String(rich.meta !== null ? Object.keys(rich.meta).length : -1));
+const bad = TaskRow.of(/** @type {Record<string, unknown>} */ ({ id: "b", title: "bad", addedAt: 1, tags: "x" }));
+console.log("bad tags", bad === null ? "null" : "kept");

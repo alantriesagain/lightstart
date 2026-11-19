@@ -25,15 +25,16 @@ The class table comes from the generation. A theme class in a template must be a
 
 ## A model and a controller
 
-`defineModel` reads `T` descriptors. Hold the schema in a `const schema: ModelSchema`, so the rows read as dynamic data through `unknown` fields. A controller is a `Controller` subclass, default-exported as one instance; `liveRows(this, model, () => query)` follows a model's rows from the controller's start, its first load counted before the controller is ready.
+`defineModel` reads `T` descriptors. Hold the schema in a `const schema: ModelSchema`: the generation writes a row class for it into `.light/models.ts`, one typed field per schema field, and its `static of` checks a row once on read, so a damaged row is skipped and warned about. A controller is a `Controller` subclass, default-exported as one instance; `liveRows(this, model, () => query, Row.of)` follows a model's rows from the controller's start, its first load counted before the controller is ready.
 
 ```ts
 import { Controller } from "@lightstart/light/controller/class";
 import { liveRows } from "@lightstart/light/model/binder";
 import todo from "../models/todo.ts";
+import { TodoRow } from "../../.light/models.ts";
 
 class Todos extends Controller {
-  readonly rows = liveRows<Todo>(this, todo, () => ({ order: "addedAt" }));
+  readonly rows = liveRows<TodoRow>(this, todo, () => ({ order: "addedAt" }), TodoRow.of);
   constructor() { super("todos"); }
   async add(title: string) { await todo.add({ title, addedAt: Date.now() }); }
 }
@@ -49,16 +50,17 @@ A view is a `View` subclass from `@lightstart/light/native/tui` whose `render()`
 import { define, html, View } from "@lightstart/light/native/tui";
 import todos from "../controllers/todos.ts";
 import type { KeyEvent } from "@lightstart/light/native/tui";
+import type { TodoRow } from "../../.light/models.ts";
 
-class TodoRow extends View {
-  todo = this.prop<Todo | null>("todo", null);
+class TodoRowView extends View {
+  todo = this.prop<TodoRow | null>("todo", null);
   render() {
     const todo = this.todo.value;
-    return todo === null ? null : html`<p @click=${() => todos.toggle(todo)}>${String(todo.title)}</p>`;
+    return todo === null ? null : html`<p @click=${() => todos.toggle(todo)}>${todo.title}</p>`;
   }
 }
 
-define("todo-row", TodoRow);
+define("todo-row", TodoRowView);
 ```
 
 ## Scripts

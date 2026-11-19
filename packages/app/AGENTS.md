@@ -17,7 +17,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `web/generate.ts` | The web host's part of the generation: `.light/main.ts`, and `.light/components.ts` and `.light/components.css` for a project on `@lightstart/components` |
 | `static/index.ts` | `renderApp(manifest, { path, args, kinds })` and `renderPage(manifest, page, options)`: the app's root view rendered on light's markup host over memory stores and a history in memory, with `<app-container>` as a markup view, and that markup put in a built page with the prerender marker |
 | `tui/index.ts` | The terminal host: `TuiHost`, `JsonlKind`, `hostArgs` (`--data`, `--scheme`, `--route`), argv, the history in memory, `<app-container>` as a terminal view, the baked table, `runApp`, `start` |
-| `tui/generate.ts` | The terminal host's part of the generation: the modes dispatch in `.light/main.ts`, and `.light/classes.baked.ts` |
+| `tui/generate.ts` | The terminal host's part of the generation: the modes dispatch in `.light/main.ts`, `.light/classes.baked.ts`, and `.light/models.ts` |
+| `tui/models.ts` | The row classes `.light/models.ts` holds: each model's fields typed by its schema, and a `static of` reading a row once and skipping a damaged one |
 | `tui/container.ts` | `AppContainer`: `<app-container>` as a terminal view, defined on import |
 | `tui/root.ts` | `handlerOf` and `callMounted`: the root view's `onKey` and `mounted(renderer)`, for the terminal host and its test mount |
 | `tui/file.ts` | `fileIO`: the JSONL adapter's files through `node:fs`, the folder made on the first write |
@@ -68,7 +69,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `AppHost` and `HostGeneration` | the hosts, and a host a project would bring later |
 | `AppManifest` and its records (`app`, `rootView`, `models`, `controllers`, `routes`, `views`) | the generated `.light/app.ts` and the run |
 | The file-name rule and the default exports of models, controllers, the root view and routes | project folders and the generator |
-| `.light/app.ts`, `.light/main.ts` and, for a terminal, `.light/classes.baked.ts` | `light serve`, `light build`, `light test`, `light app`, and a project's page or native entry |
+| `.light/app.ts`, `.light/main.ts` and, for a terminal, `.light/classes.baked.ts` and `.light/models.ts` | `light serve`, `light build`, `light test`, `light app`, and a project's page or native entry |
 | `.light/components.ts` and `.light/components.css` | a web project on `@lightstart/components`, imported by `.light/app.ts` and its own stylesheet |
 | `.light/locales.ts` | a project on `@lightstart/i18n`, imported by `.light/app.ts` before the views |
 | `currentView`, `navigate` and `<app-container>` | root views and controllers of web and terminal apps |

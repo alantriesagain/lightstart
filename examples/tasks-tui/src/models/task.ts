@@ -16,11 +16,3 @@ const schema: ModelSchema = {
 
 export default defineModel("task", schema);
 
-/** A task as a query answers it. */
-export interface Task {
-  id: unknown;
-  title: unknown;
-  done: unknown;
-  list: unknown;
-  addedAt: unknown;
-}
