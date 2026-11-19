@@ -13,7 +13,7 @@ class ActivityPage extends View {
 
   override render(): unknown {
     const rows = activity.rows.value;
-    return html`<div class="flex-1 overflow-y-auto">${rows.length > 0 ? rows.map((row) => key(String(row.id), html`<p>${String(row.text)}</p>`)) : html`<p class="text-muted">Nothing done yet in this run.</p>`}</div>`;
+    return html`<div class="flex-1 overflow-y-auto">${rows.length > 0 ? rows.map((row) => key(row.id, html`<p>${row.text}</p>`)) : html`<p class="text-muted">Nothing done yet in this run.</p>`}</div>`;
   }
 }
 

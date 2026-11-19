@@ -19,8 +19,8 @@ class TasksPage extends View {
   override render(): unknown {
     const rows = tasks.open();
     return html`<div class="flex-1" @submit=${(e: SubmitEvent) => tasks.add(e.value)}>
-      <p class="text-muted">${String(rows.length)} tasks</p>
-      <div class="flex-1 overflow-y-auto">${rows.length > 0 ? rows.map((row) => key(String(row.id), html`<task-row .task=${row}></task-row>`)) : html`<p class="text-muted">No tasks here yet: type one below and press Enter.</p>`}</div>
+      <p class="text-muted">${rows.length} tasks</p>
+      <div class="flex-1 overflow-y-auto">${rows.length > 0 ? rows.map((row) => key(row.id, html`<task-row .task=${row}></task-row>`)) : html`<p class="text-muted">No tasks here yet: type one below and press Enter.</p>`}</div>
       ${this.input}
     </div>`;
   }

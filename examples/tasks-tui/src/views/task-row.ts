@@ -6,15 +6,15 @@ import { View, define, html } from "@lightstart/light/native/tui";
 import tasks from "../controllers/tasks.ts";
 
 import type { KeyEvent } from "@lightstart/light/native/tui";
-import type { Task } from "../models/task.ts";
+import type { TaskRow } from "../../.light/models.ts";
 
-class TaskRow extends View {
-  task = this.prop<Task | null>("task", null);
+class TaskRowView extends View {
+  task = this.prop<TaskRow | null>("task", null);
 
   override render(): unknown {
     const task = this.task.value;
     if (task === null) return null;
-    const done = task.done === true;
+    const done = task.done;
     return html`<p
       @click=${() => tasks.toggle(task)}
       @key=${(e: KeyEvent) => {
@@ -23,8 +23,8 @@ class TaskRow extends View {
         void tasks.remove(task);
       }}
       class=${done ? "text-muted line-through focus:font-bold" : "focus:font-bold"}
-    >${done ? "[x]" : "[ ]"} ${String(task.title)}</p>`;
+    >${done ? "[x]" : "[ ]"} ${task.title}</p>`;
   }
 }
 
-define("task-row", TaskRow);
+define("task-row", TaskRowView);

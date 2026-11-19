@@ -4,21 +4,20 @@
  */
 import { Controller } from "@lightstart/light/controller/class";
 import { liveRows } from "@lightstart/light/model/binder";
+import { TaskRow } from "../../.light/models.ts";
 import task from "../models/task.ts";
 import activity from "./activity.ts";
 import lists from "./lists.ts";
 
-import type { Task } from "../models/task.ts";
-
 class Tasks extends Controller {
-  readonly rows = liveRows<Task>(this, task, () => ({ order: "addedAt" }));
+  readonly rows = liveRows<TaskRow>(this, task, () => ({ order: "addedAt" }), TaskRow.of);
 
   constructor() {
     super("tasks");
   }
 
   /** The open list's tasks, in the order they were added. */
-  open(): Task[] {
+  open(): TaskRow[] {
     const id = lists.current.value;
     return this.rows.value.filter((row) => row.list === id);
   }
@@ -30,7 +29,7 @@ class Tasks extends Controller {
     for (const row of this.rows.value) {
       if (row.list !== id) continue;
       all++;
-      if (row.done === true) done++;
+      if (row.done) done++;
     }
     return { all, done };
   }
@@ -43,15 +42,15 @@ class Tasks extends Controller {
     await activity.note("added " + text);
   }
 
-  async toggle(row: Task): Promise<void> {
-    const done = row.done !== true;
-    await task.edit(String(row.id), { done });
-    await activity.note((done ? "did " : "reopened ") + String(row.title));
+  async toggle(row: TaskRow): Promise<void> {
+    const done = !row.done;
+    await task.edit(row.id, { done });
+    await activity.note((done ? "did " : "reopened ") + row.title);
   }
 
-  async remove(row: Task): Promise<void> {
-    await task.remove(String(row.id));
-    await activity.note("removed " + String(row.title));
+  async remove(row: TaskRow): Promise<void> {
+    await task.remove(row.id);
+    await activity.note("removed " + row.title);
   }
 }
 

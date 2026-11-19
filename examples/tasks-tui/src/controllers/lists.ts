@@ -7,13 +7,12 @@ import { Controller } from "@lightstart/light/controller/class";
 import { liveRows } from "@lightstart/light/model/binder";
 import { signal } from "@lightstart/light/signals";
 import app from "../app.ts";
+import { ListRow } from "../../.light/models.ts";
 import list from "../models/list.ts";
 import activity from "./activity.ts";
 
-import type { List } from "../models/list.ts";
-
 class Lists extends Controller {
-  readonly rows = liveRows<List>(this, list, () => ({ order: "addedAt" }));
+  readonly rows = liveRows<ListRow>(this, list, () => ({ order: "addedAt" }), ListRow.of);
   /** The id of the list open now. */
   readonly current = signal("");
 
@@ -29,13 +28,13 @@ class Lists extends Controller {
     await this.rows.loaded();
     const wanted = app.args.string("list") ?? "Inbox";
     const found = this.rows.peek().find((row) => row.name === wanted);
-    this.current.value = found !== undefined ? String(found.id) : await this.add(wanted);
+    this.current.value = found !== undefined ? found.id : await this.add(wanted);
   }
 
   /** The list open now, or null before the start settled. */
-  currentList(): List | null {
+  currentList(): ListRow | null {
     const id = this.current.value;
-    return this.rows.value.find((row) => String(row.id) === id) ?? null;
+    return this.rows.value.find((row) => row.id === id) ?? null;
   }
 
   /** Make a list named `name`; answers its id. */

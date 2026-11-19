@@ -15,9 +15,3 @@ const schema: ModelSchema = {
 
 export default defineModel("event", schema);
 
-/** An event as a query answers it. */
-export interface Event {
-  id: unknown;
-  text: unknown;
-  at: unknown;
-}

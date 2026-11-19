@@ -13,9 +13,3 @@ const schema: ModelSchema = {
 
 export default defineModel("list", schema);
 
-/** A list as a query answers it. */
-export interface List {
-  id: unknown;
-  name: unknown;
-  addedAt: unknown;
-}

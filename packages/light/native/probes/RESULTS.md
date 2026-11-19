@@ -1,4 +1,4 @@
-# Probe results (2026-11-19T19:28Z, scriptc 0.4.12, node v25.3.0)
+# Probe results (2026-11-19T19:42Z, scriptc 0.4.12, node v25.3.0)
 
 ## p-a-dispatch: PASS
 - coverage rc=0 static=64 (100%) fully=true deferred=false
@@ -249,5 +249,5 @@ empty array field only: 9.0 ms
 ```
 
 ## p-am-row-class: PASS
-- coverage rc=0 static=957 (100%) fully=true deferred=false
+- coverage rc=0 static=975 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true

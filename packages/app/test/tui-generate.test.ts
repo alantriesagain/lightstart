@@ -5,7 +5,7 @@
  * tables, and `.light/classes.baked.ts` holds the classes the views write.
  */
 
-import { cpSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -50,6 +50,18 @@ const main = async (): Promise<void> => {
       ok("it has the light scheme", table.includes("export const light: BakedEntry[] = ["));
       ok("it carries a class the root view writes", table.includes('["flex-1 border", [["flex", 1, 0], ["border", true, 0]]]'));
       ok("it carries the row's conditional class", table.includes('["text-muted focus:font-bold", [["fg", "#7f857e", 0], ["bold", true, 1]]]'));
+    }
+
+    const rows = join(first.dir, "models.ts");
+    ok("the models file is written", existsSync(rows));
+    if (existsSync(rows)) {
+      const models = readFileSync(rows, "utf8");
+      ok("it says it is generated", models.startsWith("/**\n * @file The row classes of the app's models"));
+      ok("a number id is typed and checked", models.includes("export class ItemRow {\n  id: number;") && models.includes('if (typeof id !== "number") return null;'));
+      ok("a required string is non-null", models.includes("  title: string;") && models.includes('if (typeof title !== "string") return null;'));
+      ok("a boolean default reads the default", models.includes("  done: boolean;") && models.includes("let doneValue: boolean = false;"));
+      ok("an optional string is nullable", models.includes("  note: string | null;") && models.includes("let noteValue: string | null = null;"));
+      ok("each model gets its class", models.includes("export class NoteRow {") && models.includes("export class ProfileRow {"));
     }
 
     const before = statSync(first.manifest).mtimeMs;

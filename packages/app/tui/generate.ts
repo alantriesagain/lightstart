@@ -11,6 +11,7 @@
 import { join } from "node:path";
 import { bakeTables, collectClasses, render as renderClasses } from "@lightstart/light/theme/bake.js";
 import defaultTheme from "@lightstart/light/theme/themes/default.js";
+import { modelsSource, readModelDefinition } from "./models.ts";
 import type { GenerationHelpers, HostGeneration } from "../node/generate.ts";
 
 const modeImport = (helpers: GenerationHelpers, project: string, file: string, index: number): string =>
@@ -58,7 +59,10 @@ const generation: HostGeneration = {
     const wroteMain = helpers.writeWhenChanged(main, mainSource(helpers, project, modes));
     const classes = join(dir, "classes.baked.ts");
     const wroteClasses = helpers.writeWhenChanged(classes, await bakedSource(main));
-    return { changed: wroteMain || wroteClasses, classes, modes: modes.map(helpers.nameOf) };
+    const models = helpers.flatFiles(join(project, "src", "models"));
+    const definitions = await Promise.all(models.map((file) => readModelDefinition(file, helpers.nameOf(file))));
+    const wroteModels = helpers.writeWhenChanged(join(dir, "models.ts"), modelsSource(definitions));
+    return { changed: wroteMain || wroteClasses || wroteModels, classes, modes: modes.map(helpers.nameOf) };
   },
 };
 
