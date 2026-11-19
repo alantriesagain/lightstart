@@ -222,14 +222,16 @@ type FieldValue<F> = (F extends TypeDefinition<infer V> ? V : unknown) | (Held<F
  * stored row, since the store fills defaults on every add whatever the
  * adapter; any other field may be absent; a `null` default adds `null` to
  * the value. `id` is the declared `id` descriptor's type (`id: T.number()`
- * for an auto-incremented key), else the string the store assigns. `$`
- * directives are not fields.
+ * for an auto-incremented key), else the string the store assigns, and is
+ * always a string or number, as a store key is. `$`
+ * directives are not fields. A row has exactly its schema's fields and `id`,
+ * so a misspelled field is a type error.
  */
 export type RowOf<S> = {
   [K in keyof S as Holds<S[K]> extends true ? FieldKey<K> : never]: FieldValue<S[K]>;
 } & {
   [K in keyof S as Holds<S[K]> extends true ? never : FieldKey<K>]?: FieldValue<S[K]>;
-} & { id: S extends { readonly id: TypeDefinition<infer I> } ? I : string } & Row;
+} & { id: S extends { readonly id: TypeDefinition<infer I> } ? I & (string | number) : string };
 
 /** The row a model's api answers, as `defineModel` or a host's typings bound it: `type Todo = ModelRow<typeof todos>`. */
 export type ModelRow<M> = M extends ModelApi<infer R, ModelSchema | undefined> ? R : never;
