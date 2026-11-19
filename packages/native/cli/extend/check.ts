@@ -1,6 +1,7 @@
 /**
- * @file `light check` for a native project, or with `--all`: the native conventions over the
- * project, or over the workspace members light check's targets name. In a folder with no native
+ * @file `light check` for a native project, or with `--all`: the native conventions and light's
+ * own check rules over the project, or the native conventions over the workspace members light
+ * check's targets name. In a folder with no native
  * project and without `--all`, light's own check runs unchanged.
  */
 import { basename, resolve } from "node:path";
@@ -47,7 +48,12 @@ export default defineExtension("check", {
     if (!all && project === null && names.length === 0) return;
     const workspaceMode = all || (project !== null && workspaceRoot === project.dir) || names.length > 0;
     api.run(async (input) => {
-      if (!workspaceMode && project !== null) return (await checkProject(project)) === 0;
+      // A native project's conventions, then light's own rules over it (the engine's, its dependencies' and the project's): both run, and both must pass.
+      if (!workspaceMode && project !== null) {
+        const native = (await checkProject(project)) === 0;
+        const rules = await input.runOnce(project.dir);
+        return native && rules;
+      }
       const root = workspaceRoot ?? findRoot(ctx.projectDir);
       const targets = input.targets.filter((target) => target !== ctx.cwd);
       return (await run(targets, root)) === 0;
