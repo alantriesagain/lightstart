@@ -28,6 +28,7 @@ export type BuildContext = {
   importMap: ImportMap;
   parsed: ParsedPage;
   moduleOutputs: (string | undefined)[];
+  modulePreloads: string[];
   styleOutputs: (string | undefined)[];
   outputs: Map<string, Uint8Array | string>;
   log: BuildLog;

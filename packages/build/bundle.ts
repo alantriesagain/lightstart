@@ -127,13 +127,35 @@ const collect = (ctx: BuildContext, result: esbuild.BuildResult): void => {
   for (const file of result.outputFiles ?? []) ctx.outputs.set(relative(ctx.buildDir, file.path).split("\\").join("/"), file.contents);
 };
 
-const outputFor = (ctx: BuildContext, result: esbuild.BuildResult, entry: Entry): string | undefined => {
+type EntryOutput = { key: string; path: string };
+
+const entryOutput = (ctx: BuildContext, result: esbuild.BuildResult, entry: Entry): EntryOutput | undefined => {
   for (const [key, output] of Object.entries(result.metafile?.outputs ?? {})) {
     if (output.entryPoint === undefined) continue;
     const matches = entry.virtual === true ? output.entryPoint.endsWith(entry.in) : resolve(ctx.root, output.entryPoint) === entry.in;
-    if (matches) return outputPath(ctx, key);
+    if (matches) return { key, path: outputPath(ctx, key) };
   }
   return undefined;
+};
+
+const outputFor = (ctx: BuildContext, result: esbuild.BuildResult, entry: Entry): string | undefined => entryOutput(ctx, result, entry)?.path;
+
+const staticImports = (result: esbuild.BuildResult, entry: string): string[] => {
+  const outputs = result.metafile?.outputs ?? {};
+  const found = new Set<string>();
+  const visit = (key: string): void => {
+    const output = outputs[key];
+    if (output === undefined) return;
+    for (const imported of output.imports) {
+      if (imported.kind !== "import-statement" || imported.external === true) continue;
+      const dependency = outputs[imported.path];
+      if (dependency === undefined || dependency.entryPoint !== undefined || found.has(imported.path)) continue;
+      found.add(imported.path);
+      visit(imported.path);
+    }
+  };
+  visit(entry);
+  return [...found];
 };
 
 /** Bundle the page's module scripts and put their outputs in the context. */
@@ -154,9 +176,13 @@ export const bundleModules = async (ctx: BuildContext): Promise<void> => {
   if (entries.length === 0) return;
   const result = await bundle(ctx, entries, inline);
   collect(ctx, result);
+  const preloads = new Set<string>();
   entries.forEach((entry, index) => {
-    ctx.moduleOutputs[index] = outputFor(ctx, result, entry);
+    const output = entryOutput(ctx, result, entry);
+    ctx.moduleOutputs[index] = output?.path;
+    if (output !== undefined) for (const key of staticImports(result, output.key)) preloads.add(outputPath(ctx, key));
   });
+  ctx.modulePreloads = [...preloads];
 };
 
 /** Bundle each linked stylesheet and put its output and assets in the context. */

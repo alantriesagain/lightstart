@@ -54,6 +54,25 @@ const main = async (): Promise<void> => {
   } finally {
     rmSync(pruneOut, { recursive: true, force: true });
   }
+
+  const preloadFixture = fileURLToPath(new URL("./fixtures/preload", import.meta.url));
+  const preloadOut = mkdtempSync(join(tmpdir(), "light-build-preload-"));
+  try {
+    const report = await build({ root: preloadFixture, outDir: preloadOut, minify: false });
+    const html = readFileSync(join(report.dir, "index.html"), "utf8");
+    const preloads = [...html.matchAll(/<link rel="modulepreload" href="([^"]+)">/g)].map((match) => match[1]!);
+    eqn("the shared chunk is preloaded once", preloads.length, 1);
+    const preload = preloads[0]!;
+    ok("the preload is root-absolute", preload.startsWith("/"));
+    ok("the preloaded chunk exists", existsSync(join(report.dir, preload)));
+    ok("the preloaded chunk is the shared one", readFileSync(join(report.dir, preload), "utf8").includes("shared"));
+    const entry = [...html.matchAll(/<script type="module" src="([^"]+)"><\/script>/g)].map((match) => match[1]!)[0]!;
+    ok("the entry is not preloaded", preload !== entry);
+    const dynamic = /import\("\.\/([^"]+\.js)"\)/.exec(readFileSync(join(report.dir, entry), "utf8"))?.[1] ?? "";
+    ok("the dynamically imported chunk is not preloaded", dynamic !== "" && !preloads.some((href) => href.endsWith(dynamic)));
+  } finally {
+    rmSync(preloadOut, { recursive: true, force: true });
+  }
   done();
 };
 
