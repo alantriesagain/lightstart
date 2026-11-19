@@ -15,7 +15,7 @@ A web app on `@lightstart/app`: the folders are the app, and light writes the wi
 | `src/styles.css` | The generated components' stylesheet, then the app's own rules |
 | `test/` | Browser tests, run by `light test` |
 
-A view reaches its controller with an import, `import notes from "../controllers/notes.ts"`. A controller imports its models the same way, `import note from "../models/note.ts"`. One controller reaches another by name with `sync:` (the file name is the name), never by importing its instance.
+A view reaches its controller with an import, `import notes from "../controllers/notes.ts"`. A controller imports its models the same way, `import note from "../models/note.ts"`. A row's type comes from its schema: pass the schema to `defineModel` directly (not through a `: ModelSchema` annotation, which drops its fields) and name the row `export type Note = ModelRow<typeof note>`; its fields are typed, so a row reads `row.text`, not `String(row.text)`. One controller reaches another by name with `sync:` (the file name is the name), never by importing its instance.
 
 ## Generated files
 

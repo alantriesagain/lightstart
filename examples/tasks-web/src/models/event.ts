@@ -5,19 +5,15 @@
 import T from "@lightstart/light/types";
 import { defineModel } from "@lightstart/light/model";
 
-import type { ModelSchema } from "@lightstart/light/model";
+import type { ModelRow } from "@lightstart/light/model";
 
-const schema: ModelSchema = {
+const event = defineModel("event", {
   $adapter: "activity",
   text: T.string({ required: true }),
   at: T.number({ required: true }),
-};
+});
 
-export default defineModel("event", schema);
+export default event;
 
-/** An event as a query answers it. */
-export interface Event {
-  id: unknown;
-  text: unknown;
-  at: unknown;
-}
+/** An entry of the run's activity as a query answers it, typed from the schema. */
+export type EventRow = ModelRow<typeof event>;

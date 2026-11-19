@@ -17,7 +17,7 @@ class AppRoot extends View {
       <main class="page">
         <header class="bar">
           <lc-text tag="h1" size="2xl" weight="bold">${t("app.title")}</lc-text>
-          <lc-text color="muted">${open !== null ? String(open.name) : ""}</lc-text>
+          <lc-text color="muted">${open !== null ? open.name : ""}</lc-text>
           <lc-language-switcher></lc-language-switcher>
         </header>
         <nav class="tabs">

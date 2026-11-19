@@ -31,8 +31,8 @@ class TasksPage extends View {
           ? html`<p class="muted">${t("tasks.empty")}</p>`
           : html`<ul class="tasks">
               ${rows.map(
-                (row) => html`<li class=${row.done === true ? "done" : ""}>
-                  <label><input type="checkbox" .checked=${row.done === true} @change=${() => tasks.toggle(row)} /> ${String(row.title)}</label>
+                (row) => html`<li class=${row.done ? "done" : ""}>
+                  <label><input type="checkbox" .checked=${row.done} @change=${() => tasks.toggle(row)} /> ${row.title}</label>
                   <lc-button variant="secondary" size="sm" @click=${() => tasks.remove(row)}>${t("tasks.remove")}</lc-button>
                 </li>`,
               )}

@@ -5,22 +5,16 @@
 import T from "@lightstart/light/types";
 import { defineModel } from "@lightstart/light/model";
 
-import type { ModelSchema } from "@lightstart/light/model";
+import type { ModelRow } from "@lightstart/light/model";
 
-const schema: ModelSchema = {
+const task = defineModel("task", {
   title: T.string({ required: true }),
   done: T.boolean({ defaultValue: false }),
   list: T.string({ required: true }),
   addedAt: T.number({ required: true }),
-};
+});
 
-export default defineModel("task", schema);
+export default task;
 
-/** A task as a query answers it. */
-export interface Task {
-  id: unknown;
-  title: unknown;
-  done: unknown;
-  list: unknown;
-  addedAt: unknown;
-}
+/** A task as a query answers it, typed from the schema. */
+export type Task = ModelRow<typeof task>;

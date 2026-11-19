@@ -29,20 +29,20 @@ class Lists extends Controller {
     await this.rows.loaded();
     const wanted = app.args.string("list") ?? "Inbox";
     const found = this.rows.peek().find((row) => row.name === wanted);
-    this.current.value = found !== undefined ? String(found.id) : await this.add(wanted);
+    this.current.value = found !== undefined ? found.id : await this.add(wanted);
   }
 
   /** The list open now, or null before the start settled. */
   currentList(): List | null {
     const id = this.current.value;
-    return this.rows.value.find((row) => String(row.id) === id) ?? null;
+    return this.rows.value.find((row) => row.id === id) ?? null;
   }
 
   /** Make a list named `name`; answers its id. */
   async add(name: string): Promise<string> {
     const made = await list.add({ name: name.trim(), addedAt: Date.now() });
     await activity.note("made the list " + name.trim());
-    return String(made.id);
+    return made.id;
   }
 
   /** Open list `id`. */

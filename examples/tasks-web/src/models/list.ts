@@ -4,18 +4,14 @@
 import T from "@lightstart/light/types";
 import { defineModel } from "@lightstart/light/model";
 
-import type { ModelSchema } from "@lightstart/light/model";
+import type { ModelRow } from "@lightstart/light/model";
 
-const schema: ModelSchema = {
+const list = defineModel("list", {
   name: T.string({ required: true }),
   addedAt: T.number({ required: true }),
-};
+});
 
-export default defineModel("list", schema);
+export default list;
 
-/** A list as a query answers it. */
-export interface List {
-  id: unknown;
-  name: unknown;
-  addedAt: unknown;
-}
+/** A list as a query answers it, typed from the schema. */
+export type List = ModelRow<typeof list>;

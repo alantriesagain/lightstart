@@ -32,10 +32,10 @@ class ListsPage extends View {
       <lc-card padding="lg">
         <ul class="lists">
           ${lists.rows.value.map((row) => {
-            const id = String(row.id);
+            const id = row.id;
             const count = tasks.countOf(id);
             return html`<li class=${id === current ? "current" : ""}>
-              <lc-button variant="secondary" size="sm" @click=${() => this.open(id)}>${String(row.name)}</lc-button>
+              <lc-button variant="secondary" size="sm" @click=${() => this.open(id)}>${row.name}</lc-button>
               <span class="muted">${t("lists.count", { done: count.done, all: count.all })}</span>
             </li>`;
           })}

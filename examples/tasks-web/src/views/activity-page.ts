@@ -12,7 +12,7 @@ class ActivityPage extends View {
     const rows = activity.rows.value;
     return html`
       <lc-card padding="lg">
-        ${rows.length === 0 ? html`<p class="muted">${t("activity.empty")}</p>` : html`<ul class="activity">${rows.map((row) => html`<li>${String(row.text)}</li>`)}</ul>`}
+        ${rows.length === 0 ? html`<p class="muted">${t("activity.empty")}</p>` : html`<ul class="activity">${rows.map((row) => html`<li>${row.text}</li>`)}</ul>`}
       </lc-card>
     `;
   }

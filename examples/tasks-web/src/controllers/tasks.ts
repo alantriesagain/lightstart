@@ -30,7 +30,7 @@ class Tasks extends Controller {
     for (const row of this.rows.value) {
       if (row.list !== id) continue;
       all++;
-      if (row.done === true) done++;
+      if (row.done) done++;
     }
     return { all, done };
   }
@@ -45,13 +45,13 @@ class Tasks extends Controller {
 
   async toggle(row: Task): Promise<void> {
     const done = row.done !== true;
-    await task.edit(String(row.id), { done });
-    await activity.note((done ? "did " : "reopened ") + String(row.title));
+    await task.edit(row.id, { done });
+    await activity.note((done ? "did " : "reopened ") + row.title);
   }
 
   async remove(row: Task): Promise<void> {
-    await task.remove(String(row.id));
-    await activity.note("removed " + String(row.title));
+    await task.remove(row.id);
+    await activity.note("removed " + row.title);
   }
 }
 
