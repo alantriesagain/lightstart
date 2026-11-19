@@ -64,6 +64,18 @@ An app keeps rows in stores by name, several at once. A model picks one through 
 - `at` is what the kind opens: a folder for `jsonl` (the terminal's `--data` when absent), a database's name for `indexeddb` (the app's name for `main`, `<name>:<store>` for another), nothing for `memory`. It may be a function of the arguments.
 - A project brings a kind of its own (an adapter over its server's API, SQLite with its driver) by registering a `StoreKind` before the run: `registerStoreKind(new MyKind())`. Its `open(app, store, at, models, main)` answers the opened adapter.
 
+## Seeds
+
+A project may start with data. `src/seed.ts` (or `src/seed.js`) default-exports rows keyed by model name; `src/seed.dev.ts` (or `.js`) holds demo rows, loaded by `light serve`, `light test` and the test helpers, and left out of a release build (`light build`):
+
+```ts
+export default {
+  note: [{ text: "A first note" }],
+};
+```
+
+The generation imports both files into the manifest (`.light/app.ts` or `.js`), `src/seed` before `src/seed.dev`. A run adds a model's seed after the stores open and before the controllers start, so a controller's first query already sees the rows (and a prerender draws them). It adds them only when the model's store is empty, so a later run over the same rows adds nothing. A name with no such model is an error naming it; a row the model rejects is an error naming the model and the row's index. `openApp` and `openPage` load the seeds too; pass `{ seed: false }` to skip them.
+
 ## Routes and views
 
 `src/routes.ts` maps paths to view tags on every host. The run makes the router (`@lightstart/router`'s core) over the host's history: the browser's on the web, one in memory on the terminal (starting at `/`, or the path `--route` names). `currentView` is the view tag the path answers, `currentParams` the parameters of its path (`/components/:category` gives `{ category }`), and `navigate(path)` goes to another; all come from the host's subpath. A root view that shows routes writes `<app-container>` (the app's, drawing the routed view; not `lc-app-container`, the components' page layout), which the host gives: a component in the page, a terminal view on the terminal. The container sets the parameters on the view as props, keeping the same element while the tag stays, so a view declares a prop for each parameter its path has. An app without `routes.ts` mounts its root view alone.
@@ -75,7 +87,7 @@ A route with parameters may list their values with `params: () => Array<Record<s
 One run, the same on every host (`run.ts`):
 
 1. Fills the arguments from the host's source (argv, the URL query, a test's values).
-2. Opens every store.
+2. Opens every store, then adds each empty model's seeds.
 3. Names every controller (`nameControllers`, so `sync:` reaches it), starts them in import order and awaits each `$ready`.
 4. Follows the routes, when the app has them.
 5. Mounts the view on the host's surface.
@@ -98,6 +110,7 @@ The run starts the controllers one after the other, each once the one before it 
 import type { AppManifest } from "@lightstart/app/manifest.ts";
 import app from "../src/app.ts";
 import model0 from "../src/models/note.ts";
+import seed0 from "../src/seed.ts";
 import controller0 from "../src/controllers/notes.ts";
 import routes from "../src/routes.ts";
 import "../src/views/app-root.ts";
@@ -105,6 +118,7 @@ import "../src/views/app-root.ts";
 const manifest: AppManifest = {
   app,
   models: [{ name: "note", model: model0 }],
+  seeds: [seed0],
   controllers: [{ name: "notes", controller: controller0 }],
   routes,
   views: ["app-root"],

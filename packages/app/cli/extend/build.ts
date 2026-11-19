@@ -70,7 +70,7 @@ export default defineExtension("build", {
     api.steps.before("page", {
       name: "app",
       async run(ctx) {
-        await generate(ctx.root);
+        await generate(ctx.root, { dev: false });
       },
     });
     api.steps.after("html", {

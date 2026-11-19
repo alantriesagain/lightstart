@@ -34,10 +34,12 @@ const main = async (): Promise<void> => {
     eq("the host is the terminal", first.host, "tui");
     ok("the root view and row view are found", first.views.join(",") === "app-root,note-row");
     ok("the modes are found", first.modes.join(",") === "hello");
+    eq("the seed is found", first.seeds.join(","), "seed");
     ok("the first run wrote", first.changed);
 
     const manifest = readFileSync(first.manifest, "utf8");
     ok("the root view is the default import", manifest.includes('import rootView from "../src/views/app-root.ts";'));
+    ok("the seed is imported", manifest.includes('import seed0 from "../src/seed.ts";') && manifest.includes("  seeds: [\n    seed0,\n  ],"));
     ok("the manifest carries it", manifest.includes("  rootView,"));
     ok("the other view is side-effect only", manifest.includes('import "../src/views/note-row.ts";'));
 

@@ -24,6 +24,8 @@ export interface OpenPageOptions {
   args?: readonly string[] | Record<string, unknown>;
   /** The kinds the stores open with, the first the default; `memory` is always available. None opens every store in memory. */
   kinds?: readonly StoreKind[];
+  /** Whether the manifest's seeds load; `true` when absent. */
+  seed?: boolean;
 }
 
 /** How long a helper waits before it throws. */
@@ -165,7 +167,7 @@ export class OpenedPage {
 export const openPage = async (manifest: AppManifest, options: OpenPageOptions = {}): Promise<OpenedPage> => {
   const kinds = options.kinds ?? [];
   const host = new PageHost(options.path ?? "/", options.args, kinds);
-  const run = new AppRun(manifest, host, kinds.length === 0);
+  const run = new AppRun(manifest, host, kinds.length === 0, options.seed !== false);
   await run.start();
   await settlePage();
   if (host.mountedRoot === null) throw new Error("the page did not mount the app's root view");

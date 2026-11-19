@@ -8,6 +8,7 @@ A terminal app on `@lightstart/app`: the folders are the app, and light writes t
 |---|---|
 | `src/app.ts` | `defineApp({ name, host: "tui", theme?, stores?, root?, args? })`: `stores` by name (`main` is JSONL files under `--data` unless it names another kind or folder, `at`), `args` from argv beside the host's `--data`, `--scheme` and `--route` |
 | `src/models/<name>.ts` | One model, default-exported; the file name is the model's name |
+| `src/seed.ts` | Optional: rows by model name (`{ note: [{ text: "…" }] }`), added once into an empty store before the controllers start; `src/seed.dev.ts` holds demo rows `light build` leaves out |
 | `src/controllers/<name>.ts` | One controller, default-exported; the file name is its name |
 | `src/views/<tag>.ts` | One view; the file name is its tag, and the root view default-exports its class |
 | `src/routes.ts` | Optional: `{ "/path": { view: "<tag>", name?, title? } }`, drawn by `<app-container>` in the root view; `navigate(path)` from `@lightstart/app/tui` goes to a path |

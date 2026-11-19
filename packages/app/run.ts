@@ -14,7 +14,7 @@ import { RouterCore } from "@lightstart/router/core";
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
 import { parseArgs } from "@lightstart/cli/argv.ts";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
-import type { Store } from "@lightstart/light/model/types.ts";
+import type { Row, Store } from "@lightstart/light/model/types.ts";
 import { startControllers, stopControllers } from "./controllers.ts";
 import type { App } from "./index.ts";
 import type { AppManifest } from "./manifest.ts";
@@ -111,11 +111,13 @@ export class AppRun {
   controllers: readonly unknown[] = [];
   router: RouterCore | null = null;
   private following: (() => void) | null = null;
+  private readonly seed: boolean;
 
-  constructor(manifest: AppManifest, host: AppHost, memoryOnly = false) {
+  constructor(manifest: AppManifest, host: AppHost, memoryOnly = false, seed = true) {
     this.manifest = manifest;
     this.host = host;
     this.memoryOnly = memoryOnly;
+    this.seed = seed;
   }
 
   get app(): App {
@@ -135,9 +137,39 @@ export class AppRun {
 
   private async open(): Promise<void> {
     this.store = await this.host.openStores(this.manifest, this.memoryOnly);
+    if (this.seed) await this.seedStores();
     this.controllers = await startControllers(this.manifest);
     this.route();
     await this.host.mount(this);
+  }
+
+  /** Add each seed's rows once, into a model whose store is still empty; an error names the model and a bad row's index. */
+  private async seedStores(): Promise<void> {
+    const store = this.store;
+    if (store === null) return;
+    const models = new Set(this.manifest.models.map((entry) => entry.name));
+    // Whether each model's store was empty before any seed ran: the dev seed's rows join the seed's on a fresh store.
+    const empty = new Map<string, boolean>();
+    for (const group of this.manifest.seeds ?? []) {
+      for (const [name, rows] of Object.entries(group)) {
+        if (!models.has(name)) throw new Error(`A seed names the model "${name}", which the app does not have`);
+        if (!Array.isArray(rows)) throw new Error(`The seed for model "${name}" is not a list of rows`);
+        if (!empty.has(name)) empty.set(name, (await store.count(name)) === 0);
+      }
+    }
+    for (const group of this.manifest.seeds ?? []) {
+      for (const [name, rows] of Object.entries(group)) {
+        if (!Array.isArray(rows) || rows.length === 0) continue;
+        if (empty.get(name) !== true) continue;
+        try {
+          await store.addMany(name, rows.map((row) => row as Row), { importing: true });
+        } catch (error) {
+          const index = typeof error === "object" && error !== null && "index" in error && typeof (error as { index?: unknown }).index === "number" ? (error as { index: number }).index : null;
+          const reason = error instanceof Error ? error.message : String(error);
+          throw new Error(index === null ? `The seed for model "${name}" failed: ${reason}` : `The seed for model "${name}" failed at row ${String(index)}: ${reason}`);
+        }
+      }
+    }
   }
 
   private route(): void {

@@ -7,11 +7,11 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | Where | What |
 |---|---|
 | `index.ts` | `defineApp`, `AppConfig` (including the site's `url` and how it `prerender`s), `PrerenderRenderer`, `StoreConfig`, the `App` and `AppArgs` classes, `AppLifecycle` |
-| `manifest.ts` | `AppManifest`, `AppModel`, `AppController`: the plain records `.light/app.ts` (or `.js`) exports |
+| `manifest.ts` | `AppManifest`, `AppModel`, `AppController`, `AppSeeds`: the plain records `.light/app.ts` (or `.js`) exports |
 | `stores.ts` | `StoreKind`, `MemoryKind`, `registerStoreKind`, `schemasOf` and `openStores`: every declared store opened by its kind over one engine store, checked against the host's kinds and the models' `$adapter` |
 | `memory.ts` | `MemoryAdapter`, the in-memory storage adapter |
 | `controllers.ts` | `startControllers` and `stopControllers`: name, start, await `$ready`, dispose |
-| `run.ts` | `AppHost` (the host contract, with a surface-less default for each method), `AppRun` (the run: arguments, stores, controllers, routes, mount; `stop`, `restart`, `quit`), `currentView` and `navigate` |
+| `run.ts` | `AppHost` (the host contract, with a surface-less default for each method), `AppRun` (the run: arguments, stores, seeds, controllers, routes, mount; `stop`, `restart`, `quit`), `currentView` and `navigate` |
 | `web/index.ts` | The web host: `WebHost`, `IndexedDBKind`, the URL-query arguments, the browser history, the theme, `<app-container>` as a component, the root mount, `start` |
 | `web/test.ts` | `openPage(manifest, { path, args, kinds })`: the web host's root mount, theme and routed links over memory stores and a history in memory, and `OpenedPage` (`run`, `root`, `find`, `text`, `shows`, `navigate`, `settle`, `stop`) |
 | `web/generate.ts` | The web host's part of the generation: `.light/main.ts` (or `.js`), and `.light/components.ts` (or `.js`) and `.light/components.css` for a project on `@lightstart/components` |
@@ -24,7 +24,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `tui/file.ts` | `fileIO`: the JSONL adapter's files through `node:fs`, the folder made on the first write |
 | `tui/test.ts` | `mountApp`: the root view on a `TestTerminal` over an opened app |
 | `test/index.ts` | `openApp(manifest, { args })`: a run over memory stores with no surface, and `OpenedApp` |
-| `node/generate.ts` | The generator's core: find `src/app.ts` or `src/app.js` (its exported `appOf`), read it (its exported `infoOf`) and the routes (its exported `routesOf`, `routesPathOf`) without their views, read the folders, write `.light/app.ts` (or `.js`) and, for a project on `@lightstart/i18n`, `.light/locales.ts` (or `.js`), then hand `.light/main.ts` (or `.js`) to the host's `generate.ts` (`HostGeneration`) |
+| `node/generate.ts` | The generator's core: find `src/app.ts` or `src/app.js` (its exported `appOf`), read it (its exported `infoOf`) and the routes (its exported `routesOf`, `routesPathOf`) without their views, read the folders and `src/seed` (with `src/seed.dev` unless a release build passes `{ dev: false }`), write `.light/app.ts` (or `.js`) and, for a project on `@lightstart/i18n`, `.light/locales.ts` (or `.js`), then hand `.light/main.ts` (or `.js`) to the host's `generate.ts` (`HostGeneration`) |
 | `cli/commands/app.ts` | `light app` |
 | `cli/hooks/serve.before.ts` | Generate before `light serve` starts |
 | `cli/hooks/serve.file-changed.ts` | Regenerate when a named source is added, removed or renamed |
@@ -37,7 +37,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 ## Rules the sources keep
 
 - The core names no host. What only one host does (its store kinds, where its arguments come from, its history, its surface, its generated entry and files) is that host's subpath; the core reaches it through `AppHost` and `HostGeneration`.
-- One run, the same on every host: arguments, stores, controllers in import order, routes, mount. `stop` is the reverse: unmount, routes, controllers in reverse, stores. `restart` and `quit` are the run's, installed on `app` by every host and by `openApp`; they reject with "the app is not running" before a run.
+- One run, the same on every host: arguments, stores, seeds into empty stores, controllers in import order, routes, mount. `stop` is the reverse: unmount, routes, controllers in reverse, stores. `restart` and `quit` are the run's, installed on `app` by every host and by `openApp`; they reject with "the app is not running" before a run.
 - `AppHost` is a class whose methods all have a default, not an abstract class, and a method answering a promise is not `async`: scriptc does not dispatch an abstract method's override reliably, nor an async override. A `StoreKind`'s `open` follows the same rule.
 - Stores: `main` is always declared, of the host's default kind unless the app says. A store's kind must be one the host runs, a project's registered one, or `memory`; a model's `$adapter` must name a declared store. Both are errors before anything opens. A test opens every store in memory.
 - The manifest lists the controllers in the order they start: taken by name, each after the controllers it imports for their values (`import type` does not count), read from its relative imports. A cycle is an error that names it.
@@ -68,7 +68,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `defineApp`, `AppConfig` and its fields (`name`, `host`, `theme`, `locale`, `url`, `prerender`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`kind`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
 | `StoreKind` and `registerStoreKind` | a project bringing a store kind of its own |
 | `AppHost` and `HostGeneration` | the hosts, and a host a project would bring later |
-| `AppManifest` and its records (`app`, `rootView`, `models`, `controllers`, `routes`, `views`) | the generated `.light/app.ts` (or `.js`) and the run |
+| `AppManifest` and its records (`app`, `rootView`, `models`, `seeds`, `controllers`, `routes`, `views`) | the generated `.light/app.ts` (or `.js`) and the run |
 | The file-name rule and the default exports of models, controllers, the root view and routes | project folders and the generator |
 | `.light/app.ts` (or `.js`), `.light/main.ts` (or `.js`) and, for a terminal, `.light/classes.baked.ts` and `.light/models.ts` | `light serve`, `light build`, `light test`, `light app`, and a project's page or native entry |
 | `.light/components.ts` (or `.js`) and `.light/components.css` | a web project on `@lightstart/components`, imported by `.light/app.ts` (or `.js`) and its own stylesheet |
