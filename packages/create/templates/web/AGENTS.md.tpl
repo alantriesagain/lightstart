@@ -24,6 +24,18 @@ A view reaches its controller with an import, `import notes from "../controllers
 
 The app layer opens the stores (a model picks one with its schema's `$adapter`, `main` when it names none), names and starts the controllers, applies the theme, builds the router from `src/routes.__EXT__` and mounts the root view. It also writes `.light/components.__EXT__` and `.light/components.css` for a project on `@lightstart/components`: the views write `lc-*` tags and the generation defines them and imports their stylesheets, so a view imports no component and calls no `View.define`.
 
+## Writing a piece
+
+Write a model, a controller or a view from the app's folder, in the app's language and with the shape the scaffold uses:
+
+```bash
+light new model note2 --fields "title:string,done:boolean"
+light new controller notes2 --model note2
+light new view note-list
+```
+
+A field is `name:type`, types are `string`, `boolean`, `number`, `array` and `object`, and a `!` after the type makes it required (`title:string!`); a `?`, or nothing, is optional with a default (`""`, `false`, `0`, `[]`, `{}`). The commands refuse a file that already exists, and a view tag needs a hyphen.
+
 ## Scripts
 
 | Command | Does |
