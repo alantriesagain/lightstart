@@ -161,6 +161,21 @@ await start(manifest, { classes: { dark, light } });
 
 The output is deterministic (sorted, relative imports from `.light/`) and a file is written only when its content changes. `.light/` is not committed: add it to the project's `.gitignore`, beside `.deployed/`.
 
+## Check rules
+
+A project that depends on `@lightstart/app` gets these rules from `light check`, in `check/rules/`, each an error unless marked:
+
+- `view-writes-no-model`: a module under `src/views/` never calls `add`, `addMany`, `edit`, `remove` or `removeAll` on a model it imports; a view goes through its controller.
+- `model-module-shape`: `src/models/<name>.(js|ts)` default-exports `defineModel(...)` (or a name bound to one), with the model named after the file.
+- `routes-module-shape`: `src/routes.(js|ts)` default-exports an object literal (or a name bound to one) whose keys are paths starting with `/`.
+- `no-view-import-by-hand`: a module imports no view module for its side effect or its default; `.light/` defines the views, and `import type` is fine.
+- `no-duplicate-route-path`: two keys of the routes table never name the same path once a trailing slash is ignored.
+- `no-server-module-in-page`: in a web app (`host: "web"` in `src/app.*`), nothing under `src/` imports `node:*`, `@lightstart/server` or `@lightstart/sqlite`.
+- `test-conventions`: no committed `.only` on `describe`, `it` or `test`.
+- `test-touches-browser` (warning): a test that reads `document` or `window` is named `*.browser.test.*` or `*.e2e.*`.
+- `controller-has-test` (warning): a controller under `src/controllers/` is named by a file under `test/` or `tests/`, or one that opens the generated app.
+- `piece-file-names` (warning): a file under `src/models`, `src/controllers` or `src/views` is kebab-case.
+
 ## Building
 
 `light build` runs the same generator before it reads the page, then adds the files a static host needs after it rewrites the page, for a project with `src/app.ts` or `src/app.js`:

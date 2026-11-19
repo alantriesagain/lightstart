@@ -61,6 +61,7 @@ Follow the shape `light new` gave the project and the choices it already made (i
 - **Components.** A web view writes `<lc-*>` tags and imports nothing; `src/styles.css` starts with `@import "../.light/components.css"`. `index.html` loads `/src/styles.css` and `/.light/main.ts` from the root, so nested routes and a built `404.html` find them.
 - **Words.** With `@lightstart/i18n` installed, `src/locales/<lang>.ts` holds the app's words, merged over the `locales/` of every package that declares `light.locales: true`, and `defineApp({ locale })` names the default.
 - **Arguments.** `defineApp({ args })` declares them; a controller reads `app.args.string("name")`. The web host fills them from the URL query, the terminal from argv (with its own `--data`, `.data` by default, `--scheme` and `--route`).
+- **Checks.** `light check` enforces these patterns for an app on `@lightstart/app`: a view writes no model, a model and the routes keep their shape, no view is imported by hand, routes have no duplicate path, a web page reaches no server module, tests carry no `.only`, and `src/locales` stays in parity (with warnings for a controller no test names and a file name that is not kebab-case).
 
 ## Testing
 

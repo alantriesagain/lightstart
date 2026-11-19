@@ -6,9 +6,6 @@ import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
 import { t } from "@lightstart/i18n";
 import lists from "../controllers/lists.ts";
-import "./tasks-page.ts";
-import "./lists-page.ts";
-import "./activity-page.ts";
 
 class AppRoot extends View {
   render() {
