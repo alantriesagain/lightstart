@@ -15,7 +15,7 @@ pnpm dev
 |---|---|
 | `dev` | `light serve --watch` |
 | `build` | `light build` into `.deployed/current` |
-| `test` | `light test test/*.test.ts` in headless Chromium |
+| `test` | `light test test/*.test.*` in headless Chromium |
 | `check` | `light check` |
 | `lint` | `light lint`: eslint with the project's config |
 | `typecheck` | `light typecheck`: `tsc --noEmit` over the sources, the tests and `.light/` |
@@ -27,15 +27,15 @@ The browser tests need Chromium: `pnpm exec playwright install chromium`. Run `p
 
 | Path | What |
 |---|---|
-| `src/app.ts` | The app's name and host |
-| `src/models/note.ts` | The note model |
-| `src/controllers/notes.ts` | The live notes and the write that adds one |
-| `src/views/app-root.ts` | The root view: the heading, the notes, the field and the button |
-| `src/views/app-home.ts`, `src/views/app-about.ts` | The route views |
-| `src/routes.ts` | `/` and `/about` to their views |
+| `src/app.__EXT__` | The app's name and host |
+| `src/models/note.__EXT__` | The note model |
+| `src/controllers/notes.__EXT__` | The live notes and the write that adds one |
+| `src/views/app-root.__EXT__` | The root view: the heading, the notes, the field and the button |
+| `src/views/app-home.__EXT__`, `src/views/app-about.__EXT__` | The route views |
+| `src/routes.__EXT__` | `/` and `/about` to their views |
 | `src/styles.css` | The generated components' stylesheet, and the page's own rules |
 | `.light/` | Generated wiring: never edit, never commit |
-| `test/app.test.ts` | The browser test |
+| `test/app.test.__EXT__` | The browser test |
 
 ## Light
 

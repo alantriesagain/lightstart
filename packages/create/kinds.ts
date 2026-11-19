@@ -13,6 +13,8 @@ export type Kind = {
   name: string;
   /** One line for `light new` with no kind. */
   description: string;
+  /** The language variants under `templates/<name>/`: each is a folder copied over the shared files. */
+  languages?: readonly ("js" | "ts")[];
   /** The light packages the project depends on, put under `dependencies`. */
   packages: readonly string[];
   /** The scripts the project's package.json runs; `__NAME__` is the project's name. */

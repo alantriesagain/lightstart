@@ -15,6 +15,7 @@ const args = {
   dir: { description: "The folder to write (default: ./<name>)" },
   light: { description: "The light checkout to link (default: the one this CLI runs from)" },
   npm: { flag: true, description: "Write published versions instead of linking; the install may fail until they are published" },
+  ts: { flag: true, description: "A web app in TypeScript (default: JavaScript with JSDoc)" },
   pm: { choices: ["pnpm", "npm"] as const, description: "The package manager (default: pnpm, or npm with --npm)" },
   install: { flag: true, default: true, description: "Run the install (--no-install keeps it off)" },
   force: { flag: true, description: "Write into a folder that is not empty" },
@@ -22,7 +23,7 @@ const args = {
 
 const command: Command<typeof args> = {
   description: "Start a project on light",
-  usage: "light new <kind> <name> [--dir <path>] [--light <path>] [--npm] [--pm pnpm|npm] [--no-install] [--force]",
+  usage: "light new <kind> <name> [--dir <path>] [--light <path>] [--npm] [--pm pnpm|npm] [--ts] [--no-install] [--force]",
   args,
   async run(ctx, parsed: ResolvedArgs<typeof args>) {
     if (parsed.kind === undefined) {
@@ -52,6 +53,7 @@ const command: Command<typeof args> = {
         pm,
         install: parsed.install,
         force: parsed.force,
+        language: parsed.ts ? "ts" : "js",
         log: (message) => ctx.log.log(message),
       });
       ctx.log.log(`Created ${manifest.name} from the ${kind.name} kind.`);

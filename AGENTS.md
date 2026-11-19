@@ -8,20 +8,20 @@ Start every new project with `light new <kind> <name>`, run from a light checkou
 
 | Kind | What it gives |
 |---|---|
-| `web` | A web app on `@lightstart/app`: views, a model, a controller and routes, served by `light serve` |
+| `web` | A web app on `@lightstart/app`: views, a model, a controller and routes, served by `light serve`; JavaScript typed with JSDoc, or TypeScript with `--ts` |
 | `tui` | A terminal app on `@lightstart/app`: a model, a controller and views, compiled by `scriptc` |
 | `desktop` | A light page in the desktop shell, with a backend `scriptc` compiles |
 | `package` | A light package: modules, tests, a README and the pack script |
 
 The project's own `AGENTS.md` is the reference for its kind: where files go, what each script does, how to test and what the host expects. Read it before changing code.
 
-A web or terminal project is an app on `@lightstart/app`: `src/app.ts` names its host, `src/models/`, `src/controllers/` and `src/views/` hold its pieces, and `src/routes.ts` maps paths to view tags on the web. Light writes the wiring into `.light/`, which is generated and never committed or edited. A view imports its controller, a controller imports its models, and one controller reaches another by name with `sync:`.
+A web or terminal project is an app on `@lightstart/app`: `src/app.js` (`src/app.ts` in a TypeScript app) names its host, `src/models/`, `src/controllers/` and `src/views/` hold its pieces, and `src/routes.js` maps paths to view tags on the web. Light writes the wiring into `.light/`, which is generated and never committed or edited. A view imports its controller, a controller imports its models, and one controller reaches another by name with `sync:`.
 
 The everyday commands are `pnpm dev` (web, tui, desktop), `pnpm build`, `pnpm test`, `pnpm check`, `pnpm lint`, `pnpm typecheck` and `pnpm verify` (all four gates). A project's own scripts are the source of truth.
 
 Conventions every kind shares:
 
-- TypeScript with erasable syntax: no `enum`, `namespace`, parameter properties or decorators, so node runs the sources after stripping types and `scriptc` can compile them.
+- TypeScript with erasable syntax (light's own packages, a `--ts` app, terminal apps): no `enum`, `namespace`, parameter properties or decorators, so node runs the sources after stripping types and `scriptc` can compile them. A web app defaults to JavaScript typed with JSDoc, checked by `light typecheck`; `--ts` writes TypeScript instead.
 - No `any`. Narrow `unknown` with `typeof`, `instanceof` or `Array.isArray`.
 - Run `pnpm verify` before committing: `light verify` runs `check`, `lint`, `typecheck` and `test` in order.
 - Test with `light test` in a web app, and with `node --test` (or the project's test script) elsewhere.
@@ -52,11 +52,11 @@ Reach for these before writing your own; each package's README is its reference.
 
 Follow the shape `light new` gave the project and the choices it already made (its host, its store kinds, its controller style); extend them rather than introduce a second way.
 
-- **One file, one piece.** `src/models/<name>.ts`, `src/controllers/<name>.ts`, `src/views/<tag>.ts`: the file name is the name, a view module defines its tag (`View.register(tag, Class)` or `View.define(definition)`), and `.light/` picks them all up. Never import a view's module by hand to make it exist.
+- **One file, one piece.** `src/models/<name>.js`, `src/controllers/<name>.js`, `src/views/<tag>.js` (`.ts` in a TypeScript app): the file name is the name, a view module defines its tag (`View.register(tag, Class)` or `View.define(definition)`), and `.light/` picks them all up. Never import a view's module by hand to make it exist.
 - **Controllers.** A `Controller` subclass compiles natively and follows a model with `readonly rows = liveRows<Row>(this, model, () => query)`, which starts with the controller and comes back after a restart. A `defineController` literal is a sync target: a view's prop declared `T.string({ sync: "<controller>" })` follows it, once the page installs `View.use(syncPlugin)` (`@lightstart/light/controller/view`) before its views are defined. Its own `sync: { prop: "local" }` needs the page to `registerAdapter("local", localStorage)`.
 - **State, occurrences and a child's news.** State is a signal: what a view or a controller reads now (the route, the language, a list, a setting), never a "changed" event someone fires beside it. An occurrence is an event, each one delivered (a request opened, a message about to be sent). A component telling its parent something happened is a DOM event through `$emit` (`form-submit`, `field-change`), its public boundary. A global "something changed, go and look" event is the one shape to avoid: make the state a signal instead.
 - **Views and signals.** A `View` subclass's render follows the signals it reads. A definition view (`defineComponent` then `View.define`) does not: it reads shared state through `sync:` props, or it is written as a class.
-- **Routes.** `src/routes.ts` maps a path to a view tag; `/notes/:id` sets `id` on the view as a prop (declare it), and the same view updates when only a parameter changes. Go with `navigate(path)`; a plain `<a href>` to an app path goes through the router too.
+- **Routes.** `src/routes.js` (or `.ts`) maps a path to a view tag; `/notes/:id` sets `id` on the view as a prop (declare it), and the same view updates when only a parameter changes. Go with `navigate(path)`; a plain `<a href>` to an app path goes through the router too.
 - **Components.** A web view writes `<lc-*>` tags and imports nothing; `src/styles.css` starts with `@import "../.light/components.css"`. `index.html` loads `/src/styles.css` and `/.light/main.ts` from the root, so nested routes and a built `404.html` find them.
 - **Words.** With `@lightstart/i18n` installed, `src/locales/<lang>.ts` holds the app's words, merged over the `locales/` of every package that declares `light.locales: true`, and `defineApp({ locale })` names the default.
 - **Arguments.** `defineApp({ args })` declares them; a controller reads `app.args.string("name")`. The web host fills them from the URL query, the terminal from argv (with its own `--data`, `.data` by default, `--scheme` and `--route`).
