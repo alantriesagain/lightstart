@@ -56,7 +56,8 @@ const writePage = async (ctx: BuildContext): Promise<void> => {
     return output === undefined ? undefined : outputUrl(ctx, module?.kind === "external" ? module.src : undefined, output);
   });
   const styles = ctx.styleOutputs.map((output, index) => (output === undefined ? undefined : outputUrl(ctx, ctx.parsed.stylesheets[index]?.href, output)));
-  const html = renderPage(ctx.parsed, modules, styles);
+  const preloads = ctx.modulePreloads.map((output) => `/${output}`);
+  const html = renderPage(ctx.parsed, modules, styles, preloads);
   ctx.outputs.set(relative(ctx.root, ctx.pagePath).split("\\").join("/"), html);
 };
 
@@ -136,6 +137,7 @@ const runBuild = async (extension: BuildExtension, log: BuildLog): Promise<Build
     importMap: { imports: {} },
     parsed: parsePage("", dirname(pagePath)),
     moduleOutputs: [],
+    modulePreloads: [],
     styleOutputs: [],
     outputs: new Map<string, Uint8Array | string>(),
     log,

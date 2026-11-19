@@ -88,8 +88,8 @@ export const parsePage = (html: string, pageDir: string, root: string = pageDir)
 
 const replaceHref = (tag: string, url: string): string => tag.replace(/(\bhref\s*=\s*)(?:"[^"]*"|'[^']*'|[^\s>]+)/i, `$1"${url}"`);
 
-/** Render the page with the importmap gone, module scripts pointing at their bundles and stylesheet links at their outputs. */
-export const renderPage = (page: ParsedPage, moduleUrls: readonly (string | undefined)[], styleUrls: readonly (string | undefined)[]): string => {
+/** Render the page with the importmap gone, module scripts pointing at their bundles and stylesheet links at their outputs, and the given chunks preloaded in `<head>`. */
+export const renderPage = (page: ParsedPage, moduleUrls: readonly (string | undefined)[], styleUrls: readonly (string | undefined)[], preloadUrls: readonly string[] = []): string => {
   const replacements: { range: PageRange; text: string }[] = [];
   for (const range of page.importMapRanges) replacements.push({ range, text: "" });
   page.modules.forEach((_module, index) => {
@@ -105,5 +105,7 @@ export const renderPage = (page: ParsedPage, moduleUrls: readonly (string | unde
   replacements.sort((a, b) => b.range.start - a.range.start);
   let out = page.html;
   for (const replacement of replacements) out = out.slice(0, replacement.range.start) + replacement.text + out.slice(replacement.range.end);
-  return out;
+  if (preloadUrls.length === 0) return out;
+  const links = preloadUrls.map((url) => `<link rel="modulepreload" href="${url}">`).join("");
+  return out.replace(/<head(\s[^>]*)?>/i, (head) => head + links);
 };
