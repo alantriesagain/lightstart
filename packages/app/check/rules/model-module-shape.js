@@ -36,7 +36,7 @@ export default defineRule({
       }
       const resolved = resolveLocal(exported);
       const name = resolved ? defineModelName(resolved) : null;
-      if (name === null) {
+      if (resolved === null || name === null) {
         ctx.report({ file, offset: exported.getStart(sf), message: `${file} does not default-export \`defineModel(...)\`; a model module exports the model it defines` });
         continue;
       }
