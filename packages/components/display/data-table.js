@@ -1,10 +1,13 @@
 import { html } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
 import { defineComponent } from "@lightstart/light";
+import { isModelApi, modelApi } from "@lightstart/light/model";
+import { modelQuery } from "@lightstart/light/model/binder";
 import { lcText } from "../utils/text.js";
 import { clampPage, pageCount, pageRows, rangeOf, sortRows } from "../utils/table-rows.js";
 
 /** @import { DataTableQuery, Prop, TableColumn, TableRow, TableRowSelect, TableRowSelected } from "../types.ts" */
+/** @import { ModelQueryResource } from "@lightstart/light/model" */
 
 const TAG = /** @type {const} */ ("lc-data-table");
 
@@ -35,13 +38,19 @@ export default defineComponent({
     isSelected: /** @type {Prop<TableRowSelected | null>} */ (T.function()),
     emptyMessage: "",
     compact: false,
-    total: 0,
     _queryKey: T.string({ reactive: false, defaultValue: "" }),
-    _query: /** @type {Prop<Record<string, unknown> | null>} */ (T.object({ reactive: false, defaultValue: null })),
+    _resource: /** @type {Prop<ModelQueryResource<Record<string, unknown>> | null>} */ (T.object({ reactive: false, defaultValue: null })),
+    _queryOffs: /** @type {Prop<Array<() => void>>} */ (T.array({ reactive: false, defaultValue: [] })),
   },
   events: {
     "page-change": T.object({ page: T.number(), pageSize: T.number() }),
     sort: T.object({ sortBy: T.string(), sortDir: T.string() }),
+  },
+
+  connected() {
+    // A remount starts the query again: the last disconnect disposed it.
+    this._syncQuery();
+    this.$own(() => this._disposeQuery());
   },
 
   /** @param {{ changedProps: Map<string, unknown> }} detail */
@@ -51,10 +60,66 @@ export default defineComponent({
     const reorder = ["sortBy", "sortDir", "pageSize"].some((name) => changedProps.has(name) && changedProps.get(name) !== undefined);
     const requery = changedProps.has("query") && changedProps.get("query") !== undefined && JSON.stringify(changedProps.get("query")) !== JSON.stringify(this.query);
     if (recount || reorder || requery) this.page = 1;
+    this._syncQuery();
+  },
+
+  _syncQuery() {
+    const query = this.query;
+    if (!query?.model) {
+      if (this._resource !== null) {
+        this._disposeQuery();
+        this._queryKey = "";
+      }
+      return;
+    }
+    const api = typeof query.model === "string" ? modelApi(query.model, () => undefined) : query.model;
+    if (!isModelApi(api)) return;
+    const key = JSON.stringify([api.name, query.where ?? null, query.includes ?? null, this.page, this.pageSize, this.sortBy, this.sortDir]);
+    if (key === this._queryKey && this._resource !== null) return;
+    this._queryKey = key;
+    this._disposeQuery();
+    const resource = modelQuery(api, {
+      where: query.where,
+      includes: query.includes,
+      order: this.sortBy ? (this.sortDir === "desc" ? `-${this.sortBy}` : this.sortBy) : undefined,
+      limit: this.pageSize,
+      offset: (this.page - 1) * this.pageSize,
+    });
+    const update = () => this.$requestUpdate();
+    this._resource = resource;
+    this._queryOffs = [resource.value.subscribe(update), resource.pending.subscribe(update), resource.error.subscribe(update)];
+    resource.ensure().catch(() => {});
+  },
+
+  _disposeQuery() {
+    const offs = this._queryOffs;
+    this._queryOffs = [];
+    for (const off of offs) off();
+    const resource = this._resource;
+    this._resource = null;
+    resource?.dispose();
   },
 
   _count() {
-    return this.query?.model ? this.total : this.rows.length;
+    if (this.query?.model) {
+      const resource = this._resource;
+      return resource !== null ? resource.total : 0;
+    }
+    return this.rows.length;
+  },
+
+  _queryRows() {
+    const resource = this._resource;
+    const rows = resource !== null ? resource.value.value : undefined;
+    return Array.isArray(rows) ? /** @type {TableRow[]} */ (rows) : [];
+  },
+
+  _emptyMessage() {
+    const resource = this._resource;
+    if (resource === null) return this.emptyMessage;
+    if (resource.error.value) return lcText(TAG, "failed");
+    if (resource.pending.value && this._queryRows().length === 0) return lcText(TAG, "loading");
+    return this.emptyMessage;
   },
 
   /** @param {number} page */
@@ -80,23 +145,6 @@ export default defineComponent({
     this.$emit("sort", { sortBy: this.sortBy, sortDir: this.sortDir });
   },
 
-  _pageQuery() {
-    const query = /** @type {DataTableQuery} */ (this.query);
-    const next = {
-      ...query,
-      key: "rows",
-      limit: this.pageSize,
-      offset: (this.page - 1) * this.pageSize,
-      ...(this.sortBy ? { order: `${this.sortBy} ${this.sortDir === "desc" ? "DESC" : "ASC"}` } : {}),
-    };
-    const key = JSON.stringify(next);
-    if (key !== this._queryKey) {
-      this._queryKey = key;
-      this._query = next;
-    }
-    return this._query;
-  },
-
   _renderFooter() {
     const count = this._count();
     if (!count) return "";
@@ -120,34 +168,21 @@ export default defineComponent({
 
   render() {
     const sort = (/** @type {CustomEvent<{ sortBy: string, sortDir: string }>} */ e) => this._sort(e);
-    if (this.query?.model)
-      return html`
-        <lc-table
-          .data-query=${this._pageQuery()}
-          .columns=${this.columns}
-          .selectRow=${this.selectRow}
-          .isSelected=${this.isSelected}
-          ?sortable=${this.sortable}
-          .sortBy=${this.sortBy}
-          .sortDir=${this.sortDir}
-          .emptyMessage=${this.emptyMessage}
-          ?compact=${this.compact}
-          @sort=${sort}
-          @dataLoaded=${(/** @type {CustomEvent<{ total?: number, count?: number }>} */ e) => { this.total = Number(e.detail.total ?? e.detail.count ?? 0); }}
-        ></lc-table>
-        ${this._renderFooter()}
-      `;
-    const page = clampPage(this.page, this.rows.length, this.pageSize);
+    const querying = Boolean(this.query?.model);
+    const page = clampPage(this.page, this._count(), this.pageSize);
+    const rows = querying
+      ? this._queryRows()
+      : pageRows(sortRows(this.rows, this.columns, this.sortBy, this.sortDir), page, this.pageSize);
     return html`
       <lc-table
         .columns=${this.columns}
-        .rows=${pageRows(sortRows(this.rows, this.columns, this.sortBy, this.sortDir), page, this.pageSize)}
+        .rows=${rows}
         .selectRow=${this.selectRow}
         .isSelected=${this.isSelected}
         ?sortable=${this.sortable}
         .sortBy=${this.sortBy}
         .sortDir=${this.sortDir}
-        .emptyMessage=${this.emptyMessage}
+        .emptyMessage=${this._emptyMessage()}
         ?compact=${this.compact}
         @sort=${sort}
       ></lc-table>

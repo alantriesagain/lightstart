@@ -312,9 +312,13 @@ export interface TableColumn {
   sortValue?: (row: TableRow) => unknown;
 }
 
-/** display/data-table.js: the model `<lc-data-table>` pages when it pages a query rather than rows. */
+/**
+ * display/data-table.js: the model `<lc-data-table>` pages when it pages a
+ * query rather than rows. `model` is a model api (what `defineModel` returns)
+ * or the name of one `modelApi()` resolves.
+ */
 export interface DataTableQuery {
-  model: string;
+  model: import("@lightstart/light/model").ModelApi | string;
   where?: Record<string, unknown>;
   includes?: string[];
 }

@@ -62,6 +62,8 @@ export default {
   "lc-data-table": {
     range: "{from}–{to} de {total}",
     perPage: "Filas por página",
+    loading: "Cargando…",
+    failed: "Algo salió mal.",
   },
   "lc-table": {
     noData: "Sin datos",
