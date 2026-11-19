@@ -32,6 +32,7 @@ export interface Generated {
   /** The language the generated files are written in. */
   extension: ".ts" | ".js";
   models: string[];
+  seeds: string[];
   controllers: string[];
   views: string[];
   modes: string[];
@@ -184,11 +185,12 @@ export const routesOf = async (routes: string): Promise<Record<string, unknown> 
   }
 };
 
-const manifestSource = (project: string, app: string, extension: ".ts" | ".js", models: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[]): string => {
+const manifestSource = (project: string, app: string, extension: ".ts" | ".js", models: string[], seeds: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[]): string => {
   const lines: string[] = [];
   if (extension === ".ts") lines.push('import type { AppManifest } from "@lightstart/app/manifest.ts";');
   lines.push(`import app from "${specifierFor(project, app)}";`);
   models.forEach((file, index) => lines.push(`import model${String(index)} from "${specifierFor(project, file)}";`));
+  seeds.forEach((file, index) => lines.push(`import seed${String(index)} from "${specifierFor(project, file)}";`));
   controllers.forEach((file, index) => lines.push(`import controller${String(index)} from "${specifierFor(project, file)}";`));
   if (routes !== null) lines.push(`import routes from "${specifierFor(project, routes)}";`);
   for (const specifier of appImports) lines.push(`import ${JSON.stringify(specifier)};`);
@@ -205,6 +207,12 @@ const manifestSource = (project: string, app: string, extension: ".ts" | ".js", 
   else {
     lines.push("  models: [");
     models.forEach((file, index) => lines.push(`    { name: ${JSON.stringify(nameOf(file))}, model: model${String(index)} },`));
+    lines.push("  ],");
+  }
+  if (seeds.length === 0) lines.push("  seeds: [],");
+  else {
+    lines.push("  seeds: [");
+    seeds.forEach((_file, index) => lines.push(`    seed${String(index)},`));
     lines.push("  ],");
   }
   if (controllers.length === 0) lines.push("  controllers: [],");
@@ -409,6 +417,12 @@ export const appOf = (project: string): { path: string; extension: ".ts" | ".js"
   return null;
 };
 
+/** The project's seed files, `src/seed` always and `src/seed.dev` when `dev`; each in the app's language. */
+const seedFiles = (project: string, extension: ".ts" | ".js", dev: boolean): string[] => {
+  const names = dev ? ["seed", "seed.dev"] : ["seed"];
+  return names.map((name) => join(project, "src", `${name}${extension}`)).filter((path) => existsSync(path));
+};
+
 /** The project's routes module, `.ts` or `.js`; null when it has none. */
 export const routesPathOf = (project: string): string | null => {
   const ts = join(project, "src", "routes.ts");
@@ -417,14 +431,21 @@ export const routesPathOf = (project: string): string | null => {
   return existsSync(js) ? js : null;
 };
 
+/** What a generation reads: `dev` includes `src/seed.dev` (a release build passes false). */
+export interface GenerateOptions {
+  /** Whether to read `src/seed.dev` (or `.js`); `true` when absent. */
+  dev?: boolean;
+}
+
 /** Generate the project's `.light` manifest and entry; null when there is no `src/app.ts` or `src/app.js`. */
-export const generate = async (projectPath: string): Promise<Generated | null> => {
+export const generate = async (projectPath: string, options: GenerateOptions = {}): Promise<Generated | null> => {
   const project = resolve(projectPath);
   const found = appOf(project);
   if (found === null) return null;
   const app = found.path;
 
   const models = flatFiles(join(project, "src", "models"));
+  const seeds = seedFiles(project, found.extension, options.dev !== false);
   const controllers = inStartOrder(flatFiles(join(project, "src", "controllers")));
   const views = flatFiles(join(project, "src", "views"));
   const routes = routesPathOf(project);
@@ -441,7 +462,7 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
   const locales = writeLocales(project, dir, info.locale, helpers);
   const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
   const appImports = [...locales.imports, ...prepared.imports];
-  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, app, extension, models, controllers, views, routes, rootFile, appImports));
+  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, app, extension, models, seeds, controllers, views, routes, rootFile, appImports));
   const written = await part.write(project, dir, main, helpers);
 
   return {
@@ -453,6 +474,7 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
     host: info.host,
     extension,
     models: models.map(nameOf),
+    seeds: seeds.map(nameOf),
     controllers: controllers.map(nameOf),
     views: views.map(nameOf),
     modes: written.modes,

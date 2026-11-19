@@ -9,6 +9,7 @@ describe("openPage on a JavaScript app", () => {
     try {
       assert.equal(page.root.tagName.toLowerCase(), "app-root");
       assert.ok((await page.shows("Home")).includes("Home"), "the home route is drawn");
+      assert.ok((await page.shows("Seeded note")).includes("Seeded note"), "the seed's row is drawn");
     } finally {
       await page.stop();
     }

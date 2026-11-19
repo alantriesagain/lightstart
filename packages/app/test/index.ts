@@ -20,6 +20,8 @@ export interface OpenAppOptions {
   args?: readonly string[] | Record<string, unknown>;
   /** The kinds the stores open with, the first the default, `memory` beside them; a test that checks what lands on disk passes a host's (`JsonlKind`). */
   kinds?: readonly StoreKind[];
+  /** Whether the manifest's seeds load; `true` when absent. */
+  seed?: boolean;
 }
 
 /** An app opened for a test: its run, the run's stores and controllers, and its restart, quit and stop. */
@@ -80,7 +82,7 @@ class TestHost extends AppHost {
 /** Open the manifest's run over memory stores, mounting nothing. */
 export const openApp = async (manifest: AppManifest, options: OpenAppOptions = {}): Promise<OpenedApp> => {
   const kinds = options.kinds ?? [];
-  const run = new AppRun(manifest, new TestHost(options.args, kinds), kinds.length === 0);
+  const run = new AppRun(manifest, new TestHost(options.args, kinds), kinds.length === 0, options.seed !== false);
   await run.start();
   return new OpenedApp(run);
 };

@@ -8,6 +8,7 @@ __LANGUAGE_INTRO__A web app on `@lightstart/app`: the folders are the app, and l
 |---|---|
 | `src/app.__EXT__` | `defineApp({ name, host: "web", theme?, stores?, root?, args?, url?, locale? })`: `url` is the site's address (the build's sitemap), `locale` the default language; `stores` by name (`main` is IndexedDB unless it names another kind, `{ cache: { kind: "memory" } }` beside it), `args` read from the URL query |
 | `src/models/<name>.__EXT__` | One model, default-exported; the file name is the model's name |
+| `src/seed.__EXT__` | Optional: rows by model name (`{ note: [{ text: "…" }] }`), added once into an empty store before the controllers start; `src/seed.dev.__EXT__` holds demo rows `light build` leaves out |
 | `src/controllers/<name>.__EXT__` | One controller, default-exported; the file name is its name |
 | `src/views/<tag>.__EXT__` | One view, registering its tag; the file name is the tag |
 | `src/routes.__EXT__` | Optional: `{ "/path": { view: "<tag>", name?, title? } }`; `/notes/:id` sets `id` on the view as a prop |

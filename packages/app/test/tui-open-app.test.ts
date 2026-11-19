@@ -15,12 +15,14 @@ import type { AppManifest } from "../manifest.ts";
 import note from "./fixtures/tui/src/models/note.ts";
 import notes from "./fixtures/tui/src/controllers/notes.ts";
 import AppRoot from "./fixtures/tui/src/views/app-root.ts";
+import seed from "./fixtures/tui/src/seed.ts";
 import { defineApp } from "../index.ts";
 
 const manifest: AppManifest = {
   app: defineApp({ name: "fixture-tui-test", host: "tui" }),
   rootView: AppRoot,
   models: [{ name: "note", model: note }],
+  seeds: [seed],
   controllers: [{ name: "notes", controller: notes }],
   routes: null,
   views: ["app-root", "note-row"],
@@ -33,18 +35,18 @@ const main = async (): Promise<void> => {
   try {
     await mounted.settle();
     ok("the root view was told it is mounted, with the renderer", mounted.root instanceof AppRoot && mounted.root.mountedCols === 50);
-    ok("the empty app says so", mounted.text().includes("No notes yet."));
+    ok("the seed's row is drawn", mounted.text().includes("seeded note"));
 
     mounted.renderer.decoder.pushText("a");
     await mounted.settle();
-    ok("the root view's key adds a note", mounted.text().includes("note 1"));
+    ok("the root view's key adds a note", mounted.text().includes("note 2"));
 
     await notes.add("second");
     await mounted.settle();
     ok("a write through the controller is drawn", mounted.text().includes("second"));
 
     const rows = await note.getAll({ order: "text" });
-    eq("the model reads both rows", String(rows.length), "2");
+    eq("the model reads the seed and both writes", String(rows.length), "3");
   } finally {
     mounted.stop();
     await app.stop();
