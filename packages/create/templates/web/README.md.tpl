@@ -16,6 +16,7 @@ pnpm dev
 | `dev` | `light serve --watch` |
 | `build` | `light build` into `.deployed/current` |
 | `test` | `light test test/*.test.*` in headless Chromium |
+| `test:e2e` | builds the app, then opens the built pages in headless Chromium |
 | `check` | `light check` |
 | `lint` | `light lint`: eslint with the project's config |
 | `typecheck` | `light typecheck`: `tsc --noEmit` over the sources, the tests and `.light/` |

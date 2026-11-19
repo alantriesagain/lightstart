@@ -234,6 +234,22 @@ await page.stop();       // stops the run and removes the root element
 
 `openPage` mounts the root view as the web host does, with the theme applied and the routes drawn by `<app-container>` over a history in memory that starts at `path` (`"/"` by default), so the test page's URL is no route of the app's. It takes the app's arguments as `openApp` does (`args`, rather than the URL's) and opens every store in memory unless `kinds` names others. It answers an `OpenedPage`: `run`, `root` (the mounted root element), `find(selector, { timeout })` (waits for the element, waits for its pending update, then answers it), `text()`, `shows(text, { timeout })`, `navigate(path)`, `settle()` and `stop()`. A helper waits 2 s by default and throws naming what it wanted beside the page's text.
 
+A test of the build itself serves a build folder and opens it in a fresh headless Chromium context with `openBuilt`:
+
+```ts
+import { latestBuild, openBuilt } from "@lightstart/app/web/test";
+
+const dir = await latestBuild("."); // .deployed/current, else .deployed/builds/<id>
+const page = await openBuilt(dir, "/about", { timeoutMs: 30_000 });
+
+page.errors; // page errors and console errors
+page.failed; // same-origin 4xx/5xx and failed requests
+await page.text(); // document.body.innerText
+await page.close();
+```
+
+`openBuilt(dir, path, { timeoutMs })` serves `dir` as a static host does: the file, else `<path>/index.html`, else `404.html` with status 404 (the SPA fallback). It waits for `load` and the network to go idle (Playwright's `networkidle`, 500 ms quiet) plus two animation frames before answering. The document's own 404 is not reported when `404.html` answered it, since that is the expected fallback; every other failed same-origin request, page error and console error is. It needs Playwright and a built folder; `latestBuild` reads `.deployed`, in the test that has the disk.
+
 A terminal test mounts the root view on light's `TestTerminal` with `@lightstart/app/tui/test`'s `mountApp`:
 
 ```ts
@@ -254,4 +270,4 @@ await app.stop();        // disposes the controllers and closes the stores
 
 ## What is node-only
 
-The generator (`node/generate.ts`, and each host's `generate.ts`) reads the disk. The core, the hosts and the test helpers are plain modules the browser and the terminal compile. `static/index.ts` is node-only: it renders on light's markup host, and its prerender marker is the build's.
+The generator (`node/generate.ts`, and each host's `generate.ts`) reads the disk. The core, the hosts and `openPage`/`mountApp` are plain modules the browser and the terminal compile. `static/index.ts` is node-only: it renders on light's markup host, and its prerender marker is the build's. `openBuilt` and `latestBuild` are node-only too: they serve a build folder and drive headless Chromium.
