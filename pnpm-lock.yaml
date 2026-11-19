@@ -199,6 +199,9 @@ importers:
       '@lightstart/cli':
         specifier: workspace:*
         version: link:../cli
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
       '@lightstart/server':
         specifier: workspace:*
         version: link:../server

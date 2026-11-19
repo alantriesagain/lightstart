@@ -2,7 +2,7 @@
  * @file `@lightstart/dev/node`: what needs node's runtime: the importmap read off the disk,
  * TypeScript stripping through `node:module`, `fs.watch`, the websockets and the build preview.
  */
-export { buildImportMap, devPortOf, devTunnelOf, readPackageJson } from "./importmap.ts";
+export { buildImportMap, devCheckOf, devPortOf, devTunnelOf, readPackageJson } from "./importmap.ts";
 export type { ServePidRecord } from "./single-instance.ts";
 export { clearPidRecord, looksLikeServe, readPidRecord, replaceStaleServe, watchParent, writePidRecord } from "./single-instance.ts";
 export type { DevTunnel, Tunnel } from "./tunnel.ts";

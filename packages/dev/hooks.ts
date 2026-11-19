@@ -52,6 +52,7 @@ declare module "@lightstart/cli" {
       open: boolean;
       tunnel: boolean;
       ephemeral: boolean;
+      check: boolean;
     };
   }
 }

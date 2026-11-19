@@ -15,10 +15,11 @@ import type { ServeAfterPayload, ServeBeforePayload, ServeFileChangedPayload } f
 import { importmapFromHtml, mergeImportMaps, type ImportMap } from "../importmap.ts";
 import { createPipeline } from "../pipeline.ts";
 import type { RouteFactory } from "../types.ts";
+import { startChecker, type Checker } from "./check.ts";
 import { afterListen } from "./after.ts";
 import { createDeployedServer, type DeployedServer } from "./deployed.ts";
 import { attachSockets } from "./hmr.ts";
-import { buildImportMap, devPortOf, devTunnelOf, readPackageJson } from "./importmap.ts";
+import { buildImportMap, devCheckOf, devPortOf, devTunnelOf, readPackageJson } from "./importmap.ts";
 import { replaceStaleServe, watchParent } from "./single-instance.ts";
 import { createModuleTransform } from "./transform.ts";
 import { startWatcher, type Watcher } from "./watch.ts";
@@ -33,6 +34,7 @@ export type ServeArgs = {
   open?: boolean;
   tunnel?: boolean;
   ephemeral?: boolean;
+  check?: boolean;
 };
 
 const bindHostFor = (host: string): string => (host === "localhost" ? "127.0.0.1" : host);
@@ -87,6 +89,7 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
   const pkg = readPackageJson(projectDir);
   const host = bindHostFor(args.host ?? "127.0.0.1");
   const watch = args.watch === true;
+  const check = watch && args.check !== false && devCheckOf(pkg);
   const ephemeral = args.ephemeral === true;
   const namedTunnel = devTunnelOf(pkg);
   if (!ephemeral) await replaceStaleServe(projectDir);
@@ -161,10 +164,13 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
   const server = await listenOnFreePort(app, basePort, host);
   const sockets = attachSockets(server.server, pipeline.apps);
   const watchers: Watcher[] = [];
+  let checker: Checker | null = null;
   if (watch) {
+    if (check) checker = startChecker(projectDir, ctx.log);
     watchers.push(
       startWatcher(projectDir, (event) => {
         sockets.broadcast({ type: "file-changed", path: event.path });
+        checker?.schedule(event.path);
         void ctx.cli.runHook("serve:file-changed", { ...extension.payload, path: event.path, type: event.type } as unknown as ServeFileChangedPayload);
       }, ctx.log),
     );
@@ -233,6 +239,7 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
       await auxiliary.stop();
       await after.teardown();
       await before.teardown();
+      checker?.stop();
       for (const watcher of watchers) watcher.close();
       for (const preview of previews) await preview.close();
       sockets.close();

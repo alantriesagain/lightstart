@@ -16,7 +16,7 @@ light serve --open --tunnel  # open the browser, expose it through Cloudflare
 
 ## Options
 
-`light serve [dir] [--port <n>] [--host <addr>] [--watch] [--build] [--open] [--tunnel] [--ephemeral]`, alias `s`.
+`light serve [dir] [--port <n>] [--host <addr>] [--watch] [--no-check] [--build] [--open] [--tunnel] [--ephemeral]`, alias `s`.
 
 | Option | Default | What |
 |---|---|---|
@@ -24,6 +24,7 @@ light serve --open --tunnel  # open the browser, expose it through Cloudflare
 | `--port`, `-p` | see below | The first port to try |
 | `--host` | `127.0.0.1` | The address to bind; `0.0.0.0` also prints the LAN URLs |
 | `--watch`, `-w` | off | Watch the project and reload the page on a change |
+| `--no-check` | off | Do not run `light check` after a watched change |
 | `--build` | off | Preview `.deployed/current` instead of serving sources |
 | `--open` | off | Open the page in the system's browser once it listens |
 | `--tunnel` | off | Expose the server through a Cloudflare tunnel |
@@ -171,6 +172,21 @@ passes only the paths `light.dev.tunnel` lists).
 ## Watch and reload
 
 `--watch` runs a recursive `fs.watch` over the project and over each extra folder an extension added, ignoring `node_modules`, `.git` and `.deployed`, and debounces changes per path for 50 ms. Each settled change is broadcast to the reload clients as `{ "type": "file-changed", "path": "..." }` and dispatched as `serve:file-changed`. The client at `/__light/reload.js` reloads the page on that message and reconnects a second after the socket drops.
+
+## Check on change
+
+With `--watch`, a change to a file the checker reads (`.js`, `.mjs`, `.ts`, `.css`, `.json`, `.html`, `.md`, outside hidden folders) schedules one run of light's convention checker after the reload is sent. The run is debounced for 300 ms, and a change during a run schedules one more run after it. It uses the same rules `light check` does, and prints only what changed:
+
+```
+check: +1 new
+[check] src/views/home.js:3:20  error  `notes.add(...)` writes the model from inside a view ...  (app/view-writes-no-model)
+check: −1 cleared
+[check] src/views/home.js:3:20  error  `notes.add(...)` writes the model from inside a view ...  (app/view-writes-no-model)
+```
+
+The first run, at startup, prints only `check: N findings; run light check to list them` so a server that starts on a project with findings is not noisy. A check error prints once and the server keeps running. It never runs `light typecheck`.
+
+A project turns the check off with `"light": { "dev": { "check": false } }` in `package.json`, or for one run with `light serve --watch --no-check`.
 
 ## Build preview
 
