@@ -9,6 +9,7 @@
 
 /// <reference lib="dom" />
 
+import { existsSync } from "node:fs";
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -153,7 +154,7 @@ const prerenderMarkup = async (options: PrerenderOptions): Promise<number> => {
   if (built === undefined) throw new Error("Prerendering needs the build's index.html");
 
   const markup = (await importFromProject(root, "@lightstart/light/markup")) as MarkupModule;
-  const appPath = join(root, ".light", "app.ts");
+  const appPath = existsSync(join(root, ".light", "app.js")) ? join(root, ".light", "app.js") : join(root, ".light", "app.ts");
   const module = (await import(`${pathToFileURL(appPath).href}?mtime=${String(Date.now())}`)) as { default?: AppManifest };
   if (module.default === undefined) throw new Error(`The generated app at ${appPath} has no default export`);
   const manifest = module.default;

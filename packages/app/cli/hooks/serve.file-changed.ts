@@ -1,7 +1,7 @@
 /**
  * @file `serve:file-changed`: regenerate when a file the manifest names is
  * added, removed or renamed under src/models, src/controllers, src/views, or
- * when src/routes.ts or src/app.ts changes.
+ * when src/routes.ts, src/routes.js, src/app.ts or src/app.js changes.
  */
 
 import type { CommandContext } from "@lightstart/cli";
@@ -10,7 +10,9 @@ import { generate } from "../../node/generate.ts";
 
 const watched = (path: string): boolean =>
   path === "src/app.ts" ||
+  path === "src/app.js" ||
   path === "src/routes.ts" ||
+  path === "src/routes.js" ||
   path.startsWith("src/models/") ||
   path.startsWith("src/controllers/") ||
   path.startsWith("src/views/");

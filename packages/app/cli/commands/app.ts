@@ -1,6 +1,6 @@
 /**
- * @file `light app`: generate `.light/app.ts` and `.light/main.ts` now, and
- * print what the project's folders hold.
+ * @file `light app`: generate `.light/app.ts` or `.light/app.js` (and the
+ * matching entry) now, and print what the project's folders hold.
  */
 
 import { defineCommand } from "@lightstart/cli";
@@ -18,7 +18,8 @@ export default defineCommand({
       `${String(result.views.length)} views`,
       result.routes ? "routes" : "no routes",
     ];
-    ctx.log.log(`${result.changed ? "wrote" : "unchanged"} .light/app.ts: ${parts.join(", ")}`);
+    const manifest = result.manifest.slice(result.dir.length + 1);
+    ctx.log.log(`${result.changed ? "wrote" : "unchanged"} .light/${manifest}: ${parts.join(", ")}`);
     return 0;
   },
 });

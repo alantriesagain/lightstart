@@ -193,7 +193,8 @@ const remove = (path: string): boolean => {
 
 /** Write the components files the project needs, remove them when it needs none. */
 const writeComponents = (project: string, dir: string, helpers: GenerationHelpers): HostPrepared => {
-  const modulePath = join(dir, "components.ts");
+  const extension = helpers.extension;
+  const modulePath = join(dir, `components${extension}`);
   const stylePath = join(dir, "components.css");
   const table = tableFor(project);
   const written = table === null ? [] : writtenTags(project, table);
@@ -210,7 +211,7 @@ const writeComponents = (project: string, dir: string, helpers: GenerationHelper
   const styled = new Set([...wanted, ...later]);
   const moduleChanged = helpers.writeWhenChanged(modulePath, moduleSource(order, onDemand, table));
   const styleChanged = helpers.writeWhenChanged(stylePath, styleSource(inOrder(styled, table), table));
-  return { changed: moduleChanged || styleChanged, imports: ["./components.ts"] };
+  return { changed: moduleChanged || styleChanged, imports: [`./components${extension}`] };
 };
 
 const generation: HostGeneration = {
@@ -219,7 +220,7 @@ const generation: HostGeneration = {
     return writeComponents(project, dir, helpers);
   },
   async write(_project, _dir, main, helpers) {
-    const source = ['import { start } from "@lightstart/app/web";', 'import manifest from "./app.ts";', "", "await start(manifest);", ""].join("\n");
+    const source = ['import { start } from "@lightstart/app/web";', `import manifest from "./app${helpers.extension}";`, "", "await start(manifest);", ""].join("\n");
     return { changed: helpers.writeWhenChanged(main, source), classes: null, modes: [] };
   },
 };

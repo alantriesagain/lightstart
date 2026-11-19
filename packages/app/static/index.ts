@@ -10,7 +10,7 @@
  * Render on the markup host only after `@lightstart/light/markup` is imported:
  * it names the markup element and registry to light's views, and a view
  * module registers when it loads. Import it before the app's manifest (the
- * generated `.light/app.ts`), which imports every view.
+ * generated `.light/app.ts` or `.light/app.js`), which imports every view.
  */
 
 import { MRoot, MarkupHost, serialize } from "@lightstart/light/markup";

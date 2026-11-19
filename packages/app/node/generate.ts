@@ -1,13 +1,13 @@
 /**
  * @file The generation behind `light app`, `light serve`, `light build` and
- * `light test`: read `src/app.ts` and the project's folders, and write
- * `.light/app.ts` with a static import of every model, controller, view and
- * the routes, plus its manifest, the same for every host; the host's own
- * generation (`@lightstart/app/<host>/generate.ts`) writes `.light/main.ts`
- * with its start, and any files of its own.
+ * `light test`: read `src/app.ts` or `src/app.js` and the project's folders,
+ * and write `.light/app.ts` (or `.js`) with a static import of every model,
+ * controller, view and the routes, plus its manifest, the same for every host;
+ * the host's own generation (`@lightstart/app/<host>/generate.ts`) writes
+ * `.light/main.ts` (or `.js`) with its start, and any files of its own.
  * The output is sorted (the controllers in the order they start: after the
  * controllers they import) and written only when it changed. A folder with no
- * `src/app.ts` is left alone.
+ * `src/app.ts` or `src/app.js` is left alone.
  */
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -29,6 +29,8 @@ export interface Generated {
   classes: string | null;
   /** The host the entry starts. */
   host: string;
+  /** The language the generated files are written in. */
+  extension: ".ts" | ".js";
   models: string[];
   controllers: string[];
   views: string[];
@@ -40,6 +42,8 @@ export interface Generated {
 
 /** What a host's generation reaches of the core's: the folder listing, the specifiers, the names and the writes. */
 export interface GenerationHelpers {
+  /** The language the generated files are written in. */
+  readonly extension: ".ts" | ".js";
   flatFiles(dir: string): string[];
   specifierFor(from: string, to: string): string;
   nameOf(file: string): string;
@@ -180,9 +184,10 @@ export const routesOf = async (routes: string): Promise<Record<string, unknown> 
   }
 };
 
-const manifestSource = (project: string, models: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[]): string => {
-  const lines: string[] = ['import type { AppManifest } from "@lightstart/app/manifest.ts";'];
-  lines.push(`import app from "${specifierFor(project, join(project, "src", "app.ts"))}";`);
+const manifestSource = (project: string, app: string, extension: ".ts" | ".js", models: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[]): string => {
+  const lines: string[] = [];
+  if (extension === ".ts") lines.push('import type { AppManifest } from "@lightstart/app/manifest.ts";');
+  lines.push(`import app from "${specifierFor(project, app)}";`);
   models.forEach((file, index) => lines.push(`import model${String(index)} from "${specifierFor(project, file)}";`));
   controllers.forEach((file, index) => lines.push(`import controller${String(index)} from "${specifierFor(project, file)}";`));
   if (routes !== null) lines.push(`import routes from "${specifierFor(project, routes)}";`);
@@ -193,7 +198,7 @@ const manifestSource = (project: string, models: string[], controllers: string[]
   }
 
   lines.push("");
-  lines.push("const manifest: AppManifest = {");
+  lines.push(extension === ".ts" ? "const manifest: AppManifest = {" : "const manifest = {");
   lines.push("  app,");
   if (rootFile !== null) lines.push("  rootView,");
   if (models.length === 0) lines.push("  models: [],");
@@ -301,7 +306,8 @@ interface LocaleImport {
  * project does not depend on `@lightstart/i18n`.
  */
 const writeLocales = (project: string, dir: string, locale: string, helpers: GenerationHelpers): HostPrepared => {
-  const path = join(dir, "locales.ts");
+  const extension = helpers.extension;
+  const path = join(dir, `locales${extension}`);
   if (!declaresI18n(project)) return { changed: remove(path), imports: [] };
 
   const imports: string[] = [];
@@ -335,14 +341,21 @@ const writeLocales = (project: string, dir: string, locale: string, helpers: Gen
   };
 
   const lines: string[] = ['import { configureI18n } from "@lightstart/i18n";'];
-  if (languages.length > 0) lines.push('import type { TranslationTree } from "@lightstart/i18n";');
+  if (languages.length > 0 && extension === ".ts") lines.push('import type { TranslationTree } from "@lightstart/i18n";');
   lines.push(...imports);
   if (languages.length > 0) {
     lines.push("");
-    lines.push('const isRecord = (value: unknown): value is TranslationTree => typeof value === "object" && value !== null && !Array.isArray(value);');
-    lines.push("");
-    lines.push("const merge = (base: TranslationTree, over: TranslationTree): TranslationTree => {");
-    lines.push("  const merged: TranslationTree = {};");
+    if (extension === ".ts") {
+      lines.push('const isRecord = (value: unknown): value is TranslationTree => typeof value === "object" && value !== null && !Array.isArray(value);');
+      lines.push("");
+      lines.push("const merge = (base: TranslationTree, over: TranslationTree): TranslationTree => {");
+      lines.push("  const merged: TranslationTree = {};");
+    } else {
+      lines.push('const isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);');
+      lines.push("");
+      lines.push("const merge = (base, over) => {");
+      lines.push("  const merged = {};");
+    }
     lines.push("  for (const key of Object.keys(base)) merged[key] = base[key];");
     lines.push("  for (const key of Object.keys(over)) {");
     lines.push("    const before = merged[key];");
@@ -367,7 +380,7 @@ const writeLocales = (project: string, dir: string, locale: string, helpers: Gen
   }
   lines.push("});");
   lines.push("");
-  return { changed: helpers.writeWhenChanged(path, lines.join("\n")), imports: ["./locales.ts"] };
+  return { changed: helpers.writeWhenChanged(path, lines.join("\n")), imports: [`./locales${extension}`] };
 };
 
 /** The generation of host `host` (`@lightstart/app/<host>/generate.ts`); an error naming it when there is none. */
@@ -384,29 +397,51 @@ const hostGeneration = async (host: string): Promise<HostGeneration> => {
   return part;
 };
 
-/** Generate the project's `.light` manifest and entry; null when there is no `src/app.ts`. */
+/** The app's source path and language; null when there is none, an error when both are there. */
+export const appOf = (project: string): { path: string; extension: ".ts" | ".js" } | null => {
+  const ts = join(project, "src", "app.ts");
+  const js = join(project, "src", "app.js");
+  const hasTs = existsSync(ts);
+  const hasJs = existsSync(js);
+  if (hasTs && hasJs) throw new Error(`The app has both src/app.ts and src/app.js; keep one of them`);
+  if (hasJs) return { path: js, extension: ".js" };
+  if (hasTs) return { path: ts, extension: ".ts" };
+  return null;
+};
+
+/** The project's routes module, `.ts` or `.js`; null when it has none. */
+export const routesPathOf = (project: string): string | null => {
+  const ts = join(project, "src", "routes.ts");
+  if (existsSync(ts)) return ts;
+  const js = join(project, "src", "routes.js");
+  return existsSync(js) ? js : null;
+};
+
+/** Generate the project's `.light` manifest and entry; null when there is no `src/app.ts` or `src/app.js`. */
 export const generate = async (projectPath: string): Promise<Generated | null> => {
   const project = resolve(projectPath);
-  const app = join(project, "src", "app.ts");
-  if (!existsSync(app)) return null;
+  const found = appOf(project);
+  if (found === null) return null;
+  const app = found.path;
 
   const models = flatFiles(join(project, "src", "models"));
   const controllers = inStartOrder(flatFiles(join(project, "src", "controllers")));
   const views = flatFiles(join(project, "src", "views"));
-  const routes = existsSync(join(project, "src", "routes.ts")) ? join(project, "src", "routes.ts") : null;
+  const routes = routesPathOf(project);
 
+  const info = await infoOf(app);
+  const extension = info.host === "tui" ? ".ts" : found.extension;
   const dir = join(project, ".light");
   mkdirSync(dir, { recursive: true });
-  const manifest = join(dir, "app.ts");
-  const main = join(dir, "main.ts");
-  const info = await infoOf(app);
+  const manifest = join(dir, `app${extension}`);
+  const main = join(dir, `main${extension}`);
   const part = await hostGeneration(info.host);
   const rootFile = part.rootView ? rootFileOf(views, info.root) : null;
-  const helpers = { flatFiles, specifierFor, nameOf, writeWhenChanged };
+  const helpers = { extension, flatFiles, specifierFor, nameOf, writeWhenChanged };
   const locales = writeLocales(project, dir, info.locale, helpers);
   const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
   const appImports = [...locales.imports, ...prepared.imports];
-  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, models, controllers, views, routes, rootFile, appImports));
+  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, app, extension, models, controllers, views, routes, rootFile, appImports));
   const written = await part.write(project, dir, main, helpers);
 
   return {
@@ -416,6 +451,7 @@ export const generate = async (projectPath: string): Promise<Generated | null> =
     main,
     classes: written.classes,
     host: info.host,
+    extension,
     models: models.map(nameOf),
     controllers: controllers.map(nameOf),
     views: views.map(nameOf),
