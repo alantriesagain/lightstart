@@ -75,6 +75,8 @@ export default { tasks: { add: "Add task" } };
 export default defineApp({ name: "tasks", host: "web", locale: "en" });
 ```
 
+`light check` ships `locales-in-parity` with this package: each `src/locales/<lang>.(js|ts)` must have the default locale's keys (the app's `locale` in `defineApp`, else `"en"`) with no more and no fewer, and the finding names the missing and extra keys.
+
 A project that does not depend on this package is left alone, and may pass its own `Translation` to `configureTranslation` instead.
 
 ## Plurals

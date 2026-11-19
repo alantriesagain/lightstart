@@ -4,7 +4,6 @@
  */
 import { View, define, html, key, SubmitEvent, TInput } from "@lightstart/light/native/tui";
 import tasks from "../controllers/tasks.ts";
-import "./task-row.ts";
 
 class TasksPage extends View {
   readonly input = new TInput("textarea");

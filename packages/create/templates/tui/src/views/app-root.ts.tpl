@@ -4,7 +4,6 @@
  */
 import { html, key, SubmitEvent, TInput, View } from "@lightstart/light/native/tui";
 import todos from "../controllers/todos.ts";
-import "./todo-row.ts";
 
 import type { KeyEvent, Renderer } from "@lightstart/light/native/tui";
 

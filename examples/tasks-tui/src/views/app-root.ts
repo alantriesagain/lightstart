@@ -6,9 +6,6 @@
 import { html, View } from "@lightstart/light/native/tui";
 import { navigate } from "@lightstart/app/tui";
 import lists from "../controllers/lists.ts";
-import "./tasks-page.ts";
-import "./lists-page.ts";
-import "./activity-page.ts";
 
 import type { KeyEvent, Renderer } from "@lightstart/light/native/tui";
 
