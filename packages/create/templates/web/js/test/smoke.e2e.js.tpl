@@ -19,7 +19,7 @@ before(async () => {
 });
 
 describe("the built app", () => {
-  for (const path of paths) {
+  for (const path of paths)
     it(`opens ${path} without an error`, async () => {
       const page = await openBuilt(buildDir, path);
       try {
@@ -30,5 +30,4 @@ describe("the built app", () => {
         await page.close();
       }
     });
-  }
 });

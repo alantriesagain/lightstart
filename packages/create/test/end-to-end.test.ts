@@ -134,6 +134,10 @@ const main = async (): Promise<void> => {
         ok(`${label}the project's check passes`, checked.code === 0);
         if (checked.code !== 0) console.log(checked.output);
 
+        const linted = await run("pnpm", ["run", "lint"], target);
+        ok(`${label}the project's lint passes`, linted.code === 0);
+        if (linted.code !== 0) console.log(linted.output);
+
         const port = await freePort();
         server = spawn(process.execPath, [join(root, "packages", "cli", "bin", "light.js"), "serve", "--port", String(port), "--host", "127.0.0.1"], { cwd: target, stdio: ["ignore", "pipe", "pipe"] });
         let log = "";
