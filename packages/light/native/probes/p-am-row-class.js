@@ -6,6 +6,8 @@
  */
 
 import { TaskRow } from "./p-am-row-class.rows.ts";
+import { LiveRows } from "../../model/binder.ts";
+import { resource } from "../../controller/resource.ts";
 
 /** @type {Array<Record<string, unknown>>} */
 const source = [
@@ -63,3 +65,20 @@ for (const row of typed) {
 }
 console.log("typed", typed.length, "dropped", dropped);
 console.log("total", total, "label", label, "done", doneCount);
+
+/** @type {Record<string, unknown>[]} */
+const feed = [];
+for (const value of incoming) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) continue;
+  feed.push(/** @type {Record<string, unknown>} */ (value));
+}
+const live = new LiveRows(TaskRow.of, "task");
+live.use(resource(() => feed, { eager: true, ready: false }));
+await live.loaded();
+let liveTotal = 0;
+let liveLabel = "";
+for (const row of live.value) {
+  liveTotal += row.addedAt;
+  liveLabel += row.title.charAt(0);
+}
+console.log("live", live.value.length, "skipped", live.skipped, "total", liveTotal, "label", liveLabel);
