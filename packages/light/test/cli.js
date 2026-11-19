@@ -76,8 +76,10 @@ export const test = async (argv) => {
 
 /**
  * The `light test` command: a replacement run when an extension registers one,
- * otherwise the files when it is given any, otherwise the groups extensions
- * added, all of them or only those whose flags were given.
+ * otherwise the groups extensions added (all of them, or only those whose
+ * flags were given), which get the files named, otherwise the files on light's
+ * own runner. A project whose tests an extension runs keeps them there when a
+ * file is named: light's runner serves the folder as it is and boots no app.
  * @param {CommandContext} ctx
  * @param {Record<string, unknown>} args
  * @returns {Promise<boolean>}
@@ -117,8 +119,8 @@ export const runTestCommand = async (ctx, args) => {
   /** @type {import("../cli/extensions.ts").TestInput} */
   const input = { args, files, projectDir: ctx.projectDir, root, headless, timeoutMs, runFiles, serve: (dir, port = 0) => serve(dir, port, render) };
   if (replacements.length > 0) return replacements[0](input);
-  if (files.length > 0) return runTestFiles({ files, root, headless, timeoutMs, render });
   if (groups.length === 0) {
+    if (files.length > 0) return runTestFiles({ files, root, headless, timeoutMs, render });
     console.error(USAGE);
     return false;
   }
