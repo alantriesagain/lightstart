@@ -5,7 +5,7 @@
  * root.
  */
 
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 
 /** @import { PackageJson, WalkOptions } from "./types.ts" */
@@ -46,6 +46,22 @@ export const readPackageJson = (dir) => {
  */
 export const toRel = (root, abs) => path.relative(root, abs).split(path.sep).join("/");
 
+/**
+ * Whether the folder a link names is inside `base`: a link out of the project (a checkout linked
+ * beside it, a shared folder) is someone else's code and is not walked.
+ * @param {string} base
+ * @param {string} link
+ */
+const within = (base, link) => {
+  try {
+    const root = realpathSync(base);
+    const target = realpathSync(link);
+    return target === root || target.startsWith(root + path.sep);
+  } catch {
+    return false;
+  }
+};
+
 /** @param {{ name: string }} a @param {{ name: string }} b */
 const byName = (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
 
@@ -66,7 +82,7 @@ const walk = (base, dir, options, out) => {
   for (const e of entries.sort(byName)) {
     const full = path.join(dir, e.name);
     const rel = toRel(base, full);
-    if (e.isDirectory() || (e.isSymbolicLink() && isDir(full))) {
+    if (e.isDirectory() || (e.isSymbolicLink() && isDir(full) && within(base, full))) {
       if (options.recursive && !options.prune?.(e.name, rel)) walk(base, full, options, out);
       continue;
     }
