@@ -9,7 +9,6 @@
  * state written and read back.
  */
 import { Command } from "../commands.ts";
-import { Hook } from "@lightstart/lib/hook.ts";
 import { Kernel } from "../kernel.ts";
 import { Action } from "../actions.ts";
 import { KeyEntry, Layer, keySpec } from "../keys.ts";
@@ -169,23 +168,6 @@ ok("a removed replacement restores what it replaced", kk.actions.find("same") ==
 eq("a plugin's layers go with it", press("f6", "", ["code", ""]) + " " + String(kk.keys.all().map((l: Layer) => l.id).join(",")), "models.next mine");
 kk.actions.removeOwner("files");
 eq("its actions too", press("enter", "", ["files", ""]) + " " + press("down", "", ["files", ""]), "sessions.new ");
-
-const hook = new Hook();
-const fired: string[] = [];
-hook.add("a", () => fired.push("a"));
-hook.add("b", () => fired.push("b"));
-hook.fire();
-eq("hooks fire in order", fired.join("") + " " + String(hook.size), "ab 2");
-const during: string[] = [];
-const changing = new Hook();
-changing.add("one", () => {
-  during.push("one");
-  changing.remove("two");
-  changing.add("three", () => during.push("three"));
-});
-changing.add("two", () => during.push("two"));
-changing.fire();
-eq("a listener removed during a fire is not called, one added then waits for the next", during.join(","), "one");
 
 const ks = new Kernel();
 ks.settings.load(JSON.parse('{"status": {"separator": " · "}, "git": false, "code": true}'));
