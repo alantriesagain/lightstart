@@ -26,10 +26,14 @@ export const routesTable = (source, file) => {
  * @returns {{ name: string, offset: number } | null}
  */
 export const routeKey = (member) => {
-  if (ts.isComputedPropertyName(member.name)) return null;
-  const name = nameOf(member.name);
-  return name === null ? null : { name, offset: member.name.getStart() };
+  const key = member.name;
+  if (key === undefined || ts.isComputedPropertyName(key)) return null;
+  const name = nameOf(key);
+  return name === null ? null : { name, offset: key.getStart() };
 };
 
-/** A path with its trailing slash removed, except the root. */
+/**
+ * A path with its trailing slash removed, except the root.
+ * @param {string} path
+ */
 export const normalisePath = (path) => (path.length > 1 && path.endsWith("/") ? path.replace(/\/+$/, "") || "/" : path);
