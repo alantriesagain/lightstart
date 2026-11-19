@@ -25,7 +25,13 @@ export type ComponentThis<D, M, P, E> = PropsToThis<P & Omit<MixinProps<M>, keyo
   MixinMembers<M> &
   Omit<View, "$emit"> &
   { $emit: TypedEmit<E & MixinEvents<M>> } &
+  QueryPending &
   (D extends { extends: string } ? Record<string, unknown> : unknown);
+
+/** What light's sync plugin adds to a view with a model-bound property (`sync:` to a model, with `query`): whether a query is loading. */
+export type QueryPending = {
+  readonly dataPending?: boolean;
+};
 
 /**
  * The element as a render function sees it: the props, the mixins' props and
