@@ -1,9 +1,10 @@
 import { html } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
-import { getFormFieldRenderer, renderFormControl, drawsOwnLabel } from "./field-renderers.js";
+import { getFormFieldRenderer, renderFormControl, drawsOwnLabel, controlTagsOf } from "./field-renderers.js";
 import { setPath } from "./path.js";
 import { defineComponent } from "@lightstart/light";
 import { lcText } from "../utils/text.js";
+import { defineOnDemand } from "../utils/on-demand.js";
 
 const TAG = /** @type {const} */ ("lc-form");
 const CONTROL_HOSTS = "lc-input, lc-select, lc-textarea, lc-checkbox, lc-switch, lc-file-upload";
@@ -74,6 +75,8 @@ export default defineComponent({
     ),
     _loads: /** @type {Prop<Map<string, number>>} */ (T.object({ reactive: false, defaultValue: () => new Map() })),
     _refusing: T.boolean({ reactive: false, defaultValue: false }),
+    _pendingControls: T.boolean({ reactive: false, defaultValue: false }),
+    _controlLoad: T.number({ reactive: false, defaultValue: 0 }),
   },
 
   events: {
@@ -95,6 +98,38 @@ export default defineComponent({
       this.removeEventListener("change", onEdit, true);
       this.removeEventListener("invalid", onInvalid, true);
     });
+    void this._syncControls();
+  },
+
+  /** @param {{ changedProps: Map<string, unknown> }} [changed] */
+  updated({ changedProps } = { changedProps: new Map() }) {
+    if (changedProps.has("fields")) void this._syncControls();
+  },
+
+  /**
+   * Define every control tag the current fields will draw, and hold the fields
+   * back until they exist. A page without a definer, or a tag already defined,
+   * answers null and the form draws as it always has.
+   */
+  async _syncControls() {
+    const load = ++this._controlLoad;
+    const waiting = defineOnDemand([...controlTagsOf(this.fields || [])]);
+    if (waiting === null) {
+      if (this._pendingControls) {
+        this._pendingControls = false;
+        this.$requestUpdate();
+      }
+      return;
+    }
+    if (!this._pendingControls) {
+      this._pendingControls = true;
+      this.$requestUpdate();
+    }
+    // A control that fails to load is drawn as a plain element rather than holding the fields back for good.
+    await waiting.catch(() => {});
+    if (this._controlLoad !== load) return;
+    this._pendingControls = false;
+    this.$requestUpdate();
   },
 
   /**
@@ -521,7 +556,7 @@ export default defineComponent({
 
     return html`
       <form @submit=${this._handleSubmit}>
-        ${this.visibleFields().map((original) => {
+        ${this._pendingControls ? "" : this.visibleFields().map((original) => {
           const value = formData[original.name];
           const field = this._withOptions(original, value);
           const error = this.errors[field.name];

@@ -16,6 +16,7 @@ interface TagEntry {
   style: string | null;
   extends: string | null;
   uses: string[];
+  loads: string[];
 }
 
 type TagTable = Record<string, TagEntry>;
@@ -51,16 +52,22 @@ const tagTable = (value: unknown): TagTable | null => {
     const style = entry["style"];
     const base = entry["extends"];
     const uses = entry["uses"];
+    const loads = entry["loads"] ?? [];
     if (typeof module !== "string") return null;
     if (style !== null && typeof style !== "string") return null;
     if (base !== null && typeof base !== "string") return null;
-    if (!Array.isArray(uses)) return null;
+    if (!Array.isArray(uses) || !Array.isArray(loads)) return null;
     const names: string[] = [];
     for (const use of uses) {
       if (typeof use !== "string") return null;
       names.push(use);
     }
-    table[tag] = { module, style, extends: base, uses: names };
+    const later: string[] = [];
+    for (const load of loads) {
+      if (typeof load !== "string") return null;
+      later.push(load);
+    }
+    table[tag] = { module, style, extends: base, uses: names, loads: later };
   }
   return table;
 };
@@ -147,14 +154,23 @@ const identifier = (tag: string): string =>
     .map((part, index) => (index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1)))
     .join("");
 
-const moduleSource = (order: readonly string[], table: TagTable): string => {
+const moduleSource = (order: readonly string[], onDemand: readonly string[], table: TagTable): string => {
   const lines = ['import View from "@lightstart/light";'];
   for (const tag of order) {
     const entry = table[tag];
     if (entry !== undefined) lines.push(`import ${identifier(tag)} from "@lightstart/components/${entry.module}";`);
   }
+  if (onDemand.length > 0) lines.push('import { configureOnDemand } from "@lightstart/components/utils/on-demand.js";');
   lines.push("");
   for (const tag of order) lines.push(`View.define(${identifier(tag)});`);
+  if (onDemand.length > 0) {
+    lines.push("", "const onDemand = {");
+    for (const tag of onDemand) {
+      const entry = table[tag];
+      if (entry !== undefined) lines.push(`  ${JSON.stringify(tag)}: () => import("@lightstart/components/${entry.module}"),`);
+    }
+    lines.push("};", "", "configureOnDemand((tag) => {", "  const load = onDemand[tag];", "  return load === undefined ? Promise.resolve() : load().then((module) => View.define(module.default));", "});");
+  }
   lines.push("");
   return lines.join("\n");
 };
@@ -188,8 +204,12 @@ const writeComponents = (project: string, dir: string, helpers: GenerationHelper
     return { changed: found || style, imports: [] };
   }
   const order = inOrder(wanted, table);
-  const moduleChanged = helpers.writeWhenChanged(modulePath, moduleSource(order, table));
-  const styleChanged = helpers.writeWhenChanged(stylePath, styleSource(order, table));
+  const later = new Set<string>();
+  for (const tag of wanted) for (const load of table[tag]?.loads ?? []) if (!wanted.has(load)) later.add(load);
+  const onDemand = [...later].sort();
+  const styled = new Set([...wanted, ...later]);
+  const moduleChanged = helpers.writeWhenChanged(modulePath, moduleSource(order, onDemand, table));
+  const styleChanged = helpers.writeWhenChanged(stylePath, styleSource(inOrder(styled, table), table));
   return { changed: moduleChanged || styleChanged, imports: ["./components.ts"] };
 };
 

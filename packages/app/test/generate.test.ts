@@ -34,7 +34,10 @@ const copyWithComponents = (): string => {
   for (const name of readdirSync(source)) {
     if (name === "@lightstart") {
       mkdirSync(join(modules, name));
-      for (const sub of readdirSync(join(source, name))) symlinkSync(join(source, name, sub), join(modules, name, sub), "dir");
+      for (const sub of readdirSync(join(source, name))) {
+        if (name === "@lightstart" && sub === "components") continue;
+        symlinkSync(join(source, name, sub), join(modules, name, sub), "dir");
+      }
     } else symlinkSync(join(source, name), join(modules, name), "dir");
   }
   symlinkSync(components, join(modules, "@lightstart", "components"), "dir");
@@ -70,7 +73,7 @@ const main = async (): Promise<void> => {
 
     ok("it finds the note model", first.models.join(",") === "note");
     ok("it finds the notes controller", first.controllers.join(",") === "notes");
-    eq("it sorts the views", first.views.join(","), "app-about,app-home,app-legal,app-root,app-search");
+    eq("it sorts the views", first.views.join(","), "app-about,app-form,app-home,app-legal,app-root,app-search");
     ok("it finds the routes", first.routes);
     ok("the first run wrote", first.changed);
 
@@ -81,7 +84,7 @@ const main = async (): Promise<void> => {
     ok("a view import is relative and side-effect only", source.includes('import "../src/views/app-root.ts";'));
     ok("the model keeps its file name", source.includes('{ name: "note", model: model0 }'));
     ok("the controller keeps its file name", source.includes('{ name: "notes", controller: controller0 }'));
-    ok("the views are named", source.includes('views: ["app-about", "app-home", "app-legal", "app-root", "app-search"]'));
+    ok("the views are named", source.includes('views: ["app-about", "app-form", "app-home", "app-legal", "app-root", "app-search"]'));
     eq("the entry starts the web host", readFileSync(first.main, "utf8"), 'import { start } from "@lightstart/app/web";\nimport manifest from "./app.ts";\n\nawait start(manifest);\n');
     ok("a project without the components writes none", !existsSync(join(first.dir, "components.ts")) && !existsSync(join(first.dir, "components.css")));
     ok("a project without i18n writes no locales", !existsSync(join(first.dir, "locales.ts")) && !source.includes('import "./locales.ts";'));
@@ -111,9 +114,9 @@ const main = async (): Promise<void> => {
     ok("it imports the tag's module", module.includes('import lcCard from "@lightstart/components/layout/card.js";'));
     ok("it defines the base before the tag", module.indexOf("View.define(lcContainer);") < module.indexOf("View.define(lcCard);"));
     ok("it defines the used tag before the tag", module.indexOf("View.define(lcIcon);") < module.indexOf("View.define(lcCard);"));
-    eq("the order is topological with ties by tag", module, 'import View from "@lightstart/light";\nimport lcContainer from "@lightstart/components/layout/container.js";\nimport lcIcon from "@lightstart/components/display/icon.js";\nimport lcCard from "@lightstart/components/layout/card.js";\nimport lcText from "@lightstart/components/display/text.js";\n\nView.define(lcContainer);\nView.define(lcIcon);\nView.define(lcCard);\nView.define(lcText);\n');
+    eq("the order is topological with ties by tag", module, 'import View from "@lightstart/light";\nimport lcContainer from "@lightstart/components/layout/container.js";\nimport lcIcon from "@lightstart/components/display/icon.js";\nimport lcCard from "@lightstart/components/layout/card.js";\nimport lcLabel from "@lightstart/components/form/label.js";\nimport lcForm from "@lightstart/components/form/form.js";\nimport lcText from "@lightstart/components/display/text.js";\nimport { configureOnDemand } from "@lightstart/components/utils/on-demand.js";\n\nView.define(lcContainer);\nView.define(lcIcon);\nView.define(lcCard);\nView.define(lcLabel);\nView.define(lcForm);\nView.define(lcText);\n\nconst onDemand = {\n  "lc-accordion": () => import("@lightstart/components/navigation/accordion.js"),\n  "lc-button": () => import("@lightstart/components/display/button.js"),\n  "lc-checkbox": () => import("@lightstart/components/form/checkbox.js"),\n  "lc-color-picker": () => import("@lightstart/components/form/color-picker.js"),\n  "lc-file-upload": () => import("@lightstart/components/form/file-upload.js"),\n  "lc-input": () => import("@lightstart/components/form/input.js"),\n  "lc-select": () => import("@lightstart/components/form/select.js"),\n  "lc-textarea": () => import("@lightstart/components/form/textarea.js"),\n  "lc-week-hours": () => import("@lightstart/components/form/week-hours.js"),\n};\n\nconfigureOnDemand((tag) => {\n  const load = onDemand[tag];\n  return load === undefined ? Promise.resolve() : load().then((module) => View.define(module.default));\n});\n');
 
-    eq("the style module has the theme first, then each stylesheet", readFileSync(join(first.dir, "components.css"), "utf8"), '@import "../node_modules/@lightstart/light/theme/theme.css";\n@import "../node_modules/@lightstart/components/layout/container.css";\n@import "../node_modules/@lightstart/components/display/icon.css";\n@import "../node_modules/@lightstart/components/layout/card.css";\n@import "../node_modules/@lightstart/components/display/text.css";\n');
+    eq("the style module has the theme first, then each stylesheet", readFileSync(join(first.dir, "components.css"), "utf8"), '@import "../node_modules/@lightstart/light/theme/theme.css";\n@import "../node_modules/@lightstart/components/navigation/accordion.css";\n@import "../node_modules/@lightstart/components/display/button.css";\n@import "../node_modules/@lightstart/components/layout/container.css";\n@import "../node_modules/@lightstart/components/display/icon.css";\n@import "../node_modules/@lightstart/components/layout/card.css";\n@import "../node_modules/@lightstart/components/form/color-picker.css";\n@import "../node_modules/@lightstart/components/form/file-upload.css";\n@import "../node_modules/@lightstart/components/form/label.css";\n@import "../node_modules/@lightstart/components/form/checkbox.css";\n@import "../node_modules/@lightstart/components/form/form.css";\n@import "../node_modules/@lightstart/components/form/input.css";\n@import "../node_modules/@lightstart/components/form/select.css";\n@import "../node_modules/@lightstart/components/display/text.css";\n@import "../node_modules/@lightstart/components/form/textarea.css";\n@import "../node_modules/@lightstart/components/form/week-hours.css";\n');
 
     const manifest = readFileSync(first.manifest, "utf8");
     const importAt = manifest.indexOf('import "./components.ts";');
@@ -123,7 +126,19 @@ const main = async (): Promise<void> => {
     const second = await generate(withComponents);
     ok("a second components run changes nothing", second !== null && !second.changed);
 
+    writeFileSync(view, 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppHome extends View {\n  render() {\n    return html`<lc-form .fields=${[]}></lc-form>`;\n  }\n}\n\nView.register("app-home", AppHome);\n');
+    const onDemandApp = await generate(withComponents);
+    ok("a form app generates", onDemandApp !== null);
+    if (onDemandApp !== null) {
+      const formModule = readFileSync(join(onDemandApp.dir, "components.ts"), "utf8");
+      ok("the form and its label import statically", formModule.includes('import lcForm from "@lightstart/components/form/form.js";') && formModule.includes('import lcLabel from "@lightstart/components/form/label.js";'));
+      ok("it configures the on-demand definer", formModule.includes('import { configureOnDemand } from "@lightstart/components/utils/on-demand.js";'));
+      ok("the controls are on demand", formModule.includes('"lc-input": () => import("@lightstart/components/form/input.js")') && formModule.includes('"lc-checkbox": () => import("@lightstart/components/form/checkbox.js")'));
+      ok("the controls' styles are eager", readFileSync(join(onDemandApp.dir, "components.css"), "utf8").includes('@import "../node_modules/@lightstart/components/form/input.css";'));
+    }
+
     writeFileSync(view, 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppHome extends View {\n  render() {\n    return html`<p>Home</p>`;\n  }\n}\n\nView.register("app-home", AppHome);\n');
+    writeFileSync(join(withComponents, "src", "views", "app-form.ts"), 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppForm extends View {\n  render() {\n    return html`<p>Form</p>`;\n  }\n}\n\nView.register("app-form", AppForm);\n');
     const cleared = await generate(withComponents);
     ok("a project with no tag removes the components files", cleared !== null && cleared.changed && !existsSync(join(cleared.dir, "components.ts")) && !existsSync(join(cleared.dir, "components.css")));
     ok("and app.ts no longer imports them", cleared !== null && !readFileSync(cleared.manifest, "utf8").includes('import "./components.ts";'));

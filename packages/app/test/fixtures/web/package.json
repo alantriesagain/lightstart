@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@lightstart/app": "workspace:*",
+    "@lightstart/components": "workspace:*",
     "@lightstart/light": "workspace:*",
     "@lightstart/router": "workspace:*"
   },
