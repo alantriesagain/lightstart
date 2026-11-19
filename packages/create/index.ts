@@ -17,4 +17,6 @@ export {
 } from "./generate.ts";
 export type { GenerateOptions, GeneratedManifest, InstallMode, PackageManager } from "./generate.ts";
 export { KINDS, kindByName, titleOf } from "./kinds.ts";
+export { appAt, generatePiece, isPiece, parseFields, PIECES } from "./pieces.ts";
+export type { AppInfo, Field, FieldType, Piece, PieceOptions } from "./pieces.ts";
 export type { Kind } from "./kinds.ts";

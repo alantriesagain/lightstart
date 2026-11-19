@@ -64,6 +64,18 @@ class TodoRowView extends View {
 define("todo-row", TodoRowView);
 ```
 
+## Writing a piece
+
+Write a model, a controller or a view from the app's folder, in TypeScript and with the shape the scaffold uses:
+
+```bash
+light new model note2 --fields "title:string,done:boolean"
+light new controller notes2 --model note2
+light new view note-list
+```
+
+A field is `name:type`, types are `string`, `boolean`, `number`, `array` and `object`, and a `!` after the type makes it required (`title:string!`); a `?`, or nothing, is optional with a default (`""`, `false`, `0`, `[]`, `{}`). The commands refuse a file that already exists, and a view tag needs a hyphen.
+
 ## Scripts
 
 | Command | Does |
