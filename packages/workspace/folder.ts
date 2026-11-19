@@ -2,13 +2,11 @@
  * @file The folder as the host reads it: its files, its git status against the compare base (the marks
  * and the lines added and removed), the base itself, the watcher's latest batch and when each file
  * last changed, and the tree built from the files. The files, the status and the base are signals
- * holding a snapshot each, replaced whole by a load, so a render reading one follows it; the hooks
- * announce the same loads to plugins. One per folder: `/open` makes another, with the same hooks,
- * the host's, so the listeners stay. One of light's controllers, as the app's state is.
+ * holding a snapshot each, replaced whole by a load, so whatever reads one follows it; `changed` is
+ * an event carrying each batch the watcher saw. One of light's controllers, as the app's state is.
  */
 import { event, signal } from "@lightstart/light/signals";
 import { Controller } from "@lightstart/light/controller/class.ts";
-import { Hook } from "@lightstart/lib/hook.ts";
 import { Latest } from "@lightstart/lib/timing.ts";
 import { buildChanges, FileChange, readBaseMarks, readNumstat, UntrackedCounter } from "./changes.ts";
 import { LineCount } from "./git-parse.ts";
@@ -22,14 +20,6 @@ export class FolderStatus {
   branch = "";
   marks = new Map<string, string>();
   counts = new Map<string, LineCount>();
-}
-
-/** The folder's announcements, the host's across folders so plugins' listeners stay: the files were loaded, the status was read, the watcher saw changes, the compare base changed. */
-export class FolderHooks {
-  readonly filesLoaded = new Hook();
-  readonly statusLoaded = new Hook();
-  readonly folderChanged = new Hook();
-  readonly baseChanged = new Hook();
 }
 
 /** What changes are compared with: "HEAD" or a commit; its kind ("head", "branch", "session") and name. */
@@ -56,11 +46,10 @@ export class FolderController extends Controller {
   readonly files = signal(new FileList());
   readonly status = signal(new FolderStatus());
   readonly base = signal(new CompareBase("HEAD", "head", "HEAD"));
-  /** The watcher's latest batch, for `folderChanged` listeners. */
+  /** The watcher's latest batch. */
   batch = new ChangeBatch();
   /** Each batch of changes the watcher saw, as it arrives. */
   readonly changed = event<ChangeBatch>();
-  readonly hooks: FolderHooks;
   /** Called with a line worth logging. */
   onNote: ((text: string) => void) | null = null;
   /** When each path last changed (the watcher's batches, the agent's edits); untracked files' lines. */
@@ -75,10 +64,9 @@ export class FolderController extends Controller {
   private readonly filesTicket = new Latest();
   private readonly mtimes = new Map<string, number>();
 
-  constructor(workspace: Workspace, hooks: FolderHooks) {
+  constructor(workspace: Workspace) {
     super("folder");
     this.workspace = workspace;
-    this.hooks = hooks;
     workspace.onChanges = (b: ChangeBatch) => this.received(b);
   }
 
@@ -158,7 +146,6 @@ export class FolderController extends Controller {
     const files = await this.workspace.files();
     if (!this.filesTicket.is(ticket)) return;
     this.files.value = files;
-    this.hooks.filesLoaded.fire();
   }
 
   /** Git status and line counts against the compare base, one read at a time (a request meanwhile reads once more after). */
@@ -181,7 +168,6 @@ export class FolderController extends Controller {
         next.marks = sameMarks(before, marks) ? before : marks;
         next.counts = await readNumstat(this.workspace.repo, this.workspace.folder, base);
         this.status.value = next;
-        this.hooks.statusLoaded.fire();
       } while (this.statusAgain);
     } finally {
       this.statusBusy = false;
@@ -191,7 +177,6 @@ export class FolderController extends Controller {
   /** Compare changes with `base` ("HEAD" or a commit), of `kind`, named `name`; status is read again. */
   async setBase(base: string, kind: string, name: string): Promise<void> {
     this.base.value = new CompareBase(base, kind, name);
-    this.hooks.baseChanged.fire();
     await this.loadStatus();
   }
 
@@ -204,7 +189,6 @@ export class FolderController extends Controller {
     for (const p of b.paths) this.changeTimes.set(p, now);
     void this.reload(b.structure);
     this.changed.emit(b);
-    this.hooks.folderChanged.fire();
   }
 
   /** Read the listing and status after a batch; a git failure is said, not an unhandled rejection. */
