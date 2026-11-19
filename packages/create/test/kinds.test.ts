@@ -19,7 +19,8 @@ if (web !== undefined) {
   eq("verify runs light verify", web.scripts.verify, "light verify");
   eq("dev serves with a watch", web.scripts.dev, "light serve --watch");
   eq("build runs light build", web.scripts.build, "light build");
-  eq("test names the browser tests", web.scripts.test, "light test test/*.test.ts");
+  eq("test names the browser tests", web.scripts.test, "light test test/*.test.*");
+  eq("web has a JavaScript and a TypeScript variant", web.languages?.join(",") ?? "", "js,ts");
   eq("check runs light check", web.scripts.check, "light check");
   ok("web declares the cli", Object.hasOwn(web.devDependencies, "@lightstart/cli"));
   ok("web declares playwright", Object.hasOwn(web.devDependencies, "playwright"));

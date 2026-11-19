@@ -7,11 +7,12 @@ import type { Kind } from "../kinds.ts";
 export const web: Kind = {
   name: "web",
   description: "A web app on @lightstart/app: views, a model, a controller and routes",
+  languages: ["js", "ts"],
   packages: ["@lightstart/light", "@lightstart/components", "@lightstart/app"],
   scripts: {
     dev: "light serve --watch",
     build: "light build",
-    test: "light test test/*.test.ts",
+    test: "light test test/*.test.*",
     check: "light check",
     lint: "light lint",
     typecheck: "light typecheck",

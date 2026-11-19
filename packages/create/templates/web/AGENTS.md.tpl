@@ -1,27 +1,27 @@
 # Working in __TITLE__
 
-A web app on `@lightstart/app`: the folders are the app, and light writes the wiring. `src/app.ts` names the few choices, the models, controllers and views live in their folders, and `src/routes.ts` maps paths to view tags. `light` generates `.light/app.ts` and `.light/main.ts`; `index.html` loads `.light/main.ts`.
+__LANGUAGE_INTRO__A web app on `@lightstart/app`: the folders are the app, and light writes the wiring. `src/app.__EXT__` names the few choices, the models, controllers and views live in their folders, and `src/routes.__EXT__` maps paths to view tags. `light` generates `.light/app.__EXT__` and `.light/__MAIN__`; `index.html` loads `.light/__MAIN__`.
 
 ## The folders
 
 | Path | Holds |
 |---|---|
-| `src/app.ts` | `defineApp({ name, host: "web", theme?, stores?, root?, args?, url?, locale? })`: `url` is the site's address (the build's sitemap), `locale` the default language; `stores` by name (`main` is IndexedDB unless it names another kind, `{ cache: { kind: "memory" } }` beside it), `args` read from the URL query |
-| `src/models/<name>.ts` | One model, default-exported; the file name is the model's name |
-| `src/controllers/<name>.ts` | One controller, default-exported; the file name is its name |
-| `src/views/<tag>.ts` | One view, registering its tag; the file name is the tag |
-| `src/routes.ts` | Optional: `{ "/path": { view: "<tag>", name?, title? } }`; `/notes/:id` sets `id` on the view as a prop |
-| `src/locales/<lang>.ts` | With `@lightstart/i18n` installed: the app's words, read with `t(key)`, merged over the words its packages ship |
+| `src/app.__EXT__` | `defineApp({ name, host: "web", theme?, stores?, root?, args?, url?, locale? })`: `url` is the site's address (the build's sitemap), `locale` the default language; `stores` by name (`main` is IndexedDB unless it names another kind, `{ cache: { kind: "memory" } }` beside it), `args` read from the URL query |
+| `src/models/<name>.__EXT__` | One model, default-exported; the file name is the model's name |
+| `src/controllers/<name>.__EXT__` | One controller, default-exported; the file name is its name |
+| `src/views/<tag>.__EXT__` | One view, registering its tag; the file name is the tag |
+| `src/routes.__EXT__` | Optional: `{ "/path": { view: "<tag>", name?, title? } }`; `/notes/:id` sets `id` on the view as a prop |
+| `src/locales/<lang>.__EXT__` | With `@lightstart/i18n` installed: the app's words, read with `t(key)`, merged over the words its packages ship |
 | `src/styles.css` | The generated components' stylesheet, then the app's own rules |
 | `test/` | Browser tests, run by `light test` |
 
-A view reaches its controller with an import, `import notes from "../controllers/notes.ts"`. A controller imports its models the same way, `import note from "../models/note.ts"`. A row's type comes from its schema: pass the schema to `defineModel` directly (not through a `: ModelSchema` annotation, which drops its fields) and name the row `export type Note = ModelRow<typeof note>`; its fields are typed, so a row reads `row.text`, not `String(row.text)`. One controller reaches another by name with `sync:` (the file name is the name), never by importing its instance.
+A view reaches its controller with an import, `import notes from "../controllers/notes.__EXT__"`. A controller imports its models the same way, `import note from "../models/note.__EXT__"`. __ROW_TYPE__ One controller reaches another by name with `sync:` (the file name is the name), never by importing its instance.
 
 ## Generated files
 
-`.light/app.ts`, `.light/main.ts` and the manifest are written by `light app` (and by `serve`, `build` and `test` before they start). Never edit them, and never commit them: `.light/` is in `.gitignore` beside `.deployed/`.
+`.light/app.__EXT__`, `.light/__MAIN__` and the manifest are written by `light app` (and by `serve`, `build` and `test` before they start). Never edit them, and never commit them: `.light/` is in `.gitignore` beside `.deployed/`.
 
-The app layer opens the stores (a model picks one with its schema's `$adapter`, `main` when it names none), names and starts the controllers, applies the theme, builds the router from `src/routes.ts` and mounts the root view. It also writes `.light/components.ts` and `.light/components.css` for a project on `@lightstart/components`: the views write `lc-*` tags and the generation defines them and imports their stylesheets, so a view imports no component and calls no `View.define`.
+The app layer opens the stores (a model picks one with its schema's `$adapter`, `main` when it names none), names and starts the controllers, applies the theme, builds the router from `src/routes.__EXT__` and mounts the root view. It also writes `.light/components.__EXT__` and `.light/components.css` for a project on `@lightstart/components`: the views write `lc-*` tags and the generation defines them and imports their stylesheets, so a view imports no component and calls no `View.define`.
 
 ## Scripts
 
@@ -29,7 +29,7 @@ The app layer opens the stores (a model picks one with its schema's `$adapter`, 
 |---|---|
 | `pnpm dev` | `light serve --watch`: the app on the first free port from 3000, reloading on a change |
 | `pnpm build` | `light build`: bundles into `.deployed/builds/<id>`, with `404.html`, `robots.txt`, `_headers` and (given `url`) `sitemap.xml` for a static host, and points `.deployed/current` at it |
-| `pnpm test` | `light test test/*.test.ts`: the browser tests in headless Chromium (`pnpm exec playwright install chromium` once) |
+| `pnpm test` | `light test test/*.test.*`: the browser tests in headless Chromium (`pnpm exec playwright install chromium` once) |
 | `pnpm check` | `light check`: light's conventions over the sources |
 | `pnpm lint` | `light lint`: eslint with the project's config |
 | `pnpm typecheck` | `light typecheck`: `tsc --noEmit` over `src/`, `test/` and the generated `.light/` |
@@ -43,19 +43,7 @@ The dev server builds the page's importmap from `package.json`; the build resolv
 
 A view is a `View` subclass whose `render()` returns an `html` template. Reading a signal in `render()` subscribes the view to it.
 
-```ts
-import View from "@lightstart/light";
-import { html } from "@lightstart/light/html";
-import notes from "../controllers/notes.ts";
-
-class Counter extends View {
-  render() {
-    return html`<button @click=${() => notes.add("one")}>${notes.rows.value.length}</button>`;
-  }
-}
-
-View.register("my-counter", Counter);
-```
+__VIEW_EXAMPLE__
 
 ## Routes, tests, forms and words
 
@@ -65,7 +53,7 @@ A test opens the app in the page with `openPage(manifest, { path, args })` from 
 
 A form over a model is `<lc-form .fields=${fieldsForModel(schema)}>` with `@lightstart/form`, its submit checked with `validateForm`. Words go through `t(key)` from `@lightstart/i18n`, and `<lc-language-switcher>` changes the language.
 
-A `View` subclass's render follows the signals it reads. A view written as a definition (`View.define({ tag, props, render })`) does not: it reads a `defineController`'s state through props declared `sync: "<controller>"`, which needs `View.use(syncPlugin)` from `@lightstart/light/controller/view` in `src/app.ts`.
+A `View` subclass's render follows the signals it reads. A view written as a definition (`View.define({ tag, props, render })`) does not: it reads a `defineController`'s state through props declared `sync: "<controller>"`, which needs `View.use(syncPlugin)` from `@lightstart/light/controller/view` in `src/app.__EXT__`.
 
 ## Read more
 

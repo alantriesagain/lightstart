@@ -4,12 +4,13 @@ The generator behind `light new`: a project of a named kind, with light's comman
 
 ```bash
 light new                          # list the kinds, one line each
-light new web my-app               # a web app on @lightstart/app
+light new web my-app               # a web app on @lightstart/app, JavaScript with JSDoc
+light new web my-app --ts          # the same app in TypeScript
 light new web my-app --dir sites/my-app
 light new package my-package --no-install
 ```
 
-`light new <kind> <name> [--dir <path>] [--light <path>] [--npm] [--pm pnpm|npm] [--no-install] [--force]`
+`light new <kind> <name> [--dir <path>] [--light <path>] [--npm] [--pm pnpm|npm] [--ts] [--no-install] [--force]`
 
 | Option | Default | What |
 |---|---|---|
@@ -18,6 +19,7 @@ light new package my-package --no-install
 | `--dir` | `./<name>` | The folder to write |
 | `--light` | the checkout the generator runs from | The light checkout that holds `packages/light` |
 | `--npm` | off | Write semver ranges of the packages' current versions instead of linking; the packages may not be published yet, so the install may fail |
+| `--ts` | off | A web app in TypeScript; without it the app is JavaScript typed with JSDoc |
 | `--pm` | `pnpm`, or `npm` with `--npm` | The package manager |
 | `--no-install` | install | Do not run the install |
 | `--force` | off | Write into a folder that is not empty |
@@ -26,7 +28,7 @@ light new package my-package --no-install
 
 | Kind | What it starts | Its scripts |
 |---|---|---|
-| `web` | A web app on `@lightstart/app`: a model, a controller, views and routes | `light serve --watch`, `light build`, `light test`, `light check`, `light lint`, `light typecheck`, `light verify` |
+| `web` | A web app on `@lightstart/app` in JavaScript with JSDoc (`--ts` for TypeScript): a model, a controller, views and routes | `light serve --watch`, `light build`, `light test`, `light check`, `light lint`, `light typecheck`, `light verify` |
 | `tui` | A terminal app on `@lightstart/app`: a model, a controller and views, compiled by `scriptc` | `light run`, `light test`, `light build`, `light check`, `light lint`, `light typecheck`, `light verify` |
 | `desktop` | A page in light's desktop shell with a native backend | `light desktop run`, `light desktop build`, node's test runner, `light check`, `light lint`, `light typecheck`, `light verify` |
 | `package` | A light package with modules, tests and a README | node's test runner, `tsc`, `light check`, `light lint`, `light verify`, the pack script |
@@ -35,7 +37,7 @@ The `web` and `tui` kinds start on [`@lightstart/app`](../app/README.md): the pr
 
 Every kind gets `eslint.config.js`, which re-exports light's recommended config with the generated and build folders ignored, a `tsconfig.json` covering what `light typecheck` reads, and the `lint`, `typecheck` and `verify` scripts beside `check` and `test`.
 
-Sources are TypeScript with erasable syntax, as light's own packages are, so what `scriptc` compiles in one kind reads the same in another. Each kind is a template folder under `templates/` and a module under `kinds/`.
+A web app is JavaScript typed with JSDoc by default (`--ts` writes TypeScript); the other kinds are TypeScript with erasable syntax, as light's own packages are, so what `scriptc` compiles in one kind reads the same in another. Each kind is a template folder under `templates/`; a web template keeps its shared files and a `js/` and `ts/` folder for the code each language writes.
 
 ## Where light comes from
 

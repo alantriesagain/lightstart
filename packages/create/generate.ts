@@ -29,6 +29,8 @@ export type GenerateOptions = {
   pm: PackageManager;
   install: boolean;
   force: boolean;
+  /** The language under a template's `js/` or `ts/` folder; `ts` when the kind has neither. */
+  language?: "js" | "ts";
   log?: (message: string) => void;
 };
 
@@ -150,15 +152,43 @@ export const manifestFor = (kind: Kind, name: string, root: string, mode: Instal
   };
 };
 
-/** Write `__NAME__` and `__TITLE__` into a template file's text. */
-export const replaceTokens = (text: string, name: string, title: string): string =>
-  text.replaceAll("__NAME__", name).replaceAll("__TITLE__", title);
+/** Write `__NAME__` and `__TITLE__` into a template file's text, then any extra tokens. */
+export const replaceTokens = (text: string, name: string, title: string, tokens: Record<string, string> = {}): string => {
+  let out = text.replaceAll("__NAME__", name).replaceAll("__TITLE__", title);
+  for (const [token, value] of Object.entries(tokens)) out = out.replaceAll(token, value);
+  return out;
+};
 
-/** Copy a template folder into `target`, dropping `.tpl` from a name and replacing its tokens. */
-export const copyTemplate = (templateDir: string, target: string, name: string, title: string): string[] => {
+/** The tokens a language's template files use: the source extension, the generated main file and the language-specific prose. */
+export const languageTokens = (language: "js" | "ts"): Record<string, string> => {
+  if (language === "js")
+    return {
+      __EXT__: "js",
+      __MAIN__: "main.js",
+      __LANGUAGE_INTRO__:
+        "This app is JavaScript typed with JSDoc and checked by `light typecheck`; `light new web <name> --ts` starts the TypeScript variant.\n\n",
+      __ROW_TYPE__:
+        'The row type is a JSDoc typedef from the model, `/** @typedef {import("@lightstart/light/model").ModelRow<typeof note>} Note */`, and a file that needs it imports it, `/** @import { Note } from "../models/note.js" */`. Type a view with a typedef (`/** @typedef {{ id: string }} Props */`) or a field with `@type`, and a method with `@param` and `@returns` (`/** @param {string} text @returns {Promise<void>} */`); `light typecheck` checks all of it.',
+      __VIEW_EXAMPLE__:
+        "```js\nimport View from \"@lightstart/light\";\nimport { html } from \"@lightstart/light/html\";\nimport notes from \"../controllers/notes.js\";\n\nclass Counter extends View {\n  render() {\n    return html`<button @click=${() => notes.add(\"one\")}>${notes.rows.value.length}</button>`;\n  }\n}\n\nView.register(\"my-counter\", Counter);\n```",
+    };
+  return {
+    __EXT__: "ts",
+    __MAIN__: "main.ts",
+    __LANGUAGE_INTRO__: "",
+    __ROW_TYPE__:
+      "A row's type comes from its schema: pass the schema to `defineModel` directly (not through a `: ModelSchema` annotation, which drops its fields) and name the row `export type Note = ModelRow<typeof note>`; its fields are typed, so a row reads `row.text`, not `String(row.text)`.",
+    __VIEW_EXAMPLE__:
+      "```ts\nimport View from \"@lightstart/light\";\nimport { html } from \"@lightstart/light/html\";\nimport notes from \"../controllers/notes.ts\";\n\nclass Counter extends View {\n  render() {\n    return html`<button @click=${() => notes.add(\"one\")}>${notes.rows.value.length}</button>`;\n  }\n}\n\nView.register(\"my-counter\", Counter);\n```",
+  };
+};
+
+/** Copy a template folder into `target`, dropping `.tpl` from a name and replacing its tokens; top-level `skip` folders are left out. */
+export const copyTemplate = (templateDir: string, target: string, name: string, title: string, skip: ReadonlySet<string> = new Set(), tokens: Record<string, string> = {}): string[] => {
   const written: string[] = [];
   const walk = (dir: string): void => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (dir === templateDir && entry.isDirectory() && skip.has(entry.name)) continue;
       const source = join(dir, entry.name);
       if (entry.isDirectory()) {
         walk(source);
@@ -168,7 +198,7 @@ export const copyTemplate = (templateDir: string, target: string, name: string, 
       const output = entry.name.endsWith(".tpl") ? entry.name.slice(0, -4) : entry.name;
       const destination = join(target, relative(templateDir, join(dir, output)));
       mkdirSync(dirname(destination), { recursive: true });
-      writeFileSync(destination, replaceTokens(readFileSync(source, "utf8"), name, title));
+      writeFileSync(destination, replaceTokens(readFileSync(source, "utf8"), name, title, tokens));
       written.push(relative(target, destination));
     }
   };
@@ -233,7 +263,10 @@ export const generate = async (options: GenerateOptions): Promise<GeneratedManif
   if (!existsSync(templateDir)) throw new Error(`The "${options.kind.name}" template is not here yet.`);
   ensureTarget(options.target, options.force);
   const manifest = manifestFor(options.kind, options.name, options.lightRoot, options.mode, options.target);
-  const written = copyTemplate(templateDir, options.target, options.name, titleOf(options.name));
+  const language = options.kind.languages === undefined ? undefined : options.language ?? "js";
+  const tokens = languageTokens(language ?? "ts");
+  const written = copyTemplate(templateDir, options.target, options.name, titleOf(options.name), new Set(options.kind.languages ?? []), tokens);
+  if (language !== undefined) written.push(...copyTemplate(join(templateDir, language), options.target, options.name, titleOf(options.name), new Set(), tokens));
   writeFileSync(join(options.target, "package.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   options.log?.(`Wrote ${String(written.length + 1)} files in ${options.target}`);
   if (options.install) {
