@@ -1,6 +1,7 @@
 /**
  * @file `light test` extended by the app: generate the manifest before the
- * command picks its files, so a browser test can import `../.light/main.ts`.
+ * command picks its files, so a browser test can import `../.light/main.ts`,
+ * or `../.light/main.js` for a JavaScript app.
  */
 
 import { defineExtension } from "@lightstart/cli";

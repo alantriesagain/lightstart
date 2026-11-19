@@ -1,6 +1,6 @@
 # @lightstart/app
 
-A project's folders are its app, whatever it runs on. `src/app.ts` names the few choices, `src/models/`, `src/controllers/` and `src/views/` hold the pieces, and `src/routes.ts` maps paths to view tags when the app has routes. Light writes the wiring into `.light/`; one run opens the stores, starts the controllers and the routes, and a host puts the view on its surface: `@lightstart/app/web` in a page, `@lightstart/app/tui` on a terminal.
+A project's folders are its app, whatever it runs on. `src/app.ts` (or `src/app.js`) names the few choices, `src/models/`, `src/controllers/` and `src/views/` hold the pieces, and `src/routes.ts` (or `src/routes.js`) maps paths to view tags when the app has routes. Light writes the wiring into `.light/`; one run opens the stores, starts the controllers and the routes, and a host puts the view on its surface: `@lightstart/app/web` in a page, `@lightstart/app/tui` on a terminal.
 
 light's engine is the MVC (models, controllers and views, usable in any project); this package is the framework that composes them: the folder convention, the generated wiring, one lifecycle, and the hosts.
 
@@ -14,7 +14,7 @@ light build                # generate as the build's first step
 
 | Path | Holds | The app does |
 |---|---|---|
-| `src/app.ts` | `defineApp({ name, host, theme, locale, url, stores, root, args })` | reads it first |
+| `src/app.ts` or `src/app.js` | `defineApp({ name, host, theme, locale, url, stores, root, args })` | reads it first |
 | `src/models/<name>.ts` | one model, default-exported | opens its store with every model |
 | `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready`, each after the controllers it imports |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
@@ -90,7 +90,7 @@ The run starts the controllers one after the other, each once the one before it 
 
 ## What is generated
 
-`light app`, `serve:before`, `serve:file-changed`, the build extension and the test extension all call the same generator. It does nothing in a folder without `src/app.ts`.
+`light app`, `serve:before`, `serve:file-changed`, the build extension and the test extension all call the same generator. It does nothing in a folder without `src/app.ts` or `src/app.js`, and a project with both is an error naming both.
 
 `.light/app.ts` is the same for every host: static imports of every model, controller and view (and `src/routes.ts` when present), plus the manifest:
 
@@ -122,9 +122,9 @@ import manifest from "./app.ts";
 await start(manifest);
 ```
 
-A web project that declares `@lightstart/components` and writes an `lc-*` tag in `src/` gets two more files. `.light/components.ts` imports each component module, follows every `extends` and `uses`, and defines each base and used tag before the tag that needs it; `.light/components.css` imports the theme and each component's stylesheet in the same order. `.light/app.ts` imports `./components.ts` before the views. A project without the package, or writing no tag, gets neither file.
+A web project that declares `@lightstart/components` and writes an `lc-*` tag in `src/` gets two more files. `.light/components.ts` (or `.js`) imports each component module, follows every `extends` and `uses`, and defines each base and used tag before the tag that needs it; `.light/components.css` imports the theme and each component's stylesheet in the same order. `.light/app.ts` (or `.js`) imports `./components.ts` (or `.js`) before the views. A project without the package, or writing no tag, gets neither file.
 
-A project that declares `@lightstart/i18n` gets `.light/locales.ts`, imported by `.light/app.ts` before the views. It imports `locales/<lang>.js` from every dependency whose `package.json` says `light.locales: true`, and the project's own `src/locales/<lang>.ts`/`.js`, then calls `configureI18n({ locales, defaultLocale, dictionaries })`: every language found, the app's `locale` as the default, and each language's dictionary the packages' merged first with the project's over them (a deep merge, so a key the project writes wins). A project without the package gets no file, and may plug another library into `configureTranslation` itself.
+A project that declares `@lightstart/i18n` gets `.light/locales.ts` (or `.js`), imported by `.light/app.ts` (or `.js`) before the views. It imports `locales/<lang>.js` from every dependency whose `package.json` says `light.locales: true`, and the project's own `src/locales/<lang>.ts`/`.js`, then calls `configureI18n({ locales, defaultLocale, dictionaries })`: every language found, the app's `locale` as the default, and each language's dictionary the packages' merged first with the project's over them (a deep merge, so a key the project writes wins). A project without the package gets no file, and may plug another library into `configureTranslation` itself.
 
 On the terminal, the manifest also carries the root view's class (`rootView`), `.light/classes.baked.ts` holds the theme's classes the views use baked into a table per scheme, and the entry runs the first run mode that matches before the host (`matches(argv)` when the mode has one, else `argv` holding `--<name>`; it exits with its code):
 
@@ -149,7 +149,7 @@ The output is deterministic (sorted, relative imports from `.light/`) and a file
 
 ## Building
 
-`light build` runs the same generator before it reads the page, then adds the files a static host needs after it rewrites the page, for a project with `src/app.ts`:
+`light build` runs the same generator before it reads the page, then adds the files a static host needs after it rewrites the page, for a project with `src/app.ts` or `src/app.js`:
 
 - `404.html`, the built page itself (the same contents as `index.html`), so a path the host has no file for still boots the app and its router.
 - `sitemap.xml` and `robots.txt` when `defineApp` has a `url`: the sitemap lists every concrete path of `src/routes.ts`, as absolute URLs joined with `url`, sorted. A static route is its own path; a route with parameters (`/notes/:id`) is filled from the values its `params` answers, when it has one (`params: () => [{ id: "1" }, { id: "2" }]`), so a parameter route without `params`, a wildcard, a `spa: true` route and a redirect are left out. `robots.txt` is `User-agent: *`, `Allow: /` and a `Sitemap:` line. Without a `url` there is no sitemap, and `robots.txt` has no `Sitemap:` line.
@@ -206,7 +206,7 @@ await app.stop();
 
 ```ts
 import { openPage } from "@lightstart/app/web/test";
-import manifest from "../.light/app.ts";
+import manifest from "../.light/app.ts"; // `../.light/app.js` for a JavaScript app
 
 const page = await openPage(manifest, { path: "/lists", args: { list: "Work" } });
 

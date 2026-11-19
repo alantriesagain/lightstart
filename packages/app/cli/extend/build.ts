@@ -10,11 +10,10 @@ import "@lightstart/light/markup";
 import { defineExtension } from "@lightstart/cli";
 import type {} from "@lightstart/build";
 import type { RoutesMap } from "@lightstart/router";
-import { existsSync } from "node:fs";
-import { join, relative } from "node:path";
+import { relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { PrerenderRenderer } from "../../index.ts";
-import { generate, infoOf, routesOf } from "../../node/generate.ts";
+import { appOf, generate, infoOf, routesOf, routesPathOf } from "../../node/generate.ts";
 import { pathsOf } from "../../node/paths.ts";
 import { prerender } from "../../node/prerender.ts";
 
@@ -77,16 +76,16 @@ export default defineExtension("build", {
     api.steps.after("html", {
       name: "static",
       async run(ctx) {
-        const app = join(ctx.root, "src", "app.ts");
-        if (!existsSync(app)) return;
+        const app = appOf(ctx.root);
+        if (app === null) return;
 
         const page = relative(ctx.root, ctx.pagePath).split("\\").join("/");
         const html = ctx.outputs.get(page);
         if (html !== undefined) ctx.outputs.set("404.html", html);
 
-        const info = await infoOf(app);
-        const routesPath = join(ctx.root, "src", "routes.ts");
-        const routes = existsSync(routesPath) ? await routesOf(routesPath) : null;
+        const info = await infoOf(app.path);
+        const routesPath = routesPathOf(ctx.root);
+        const routes = routesPath === null ? null : await routesOf(routesPath);
         ctx.data.set("app-routes", routes);
         if (info.url === undefined) {
           ctx.outputs.set("robots.txt", "User-agent: *\nAllow: /\n");
@@ -102,9 +101,9 @@ export default defineExtension("build", {
     api.steps.after("static", {
       name: "prerender",
       async run(ctx) {
-        const app = join(ctx.root, "src", "app.ts");
-        if (!existsSync(app)) return;
-        const fromApp = await prerenders(app);
+        const app = appOf(ctx.root);
+        if (app === null) return;
+        const fromApp = await prerenders(app.path);
         if (!wanted && !fromApp.prerender) return;
 
         const routes = ctx.data.get("app-routes");
