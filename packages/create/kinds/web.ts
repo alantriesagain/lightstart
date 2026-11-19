@@ -13,6 +13,7 @@ export const web: Kind = {
     dev: "light serve --watch",
     build: "light build",
     test: "light test test/*.test.*",
+    "test:e2e": "node --test test/*.e2e.*",
     check: "light check",
     lint: "light lint",
     typecheck: "light typecheck",

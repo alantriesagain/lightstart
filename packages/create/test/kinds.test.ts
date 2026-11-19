@@ -15,11 +15,12 @@ const web = kindByName("web");
 ok("web is in the table", web !== undefined);
 if (web !== undefined) {
   eq("web depends on light, components and the app layer", web.packages.join(","), "@lightstart/light,@lightstart/components,@lightstart/app");
-  eq("web's scripts", Object.keys(web.scripts).join(","), "dev,build,test,check,lint,typecheck,verify");
+  eq("web's scripts", Object.keys(web.scripts).join(","), "dev,build,test,test:e2e,check,lint,typecheck,verify");
   eq("verify runs light verify", web.scripts.verify, "light verify");
   eq("dev serves with a watch", web.scripts.dev, "light serve --watch");
   eq("build runs light build", web.scripts.build, "light build");
   eq("test names the browser tests", web.scripts.test, "light test test/*.test.*");
+  eq("test:e2e runs the built app", web.scripts["test:e2e"], "node --test test/*.e2e.*");
   eq("web has a JavaScript and a TypeScript variant", web.languages?.join(",") ?? "", "js,ts");
   eq("check runs light check", web.scripts.check, "light check");
   ok("web declares the cli", Object.hasOwn(web.devDependencies, "@lightstart/cli"));

@@ -6,6 +6,8 @@
  * stores in memory and a history in memory starting at a path, with the
  * arguments the test gives rather than the URL's. It answers an `OpenedPage`
  * with helpers to wait for an element or a text, go to a path and settle.
+ * `openBuilt` serves a build folder as a static host does and opens a path in
+ * a fresh headless Chromium context, for a test of the build itself.
  */
 
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
@@ -172,4 +174,223 @@ export const openPage = async (manifest: AppManifest, options: OpenPageOptions =
   await settlePage();
   if (host.mountedRoot === null) throw new Error("the page did not mount the app's root view");
   return new OpenedPage(run, host.mountedRoot);
+};
+
+/** What `openBuilt` takes: how long a page may take to settle (30 s by default). */
+export interface OpenBuiltOptions {
+  /** Milliseconds `goto` waits for the page to load and the network to go idle. */
+  timeoutMs?: number;
+}
+
+interface BuiltPageLike {
+  on(event: "pageerror", handler: (error: unknown) => void): void;
+  on(event: "console", handler: (message: { type(): string; text(): string; location(): { url: string } }) => void): void;
+  on(event: "response", handler: (response: { status(): number; url(): string; request(): { resourceType(): string } }) => void): void;
+  on(event: "requestfailed", handler: (request: { url(): string }) => void): void;
+  goto(url: string, options: { waitUntil: string; timeout: number }): Promise<unknown>;
+  evaluate<T>(run: () => T): Promise<T>;
+  close(): Promise<void>;
+}
+
+interface BuiltBrowserLike {
+  newPage(): Promise<BuiltPageLike>;
+  close(): Promise<void>;
+}
+
+interface ChromiumLike {
+  launch(options?: { headless?: boolean }): Promise<BuiltBrowserLike>;
+}
+
+const BUILT_TYPES: Record<string, string> = {
+  css: "text/css; charset=utf-8",
+  gif: "image/gif",
+  html: "text/html; charset=utf-8",
+  ico: "image/x-icon",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  js: "text/javascript; charset=utf-8",
+  json: "application/json; charset=utf-8",
+  map: "application/json; charset=utf-8",
+  mjs: "text/javascript; charset=utf-8",
+  png: "image/png",
+  svg: "image/svg+xml",
+  txt: "text/plain; charset=utf-8",
+  wasm: "application/wasm",
+  webp: "image/webp",
+  woff: "font/woff",
+  woff2: "font/woff2",
+  xml: "application/xml; charset=utf-8",
+};
+
+const builtTypeOf = (path: string): string => BUILT_TYPES[path.slice(path.lastIndexOf(".") + 1).toLowerCase()] ?? "application/octet-stream";
+
+const builtMessageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/** A built app opened in headless Chromium. */
+export class OpenedBuiltPage {
+  /** The page errors and the console errors it raised. */
+  readonly errors: string[];
+  /** The same-origin requests that failed or answered 4xx or 5xx, with their paths. */
+  readonly failed: string[];
+  private readonly page: BuiltPageLike;
+  private readonly browser: BuiltBrowserLike;
+  private readonly server: { close(callback: () => void): unknown };
+  private closed = false;
+
+  constructor(errors: string[], failed: string[], page: BuiltPageLike, browser: BuiltBrowserLike, server: { close(callback: () => void): unknown }) {
+    this.errors = errors;
+    this.failed = failed;
+    this.page = page;
+    this.browser = browser;
+    this.server = server;
+  }
+
+  /** The page's text now. */
+  text(): Promise<string> {
+    return this.page.evaluate(() => document.body?.innerText ?? "");
+  }
+
+  /** Close the page, the browser and the server. */
+  async close(): Promise<void> {
+    if (this.closed) return;
+    this.closed = true;
+    await this.page.close();
+    await this.browser.close();
+    await new Promise<void>((resolve) => {
+      this.server.close(() => resolve());
+    });
+  }
+}
+
+/**
+ * Serve the build folder `dir` as a static host does (the file, else
+ * `<path>/index.html`, else `404.html` with status 404), open `path` in a
+ * fresh headless Chromium context, and wait until it loads with the network
+ * idle (Playwright's `networkidle`: 500 ms with no request) plus two animation
+ * frames. A path answered by `404.html` is the expected SPA fallback, so the
+ * document's own 404 is not reported; any other same-origin 4xx/5xx, a failed
+ * request, a page error or a console error is.
+ */
+export const openBuilt = async (dir: string, path = "/", options: OpenBuiltOptions = {}): Promise<OpenedBuiltPage> => {
+  const { createServer } = await import("node:http");
+  const { createReadStream } = await import("node:fs");
+  const { stat } = await import("node:fs/promises");
+  const { extname, join, normalize, resolve, sep } = await import("node:path");
+  const { chromiumFrom } = await import("../node/prerender.ts");
+
+  const root = resolve(dir);
+  const fallbacks = new Set<string>();
+  const answer = async (pathname: string, send: (status: number, file: string | null) => void): Promise<void> => {
+    let relative = pathname.replace(/^\/+/, "");
+    try {
+      relative = decodeURIComponent(relative);
+    } catch {
+      // Keep the undecoded path.
+    }
+    const candidates = relative === "" ? ["index.html"] : [relative, join(relative, "index.html")];
+    for (const candidate of candidates) {
+      const file = normalize(join(root, candidate));
+      if (file !== root && !file.startsWith(root + sep)) continue;
+      try {
+        if ((await stat(file)).isFile()) {
+          send(200, file);
+          return;
+        }
+      } catch {
+        // Try the next candidate.
+      }
+    }
+    const shell = join(root, "404.html");
+    try {
+      if ((await stat(shell)).isFile()) {
+        fallbacks.add(pathname);
+        send(404, shell);
+        return;
+      }
+    } catch {
+      // No SPA fallback.
+    }
+    send(404, null);
+  };
+
+  const server = createServer((request, response) => {
+    const url = new URL(request.url ?? "/", "http://127.0.0.1");
+    void answer(url.pathname, (status, file) => {
+      response.statusCode = status;
+      if (file === null) {
+        response.setHeader("content-type", "text/plain; charset=utf-8");
+        response.end("Not found");
+        return;
+      }
+      response.setHeader("content-type", builtTypeOf(extname(file)));
+      createReadStream(file).pipe(response);
+    });
+  });
+  await new Promise<void>((settle, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", settle);
+  });
+  const address = server.address();
+  const port = typeof address === "object" && address !== null ? address.port : 0;
+  const origin = `http://127.0.0.1:${String(port)}`;
+
+  const chromium = (await chromiumFrom(process.cwd())) as unknown as ChromiumLike;
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  const errors: string[] = [];
+  const failed: string[] = [];
+  page.on("pageerror", (error) => errors.push(builtMessageOf(error)));
+  page.on("console", (message) => {
+    if (message.type() !== "error") return;
+    try {
+      const url = new URL(message.location().url);
+      if (url.origin === origin && fallbacks.has(url.pathname)) return;
+    } catch {
+      // A console message with no URL is the page's own.
+    }
+    errors.push(message.text());
+  });
+  page.on("response", (response) => {
+    const url = new URL(response.url());
+    if (url.origin !== origin || response.status() < 400) return;
+    if (response.status() === 404 && response.request().resourceType() === "document" && fallbacks.has(url.pathname)) return;
+    failed.push(`${String(response.status())} ${url.pathname}`);
+  });
+  page.on("requestfailed", (request) => {
+    const url = new URL(request.url());
+    if (url.origin === origin) failed.push(`failed ${url.pathname}`);
+  });
+  try {
+    await page.goto(`${origin}${path}`, { waitUntil: "networkidle", timeout: options.timeoutMs ?? 30_000 });
+    await page.evaluate(
+      () =>
+        new Promise<void>((settle) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(settle, 50)));
+        }),
+    );
+  } catch (error) {
+    errors.push(builtMessageOf(error));
+  }
+  return new OpenedBuiltPage(errors, failed, page, browser, server);
+};
+
+/** The newest build folder in `projectDir`: `.deployed/current` when the build wrote it, else `.deployed/builds/<id>` by name. */
+export const latestBuild = async (projectDir: string): Promise<string> => {
+  const { existsSync } = await import("node:fs");
+  const { promises: fs } = await import("node:fs");
+  const { join } = await import("node:path");
+  const out = join(projectDir, ".deployed");
+  const current = join(out, "current");
+  if (existsSync(current)) return current;
+  const builds = join(out, "builds");
+  let entries: { name: string; isDirectory(): boolean }[];
+  try {
+    entries = await fs.readdir(builds, { withFileTypes: true });
+  } catch {
+    throw new Error(`no build in ${out}`);
+  }
+  const ids = entries.filter((entry) => entry.isDirectory() && entry.name !== "current").map((entry) => entry.name).sort().reverse();
+  const newest = ids[0];
+  if (newest === undefined) throw new Error(`no build in ${out}`);
+  return join(builds, newest);
 };

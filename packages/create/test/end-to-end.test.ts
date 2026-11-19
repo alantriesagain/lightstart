@@ -92,6 +92,7 @@ const main = async (): Promise<void> => {
           `src/views/app-home.${variant.ext}`,
           `src/views/app-about.${variant.ext}`,
           `test/app.test.${variant.ext}`,
+          `test/smoke.e2e.${variant.ext}`,
           "README.md",
           "AGENTS.md",
           ".gitignore",
@@ -107,6 +108,7 @@ const main = async (): Promise<void> => {
         ok(`${label}the manifest links light`, manifest.dependencies["@lightstart/light"]?.startsWith("link:") === true);
         ok(`${label}the manifest links the app layer`, manifest.dependencies["@lightstart/app"]?.startsWith("link:") === true);
         ok(`${label}test runs both languages`, manifest.scripts.test === "light test test/*.test.*");
+        ok(`${label}test:e2e runs only the built app`, manifest.scripts["test:e2e"] === "node --test test/*.e2e.*");
 
         const built = await run(process.execPath, [join(root, "packages", "cli", "bin", "light.js"), "build"], target);
         ok(`${label}light build exits 0`, built.code === 0);
@@ -123,6 +125,10 @@ const main = async (): Promise<void> => {
         const tested = await run("pnpm", ["run", "test"], target);
         ok(`${label}the project's browser test passes`, tested.code === 0);
         if (tested.code !== 0) console.log(tested.output);
+
+        const smoke = await run("pnpm", ["run", "test:e2e"], target);
+        ok(`${label}the project's built app passes its smoke test`, smoke.code === 0);
+        if (smoke.code !== 0) console.log(smoke.output);
 
         const checked = await run("pnpm", ["run", "check"], target);
         ok(`${label}the project's check passes`, checked.code === 0);

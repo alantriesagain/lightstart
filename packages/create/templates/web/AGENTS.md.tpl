@@ -31,6 +31,7 @@ The app layer opens the stores (a model picks one with its schema's `$adapter`, 
 | `pnpm dev` | `light serve --watch`: the app on the first free port from 3000, reloading on a change |
 | `pnpm build` | `light build`: bundles into `.deployed/builds/<id>`, with `404.html`, `robots.txt`, `_headers` and (given `url`) `sitemap.xml` for a static host, and points `.deployed/current` at it |
 | `pnpm test` | `light test test/*.test.*`: the browser tests in headless Chromium (`pnpm exec playwright install chromium` once) |
+| `pnpm test:e2e` | `node --test test/*.e2e.*`: builds the app, then opens the built pages in headless Chromium |
 | `pnpm check` | `light check`: light's conventions over the sources |
 | `pnpm lint` | `light lint`: eslint with the project's config |
 | `pnpm typecheck` | `light typecheck`: `tsc --noEmit` over `src/`, `test/` and the generated `.light/` |
@@ -51,6 +52,8 @@ __VIEW_EXAMPLE__
 `<app-container>` in the root view draws the view the path answers; `navigate(path)` from `@lightstart/app/web` goes to another, and a plain `<a href="/path">` does too. A view that a path with parameters answers declares a prop for each one.
 
 A test opens the app in the page with `openPage(manifest, { path, args })` from `@lightstart/app/web/test` (stores and history in memory): `await page.find(selector)`, `await page.shows(text)`, `await page.navigate(path)`, then `await page.stop()`.
+
+`pnpm test:e2e` tests the build itself: it runs `light build`, then opens `/` and each concrete route with `openBuilt(latestBuild("."), path)` and fails on a page error or a failed request. Run it before publishing or after changing the build, prerendering or the routes; `pnpm test` stays fast and does not run it.
 
 A form over a model is `<lc-form .fields=${fieldsForModel(schema)}>` with `@lightstart/form`, its submit checked with `validateForm`. Words go through `t(key)` from `@lightstart/i18n`, and `<lc-language-switcher>` changes the language.
 

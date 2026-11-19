@@ -67,6 +67,7 @@ Follow the shape `light new` gave the project and the choices it already made (i
 - An app's logic: `openApp(manifest, { args, kinds })` from `@lightstart/app/test`, over memory stores.
 - A terminal app's screen: `mountApp(manifest, opened, { cols, rows })` from `@lightstart/app/tui/test`, keys through `renderer.decoder.pushText`.
 - A web app's page: `openPage(manifest, { path, args })` from `@lightstart/app/web/test`, in headless Chromium: `find`, `shows`, `navigate`, `stop`. It mounts in the test page with memory stores and a history in memory; link the app's stylesheet when a test measures layout.
+- A web app's build: `openBuilt(latestBuild(projectDir), path)` from `@lightstart/app/web/test` serves `.deployed` as a static host and opens the page in headless Chromium, reporting errors and failed requests; `pnpm test:e2e` in a web scaffold does this for every concrete route.
 - A package's tests are plain scripts on `@lightstart/test/assert.ts` (`ok`, `eq`, `done`) that `light test` runs under node and natively, the outputs equal: no `node:test` reporter (its timings differ), no `assert.deepEqual` (compare JSON), typed fallback arrays (`const xs: string[] = c ? a : []`). `// node-only` as a test's first line skips the native run.
 
 ## Building and publishing
