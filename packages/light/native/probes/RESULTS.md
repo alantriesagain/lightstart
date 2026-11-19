@@ -1,4 +1,4 @@
-# Probe results (2026-11-19T19:42Z, scriptc 0.4.12, node v25.3.0)
+# Probe results (2026-11-19T21:20Z, scriptc 0.4.12, node v25.3.0)
 
 ## p-a-dispatch: PASS
 - coverage rc=0 static=64 (100%) fully=true deferred=false
@@ -21,11 +21,11 @@
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-ae-model: PASS
-- coverage rc=0 static=987 (100%) fully=true deferred=false
+- coverage rc=0 static=1119 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-af-controller: PASS
-- coverage rc=0 static=1916 (100%) fully=true deferred=false
+- coverage rc=0 static=2058 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-ag-prop-signal: PASS
@@ -41,11 +41,11 @@
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-aj-ts-controller: PASS
-- coverage rc=0 static=1473 (100%) fully=true deferred=false
+- coverage rc=0 static=1708 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-ak-ts-model: PASS
-- coverage rc=0 static=944 (100%) fully=true deferred=false
+- coverage rc=0 static=1079 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
 
 ## p-b-host: PASS
@@ -249,5 +249,5 @@ empty array field only: 9.0 ms
 ```
 
 ## p-am-row-class: PASS
-- coverage rc=0 static=975 (100%) fully=true deferred=false
+- coverage rc=0 static=1715 (100%) fully=true deferred=false
 - build rc=0 node rc=0 native rc=0 same output=true
