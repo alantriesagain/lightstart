@@ -6,7 +6,7 @@
  * announce the same loads to plugins. One per folder: `/open` makes another, with the same hooks,
  * the host's, so the listeners stay. One of light's controllers, as the app's state is.
  */
-import { signal } from "@lightstart/light/signals";
+import { event, signal } from "@lightstart/light/signals";
 import { Controller } from "@lightstart/light/controller/class.ts";
 import { Hook } from "@lightstart/lib/hook.ts";
 import { Latest } from "@lightstart/lib/timing.ts";
@@ -58,6 +58,8 @@ export class FolderController extends Controller {
   readonly base = signal(new CompareBase("HEAD", "head", "HEAD"));
   /** The watcher's latest batch, for `folderChanged` listeners. */
   batch = new ChangeBatch();
+  /** Each batch of changes the watcher saw, as it arrives. */
+  readonly changed = event<ChangeBatch>();
   readonly hooks: FolderHooks;
   /** Called with a line worth logging. */
   onNote: ((text: string) => void) | null = null;
@@ -201,6 +203,7 @@ export class FolderController extends Controller {
     const now = Date.now();
     for (const p of b.paths) this.changeTimes.set(p, now);
     void this.reload(b.structure);
+    this.changed.emit(b);
     this.hooks.folderChanged.fire();
   }
 
