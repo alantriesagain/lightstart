@@ -47,13 +47,13 @@ const main = async (): Promise<void> => {
 
   const generated = spawnSync(process.execPath, ["--no-warnings", cli, "app"], { cwd: fixture, env, encoding: "utf8" });
   eqn("light app exits 0", generated.status ?? 1, 0);
-  ok("light app prints what it found", (generated.stdout ?? "").includes("1 models, 1 controllers, 5 views, routes"));
+  ok("light app prints what it found", (generated.stdout ?? "").includes("1 models, 1 controllers, 6 views, routes"));
 
   const built = spawnSync(process.execPath, ["--no-warnings", cli, "build"], { cwd: fixture, env, encoding: "utf8" });
   eqn("light build exits 0", built.status ?? 1, 0);
   ok("light build writes a build", existsSync(join(fixture, ".deployed", "current", "index.html")));
 
-  const browser = spawnSync(process.execPath, ["--no-warnings", cli, "test", "test/app.browser.test.ts"], { cwd: fixture, env, encoding: "utf8" });
+  const browser = spawnSync(process.execPath, ["--no-warnings", cli, "test", "test/app.browser.test.ts", "test/app-form.browser.test.ts"], { cwd: fixture, env, encoding: "utf8" });
   eqn("light test runs the fixture's browser test", browser.status ?? 1, 0);
   if ((browser.status ?? 1) !== 0) console.log(browser.stdout, browser.stderr);
 

@@ -3,6 +3,8 @@
  * base and tags its source names, read from the files beside it. The tags a
  * component writes include those of the helper modules it imports (the form's
  * table of controls), so a page that defines the component defines them too.
+ * A helper module marked `@tags-on-demand` instead gives the component a
+ * `loads` list: tags it can define later, when it is about to draw them.
  */
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
@@ -17,6 +19,7 @@ const EXTENDS = /\bextends:\s*"([^"]+)"/;
 const STYLE = /\bstyle:\s*true\b/;
 const WRITTEN = /<\s*(lc-[a-z0-9-]+)/g;
 const IMPORTED = /(?:\bfrom\s+|^\s*import\s+)"(\.{1,2}\/[^"]+\.js)"/gm;
+const ON_DEMAND = /@tags-on-demand\b/;
 
 /** @param {string} source */
 const stripComments = (source) =>
@@ -91,24 +94,43 @@ const extractSlots = (sourceCode) => {
 };
 
 /**
- * The tags `file` writes, with those of the helper modules it imports statically,
- * followed through each; a component's module is left out, its tags are its own.
- * @param {string} file
- * @param {Set<string>} [seen]
- * @returns {Set<string>}
+ * Whether the module's first comment carries `@tags-on-demand`: what it writes
+ * is defined only when a component is about to draw it.
+ * @param {string} text
  */
-const writtenTags = (file, seen = new Set()) => {
-  const tags = new Set();
-  if (seen.has(file)) return tags;
-  seen.add(file);
-  const source = stripComments(readFileSync(file, "utf8"));
-  for (const match of source.matchAll(WRITTEN)) tags.add(match[1]);
+const marksOnDemand = (text) => {
+  const first = text.match(/^\s*\/\*\*?([\s\S]*?)\*\//);
+  return first !== null && ON_DEMAND.test(first[1]);
+};
+
+/**
+ * The tags `file` writes eagerly and the ones it writes on demand, with those
+ * of the helper modules it imports statically, followed through each; a
+ * component's module is left out, its tags are its own. A helper module marked
+ * `@tags-on-demand`, and everything below it, contributes to `loads`.
+ * @param {string} file
+ * @param {boolean} [onDemand]
+ * @param {Set<string>} [stack]
+ * @returns {{ uses: Set<string>, loads: Set<string> }}
+ */
+const writtenTags = (file, onDemand = false, stack = new Set()) => {
+  const found = { uses: new Set(), loads: new Set() };
+  if (stack.has(file)) return found;
+  stack.add(file);
+  const text = readFileSync(file, "utf8");
+  const source = stripComments(text);
+  const lazy = onDemand || marksOnDemand(text);
+  for (const match of source.matchAll(WRITTEN))
+    (lazy ? found.loads : found.uses).add(match[1]);
   for (const match of source.matchAll(IMPORTED)) {
     const target = join(dirname(file), match[1]);
     if (!existsSync(target) || COMPONENT.test(stripComments(readFileSync(target, "utf8")))) continue;
-    for (const tag of writtenTags(target, seen)) tags.add(tag);
+    const below = writtenTags(target, lazy, stack);
+    for (const tag of below.uses) found.uses.add(tag);
+    for (const tag of below.loads) found.loads.add(tag);
   }
-  return tags;
+  stack.delete(file);
+  return found;
 };
 
 /** @param {string} dir @returns {string[]} */
@@ -122,10 +144,10 @@ const modules = (dir) =>
 
 /**
  * The components the sources declare, keyed by tag, in tag order.
- * @returns {Record<string, { module: string, style: string | null, extends: string | null, uses: string[], doc: { description: string, parts: { name: string, description: string }[], slots: { name: string, description: string }[] } }>}
+ * @returns {Record<string, { module: string, style: string | null, extends: string | null, uses: string[], loads: string[], doc: { description: string, parts: { name: string, description: string }[], slots: { name: string, description: string }[] } }>}
  */
 export const buildTags = () => {
-  /** @type {Record<string, { module: string, style: string | null, extends: string | null, uses: string[], doc: { description: string, parts: { name: string, description: string }[], slots: { name: string, description: string }[] } }>} */
+  /** @type {Record<string, { module: string, style: string | null, extends: string | null, uses: string[], loads: string[], doc: { description: string, parts: { name: string, description: string }[], slots: { name: string, description: string }[] } }>} */
   const tags = {};
   for (const file of modules(PKG).sort()) {
     const text = readFileSync(file, "utf8");
@@ -136,13 +158,16 @@ export const buildTags = () => {
     const tag = block.match(TAG)?.[1];
     if (tag === undefined) continue;
     const style = file.replace(/\.js$/, ".css");
-    const used = new Set();
-    for (const written of writtenTags(file)) if (written !== tag) used.add(written);
+    const found = writtenTags(file);
+    found.uses.delete(tag);
+    found.loads.delete(tag);
+    for (const used of found.uses) found.loads.delete(used);
     tags[tag] = {
       module: relative(PKG, file).split(sep).join("/"),
       style: STYLE.test(block) && existsSync(style) ? relative(PKG, style).split(sep).join("/") : null,
       extends: block.match(EXTENDS)?.[1] ?? null,
-      uses: [...used].sort(),
+      uses: [...found.uses].sort(),
+      loads: [...found.loads].sort(),
       doc: {
         description: extractDescription(text),
         parts: extractParts(text),

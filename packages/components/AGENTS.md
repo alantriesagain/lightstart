@@ -107,6 +107,12 @@ own chrome around it calls `renderFormControl` rather than dispatching on the ty
 `check/field-list-through-form` fires on a file that dispatches on four or more field types while
 drawing two or more controls.
 
+A helper module can write tags the component defines only when it draws them: put
+`@tags-on-demand` in the module's first comment. `scripts/tags.js` then records those tags in the
+component's `loads` instead of its `uses`, and a page emits an on-demand table for them rather
+than a static import. `form/field-renderers.js` is marked this way, so `<lc-form>` asks
+`utils/on-demand.js` for the controls its fields will draw before it renders them.
+
 Two things the engine has to do that are not obvious. A control stops the native `input`/`change`
 so its own re-emitted one is the public surface, and `$emit` does not bubble, so the form listens in
 the **capture** phase and defers the read to a microtask: capture is too early to see the control's

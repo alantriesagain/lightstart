@@ -11,6 +11,9 @@
  * shipping a rich widget and the built-in controls share one namespace. A
  * registration under a built-in type replaces that control everywhere, which is
  * how a project rethemes one rather than reaching around it.
+ *
+ * @tags-on-demand the tags below are defined when a form is about to draw them,
+ * rather than by every page that writes `<lc-form>`.
  */
 
 import { html as defaultHtml, nothing } from "@lightstart/light/html";
@@ -21,6 +24,36 @@ import { lcText } from "../utils/text.js";
 
 /** @type {Map<string, FormFieldRenderer>} */
 const renderers = new Map();
+
+/**
+ * The component tags each built-in control writes, beside the registrations
+ * below so the table and the markup cannot drift. A form asks for these before
+ * it draws its fields.
+ * @type {Record<string, string[]>}
+ */
+const CONTROL_TAGS = {
+  text: ["lc-input"],
+  number: ["lc-input"],
+  date: ["lc-input"],
+  "datetime-local": ["lc-input"],
+  time: ["lc-input"],
+  password: ["lc-input"],
+  tel: ["lc-input"],
+  email: ["lc-input"],
+  url: ["lc-input"],
+  color: ["lc-color-picker"],
+  "week-hours": ["lc-week-hours"],
+  textarea: ["lc-textarea"],
+  json: ["lc-textarea"],
+  select: ["lc-select"],
+  "multi-select": ["lc-select"],
+  checkbox: ["lc-checkbox"],
+  switch: ["lc-checkbox"],
+  file: ["lc-file-upload"],
+  files: ["lc-file-upload"],
+  object: ["lc-accordion"],
+  array: ["lc-button"],
+};
 
 /**
  * @param {string} type `field.cmsType` or `field.type`
@@ -38,6 +71,29 @@ export const getFormFieldRenderer = (type) => renderers.get(type);
 
 /** Every registered key, for a caller listing what it can draw. */
 export const formFieldTypes = () => [...renderers.keys()];
+
+/**
+ * Every control tag a list of fields will draw, nested groups and array items
+ * included. An unknown type falls back to the text control, so it asks for one.
+ * @param {readonly FormField[]} fields
+ * @returns {Set<string>}
+ */
+export const controlTagsOf = (fields) => {
+  const tags = new Set();
+  /** @param {FormField} field */
+  const visit = (field) => {
+    const type = field.cmsType || field.type;
+    const kinds = CONTROL_TAGS[type] ?? (renderers.has(type) ? [] : CONTROL_TAGS.text);
+    for (const tag of kinds) tags.add(tag);
+    if (field.type === "object") for (const child of field.fields || []) visit(child);
+    if (field.type === "array") {
+      if (field.itemField) visit(field.itemField);
+      for (const child of field.itemFields || []) visit(child);
+    }
+  };
+  for (const field of fields) visit(field);
+  return tags;
+};
 
 /**
  * The control for one field. An unknown type falls back to a text input, so

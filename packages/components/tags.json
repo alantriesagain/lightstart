@@ -6,6 +6,7 @@
     "uses": [
       "lc-markdown"
     ],
+    "loads": [],
     "doc": {
       "description": "About section",
       "parts": [],
@@ -17,6 +18,7 @@
     "style": "navigation/accordion.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Accordion Component",
       "parts": [],
@@ -30,6 +32,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -43,6 +46,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Alert Dialog Component",
       "parts": [],
@@ -54,6 +58,7 @@
     "style": "app/app-container.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "App Container Component",
       "parts": [
@@ -147,6 +152,7 @@
     "style": "app/app-header.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "App Header Component",
       "parts": [
@@ -195,6 +201,7 @@
       "lc-drawer",
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "App Shell Component",
       "parts": [],
@@ -239,6 +246,7 @@
       "lc-input",
       "lc-tabs"
     ],
+    "loads": [],
     "doc": {
       "description": "Auth Form Component",
       "parts": [
@@ -321,6 +329,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Avatar Component",
       "parts": [],
@@ -332,6 +341,7 @@
     "style": "display/avatar-group.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Avatar Group Component",
       "parts": [
@@ -357,6 +367,7 @@
     "style": "display/badge.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Badge Component",
       "parts": [],
@@ -373,6 +384,7 @@
     "style": "display/bar-chart.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Bar Chart Component",
       "parts": [],
@@ -384,6 +396,7 @@
     "style": "app/bottom-nav.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Bottom Navigation Component",
       "parts": [
@@ -405,6 +418,7 @@
     "style": "overlay/bottom-sheet.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Bottom Sheet Component",
       "parts": [],
@@ -418,6 +432,7 @@
     "uses": [
       "lc-link"
     ],
+    "loads": [],
     "doc": {
       "description": "Breadcrumbs Component",
       "parts": [],
@@ -429,6 +444,7 @@
     "style": "display/button.css",
     "extends": "lc-link",
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Button Component",
       "parts": [],
@@ -440,6 +456,7 @@
     "style": "display/calendar.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Calendar Component",
       "parts": [
@@ -655,6 +672,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Copyright (c) Alan Carlos Meira Leal\n\nCard Component",
       "parts": [
@@ -714,6 +732,7 @@
     "uses": [
       "lc-label"
     ],
+    "loads": [],
     "doc": {
       "description": "Checkbox Component",
       "parts": [],
@@ -725,6 +744,7 @@
     "style": "display/circle.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -738,6 +758,7 @@
     "uses": [
       "lc-button"
     ],
+    "loads": [],
     "doc": {
       "description": "Clipboard Component",
       "parts": [],
@@ -752,6 +773,7 @@
       "lc-button",
       "lc-clipboard"
     ],
+    "loads": [],
     "doc": {
       "description": "Code Block Component",
       "parts": [],
@@ -765,6 +787,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Color Picker Component",
       "parts": [],
@@ -781,6 +804,7 @@
       "lc-modal",
       "lc-search"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -796,6 +820,7 @@
       "lc-badge",
       "lc-link"
     ],
+    "loads": [],
     "doc": {
       "description": "Comment Component",
       "parts": [],
@@ -807,6 +832,7 @@
     "style": "layout/container.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Container Component\nGeneric container component with padding, overflow, and variant support",
       "parts": [],
@@ -821,6 +847,7 @@
       "lc-icon",
       "lc-menu"
     ],
+    "loads": [],
     "doc": {
       "description": "Context Menu Component",
       "parts": [],
@@ -832,6 +859,7 @@
     "style": "page/cta-section.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -847,6 +875,7 @@
       "lc-nav-item",
       "lc-switch"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -862,6 +891,7 @@
       "lc-select",
       "lc-table"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -873,6 +903,7 @@
     "style": "form/day-strip.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Day strip",
       "parts": [],
@@ -884,6 +915,7 @@
     "style": "utility/device.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Device Frame Component",
       "parts": [
@@ -912,6 +944,7 @@
     "style": "layout/divider.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -923,6 +956,7 @@
     "style": "utility/draggable.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -934,6 +968,7 @@
     "style": "overlay/drawer.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Drawer Component",
       "parts": [
@@ -954,6 +989,7 @@
     "style": "utility/droparea.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -967,6 +1003,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Copyright (c) Alan Carlos Meira Leal\n\nDropdown Component\nMenu popover with two content modes: a structured `items` array (rendered\nrows with icons, check marks, group headers, dividers, danger styling and\nkeyboard navigation) or raw slotted HTML. `withPopover()` gives it\npositioning, open state, and outside-click handling.",
       "parts": [],
@@ -987,6 +1024,7 @@
       "lc-input",
       "lc-join"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1000,6 +1038,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1015,6 +1054,7 @@
       "lc-code-block",
       "lc-segmented"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1028,6 +1068,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1041,6 +1082,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1055,6 +1097,7 @@
       "lc-button",
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "File Upload Component",
       "parts": [],
@@ -1066,6 +1109,7 @@
     "style": "layout/flex.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Flex Component",
       "parts": [],
@@ -1077,6 +1121,7 @@
     "style": "page/float-card.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1088,6 +1133,7 @@
     "style": "overlay/float-panel.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Float Panel Component",
       "parts": [],
@@ -1099,6 +1145,7 @@
     "style": "display/flow.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Flow Component",
       "parts": [],
@@ -1112,6 +1159,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1123,13 +1171,15 @@
     "style": "form/form.css",
     "extends": null,
     "uses": [
+      "lc-label"
+    ],
+    "loads": [
       "lc-accordion",
       "lc-button",
       "lc-checkbox",
       "lc-color-picker",
       "lc-file-upload",
       "lc-input",
-      "lc-label",
       "lc-select",
       "lc-textarea",
       "lc-week-hours"
@@ -1145,6 +1195,7 @@
     "style": "layout/grid.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Grid Component",
       "parts": [],
@@ -1156,6 +1207,7 @@
     "style": "page/hero-section.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1167,6 +1219,7 @@
     "style": "display/icon.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Copyright (c) Alan Carlos Meira Leal\n\nIcon Component",
       "parts": [],
@@ -1180,6 +1233,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1191,6 +1245,7 @@
     "style": null,
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1206,6 +1261,7 @@
       "lc-slider",
       "lc-spinner"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1219,6 +1275,7 @@
     "uses": [
       "lc-label"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1230,6 +1287,7 @@
     "style": "form/join.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Join Component",
       "parts": [],
@@ -1246,6 +1304,7 @@
       "lc-droparea",
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1257,6 +1316,7 @@
     "style": "display/kbd.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Kbd Component",
       "parts": [],
@@ -1273,6 +1333,7 @@
     "style": "form/label.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Label Component",
       "parts": [],
@@ -1284,6 +1345,7 @@
     "style": "navigation/language-switcher.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Language Switcher Component",
       "parts": [],
@@ -1295,6 +1357,7 @@
     "style": "display/line-chart.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1309,6 +1372,7 @@
       "lc-icon",
       "lc-tooltip"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1322,6 +1386,7 @@
     "uses": [
       "lc-card"
     ],
+    "loads": [],
     "doc": {
       "description": "Link Preview Component",
       "parts": [],
@@ -1333,6 +1398,7 @@
     "style": "display/list.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1344,6 +1410,7 @@
     "style": null,
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1358,6 +1425,7 @@
       "lc-badge",
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "List Row Component",
       "parts": [],
@@ -1371,6 +1439,7 @@
     "uses": [
       "lc-code-block"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1382,6 +1451,7 @@
     "style": "display/media-card.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Media Card Component",
       "parts": [
@@ -1431,6 +1501,7 @@
     "style": "navigation/menu.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Menu Component",
       "parts": [],
@@ -1442,6 +1513,7 @@
     "style": "overlay/modal.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Modal Component",
       "parts": [],
@@ -1455,6 +1527,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Month picker",
       "parts": [],
@@ -1469,6 +1542,7 @@
       "lc-icon",
       "lc-tooltip"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [
@@ -1504,6 +1578,7 @@
       "lc-icon",
       "lc-nav-item"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1517,6 +1592,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Navbar Component",
       "parts": [],
@@ -1547,6 +1623,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Number Input Component",
       "parts": [],
@@ -1558,6 +1635,7 @@
     "style": "layout/page.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1571,6 +1649,7 @@
     "uses": [
       "lc-breadcrumbs"
     ],
+    "loads": [],
     "doc": {
       "description": "Page Header Component",
       "parts": [
@@ -1635,6 +1714,7 @@
       "lc-icon",
       "lc-link"
     ],
+    "loads": [],
     "doc": {
       "description": "Pagination Component",
       "parts": [],
@@ -1646,6 +1726,7 @@
     "style": "display/palette.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Palette Component",
       "parts": [
@@ -1678,6 +1759,7 @@
     "style": "layout/panel.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Panel Component",
       "parts": [],
@@ -1702,6 +1784,7 @@
     "style": "display/pattern.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1713,6 +1796,7 @@
     "style": "display/pie-chart.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1724,6 +1808,7 @@
     "style": "overlay/popover.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Copyright (c) Alan Carlos Meira Leal\n\nPopover Component\nShows popover content on click using custom popover system.\nSimilar to dropdown but can contain any content (not just menu items).\n`withPopover()` gives it positioning and state management.",
       "parts": [],
@@ -1742,6 +1827,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1755,6 +1841,7 @@
     "uses": [
       "lc-pricing-card"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1766,6 +1853,7 @@
     "style": "feedback/progress-bar.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Progress Bar Component",
       "parts": [],
@@ -1777,6 +1865,7 @@
     "style": "layout/prose.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Prose Component\nReading container: caps the line measure, centers it, and sets the\nlong-form typography scale (defaults to the lg reading size) that\ncascades into any contained lc-markdown.",
       "parts": [],
@@ -1791,6 +1880,7 @@
       "lc-icon",
       "lc-spinner"
     ],
+    "loads": [],
     "doc": {
       "description": "The hint a pull to refresh draws above the list: a band as tall as the pull\nso far, with an arrow that turns once a release would refresh, and a\nspinner while the refresh runs. It holds no gesture; a host with\n`withPullToRefresh` hands it `pullY` and `refreshing`.\n\n<lc-pull-indicator .pull=${this.pullY} ?refreshing=${this.refreshing}></lc-pull-indicator>",
       "parts": [],
@@ -1802,6 +1892,7 @@
     "style": "form/radio.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Radio Component",
       "parts": [],
@@ -1813,6 +1904,7 @@
     "style": "form/radio-group.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Radio Group Component",
       "parts": [],
@@ -1826,6 +1918,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1837,6 +1930,7 @@
     "style": "form/ruler.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Ruler",
       "parts": [],
@@ -1850,6 +1944,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Horizontal scroller",
       "parts": [
@@ -1878,6 +1973,7 @@
       "lc-icon",
       "lc-join"
     ],
+    "loads": [],
     "doc": {
       "description": "Search Component",
       "parts": [],
@@ -1889,6 +1985,7 @@
     "style": "layout/section.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Section Component",
       "parts": [],
@@ -1902,6 +1999,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Segmented Component",
       "parts": [],
@@ -1917,6 +2015,7 @@
       "lc-label",
       "lc-tag"
     ],
+    "loads": [],
     "doc": {
       "description": "Copyright (c) Alan Carlos Meira Leal\n\nSelect Component",
       "parts": [],
@@ -1930,6 +2029,7 @@
     "uses": [
       "lc-markdown"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1943,6 +2043,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Sidebar Component",
       "parts": [],
@@ -1970,6 +2071,7 @@
       "lc-badge",
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1981,6 +2083,7 @@
     "style": "page/site-header.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -1992,6 +2095,7 @@
     "style": "feedback/skeleton.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Skeleton Component",
       "parts": [],
@@ -2003,6 +2107,7 @@
     "style": "form/slider.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Slider Component",
       "parts": [],
@@ -2014,6 +2119,7 @@
     "style": "display/sparkline.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -2025,6 +2131,7 @@
     "style": "feedback/spinner.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Spinner Component",
       "parts": [],
@@ -2036,6 +2143,7 @@
     "style": "layout/split-pane.css",
     "extends": "lc-flex",
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Copyright (c) Alan Carlos Meira Leal\n\nSplit Pane Component",
       "parts": [
@@ -2071,6 +2179,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Stat Component",
       "parts": [
@@ -2122,6 +2231,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -2136,6 +2246,7 @@
       "lc-icon",
       "lc-spinner"
     ],
+    "loads": [],
     "doc": {
       "description": "Stepper Component",
       "parts": [],
@@ -2149,6 +2260,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -2162,6 +2274,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Fullscreen story viewer",
       "parts": [],
@@ -2176,6 +2289,7 @@
       "lc-avatar",
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Story circle",
       "parts": [],
@@ -2189,6 +2303,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Swipe deck",
       "parts": [],
@@ -2200,6 +2315,7 @@
     "style": "form/switch.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Switch Component",
       "parts": [],
@@ -2213,6 +2329,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -2224,6 +2341,7 @@
     "style": "navigation/tabs.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Tabs Component",
       "parts": [],
@@ -2237,6 +2355,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Tag Component",
       "parts": [],
@@ -2259,6 +2378,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -2270,6 +2390,7 @@
     "style": "display/text.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Text Component\n\nThe one text primitive: inline text, headings (`level`) and section labels\n(`eyebrow`). Light DOM with no render: the children are already the content,\nso there is nothing to wrap. Styling lands on the host, the way `lc-badge`\ndoes it, which also means a class on the call site still wins.",
       "parts": [],
@@ -2283,6 +2404,7 @@
     "uses": [
       "lc-label"
     ],
+    "loads": [],
     "doc": {
       "description": "Textarea Component",
       "parts": [],
@@ -2296,6 +2418,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Tile Component",
       "parts": [],
@@ -2307,6 +2430,7 @@
     "style": null,
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -2321,6 +2445,7 @@
       "lc-icon",
       "lc-link"
     ],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -2332,6 +2457,7 @@
     "style": "app/title-bar.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Title Bar Component",
       "parts": [
@@ -2395,6 +2521,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Toast Component",
       "parts": [],
@@ -2406,6 +2533,7 @@
     "style": "navigation/toc.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "",
       "parts": [],
@@ -2417,6 +2545,7 @@
     "style": "layout/toolbar.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Toolbar Component",
       "parts": [],
@@ -2428,6 +2557,7 @@
     "style": "overlay/tooltip.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Copyright (c) Alan Carlos Meira Leal\n\nTooltip Component - CSS-First",
       "parts": [],
@@ -2444,6 +2574,7 @@
     "style": "navigation/tree.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Tree Component",
       "parts": [],
@@ -2457,6 +2588,7 @@
     "uses": [
       "lc-icon"
     ],
+    "loads": [],
     "doc": {
       "description": "Tree Item Component",
       "parts": [],
@@ -2470,6 +2602,7 @@
     "uses": [
       "lc-switch"
     ],
+    "loads": [],
     "doc": {
       "description": "Week hours",
       "parts": [],
@@ -2481,6 +2614,7 @@
     "style": "navigation/wizard.css",
     "extends": null,
     "uses": [],
+    "loads": [],
     "doc": {
       "description": "Wizard Component",
       "parts": [
