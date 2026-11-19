@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import T from "../types/index.js";
-import { modelChanged } from "./events.ts";
+import { modelChanged, modelWarn } from "./events.ts";
 import { configureModel, modelApi } from "./index.ts";
 import { bindModelQuery, liveRows, modelBinder, modelQuery } from "./binder.ts";
 import { createStore } from "../signals/store.ts";
@@ -23,7 +23,7 @@ const fakeBackend = () => {
     if (action === "MODEL:QUERY") {
       const { limit, offset = 0 } = payload.opts;
       const rows = data[model];
-      return { rows: limit ? rows.slice(offset, offset + limit) : rows, total: rows.length };
+      return { rows: limit ? rows.slice(offset, offset + limit) : rows.slice(offset), total: rows.length };
     }
     if (action === "MODEL:GET") return data[model].find((r) => r.id === payload.id) ?? data[model][0] ?? null;
     return null;
@@ -205,6 +205,67 @@ describe("liveRows", () => {
     assert.equal(backend.calls.filter(([a]) => a === "MODEL:QUERY").length, 1);
     await board.start();
     assert.deepEqual(board.rows.value.map((r) => r.id), ["a", "b", "c"]);
+    await board.dispose();
+  });
+
+  it("converts every row through convert, caches the array against the source, and converts again on a write", async () => {
+    let conversions = 0;
+    const convert = (row) => {
+      conversions++;
+      return { id: row.id, value: row.n };
+    };
+    class Board extends Controller {
+      rows = liveRows(this, Model.session, () => ({ order: "n" }), convert);
+
+      constructor() {
+        super("board");
+      }
+    }
+    const board = new Board();
+    await board.start();
+    assert.deepEqual(board.rows.value, [{ id: "a", value: 1 }, { id: "b", value: 3 }]);
+    assert.equal(conversions, 2);
+    const first = board.rows.value;
+    assert.equal(board.rows.value, first, "the same array is read again");
+    assert.equal(board.rows.peek(), first);
+    assert.equal(conversions, 2, "reading value converts nothing");
+    backend.data.session.push({ id: "c", n: 2 });
+    await change("session", "add", { id: "c", n: 2 });
+    await tick();
+    assert.deepEqual(board.rows.value.map((r) => r.id), ["a", "b", "c"]);
+    assert.notEqual(board.rows.value, first);
+    assert.equal(conversions, 5, "the new rows convert once");
+    assert.equal(board.rows.skipped, 0);
+    await board.dispose();
+  });
+
+  it("skips a damaged row, counts it and warns once per row id", async () => {
+    backend.data.session.push({ id: "damaged", n: "three" });
+    const warnings = [];
+    const off = modelWarn.on((note) => warnings.push(note));
+    let conversions = 0;
+    const convert = (row) => {
+      conversions++;
+      if (typeof row.n !== "number") return null;
+      return { id: row.id, value: row.n };
+    };
+    class Board extends Controller {
+      rows = liveRows(this, Model.session, () => ({}), convert);
+
+      constructor() {
+        super("board");
+      }
+    }
+    const board = new Board();
+    await board.start();
+    assert.deepEqual(board.rows.value.map((r) => r.id), ["a", "b"]);
+    assert.equal(board.rows.skipped, 1);
+    assert.deepEqual(warnings, [{ type: "row_skipped", model: "session", id: "damaged" }]);
+    await change("session", "edit", { id: "a", n: 2 });
+    await tick();
+    assert.equal(board.rows.skipped, 1);
+    assert.equal(warnings.length, 1, "the same row id warns once");
+    off();
     await board.dispose();
   });
 

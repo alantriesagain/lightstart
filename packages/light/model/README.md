@@ -108,6 +108,8 @@ An array property runs `modelQuery()`; any other keeps one row (`query.id`, or a
 
 For a `Controller` subclass, `liveRows(controller, model, build)` is the same query as a `sync:` entry, its rows read through a `LiveRows<T>`. It registers the query with `controller.$onStart`, so it starts with `start()` against the stores the run opened, its first load counts in `$ready`, a `dispose()` tears it down and a second `start()` follows it again; `build` is a function, so the signals it reads rebuild the query.
 
+A fourth argument, `convert`, turns each row the query answers into `T`, so `rows.value` is `T[]`: a terminal app passes a generated row class's `of`, `liveRows(this, task, () => query, TaskRow.of)`. Each row is checked to be a non-null object and handed to `convert` once, the converted array is cached against the source rows it came from, and `rows.skipped` counts the rows the last conversion skipped. A row that is not an object, or that `convert` answers `null` for, is skipped and reported once per row id through `modelWarn` as `{ type: "row_skipped", model, id }`, never thrown, so a damaged row on disk does not stop the program.
+
 ## Hooks
 
 Define lifecycle hooks in schema's `$hooks`. Each receives the store, so a hook reads and writes through the same pipeline as everyone else:
