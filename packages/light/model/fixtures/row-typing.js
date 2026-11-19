@@ -41,5 +41,7 @@ export const reads = (note, counter) => {
   /** @type {string} */ const orphan = note.parent;
   // @ts-expect-error an edit's patch is typed by the row
   const edited = notes.edit("a", { done: "yes" });
-  return [id, title, done, rank, parent, counterId, body, author, orphan, edited];
+  // @ts-expect-error a row has exactly its schema's fields: a misspelling is an error
+  /** @type {unknown} */ const typo = note.texxt;
+  return [id, title, done, rank, parent, counterId, body, author, orphan, edited, typo];
 };
