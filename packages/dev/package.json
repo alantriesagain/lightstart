@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@lightstart/cli": "workspace:*",
+    "@lightstart/light": "workspace:*",
     "@lightstart/server": "workspace:*"
   },
   "native": {

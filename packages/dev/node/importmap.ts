@@ -31,6 +31,16 @@ export const devPortOf = (pkg: PackageManifest | null): number | null => {
   return typeof dev["port"] === "number" ? dev["port"] : null;
 };
 
+/** `light.dev.check` from a manifest: false only when the project turns the check off after a change. */
+export const devCheckOf = (pkg: PackageManifest | null): boolean => {
+  if (pkg === null) return true;
+  const light = (pkg as Record<string, unknown>)["light"];
+  if (!isRecord(light)) return true;
+  const dev = light["dev"];
+  if (!isRecord(dev)) return true;
+  return dev["check"] !== false;
+};
+
 /** `light.dev.tunnel` from a manifest: a hostname, or `{ hostname, paths }`. */
 export const devTunnelOf = (pkg: PackageManifest | null): DevTunnel | null => {
   if (pkg === null) return null;
