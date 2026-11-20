@@ -53,6 +53,17 @@ const main = async (): Promise<void> => {
   eq("and its bytes", await bodyOf(css), "#app { color: red; }\n");
   eq("dev answers no-store", css.headers.get("cache-control") ?? "", "no-store");
 
+  const image = await request(app, "GET", "/profile.jpeg");
+  eqn("a file under public answers at the root", image.status, 200);
+  eq("with its type", image.headers.get("content-type") ?? "", "image/jpeg");
+  eq("and its bytes", await bodyOf(image), "jpeg-bytes\n");
+
+  const both = await bodyOf(await request(app, "GET", "/style.css"));
+  eq("a file in both the project and public answers the project's", both, "#app { color: red; }\n");
+
+  eqn("a path in neither is still a 404", (await request(app, "GET", "/profile.png")).status, 404);
+  eqn("a path that escapes public is not served", (await request(app, "GET", "/../package.json")).status, 404);
+
   const ts = await request(app, "GET", "/types.ts");
   const tsBody = await bodyOf(ts);
   ok("a TypeScript module is served as JavaScript", (ts.headers.get("content-type") ?? "").startsWith("text/javascript"));

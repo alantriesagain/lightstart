@@ -189,7 +189,7 @@ A project that depends on `@lightstart/app` gets these rules from `light check`,
 
 ## Building
 
-`light build` runs the same generator before it reads the page, then adds the files a static host needs after it rewrites the page, for a project with `src/app.ts` or `src/app.js`:
+`public/` is the place for an app's static files, served at the root in development, in a browser test and in the build; `index.html` references them with an absolute path. `light build` runs the same generator before it reads the page, then adds the files a static host needs after it rewrites the page, for a project with `src/app.ts` or `src/app.js`:
 
 - `404.html`, the built page itself (the same contents as `index.html`), so a path the host has no file for still boots the app and its router.
 - `sitemap.xml` and `robots.txt` when `defineApp` has a `url`: the sitemap lists every concrete path of `src/routes.ts`, as absolute URLs joined with `url`, sorted. A static route is its own path; a route with parameters (`/notes/:id`) is filled from the values its `params` answers, when it has one (`params: () => [{ id: "1" }, { id: "2" }]`), so a parameter route without `params`, a wildcard, a `spa: true` route and a redirect are left out. `robots.txt` is `User-agent: *`, `Allow: /` and a `Sitemap:` line. Without a `url` there is no sitemap, and `robots.txt` has no `Sitemap:` line.

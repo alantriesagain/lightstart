@@ -82,10 +82,13 @@ A request is answered in this order:
 2. Every app an extension added with `handle()`, in the order added; no route or a `pass()` falls through.
 3. `/__light/reload.js`, the reload client.
 4. A file under the project root, then a file under an extension's extra roots. A request for `name.js` also probes `name.ts` and `name.tsx`.
-5. The app shell for `/` and for a path with no extension (a route such as `/posts/one`).
-6. A 404 for a missing path that has an extension, so a missing asset is not answered with the shell.
+5. A file under the project's `public/` folder, served at the root (`public/profile.jpeg` answers `/profile.jpeg`) when no project file answered the path. A path that leaves `public/` is never served.
+6. The app shell for `/` and for a path with no extension (a route such as `/posts/one`).
+7. A 404 for a missing path that has an extension, so a missing asset is not answered with the shell.
 
 Route, reload, file and shell replies carry `cache-control: no-store`.
+
+`light build` copies `public/` into the build's root, so an image referenced as `/profile.jpeg` works in development, in a browser test and in the built site. A project file at the same path wins in both, and the build never overwrites an output a bundle wrote.
 
 Files go through a transform that touches only modules (`.js`, `.mjs`, `.ts`, `.tsx`, `.mts`): TypeScript is stripped in place with `node:module`'s `stripTypeScriptTypes`, and bare specifiers are rewritten to the URLs the importmap names. A `.d.ts` is served as it is. Rewriting covers `from "..."`, `export ... from "..."`, a side-effect `import "..."` and `import("...")`; relative paths, URLs and ordinary strings are left alone.
 
