@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readdirSync } from "node:fs";
 import test from "node:test";
 import ts from "typescript";
 import { STATE_FOCUS_WITHIN } from "../native/tui/classes.ts";
@@ -25,11 +26,19 @@ test("a class the baker cannot read as literals is a problem naming its site", (
   ]);
 });
 
-test("collectClasses walks the tasks example's imports and answers exactly its eight strings", () => {
-  const { classes, problems, files } = collectClasses("../../examples/tasks-tui/src/views/app-root.ts", ts);
-  assert.deepEqual(problems, []);
-  assert.deepEqual(classes, TASKS);
-  assert.ok(files.includes("../../examples/tasks-tui/src/views/task-row.ts") && files.includes("native/tui/node.ts"));
+test("collectClasses walks the tasks example's views and answers exactly its eight strings", () => {
+  // The app imports no view by hand (the generated entry does), so the walk starts from each view file, as the generated entry's imports would.
+  const views = "../../examples/tasks-tui/src/views";
+  const classes = new Set();
+  const files = new Set();
+  for (const name of readdirSync(views).filter((entry) => entry.endsWith(".ts")).sort()) {
+    const found = collectClasses(`${views}/${name}`, ts);
+    assert.deepEqual(found.problems, []);
+    for (const value of found.classes) classes.add(value);
+    for (const file of found.files) files.add(file);
+  }
+  assert.deepEqual([...classes].sort(), TASKS);
+  assert.ok(files.has("../../examples/tasks-tui/src/views/task-row.ts") && files.has("native/tui/node.ts"));
 });
 
 test("bakeTables compiles each string per scheme through the terminal styler, states kept, and names an ignored class", () => {
