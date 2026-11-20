@@ -46,6 +46,8 @@ export interface AppConfig {
   url?: string;
   /** Render every concrete route to its own `index.html` at build time; `light build --prerender` when absent. `true` and `"markup"` render in node, `"browser"` through Playwright. */
   prerender?: boolean | PrerenderRenderer;
+  /** Run every route change inside the browser's view transition where it has one; `false` when absent. */
+  transitions?: boolean;
   /**
    * The stores by name, several at once of any kinds the host runs; a model picks one with its
    * schema's `$adapter`, and gets `main` when it names none. `main` is the host's default kind when
@@ -104,6 +106,8 @@ export class App {
   readonly prerender: boolean;
   /** The renderer the config names, when it names one; `undefined` asks for the build's default. */
   readonly prerenderRenderer: PrerenderRenderer | undefined;
+  /** Whether the web host runs each route change inside a view transition. */
+  readonly transitions: boolean;
   /** The stores the config declares, `main` among them (of the host's default kind unless it says). */
   readonly stores: Record<string, StoreConfig>;
   readonly root: string | undefined;
@@ -122,6 +126,7 @@ export class App {
     this.url = config.url === undefined ? undefined : config.url.replace(/\/+$/, "");
     this.prerender = config.prerender === true || typeof config.prerender === "string";
     this.prerenderRenderer = config.prerender === "markup" || config.prerender === "browser" ? config.prerender : undefined;
+    this.transitions = config.transitions === true;
     const stores: Record<string, StoreConfig> = {};
     stores["main"] = {};
     const declared = config.stores ?? {};
