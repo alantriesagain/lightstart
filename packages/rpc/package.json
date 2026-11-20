@@ -1,0 +1,40 @@
+{
+  "name": "@lightstart/rpc",
+  "version": "0.1.0",
+  "description": "A channel across a message port: requests and answers, a declared set of relayed events, and a one-way mirrored signal, with no app knowledge.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/rpc"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "rpc",
+    "worker",
+    "messageport",
+    "relay",
+    "signal",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./port": "./port.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/light": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
