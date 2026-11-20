@@ -395,6 +395,22 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  packages/rpc:
+    dependencies:
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+    devDependencies:
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/server:
     devDependencies:
       '@lightstart/test':
