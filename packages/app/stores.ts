@@ -67,24 +67,34 @@ export const schemasOf = (manifest: AppManifest): Record<string, ModelSchema> =>
   return models;
 };
 
-const kindNamed = (host: StoreHost, name: string): StoreKind | null => {
+/** The kind named `name` that `host` can run, `memory` always among them; null when it has none. */
+export const kindNamed = (host: StoreHost, name: string): StoreKind | null => {
   for (const k of projectKinds) if (k.name === name) return k;
   for (const k of host.kinds) if (k.name === name) return k;
   return name === "memory" ? new MemoryKind() : null;
 };
 
 /** The kinds `host` can run, by name, for an error. */
-const kindsOf = (host: StoreHost): string => {
+export const kindsOf = (host: StoreHost): string => {
   const names = host.kinds.map((k) => k.name);
   for (const k of projectKinds) if (!names.includes(k.name)) names.push(k.name);
   if (!names.includes("memory")) names.push("memory");
   return names.join(", ");
 };
 
+/** One declared store's plan: the store, the kind it opens with (memory in a test), and the name of the kind it asked for. */
+export interface PlannedStore {
+  store: string;
+  kind: StoreKind;
+  kindName: string;
+  at: string;
+  worker: boolean;
+}
+
 /** The kind each store opens with: its own, or the host's default; `memoryOnly` makes every one memory (a test). */
-const plan = (manifest: AppManifest, host: StoreHost, memoryOnly: boolean): { store: string; kind: StoreKind; at: string }[] => {
+export const plan = (manifest: AppManifest, host: StoreHost, memoryOnly: boolean): PlannedStore[] => {
   const app = manifest.app;
-  const out: { store: string; kind: StoreKind; at: string }[] = [];
+  const out: PlannedStore[] = [];
   for (const store of Object.keys(app.stores)) {
     const config = app.stores[store] ?? {};
     const given = config.kind;
@@ -92,7 +102,7 @@ const plan = (manifest: AppManifest, host: StoreHost, memoryOnly: boolean): { st
     const kind = memoryOnly ? new MemoryKind() : kindNamed(host, wanted);
     if (kind === null) throw new Error(`The ${host.name} host cannot run the "${wanted}" store "${store}"; it runs ${kindsOf(host)}`);
     const at = config.at;
-    out.push({ store, kind, at: typeof at === "function" ? at(app.args) : at ?? "" });
+    out.push({ store, kind, kindName: wanted, at: typeof at === "function" ? at(app.args) : at ?? "", worker: config.worker === true });
   }
   const models = schemasOf(manifest);
   for (const name of Object.keys(models)) {

@@ -16,38 +16,25 @@ import { configureNavigation } from "@lightstart/light/navigation";
 import { listen } from "@lightstart/router/listen";
 import { applyTheme } from "@lightstart/light/theme";
 import { loadPreset } from "@lightstart/light/theme/presets.js";
-import { createAdapter, hasAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
-import IndexedDBAdapter from "@lightstart/light/model/indexeddb";
-import type { ModelSchema, StorageAdapter } from "@lightstart/light/model/types.ts";
 import { createBrowserAdapter } from "@lightstart/router/adapters/browser";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import { parseArgs } from "@lightstart/cli/argv.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
+import { createStore, storeRequest } from "@lightstart/light/model/store";
+import type { StorageAdapter, Store } from "@lightstart/light/model/types.ts";
+import { configureModel } from "@lightstart/light/model";
 import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
-import { MemoryKind, StoreKind } from "../stores.ts";
+import { MemoryKind, plan, schemasOf, StoreKind } from "../stores.ts";
+import { IndexedDBKind } from "./indexeddb.ts";
+import { MODEL_OPERATORS, WorkerAdapter, WorkerConnection } from "./worker.ts";
 
 export { currentParams, currentView, navigate } from "../run.ts";
+export { IndexedDBKind } from "./indexeddb.ts";
 
 /** A running app: `stop()` takes the view down, disposes its controllers, stops following the routes and closes its stores. */
 export interface AppHandle {
   stop(): Promise<void>;
-}
-
-const openIndexedDB = async (name: string, models: Record<string, ModelSchema>, main: boolean): Promise<StorageAdapter> => {
-  if (!hasAdapter("indexeddb")) registerStorageAdapter("indexeddb", IndexedDBAdapter);
-  const db = createAdapter("indexeddb", { name, version: 1, models, isDefaultAdapter: main });
-  await db.init();
-  return db;
-};
-
-/** The page's IndexedDB: a database per store, the app's name for `main` unless the store names one (`at`). */
-export class IndexedDBKind extends StoreKind {
-  readonly name = "indexeddb";
-
-  open(app: App, store: string, at: string, models: Record<string, ModelSchema>, main: boolean): Promise<StorageAdapter> {
-    return openIndexedDB(at.length > 0 ? at : main ? app.name : app.name + ":" + store, models, main);
-  }
 }
 
 /** Whether this page was rendered ahead of time (`light build --prerender` marks it). */
@@ -140,6 +127,8 @@ const queryArgv = (app: App): string[] => {
 export interface WebHostOptions {
   kinds?: readonly StoreKind[];
   defaultKind?: string;
+  /** Spawn the worker a store declared `worker: true` opens in; absent, every store opens on the page. */
+  worker?: () => Worker;
 }
 
 /** The web host. */
@@ -150,11 +139,51 @@ export class WebHost extends AppHost {
   private mounted: Element | null = null;
   /** Stops handing the page's link clicks to the run's router. */
   private unlisten: (() => void) | null = null;
+  private readonly workerFactory: (() => Worker) | null;
+  private connection: WorkerConnection | null = null;
 
   constructor(options: WebHostOptions = {}) {
     super();
     if (options.kinds !== undefined) this.kinds = options.kinds;
     if (options.defaultKind !== undefined) this.defaultKind = options.defaultKind;
+    this.workerFactory = options.worker ?? null;
+  }
+
+  /** Open every store as the host does; a store declared `worker: true` opens in a worker spawned once for the run. */
+  openStores(manifest: AppManifest, memoryOnly: boolean): Promise<Store> {
+    const models = schemasOf(manifest);
+    const databases: Record<string, StorageAdapter> = {};
+    const factory = this.workerFactory;
+    let connection: WorkerConnection | null = null;
+    const openOne = async (p: ReturnType<typeof plan>[number]): Promise<void> => {
+      if (!p.worker || factory === null) {
+        databases[p.store] = await p.kind.open(manifest.app, p.store, p.at, models, p.store === "main");
+        return;
+      }
+      if (connection === null) {
+        const made = await WorkerConnection.connect(factory(), () => {
+          if (this.connection === made) this.connection = null;
+        });
+        this.connection = made;
+        connection = made;
+      }
+      connection.retain();
+      const adapter = new WorkerAdapter(connection, p.store, p.kindName, p.at, p.store === "main", memoryOnly, MODEL_OPERATORS);
+      try {
+        await adapter.init();
+      } catch (error) {
+        const message = connection.failedMessage();
+        connection.release();
+        throw message === "" ? error : new Error(message);
+      }
+      databases[p.store] = adapter;
+    };
+    const opened = plan(manifest, this, memoryOnly).reduce((before, p) => before.then(() => openOne(p)), Promise.resolve());
+    return opened.then(() => {
+      const store = createStore({ models, databases, defaultAdapter: "main" });
+      configureModel({ request: storeRequest(store) });
+      return store;
+    });
   }
 
   args(app: App): Record<string, unknown> {
@@ -218,9 +247,15 @@ export class WebHost extends AppHost {
   exit(_code: number): void {}
 }
 
+/** What `start` takes beside the manifest: how to spawn the worker a store may ask for. */
+export interface WebStartOptions {
+  /** Spawn the worker a store declared `worker: true` opens in. */
+  worker?: () => Worker;
+}
+
 /** Start the app on the web; answers the handle that stops it. */
-export const start = async (manifest: AppManifest): Promise<AppHandle> => {
-  const run = new AppRun(manifest, new WebHost());
+export const start = async (manifest: AppManifest, options: WebStartOptions = {}): Promise<AppHandle> => {
+  const run = new AppRun(manifest, new WebHost({ worker: options.worker }));
   await run.start();
   return { stop: () => run.stop() };
 };

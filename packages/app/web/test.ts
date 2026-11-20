@@ -28,6 +28,8 @@ export interface OpenPageOptions {
   kinds?: readonly StoreKind[];
   /** Whether the manifest's seeds load; `true` when absent. */
   seed?: boolean;
+  /** Spawn the worker a store declared `worker: true` opens in; absent, every store stays on the page. */
+  worker?: () => Worker;
 }
 
 /** How long a helper waits before it throws. */
@@ -63,10 +65,11 @@ class PageHost extends WebHost {
   private readonly given: readonly string[] | Record<string, unknown> | undefined;
   mountedRoot: HTMLElement | null = null;
 
-  constructor(path: string, given: readonly string[] | Record<string, unknown> | undefined, kinds: readonly StoreKind[]) {
+  constructor(path: string, given: readonly string[] | Record<string, unknown> | undefined, kinds: readonly StoreKind[], worker: (() => Worker) | undefined) {
     super({
       kinds: kinds.length > 0 ? kinds : [new MemoryKind()],
       defaultKind: kinds[0]?.name ?? "memory",
+      worker,
     });
     this.path = path;
     this.given = given;
@@ -168,7 +171,7 @@ export class OpenedPage {
 /** Open the manifest's app in the page over memory stores, a history in memory and the given arguments. */
 export const openPage = async (manifest: AppManifest, options: OpenPageOptions = {}): Promise<OpenedPage> => {
   const kinds = options.kinds ?? [];
-  const host = new PageHost(options.path ?? "/", options.args, kinds);
+  const host = new PageHost(options.path ?? "/", options.args, kinds, options.worker);
   const run = new AppRun(manifest, host, kinds.length === 0, options.seed !== false);
   await run.start();
   await settlePage();

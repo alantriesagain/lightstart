@@ -27,7 +27,7 @@ const sitemapOf = (url: string, paths: readonly string[]): string => {
 
 const headersOf = (paths: readonly string[]): string => {
   const hashed = paths
-    .filter((path) => HASHED.test(path))
+    .filter((path) => path !== "worker.js" && HASHED.test(path))
     .map((path) => `/${path}`)
     .sort();
   const rules = [

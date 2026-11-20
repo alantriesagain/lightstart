@@ -24,6 +24,8 @@
     ".": "./index.ts",
     "./manifest": "./manifest.ts",
     "./web": "./web/index.ts",
+    "./web/worker": "./web/worker.ts",
+    "./web/worker-entry": "./web/worker-entry.ts",
     "./web/test": "./web/test.ts",
     "./static": "./static/index.ts",
     "./tui": "./tui/index.ts",
@@ -35,7 +37,8 @@
   "dependencies": {
     "@lightstart/cli": "workspace:*",
     "@lightstart/light": "workspace:*",
-    "@lightstart/router": "workspace:*"
+    "@lightstart/router": "workspace:*",
+    "@lightstart/rpc": "workspace:*"
   },
   "devDependencies": {
     "@lightstart/build": "workspace:*",

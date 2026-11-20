@@ -220,9 +220,30 @@ const generation: HostGeneration = {
   async prepare(project, dir, helpers) {
     return writeComponents(project, dir, helpers);
   },
-  async write(_project, _dir, main, helpers) {
-    const source = ['import { start } from "@lightstart/app/web";', `import manifest from "./app${helpers.extension}";`, "", "await start(manifest);", ""].join("\n");
-    return { changed: helpers.writeWhenChanged(main, source), classes: null, modes: [] };
+  async write(project, dir, main, helpers) {
+    const workerPath = join(dir, "worker.js");
+    let changed = false;
+    let source: string;
+    if (helpers.worker) {
+      const models = helpers.flatFiles(join(project, "src", "models"));
+      const lines = ['import { serveStores } from "@lightstart/app/web/worker-entry";', `import app from "${helpers.specifierFor(project, join(project, "src", `app${helpers.extension}`))}";`];
+      models.forEach((file, index) => lines.push(`import model${String(index)} from "${helpers.specifierFor(project, file)}";`));
+      lines.push("", "serveStores(app, {");
+      models.forEach((file, index) => lines.push(`  ${JSON.stringify(helpers.nameOf(file))}: model${String(index)},`));
+      lines.push("});", "");
+      changed = helpers.writeWhenChanged(workerPath, lines.join("\n"));
+      source = [
+        'import { start } from "@lightstart/app/web";',
+        `import manifest from "./app${helpers.extension}";`,
+        "",
+        'await start(manifest, { worker: () => new Worker(new URL("./worker.js", import.meta.url), { type: "module" }) });',
+        "",
+      ].join("\n");
+    } else {
+      changed = remove(workerPath);
+      source = ['import { start } from "@lightstart/app/web";', `import manifest from "./app${helpers.extension}";`, "", "await start(manifest);", ""].join("\n");
+    }
+    return { changed: helpers.writeWhenChanged(main, source) || changed, classes: null, modes: [] };
   },
 };
 

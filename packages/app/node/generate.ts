@@ -45,6 +45,8 @@ export interface Generated {
 export interface GenerationHelpers {
   /** The language the generated files are written in. */
   readonly extension: ".ts" | ".js";
+  /** Whether a store declares `worker: true`, so the host writes its worker entry. */
+  readonly worker: boolean;
   flatFiles(dir: string): string[];
   specifierFor(from: string, to: string): string;
   nameOf(file: string): string;
@@ -156,21 +158,28 @@ export interface AppInfo {
   locale: string;
   /** The site's address without a trailing slash, or `undefined` when the app names none. */
   url: string | undefined;
+  /** Whether any store declares `worker: true`. */
+  worker: boolean;
 }
 
 /** Read `src/app.ts` without its views: the app module imports only `@lightstart/app`. */
 export const infoOf = async (app: string): Promise<AppInfo> => {
   try {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
-    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; url?: unknown } }).default;
+    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; url?: unknown; stores?: unknown } }).default;
+    let worker = false;
+    if (config !== undefined && isRecord(config.stores)) {
+      for (const value of Object.values(config.stores)) if (isRecord(value) && value["worker"] === true) worker = true;
+    }
     return {
       host: config !== undefined && typeof config.host === "string" && config.host.length > 0 ? config.host : "web",
       root: config !== undefined && typeof config.root === "string" ? config.root : "app-root",
       locale: config !== undefined && typeof config.locale === "string" && config.locale.length > 0 ? config.locale : "en",
       url: config !== undefined && typeof config.url === "string" && config.url.length > 0 ? config.url.replace(/\/+$/, "") : undefined,
+      worker,
     };
   } catch {
-    return { host: "web", root: "app-root", locale: "en", url: undefined };
+    return { host: "web", root: "app-root", locale: "en", url: undefined, worker: false };
   }
 };
 
@@ -458,7 +467,7 @@ export const generate = async (projectPath: string, options: GenerateOptions = {
   const main = join(dir, `main${extension}`);
   const part = await hostGeneration(info.host);
   const rootFile = part.rootView ? rootFileOf(views, info.root) : null;
-  const helpers = { extension, flatFiles, specifierFor, nameOf, writeWhenChanged };
+  const helpers = { extension, worker: info.worker, flatFiles, specifierFor, nameOf, writeWhenChanged };
   const locales = writeLocales(project, dir, info.locale, helpers);
   const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
   const appImports = [...locales.imports, ...prepared.imports];
