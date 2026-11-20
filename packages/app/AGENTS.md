@@ -40,6 +40,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 ## Rules the sources keep
 
 - The core names no host. What only one host does (its store kinds, where its arguments come from, its history, its surface, its generated entry and files) is that host's subpath; the core reaches it through `AppHost` and `HostGeneration`.
+- The web host applies the app's `scheme` before the theme: `"dark"` and `"light"` pin the `dark` class on `<html>` and stop following the preference, `"system"` follows as before, and `color-scheme` matches. `renderPage` writes `class="dark"` on a dark app's `<html>`, and `openPage` restores the page's scheme on `stop`.
 - A route change applies inside the host's `transition(apply)`: the run calls it when `app.transitions` is on or `navigate(path, { transition: true })` asks, and the web host wraps it in `document.startViewTransition` where the browser has it and waits for `<app-container>` to draw; every other host and `openApp` run `apply` as it is. `navigate(path, { transition: false })` runs plainly.
 - One run, the same on every host: arguments, stores, seeds into empty stores, controllers in import order, routes, mount. `stop` is the reverse: unmount, routes, controllers in reverse, stores. `restart` and `quit` are the run's, installed on `app` by every host and by `openApp`; they reject with "the app is not running" before a run.
 - `AppHost` is a class whose methods all have a default, not an abstract class, and a method answering a promise is not `async`: scriptc does not dispatch an abstract method's override reliably, nor an async override. A `StoreKind`'s `open` follows the same rule.
@@ -69,7 +70,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Contract | Who relies on it |
 |---|---|
-| `defineApp`, `AppConfig` and its fields (`name`, `host`, `theme`, `locale`, `url`, `prerender`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`kind`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
+| `defineApp`, `AppConfig` and its fields (`name`, `host`, `theme`, `scheme`, `locale`, `url`, `prerender`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`kind`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
 | `StoreKind` and `registerStoreKind` | a project bringing a store kind of its own |
 | `AppHost` and `HostGeneration` | the hosts, and a host a project would bring later |
 | `AppManifest` and its records (`app`, `rootView`, `models`, `seeds`, `controllers`, `routes`, `views`) | the generated `.light/app.ts` (or `.js`) and the run |

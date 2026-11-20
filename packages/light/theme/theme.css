@@ -1,3 +1,4 @@
+@layer light {
 html,
 body {
   font-family: var(--font-family-base);
@@ -182,4 +183,5 @@ dialog::backdrop {
 
 @view-transition {
   navigation: auto;
+}
 }

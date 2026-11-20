@@ -16,6 +16,7 @@ import { html } from "@lightstart/light/html";
 import { configureNavigation } from "@lightstart/light/navigation";
 import { listen } from "@lightstart/router/listen";
 import { applyTheme } from "@lightstart/light/theme";
+import { applyScheme } from "@lightstart/light/theme/color-scheme.js";
 import { loadPreset } from "@lightstart/light/theme/presets.js";
 import { createBrowserAdapter } from "@lightstart/router/adapters/browser";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
@@ -229,6 +230,7 @@ export class WebHost extends AppHost {
 
   private async put(run: AppRun): Promise<void> {
     registerContainer();
+    applyScheme(run.app.scheme);
     const theme = await loadPreset(run.app.theme ?? "default");
     if (theme !== null) applyTheme(theme);
     if (run.router !== null) {

@@ -15,6 +15,32 @@ applyTheme({ color: { primary: "#fabd2f" }, radius: { field: "0.75rem" } });
 selection, scrollbars); link it once. `presets.js` lists the themes in
 `themes/`, in the order a picker offers them.
 
+## The cascade layer
+
+The theme's CSS lives in one cascade layer, `light`: `theme.css` wraps its
+defaults and base styles in `@layer light { … }`, and `applyTheme` writes its
+variables, variant rules, dark side and scoped palettes into adopted sheets
+wrapped the same way. Unlayered rules beat layered ones whatever their order,
+so an app's own `:root` rule in its stylesheet overrides a token with no extra
+specificity:
+
+```css
+@import "../.light/components.css";
+
+:root {
+  --canvas-background: #0f1115;
+}
+```
+
+A preset still wins over the static defaults inside the layer, because the
+preset is written later. The components' own rules and the utility classes the
+classes engine generates stay unlayered on purpose: an app's own rule beats the
+engine's defaults, and a utility class keeps beating a component's default.
+
+A web app pins its scheme with `defineApp({ scheme })`: `"dark"` or `"light"`
+puts or removes the `dark` class on `<html>` and stops following the reader's
+preference, and `"system"` follows it (the default).
+
 ## Entries
 
 | Import | Holds |

@@ -34,6 +34,24 @@ describe("openPage", () => {
     }
   });
 
+  it("pins the page dark from defineApp and restores it when it stops", async () => {
+    const light = await openPage(manifest);
+    const lightCanvas = getComputedStyle(document.documentElement).getPropertyValue("--canvas-background").trim();
+    await light.stop();
+
+    const dark = { ...manifest, app: defineApp({ name: "fixture-web", host: "web", scheme: "dark" }) } as AppManifest;
+    const html = document.documentElement;
+    const page = await openPage(dark);
+    try {
+      assert.equal(html.classList.contains("dark"), true, "the dark class is on <html>");
+      assert.equal(html.style.colorScheme, "dark");
+      assert.notEqual(getComputedStyle(html).getPropertyValue("--canvas-background").trim(), lightCanvas, "the dark side is in effect");
+    } finally {
+      await page.stop();
+    }
+    assert.equal(html.classList.contains("dark"), false, "the class is gone after stop");
+  });
+
   it("removes the root element when it stops", async () => {
     const page = await openPage(manifest);
     const root = page.root;

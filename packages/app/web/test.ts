@@ -106,10 +106,12 @@ export class OpenedPage {
   readonly run: AppRun;
   /** The mounted root element. */
   readonly root: HTMLElement;
+  private readonly restore: (() => void) | undefined;
 
-  constructor(run: AppRun, root: HTMLElement) {
+  constructor(run: AppRun, root: HTMLElement, restore?: () => void) {
     this.run = run;
     this.root = root;
+    this.restore = restore;
   }
 
   /** Wait until an element matches `selector`, wait for its pending update, then answer it. */
@@ -161,10 +163,11 @@ export class OpenedPage {
     return settlePage();
   }
 
-  /** Stop the run and remove the root element. */
+  /** Stop the run, remove the root element and restore the page's scheme. */
   async stop(): Promise<void> {
     await this.run.stop();
     this.root.remove();
+    this.restore?.();
   }
 }
 
@@ -173,10 +176,16 @@ export const openPage = async (manifest: AppManifest, options: OpenPageOptions =
   const kinds = options.kinds ?? [];
   const host = new PageHost(options.path ?? "/", options.args, kinds, options.worker);
   const run = new AppRun(manifest, host, kinds.length === 0, options.seed !== false);
+  const root = document.documentElement;
+  const previous = { dark: root.classList.contains("dark"), colorScheme: root.style.colorScheme };
   await run.start();
   await settlePage();
   if (host.mountedRoot === null) throw new Error("the page did not mount the app's root view");
-  return new OpenedPage(run, host.mountedRoot);
+  const restore = (): void => {
+    root.classList.toggle("dark", previous.dark);
+    root.style.colorScheme = previous.colorScheme;
+  };
+  return new OpenedPage(run, host.mountedRoot, restore);
 };
 
 /** What `openBuilt` takes: how long a page may take to settle (30 s by default). */
