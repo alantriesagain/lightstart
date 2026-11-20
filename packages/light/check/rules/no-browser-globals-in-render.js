@@ -158,7 +158,7 @@ const classRenderNodes = (sf) => {
   /** @type {Node[]} */
   const out = [];
   const lightDefault = defaultImportBinding(sf, isLightSpec);
-  /** @param {Expression} expression */
+  /** @param {Expression} expression @returns {boolean} */
   const isViewBase = (expression) => {
     const base = unwrapParens(expression);
     if (!base) return false;
@@ -166,6 +166,10 @@ const classRenderNodes = (sf) => {
       if (base.text === "View" || base.text === "ViewCore" || (lightDefault && base.text === lightDefault)) return true;
       const binding = importBinding(sf, base.text);
       return !!binding && isLightSpec(binding.spec) && (binding.exported === "View" || binding.exported === "ViewCore");
+    }
+    if (ts.isCallExpression(base)) {
+      const callee = base.expression;
+      return ts.isPropertyAccessExpression(callee) && callee.name.text === "props" && isViewBase(callee.expression);
     }
     return ts.isPropertyAccessExpression(base) && (base.name.text === "View" || base.name.text === "ViewCore");
   };

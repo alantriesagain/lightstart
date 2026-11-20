@@ -247,18 +247,21 @@ export interface ComponentEntry {
   loadPromise?: Promise<ViewConstructor | null>;
 }
 
+/** A View class's statics without the members every function carries, so a factory result may declare `props` as data. */
+export type ViewStatics = Omit<typeof View, keyof Function | "prototype">;
+
 /**
  * `View`'s `this.constructor` carries framework-added statics that
  * regular `Function` typing doesn't expose. `ViewConstructor` is what
  * `this.$ctor` returns.
  */
-export type ViewConstructor = typeof View & {
+export type ViewConstructor = (new (...args: unknown[]) => View) & ViewStatics & {
   icons?: string[];
   formAssociated?: boolean;
   style?: boolean;
   tag?: string;
-  /** The props a class written by hand declares, the shape `View.define` takes. */
-  props?: PropertyDeclarations;
+  /** The props a class written by hand declares, the shape `View.define` takes; a factory result carries its `props` as data too. */
+  props?: PropertyDeclarations | Function;
   _storeDefs?: Record<string, { default: () => unknown }>;
   _klass?: string;
   _role?: string;
@@ -266,6 +269,31 @@ export type ViewConstructor = typeof View & {
   _hooks?: Record<string, LifecycleHook | undefined>;
   _hookLists?: Map<string, LifecycleHook[]> | null;
 };
+
+/**
+ * What `View.props(definition)` builds: a `View` subclass whose instances
+ * carry each declared prop as a member, typed as a definition view's props
+ * are (`this.slug: string` from `{ slug: "" }` or `T.string()`). Call it on
+ * the web and markup hosts; the terminal's `View` declares props with
+ * `prop()`, so it has no such factory.
+ */
+export type PropsView<P extends PropertyDeclarations> = {
+  new (): View & PropsToThis<P>;
+  prototype: View & PropsToThis<P>;
+  props: P;
+} & ViewStatics;
+
+declare global {
+  interface Function {
+    /**
+     * Build a `View` subclass from a props declaration, typed so a class
+     * extending it reads each prop on `this` under `checkJs`. Runtime is
+     * `View.props` in `dom/view.js`; a `static props` class stays as it is.
+     * The `this` parameter keeps the member to `View` and its subclasses.
+     */
+    props<const P extends PropertyDeclarations>(this: typeof View, props: P): PropsView<P>;
+  }
+}
 
 /** Re-export runtime types from the JS entry so the bare `@lightstart/light` specifier surfaces both the type-only declarations above and the JSDoc-inferred types of runtime exports (`import type View from "@lightstart/light"`). */
 export * from "./index.js";

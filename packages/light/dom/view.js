@@ -359,9 +359,10 @@ class View extends BaseElement {
    */
   static register(tag, component) {
     component.tag = tag;
-    const declared = Object.hasOwn(component, "props") ? component.props
+    const inherited = typeof component.props === "object" && component.props !== null ? /** @type {import("../view/types.ts").PropertyDeclarations} */ (component.props) : null;
+    const declared = Object.hasOwn(component, "props") ? /** @type {import("../view/types.ts").PropertyDeclarations} */ (component.props)
       : Object.hasOwn(component, "properties") ? component.properties
-      : null;
+      : inherited;
     const base = /** @type {ViewConstructor} */ (Object.getPrototypeOf(component));
     const plugins = pluginsFor(base);
     const definition = /** @type {ComponentDefinition} */ (/** @type {unknown} */ (component));
@@ -1006,6 +1007,24 @@ class View extends BaseElement {
     else this.$ignoreAttributeChange = false;
   }
 }
+
+/**
+ * Build a `View` subclass that declares `props`, the typed form of a class
+ * view: `class Page extends View.props({ slug: "" })` reads `this.slug` in
+ * JavaScript under `checkJs` and in TypeScript. A plain class keeps its
+ * `static props`.
+ * @template {import("../view/types.ts").PropertyDeclarations} P
+ * @param {P} props
+ * @returns {import("../view/types.ts").PropsView<P>}
+ */
+const viewProps = (props) => {
+  const BareView = /** @type {(new (...args: unknown[]) => View) & import("../view/types.ts").ViewStatics} */ (View);
+  const Base = class extends BareView {};
+  Object.defineProperty(Base, "props", { configurable: true, writable: true, enumerable: true, value: props });
+  return /** @type {import("../view/types.ts").PropsView<P>} */ (Base);
+};
+
+Object.defineProperty(View, "props", { configurable: true, writable: true, value: viewProps });
 
 for (const name of CORE_METHODS)
   if (name !== "$own") Object.defineProperty(View.prototype, name, /** @type {PropertyDescriptor} */ (Object.getOwnPropertyDescriptor(core, name)));

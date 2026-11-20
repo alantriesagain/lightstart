@@ -81,7 +81,22 @@ The generation imports both files into the manifest (`.light/app.ts` or `.js`), 
 
 ## Routes and views
 
-`src/routes.ts` maps paths to view tags on every host. The run makes the router (`@lightstart/router`'s core) over the host's history: the browser's on the web, one in memory on the terminal (starting at `/`, or the path `--route` names). `currentView` is the view tag the path answers, `currentParams` the parameters of its path (`/components/:category` gives `{ category }`), and `navigate(path)` goes to another; all come from the host's subpath. A root view that shows routes writes `<app-container>` (the app's, drawing the routed view; not `lc-app-container`, the components' page layout), which the host gives: a component in the page, a terminal view on the terminal. The container sets the parameters on the view as props, keeping the same element while the tag stays, so a view declares a prop for each parameter its path has. An app without `routes.ts` mounts its root view alone.
+`src/routes.ts` maps paths to view tags on every host. The run makes the router (`@lightstart/router`'s core) over the host's history: the browser's on the web, one in memory on the terminal (starting at `/`, or the path `--route` names). `currentView` is the view tag the path answers, `currentParams` the parameters of its path (`/components/:category` gives `{ category }`), and `navigate(path)` goes to another; all come from the host's subpath. A root view that shows routes writes `<app-container>` (the app's, drawing the routed view; not `lc-app-container`, the components' page layout), which the host gives: a component in the page, a terminal view on the terminal. The container sets the parameters on the view as props, keeping the same element while the tag stays, so a view declares a prop for each parameter its path has:
+
+```js
+import View from "@lightstart/light";
+import { html } from "@lightstart/light/html";
+
+class NotePage extends View.props({ slug: "" }) {
+  render() {
+    return html`<h1>${this.slug}</h1>`;
+  }
+}
+
+View.register("app-note", NotePage);
+```
+
+A plain class may keep `static props = { slug: "" }` instead. An app without `routes.ts` mounts its root view alone.
 
 With `transitions: true` the web host runs each route change (a `navigate`, a link through the router, the browser's back and forward) inside `document.startViewTransition` where the browser has it, and waits for `<app-container>` to draw the next view, so the browser snapshots the old view and the new one. Light adds no attribute: a view names what morphs with the platform's `view-transition-name` CSS property, the same name on the tile and on the page it opens:
 

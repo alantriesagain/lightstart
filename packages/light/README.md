@@ -35,18 +35,15 @@ View.define("my-counter", { count: 0, label: "Count" }, (el) => html`
 `);
 ```
 
-A class declares its props with `static props`, in the same shape a definition
-takes (`static properties` is read when `static props` is absent), and holds
-state it writes in signal fields. Its `render()` is tracked,
-so any signal the render reads re-renders the element when it changes:
+A class declares its props with `View.props(definition)`, in the same shape a
+definition takes, so `this.label` is typed under `checkJs` and in TypeScript:
 
 ```js
 import View from "@lightstart/light";
 import { html } from "@lightstart/light/html";
 import { signal } from "@lightstart/light/signals";
 
-class MyCounter extends View {
-  static props = { label: "Count" };
+class MyCounter extends View.props({ label: "Count" }) {
   count = signal(0);
 
   render() {
@@ -60,6 +57,13 @@ class MyCounter extends View {
 
 View.register("my-counter", MyCounter);
 ```
+
+A plain class may keep its props in `static props` (or `static properties`
+when `static props` is absent); the engine gives both forms the same prop
+behaviour. `View.props` is the web and markup hosts' factory: the terminal's
+`View` declares props with `prop()` instead. A class holds state it writes in
+signal fields, and its `render()` is tracked, so any signal the render reads
+re-renders the element when it changes.
 
 Both examples register the `<my-counter>` element, and a class gets the same
 prop behaviour a definition does. A class adds methods and lifecycle hooks

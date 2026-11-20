@@ -202,6 +202,18 @@ const controllerSource = (name: string, model: string | undefined, info: AppInfo
   return lines.join("\n");
 };
 
+const routePropOf = (tag: string, info: AppInfo): string | null => {
+  if (info.host !== "web" || !existsSync(info.routes)) return null;
+  const source = readFileSync(info.routes, "utf8");
+  const route = /["']([^"']+)["']\s*:\s*\{[^}]*?view\s*:\s*["']([^"']+)["']/g;
+  for (const match of source.matchAll(route)) {
+    if (match[2] !== tag) continue;
+    const parameter = /:([A-Za-z_$][A-Za-z0-9_$]*)/.exec(match[1] ?? "");
+    if (parameter) return parameter[1] ?? null;
+  }
+  return null;
+};
+
 const viewSource = (tag: string, info: AppInfo): string => {
   const className = pascal(tag);
   if (info.host === "tui") {
@@ -221,6 +233,7 @@ const viewSource = (tag: string, info: AppInfo): string => {
       "",
     ].join("\n");
   }
+  const prop = routePropOf(tag, info);
   return [
     "/**",
     ` * @file The ${tag} view.`,
@@ -228,9 +241,11 @@ const viewSource = (tag: string, info: AppInfo): string => {
     'import View from "@lightstart/light";',
     'import { html } from "@lightstart/light/html";',
     "",
-    `class ${className} extends View {`,
+    `class ${className} extends ${prop === null ? "View" : `View.props({ ${prop}: "" })`} {`,
     "  render() {",
-    `    return html\`<p>${tag}</p>\`;`,
+    prop === null
+      ? `    return html\`<p>${tag}</p>\`;`
+      : `    return html\`<p>${tag}: \${this.${prop}}</p>\`;`,
     "  }",
     "}",
     "",
