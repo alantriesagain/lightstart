@@ -4,9 +4,9 @@ The fields a form shows, from a light model's schema, and the validation of what
 
 | Function | What |
 |---|---|
-| `fieldsForModel(schema, { labels? })` | The fields `schema.$form.fields` names, in order; a field's `label`, `placeholder`, `input`, `rows` and `cmsType` come from its `T.*` definition, a `select`'s option labels from `labels`; an array field becomes `type: "array"`, its scalar item an `itemField` and an object item's props `itemFields` |
+| `fieldsForModel(schema, { labels? })` | The fields `schema.$form.fields` names, in order; a field's `label`, `placeholder`, `input`, `rows` and `cmsType` come from its `T.*` definition, a `select`'s option labels from `labels`; an array field becomes `type: "array"`, its scalar item an `itemField` and an object item's props `itemFields`; a `nullable` field is optional and clearing it writes `null` |
 | `formDefaults(schema)` | The payload defaults `schema.$form.defaults` declares |
-| `inferFields(schema, { operation? })` | Every editable field of a schema with no `$form` block, in schema order: `id` and `updatedAt` never, `createdAt` and `immutable` fields only on `"add"` or `"edit"` as they allow |
+| `inferFields(schema, { operation? })` | Every editable field of a schema with no `$form` block, in schema order: `id` and `updatedAt` never, `createdAt` and `immutable` fields only on `"add"` or `"edit"` as they allow; a `nullable` field is optional and clears to `null` |
 | `inferInput(def)` | The control a field definition asks for: what it describes first, then what its name suggests |
 | `inputFromName(name)`, `humanizeName(name)` | What a name suggests (`email`, `birthDate`, `bio`), and a name as a label (`createdAt` → "Created At") |
 | `relationTargets(schema)` | Which model each `relationship` field's options come from |

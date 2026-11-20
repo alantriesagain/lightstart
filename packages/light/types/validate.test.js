@@ -42,3 +42,37 @@ describe("light/types: validateType", () => {
     assert.equal(edited?.addedAt, 5);
   });
 });
+
+describe("light/types: nullable", () => {
+  it("keeps null as the value on every primitive factory", () => {
+    for (const name of ["string", "number", "boolean", "date", "datetime", "array", "object"]) {
+      const def = T[name]({ nullable: true });
+      assert.deepEqual(def.validate(null), { valid: true, value: null, error: null, details: null }, name);
+    }
+  });
+
+  it("a required field without nullable rejects null", () => {
+    const [errors, out] = validateType({ title: null }, { schema: { title: T.string({ required: true }) } });
+    assert.deepEqual(errors, { title: "required" });
+    assert.equal(out, null);
+  });
+
+  it("required with nullable rejects undefined and the empty string but keeps null", () => {
+    const title = T.string({ required: true, nullable: true });
+    assert.equal(title.validate(undefined).error, "required");
+    assert.equal(title.validate("").error, "required");
+    const kept = title.validate(null);
+    assert.equal(kept.valid, true);
+    assert.equal(kept.value, null);
+    const [errors, out] = validateType({ title: null }, { schema: { title } });
+    assert.equal(errors, null);
+    assert.equal(out?.title, null);
+  });
+
+  it("defaultValue fills undefined and the empty string but not null on a nullable field", () => {
+    const title = T.string({ nullable: true, defaultValue: "untitled" });
+    assert.equal(title.validate(null).value, null);
+    assert.equal(title.validate(undefined).value, "untitled");
+    assert.equal(title.validate("").value, "untitled");
+  });
+});

@@ -48,6 +48,8 @@ export interface TypeDefinitionFields {
   /** Whether a model stores the field; off for a `reactive: false` field, a function and a relationship a row does not own. */
   persist: boolean;
   required?: boolean;
+  /** Whether `null` is a value the field keeps and validates, rather than an absent one its default or `required` reads. */
+  nullable?: boolean;
   index?: boolean;
   /** Declares the backing index unique, honored by the IndexedDB adapter when it creates the store's indexes. */
   unique?: boolean;
@@ -159,12 +161,12 @@ export interface TypeExtension {
   types: Record<string, (options?: TypeOptions) => object>;
 }
 
-/** A bare default as the `defaultValue` it stands for, or the `required` and `defaultValue` of an options object. */
+/** A bare default as the `defaultValue` it stands for, or the `required`, `nullable` and `defaultValue` of an options object. */
 type Declared<O> = [O] extends [never] ? unknown
   : [O] extends [readonly unknown[] | string | number | boolean | null] ? { readonly defaultValue: O }
-  : Pick<O, Extract<keyof O, "required" | "defaultValue">>;
+  : Pick<O, Extract<keyof O, "required" | "nullable" | "defaultValue">>;
 
-/** What a primitive factory's descriptor carries from its options, in its type: the `required` and `defaultValue` written there, which a model's `RowOf` reads. */
+/** What a primitive factory's descriptor carries from its options, in its type: the `required`, `nullable` and `defaultValue` written there, which a model's `RowOf` reads. */
 export type DeclaredOptions<O> = Declared<Exclude<O, undefined>>;
 
 /**

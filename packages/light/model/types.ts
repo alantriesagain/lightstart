@@ -213,15 +213,17 @@ type Held<F> = F extends { readonly __tsHeld?: infer H } ? Exclude<H, undefined>
 type Holds<F> = Held<F> extends { readonly required: true } ? true
   : Held<F> extends { readonly defaultValue: infer D } ? ([D] extends [undefined] ? false : true) : false;
 
-/** The value a field holds, read off its descriptor, with `null` when its default is `null`. */
-type FieldValue<F> = (F extends TypeDefinition<infer V> ? V : unknown) | (Held<F> extends { readonly defaultValue: null } ? null : never);
+/** The value a field holds, read off its descriptor, with `null` when its default is `null` or it is declared `nullable`. */
+type FieldValue<F> = (F extends TypeDefinition<infer V> ? V : unknown)
+  | (Held<F> extends { readonly defaultValue: null } ? null : never)
+  | (Held<F> extends { readonly nullable: true } ? null : never);
 
 /**
  * The row a schema declares. A field declared `required: true` or given a
  * default (`T.boolean({ defaultValue: false })`, `T.number(0)`) is on every
  * stored row, since the store fills defaults on every add whatever the
- * adapter; any other field may be absent; a `null` default adds `null` to
- * the value. `id` is the declared `id` descriptor's type (`id: T.number()`
+ * adapter; any other field may be absent; a `null` default or a `nullable`
+ * field adds `null` to the value. `id` is the declared `id` descriptor's type (`id: T.number()`
  * for an auto-incremented key), else the string the store assigns, and is
  * always a string or number, as a store key is. `$`
  * directives are not fields. A row has exactly its schema's fields and `id`,

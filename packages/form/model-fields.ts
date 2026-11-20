@@ -37,7 +37,8 @@ const fieldType = (def: ModelFieldDef): string => {
 
 /** One field from its name and `T.*` definition: the metadata rules every field keeps, an array item's too. */
 const fieldOf = (name: string, def: ModelFieldDef, labels: OptionLabels): ModelFormField => {
-  const field: ModelFormField = { name, label: def.label || humanize(name), type: fieldType(def), required: !!def.required };
+  const field: ModelFormField = { name, label: def.label || humanize(name), type: fieldType(def), required: !!def.required && !def.nullable };
+  if (def.nullable) field.nullable = true;
   if (def.placeholder) field.placeholder = def.placeholder;
   if (def.rows) field.rows = def.rows;
   if (def.cmsType) field.cmsType = def.cmsType;

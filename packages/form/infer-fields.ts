@@ -72,7 +72,8 @@ export const inferFields = (modelSchema?: object, { operation = "add" }: { opera
     if (def.attribute === false && !def.cmsType) continue;
 
     const type = inferInput({ ...def, name });
-    const field: ModelFormField = { name, label: def.label || humanizeName(name), type, required: !!def.required };
+    const field: ModelFormField = { name, label: def.label || humanizeName(name), type, required: !!def.required && !def.nullable };
+    if (def.nullable) field.nullable = true;
     if (def.placeholder) field.placeholder = def.placeholder;
     if (def.help) field.help = def.help;
     if (def.rows || type === "textarea") field.rows = def.rows || 3;

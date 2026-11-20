@@ -70,13 +70,16 @@ const validations = {
  * @returns {[string, unknown] | [null, unknown]}
  */
 const validateField = (input, prop, context = {}) => {
+  const nullable = prop.nullable === true;
   let value = input;
   if (value === undefined && prop.defaultValue !== undefined)
     value = prop.defaultValue;
 
+  const keepsNull = nullable && value === null;
+
   if (
     prop.required === true &&
-    (value === undefined || value === null || value === "")
+    (value === undefined || value === "" || (value === null && !nullable))
   )
     return ["required", null];
 
@@ -86,6 +89,8 @@ const validateField = (input, prop, context = {}) => {
       ? timestampValidator(value, prop, context)
       : null;
   if (custom) return /** @type {[string, unknown]} */ (custom);
+
+  if (keepsNull) return [null, null];
 
   if (prop.relationship) {
     if (prop.many)
