@@ -59,3 +59,43 @@ test("any Emitter<T> is an Occurrence a resource's invalidateOn accepts", async 
   ].join("\n"));
   assert.equal(await typecheckProject(dir, { log: quiet }), 0);
 });
+
+test("a class from View.props reads its declared prop and not an undeclared one", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "light-typecheck-view-props-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const light = fileURLToPath(new URL("../", import.meta.url));
+  writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "typecheck-view-props", type: "module" }));
+  writeFileSync(join(dir, "tsconfig.json"), JSON.stringify({
+    compilerOptions: {
+      target: "es2024",
+      module: "esnext",
+      moduleResolution: "bundler",
+      lib: ["es2024", "dom"],
+      strict: true,
+      noEmit: true,
+      allowJs: true,
+      checkJs: true,
+      allowImportingTsExtensions: true,
+      skipLibCheck: true,
+    },
+    include: ["src"],
+  }));
+  mkdirSync(join(dir, "src"), { recursive: true });
+  const file = join(dir, "src", "note.js");
+  const body = (read) => [
+    `import View from "${light}view/types.ts";`,
+    "",
+    'class Note extends View.props({ slug: "" }) {',
+    `  render() { return this.${read}.toUpperCase(); }`,
+    "}",
+    "",
+    'View.register("x-note", Note);',
+    "",
+  ].join("\n");
+  writeFileSync(file, body("slug"));
+  assert.equal(await typecheckProject(dir, { log: quiet }), 0);
+  const errors = [];
+  writeFileSync(file, body("slugged"));
+  assert.notEqual(await typecheckProject(dir, { log: { error: (line) => errors.push(line) } }), 0);
+  assert.match(errors.join("\n"), /slugged/);
+});

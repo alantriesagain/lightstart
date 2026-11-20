@@ -2773,6 +2773,34 @@ describe("light - a class with static props", () => {
     assert.equal(Object.hasOwn(Clash, "properties"), false);
   });
 
+  it("View.props builds a class that draws, reflects and updates its prop", async () => {
+    const tag = getUniqueTag("class-props-factory");
+    const declaration = { item: "a", count: 0 };
+    class Item extends View.props(declaration) {
+      render() {
+        return html`<b>${this.item}</b><i>${this.count}</i>`;
+      }
+    }
+    assert.equal(Item.props, declaration);
+    View.register(tag, Item);
+    assert.deepEqual(Item.observedAttributes.sort(), ["count", "item"]);
+    const el = document.createElement(tag);
+    document.body.appendChild(el);
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "a");
+    assert.equal(el.querySelector("i").textContent, "0");
+    el.setAttribute("item", "z");
+    el.setAttribute("count", "3");
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "z");
+    assert.equal(el.querySelector("i").textContent, "3");
+    el.item = "y";
+    assert.equal(el.getAttribute("item"), "y");
+    await el.$requestUpdate();
+    assert.equal(el.querySelector("b").textContent, "y");
+    el.remove();
+  });
+
   it("leaves a class without static props as it was", async () => {
     const tag = getUniqueTag("class-props-none");
     class Plain extends View {
