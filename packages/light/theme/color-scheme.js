@@ -72,4 +72,22 @@ export const colorScheme = {
   },
 };
 
+/**
+ * Apply the scheme a page declares before its theme: `"dark"` and `"light"`
+ * pin the page and stop following the preference, `"system"` starts following
+ * the OS as `start` does. `color-scheme` on `<html>` matches the result.
+ * @param {string} [mode]
+ */
+export const applyScheme = (mode) => {
+  if (mode === "dark" || mode === "light") {
+    stopFollowing?.();
+    stopFollowing = null;
+    colorScheme.followsSystem = false;
+    colorScheme.dark.value = mode === "dark";
+    apply();
+  } else colorScheme.start("system");
+  const root = globalThis.document?.documentElement;
+  if (root) root.style.colorScheme = colorScheme.dark.value ? "dark" : "light";
+};
+
 export default colorScheme;

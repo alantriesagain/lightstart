@@ -83,7 +83,7 @@ const styleSheetFor = (styleId) => {
  * @param {string} css
  */
 const writeSheet = (styleId, css) => {
-  styleSheetFor(styleId)?.replaceSync(css);
+  styleSheetFor(styleId)?.replaceSync(`@layer light {\n${css}\n}`);
 };
 
 /**
@@ -402,7 +402,7 @@ export const themeCSS = (themeData, overrides) => {
     css += `\n:root.dark {\n  ${toRules(generateThemeVariables(dark))}\n}`;
   }
 
-  return css;
+  return `@layer light {\n${css}\n}`;
 };
 
 export {

@@ -40,6 +40,8 @@ export interface AppConfig {
   host: string;
   /** A theme preset name; `"default"` when absent. */
   theme?: string;
+  /** The page's color scheme: `"dark"` or `"light"` pins it, `"system"` follows the reader's preference; `"system"` when absent. */
+  scheme?: "dark" | "light" | "system";
   /** The default language the app's words are in; `"en"` when absent. */
   locale?: string;
   /** The site's address, absolute and without a trailing slash (`https://lightstart.dev`); the build writes its sitemap against it. */
@@ -98,6 +100,8 @@ export class App {
   readonly name: string;
   readonly host: string;
   readonly theme: string | undefined;
+  /** The page's color scheme: `"dark"`, `"light"` or `"system"`. */
+  readonly scheme: "dark" | "light" | "system";
   /** The default language the app's words are in. */
   readonly locale: string;
   /** The site's address, when the config names one, without a trailing slash. */
@@ -122,6 +126,7 @@ export class App {
     this.name = config.name;
     this.host = config.host;
     this.theme = config.theme;
+    this.scheme = config.scheme ?? "system";
     this.locale = config.locale ?? "en";
     this.url = config.url === undefined ? undefined : config.url.replace(/\/+$/, "");
     this.prerender = config.prerender === true || typeof config.prerender === "string";

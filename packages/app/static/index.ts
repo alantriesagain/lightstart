@@ -158,6 +158,19 @@ export const renderApp = async (manifest: AppManifest, options: RenderOptions = 
 
 const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+/** Put `dark` on the page's `<html>` so a dark app paints dark before its scripts run. */
+const withScheme = (page: string, scheme: "dark" | "light" | "system"): string => {
+  if (scheme !== "dark") return page;
+  return page.replace(/<html(\s[^>]*)?>/i, (tag) => {
+    const classAttribute = /\sclass=(["'])(.*?)\1/.exec(tag);
+    if (classAttribute !== null) {
+      const classes = classAttribute[2].trim();
+      return tag.replace(classAttribute[0], ` class="${classes ? `${classes} dark` : "dark"}"`);
+    }
+    return tag.replace(/>$/, ' class="dark">');
+  });
+};
+
 /** Put `renderApp`'s markup in a built page in place of its root placeholder, with the prerender marker first in `<head>`. */
 export const renderPage = async (manifest: AppManifest, page: string, options: RenderOptions = {}): Promise<string> => {
   const tag = manifest.app.root ?? "app-root";
@@ -165,6 +178,6 @@ export const renderPage = async (manifest: AppManifest, page: string, options: R
   const placeholder = new RegExp(`<${name}(?:\\s[^>]*)?>\\s*</${name}>`);
   if (!placeholder.test(page)) throw new Error(`The page has no <${tag}></${tag}> placeholder for the app's root view`);
   const markup = await renderApp(manifest, options);
-  const withRoot = page.replace(placeholder, markup);
+  const withRoot = withScheme(page.replace(placeholder, markup), manifest.app.scheme);
   return withRoot.replace(/<head(\s[^>]*)?>/i, (head) => head + PRERENDER_SCRIPT);
 };

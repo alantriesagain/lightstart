@@ -27,7 +27,6 @@ test("a class the baker cannot read as literals is a problem naming its site", (
 });
 
 test("collectClasses walks the tasks example's views and answers exactly its eight strings", () => {
-  // The app imports no view by hand (the generated entry does), so the walk starts from each view file, as the generated entry's imports would.
   const views = "../../examples/tasks-tui/src/views";
   const classes = new Set();
   const files = new Set();

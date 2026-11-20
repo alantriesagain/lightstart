@@ -14,7 +14,7 @@ light build                # generate as the build's first step
 
 | Path | Holds | The app does |
 |---|---|---|
-| `src/app.ts` or `src/app.js` | `defineApp({ name, host, theme, locale, url, prerender, transitions, stores, root, args })` | reads it first |
+| `src/app.ts` or `src/app.js` | `defineApp({ name, host, theme, scheme, locale, url, prerender, transitions, stores, root, args })` | reads it first |
 | `src/models/<name>.ts` | one model, default-exported | opens its store with every model |
 | `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready`, each after the controllers it imports |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
@@ -45,6 +45,7 @@ export default defineApp({
 | `name` | required | The stores' default name and the document's title |
 | `host` | required | The host's name: `"web"` or `"tui"` (`@lightstart/app/<host>`) |
 | `theme` | `"default"` | A preset name, applied by the web host |
+| `scheme` | `"system"` | The page's color scheme: `"dark"` or `"light"` pins it, `"system"` follows the reader's preference; the web host applies it before the theme |
 | `locale` | `"en"` | The default language the app's words are in |
 | `url` | none | The site's address (`https://lightstart.dev`), which the build's sitemap is written against |
 | `prerender` | `false` | Render every concrete route into its own `index.html` during `light build`: `true` or `"markup"` renders in node, `"browser"` through Playwright |
@@ -147,6 +148,8 @@ import manifest from "./app.ts";
 await start(manifest);
 ```
 
+On the web, `scheme` is applied before the theme: `"dark"` puts the `dark` class on `<html>` and stops following the preference, `"light"` removes it, and `"system"` follows the reader's choice and the OS. The build writes the class into a prerendered page's `<html>`, so a dark app paints dark on the first frame. The terminal host ignores it.
+
 A web project that declares `@lightstart/components` and writes an `lc-*` tag in `src/` gets two more files. `.light/components.ts` (or `.js`) imports each component module, follows every `extends` and `uses`, and defines each base and used tag before the tag that needs it; `.light/components.css` imports the theme and each component's stylesheet in the same order. `.light/app.ts` (or `.js`) imports `./components.ts` (or `.js`) before the views. A project without the package, or writing no tag, gets neither file.
 
 A project that declares `@lightstart/i18n` gets `.light/locales.ts` (or `.js`), imported by `.light/app.ts` (or `.js`) before the views. It imports `locales/<lang>.js` from every dependency whose `package.json` says `light.locales: true`, and the project's own `src/locales/<lang>.ts`/`.js`, then calls `configureI18n({ locales, defaultLocale, dictionaries })`: every language found, the app's `locale` as the default, and each language's dictionary the packages' merged first with the project's over them (a deep merge, so a key the project writes wins). A project without the package gets no file, and may plug another library into `configureTranslation` itself.
@@ -199,7 +202,7 @@ A project that depends on `@lightstart/app` gets these rules from `light check`,
 
 ## The web host
 
-`@lightstart/app/web`'s `start(manifest)` runs the app in the page: its kinds `indexeddb` and `memory`, the arguments from the URL query (`?name=value`, a bare `?flag`; a parameter the app does not declare is left out), the browser's history for the routes with `configureNavigation(router.navigation)`, the theme preset applied, and the root view mounted (an existing `<app-root>` replaced by a fresh one, another placeholder replaced, or appended to `<body>`). On a prerendered page (`window.__PRERENDERED__ === true` and the root already holding markup) the host keeps that element, so light's views adopt the served DOM, and `<app-container>` keeps the served view of the path. A view's first renders on such a page come before its data, so the host gives light a `settle` hook: a render that does not match the served DOM is held until the run has mounted and the work views handed to `trackWork` is done, then adopts if it matches by then, and renders fresh only if it still differs. The wait also ends at the user's first `input`, `change`, `pointerdown` or `keydown`, so what they asked for shows while loads continue. The first client navigation clears the marker. `<app-container>` is a component drawing `currentView`. It answers `{ stop() }`.
+`@lightstart/app/web`'s `start(manifest)` runs the app in the page: its kinds `indexeddb` and `memory`, the arguments from the URL query (`?name=value`, a bare `?flag`; a parameter the app does not declare is left out), the browser's history for the routes with `configureNavigation(router.navigation)`, the app's scheme applied before the theme preset, and the root view mounted (an existing `<app-root>` replaced by a fresh one, another placeholder replaced, or appended to `<body>`). On a prerendered page (`window.__PRERENDERED__ === true` and the root already holding markup) the host keeps that element, so light's views adopt the served DOM, and `<app-container>` keeps the served view of the path. A view's first renders on such a page come before its data, so the host gives light a `settle` hook: a render that does not match the served DOM is held until the run has mounted and the work views handed to `trackWork` is done, then adopts if it matches by then, and renders fresh only if it still differs. The wait also ends at the user's first `input`, `change`, `pointerdown` or `keydown`, so what they asked for shows while loads continue. The first client navigation clears the marker. `<app-container>` is a component drawing `currentView`. It answers `{ stop() }`.
 
 A project on `@lightstart/components` has its tags defined by the generated `.light/components.ts`, which `.light/app.ts` imports before the views, so every component exists before the root view is made. The stylesheets come from `.light/components.css` through the app's own stylesheet.
 
