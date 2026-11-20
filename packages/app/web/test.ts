@@ -16,6 +16,7 @@ import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { AppRun, currentView } from "../run.ts";
+import type { NavigateOptions } from "../run.ts";
 import { MemoryKind, StoreKind } from "../stores.ts";
 import { WebHost } from "./index.ts";
 
@@ -141,11 +142,10 @@ export class OpenedPage {
     }
   }
 
-  /** Go to `path` and wait for the view it answers to render. */
-  async navigate(path: string): Promise<void> {
-    const router = this.run.router;
-    if (router !== null) {
-      router.go(path);
+  /** Go to `path` and wait for the view it answers to render; `options.transition` overrides the app's choice for this call. */
+  async navigate(path: string, options: NavigateOptions = {}): Promise<void> {
+    if (this.run.router !== null) {
+      this.run.go(path, options.transition);
       await settlePage();
       const tag = currentView.value;
       if (tag !== null) {

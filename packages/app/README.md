@@ -14,7 +14,7 @@ light build                # generate as the build's first step
 
 | Path | Holds | The app does |
 |---|---|---|
-| `src/app.ts` or `src/app.js` | `defineApp({ name, host, theme, locale, url, stores, root, args })` | reads it first |
+| `src/app.ts` or `src/app.js` | `defineApp({ name, host, theme, locale, url, prerender, transitions, stores, root, args })` | reads it first |
 | `src/models/<name>.ts` | one model, default-exported | opens its store with every model |
 | `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready`, each after the controllers it imports |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
@@ -48,6 +48,7 @@ export default defineApp({
 | `locale` | `"en"` | The default language the app's words are in |
 | `url` | none | The site's address (`https://lightstart.dev`), which the build's sitemap is written against |
 | `prerender` | `false` | Render every concrete route into its own `index.html` during `light build`: `true` or `"markup"` renders in node, `"browser"` through Playwright |
+| `transitions` | `false` | Run every web route change inside `document.startViewTransition` where the browser has it |
 | `stores` | `{ main: {} }` | The stores by name, several at once: `{ kind?, at? }` each |
 | `root` | `"app-root"` | The root view's tag |
 | `args` | `{}` | The arguments the app takes, as a `@lightstart/cli` schema |
@@ -81,6 +82,15 @@ The generation imports both files into the manifest (`.light/app.ts` or `.js`), 
 
 `src/routes.ts` maps paths to view tags on every host. The run makes the router (`@lightstart/router`'s core) over the host's history: the browser's on the web, one in memory on the terminal (starting at `/`, or the path `--route` names). `currentView` is the view tag the path answers, `currentParams` the parameters of its path (`/components/:category` gives `{ category }`), and `navigate(path)` goes to another; all come from the host's subpath. A root view that shows routes writes `<app-container>` (the app's, drawing the routed view; not `lc-app-container`, the components' page layout), which the host gives: a component in the page, a terminal view on the terminal. The container sets the parameters on the view as props, keeping the same element while the tag stays, so a view declares a prop for each parameter its path has. An app without `routes.ts` mounts its root view alone.
 
+With `transitions: true` the web host runs each route change (a `navigate`, a link through the router, the browser's back and forward) inside `document.startViewTransition` where the browser has it, and waits for `<app-container>` to draw the next view, so the browser snapshots the old view and the new one. Light adds no attribute: a view names what morphs with the platform's `view-transition-name` CSS property, the same name on the tile and on the page it opens:
+
+```css
+.tile { view-transition-name: note-card; }
+.note-header { view-transition-name: note-card; }
+```
+
+`navigate(path, { transition: true | false })` overrides the app's choice for one call.
+
 A route with parameters may list their values with `params: () => Array<Record<string, string>>` (or a promise of one), as the site's `/components/:category` does. `pathsOf` (`@lightstart/app/node/paths.ts`) answers every concrete path of a routes table, sorted and unique: a path without parameters is itself, and a path with them is filled from the entries `params` answers, each value URL-encoded, an entry missing a parameter skipped. A wildcard path, a route marked `spa: true` and a redirect are left out, and nested `routes` join their parent's path. The build's sitemap and prerendering read it.
 
 ## The run
@@ -95,7 +105,7 @@ One run, the same on every host (`run.ts`):
 
 It installs `app.restart(args?)` (stop, merge the arguments, open, start and mount again) and `app.quit(code?)` (stop, then leave as the host does: a terminal app exits with `code`). Both answer promises, and reject with "the app is not running" before a run. `stop()` takes the view down, stops following the routes, disposes the controllers in reverse order and closes the stores.
 
-A host is an `AppHost`: its name, the store kinds it runs and its default, `args(app)`, `history()`, `mount(run)`, `unmount(run)` and `exit(code)`. Each has what a host with no surface does, and a host overrides what it changes.
+A host is an `AppHost`: its name, the store kinds it runs and its default, `args(app)`, `history()`, `mount(run)`, `unmount(run)`, `transition(apply)` and `exit(code)`. Each has what a host with no surface does, and a host overrides what it changes.
 
 ## The order controllers start in
 
@@ -248,7 +258,7 @@ await page.settle();     // pending updates and microtasks
 await page.stop();       // stops the run and removes the root element
 ```
 
-`openPage` mounts the root view as the web host does, with the theme applied and the routes drawn by `<app-container>` over a history in memory that starts at `path` (`"/"` by default), so the test page's URL is no route of the app's. It takes the app's arguments as `openApp` does (`args`, rather than the URL's) and opens every store in memory unless `kinds` names others. With `worker`, a store declared `worker: true` opens in that worker (still in memory when every store is memory); without it, every store stays on the page. It answers an `OpenedPage`: `run`, `root` (the mounted root element), `find(selector, { timeout })` (waits for the element, waits for its pending update, then answers it), `text()`, `shows(text, { timeout })`, `navigate(path)`, `settle()` and `stop()`. A helper waits 2 s by default and throws naming what it wanted beside the page's text.
+`openPage` mounts the root view as the web host does, with the theme applied and the routes drawn by `<app-container>` over a history in memory that starts at `path` (`"/"` by default), so the test page's URL is no route of the app's. It takes the app's arguments as `openApp` does (`args`, rather than the URL's) and opens every store in memory unless `kinds` names others. With `worker`, a store declared `worker: true` opens in that worker (still in memory when every store is memory); without it, every store stays on the page. It answers an `OpenedPage`: `run`, `root` (the mounted root element), `find(selector, { timeout })` (waits for the element, waits for its pending update, then answers it), `text()`, `shows(text, { timeout })`, `navigate(path, { transition })`, `settle()` and `stop()`. A helper waits 2 s by default and throws naming what it wanted beside the page's text.
 
 A test of the build itself serves a build folder and opens it in a fresh headless Chromium context with `openBuilt`:
 

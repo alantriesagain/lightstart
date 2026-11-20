@@ -66,6 +66,11 @@ export class AppHost implements StoreHost {
     return;
   }
 
+  /** Run `apply` inside the host's transition, then wait for its surface to draw; by default it just runs `apply`. */
+  transition(apply: () => Promise<void> | void): Promise<void> {
+    return Promise.resolve(apply()).then(() => undefined);
+  }
+
   /** Put the run's view on the surface. */
   mount(_run: AppRun): Promise<void> {
     return Promise.resolve();
@@ -95,10 +100,16 @@ const viewOf = (route: unknown): string | null => {
 
 let running: AppRun | null = null;
 
-/** Go to `path` in the app running now; nothing without routes. */
-export const navigate = (path: string): void => {
-  const router = running !== null ? running.router : null;
-  if (router !== null) router.go(path);
+/** What a one-call navigation may override. */
+export interface NavigateOptions {
+  /** Run this navigation inside the host's transition (`true`), or plainly (`false`), whatever the app chose. */
+  transition?: boolean;
+}
+
+/** Go to `path` in the app running now; nothing without routes. `options.transition` overrides the app's choice for this call. */
+export const navigate = (path: string, options: NavigateOptions = {}): void => {
+  const run = running;
+  if (run !== null) run.go(path, options.transition);
 };
 
 /** An app running on a host. */
@@ -111,6 +122,7 @@ export class AppRun {
   controllers: readonly unknown[] = [];
   router: RouterCore | null = null;
   private following: (() => void) | null = null;
+  private overrideTransition: boolean | undefined = undefined;
   private readonly seed: boolean;
 
   constructor(manifest: AppManifest, host: AppHost, memoryOnly = false, seed = true) {
@@ -172,28 +184,55 @@ export class AppRun {
     }
   }
 
+  /** Write the matched route into `currentView` and `currentParams`. */
+  private applyRoute(matched: { params?: unknown; route?: unknown }): void {
+    currentParams.value = paramsOf(matched);
+    currentView.value = viewOf(matched.route);
+  }
+
+  /** Apply a route change, through the host's transition when the app asks for one or this call overrides it. */
+  private followRoute(matched: { params?: unknown; route?: unknown }): void {
+    const apply = (): void => this.applyRoute(matched);
+    const transition = this.overrideTransition ?? this.app.transitions;
+    if (transition) void this.host.transition(apply);
+    else apply();
+  }
+
   private route(): void {
     const routes = this.manifest.routes;
     currentView.value = null;
     currentParams.value = {};
     if (routes === null) return;
     const router = new RouterCore(this.host.history(), { plugins: [] });
+    // The first match happens inside `init`; every later one reaches the subscriber.
+    let initial = true;
     router.init(routes, {
       appName: this.app.name,
       prerendered: () => this.host.prerendered(),
       clearPrerendered: () => this.host.clearPrerendered(),
       onRouteChange: (matched) => {
-        currentParams.value = paramsOf(matched);
-        currentView.value = viewOf(matched.route);
+        if (initial) this.applyRoute(matched);
       },
     });
+    initial = false;
     this.following = router.subscribe((matched) => {
-      currentParams.value = paramsOf(matched);
-      currentView.value = viewOf(matched.route);
+      this.followRoute(matched);
     });
     currentParams.value = paramsOf(router.currentRoute);
     currentView.value = router.currentRoute === null ? null : viewOf(router.currentRoute.route);
     this.router = router;
+  }
+
+  /** Go to `path`, choosing whether this one navigation uses the host's transition. */
+  go(path: string, transition?: boolean): void {
+    const router = this.router;
+    if (router === null) return;
+    this.overrideTransition = transition;
+    try {
+      router.go(path);
+    } finally {
+      this.overrideTransition = undefined;
+    }
   }
 
   /** Take the view down, stop following the routes, dispose the controllers in reverse order and close the stores. */

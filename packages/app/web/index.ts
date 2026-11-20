@@ -202,6 +202,33 @@ export class WebHost extends AppHost {
     (globalThis as { __PRERENDERED__?: boolean }).__PRERENDERED__ = false;
   }
 
+  /** Run the route change inside `document.startViewTransition` where the browser has it, then wait for `<app-container>` to draw the next view. */
+  transition(apply: () => Promise<void> | void): Promise<void> {
+    const doc = globalThis.document;
+    const start = (doc as unknown as { startViewTransition?: (callback: () => Promise<void> | void) => { finished: Promise<void> } }).startViewTransition;
+    if (typeof start !== "function") return Promise.resolve(apply()).then(() => undefined);
+    // The container draws the next view's element, then that view draws its content: wait for both, so the snapshot has the page the user will see.
+    const updated = (element: Element | null): Promise<void> => {
+      const update = element === null ? null : (element as unknown as { $requestUpdate?: () => Promise<void> }).$requestUpdate;
+      return typeof update === "function" ? update.call(element) : Promise.resolve();
+    };
+    const draw = (): Promise<void> => {
+      const container = this.mounted === null ? null : this.mounted.querySelector("app-container");
+      return updated(container).then(() => updated(container === null ? null : container.firstElementChild));
+    };
+    const update = (): Promise<void> => Promise.resolve(apply()).then(draw);
+    return new Promise<void>((resolve, reject) => {
+      let transition: { finished: Promise<void> };
+      try {
+        transition = start.call(doc, update);
+      } catch (error) {
+        reject(error);
+        return;
+      }
+      transition.finished.then(() => resolve(), () => resolve());
+    });
+  }
+
   mount(run: AppRun): Promise<void> {
     return this.put(run);
   }

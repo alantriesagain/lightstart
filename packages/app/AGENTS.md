@@ -11,8 +11,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `stores.ts` | `StoreKind`, `MemoryKind`, `registerStoreKind`, `schemasOf` and `openStores`: every declared store opened by its kind over one engine store, checked against the host's kinds and the models' `$adapter` |
 | `memory.ts` | `MemoryAdapter`, the in-memory storage adapter |
 | `controllers.ts` | `startControllers` and `stopControllers`: name, start, await `$ready`, dispose |
-| `run.ts` | `AppHost` (the host contract, with a surface-less default for each method), `AppRun` (the run: arguments, stores, seeds, controllers, routes, mount; `stop`, `restart`, `quit`), `currentView` and `navigate` |
-| `web/index.ts` | The web host: `WebHost`, the URL-query arguments, the browser history, the theme, `<app-container>` as a component, the root mount, `start` |
+| `run.ts` | `AppHost` (the host contract, with a surface-less default for each method, `transition(apply)` among them), `AppRun` (the run: arguments, stores, seeds, controllers, routes, mount; `stop`, `restart`, `quit`), `currentView` and `navigate` |
+| `web/index.ts` | The web host: `WebHost`, the URL-query arguments, the browser history, the theme, `<app-container>` as a component, the root mount, the view-transition `transition`, `start` |
 | `web/indexeddb.ts` | `IndexedDBKind`, kept apart from the host's DOM pieces so the worker entry can open it |
 | `web/test.ts` | `openPage(manifest, { path, args, kinds })`: the web host's root mount, theme and routed links over memory stores and a history in memory, and `OpenedPage` (`run`, `root`, `find`, `text`, `shows`, `navigate`, `settle`, `stop`) |
 | `web/generate.ts` | The web host's part of the generation: `.light/main.ts` (or `.js`), `.light/worker.js` when a store declares `worker: true`, and `.light/components.ts` (or `.js`) and `.light/components.css` for a project on `@lightstart/components` |
@@ -40,6 +40,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 ## Rules the sources keep
 
 - The core names no host. What only one host does (its store kinds, where its arguments come from, its history, its surface, its generated entry and files) is that host's subpath; the core reaches it through `AppHost` and `HostGeneration`.
+- A route change applies inside the host's `transition(apply)`: the run calls it when `app.transitions` is on or `navigate(path, { transition: true })` asks, and the web host wraps it in `document.startViewTransition` where the browser has it and waits for `<app-container>` to draw; every other host and `openApp` run `apply` as it is. `navigate(path, { transition: false })` runs plainly.
 - One run, the same on every host: arguments, stores, seeds into empty stores, controllers in import order, routes, mount. `stop` is the reverse: unmount, routes, controllers in reverse, stores. `restart` and `quit` are the run's, installed on `app` by every host and by `openApp`; they reject with "the app is not running" before a run.
 - `AppHost` is a class whose methods all have a default, not an abstract class, and a method answering a promise is not `async`: scriptc does not dispatch an abstract method's override reliably, nor an async override. A `StoreKind`'s `open` follows the same rule.
 - Stores: `main` is always declared, of the host's default kind unless the app says. A store's kind must be one the host runs, a project's registered one, or `memory`; a model's `$adapter` must name a declared store. Both are errors before anything opens. A test opens every store in memory. A worker store is the same kind opened in the worker behind a `StorageAdapter` proxy; the model layer runs once, on the page.

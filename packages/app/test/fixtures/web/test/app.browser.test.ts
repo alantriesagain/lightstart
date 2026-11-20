@@ -42,3 +42,94 @@ describe("openPage", () => {
     assert.equal(document.querySelector("app-root"), null);
   });
 });
+
+interface TransitionDocument {
+  startViewTransition?: (callback: () => Promise<void> | void) => { finished: Promise<void> };
+}
+
+const stubTransitions = () => {
+  const doc = document as unknown as TransitionDocument;
+  const hadOwn = Object.prototype.hasOwnProperty.call(doc, "startViewTransition");
+  const original = doc.startViewTransition;
+  let calls = 0;
+  doc.startViewTransition = (callback) => {
+    calls += 1;
+    let finish: () => void = () => {};
+    const finished = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    Promise.resolve(callback()).then(() => {
+      finish();
+    });
+    return { finished };
+  };
+  return {
+    calls: (): number => calls,
+    restore: (): void => {
+      if (hadOwn) doc.startViewTransition = original;
+      else delete doc.startViewTransition;
+    },
+  };
+};
+
+const transitionsManifest = (): AppManifest =>
+  ({ ...manifest, app: defineApp({ name: "fixture-web", host: "web", url: "https://fixture.example", transitions: true }) }) as AppManifest;
+
+describe("view transitions", () => {
+  it("runs a route change inside document.startViewTransition when the app asks", async () => {
+    const stub = stubTransitions();
+    const page = await openPage(transitionsManifest());
+    try {
+      await page.navigate("/about");
+      assert.equal(stub.calls(), 1, "one transition wraps the navigation");
+      assert.ok((await page.shows("About")).includes("About"), "the next view is drawn");
+    } finally {
+      await page.stop();
+      stub.restore();
+    }
+  });
+
+  it("skips the transition for a call that asks to", async () => {
+    const stub = stubTransitions();
+    const page = await openPage(transitionsManifest());
+    try {
+      await page.navigate("/about", { transition: false });
+      assert.equal(stub.calls(), 0, "no transition wraps the navigation");
+      assert.ok((await page.shows("About")).includes("About"), "the next view is still drawn");
+    } finally {
+      await page.stop();
+      stub.restore();
+    }
+  });
+
+  it("navigates plainly where the browser has no view transition", async () => {
+    const doc = document as unknown as TransitionDocument;
+    const hadOwn = Object.prototype.hasOwnProperty.call(doc, "startViewTransition");
+    const original = doc.startViewTransition;
+    doc.startViewTransition = undefined;
+    const page = await openPage(transitionsManifest());
+    try {
+      await page.navigate("/about");
+      assert.ok((await page.shows("About")).includes("About"), "the navigation still lands");
+    } finally {
+      await page.stop();
+      if (hadOwn) doc.startViewTransition = original;
+      else delete doc.startViewTransition;
+    }
+  });
+
+  it("uses the app's choice unless one call overrides it", async () => {
+    const stub = stubTransitions();
+    const page = await openPage(manifest);
+    try {
+      await page.navigate("/about");
+      assert.equal(stub.calls(), 0, "an app without transitions runs plainly");
+      await page.navigate("/", { transition: true });
+      assert.equal(stub.calls(), 1, "one call can ask for a transition");
+      assert.ok((await page.shows("Home")).includes("Home"), "the next view is drawn");
+    } finally {
+      await page.stop();
+      stub.restore();
+    }
+  });
+});
