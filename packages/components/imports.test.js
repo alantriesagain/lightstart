@@ -57,16 +57,25 @@ const sourceFiles = (dir) =>
 
 const sources = sourceFiles(".").map((file) => join(ROOT, file));
 
+/**
+ * The components that bind a model on purpose: `lc-data-table` takes a model
+ * api in its `model` prop and follows it with `modelQuery`, so it reaches the
+ * model and the controller's resource by design. Everything else stays out.
+ */
+const MODEL_BOUND = new Set(["display/data-table.js"].map((file) => join(ROOT, file)));
+
 describe("@lightstart/components: nothing loads light's private engines", () => {
-  it("no component reaches the controller", () => {
+  it("no component reaches the controller, but the one that binds a model", () => {
     for (const file of sources) {
+      if (MODEL_BOUND.has(file)) continue;
       const leaked = reach(file).filter((path) => path.startsWith("controller/"));
       assert.deepEqual(leaked, [], `${relative(ROOT, file)} reaches ${leaked.join(", ")}`);
     }
   });
 
-  it("no component reaches the model", () => {
+  it("no component reaches the model, but the one that binds a model", () => {
     for (const file of sources) {
+      if (MODEL_BOUND.has(file)) continue;
       const leaked = reach(file).filter((path) => path.startsWith("model/"));
       assert.deepEqual(leaked, [], `${relative(ROOT, file)} reaches ${leaked.join(", ")}`);
     }
