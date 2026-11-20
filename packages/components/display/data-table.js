@@ -48,7 +48,6 @@ export default defineComponent({
   },
 
   connected() {
-    // A remount starts the query again: the last disconnect disposed it.
     this._syncQuery();
     this.$own(() => this._disposeQuery());
   },
