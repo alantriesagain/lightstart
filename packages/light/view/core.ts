@@ -82,7 +82,7 @@ function depthOf(node: unknown) {
   return depth;
 }
 
-function flushUpdates() {
+function flushQueue() {
   if (!flushScheduled) return;
   flushScheduled = false;
   const batch = queue;
@@ -112,8 +112,19 @@ function flushUpdates() {
 function scheduleFlush() {
   if (flushScheduled) return;
   flushScheduled = true;
-  currentHost().scheduleFlush(flushUpdates);
+  currentHost().scheduleFlush(flushQueue);
 }
+
+/**
+ * Perform every pending update now, and the updates those make, instead of
+ * waiting for the host's next flush: for a caller that must have the views
+ * drawn before it returns, such as a view transition's update callback, where
+ * the browser pauses rendering (and the frame the host waits for) until the
+ * callback settles. The host's own scheduled flush then finds nothing to do.
+ */
+export const flushUpdates = (): void => {
+  for (let round = 0; flushScheduled && round < 100; round++) flushQueue();
+};
 
 function enqueueUpdate(view: ViewCore) {
   if (flushing !== null) flushing.push(view);

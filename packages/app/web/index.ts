@@ -11,6 +11,7 @@
  */
 
 import View, { configureView } from "@lightstart/light";
+import { flushUpdates } from "@lightstart/light/view/core";
 import { html } from "@lightstart/light/html";
 import { configureNavigation } from "@lightstart/light/navigation";
 import { listen } from "@lightstart/router/listen";
@@ -207,16 +208,9 @@ export class WebHost extends AppHost {
     const doc = globalThis.document;
     const start = (doc as unknown as { startViewTransition?: (callback: () => Promise<void> | void) => { finished: Promise<void> } }).startViewTransition;
     if (typeof start !== "function") return Promise.resolve(apply()).then(() => undefined);
-    // The container draws the next view's element, then that view draws its content: wait for both, so the snapshot has the page the user will see.
-    const updated = (element: Element | null): Promise<void> => {
-      const update = element === null ? null : (element as unknown as { $requestUpdate?: () => Promise<void> }).$requestUpdate;
-      return typeof update === "function" ? update.call(element) : Promise.resolve();
-    };
-    const draw = (): Promise<void> => {
-      const container = this.mounted === null ? null : this.mounted.querySelector("app-container");
-      return updated(container).then(() => updated(container === null ? null : container.firstElementChild));
-    };
-    const update = (): Promise<void> => Promise.resolve(apply()).then(draw);
+    // The browser pauses rendering, and with it the frame light's host flushes on, until this callback settles: draw the
+    // container and the next view now, so the snapshot has the page the user will see and the callback never waits on a frame.
+    const update = (): Promise<void> => Promise.resolve(apply()).then(() => flushUpdates());
     return new Promise<void>((resolve, reject) => {
       let transition: { finished: Promise<void> };
       try {

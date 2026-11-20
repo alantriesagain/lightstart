@@ -118,6 +118,19 @@ describe("view transitions", () => {
     }
   });
 
+  it("draws the next view inside the browser's own view transition, without waiting on a frame", async () => {
+    const doc = document as unknown as TransitionDocument;
+    if (typeof doc.startViewTransition !== "function") return;
+    const page = await openPage(transitionsManifest());
+    try {
+      await page.navigate("/about");
+      // A transition pauses rendering until its callback settles; a callback waiting on a frame would time out after seconds.
+      assert.ok((await page.shows("About", { timeout: 1000 })).includes("About"), "the next view is on the page right away");
+    } finally {
+      await page.stop();
+    }
+  });
+
   it("uses the app's choice unless one call overrides it", async () => {
     const stub = stubTransitions();
     const page = await openPage(manifest);
