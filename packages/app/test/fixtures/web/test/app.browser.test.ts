@@ -93,6 +93,37 @@ const stubTransitions = () => {
 const transitionsManifest = (): AppManifest =>
   ({ ...manifest, app: defineApp({ name: "fixture-web", host: "web", url: "https://fixture.example", transitions: true }) }) as AppManifest;
 
+describe("navigation focus and page head", () => {
+  it("moves focus to the new view's heading and announces the title", async () => {
+    const page = await openPage(manifest);
+    try {
+      await page.navigate("/about");
+      assert.equal(document.title, "About | fixture-web");
+      const heading = document.querySelector("app-about h1");
+      assert.ok(heading instanceof HTMLElement, "the about view has a heading");
+      assert.equal(document.activeElement, heading, "focus moves to the heading");
+      const region = document.querySelector("[data-light-live-region]");
+      assert.ok(region instanceof HTMLElement, "the page has a live region");
+      assert.equal(region.textContent, "About | fixture-web");
+    } finally {
+      await page.stop();
+    }
+  });
+
+  it("leaves focus where it was when focusOnNavigate is false", async () => {
+    const still = defineApp({ name: "fixture-web", host: "web", url: "https://fixture.example", focusOnNavigate: false });
+    const page = await openPage({ ...manifest, app: still } as AppManifest);
+    try {
+      const before = document.activeElement;
+      await page.navigate("/about");
+      assert.equal(document.activeElement, before, "focus did not move");
+      assert.equal(document.title, "About | fixture-web");
+    } finally {
+      await page.stop();
+    }
+  });
+});
+
 describe("view transitions", () => {
   it("runs a route change inside document.startViewTransition when the app asks", async () => {
     const stub = stubTransitions();

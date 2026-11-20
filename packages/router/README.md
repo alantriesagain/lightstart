@@ -40,6 +40,8 @@ router.go("post", { slug: "hello-world" });
 
 A route value may also be a bare function. The router keeps it as `{ component: fn }` and never calls it; rendering belongs to the app.
 
+A route's `title` and `description` may be a string or a function of the matched params, read at navigation: `"/p/:slug": { title: ({ slug }) => slug, description: ({ slug }) => \`About ${slug}\` }`. The router answers the page title through the adapter and `onTitleChange`; the description stays on the route config for the app to read.
+
 ## Route syntax and precedence
 
 A pattern is `/`-separated segments. A segment is a literal, a `:name` parameter that matches one non-empty segment, or a trailing wildcard. A trailing `:rest*` matches the rest of the path, which may be empty, so `/admin/:rest*` answers `/admin` and `/admin/a/b`. A bare trailing `*` is accepted too.

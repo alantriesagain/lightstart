@@ -29,6 +29,8 @@ import type { AppManifest } from "../manifest.ts";
 import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
 import { MemoryKind, StoreKind } from "../stores.ts";
 import { PRERENDER_SCRIPT } from "../node/prerender.ts";
+import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
+import type { Head } from "../head.ts";
 
 /** What a static render runs with: where the routes start, the app's arguments (an argv list or a record over the defaults), and the store kinds it runs (every store in memory when absent). */
 export interface RenderOptions {
@@ -158,6 +160,50 @@ export const renderApp = async (manifest: AppManifest, options: RenderOptions = 
 
 const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const escapeAttribute = (text: string): string => text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+
+const putMeta = (page: string, attribute: "name" | "property", key: string, value: string): string => {
+  const pattern = new RegExp(`<meta\\b[^>]*\\b${attribute}=(["'])${escapeRegExp(key)}\\1[^>]*>`, "i");
+  const found = pattern.exec(page);
+  if (value === "") return found === null ? page : page.replace(pattern, "");
+  if (found === null) {
+    return page.replace(/<\/head>/i, () => `<meta ${attribute}="${key}" content="${escapeAttribute(value)}"></head>`);
+  }
+  const tag = /\bcontent=/i.test(found[0])
+    ? found[0].replace(/\bcontent=(["'])[\s\S]*?\1/i, () => `content="${escapeAttribute(value)}"`)
+    : found[0].replace(/>$/, () => ` content="${escapeAttribute(value)}">`);
+  return page.replace(found[0], () => tag);
+};
+
+const putCanonical = (page: string, href: string): string => {
+  const pattern = /<link\b[^>]*\brel=(["'])canonical\1[^>]*>/i;
+  const found = pattern.exec(page);
+  if (href === "") return found === null ? page : page.replace(pattern, "");
+  if (found === null) return page.replace(/<\/head>/i, () => `<link rel="canonical" href="${escapeAttribute(href)}"></head>`);
+  const tag = /\bhref=/i.test(found[0])
+    ? found[0].replace(/\bhref=(["'])[\s\S]*?\1/i, () => `href="${escapeAttribute(href)}"`)
+    : found[0].replace(/>$/, () => ` href="${escapeAttribute(href)}">`);
+  return page.replace(found[0], () => tag);
+};
+
+/** Write a page head into a built page's `<head>`, updating an existing tag in place and creating a missing one. */
+const putHead = (page: string, head: Head): string => {
+  const title = documentTitleOf(head);
+  const canonical = canonicalOf(head);
+  let out = /<title>[\s\S]*?<\/title>/i.test(page)
+    ? page.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${escapeAttribute(title)}</title>`)
+    : page.replace(/<\/head>/i, () => `<title>${escapeAttribute(title)}</title></head>`);
+  out = putMeta(out, "name", "description", head.description);
+  out = putCanonical(out, canonical);
+  out = putMeta(out, "property", "og:title", title);
+  out = putMeta(out, "property", "og:description", head.description);
+  out = putMeta(out, "property", "og:url", canonical);
+  out = putMeta(out, "property", "og:type", "website");
+  out = putMeta(out, "property", "og:image", absoluteImageOf(head));
+  out = putMeta(out, "name", "twitter:card", head.image === "" ? "summary" : "summary_large_image");
+  return out;
+};
+
 /** Put `dark` on the page's `<html>` so a dark app paints dark before its scripts run. */
 const withScheme = (page: string, scheme: "dark" | "light" | "system"): string => {
   if (scheme !== "dark") return page;
@@ -178,6 +224,8 @@ export const renderPage = async (manifest: AppManifest, page: string, options: R
   const placeholder = new RegExp(`<${name}(?:\\s[^>]*)?>\\s*</${name}>`);
   if (!placeholder.test(page)) throw new Error(`The page has no <${tag}></${tag}> placeholder for the app's root view`);
   const markup = await renderApp(manifest, options);
-  const withRoot = withScheme(page.replace(placeholder, markup), manifest.app.scheme);
-  return withRoot.replace(/<head(\s[^>]*)?>/i, (head) => head + PRERENDER_SCRIPT);
+  const head = currentHead.peek();
+  const withRoot = withScheme(page.replace(placeholder, () => markup), manifest.app.scheme);
+  const withHead = putHead(withRoot, head);
+  return withHead.replace(/<head(\s[^>]*)?>/i, (tag) => tag + PRERENDER_SCRIPT);
 };

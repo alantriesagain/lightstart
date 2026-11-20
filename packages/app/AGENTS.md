@@ -6,13 +6,14 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Where | What |
 |---|---|
-| `index.ts` | `defineApp`, `AppConfig` (including the site's `url` and how it `prerender`s), `PrerenderRenderer`, `StoreConfig`, the `App` and `AppArgs` classes, `AppLifecycle` |
+| `index.ts` | `defineApp`, `AppConfig` (including the site's `title`, how it `prerender`s, its `focusOnNavigate` and its `url`), `PrerenderRenderer`, `StoreConfig`, the `App` and `AppArgs` classes, `AppLifecycle` |
+| `head.ts` | `pageHead`, `currentHead` and the head shape: the route's title, description and path, the app's display title, the computed document title, canonical and absolute image |
 | `manifest.ts` | `AppManifest`, `AppModel`, `AppController`, `AppSeeds`: the plain records `.light/app.ts` (or `.js`) exports |
 | `stores.ts` | `StoreKind`, `MemoryKind`, `registerStoreKind`, `schemasOf` and `openStores`: every declared store opened by its kind over one engine store, checked against the host's kinds and the models' `$adapter` |
 | `memory.ts` | `MemoryAdapter`, the in-memory storage adapter |
 | `controllers.ts` | `startControllers` and `stopControllers`: name, start, await `$ready`, dispose |
-| `run.ts` | `AppHost` (the host contract, with a surface-less default for each method, `transition(apply)` among them), `AppRun` (the run: arguments, stores, seeds, controllers, routes, mount; `stop`, `restart`, `quit`), `currentView` and `navigate` |
-| `web/index.ts` | The web host: `WebHost`, the URL-query arguments, the browser history, the theme, `<app-container>` as a component, the root mount, the view-transition `transition`, `start` |
+| `run.ts` | `AppHost` (the host contract, with a surface-less default for each method, `transition(apply)` and `routeChanged(run, first)` among them), `AppRun` (the run: arguments, stores, seeds, controllers, routes, mount; `stop`, `restart`, `quit`), `currentView` and `navigate` |
+| `web/index.ts` | The web host: `WebHost`, the URL-query arguments, the browser history, the theme, `<app-container>` as a component, the root mount, the view-transition `transition`, the page head and its tags, focus and the live region after a route change, scroll restoration, `start` |
 | `web/indexeddb.ts` | `IndexedDBKind`, kept apart from the host's DOM pieces so the worker entry can open it |
 | `web/test.ts` | `openPage(manifest, { path, args, kinds })`: the web host's root mount, theme and routed links over memory stores and a history in memory, and `OpenedPage` (`run`, `root`, `find`, `text`, `shows`, `navigate`, `settle`, `stop`) |
 | `web/generate.ts` | The web host's part of the generation: `.light/main.ts` (or `.js`), `.light/worker.js` when a store declares `worker: true`, and `.light/components.ts` (or `.js`) and `.light/components.css` for a project on `@lightstart/components` |
@@ -70,7 +71,9 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Contract | Who relies on it |
 |---|---|
-| `defineApp`, `AppConfig` and its fields (`name`, `host`, `theme`, `scheme`, `locale`, `url`, `prerender`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`kind`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
+| `defineApp`, `AppConfig` and its fields (`name`, `title`, `host`, `theme`, `scheme`, `locale`, `url`, `prerender`, `transitions`, `focusOnNavigate`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`kind`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
+| `pageHead` and `PageHead` | a view setting its page's title, description and image |
+| A route's `title` and `description` as strings or functions of its params | a project's `src/routes.ts` and the run's head |
 | `StoreKind` and `registerStoreKind` | a project bringing a store kind of its own |
 | `AppHost` and `HostGeneration` | the hosts, and a host a project would bring later |
 | `AppManifest` and its records (`app`, `rootView`, `models`, `seeds`, `controllers`, `routes`, `views`) | the generated `.light/app.ts` (or `.js`) and the run |

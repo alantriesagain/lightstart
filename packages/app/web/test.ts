@@ -95,6 +95,7 @@ class PageHost extends WebHost {
 
   unmount(_run: AppRun): void {
     this.stopListening();
+    this.stopPage();
     const root = this.mountedRoot;
     this.mountedRoot = null;
     if (root !== null) root.remove();
@@ -204,7 +205,7 @@ interface BuiltPageLike {
   goForward(options: { timeout: number }): Promise<unknown>;
   click(selector: string, options: { timeout: number }): Promise<void>;
   waitForFunction<A>(run: (arg: A) => unknown, arg: A, options: { timeout: number }): Promise<unknown>;
-  evaluate<T>(run: () => T): Promise<T>;
+  evaluate<T>(run: () => T | Promise<T>): Promise<T>;
   close(): Promise<void>;
 }
 
@@ -285,6 +286,11 @@ export class OpenedBuiltPage {
   /** Click the element `selector` matches, as a reader does (a link goes through the app's router). */
   click(selector: string): Promise<void> {
     return this.page.click(selector, { timeout: 2000 });
+  }
+
+  /** Run `script` in the page and answer what it returns. */
+  evaluate<T>(script: () => T | Promise<T>): Promise<T> {
+    return this.page.evaluate(script) as Promise<T>;
   }
 
   /** The browser's back button. */

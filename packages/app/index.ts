@@ -38,6 +38,12 @@ export interface AppConfig {
   name: string;
   /** The host the generated entry starts: `@lightstart/app/<host>` (`web`, `tui`). */
   host: string;
+  /**
+   * The site's display name, the suffix of every page title (`<page> · <title>`, the home page
+   * or a page without a title the title alone). Without it the document title is the page's title
+   * and the app's `name` with ` | ` between them, as before.
+   */
+  title?: string;
   /** A theme preset name; `"default"` when absent. */
   theme?: string;
   /** The page's color scheme: `"dark"` or `"light"` pins it, `"system"` follows the reader's preference; `"system"` when absent. */
@@ -50,6 +56,8 @@ export interface AppConfig {
   prerender?: boolean | PrerenderRenderer;
   /** Run every route change inside the browser's view transition where it has one; `false` when absent. */
   transitions?: boolean;
+  /** Move focus to the new view's heading after a route change; `true` when absent. */
+  focusOnNavigate?: boolean;
   /**
    * The stores by name, several at once of any kinds the host runs; a model picks one with its
    * schema's `$adapter`, and gets `main` when it names none. `main` is the host's default kind when
@@ -99,6 +107,8 @@ export interface AppLifecycle {
 export class App {
   readonly name: string;
   readonly host: string;
+  /** The site's display name, when the config names one. */
+  readonly title: string | undefined;
   readonly theme: string | undefined;
   /** The page's color scheme: `"dark"`, `"light"` or `"system"`. */
   readonly scheme: "dark" | "light" | "system";
@@ -112,6 +122,8 @@ export class App {
   readonly prerenderRenderer: PrerenderRenderer | undefined;
   /** Whether the web host runs each route change inside a view transition. */
   readonly transitions: boolean;
+  /** Whether the web host moves focus to the new view after a route change. */
+  readonly focusOnNavigate: boolean;
   /** The stores the config declares, `main` among them (of the host's default kind unless it says). */
   readonly stores: Record<string, StoreConfig>;
   readonly root: string | undefined;
@@ -125,6 +137,7 @@ export class App {
   constructor(config: AppConfig) {
     this.name = config.name;
     this.host = config.host;
+    this.title = config.title;
     this.theme = config.theme;
     this.scheme = config.scheme ?? "system";
     this.locale = config.locale ?? "en";
@@ -132,6 +145,7 @@ export class App {
     this.prerender = config.prerender === true || typeof config.prerender === "string";
     this.prerenderRenderer = config.prerender === "markup" || config.prerender === "browser" ? config.prerender : undefined;
     this.transitions = config.transitions === true;
+    this.focusOnNavigate = config.focusOnNavigate !== false;
     const stores: Record<string, StoreConfig> = {};
     stores["main"] = {};
     const declared = config.stores ?? {};
@@ -156,3 +170,6 @@ export class App {
 
 /** The app of the config `src/app.ts` declares. */
 export const defineApp = (config: AppConfig): App => new App(config);
+
+export { pageHead } from "./head.ts";
+export type { PageHead } from "./head.ts";

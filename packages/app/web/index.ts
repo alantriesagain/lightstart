@@ -13,6 +13,7 @@
 import View, { configureView } from "@lightstart/light";
 import { flushUpdates } from "@lightstart/light/view/core";
 import { html } from "@lightstart/light/html";
+import { effect } from "@lightstart/light/signals";
 import { configureNavigation } from "@lightstart/light/navigation";
 import { listen } from "@lightstart/router/listen";
 import { applyTheme } from "@lightstart/light/theme";
@@ -27,6 +28,8 @@ import { createStore, storeRequest } from "@lightstart/light/model/store";
 import type { StorageAdapter, Store } from "@lightstart/light/model/types.ts";
 import { configureModel } from "@lightstart/light/model";
 import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
+import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
+import type { Head } from "../head.ts";
 import { MemoryKind, plan, schemasOf, StoreKind } from "../stores.ts";
 import { IndexedDBKind } from "./indexeddb.ts";
 import { MODEL_OPERATORS, WorkerAdapter, WorkerConnection } from "./worker.ts";
@@ -125,9 +128,52 @@ const queryArgv = (app: App): string[] => {
   return out;
 };
 
+const setMeta = (head: HTMLElement, attribute: "name" | "property", key: string, value: string): void => {
+  const existing = head.querySelector(`meta[${attribute}="${key}"]`);
+  if (value === "") {
+    existing?.remove();
+    return;
+  }
+  const tag = existing instanceof HTMLMetaElement ? existing : document.createElement("meta");
+  if (!(existing instanceof HTMLMetaElement)) {
+    tag.setAttribute(attribute, key);
+    head.append(tag);
+  }
+  tag.setAttribute("content", value);
+};
+
+const setCanonical = (head: HTMLElement, href: string): void => {
+  const existing = head.querySelector('link[rel="canonical"]');
+  if (href === "") {
+    existing?.remove();
+    return;
+  }
+  const tag = existing instanceof HTMLLinkElement ? existing : document.createElement("link");
+  if (!(existing instanceof HTMLLinkElement)) {
+    tag.setAttribute("rel", "canonical");
+    head.append(tag);
+  }
+  tag.setAttribute("href", href);
+};
+
+/** Put a head on the page: the title, description, canonical link and link-preview tags, each created once and updated in place. */
+const applyHead = (head: Head): void => {
+  const title = documentTitleOf(head);
+  document.title = title;
+  const root = document.head;
+  if (root === null) return;
+  setMeta(root, "name", "description", head.description);
+  setCanonical(root, canonicalOf(head));
+  setMeta(root, "property", "og:title", title);
+  setMeta(root, "property", "og:description", head.description);
+  setMeta(root, "property", "og:url", canonicalOf(head));
+  setMeta(root, "property", "og:type", "website");
+  setMeta(root, "property", "og:image", absoluteImageOf(head));
+  setMeta(root, "name", "twitter:card", head.image === "" ? "summary" : "summary_large_image");
+};
+
 /** What a web host may start with instead of the page's: the kinds it runs and its default kind (a test's kinds and memory). */
-export interface WebHostOptions {
-  kinds?: readonly StoreKind[];
+export interface WebHostOptions {  kinds?: readonly StoreKind[];
   defaultKind?: string;
   /** Spawn the worker a store declared `worker: true` opens in; absent, every store opens on the page. */
   worker?: () => Worker;
@@ -143,6 +189,12 @@ export class WebHost extends AppHost {
   private unlisten: (() => void) | null = null;
   private readonly workerFactory: (() => Worker) | null;
   private connection: WorkerConnection | null = null;
+  private headEffect: { dispose(): void } | null = null;
+  private onScroll: (() => void) | null = null;
+  private onPopState: (() => void) | null = null;
+  private previousScrollRestoration: ScrollRestoration | null = null;
+  private historyNavigation = false;
+  private readonly scrollPositions = new Map<string, number>();
 
   constructor(options: WebHostOptions = {}) {
     super();
@@ -233,6 +285,7 @@ export class WebHost extends AppHost {
     applyScheme(run.app.scheme);
     const theme = await loadPreset(run.app.theme ?? "default");
     if (theme !== null) applyTheme(theme);
+    this.startPage();
     if (run.router !== null) {
       configureNavigation(run.router.navigation);
       // A plain link to a path of the app goes through the router too, not only an lc-link.
@@ -254,6 +307,94 @@ export class WebHost extends AppHost {
     markStarted();
   }
 
+  /** Follow the page head into the title and tags, take over scroll restoration, and record each entry's scroll position. */
+  private startPage(): void {
+    this.headEffect?.dispose();
+    this.headEffect = effect(() => {
+      applyHead(currentHead.value);
+    });
+    this.liveRegion();
+    const win = globalThis.window;
+    this.previousScrollRestoration = win.history.scrollRestoration;
+    win.history.scrollRestoration = "manual";
+    this.onScroll = (): void => {
+      this.scrollPositions.set(win.location.href, win.scrollY);
+    };
+    win.addEventListener("scroll", this.onScroll, { passive: true });
+    this.onPopState = (): void => {
+      this.historyNavigation = true;
+    };
+    win.addEventListener("popstate", this.onPopState);
+  }
+
+  /** Undo what the web host put on the page: the head effect, the scroll and history listeners and scroll restoration. */
+  protected stopPage(): void {
+    this.headEffect?.dispose();
+    this.headEffect = null;
+    const win = globalThis.window;
+    const scroll = this.onScroll;
+    const pop = this.onPopState;
+    if (scroll !== null) win.removeEventListener("scroll", scroll);
+    if (pop !== null) win.removeEventListener("popstate", pop);
+    this.onScroll = null;
+    this.onPopState = null;
+    if (this.previousScrollRestoration !== null) {
+      win.history.scrollRestoration = this.previousScrollRestoration;
+      this.previousScrollRestoration = null;
+    }
+  }
+
+  /** After a route change, once the next view has drawn: scroll, move focus and announce the page's title. */
+  routeChanged(run: AppRun, _first: boolean): Promise<void> {
+    flushUpdates();
+    const historyNavigation = this.historyNavigation;
+    this.historyNavigation = false;
+    const win = globalThis.window;
+    if (historyNavigation) win.scrollTo(0, this.scrollPositions.get(win.location.href) ?? 0);
+    else win.scrollTo(0, 0);
+    if (run.app.focusOnNavigate) this.focusView();
+    const region = this.liveRegion();
+    region.textContent = document.title;
+    return Promise.resolve();
+  }
+
+  /** Move focus to the new view's first `h1`, else to the view itself, made focusable only until it loses focus. */
+  private focusView(): void {
+    const container = this.mounted;
+    const tag = currentView.peek();
+    if (container === null || tag === null) return;
+    const view = container.querySelector(tag);
+    if (!(view instanceof HTMLElement)) return;
+    const heading = view.querySelector("h1");
+    const target = heading instanceof HTMLElement ? heading : view;
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.addEventListener("blur", () => {
+      if (target.getAttribute("tabindex") === "-1") target.removeAttribute("tabindex");
+    }, { once: true });
+    target.focus({ preventScroll: true });
+  }
+
+  /** The page's one polite live region, created on first use and visually hidden. */
+  private liveRegion(): HTMLElement {
+    const existing = document.querySelector("[data-light-live-region]");
+    if (existing instanceof HTMLElement) return existing;
+    const region = document.createElement("div");
+    region.setAttribute("data-light-live-region", "");
+    region.setAttribute("aria-live", "polite");
+    region.setAttribute("aria-atomic", "true");
+    region.style.position = "absolute";
+    region.style.width = "1px";
+    region.style.height = "1px";
+    region.style.padding = "0";
+    region.style.margin = "-1px";
+    region.style.overflow = "hidden";
+    region.style.clip = "rect(0 0 0 0)";
+    region.style.whiteSpace = "nowrap";
+    region.style.border = "0";
+    document.body.append(region);
+    return region;
+  }
+
   /** Stop handing the page's link clicks to the router of the run that is going. */
   stopListening(): void {
     this.unlisten?.();
@@ -262,6 +403,7 @@ export class WebHost extends AppHost {
 
   unmount(_run: AppRun): void {
     this.stopListening();
+    this.stopPage();
     const mounted = this.mounted;
     this.mounted = null;
     if (mounted !== null) mounted.replaceWith(document.createElement(mounted.tagName.toLowerCase()));

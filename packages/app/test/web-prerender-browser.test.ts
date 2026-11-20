@@ -47,6 +47,8 @@ const main = async (): Promise<void> => {
     const about = readFileSync(join(dir, "about", "index.html"), "utf8");
     ok("the browser-rendered about page is rendered", about.includes("<p>About</p>"));
     ok("the browser-rendered about page marks itself prerendered", about.includes(PRERENDER_SCRIPT));
+    ok("the browser-rendered about page carries its title", about.includes("<title>About | fixture-web</title>"));
+    ok("the browser-rendered about page has its canonical", about.includes('rel="canonical" href="https://fixture.example/about"'));
 
     for (const id of ["1", "2"]) {
       const note = readFileSync(join(dir, "notes", id, "index.html"), "utf8");
