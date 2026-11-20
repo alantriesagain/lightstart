@@ -85,7 +85,7 @@ import { configureNavigation } from "@lightstart/light/navigation";
 configureNavigation(router.navigation);
 ```
 
-`router.click(event)` uses `interceptedPath`, so it walks `composedPath()` for the anchor rather than reading `event.currentTarget`. It skips modified clicks, links with `target`, `download`, `data-no-router` or `rel="external"`, other origins, and same-page hash links. `listen(document, router)` installs the document click interceptor and returns its teardown.
+`router.click(event)` uses `interceptedPath`, so it walks `composedPath()` for the anchor rather than reading `event.currentTarget`. It skips modified clicks, links with `target`, `download`, `data-no-router` or `rel="external"`, other origins, and same-page hash links. `listen(document, router)` installs the document click interceptor and a `popstate` listener on the document's window that hands the browser's back and forward to `router.handleHistoryNavigation()`, and returns the teardown of both.
 
 ## Work tracking
 

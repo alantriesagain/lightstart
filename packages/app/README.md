@@ -289,6 +289,10 @@ const page = await openBuilt(dir, "/about", { timeoutMs: 30_000 });
 page.errors; // page errors and console errors
 page.failed; // same-origin 4xx/5xx and failed requests
 await page.text(); // document.body.innerText
+await page.click('a[href="/"]'); // as a reader clicks: a link goes through the router
+await page.shows("Home"); // waits for the text (2 s by default), else throws with the page's text
+await page.back(); // the browser's back, then forward()
+await page.path(); // location.pathname
 await page.close();
 ```
 

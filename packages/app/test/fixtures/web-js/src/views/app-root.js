@@ -6,6 +6,7 @@ class AppRoot extends View {
     return html`
       <main>
         <h1>Notes</h1>
+        <nav><a href="/">Home</a> <a href="/about">About</a></nav>
         <app-container></app-container>
       </main>
     `;

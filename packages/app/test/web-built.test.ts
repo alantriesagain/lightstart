@@ -59,6 +59,19 @@ const main = async (): Promise<void> => {
       await home.close();
     }
 
+    const walk = await openBuilt(report.dir, "/");
+    try {
+      await walk.click('a[href="/about"]');
+      ok("a link goes to the other route", (await walk.shows("About these notes")).includes("About these notes") && (await walk.path()) === "/about");
+      await walk.back();
+      ok("the browser's back draws the previous route", (await walk.shows("Seeded note")).includes("Seeded note") && (await walk.path()) === "/");
+      await walk.forward();
+      ok("the browser's forward draws the next one again", (await walk.shows("About these notes")).includes("About these notes"));
+      ok("walking the history raises no error", walk.errors.length === 0 && walk.failed.length === 0);
+    } finally {
+      await walk.close();
+    }
+
     const fallback = await openBuilt(report.dir, "/no-such-route");
     try {
       ok("the 404.html fallback boots without an error", fallback.errors.length === 0 && fallback.failed.length === 0);
