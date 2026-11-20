@@ -1,8 +1,8 @@
 /**
  * @file The dev request pipeline, in order: the project's route apps, the apps an extension adds,
- * files under the project root (and under an extension's extra roots), the reload client, a 404
- * for an asset nothing answered, then the app shell. TypeScript is stripped and bare specifiers
- * are rewritten by the transform the node layer injects.
+ * the reload client, files under the project root (and under an extension's extra roots), a file
+ * under `public/` at the root, the app shell, then a 404 for an asset nothing answered. TypeScript
+ * is stripped and bare specifiers are rewritten by the transform the node layer injects.
  */
 import { readFile } from "node:fs/promises";
 import { extname, isAbsolute, join } from "node:path";
@@ -64,6 +64,12 @@ export const createPipeline = (options: PipelineOptions): Pipeline => {
     transformVersion: JSON.stringify(options.importmap),
   };
   const files = new Static({ root: options.projectDir, ...staticOptions });
+  const publicFiles = new Static({
+    root: join(options.projectDir, "public"),
+    dotfiles: true,
+    precompressed: false,
+    cacheControl: "no-store",
+  });
   const roots = (extension === undefined ? [] : extension.roots).map((root) => {
     const prefix = root.prefix.endsWith("/") ? root.prefix.slice(0, -1) : root.prefix;
     return { prefix, files: new Static({ root: root.dir, ...staticOptions }) };
@@ -96,6 +102,11 @@ export const createPipeline = (options: PipelineOptions): Pipeline => {
     return null;
   };
 
+  const publicFile = async (c: Context, rest: string): Promise<Reply | null> => {
+    const found = await publicFiles.find(rest);
+    return found === null ? null : await publicFiles.reply(c, found);
+  };
+
   const rootFile = async (c: Context): Promise<Reply | null> => {
     for (const root of roots) {
       if (c.path !== root.prefix && !c.path.startsWith(root.prefix + "/")) continue;
@@ -118,7 +129,8 @@ export const createPipeline = (options: PipelineOptions): Pipeline => {
     }
     if (c.path === RELOAD_PATH) return noStore(text(RELOAD_CLIENT).header("content-type", "text/javascript; charset=utf-8"));
     if (c.path !== "/") {
-      const reply = (await file(c, c.path.replace(/^\/+/, ""))) ?? (await rootFile(c));
+      const rest = c.path.replace(/^\/+/, "");
+      const reply = (await file(c, rest)) ?? (await rootFile(c)) ?? (await publicFile(c, rest));
       if (reply !== null) return noStore(reply);
     }
     if (c.path === "/" || !hasExtension(c.path)) return await shell(c);

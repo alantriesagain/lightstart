@@ -113,11 +113,16 @@ export const serve = async (root, port = 0, render = runnerPage) => {
   const harnessUrl = `/${path.relative(root, path.join(lightDir, "test/harness.js")).split(path.sep).join("/")}`;
   const reportUrl = `/${path.relative(root, path.join(lightDir, "test/report.js")).split(path.sep).join("/")}`;
   const files = new Static({ root, dotfiles: true, cacheControl: "no-store" });
+  const publicFiles = new Static({ root: path.join(root, "public"), dotfiles: true, cacheControl: "no-store" });
   const app = new App()
     .get(RUNNER_PATH, (c) => html(render({ file: c.query("file") ?? "", importmap: imports, harnessUrl, reportUrl })).header("cache-control", "no-store"))
     .get("/*", async (c) => {
-      const found = await files.find(c.param("*") ?? "");
-      if (found === null) return text("", 404);
+      const rest = c.param("*") ?? "";
+      const found = await files.find(rest);
+      if (found === null) {
+        const fromPublic = await publicFiles.find(rest);
+        return fromPublic === null ? text("", 404) : publicFiles.reply(c, fromPublic);
+      }
       if (found.path.endsWith(".ts") && !found.path.endsWith(".d.ts")) return text(rewriteSpecifiers(stripped(found.path), imports)).header("content-type", "text/javascript; charset=utf-8").header("cache-control", "no-store");
       if (/\.(?:js|mjs)$/.test(found.path)) return text(rewriteSpecifiers(readFileSync(found.path, "utf8"), imports)).header("content-type", "text/javascript; charset=utf-8").header("cache-control", "no-store");
       return files.reply(c, found);
