@@ -94,6 +94,12 @@ test("an array of objects gives itemFields for the item's props", () => {
   same(links?.itemFields?.map((f) => [f.name, f.type]), [["label", "text"], ["count", "number"]]);
 });
 
+test("a nullable field is drawn optional and carries nullable, so clearing it gives null", () => {
+  const [repoUrl] = fieldsForModel({ $form: { fields: ["repoUrl"] }, repoUrl: T.string({ required: true, nullable: true }) });
+  assert.equal(repoUrl?.required, false);
+  assert.equal(repoUrl?.nullable, true);
+});
+
 test("formDefaults returns $form.defaults and is empty-safe", () => {
   same(formDefaults(MODEL), { city: "Rio de Janeiro" });
   same(formDefaults({}), {});

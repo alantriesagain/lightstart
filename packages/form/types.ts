@@ -34,6 +34,8 @@ export interface ModelFieldDef {
   props?: Record<string, unknown>;
   itemType?: unknown;
   required?: boolean;
+  /** Whether the field keeps `null`: it is drawn optional and cleared to `null`. */
+  nullable?: boolean;
   fieldType?: string;
   relationship?: string;
   targetModel?: string;

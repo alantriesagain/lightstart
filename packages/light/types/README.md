@@ -23,12 +23,11 @@
 A relationship coerces an object value to its id on validation, so `{ id: "user_123" }` stores
 as `"user_123"`. `belongs` and `one` hold one key; `many` and `belongs_many` hold an array.
 
-Options every type takes: `defaultValue` (used when the input is `undefined`, `null` or `""`),
-`required` (rejects those same three), and `customValidator`, a function returning `null` on
-success or `[errorCode, details]` on failure. Per type: `format` on a string (`"email"` is the
+Options every type takes: `defaultValue` (used when the input is `undefined`, `null` or `""`), `required` (rejects those same three), `nullable` (keeps `null` as the value and lets it pass validation), and `customValidator`, a function returning `null` on success or `[errorCode, details]` on failure. With `nullable: true`, `required` still rejects `undefined` and `""` but accepts `null`, and `defaultValue` fills `undefined` and `""` but not `null`. Per type: `format` on a string (`"email"` is the
 one built-in name; a RegExp or a predicate function also works), `min`/`max` on a number, date
 or datetime, `props` on an object (a schema for its own fields), and `itemType` on an
-array (a schema each entry is coerced through). A primitive factory's type keeps the `required` and `defaultValue` it was given, which a model's row type reads.
+array (a schema each entry is coerced through). A primitive factory's type keeps the `required`,
+`nullable` and `defaultValue` it was given, which a model's row type reads.
 
 ## Validating
 

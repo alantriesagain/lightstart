@@ -53,6 +53,14 @@ test("a cross-field validator still sees the whole row, it is the report that na
   assert.equal(validateForm(models, "place", { title: "x", slug: "y" }, fields).valid, false);
 });
 
+test("a nullable field cleared to null passes the model's validation", () => {
+  const models: Record<string, ModelSchema> = { repo: { repoUrl: string({ required: true, nullable: true }) } };
+  const fields: ModelFormField[] = [{ name: "repoUrl", label: "Repository", type: "text", required: false, nullable: true }];
+  const { valid, errors } = validateForm(models, "repo", { repoUrl: null }, fields);
+  assert.equal(valid, true, JSON.stringify(errors));
+  same(errors, {});
+});
+
 test("an unknown model is reported as one, not as a clean pass", () => {
   const { valid, errors } = validateForm(MODELS, "nothing", {}, FIELDS);
   assert.equal(valid, false);

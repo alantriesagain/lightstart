@@ -13,6 +13,7 @@ const notes = defineModel("fx-notes", {
   done: T.boolean({ defaultValue: false }),
   rank: T.number(0),
   parent: T.string({ defaultValue: null }),
+  repoUrl: T.string({ nullable: true, defaultValue: null }),
   body: T.string(),
   author: T.belongs("users"),
 });
@@ -32,6 +33,7 @@ export const reads = (note, counter) => {
   /** @type {boolean} */ const done = note.done;
   /** @type {number} */ const rank = note.rank;
   /** @type {string | null} */ const parent = note.parent;
+  /** @type {string | null} */ const repoUrl = note.repoUrl;
   /** @type {number} */ const counterId = counter.id;
   // @ts-expect-error a field with neither a default nor required may be absent
   /** @type {string} */ const body = note.body;
@@ -39,9 +41,11 @@ export const reads = (note, counter) => {
   /** @type {string} */ const author = note.author;
   // @ts-expect-error a null default keeps null in the value
   /** @type {string} */ const orphan = note.parent;
+  // @ts-expect-error a nullable field keeps null in its value
+  /** @type {string} */ const notRepo = note.repoUrl;
   // @ts-expect-error an edit's patch is typed by the row
   const edited = notes.edit("a", { done: "yes" });
   // @ts-expect-error a row has exactly its schema's fields: a misspelling is an error
   /** @type {unknown} */ const typo = note.texxt;
-  return [id, title, done, rank, parent, counterId, body, author, orphan, edited, typo];
+  return [id, title, done, rank, parent, repoUrl, counterId, body, author, orphan, notRepo, edited, typo];
 };

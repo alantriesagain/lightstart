@@ -44,7 +44,7 @@ export function validateRow(models: Record<string, ModelSchema>, modelName: stri
     const def = schemaField(modelSchema, field) as ModelField;
     if (def.relationship && !def.belongs) continue;
     const value = row[field];
-    const missing = value === undefined || value === null || value === "";
+    const missing = value === undefined || value === "" || (value === null && def.nullable !== true);
 
     if (def.required && missing && options.operation !== "edit") {
       errors[field] = `${field} is required`;
