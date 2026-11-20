@@ -1,0 +1,23 @@
+{
+  "name": "fixture-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "light": {
+    "scopes": [
+      "@lightstart"
+    ]
+  },
+  "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/components": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/router": "workspace:*",
+    "@lightstart/rpc": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/build": "workspace:*",
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/dev": "workspace:*"
+  }
+}

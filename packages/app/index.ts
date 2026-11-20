@@ -28,6 +28,8 @@ export type PrerenderRenderer = "markup" | "browser";
 export interface StoreConfig {
   kind?: StoreKindOf;
   at?: StoreAt;
+  /** Open the store in a worker the web host spawns; a host without one ignores it. */
+  worker?: boolean;
 }
 
 /** What `src/app.ts` declares: the few choices a project makes. */

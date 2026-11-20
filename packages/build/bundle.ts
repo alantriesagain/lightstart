@@ -4,8 +4,8 @@
  * `url()` assets. Outputs are kept in memory, named with a content hash.
  */
 import * as esbuild from "esbuild";
-import { statSync } from "node:fs";
-import { dirname, relative, resolve } from "node:path";
+import { existsSync, statSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
 import { resolveSpecifier } from "./importmap.ts";
 import type { ImportMap } from "./importmap.ts";
 import type { BuildContext } from "./types.ts";
@@ -96,7 +96,7 @@ const outputPath = (ctx: BuildContext, key: string): string => {
   return relative(ctx.buildDir, absolute).split("\\").join("/");
 };
 
-const bundle = async (ctx: BuildContext, entries: Entry[], inline: Map<string, string>): Promise<esbuild.BuildResult> => {
+const bundle = async (ctx: BuildContext, entries: Entry[], inline: Map<string, string>, entryNames = "[name]-[hash]"): Promise<esbuild.BuildResult> => {
   try {
     return await esbuild.build({
       absWorkingDir: ctx.root,
@@ -109,7 +109,7 @@ const bundle = async (ctx: BuildContext, entries: Entry[], inline: Map<string, s
       minify: ctx.minify,
       sourcemap: false,
       target: "es2022",
-      entryNames: "[name]-[hash]",
+      entryNames,
       chunkNames: "[name]-[hash]",
       assetNames: "[name]-[hash]",
       loader: LOADERS,
@@ -158,8 +158,17 @@ const staticImports = (result: esbuild.BuildResult, entry: string): string[] => 
   return [...found];
 };
 
+/** Bundle the app's worker entry, when generation wrote one, under the fixed name `worker.js`. */
+const bundleWorker = async (ctx: BuildContext): Promise<void> => {
+  const file = [join(ctx.root, ".light", "worker.js"), join(ctx.root, ".light", "worker.ts")].find((candidate) => existsSync(candidate));
+  if (file === undefined) return;
+  const result = await bundle(ctx, [{ in: file, out: "worker" }], new Map<string, string>(), "[name]");
+  collect(ctx, result);
+};
+
 /** Bundle the page's module scripts and put their outputs in the context. */
 export const bundleModules = async (ctx: BuildContext): Promise<void> => {
+  await bundleWorker(ctx);
   const entries: Entry[] = [];
   const inline = new Map<string, string>();
   ctx.moduleOutputs = ctx.parsed.modules.map((module, index) => {
