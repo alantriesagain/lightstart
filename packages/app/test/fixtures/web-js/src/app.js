@@ -1,3 +1,3 @@
 import { defineApp } from "@lightstart/app";
 
-export default defineApp({ name: "fixture-web-js", title: "Fixture Web", host: "web", url: "https://fixture.example" });
+export default defineApp({ name: "fixture-web-js", title: "Fixture Web", host: "web", url: "https://fixture.example", stores: { main: { kind: "memory" } } });

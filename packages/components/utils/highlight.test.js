@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { loadLanguage } from "@lightstart/highlight";
 import { configureHighlight, highlightLines } from "./highlight.js";
 
-test("without an override a known language is coloured by @lightstart/highlight", () => {
+test("without an override a known language is coloured by @lightstart/highlight, once its grammar loads", async () => {
+  assert.deepEqual(highlightLines("const a = 1;", "javascript"), [[{ text: "const a = 1;", type: null }]]);
+  await loadLanguage("javascript");
   const lines = highlightLines("const a = 1;", "javascript");
   const types = lines.flat().map((run) => run.type);
   assert.ok(types.includes("keyword"), "a keyword is coloured");

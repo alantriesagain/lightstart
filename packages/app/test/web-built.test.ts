@@ -51,10 +51,31 @@ const main = async (): Promise<void> => {
     const newest = await latestBuild(project);
     ok("latestBuild names the build current points at", newest.endsWith(join(".deployed", "current")));
 
+    const entry = builtChunkOf(report.dir);
+    const entrySource = readFileSync(join(report.dir, entry), "utf8");
+    ok("the page's entry bundle carries no IndexedDB adapter", !entrySource.includes("_expectedStores"));
+    ok("the page's entry bundle carries no unused Markdown grammar", !entrySource.includes("setext"));
+    const chunks = report.files.filter((file) => file.path.endsWith(".js") && file.path.replace(/^\/+/, "") !== entry);
+    const chunkSource = (chunk: (typeof chunks)[number]): string => readFileSync(join(report.dir, chunk.path), "utf8");
+    ok("the JavaScript grammar arrives as its own chunk", chunks.some((chunk) => chunkSource(chunk).includes("TS_KEYWORDS")));
+    ok("the Markdown grammar arrives as its own chunk", chunks.some((chunk) => chunkSource(chunk).includes("setext")));
+
     const home = await openBuilt(report.dir, "/");
     try {
       ok("the built home page boots without an error", home.errors.length === 0 && home.failed.length === 0);
       ok("the built home page draws the app", (await home.text()).includes("Seeded note"));
+      const coloured = await home.evaluate(
+        () =>
+          new Promise<boolean>((resolve) => {
+            let left = 100;
+            const look = (): void => {
+              if (document.querySelector("lc-code-block .tok-keyword") !== null || left-- <= 0) resolve(left > 0);
+              else setTimeout(look, 20);
+            };
+            look();
+          }),
+      );
+      ok("the code block loads its grammar on demand and colours the snippet", coloured);
     } finally {
       await home.close();
     }

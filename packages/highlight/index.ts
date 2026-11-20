@@ -1,19 +1,22 @@
 /**
  * @file Syntax highlighting for the code column and the chat's code blocks: a line's tokens in the
- * language registered under its id (registry.ts; the languages plugin registers JavaScript,
- * TypeScript and JSON, CSS, HTML and Markdown), each token type's color and style. A line is
- * tokenized with the state the previous line left.
+ * language registered under its id (registry.ts); a browser loads one grammar at a time with
+ * `loadLanguage`, while `all.ts` registers every built-in grammar for a synchronous caller. Each
+ * token type's color and style are below. A line is tokenized with the state the previous line
+ * left.
  */
-import { findLanguage } from "./registry.ts";
+import { findLanguage, markdownStructureHook } from "./registry.ts";
 import { HlState, Token } from "./state.ts";
-import { LineResult } from "./markdown.ts";
-import { markdownStructure } from "./tokenizers.ts";
+import { LineResult } from "./structure.ts";
+import type { Peek } from "./structure.ts";
 
 export { HlState, Token } from "./state.ts";
 export { addLanguage, Language, languageForFence, languageForPath } from "./registry.ts";
-export { LineResult, MdBlock, MdLine, MdQuote, MdSpan, Range } from "./markdown.ts";
+export { grammarFor, hasLanguage, loadLanguage } from "./grammar.ts";
+export { LineResult, MdBlock, MdLine, MdQuote, MdSpan, Range } from "./structure.ts";
+export type { Peek } from "./structure.ts";
 
-/** A line's tokens in `language`, advancing `state` to the next line's; [] for a language not registered. */
+/** A line's tokens in `language`, advancing `state` to the next line's; [] for a language not registered (or not loaded yet). */
 export const tokenizeLine = (language: string, text: string, state: HlState): Token[] => {
   const l = findLanguage(language);
   return l !== null ? l.tokenizeText(text, state, (_offset: number): string | null => null) : [];
@@ -31,12 +34,15 @@ export const tokenizeAll = (language: string, lines: string[]): Token[][] => {
 };
 
 /**
- * A line's tokens and, for `markdown`, its structure; `md` is null for another language. Like
- * `tokenizeLine`, it advances `state` in place; `peek` answers the line `offset` after this one,
- * null for none.
+ * A line's tokens and, for `markdown`, its structure; `md` is null for another language or while
+ * the Markdown grammar is not loaded (await `loadLanguage("markdown")` first). Like `tokenizeLine`,
+ * it advances `state` in place; `peek` answers the line `offset` after this one, null for none.
  */
-export const tokenizeLineWithStructure = (language: string, text: string, state: HlState, peek: (offset: number) => string | null): LineResult => {
-  if (language === "markdown") return markdownStructure(text, state, peek);
+export const tokenizeLineWithStructure = (language: string, text: string, state: HlState, peek: Peek): LineResult => {
+  if (language === "markdown") {
+    const structure = markdownStructureHook();
+    if (structure !== null) return structure(text, state, peek);
+  }
   const l = findLanguage(language);
   return new LineResult(l !== null ? l.tokenizeText(text, state, peek) : [], null);
 };
