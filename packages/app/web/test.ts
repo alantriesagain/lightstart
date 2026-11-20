@@ -200,6 +200,10 @@ interface BuiltPageLike {
   on(event: "response", handler: (response: { status(): number; url(): string; request(): { resourceType(): string } }) => void): void;
   on(event: "requestfailed", handler: (request: { url(): string }) => void): void;
   goto(url: string, options: { waitUntil: string; timeout: number }): Promise<unknown>;
+  goBack(options: { timeout: number }): Promise<unknown>;
+  goForward(options: { timeout: number }): Promise<unknown>;
+  click(selector: string, options: { timeout: number }): Promise<void>;
+  waitForFunction<A>(run: (arg: A) => unknown, arg: A, options: { timeout: number }): Promise<unknown>;
   evaluate<T>(run: () => T): Promise<T>;
   close(): Promise<void>;
 }
@@ -260,6 +264,37 @@ export class OpenedBuiltPage {
   /** The page's text now. */
   text(): Promise<string> {
     return this.page.evaluate(() => document.body?.innerText ?? "");
+  }
+
+  /** The page's path now. */
+  path(): Promise<string> {
+    return this.page.evaluate(() => location.pathname);
+  }
+
+  /** Wait until the page's text includes `wanted`, then answer the text; throws after `timeout` ms (2 s by default) naming what it wanted. */
+  async shows(wanted: string, options: { timeout?: number } = {}): Promise<string> {
+    const timeout = options.timeout ?? 2000;
+    try {
+      await this.page.waitForFunction((text: string) => (document.body?.innerText ?? "").includes(text), wanted, { timeout });
+    } catch {
+      throw new Error(`the page does not show "${wanted}": ${await this.text()}`);
+    }
+    return this.text();
+  }
+
+  /** Click the element `selector` matches, as a reader does (a link goes through the app's router). */
+  click(selector: string): Promise<void> {
+    return this.page.click(selector, { timeout: 2000 });
+  }
+
+  /** The browser's back button. */
+  async back(): Promise<void> {
+    await this.page.goBack({ timeout: 2000 });
+  }
+
+  /** The browser's forward button. */
+  async forward(): Promise<void> {
+    await this.page.goForward({ timeout: 2000 });
   }
 
   /** Close the page, the browser and the server. */
