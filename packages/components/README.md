@@ -227,7 +227,7 @@ Pure modules: no `$APP`, no DOM, each tested under `node --test`.
 | `utils/scale.js` | `compactNumber(value)` for a tick label (`1.2K`), `niceMax(max, intervals)` for a round top of a value axis |
 | `utils/time-ago.js` | `timeAgo(iso, locale, now)`, a timestamp as "2 hours ago" in the reader's language |
 | `utils/day-groups.js` | `readAt`, `dayKeyOf`, `groupByDay`, `dayWords`: dated entries as the reader's day groups, with the day's words from `Intl` |
-| `utils/highlight.js` | `highlightLines(code, language)`, coloured by `@lightstart/highlight` unless `configureHighlight({ lines })` hands a tokenizer in; an unknown language stays plain |
+| `utils/highlight.js` | `highlightLines(code, language)`, coloured by `@lightstart/highlight` unless `configureHighlight({ lines })` hands a tokenizer in; `ensureLanguage(language, onReady)` loads the grammar once and calls back so the view redraws; an unknown language, or one whose grammar is still loading, stays plain |
 | `overlay/anchor.js` | `anchorPosition({ trigger, floating, side, align, offset, viewport })`, clamped into the viewport |
 | `overlay/detents.js` | `resolveStops`, `classify`, `releaseVelocity`, `rubber` for a draggable sheet |
 | `overlay/float-rect.js` | `clampRect`, `loadRect`, `saveRect` for a floating window |

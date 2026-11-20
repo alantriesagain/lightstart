@@ -1,7 +1,7 @@
 import { html } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
 import { defineComponent } from "@lightstart/light";
-import { highlightLines } from "../utils/highlight.js";
+import { ensureLanguage, highlightLines } from "../utils/highlight.js";
 import { lcText } from "../utils/text.js";
 
 const TAG = "lc-code-block";
@@ -52,6 +52,9 @@ export default defineComponent({
     highlight: "",
   },
   render() {
+    ensureLanguage(this.language, () => {
+      if (this.isConnected) this.$requestUpdate();
+    });
     const lines = highlightLines(this.code, this.language);
     const folded = this.foldAt > 0 && lines.length > this.foldAt && !this.expanded;
     const shown = folded ? lines.slice(0, this.foldAt) : lines;

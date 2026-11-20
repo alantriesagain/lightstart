@@ -19,6 +19,12 @@ const define = (tag, definition) => {
 };
 const rendered = (el) => el.$requestUpdate() ?? Promise.resolve();
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+const until = async (check) => {
+  for (let i = 0; i < 100; i++) {
+    if (check()) return;
+    await settle();
+  }
+};
 
 describe("lc-code-block", () => {
   /** @type {any} */
@@ -43,7 +49,8 @@ describe("lc-code-block", () => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: realClipboard });
   });
 
-  it("colours the snippet by default, and it reads back to the same text", () => {
+  it("colours the snippet by default once its grammar loads, and it reads back to the same text", async () => {
+    await until(() => el.querySelector(".tok-tag") !== null);
     const code = el.querySelector(".code-block-code");
     assert.equal(code.textContent, el.code);
     assert.ok(el.querySelector(".tok-tag"), "the default tokenizer colours the html tag");
