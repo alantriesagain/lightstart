@@ -171,7 +171,7 @@ export class RouterCore {
     }
 
     this.currentRoute = matched;
-    const newTitle = this.titleOf(matched.route.title);
+    const newTitle = this.rawTitleOf(matched.route.title, matched.params);
     if (!this.isPrerendered()) this.setTitle(newTitle);
 
     if (pushState) {
@@ -248,7 +248,7 @@ export class RouterCore {
     }
     populate(matched, url);
     this.currentRoute = matched;
-    const newTitle = this.titleOf(matched.route.title);
+    const newTitle = this.rawTitleOf(matched.route.title, matched.params);
     this.setTitle(newTitle);
     this.adapter.replaceState({ path }, withBase(this.options.basePath, path));
     this.updateCurrentRoute(this.currentRoute);
@@ -364,8 +364,13 @@ export class RouterCore {
     return localeOfPath(path, locales) ?? defaultLocale;
   }
 
-  titleOf(title: string | (() => string) | undefined): string {
-    return (typeof title === "function" ? title() : title) || this.defaultTitle;
+  titleOf(title: string | ((params: Record<string, string>) => string) | undefined, params: Record<string, string> = {}): string {
+    return this.rawTitleOf(title, params) || this.defaultTitle;
+  }
+
+  /** A route's title as it wrote it, without the default title taking an empty one's place. */
+  rawTitleOf(title: string | ((params: Record<string, string>) => string) | undefined, params: Record<string, string> = {}): string {
+    return (typeof title === "function" ? title(params) : title) || "";
   }
 
   get path(): string {

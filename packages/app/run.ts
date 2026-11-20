@@ -20,6 +20,7 @@ import type { App } from "./index.ts";
 import type { AppManifest } from "./manifest.ts";
 import { openStores } from "./stores.ts";
 import type { StoreHost, StoreKind } from "./stores.ts";
+import { setAppHead, setRouteHead } from "./head.ts";
 
 /** The view tag the routes answer now; null without routes or without a view for the path. */
 export const currentView = signal<string | null>(null);
@@ -69,6 +70,11 @@ export class AppHost implements StoreHost {
   /** Run `apply` inside the host's transition, then wait for its surface to draw; by default it just runs `apply`. */
   transition(apply: () => Promise<void> | void): Promise<void> {
     return Promise.resolve(apply()).then(() => undefined);
+  }
+
+  /** After a route change that is not the first load, once the next view has drawn; a host with a page moves focus, scrolls and announces the title. */
+  routeChanged(_run: AppRun, _first: boolean): Promise<void> {
+    return Promise.resolve();
   }
 
   /** Put the run's view on the surface. */
@@ -184,25 +190,35 @@ export class AppRun {
     }
   }
 
-  /** Write the matched route into `currentView` and `currentParams`. */
-  private applyRoute(matched: { params?: unknown; route?: unknown }): void {
-    currentParams.value = paramsOf(matched);
+  /** Write the matched route into `currentView` and `currentParams`, and reset the page head from it. */
+  private applyRoute(matched: { params?: unknown; route?: unknown; path?: unknown }): void {
+    const params = paramsOf(matched);
+    const path = typeof matched.path === "string" ? matched.path : "/";
+    setRouteHead(this.app, matched.route, params, path);
+    currentParams.value = params;
     currentView.value = viewOf(matched.route);
   }
 
-  /** Apply a route change, through the host's transition when the app asks for one or this call overrides it. */
-  private followRoute(matched: { params?: unknown; route?: unknown }): void {
+  /** Apply a route change, through the host's transition when the app asks for one or this call overrides it; then let the host move focus. */
+  private followRoute(matched: { params?: unknown; route?: unknown; path?: unknown }): void {
     const apply = (): void => this.applyRoute(matched);
+    const after = (): Promise<void> => this.host.routeChanged(this, false);
     const transition = this.overrideTransition ?? this.app.transitions;
-    if (transition) void this.host.transition(apply);
-    else apply();
+    if (transition) void this.host.transition(apply).then(after);
+    else {
+      apply();
+      void after();
+    }
   }
 
   private route(): void {
     const routes = this.manifest.routes;
     currentView.value = null;
     currentParams.value = {};
-    if (routes === null) return;
+    if (routes === null) {
+      setAppHead(this.app);
+      return;
+    }
     const router = new RouterCore(this.host.history(), { plugins: [] });
     // The first match happens inside `init`; every later one reaches the subscriber.
     let initial = true;

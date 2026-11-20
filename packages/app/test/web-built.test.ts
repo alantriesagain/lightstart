@@ -61,10 +61,18 @@ const main = async (): Promise<void> => {
 
     const walk = await openBuilt(report.dir, "/");
     try {
-      await walk.click('a[href="/about"]');
+      await walk.evaluate(() => window.scrollTo(0, 600));
+      await walk.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+      await walk.evaluate(() => {
+        const link = document.querySelector('a[href="/about"]');
+        if (link instanceof HTMLElement) link.click();
+      });
       ok("a link goes to the other route", (await walk.shows("About these notes")).includes("About these notes") && (await walk.path()) === "/about");
+      ok("the about page has its own title", (await walk.evaluate(() => document.title)) === "About · Fixture Web");
       await walk.back();
       ok("the browser's back draws the previous route", (await walk.shows("Seeded note")).includes("Seeded note") && (await walk.path()) === "/");
+      ok("the home page restores the scroll position it had", (await walk.evaluate(() => window.scrollY)) === 600);
+      ok("the home page is titled with the app alone", (await walk.evaluate(() => document.title)) === "Fixture Web");
       await walk.forward();
       ok("the browser's forward draws the next one again", (await walk.shows("About these notes")).includes("About these notes"));
       ok("walking the history raises no error", walk.errors.length === 0 && walk.failed.length === 0);

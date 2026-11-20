@@ -5,7 +5,7 @@ import notes from "../controllers/notes.js";
 class AppHome extends View {
   render() {
     const rows = notes.rows.value;
-    return html`<lc-card><lc-text>Home</lc-text><ul>${rows.map((row) => html`<li>${String(row.text)}</li>`)}</ul></lc-card>`;
+    return html`<lc-card><lc-text>Home</lc-text><ul>${rows.map((row) => html`<li>${String(row.text)}</li>`)}</ul></lc-card><div class="tall" style="height: 2500px"></div>`;
   }
 }
 

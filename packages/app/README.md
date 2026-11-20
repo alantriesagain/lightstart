@@ -43,6 +43,7 @@ export default defineApp({
 | Field | Default | What |
 |---|---|---|
 | `name` | required | The stores' default name and the document's title |
+| `title` | none | The site's display name, the suffix of every page title (`<page> · <title>`); the home page, or a page without a title, is the title alone. Without it the document title keeps the page's title and `name` as before, separated by a vertical bar |
 | `host` | required | The host's name: `"web"` or `"tui"` (`@lightstart/app/<host>`) |
 | `theme` | `"default"` | A preset name, applied by the web host |
 | `scheme` | `"system"` | The page's color scheme: `"dark"` or `"light"` pins it, `"system"` follows the reader's preference; the web host applies it before the theme |
@@ -50,6 +51,7 @@ export default defineApp({
 | `url` | none | The site's address (`https://lightstart.dev`), which the build's sitemap is written against |
 | `prerender` | `false` | Render every concrete route into its own `index.html` during `light build`: `true` or `"markup"` renders in node, `"browser"` through Playwright |
 | `transitions` | `false` | Run every web route change inside `document.startViewTransition` where the browser has it |
+| `focusOnNavigate` | `true` | Move focus to the new view's first `h1`, else the view itself, after a route change that is not the first load |
 | `stores` | `{ main: {} }` | The stores by name, several at once: `{ kind?, at? }` each |
 | `root` | `"app-root"` | The root view's tag |
 | `args` | `{}` | The arguments the app takes, as a `@lightstart/cli` schema |
@@ -108,6 +110,24 @@ With `transitions: true` the web host runs each route change (a `navigate`, a li
 `navigate(path, { transition: true | false })` overrides the app's choice for one call.
 
 A route with parameters may list their values with `params: () => Array<Record<string, string>>` (or a promise of one), as the site's `/components/:category` does. `pathsOf` (`@lightstart/app/node/paths.ts`) answers every concrete path of a routes table, sorted and unique: a path without parameters is itself, and a path with them is filled from the entries `params` answers, each value URL-encoded, an entry missing a parameter skipped. A wildcard path, a route marked `spa: true` and a redirect are left out, and nested `routes` join their parent's path. The build's sitemap and prerendering read it.
+
+A route's `title` and `description` may be a string or a function of the matched parameters: `"/p/:slug": { view: "app-project", title: ({ slug }) => slug, description: ({ slug }) => \`About ${slug}\` }`. The function is read on every navigation, so a page titled by its data says so.
+
+### The page head
+
+A page's head is one value the run keeps: a route change resets it from the route, and a view patches what only its own data knows with `pageHead` from `@lightstart/app`, during its render (or in `connected`):
+
+```js
+import { pageHead } from "@lightstart/app";
+
+pageHead({ title: this.note.title, description: `Notes about ${this.note.title}`, image: "/notes/cover.png" });
+```
+
+A field left out keeps the route's value until the next route change. With `defineApp({ title })`, the document title is `<page title> · <title>`; the home route (`/`) or a page without a title is the app's title alone. Without `title`, the app's `name` is the suffix as before (`<page title> | <name>`). The web host follows the head into `<title>`, `<meta name="description">`, the canonical link (from `defineApp({ url })` and the path), `og:title`, `og:description`, `og:url`, `og:type`, `og:image` and `twitter:card`, updating each tag in place. A prerendered page carries the same tags in its `<head>`.
+
+### Navigation and focus
+
+After a route change that is not the first load, the web host moves focus to the new view's first `h1`, else to the view element itself (given `tabindex="-1"` and stripped of it on blur) with `{ preventScroll: true }`, and writes the new document title into a visually hidden polite live region, so a keyboard user and a screen reader start at the new page. `defineApp({ focusOnNavigate: false })` keeps focus where it is. A new navigation scrolls to the top; the browser's back and forward restore the scroll position the page had, and the web host sets `history.scrollRestoration = "manual"` to keep it.
 
 ## The run
 
@@ -293,6 +313,7 @@ await page.click('a[href="/"]'); // as a reader clicks: a link goes through the 
 await page.shows("Home"); // waits for the text (2 s by default), else throws with the page's text
 await page.back(); // the browser's back, then forward()
 await page.path(); // location.pathname
+await page.evaluate(() => document.title); // run a script in the page
 await page.close();
 ```
 

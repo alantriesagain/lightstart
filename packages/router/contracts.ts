@@ -20,8 +20,10 @@ export interface RouteConfig {
   path?: string;
   /** Named-route key, used by `create(name, params)`. */
   name?: string;
-  /** Page title; a function is read at navigation. */
-  title?: string | (() => string);
+  /** Page title; a function is read at navigation with the matched params. */
+  title?: string | ((params: Record<string, string>) => string);
+  /** Page description; a function is read at navigation with the matched params. */
+  description?: string | ((params: Record<string, string>) => string);
   /** Hard-redirect target path on match. */
   redirect?: string;
   /** Fire-and-forget action invoked on match. */
