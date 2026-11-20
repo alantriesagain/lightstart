@@ -149,9 +149,13 @@ export interface SyncBinder {
   options?: readonly string[];
 }
 
-/** An occurrence a resource's `invalidateOn` listens to: any `Emitter<T>`. */
+/**
+ * An occurrence a resource's `invalidateOn` listens to: any `Emitter<T>`.
+ * The listener takes `unknown`, not `never`: a callback parameter is compared
+ * one way, so `never` would reject every `Emitter<T>` whose `T` is not `never`.
+ */
 export interface Occurrence {
-  on(listener: (value: never) => void): () => void;
+  on(listener: (value: unknown) => void): () => void;
 }
 
 /** What controllers read from their host; see `configureControllers`. */
