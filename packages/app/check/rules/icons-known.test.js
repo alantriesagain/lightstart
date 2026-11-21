@@ -119,3 +119,19 @@ test("fires once when the project uses icons and the collection is not installed
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("a data field named icon alone is not icon use: no set is required and no name is unknown", async () => {
+  const dir = project(null);
+  try {
+    const findings = await runRuleOn(
+      rule,
+      {
+        "src/seed.ts": 'export default { tile: [{ title: "Light", icon: "my-own-logo" }] };\n',
+      },
+      { projectDir: dir },
+    );
+    assert.deepEqual(findings, []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

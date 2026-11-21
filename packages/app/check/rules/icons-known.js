@@ -47,7 +47,8 @@ export default defineRule({
   why: "the generation writes a CSS mask for each icon name it finds, so a name the set does not have draws nothing, and a name built at run time is only in the page when a literal names it: in the module binding it, in a module it imports, or in a module-level `icons: [...]`; the npm set is what the masks are made from, so it has to be installed",
   check(ctx) {
     const scans = scansOf(ctx);
-    const used = scans.filter(({ scan }) => scan.names.length > 0 || scan.dynamic.length > 0);
+    const drawnNames = (/** @type {import("../../node/icons.ts").ScannedIcons} */ scan) => scan.names.filter((name) => !scan.properties.includes(name));
+    const used = scans.filter(({ scan }) => drawnNames(scan).length > 0 || scan.dynamic.length > 0);
     if (used.length === 0) return;
     const named = new Set(scans.filter(({ scan }) => scan.names.length > 0).map(({ file }) => file));
     for (const { file, scan } of used) {
@@ -68,7 +69,7 @@ export default defineRule({
       return;
     }
     for (const { file, scan } of used)
-      for (const name of scan.names) {
+      for (const name of drawnNames(scan)) {
         if (icon(collection, name) !== null) continue;
         ctx.report({ file, line: 1, message: `the icon "${name}" in ${file} is not in the "${set}" set; check the name or the app's \`icons\` set` });
       }

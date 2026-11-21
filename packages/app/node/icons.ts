@@ -45,6 +45,8 @@ export interface ScannedIcons {
   dynamic: DynamicIcon[];
   /** The names a module declares in its own `icons: [...]` array. */
   declared: string[];
+  /** The names seen only as an `icon:` or `iconName:` property, which may be data rather than an icon. */
+  properties: string[];
 }
 
 const lineOf = (source: string, index: number): number => {
@@ -102,8 +104,11 @@ export const scanIcons = (source: string): ScannedIcons => {
     if (literal !== undefined) push(names, literal);
     else if (expression !== undefined) dynamic.push({ line: lineOf(code, match.index ?? 0), expr: expression.trim() });
   }
-  for (const match of code.matchAll(ICON_PROPERTY)) push(names, match[1] ?? match[2]);
-  for (const match of code.matchAll(ICON_NAME_PROPERTY)) push(names, match[1] ?? match[2]);
+  const drawn = [...names];
+  const properties: string[] = [];
+  for (const match of code.matchAll(ICON_PROPERTY)) push(properties, match[1] ?? match[2]);
+  for (const match of code.matchAll(ICON_NAME_PROPERTY)) push(properties, match[1] ?? match[2]);
+  for (const name of properties) push(names, name);
 
   for (const match of code.matchAll(DECLARED)) {
     for (const string of (match[1] ?? "").matchAll(STRING)) {
@@ -114,7 +119,7 @@ export const scanIcons = (source: string): ScannedIcons => {
     }
   }
 
-  return { names, solid, bold, sizes, dynamic, declared };
+  return { names, solid, bold, sizes, dynamic, declared, properties: properties.filter((name) => !drawn.includes(name) && !declared.includes(name)) };
 };
 
 /**

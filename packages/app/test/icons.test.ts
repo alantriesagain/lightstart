@@ -28,6 +28,10 @@ eqn("one dynamic binding is found", scan.dynamic.length, 1);
 eqn("with its line", scan.dynamic[0]?.line ?? 0, 4);
 eq("and its expression", scan.dynamic[0]?.expr, "name");
 
+const data = scanIcons('export default [{ icon: "terminal" }, { icon: "house" }];\nconst view = `<lc-icon name="house"></lc-icon>`;');
+eq("a name seen only as an icon property is kept apart", data.properties.join(","), "terminal");
+eq("and still among the names", data.names.join(","), "house,terminal");
+
 const staticField = scanIcons('class Accounts extends View {\n  static icons = ["landmark", "credit-card"];\n}');
 eq("a class's static icons field declares names too", staticField.declared.join(","), "landmark,credit-card");
 
