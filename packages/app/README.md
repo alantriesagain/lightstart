@@ -81,6 +81,23 @@ export default {
 
 The generation imports both files into the manifest (`.light/app.ts` or `.js`), `src/seed` before `src/seed.dev`. A run adds a model's seed after the stores open and before the controllers start, so a controller's first query already sees the rows (and a prerender draws them). It adds them only when the model's store is empty, so a later run over the same rows adds nothing. A name with no such model is an error naming it; a row the model rejects is an error naming the model and the row's index. `openApp` and `openPage` load the seeds too; pass `{ seed: false }` to skip them.
 
+## Content
+
+A project that depends on `@lightstart/content` keeps a model's rows as Markdown files, one per
+row, in `content/<model>/` at the project's root, beside `src/` and `public/`. The folder names the model, the file name fills `slug` when the
+frontmatter has none, and the frontmatter holds the model's other fields. The model declares a
+body as `body: T.array()`, since a body is a JSON block list rather than a string.
+
+The generation writes `.light/content.ts` (or `.js`), exporting `{ <model>: [rows] }`, and
+imports it into `.light/app.ts` (or `.js`) as one seed before `src/seed`. A folder naming a model
+the app does not have is an error naming both. The dev server regenerates when a file under
+`content/` is added, removed or renamed.
+
+Content and `src/seed` are additive: with both, a model's content rows load first and its seed
+rows after. Remove the seed entry for a model that moved to `content`, so it does not load
+twice. [@lightstart/content](../content/README.md) documents the frontmatter subset, `collect`
+and `renderContent`.
+
 ## Routes and views
 
 `src/routes.ts` maps paths to view tags on every host. The run makes the router (`@lightstart/router`'s core) over the host's history: the browser's on the web, one in memory on the terminal (starting at `/`, or the path `--route` names). `currentView` is the view tag the path answers, `currentParams` the parameters of its path (`/components/:category` gives `{ category }`), and `navigate(path)` goes to another; all come from the host's subpath. A root view that shows routes writes `<app-container>` (the app's, drawing the routed view; not `lc-app-container`, the components' page layout), which the host gives: a component in the page, a terminal view on the terminal. The container sets the parameters on the view as props, keeping the same element while the tag stays, so a view declares a prop for each parameter its path has:

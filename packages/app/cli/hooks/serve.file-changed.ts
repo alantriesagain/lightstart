@@ -1,7 +1,8 @@
 /**
- * @file `serve:file-changed`: regenerate when a file the manifest names is
- * added, removed or renamed under src/models, src/controllers, src/views, or
- * when src/routes.ts, src/routes.js, src/app.ts or src/app.js changes.
+ * @file `serve:file-changed`: regenerate when a file changes under
+ * src/models, src/controllers or src/views (the manifest names them), under the
+ * root content/ folder (a content file's rows are generated), or when
+ * src/routes.ts, src/routes.js, src/app.ts or src/app.js changes.
  */
 
 import type { CommandContext } from "@lightstart/cli";
@@ -15,7 +16,8 @@ const watched = (path: string): boolean =>
   path === "src/routes.js" ||
   path.startsWith("src/models/") ||
   path.startsWith("src/controllers/") ||
-  path.startsWith("src/views/");
+  path.startsWith("src/views/") ||
+  path.startsWith("content/");
 
 export default async function (ctx: CommandContext, payload: ServeFileChangedPayload): Promise<void> {
   if (!watched(payload.path)) return;

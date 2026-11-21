@@ -19,6 +19,7 @@ packages:
   - 'packages/build'
   - 'packages/sqlite'
   - 'packages/markdown'
+  - 'packages/content'
   - 'packages/highlight'
   - 'packages/form'
   - 'packages/i18n'

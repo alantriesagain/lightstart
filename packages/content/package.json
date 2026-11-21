@@ -1,0 +1,41 @@
+{
+  "name": "@lightstart/content",
+  "version": "0.1.0",
+  "description": "Markdown files as an app's content: frontmatter and a body parsed at build to plain JSON rows, and a page renderer with no Markdown parser.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/content"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "content",
+    "markdown",
+    "frontmatter",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./render": "./render.ts",
+    "./frontmatter": "./frontmatter.ts",
+    "./json": "./json.ts",
+    "./collect": "./collect.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/light": "workspace:*",
+    "@lightstart/markdown": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5"
+  }
+}
