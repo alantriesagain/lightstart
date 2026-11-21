@@ -3,7 +3,7 @@ import { html } from "@lightstart/light/html";
 
 class AppHome extends View {
   render() {
-    return html`<p>Home</p>`;
+    return html`<p>Home</p><a class="morph-link" href="/about">About</a>`;
   }
 }
 

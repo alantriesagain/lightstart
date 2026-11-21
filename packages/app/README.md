@@ -100,14 +100,18 @@ View.register("app-note", NotePage);
 
 A plain class may keep `static props = { slug: "" }` instead. An app without `routes.ts` mounts its root view alone.
 
-With `transitions: true` the web host runs each route change (a `navigate`, a link through the router, the browser's back and forward) inside `document.startViewTransition` where the browser has it, and waits for `<app-container>` to draw the next view, so the browser snapshots the old view and the new one. Light adds no attribute: a view names what morphs with the platform's `view-transition-name` CSS property, the same name on the tile and on the page it opens:
+With `transitions: true` the web host runs each route change (a `navigate`, a link through the router, the browser's back and forward) inside `document.startViewTransition` where the browser has it, and waits for `<app-container>` to draw the next view, so the browser snapshots the old view and the new one.
+
+A route change that comes from a link click, or from `navigate(path, { from: element })`, morphs that element into the next view: the host gives the clicked element the transition name `morph` for the old snapshot, and the next view's first `[data-morph]` element (the view element itself when none is marked) the same name for the new one. Only one element carries the name at a time, so a site with many links leading to one page has no names to collide. Going back reverses it: the host remembers, per history entry, the path a morph-forward navigation led to, and on a history navigation to that page names the current view's `[data-morph]` element before the update and, on the restored page, the first link whose `href` is the path being left (preferring one marked `data-morph-source`) after it; when there is none, the change cross-fades.
+
+Light installs default rules for the `morph` group: the snapshots are not scaled (`object-fit: none`, anchored top left, clipped by the growing box), the old one fades out in the first 40% while the new one fades in, the group takes 420ms on `cubic-bezier(0.2, 0, 0, 1)`, and the root cross-fades in 220ms. The rules live in the `light` cascade layer, so an app overrides any of them with its own `::view-transition-*(morph)` rules, and a fixed `view-transition-name` an app sets itself keeps working. Under `prefers-reduced-motion: reduce` the host sets no `morph` name at all, so only the root cross-fade runs.
 
 ```css
-.tile { view-transition-name: note-card; }
 .note-header { view-transition-name: note-card; }
+.note-tile { view-transition-name: note-card; }
 ```
 
-`navigate(path, { transition: true | false })` overrides the app's choice for one call.
+`navigate(path, { transition: true | false })` overrides the app's choice for one call, and `navigate(path, { from: element })` starts its morph from the element named rather than from a click.
 
 A route with parameters may list their values with `params: () => Array<Record<string, string>>` (or a promise of one), as the site's `/components/:category` does. `pathsOf` (`@lightstart/app/node/paths.ts`) answers every concrete path of a routes table, sorted and unique: a path without parameters is itself, and a path with them is filled from the entries `params` answers, each value URL-encoded, an entry missing a parameter skipped. A wildcard path, a route marked `spa: true` and a redirect are left out, and nested `routes` join their parent's path. The build's sitemap and prerendering read it.
 

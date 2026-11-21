@@ -92,13 +92,81 @@ const main = async (): Promise<void> => {
       ok("the about page has its own title", (await walk.evaluate(() => document.title)) === "About · Fixture Web");
       await walk.back();
       ok("the browser's back draws the previous route", (await walk.shows("Seeded note")).includes("Seeded note") && (await walk.path()) === "/");
-      ok("the home page restores the scroll position it had", (await walk.evaluate(() => window.scrollY)) === 600);
+      const restored = await walk.evaluate(() => new Promise<number>((resolve) => {
+        let left = 200;
+        const check = (): void => {
+          if (window.scrollY === 600 || left-- <= 0) resolve(window.scrollY);
+          else setTimeout(check, 10);
+        };
+        check();
+      }));
+      ok("the home page restores the scroll position it had", restored === 600);
       ok("the home page is titled with the app alone", (await walk.evaluate(() => document.title)) === "Fixture Web");
       await walk.forward();
       ok("the browser's forward draws the next one again", (await walk.shows("About these notes")).includes("About these notes"));
       ok("walking the history raises no error", walk.errors.length === 0 && walk.failed.length === 0);
     } finally {
       await walk.close();
+    }
+
+    const morph = await openBuilt(report.dir, "/");
+    try {
+      await morph.evaluate(() => {
+        const w = window as unknown as { __morphRuns?: { before: string[]; after: string[] }[] };
+        const labels = (): string[] => {
+          const out: string[] = [];
+          for (const element of document.querySelectorAll("body *")) {
+            if (!(element instanceof HTMLElement) || element.style.viewTransitionName !== "morph") continue;
+            if (element.matches('nav a[href="/about"]')) out.push("nav-link");
+            else if (element.matches("app-about [data-morph]")) out.push("about-morph");
+            else out.push(element.tagName.toLowerCase());
+          }
+          return out;
+        };
+        const runs: { before: string[]; after: string[] }[] = [];
+        w.__morphRuns = runs;
+        const doc = document as unknown as { startViewTransition?: (callback: () => Promise<void> | void) => { finished: Promise<void> } };
+        doc.startViewTransition = (callback) => {
+          const before = labels();
+          let finish: () => void = () => {};
+          const finished = new Promise<void>((resolve) => {
+            finish = resolve;
+          });
+          Promise.resolve(callback()).then(() => {
+            runs.push({ before, after: labels() });
+            finish();
+          });
+          return { finished };
+        };
+      });
+      await morph.click('nav a[href="/about"]');
+      await morph.shows("About these notes");
+      await morph.evaluate(() => new Promise<void>((resolve) => {
+        const check = (): void => {
+          const runs = (window as unknown as { __morphRuns?: unknown[] }).__morphRuns ?? [];
+          if (runs.length >= 1) resolve();
+          else setTimeout(check, 10);
+        };
+        check();
+      }));
+      const forward = await morph.evaluate(() => (window as unknown as { __morphRuns: { before: string[]; after: string[] }[] }).__morphRuns);
+      ok("a forward morph names the clicked link before and the about element after", forward.length === 1 && forward[0]?.before.join() === "nav-link" && forward[0]?.after.join() === "about-morph");
+      ok("the names are clear once the forward morph settles", (await morph.evaluate(() => [...document.querySelectorAll("body *")].filter((element) => element instanceof HTMLElement && element.style.viewTransitionName === "morph").length)) === 0);
+      await morph.back();
+      await morph.shows("Seeded note");
+      await morph.evaluate(() => new Promise<void>((resolve) => {
+        const check = (): void => {
+          const runs = (window as unknown as { __morphRuns?: unknown[] }).__morphRuns ?? [];
+          if (runs.length >= 2) resolve();
+          else setTimeout(check, 10);
+        };
+        check();
+      }));
+      const back = await morph.evaluate(() => (window as unknown as { __morphRuns: { before: string[]; after: string[] }[] }).__morphRuns);
+      ok("a back navigation morphs the about element into the home page's link", back.length === 2 && back[1]?.before.join() === "about-morph" && back[1]?.after.join() === "nav-link");
+      ok("the names are clear once the back morph settles", (await morph.evaluate(() => [...document.querySelectorAll("body *")].filter((element) => element instanceof HTMLElement && element.style.viewTransitionName === "morph").length)) === 0);
+    } finally {
+      await morph.close();
     }
 
     const fallback = await openBuilt(report.dir, "/no-such-route");

@@ -195,3 +195,105 @@ describe("view transitions", () => {
     }
   });
 });
+
+const morphLabels = (): string[] => {
+  const labels: string[] = [];
+  for (const element of document.querySelectorAll("body *")) {
+    if (!(element instanceof HTMLElement) || element.style.viewTransitionName !== "morph") continue;
+    if (element.matches("app-home .morph-link")) labels.push("home-link");
+    else if (element.matches("app-about [data-morph]")) labels.push("about-morph");
+    else labels.push(element.tagName.toLowerCase());
+  }
+  return labels;
+};
+
+interface MorphRun {
+  before: string[];
+  after: string[];
+}
+
+const stubMorph = () => {
+  const doc = document as unknown as TransitionDocument;
+  const hadOwn = Object.prototype.hasOwnProperty.call(doc, "startViewTransition");
+  const original = doc.startViewTransition;
+  const runs: MorphRun[] = [];
+  doc.startViewTransition = (callback) => {
+    const before = morphLabels();
+    let finish: () => void = () => {};
+    const finished = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    Promise.resolve(callback()).then(() => {
+      runs.push({ before, after: morphLabels() });
+      finish();
+    });
+    return { finished };
+  };
+  return {
+    runs,
+    restore: (): void => {
+      if (hadOwn) doc.startViewTransition = original;
+      else delete doc.startViewTransition;
+    },
+  };
+};
+
+describe("morphing view transitions", () => {
+  it("names the clicked link, then the next view's data-morph element, and clears both", async () => {
+    const stub = stubMorph();
+    const page = await openPage(transitionsManifest());
+    try {
+      const link = await page.find("app-home .morph-link");
+      link.click();
+      assert.ok((await page.shows("About")).includes("About"), "the next view is drawn");
+      await page.settle();
+      assert.equal(stub.runs.length, 1, "one transition ran");
+      assert.deepEqual(stub.runs[0]?.before, ["home-link"], "the clicked link carries the name before the update");
+      assert.deepEqual(stub.runs[0]?.after, ["about-morph"], "the next view's data-morph element carries it after");
+      await page.settle();
+      assert.deepEqual(morphLabels(), [], "no element keeps the name once the transition settles");
+    } finally {
+      await page.stop();
+      stub.restore();
+    }
+  });
+
+  it("morphs from the element navigate names", async () => {
+    const stub = stubMorph();
+    const page = await openPage(transitionsManifest());
+    try {
+      const link = await page.find("app-home .morph-link");
+      await page.navigate("/about", { from: link });
+      assert.ok((await page.shows("About")).includes("About"), "the next view is drawn");
+      assert.equal(stub.runs.length, 1, "one transition ran");
+      assert.deepEqual(stub.runs[0]?.before, ["home-link"], "the named element carries the name before the update");
+      assert.deepEqual(stub.runs[0]?.after, ["about-morph"], "the next view's data-morph element carries it after");
+      await page.settle();
+      assert.deepEqual(morphLabels(), [], "no element keeps the name once the transition settles");
+    } finally {
+      await page.stop();
+      stub.restore();
+    }
+  });
+
+  it("sets no morph name under prefers-reduced-motion", async () => {
+    const stub = stubMorph();
+    const win = globalThis as unknown as { matchMedia: (query: string) => MediaQueryList };
+    const original = win.matchMedia;
+    win.matchMedia = (query: string) => ({ ...original.call(globalThis, query), matches: query.includes("prefers-reduced-motion"), media: query } as MediaQueryList);
+    const page = await openPage(transitionsManifest());
+    try {
+      const link = await page.find("app-home .morph-link");
+      link.click();
+      assert.ok((await page.shows("About")).includes("About"), "the next view is drawn");
+      await page.settle();
+      assert.equal(stub.runs.length, 1, "the route change still runs a transition");
+      assert.deepEqual(stub.runs[0]?.before, [], "nothing is named before the update");
+      assert.deepEqual(stub.runs[0]?.after, [], "nothing is named after the update");
+    } finally {
+      await page.stop();
+      stub.restore();
+      win.matchMedia = original;
+    }
+  });
+});

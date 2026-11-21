@@ -148,7 +148,7 @@ export class OpenedPage {
   /** Go to `path` and wait for the view it answers to render; `options.transition` overrides the app's choice for this call. */
   async navigate(path: string, options: NavigateOptions = {}): Promise<void> {
     if (this.run.router !== null) {
-      this.run.go(path, options.transition);
+      this.run.go(path, options.transition, options.from);
       await settlePage();
       const tag = currentView.value;
       if (tag !== null) {
