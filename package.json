@@ -29,6 +29,7 @@
     "@lightstart/build": "workspace:*",
     "@lightstart/cli": "workspace:*",
     "@lightstart/create": "workspace:*",
+    "@lightstart/design": "workspace:*",
     "@lightstart/dev": "workspace:*",
     "@lightstart/native": "workspace:*",
     "@lightstart/server": "workspace:*",

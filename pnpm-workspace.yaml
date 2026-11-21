@@ -17,6 +17,7 @@ packages:
   - 'packages/dev'
   - 'packages/app'
   - 'packages/build'
+  - 'packages/design'
   - 'packages/sqlite'
   - 'packages/markdown'
   - 'packages/content'

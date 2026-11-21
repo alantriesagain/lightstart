@@ -51,6 +51,7 @@ The engine is [`@lightstart/light`](packages/light/README.md): views, the `html`
 | [`@lightstart/cli`](packages/cli/README.md) | The command runner behind `light`, with commands, hooks, routes and extensions |
 | [`@lightstart/dev`](packages/dev/README.md) | The dev server behind `light serve`, with the importmap, TypeScript stripping and live reload |
 | [`@lightstart/build`](packages/build/README.md) | The production build behind `light build`, bundling pages and stylesheets with esbuild |
+| [`@lightstart/design`](packages/design/README.md) | The design canvases behind `light design`, built, previewed, served and rendered to PNG |
 | [`@lightstart/create`](packages/create/README.md) | The generator behind `light new` |
 
 ## The light command
@@ -80,7 +81,7 @@ Read [AGENTS.md](AGENTS.md) for the rules of this repository, and each package's
 | `packages/app/` | The app layer: the folders, the generated wiring and the hosts |
 | `packages/components/`, `packages/router/`, `packages/markdown/`, `packages/highlight/` | UI packages |
 | `packages/server/`, `packages/sqlite/` | Server packages |
-| `packages/cli/`, `packages/dev/`, `packages/build/`, `packages/create/` | Tooling |
+| `packages/cli/`, `packages/dev/`, `packages/build/`, `packages/design/`, `packages/create/` | Tooling |
 | `packages/native/`, `packages/tui/` | Workspace packages that native apps share |
 | `examples/` | Two apps on `@lightstart/app`, the same tasks app in a page (`tasks-web`) and on a terminal (`tasks-tui`) |
 | `benchmarks/` | The engine, renderer and server under node, natively and in Chromium |
