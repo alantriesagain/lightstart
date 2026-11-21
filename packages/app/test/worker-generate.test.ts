@@ -39,6 +39,8 @@ const main = async (): Promise<void> => {
     ok("the worker imports the app", source.includes('import app from "../src/app.js";'));
     ok("the worker imports each model", source.includes('import model0 from "../src/models/archive.js";') && source.includes('import model1 from "../src/models/note.js";'));
     ok("the worker serves each model by name", source.includes('"archive": model0,') && source.includes('"note": model1,'));
+    ok("the worker imports the project's own worker module", source.includes('import worker from "../src/worker.js";'));
+    ok("the worker passes it to serveModels", source.includes("  worker,"));
 
     const entry = readFileSync(generated.main, "utf8");
     ok("a worker app's entry imports no IndexedDB adapter type", !entry.includes("IndexedDBAdapterType"));
@@ -49,6 +51,20 @@ const main = async (): Promise<void> => {
     ok("a second run changes nothing", again !== null && !again.changed);
   } finally {
     rmSync(project, { recursive: true, force: true });
+  }
+
+  const bareProject = copy(fixture, "light-app-worker-bare-");
+  try {
+    rmSync(join(bareProject, "src", "worker.js"), { force: true });
+    const generated = await generate(bareProject);
+    ok("a worker app without src/worker.js still generates", generated !== null);
+    if (generated !== null) {
+      const source = readFileSync(join(generated.dir, "worker.js"), "utf8");
+      ok("and its worker imports no project worker module", !source.includes("import worker from"));
+      ok("and passes none to serveModels", !source.includes("  worker,"));
+    }
+  } finally {
+    rmSync(bareProject, { recursive: true, force: true });
   }
 
   const plainProject = copy(plain, "light-app-worker-plain-");
