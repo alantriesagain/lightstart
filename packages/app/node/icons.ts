@@ -8,13 +8,21 @@
  * to the module's declaration; nothing follows an identifier to its value.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { stripComments } from "@lightstart/light/check/strip-comments.js";
-import type { IconCollection } from "@lightstart/light/theme";
+import type { IconCollection, IconEntry } from "@lightstart/light/theme";
 
 const ICON_NAME = /^[a-z][a-z0-9-]*$/;
+const ROOT_OPEN = /<svg\b[^>]*>/i;
+const COMMENT = /<!--[\s\S]*?-->/g;
+const VIEW_BOX = /\bviewBox\s*=\s*(?:"([^"]*)"|'([^']*)')/i;
+const WIDTH = /(?:^|[\s])width\s*=\s*(?:"([^"]*)"|'([^']*)')/i;
+const HEIGHT = /(?:^|[\s])height\s*=\s*(?:"([^"]*)"|'([^']*)')/i;
+const HREF = /\b(?:xlink:)?href\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+const PAINT = /\b(fill|stroke|color|stop-color)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+const STYLE = /\bstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
 const ELEMENT = /<lc-icon\b[^>]*>/g;
 const ATTRIBUTE = /\b([a-zA-Z][a-zA-Z0-9-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|\$\{([^}]*)\}))?/g;
 const ICON_ATTRIBUTE = /(?:^|[^a-zA-Z])icon\s*=\s*(?:"([^"]*)"|'([^']*)'|\$\{([^}]*)\})/g;
@@ -120,6 +128,115 @@ export const scanIcons = (source: string): ScannedIcons => {
   }
 
   return { names, solid, bold, sizes, dynamic, declared, properties: properties.filter((name) => !drawn.includes(name) && !declared.includes(name)) };
+};
+
+/** One icon the app draws from its own `icons/` folder. */
+export interface OwnIcon {
+  /** The file name without `.svg`. */
+  name: string;
+  /** The Iconify entry the file draws, sized from its `viewBox`. */
+  entry: IconEntry;
+  /** The file, relative to the project. */
+  file: string;
+}
+
+const numberOf = (value: string | undefined, fallback: number): number => {
+  if (value === undefined) return fallback;
+  const match = /-?\d+(?:\.\d+)?/.exec(value);
+  return match === null ? fallback : Number(match[0]);
+};
+
+const svgOf = (text: string): { opening: string; body: string } | null => {
+  const match = ROOT_OPEN.exec(text);
+  if (match === null) return null;
+  const start = (match.index ?? 0) + match[0].length;
+  const end = text.lastIndexOf("</svg>");
+  if (end < start) return null;
+  return { opening: match[0], body: text.slice(start, end).replace(COMMENT, "").trim() };
+};
+
+const sizesOf = (opening: string): { width: number; height: number } => {
+  const box = VIEW_BOX.exec(opening);
+  if (box !== null) {
+    const parts = (box[1] ?? box[2] ?? "").trim().split(/[\s,]+/);
+    if (parts.length >= 4) return { width: numberOf(parts[2], 24), height: numberOf(parts[3], 24) };
+  }
+  const width = WIDTH.exec(opening);
+  const height = HEIGHT.exec(opening);
+  return { width: numberOf(width?.[1] ?? width?.[2], 24), height: numberOf(height?.[1] ?? height?.[2], 24) };
+};
+
+const ROOT_PAINT = /\b(fill|stroke|stroke-width|stroke-linecap|stroke-linejoin|fill-rule|clip-rule)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+
+/** The body inside a `<g>` carrying the root `<svg>`'s paint attributes, which a mask's own bare `<svg>` would drop; written with double quotes, as the solid and bold variants read them. */
+const withRootPaint = (opening: string, body: string): string => {
+  const attributes: string[] = [];
+  for (const match of opening.matchAll(ROOT_PAINT)) attributes.push(`${(match[1] ?? "").toLowerCase()}="${match[2] ?? match[3] ?? ""}"`);
+  return attributes.length === 0 ? body : `<g ${attributes.join(" ")}>${body}</g>`;
+};
+
+/**
+ * The app's own icons in `icons/`, each file named by its icon name and sized
+ * from its root `<svg>`'s viewBox, then its width and height, then 24. A file
+ * whose name is not a valid icon name is left out, as is one with no root
+ * element.
+ * @param {string} project
+ * @returns {OwnIcon[]}
+ */
+export const ownIcons = (project: string): OwnIcon[] => {
+  const dir = join(project, "icons");
+  if (!existsSync(dir)) return [];
+  const icons: OwnIcon[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0))) {
+    if (!entry.isFile() || !entry.name.endsWith(".svg")) continue;
+    const name = entry.name.slice(0, -".svg".length);
+    if (!ICON_NAME.test(name)) continue;
+    let text: string;
+    try {
+      text = readFileSync(join(dir, entry.name), "utf8");
+    } catch {
+      continue;
+    }
+    const svg = svgOf(text);
+    if (svg === null) continue;
+    const { width, height } = sizesOf(svg.opening);
+    icons.push({ name, entry: { body: withRootPaint(svg.opening, svg.body), width, height }, file: `icons/${entry.name}` });
+  }
+  return icons;
+};
+
+/**
+ * What keeps one SVG file from being a safe mask: no root `<svg>`, no
+ * `viewBox`, a script, an event attribute, a link out of the file, an image, a
+ * foreign object, or a colour where a mask keeps only the shape.
+ * @param {string} text
+ * @returns {string[]}
+ */
+export const svgProblems = (text: string): string[] => {
+  const source = text.replace(COMMENT, "");
+  const root = ROOT_OPEN.exec(source);
+  if (root === null) return ["has no root <svg> element"];
+  const problems: string[] = [];
+  if (!VIEW_BOX.test(root[0])) problems.push("has no viewBox on its root <svg>");
+  if (/<script\b/i.test(source)) problems.push("carries a <script>");
+  if (/\son[a-z]+\s*=/i.test(source)) problems.push("carries an on* event attribute");
+  for (const match of source.matchAll(HREF)) {
+    const value = match[1] ?? match[2] ?? "";
+    if (!value.startsWith("#")) problems.push(`has an href "${value}" that is not a #fragment`);
+  }
+  if (/<image\b/i.test(source)) problems.push("carries an <image>");
+  if (/<foreignObject\b/i.test(source)) problems.push("carries a <foreignObject>");
+  for (const match of source.matchAll(PAINT)) {
+    const attribute = match[1] ?? "";
+    const value = (match[2] ?? match[3] ?? "").trim();
+    if (value === "currentColor" || value.toLowerCase() === "none" || /^url\(\s*#[^)]*\)$/i.test(value)) continue;
+    problems.push(`sets ${attribute} to "${value}", a colour; draw with currentColor or none`);
+  }
+  for (const match of source.matchAll(STYLE)) {
+    const value = match[1] ?? match[2] ?? "";
+    if (/(?:^|[;{\s])(?:[a-z-]*(?:color)|fill|stroke)\s*:/i.test(value)) problems.push(`sets a colour in a style attribute ("${value}")`);
+  }
+  return problems;
 };
 
 /**

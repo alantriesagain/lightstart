@@ -1,14 +1,15 @@
 /**
- * @file `light new model|view|controller`: write one piece into an app that
- * `light new web` or `light new tui` made. The app's `src/app.ts` or
+ * @file `light new model|view|controller|icon`: write one piece into an app
+ * that `light new web` or `light new tui` made. The app's `src/app.ts` or
  * `src/app.js` names its host and language; the files follow the scaffold's
- * model, controller and view shapes for that language and host.
+ * model, controller and view shapes for that language and host, and an icon
+ * follows its set's drawing conventions.
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 /** The piece words `light new` takes inside an app. */
-export const PIECES = ["model", "view", "controller"] as const;
+export const PIECES = ["model", "view", "controller", "icon"] as const;
 
 /** One of the piece words. */
 export type Piece = (typeof PIECES)[number];
@@ -24,6 +25,12 @@ export const isPiece = (word: string): word is Piece => (PIECES as readonly stri
 
 /** The app a command runs inside: its language, its host and its routes file. */
 export type AppInfo = { language: "js" | "ts"; host: "web" | "tui"; routes: string };
+
+const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="9" />
+</svg>
+`;
+const ICON_NAME = /^[a-z][a-z0-9-]*$/;
 
 /** Read the app in `cwd`; null when it is not one, an error when it has both app files. */
 export const appAt = (cwd: string): AppInfo | null => {
@@ -271,7 +278,12 @@ export const generatePiece = (options: PieceOptions): { path: string; next: stri
   let file: string;
   let source: string;
   let next: string;
-  if (options.piece === "model") {
+  if (options.piece === "icon") {
+    if (!ICON_NAME.test(options.name)) throw new Error(`The icon name "${options.name}" is not lower-case kebab-case (for example "brand-mark").`);
+    file = join(options.cwd, "icons", `${options.name}.svg`);
+    source = ICON_SVG;
+    next = `draw it with <lc-icon name="${options.name}"></lc-icon> or icon="${options.name}".`;
+  } else if (options.piece === "model") {
     file = join(options.cwd, "src", "models", `${options.name}.${ext}`);
     source = modelSource(options.name, parseFields(options.fields), info.language, info.host);
     next = `follow it from a controller: light new controller <name> --model ${options.name}`;
@@ -287,6 +299,7 @@ export const generatePiece = (options: PieceOptions): { path: string; next: stri
     next = info.host === "web" ? `add a route in ${relative(options.cwd, info.routes)}.` : "draw it from another view.";
   }
   if (existsSync(file)) throw new Error(`${relative(options.cwd, file)} already exists.`);
+  if (options.piece === "icon") mkdirSync(join(options.cwd, "icons"), { recursive: true });
   writeFileSync(file, source);
   return { path: file, next };
 };

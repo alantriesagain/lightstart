@@ -1,8 +1,10 @@
 import { defineRule } from "@lightstart/light/check/define.js";
 import { icon } from "@lightstart/light/theme/icons.js";
-import { collectionOf, scanIcons } from "../../node/icons.ts";
+import { collectionOf, ownIcons, scanIcons, svgProblems } from "../../node/icons.ts";
 
 const SOURCE = /^src\/.*\.(?:js|ts)$/;
+const ICON_FILE = /^icons\/.+\.svg$/;
+const ICON_NAME = /^[a-z][a-z0-9-]*$/;
 
 /** @param {import("@lightstart/light/check/types.ts").ProjectModel} ctx */
 const setOf = (ctx) => {
@@ -18,60 +20,51 @@ const scansOf = (ctx) =>
     .filter((file) => SOURCE.test(file) && !/\.test\.(?:js|ts)$/.test(file))
     .map((file) => ({ file, scan: scanIcons(ctx.code(file) ?? "") }));
 
-const IMPORT = /\bfrom\s*["'](\.{1,2}\/[^"']+)["']/g;
-
-/**
- * The project files `file` imports with a relative path, resolved against its folder.
- * @param {string} file
- * @param {string} source
- * @returns {string[]}
- */
-const importsOf = (file, source) => {
-  const dir = file.slice(0, file.lastIndexOf("/") + 1);
-  const out = [];
-  for (const match of source.matchAll(IMPORT)) {
-    const parts = (dir + match[1]).split("/");
-    const resolved = [];
-    for (const part of parts) {
-      if (part === "..") resolved.pop();
-      else if (part !== ".") resolved.push(part);
-    }
-    out.push(resolved.join("/"));
-  }
-  return out;
-};
-
 export default defineRule({
   severity: "error",
-  description: "an app's icons are known to its set, and its dynamic names are declared",
-  why: "the generation writes a CSS mask for each icon name it finds, so a name the set does not have draws nothing, and a name built at run time is only in the page when a literal names it: in the module binding it, in a module it imports, or in a module-level `icons: [...]`; the npm set is what the masks are made from, so it has to be installed",
+  description: "an app's icons are known to its set or its icons/ folder, and its dynamic names have names to take",
+  why: "the generation writes a CSS mask for each icon name it finds, so a name the set does not have draws nothing, and a name built at run time is only in the page when a literal somewhere names it or it is one of the app's own icons; which literal a binding takes is only known on the page, where lc-icon warns for a name no stylesheet draws; the npm set is what the masks are made from, so it has to be installed",
   check(ctx) {
+    const own = ownIcons(ctx.projectDir);
+    const appIcons = new Set(own.map((item) => item.name));
+    for (const file of ctx.assetFiles("icons").filter((path) => ICON_FILE.test(path))) {
+      const name = file.slice(file.lastIndexOf("/") + 1, -".svg".length);
+      if (!ICON_NAME.test(name))
+        ctx.report({ file, line: 1, message: `the icon file ${file} is named "${name}", which is not a lower-case kebab-case icon name` });
+      for (const problem of svgProblems(ctx.read(file) ?? "")) ctx.report({ file, line: 1, message: `the icon file ${file} ${problem}` });
+    }
     const scans = scansOf(ctx);
     const drawnNames = (/** @type {import("../../node/icons.ts").ScannedIcons} */ scan) => scan.names.filter((name) => !scan.properties.includes(name));
     const used = scans.filter(({ scan }) => drawnNames(scan).length > 0 || scan.dynamic.length > 0);
-    if (used.length === 0) return;
-    const named = new Set(scans.filter(({ scan }) => scan.names.length > 0).map(({ file }) => file));
-    for (const { file, scan } of used) {
-      if (scan.names.length > 0) continue;
-      if (importsOf(file, ctx.code(file) ?? "").some((imported) => named.has(imported))) continue;
-      for (const binding of scan.dynamic)
-        ctx.report({
-          file,
-          line: binding.line,
-          message: `the icon name \`${binding.expr}\` is an expression, and neither ${file} nor a module it imports names an icon; list the names it can take in a module-level \`icons: [...]\` so the build can ship their masks`,
-        });
-    }
+    const namesAnywhere = appIcons.size > 0 || scans.some(({ scan }) => scan.names.length > 0);
+    if (!namesAnywhere)
+      for (const { file, scan } of used)
+        for (const binding of scan.dynamic)
+          ctx.report({
+            file,
+            line: binding.line,
+            message: `the icon name \`${binding.expr}\` is an expression, and the app names no icon anywhere for it to take; write the names as literals (in a list, in data or in a module-level \`icons: [...]\`) or add the app's own in icons/, so the build can ship their masks`,
+          });
     const set = setOf(ctx);
     const collection = collectionOf(ctx.projectDir, set);
+    const drawn = new Set(used.flatMap(({ scan }) => drawnNames(scan)));
     if (collection === null) {
+      if (used.length === 0 || (appIcons.size > 0 && [...drawn].every((name) => appIcons.has(name)))) return;
       const first = used[0]?.file ?? "src/app.ts";
       ctx.report({ file: first, line: 1, message: `the app uses icons but @iconify-json/${set} is not installed; run \`pnpm add -D @iconify-json/${set}\`` });
       return;
     }
+    for (const item of own)
+      if (icon(collection, item.name) !== null)
+        ctx.report({
+          file: item.file,
+          line: 1,
+          message: `the app icon "${item.name}" in ${item.file} shadows the "${set}" icon of the same name; rename one of them`,
+        });
     for (const { file, scan } of used)
       for (const name of drawnNames(scan)) {
-        if (icon(collection, name) !== null) continue;
-        ctx.report({ file, line: 1, message: `the icon "${name}" in ${file} is not in the "${set}" set; check the name or the app's \`icons\` set` });
+        if (appIcons.has(name) || icon(collection, name) !== null) continue;
+        ctx.report({ file, line: 1, message: `the icon "${name}" in ${file} is not in the "${set}" set or the app's icons/ folder; check the name` });
       }
   },
 });

@@ -11,7 +11,7 @@ import { KINDS, kindByName } from "./kinds.ts";
 import { generatePiece, isPiece, PIECES } from "./pieces.ts";
 
 const args = {
-  kind: { positional: true, description: "web, tui, desktop or package, or model, view or controller inside an app" },
+  kind: { positional: true, description: "web, tui, desktop or package, or model, view, controller or icon inside an app" },
   name: { positional: true, description: "The package name, and the folder when --dir is not given" },
   dir: { description: "The folder to write (default: ./<name>)" },
   light: { description: "The light checkout to link (default: the one this CLI runs from)" },
@@ -26,7 +26,7 @@ const args = {
 
 const command: Command<typeof args> = {
   description: "Start a project on light",
-  usage: "light new <kind> <name> [--dir <path>] [--light <path>] [--npm] [--pm pnpm|npm] [--ts] [--no-install] [--force]\n       light new model <name> --fields \"title:string,done:boolean\"\n       light new controller <name> [--model <model>]\n       light new view <tag>",
+  usage: "light new <kind> <name> [--dir <path>] [--light <path>] [--npm] [--pm pnpm|npm] [--ts] [--no-install] [--force]\n       light new model <name> --fields \"title:string,done:boolean\"\n       light new controller <name> [--model <model>]\n       light new view <tag>\n       light new icon <name>",
   args,
   async run(ctx, parsed: ResolvedArgs<typeof args>) {
     if (parsed.kind === undefined) {

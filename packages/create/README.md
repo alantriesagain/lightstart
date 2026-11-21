@@ -12,12 +12,13 @@ light new package my-package --no-install
 
 `light new <kind> <name> [--dir <path>] [--light <path>] [--npm] [--pm pnpm|npm] [--ts] [--no-install] [--force]`
 
-Inside an app made by `light new web` or `light new tui`, the first word may instead be a piece: `light new model|view|controller <name> [options]`. It writes into the app in the app's language (JavaScript with JSDoc, or TypeScript) and host (web or tui), refusing a file that already exists.
+Inside an app made by `light new web` or `light new tui`, the first word may instead be a piece: `light new model|view|controller|icon <name> [options]`. It writes into the app in the app's language (JavaScript with JSDoc, or TypeScript) and host (web or tui), refusing a file that already exists and, for an icon, a name that is not lower-case kebab-case.
 
 ```bash
 light new model note2 --fields "title:string,done:boolean"
 light new controller notes2 --model note2
 light new view note-list
+light new icon brand-mark
 ```
 
 | Piece | Writes | Options |
@@ -25,6 +26,7 @@ light new view note-list
 | `model` | `src/models/<name>.js` or `.ts`: `defineModel` with `T` fields and the row type | `--fields "name:type,..."` |
 | `controller` | `src/controllers/<name>.js` or `.ts`: a `Controller` subclass, following a model with `liveRows` | `--model <model>` |
 | `view` | `src/views/<tag>.js` or `.ts`: a `View` subclass registering its tag (the tag needs a hyphen) | |
+| `icon` | `icons/<name>.svg`: an app icon at 24×24, stroked in `currentColor`, ready to edit | |
 
 A field is `name:type`, where type is `string`, `boolean`, `number`, `array` or `object`. A `!` after the type makes it required (`title:string!`); `?` or nothing makes it optional with a default (`""`, `false`, `0`, `[]`, `{}`). The model's id is written by the model, so a field cannot be named `id`.
 
@@ -77,7 +79,7 @@ A file is copied with `__NAME__` and `__TITLE__` replaced. A `.tpl` suffix is dr
 
 `packages/create/test/*.test.ts` are plain node scripts on `@lightstart/test/assert.ts`; each starts `// node-only`. They cover tokens and `.tpl` names, the kind table, the three install modes and their dependency closure, a non-empty target, and an end-to-end `light new web` with an install, a build and a served page.
 
-The piece test scaffolds a JavaScript web app, a TypeScript web app and a tui app, writes a model, a controller and a view into each, then runs the app's `check` and `typecheck` and sees a second model of the same name refused.
+The piece test scaffolds a JavaScript web app, a TypeScript web app and a tui app, writes a model, a controller, a view and an icon into each, then runs the app's `check` and `typecheck` and sees a second piece of the same name and an invalid icon name refused.
 
 ```bash
 light test @lightstart/create
