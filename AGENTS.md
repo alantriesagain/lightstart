@@ -34,7 +34,7 @@ Reach for these before writing your own; each package's README is its reference.
 
 | A project needs | Package | The part to know |
 |---|---|---|
-| The app's folders, wiring and run | `@lightstart/app` | `defineApp`, stores by name (`memory`, `indexeddb`, `jsonl`, `sql`, an `AdapterType` of the project's own, a web store `worker: true` opened in a worker), routes, `<app-container>`, `navigate`, `currentView`, `currentParams`; hosts `@lightstart/app/web` and `/tui`, and `@lightstart/app/static` rendering a page in node |
+| The app's folders, wiring and run | `@lightstart/app` | `defineApp`, stores by name (`memory`, `indexeddb`, `jsonl`, `sql`, an `AdapterType` of the project's own, `worker: true` running the model layer in a worker), routes, `<app-container>`, `navigate`, `currentView`, `currentParams`; hosts `@lightstart/app/web` and `/tui`, and `@lightstart/app/static` rendering a page in node |
 | Views, templates, signals, models, controllers, the theme | `@lightstart/light` | `View`, `html`, `signal`, `event`, `defineModel` with `T` fields, `defineController` and the `Controller` class, `liveRows`, `applyTheme` |
 | UI components | `@lightstart/components` | the `lc-*` tags; in an app the generation defines the tags a view writes and their stylesheets |
 | Forms from a model | `@lightstart/form` | `fieldsForModel(schema)` for `<lc-form .fields>`, `inferFields`, `validateForm` on submit |

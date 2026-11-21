@@ -225,24 +225,29 @@ const generation: HostGeneration = {
     let changed = false;
     if (helpers.worker) {
       const models = helpers.flatFiles(join(project, "src", "models"));
-      const lines = ['import { serveStores } from "@lightstart/app/web/worker-entry";', `import app from "${helpers.specifierFor(project, join(project, "src", `app${helpers.extension}`))}";`];
+      const lines = ['import { serveModels } from "@lightstart/app/web/worker-entry";', `import app from "${helpers.specifierFor(project, join(project, "src", `app${helpers.extension}`))}";`];
       models.forEach((file, index) => lines.push(`import model${String(index)} from "${helpers.specifierFor(project, file)}";`));
-      lines.push("", "serveStores(app, {");
-      models.forEach((file, index) => lines.push(`  ${JSON.stringify(helpers.nameOf(file))}: model${String(index)},`));
-      lines.push("});", "");
+      lines.push("", "serveModels({");
+      lines.push("  app,");
+      lines.push("  models: {");
+      models.forEach((file, index) => lines.push(`    ${JSON.stringify(helpers.nameOf(file))}: model${String(index)},`));
+      lines.push("  },", "});", "");
       changed = helpers.writeWhenChanged(workerPath, lines.join("\n"));
     } else {
       changed = remove(workerPath);
     }
     const featureImports: string[] = [];
     const options: string[] = [];
-    if (helpers.info.indexeddb) {
+    if (!helpers.worker && helpers.info.indexeddb) {
       featureImports.push('import { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";');
       options.push("adapters: [new IndexedDBAdapterType()],");
     }
     if (helpers.worker) {
       featureImports.push('import { WorkerStores } from "@lightstart/app/web/worker.ts";');
-      options.push('worker: new WorkerStores(() => new Worker(new URL("./worker.js", import.meta.url), { type: "module" })),');
+      options.push('stores: new WorkerStores(() => new Worker(new URL("./worker.js", import.meta.url), { type: "module" })),');
+    } else {
+      featureImports.push('import { LocalStores } from "@lightstart/app/web/local.ts";');
+      options.push("stores: new LocalStores(),");
     }
     if (helpers.info.transitions) {
       featureImports.push('import { Transitions } from "@lightstart/app/web/transitions.ts";');

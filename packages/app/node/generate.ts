@@ -45,7 +45,7 @@ export interface Generated {
 export interface GenerationHelpers {
   /** The language the generated files are written in. */
   readonly extension: ".ts" | ".js";
-  /** Whether a store declares `worker: true`, so the host writes its worker entry. */
+  /** Whether the app declares `worker: true`, so the host writes its worker entry. */
   readonly worker: boolean;
   /** The app's choices the host's part of the generation reads. */
   readonly info: AppInfo;
@@ -160,7 +160,7 @@ export interface AppInfo {
   locale: string;
   /** The site's address without a trailing slash, or `undefined` when the app names none. */
   url: string | undefined;
-  /** Whether any store declares `worker: true`. */
+  /** Whether the app runs its model layer in a worker. */
   worker: boolean;
   /** Whether a web store is `indexeddb`, or names no adapter (the web default). */
   indexeddb: boolean;
@@ -174,13 +174,12 @@ export interface AppInfo {
 export const infoOf = async (app: string): Promise<AppInfo> => {
   try {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
-    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; url?: unknown; stores?: unknown; transitions?: unknown; args?: unknown; argsSchema?: unknown } }).default;
-    let worker = false;
+    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; url?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; args?: unknown; argsSchema?: unknown } }).default;
+    const worker = config !== undefined && config.worker === true;
     let indexeddb = false;
     if (config !== undefined && isRecord(config.stores)) {
       for (const value of Object.values(config.stores)) {
         if (!isRecord(value)) continue;
-        if (value["worker"] === true) worker = true;
         const adapter = value["adapter"];
         if (typeof adapter === "function") indexeddb = true;
         else if (adapter === undefined || adapter === "indexeddb") indexeddb = true;

@@ -50,8 +50,8 @@ const APP = (extra: string): string => `import { defineApp } from "@lightstart/a
 
 const main = async (): Promise<void> => {
   const plain = await entryFor(APP(""));
-  ok("a memory app imports only the host", !plain.includes("IndexedDBAdapterType") && !plain.includes("Transitions") && !plain.includes("queryArgs") && !plain.includes("WorkerStores"));
-  ok("a memory app starts with no options", plain.includes("await start(manifest);"));
+  ok("a memory app imports no optional adapter or feature", !plain.includes("IndexedDBAdapterType") && !plain.includes("Transitions") && !plain.includes("queryArgs") && !plain.includes("WorkerStores"));
+  ok("a memory app starts with the local stores", plain.includes('import { LocalStores } from "@lightstart/app/web/local.ts";') && plain.includes("stores: new LocalStores(),"));
 
   const features = await entryFor(APP('transitions: true, args: { greeting: { default: "hi" } }, '));
   ok("transitions import their module", features.includes('import { Transitions } from "@lightstart/app/web/transitions.ts";'));

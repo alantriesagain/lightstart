@@ -9,6 +9,7 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { Store } from "@lightstart/light/model/types.ts";
 import { done, eq, ok } from "@lightstart/test/assert.ts";
 import { openApp } from "../test/index.ts";
 import { JsonlAdapterType, TuiHost } from "../tui/index.ts";
@@ -104,7 +105,7 @@ const main = async (): Promise<void> => {
     ok("a store nothing was written to leaves no folder", !existsSync(untouched));
     const memoryHost = new TuiHost({ argv: ["--data", kept] });
     chosen.args.values = memoryHost.args(chosen);
-    const inMemory = await memoryHost.openStores({ app: chosen, models: [{ name: "note", model: note }], controllers: [], routes: null, views: [] }, false);
+    const inMemory = (await memoryHost.openStores({ app: chosen, models: [{ name: "note", model: note }], controllers: [], routes: null, views: [] }, false)) as Store;
     ok("and memory when they do not", inMemory.databases["main"] !== undefined && (await note.getAll()).length === 0);
     await inMemory.close();
   } finally {

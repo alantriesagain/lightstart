@@ -2,9 +2,10 @@
 /**
  * @file `@lightstart/app/web`: the web host. It always runs `memory`; the
  * generated entry imports the optional features the app's config uses and
- * hands them to `start`: the IndexedDB adapter type (`web/indexeddb.ts`), worker
- * stores (`web/worker.ts`), view transitions and their morph
- * (`web/transitions.ts`), and the URL's arguments (`web/args.ts`). The routes
+ * hands them to `start`: the IndexedDB adapter type (`web/indexeddb.ts`), the
+ * stores feature (`web/local.ts` or, for `worker: true`, `web/worker.ts`), view
+ * transitions and their morph (`web/transitions.ts`), and the URL's arguments
+ * (`web/args.ts`). The routes
  * follow the browser's history, the theme preset is applied as CSS variables,
  * and the root view is mounted in the page, `<app-container>` drawing the view
  * the routes answer. The views were imported by the generated manifest, so
@@ -24,15 +25,12 @@ import { createBrowserAdapter } from "@lightstart/router/adapters/browser";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
-import { createStore, storeRequest } from "@lightstart/light/model/store";
-import type { StorageAdapter, Store } from "@lightstart/light/model/types.ts";
-import { configureModel } from "@lightstart/light/model";
 import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
-import type { RouteTransition } from "../run.ts";
+import type { RouteTransition, RunStore } from "../run.ts";
 import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
 import type { Head } from "../head.ts";
-import { MemoryAdapterType, plan, schemasOf, AdapterType } from "../stores.ts";
-import type { WebArgsFeature, WebTransitionFeature, WebTransitionPort, WebWorkerConnection, WebWorkerFeature } from "./features.ts";
+import { MemoryAdapterType, AdapterType } from "../stores.ts";
+import type { WebArgsFeature, WebStoresFeature, WebTransitionFeature, WebTransitionPort } from "./features.ts";
 
 export { currentParams, currentView, navigate } from "../run.ts";
 
@@ -162,8 +160,8 @@ export interface WebHostOptions {
   /** The adapter types beyond `memory`, which the host always has. */
   adapters?: readonly AdapterType[];
   defaultAdapter?: string;
-  /** The worker feature for stores declared `worker: true`; absent, every store opens on the page. */
-  worker?: WebWorkerFeature;
+  /** Where the run's stores open, on the page or in a worker; absent cannot open any. */
+  stores?: WebStoresFeature;
   /** The view-transition and morph feature; absent, the host's `transition` is the plain default. */
   transitions?: WebTransitionFeature;
   /** The URL's arguments; absent, the host answers no values. */
@@ -193,10 +191,9 @@ export class WebHost extends AppHost {
   private mounted: Element | null = null;
   /** Stops handing the page's link clicks to the run's router. */
   private unlisten: (() => void) | null = null;
-  private readonly workerFeature: WebWorkerFeature | null;
+  private readonly storesFeature: WebStoresFeature | null;
   private readonly transitions: WebTransitionFeature | null;
   private readonly argsFeature: WebArgsFeature | null;
-  private connection: WebWorkerConnection | null = null;
   private headEffect: { dispose(): void } | null = null;
   private onScroll: (() => void) | null = null;
   private onPopState: (() => void) | null = null;
@@ -208,47 +205,19 @@ export class WebHost extends AppHost {
 
   constructor(options: WebHostOptions = {}) {
     super();
+    this.openStores = (manifest: AppManifest, memoryOnly: boolean): Promise<RunStore> => {
+      const feature = this.storesFeature;
+      if (feature === null) {
+        return Promise.reject(new Error("The web host opens no stores: the generated .light/main entry passes a stores feature (LocalStores, or WorkerStores for worker: true) to start"));
+      }
+      return feature.open(manifest, this, memoryOnly);
+    };
     const given = options.adapters ?? [];
     this.adapters = given.some((adapter) => adapter.name === "memory") ? given : [...given, new MemoryAdapterType()];
     this.defaultAdapter = options.defaultAdapter ?? (this.adapters.some((adapter) => adapter.name === "indexeddb") ? "indexeddb" : "memory");
-    this.workerFeature = options.worker ?? null;
+    this.storesFeature = options.stores ?? null;
     this.transitions = options.transitions ?? null;
     this.argsFeature = options.args ?? null;
-  }
-
-  /** Open every store as the host does; a store declared `worker: true` opens in a worker spawned once for the run. */
-  openStores(manifest: AppManifest, memoryOnly: boolean): Promise<Store> {
-    const models = schemasOf(manifest);
-    const databases: Record<string, StorageAdapter> = {};
-    const feature = this.workerFeature;
-    let connection: WebWorkerConnection | null = null;
-    const openOne = async (p: ReturnType<typeof plan>[number]): Promise<void> => {
-      if (!p.worker || feature === null) {
-        databases[p.store] = await p.type.open(manifest.app, p.store, p.at, models, p.store === "main");
-        return;
-      }
-      if (connection === null) {
-        const made = await feature.connect(() => {
-          if (this.connection === made) this.connection = null;
-        });
-        this.connection = made;
-        connection = made;
-      }
-      connection.retain();
-      try {
-        databases[p.store] = await feature.open(connection, p, memoryOnly);
-      } catch (error) {
-        const message = connection.failedMessage();
-        connection.release();
-        throw message === "" ? error : new Error(message);
-      }
-    };
-    const opened = plan(manifest, this, memoryOnly).reduce((before, p) => before.then(() => openOne(p)), Promise.resolve());
-    return opened.then(() => {
-      const store = createStore({ models, databases, defaultAdapter: "main" });
-      configureModel({ request: storeRequest(store) });
-      return store;
-    });
   }
 
   /** The URL's arguments when the entry passed the feature; none otherwise. */
@@ -452,7 +421,7 @@ export class WebHost extends AppHost {
 /** What `start` takes beside the manifest: the optional features the generated entry imported. */
 export interface WebStartOptions extends WebHostOptions {}
 
-/** Start the app on the web; answers the handle that stops it. A hand-written entry may pass nothing and gets memory stores, no transitions and no arguments; the generated entry is the supported path. */
+/** Start the app on the web; answers the handle that stops it. The generated entry passes the stores feature and the optional transitions and arguments; a hand-written entry with no stores feature cannot start the run. */
 export const start = async (manifest: AppManifest, options: WebStartOptions = {}): Promise<AppHandle> => {
   const run = new AppRun(manifest, new WebHost(options));
   await run.start();

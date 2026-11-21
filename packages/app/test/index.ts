@@ -13,6 +13,8 @@ import type { Store } from "@lightstart/light/model/types.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { AppHost, AppRun } from "../run.ts";
+import type { RunStore } from "../run.ts";
+import { openStores as openLocalStores } from "../engine.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
 
 /** What a test opens the app with: its arguments (an argv list or a record over the defaults), and the store adapter types it runs (every store in memory when absent). */
@@ -27,15 +29,17 @@ export interface OpenAppOptions {
 /** An app opened for a test: its run, the run's stores and controllers, and its restart, quit and stop. */
 export class OpenedApp {
   readonly run: AppRun;
+  private readonly host: TestHost;
 
-  constructor(run: AppRun) {
+  constructor(run: AppRun, host: TestHost) {
     this.run = run;
+    this.host = host;
   }
 
-  /** The run's stores (an error once it stopped). */
+  /** The run's engine store, opened in this process (an error once it stopped). */
   get store(): Store {
-    const store = this.run.store;
-    if (store === null) throw new Error("the app is stopped");
+    const store = this.host.opened;
+    if (store === null || this.run.store === null) throw new Error("the app is stopped");
     return store;
   }
 
@@ -59,10 +63,17 @@ export class OpenedApp {
 /** A test's host: the adapter types it was given (memory), the arguments it was given, nothing to mount. */
 class TestHost extends AppHost {
   readonly name = "test";
+  /** The engine store the run opened, for `OpenedApp.store`. */
+  opened: Store | null = null;
   private readonly given: readonly string[] | Record<string, unknown> | undefined;
 
   constructor(given: readonly string[] | Record<string, unknown> | undefined, adapters: readonly AdapterType[]) {
     super();
+    this.openStores = (manifest: AppManifest, memoryOnly: boolean): Promise<RunStore> =>
+      openLocalStores(manifest, this, memoryOnly).then((store) => {
+        this.opened = store;
+        return store;
+      });
     this.given = given;
     this.adapters = adapters.length > 0 ? adapters : [new MemoryAdapterType()];
     this.defaultAdapter = this.adapters[0]?.name ?? "memory";
@@ -82,7 +93,8 @@ class TestHost extends AppHost {
 /** Open the manifest's run over memory stores, mounting nothing. */
 export const openApp = async (manifest: AppManifest, options: OpenAppOptions = {}): Promise<OpenedApp> => {
   const adapters = options.adapters ?? [];
-  const run = new AppRun(manifest, new TestHost(options.args, adapters), adapters.length === 0, options.seed !== false);
+  const host = new TestHost(options.args, adapters);
+  const run = new AppRun(manifest, host, adapters.length === 0, options.seed !== false);
   await run.start();
-  return new OpenedApp(run);
+  return new OpenedApp(run, host);
 };

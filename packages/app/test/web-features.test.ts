@@ -43,7 +43,7 @@ const writeApp = (project: string, source: string): void => {
 };
 
 const MEMORY = 'import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", title: "Fixture Web", host: "web", stores: { main: { adapter: "memory" } } });\n';
-const EVERYTHING = 'import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", title: "Fixture Web", host: "web", transitions: true, args: { greeting: { default: "hi" } }, stores: { main: { adapter: "indexeddb" }, archive: { adapter: "memory", worker: true } } });\n';
+const EVERYTHING = 'import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", title: "Fixture Web", host: "web", transitions: true, worker: true, args: { greeting: { default: "hi" } }, stores: { main: { adapter: "indexeddb" }, archive: { adapter: "memory" } } });\n';
 
 const builtChunkOf = (dir: string): string => {
   const html = readFileSync(join(dir, "index.html"), "utf8");
@@ -88,8 +88,9 @@ const main = async (): Promise<void> => {
   const rich = await buildFixture(EVERYTHING);
   try {
     const source = readFileSync(join(rich.dir, rich.entry), "utf8");
-    ok("the app that names IndexedDB carries its adapter", rich.sources.some((script) => script.includes(IDB)));
-    ok("the app with a worker store carries the worker connection", source.includes(WORKER));
+    ok("the worker build carries the IndexedDB adapter its stores name", rich.sources.some((script) => script.includes(IDB)));
+    ok("a worker app's page entry carries no IndexedDB adapter", !source.includes(IDB));
+    ok("the app with worker: true carries the worker connection", source.includes(WORKER));
     ok("the app with transitions carries the morph styles", source.includes(MORPH));
     ok("the app with args carries the argv parser", source.includes(ARGV));
     ok("the worker entry is built beside the page", existsSync(join(rich.dir, "worker.js")));

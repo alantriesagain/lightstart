@@ -6,13 +6,12 @@
  * on the terminal), or one a project registers. A host runs the adapter types it
  * lists and its own default; a store of an adapter type it cannot run, or a
  * model naming a store the app does not declare, is an error before anything
- * opens. `configureModel` hands every model api the store in this runtime.
+ * opens. Opening them is `openStores` in engine.ts, which only a host that
+ * opens stores locally imports.
  */
 
-import { configureModel } from "@lightstart/light/model";
 import { createAdapter, hasAdapter, registerStorageAdapter } from "@lightstart/light/model/adapter";
-import { createStore, storeRequest } from "@lightstart/light/model/store";
-import type { ModelSchema, StorageAdapter, Store } from "@lightstart/light/model/types.ts";
+import type { ModelSchema, StorageAdapter } from "@lightstart/light/model/types.ts";
 import type { App } from "./index.ts";
 import type { AppManifest } from "./manifest.ts";
 import { MemoryAdapter } from "./memory.ts";
@@ -88,7 +87,6 @@ export interface PlannedStore {
   type: AdapterType;
   adapterName: string;
   at: string;
-  worker: boolean;
 }
 
 /** The adapter type each store opens with: its own, or the host's default; `memoryOnly` makes every one memory (a test). */
@@ -102,7 +100,7 @@ export const plan = (manifest: AppManifest, host: StoreHost, memoryOnly: boolean
     const type = memoryOnly ? new MemoryAdapterType() : adapterTypeNamed(host, wanted);
     if (type === null) throw new Error(`The ${host.name} host cannot run the "${wanted}" store "${store}"; it runs ${adapterTypesOf(host)}`);
     const at = config.at;
-    out.push({ store, type, adapterName: wanted, at: typeof at === "function" ? at(app.args) : at ?? "", worker: config.worker === true });
+    out.push({ store, type, adapterName: wanted, at: typeof at === "function" ? at(app.args) : at ?? "" });
   }
   const models = schemasOf(manifest);
   for (const name of Object.keys(models)) {
@@ -111,18 +109,4 @@ export const plan = (manifest: AppManifest, host: StoreHost, memoryOnly: boolean
       throw new Error(`The model "${name}" keeps its rows in the store "${named}", which the app does not declare (src/app.ts stores)`);
   }
   return out;
-};
-
-/** Open every store the app declares over one engine store, and hand it to the model apis; `memoryOnly` opens them all in memory. */
-export const openStores = async (manifest: AppManifest, host: StoreHost, memoryOnly = false): Promise<Store> => {
-  const models = schemasOf(manifest);
-  const databases: Record<string, StorageAdapter> = {};
-  for (const p of plan(manifest, host, memoryOnly)) databases[p.store] = await p.type.open(manifest.app, p.store, p.at, models, p.store === "main");
-  const store = createStore({
-    models,
-    databases,
-    defaultAdapter: "main",
-  });
-  configureModel({ request: storeRequest(store) });
-  return store;
 };

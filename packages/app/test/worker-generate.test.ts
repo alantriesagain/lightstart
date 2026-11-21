@@ -1,8 +1,8 @@
 // node-only
 /**
  * @file The worker fixture's generation: `.light/worker.js` imports the app and
- * its models, `.light/main.js` starts with the worker option, and a project
- * without a worker store gets neither.
+ * its models and serves them, `.light/main.js` starts with the worker stores
+ * feature, and a project without `worker: true` gets the local stores.
  */
 
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs";
@@ -35,15 +35,15 @@ const main = async (): Promise<void> => {
     const worker = join(generated.dir, "worker.js");
     ok("generation writes .light/worker.js", existsSync(worker));
     const source = readFileSync(worker, "utf8");
-    ok("the worker imports serveStores", source.includes('import { serveStores } from "@lightstart/app/web/worker-entry";'));
+    ok("the worker imports serveModels", source.includes('import { serveModels } from "@lightstart/app/web/worker-entry";'));
     ok("the worker imports the app", source.includes('import app from "../src/app.js";'));
     ok("the worker imports each model", source.includes('import model0 from "../src/models/archive.js";') && source.includes('import model1 from "../src/models/note.js";'));
     ok("the worker serves each model by name", source.includes('"archive": model0,') && source.includes('"note": model1,'));
 
     const entry = readFileSync(generated.main, "utf8");
-    ok("the entry imports the IndexedDB adapter type", entry.includes('import { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";'));
+    ok("a worker app's entry imports no IndexedDB adapter type", !entry.includes("IndexedDBAdapterType"));
     ok("the entry imports the worker feature", entry.includes('import { WorkerStores } from "@lightstart/app/web/worker.ts";'));
-    ok("the entry starts with the worker option", entry.includes('worker: new WorkerStores(() => new Worker(new URL("./worker.js", import.meta.url), { type: "module" })),'));
+    ok("the entry starts with the worker stores feature", entry.includes('stores: new WorkerStores(() => new Worker(new URL("./worker.js", import.meta.url), { type: "module" })),'));
 
     const again = await generate(project);
     ok("a second run changes nothing", again !== null && !again.changed);
@@ -56,8 +56,10 @@ const main = async (): Promise<void> => {
     const generated = await generate(plainProject);
     ok("the plain fixture generates", generated !== null);
     if (generated === null) return done();
-    ok("a project without a worker store writes no worker", !existsSync(join(generated.dir, "worker.js")));
-    ok("and its entry starts without the worker option", !readFileSync(generated.main, "utf8").includes("WorkerStores"));
+    ok("a project without worker: true writes no worker", !existsSync(join(generated.dir, "worker.js")));
+    const plainEntry = readFileSync(generated.main, "utf8");
+    ok("and its entry starts with local stores", plainEntry.includes('import { LocalStores } from "@lightstart/app/web/local.ts";') && plainEntry.includes("stores: new LocalStores(),"));
+    ok("and imports no worker feature", !plainEntry.includes("WorkerStores"));
   } finally {
     rmSync(plainProject, { recursive: true, force: true });
   }

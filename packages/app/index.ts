@@ -54,6 +54,12 @@ export interface AppConfig {
   url?: string;
   /** Render every concrete route to its own `index.html` at build time; `light build --prerender` when absent. `true` and `"markup"` render in node, `"browser"` through Playwright. */
   prerender?: boolean | PrerenderRenderer;
+  /**
+   * Run the whole model layer in one web worker: every declared store opens there, and the page reaches
+   * it over `@lightstart/rpc`; `false` when absent, opening the stores on the page. A host without a
+   * worker ignores it.
+   */
+  worker?: boolean;
   /** Run every route change inside the browser's view transition where it has one; `false` when absent. */
   transitions?: boolean;
   /** Move focus to the new view's heading after a route change; `true` when absent. */
@@ -120,6 +126,8 @@ export class App {
   readonly prerender: boolean;
   /** The renderer the config names, when it names one; `undefined` asks for the build's default. */
   readonly prerenderRenderer: PrerenderRenderer | undefined;
+  /** Whether the web host runs the model layer in a worker. */
+  readonly worker: boolean;
   /** Whether the web host runs each route change inside a view transition. */
   readonly transitions: boolean;
   /** Whether the web host moves focus to the new view after a route change. */
@@ -144,6 +152,7 @@ export class App {
     this.url = config.url === undefined ? undefined : config.url.replace(/\/+$/, "");
     this.prerender = config.prerender === true || typeof config.prerender === "string";
     this.prerenderRenderer = config.prerender === "markup" || config.prerender === "browser" ? config.prerender : undefined;
+    this.worker = config.worker === true;
     this.transitions = config.transitions === true;
     this.focusOnNavigate = config.focusOnNavigate !== false;
     const stores: Record<string, StoreConfig> = {};
