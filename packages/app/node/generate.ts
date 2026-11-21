@@ -502,6 +502,18 @@ const seedFiles = (project: string, extension: ".ts" | ".js", dev: boolean): str
   return names.map((name) => join(project, "src", `${name}${extension}`)).filter((path) => existsSync(path));
 };
 
+/** The project's optional worker module, `.ts` or `.js`; null when it has none, an error naming both when it has both. */
+export const workerPathOf = (project: string): string | null => {
+  const ts = join(project, "src", "worker.ts");
+  const js = join(project, "src", "worker.js");
+  const hasTs = existsSync(ts);
+  const hasJs = existsSync(js);
+  if (hasTs && hasJs) throw new Error(`The app has both src/worker.ts and src/worker.js; keep one of them`);
+  if (hasTs) return ts;
+  if (hasJs) return js;
+  return null;
+};
+
 /** The project's routes module, `.ts` or `.js`; null when it has none. */
 export const routesPathOf = (project: string): string | null => {
   const ts = join(project, "src", "routes.ts");

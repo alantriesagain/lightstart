@@ -9,6 +9,7 @@
 import { existsSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
+import { workerPathOf } from "../node/generate.ts";
 import type { GenerationHelpers, HostGeneration, HostPrepared } from "../node/generate.ts";
 
 interface TagEntry {
@@ -225,13 +226,17 @@ const generation: HostGeneration = {
     let changed = false;
     if (helpers.worker) {
       const models = helpers.flatFiles(join(project, "src", "models"));
+      const ownWorker = workerPathOf(project);
       const lines = ['import { serveModels } from "@lightstart/app/web/worker-entry";', `import app from "${helpers.specifierFor(project, join(project, "src", `app${helpers.extension}`))}";`];
       models.forEach((file, index) => lines.push(`import model${String(index)} from "${helpers.specifierFor(project, file)}";`));
+      if (ownWorker !== null) lines.push(`import worker from "${helpers.specifierFor(project, ownWorker)}";`);
       lines.push("", "serveModels({");
       lines.push("  app,");
       lines.push("  models: {");
       models.forEach((file, index) => lines.push(`    ${JSON.stringify(helpers.nameOf(file))}: model${String(index)},`));
-      lines.push("  },", "});", "");
+      lines.push("  },");
+      if (ownWorker !== null) lines.push("  worker,");
+      lines.push("});", "");
       changed = helpers.writeWhenChanged(workerPath, lines.join("\n"));
     } else {
       changed = remove(workerPath);
