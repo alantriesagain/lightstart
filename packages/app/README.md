@@ -159,6 +159,21 @@ With `transitions: true` the web host runs each route change (a `navigate`, a li
 
 Paths are the app's own, without the base: `navigate("/accounts")`, `currentView`, route params and `currentParams` all see `/accounts`, whether the app is at the root or under `/budget`. The web host puts the base before every root-relative `<a href>` in the app's DOM (a link drawn later too), leaving a link with `data-no-router` or `rel="external"` alone; a middle-click or a crawler sees the right URL too. `appUrl(path)` from `@lightstart/app` puts the running app's base before a root-relative path (`appUrl("/rates.json")` is `/budget/rates.json`), for code that fetches its own files.
 
+### Route names and links
+
+`currentRoute` is the matched route as a signal: `{ name, path, params, query, route }`, where `path` is the app path without the base and the query, `params` the path params only, `query` the query params, and `route` the matched leaf config. It is null before a run and after it stops, and follows the same update as `currentView` and `currentParams`.
+
+`href(target, options?)` builds a link: `target` is an app path (`"/places/x"`) or a route name (`"place-detail"`), `options.params` fills the name's `:params` (each URL-encoded, a missing one an error naming the route and the param) and `options.query` is appended, with the app's base before the answer. `url(target, options?)` is the same address made absolute from the app's `url` origin, else the browser's location. `navigate(target, options?)` follows either, plus `transition` and `from`, navigating with the app path without the base, which the router adds once.
+
+```js
+import { currentRoute, href, navigate } from "@lightstart/app/web";
+
+const places = href("places");
+const detail = href("place-detail", { params: { id: 7 }, query: { tab: "map" } });
+const active = currentRoute.value?.name === "places";
+navigate("place-detail", { params: { id: 7 } });
+```
+
 A route change that comes from a link click, or from `navigate(path, { from: element })`, morphs that element into the next view: the host gives the clicked element the transition name `morph` for the old snapshot, and the next view's first `[data-morph]` element (the view element itself when none is marked) the same name for the new one. Only one element carries the name at a time, so a site with many links leading to one page has no names to collide. Going back reverses it: the host remembers, per history entry, the path a morph-forward navigation led to, and on a history navigation to that page names the current view's `[data-morph]` element before the update and, on the restored page, the first link whose `href` is the path being left (preferring one marked `data-morph-source`) after it; when there is none, the change cross-fades.
 
 Light installs default rules for the `morph` group: the snapshots are not scaled (`object-fit: none`, anchored top left, clipped by the growing box), the old one fades out in the first 40% while the new one fades in, the group takes 420ms on `cubic-bezier(0.2, 0, 0, 1)`, and the root cross-fades in 220ms. The rules live in the `light` cascade layer, so an app overrides any of them with its own `::view-transition-*(morph)` rules, and a fixed `view-transition-name` an app sets itself keeps working. Under `prefers-reduced-motion: reduce` the host sets no `morph` name at all, so only the root cross-fade runs.

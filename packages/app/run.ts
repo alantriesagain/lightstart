@@ -6,14 +6,17 @@
  * (the same run again with other arguments) and `quit`, which the run installs
  * on the app. `currentView` is the view tag the routes answer and
  * `currentParams` the parameters of its path, for the
- * host's `<app-container>`; `navigate` goes to a path.
+ * host's `<app-container>`; `currentRoute` is the matched route itself, and
+ * `href` and `url` build a path or an address from a path or a route name,
+ * which `navigate` follows.
  */
 
 import { signal } from "@lightstart/light/signals";
 import { RouterCore } from "@lightstart/router/core";
-import { setAppBase } from "./base.ts";
+import { appUrl, setAppBase } from "./base.ts";
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
-import type { MatchedRoute, RouterAdapter } from "@lightstart/router/contracts.ts";
+import { stripBase, withQuery } from "@lightstart/router/url";
+import type { MatchedRoute, RouteConfig, RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { QueryOptions, Row, WriteOptions } from "@lightstart/light/model/types.ts";
 import { startControllers, stopControllers } from "./controllers.ts";
 import type { App } from "./index.ts";
@@ -53,6 +56,71 @@ export const currentParams = signal<Record<string, string>>({});
 
 /** The route the router matched now, the chain `<app-container>` resolves its drawn levels from. */
 export const currentMatch = signal<MatchedRoute | null>(null);
+
+/** Where the running app's routes stand: the matched route's name, its app path, its path params, its query and its leaf config. */
+export interface CurrentRoute {
+  name: string | null;
+  path: string;
+  params: Record<string, string>;
+  query: Record<string, string>;
+  route: RouteConfig;
+}
+
+/** The matched route now, or null before a run, without routes, and after the run stops. */
+export const currentRoute = signal<CurrentRoute | null>(null);
+
+const pathParamNamesOf = (route: RouteConfig | null): string[] => {
+  const names: string[] = [];
+  if (route === null) return names;
+  const pattern = typeof route.path === "string" ? route.path : "";
+  for (const segment of pattern.split("/")) {
+    if (segment === "*") names.push("*");
+    else if (segment.startsWith(":")) names.push(segment.slice(1).replace(/\*$/, ""));
+  }
+  for (const name of route.namedParams ?? []) names.push(name);
+  return names;
+};
+
+const pathParamsOf = (matched: MatchedRoute): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const name of pathParamNamesOf(leafRoute(matched))) {
+    const value = matched.params[name];
+    if (typeof value === "string") out[name] = value;
+  }
+  return out;
+};
+
+const queryOf = (matched: MatchedRoute): Record<string, string> => {
+  const query = matched.queryParams;
+  const out: Record<string, string> = {};
+  if (query === undefined || query === null) return out;
+  for (const key of Object.keys(query)) {
+    const value = query[key];
+    if (typeof value === "string") out[key] = value;
+  }
+  return out;
+};
+
+const appPathOf = (raw: string, base: string): string => {
+  const path = raw.split("?")[0].split("#")[0];
+  const stripped = stripBase(base, path);
+  const trimmed = stripped.replace(/\/+$/, "");
+  return trimmed === "" ? "/" : trimmed;
+};
+
+const routeStateOf = (matched: MatchedRoute | null, base: string): CurrentRoute | null => {
+  if (matched === null) return null;
+  const leaf = leafRoute(matched);
+  if (leaf === null) return null;
+  const raw = typeof matched.path === "string" ? matched.path : "/";
+  return {
+    name: typeof matched.name === "string" ? matched.name : null,
+    path: appPathOf(raw, base),
+    params: pathParamsOf(matched),
+    query: queryOf(matched),
+    route: leaf,
+  };
+};
 
 let appLayout: string | null = null;
 
@@ -124,18 +192,70 @@ export class AppHost implements StoreHost {
 
 let running: AppRun | null = null;
 
+/** What a target may carry: the route's path params and the query to append. */
+export interface TargetOptions {
+  /** A route name's path params, each encoded into its `:name`; a missing one throws. */
+  params?: Record<string, string | number>;
+  /** The query to append to the path. */
+  query?: Record<string, unknown>;
+}
+
+const filledPath = (name: string, pattern: string, params: Record<string, string | number>): string =>
+  pattern.replace(/:([A-Za-z0-9_]+)\*?/g, (_match: string, paramName: string): string => {
+    const value = params[paramName];
+    if (value === undefined || value === null) throw new Error(`The route "${name}" needs the param "${paramName}"`);
+    return encodeURIComponent(String(value));
+  });
+
+const pathOf = (target: string, options: TargetOptions): string => {
+  if (target.startsWith("/")) return target;
+  const run = running;
+  if (run === null || run.router === null) throw new Error(`no route table yet: href(${target}) needs a running app`);
+  const pattern = run.router.namedRoutes.get(target);
+  if (pattern === undefined) throw new Error(`no route named "${target}"`);
+  return filledPath(target, pattern, options.params ?? {});
+};
+
+/** The app path for `target` (a path, or a route name with its params) with the query appended and the app's base before it. */
+export const href = (target: string, options: TargetOptions = {}): string => appUrl(withQuery(pathOf(target, options), options.query));
+
+const originOf = (site: string | undefined): string => {
+  let origin = "";
+  if (site !== undefined && site !== "") {
+    try {
+      origin = new URL(site).origin;
+    } catch {
+      origin = "";
+    }
+  }
+  if (origin === "") {
+    const scope = globalThis as unknown as { location?: { origin?: string } };
+    const located = scope.location?.origin;
+    if (located !== undefined && located !== "") origin = located;
+  }
+  if (origin === "") throw new Error("url() needs the app's url or a browser location");
+  return origin;
+};
+
+/** `href(target, options)` as an absolute URL: the app's origin from its `url`, else the browser's location. */
+export const url = (target: string, options: TargetOptions = {}): string => {
+  const run = running;
+  return `${originOf(run === null ? undefined : run.app.url)}${href(target, options)}`;
+};
+
 /** What a one-call navigation may override. */
-export interface NavigateOptions {
+export interface NavigateOptions extends TargetOptions {
   /** Run this navigation inside the host's transition (`true`), or plainly (`false`), whatever the app chose. */
   transition?: boolean;
   /** The element the navigation starts from; the web host morphs it into the next view's `data-morph` element. */
   from?: NavigationSource;
 }
 
-/** Go to `path` in the app running now; nothing without routes. `options.transition` overrides the app's choice for this call. */
-export const navigate = (path: string, options: NavigateOptions = {}): void => {
+/** Go to a path or a route name (with its params and query) in the app running now; nothing without routes. `options.transition` overrides the app's choice for this call. */
+export const navigate = (target: string, options: NavigateOptions = {}): void => {
   const run = running;
-  if (run !== null) run.go(path, options.transition, options.from);
+  if (run === null || run.router === null) return;
+  run.go(withQuery(pathOf(target, options), options.query), options.transition, options.from);
 };
 
 /** An app running on a host. */
@@ -213,13 +333,14 @@ export class AppRun {
     }
   }
 
-  /** Write the matched route into `currentMatch`, `currentView` and `currentParams`, and reset the page head from its leaf. */
+  /** Write the matched route into `currentMatch`, `currentRoute`, `currentView` and `currentParams`, and reset the page head from its leaf. */
   private applyRoute(matched: MatchedRoute): void {
     const params = paramsOf(matched);
     const leaf = leafRoute(matched);
     const path = typeof matched.path === "string" ? matched.path : "/";
     setRouteHead(this.app, leaf, params, path);
     currentMatch.value = matched;
+    currentRoute.value = routeStateOf(matched, this.app.base);
     currentParams.value = params;
     currentView.value = viewOf(leaf);
   }
@@ -244,6 +365,7 @@ export class AppRun {
   private route(): void {
     const routes = this.manifest.routes;
     currentMatch.value = null;
+    currentRoute.value = null;
     currentView.value = null;
     currentParams.value = {};
     if (routes === null) {
@@ -267,6 +389,7 @@ export class AppRun {
       this.followRoute(matched);
     });
     currentMatch.value = router.currentRoute;
+    currentRoute.value = routeStateOf(router.currentRoute, this.app.base);
     currentParams.value = paramsOf(router.currentRoute);
     currentView.value = viewOf(leafRoute(router.currentRoute));
     this.router = router;
@@ -295,6 +418,7 @@ export class AppRun {
     this.router = null;
     currentView.value = null;
     currentParams.value = {};
+    currentRoute.value = null;
     await stopControllers(this.controllers);
     this.controllers = [];
     const store = this.store;
