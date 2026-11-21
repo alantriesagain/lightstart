@@ -35,7 +35,7 @@ import type { Head } from "../head.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import type { WebArgsFeature, WebStoresFeature, WebTransitionFeature, WebTransitionPort } from "./features.ts";
 
-export { currentParams, currentView, navigate } from "../run.ts";
+export { currentParams, currentRoute, currentView, href, navigate, url } from "../run.ts";
 
 /** A running app: `stop()` takes the view down, disposes its controllers, stops following the routes and closes its stores. */
 export interface AppHandle {
