@@ -34,3 +34,4 @@ export type {
   ContentText,
   ContentWikiLink,
 } from "./json.ts";
+export type { ContentNode, RenderOptions } from "./render.ts";
