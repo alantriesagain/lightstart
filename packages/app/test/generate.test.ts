@@ -5,7 +5,7 @@
  * run that writes nothing.
  */
 
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,25 +22,23 @@ const copy = (): string => {
     recursive: true,
     filter: (path) => !path.includes("node_modules") && !path.includes("/.light") && !path.includes("/.deployed"),
   });
+  const modules = join(project, "node_modules");
+  mkdirSync(modules);
+  mkdirSync(join(modules, "@lightstart"));
+  symlinkSync(realpathSync(join(fixture, "node_modules", "@lightstart", "app")), join(modules, "@lightstart", "app"), "dir");
   return project;
 };
 
 /** A copy of the fixture whose project depends on `@lightstart/components`, linked from this checkout. */
 const copyWithComponents = (): string => {
   const project = copy();
-  const source = join(fixture, "node_modules");
-  const modules = join(project, "node_modules");
-  mkdirSync(modules);
-  for (const name of readdirSync(source)) {
-    if (name === "@lightstart") {
-      mkdirSync(join(modules, name));
-      for (const sub of readdirSync(join(source, name))) {
-        if (name === "@lightstart" && sub === "components") continue;
-        symlinkSync(join(source, name, sub), join(modules, name, sub), "dir");
-      }
-    } else symlinkSync(join(source, name), join(modules, name), "dir");
+  const source = join(fixture, "node_modules", "@lightstart");
+  const modules = join(project, "node_modules", "@lightstart");
+  for (const sub of readdirSync(source)) {
+    if (sub === "app" || sub === "components") continue;
+    symlinkSync(realpathSync(join(source, sub)), join(modules, sub), "dir");
   }
-  symlinkSync(components, join(modules, "@lightstart", "components"), "dir");
+  symlinkSync(components, join(modules, "components"), "dir");
   const manifest = readFileSync(join(project, "package.json"), "utf8");
   const pkg = JSON.parse(manifest) as { dependencies?: Record<string, string> };
   pkg.dependencies = { ...(pkg.dependencies ?? {}), "@lightstart/components": "workspace:*" };
@@ -85,7 +83,7 @@ const main = async (): Promise<void> => {
     ok("the model keeps its file name", source.includes('{ name: "note", model: model0 }'));
     ok("the controller keeps its file name", source.includes('{ name: "notes", controller: controller0 }'));
     ok("the views are named", source.includes('views: ["app-about", "app-form", "app-home", "app-legal", "app-root", "app-search"]'));
-    eq("the entry starts the web host", readFileSync(first.main, "utf8"), 'import { start } from "@lightstart/app/web";\nimport manifest from "./app.ts";\n\nawait start(manifest);\n');
+    eq("the entry starts the web host with the default kind", readFileSync(first.main, "utf8"), 'import { start } from "@lightstart/app/web";\nimport manifest from "./app.ts";\nimport { IndexedDBKind } from "@lightstart/app/web/indexeddb.ts";\n\nawait start(manifest, {\n  kinds: [new IndexedDBKind()],\n});\n');
     ok("a project without the components writes none", !existsSync(join(first.dir, "components.ts")) && !existsSync(join(first.dir, "components.css")));
     ok("a project without i18n writes no locales", !existsSync(join(first.dir, "locales.ts")) && !source.includes('import "./locales.ts";'));
 

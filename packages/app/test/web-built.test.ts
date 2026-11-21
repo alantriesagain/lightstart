@@ -5,7 +5,7 @@
  * reports the failed request.
  */
 
-import { cpSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,13 +24,21 @@ const copy = (): string => {
     recursive: true,
     filter: (path) => !path.includes("node_modules") && !path.includes("/.light") && !path.includes("/.deployed"),
   });
-  symlinkSync(join(typed, "node_modules"), join(project, "node_modules"), "dir");
+  const modules = join(project, "node_modules");
+  const from = join(typed, "node_modules");
+  mkdirSync(modules);
+  for (const name of readdirSync(from)) {
+    if (name === "@lightstart") {
+      mkdirSync(join(modules, name));
+      for (const sub of readdirSync(join(from, name))) symlinkSync(realpathSync(join(from, name, sub)), join(modules, name, sub), "dir");
+    } else symlinkSync(realpathSync(join(from, name)), join(modules, name), "dir");
+  }
   return project;
 };
 
 const builtChunkOf = (dir: string): string => {
   const html = readFileSync(join(dir, "index.html"), "utf8");
-  const found = /(?:src|href)="([^"]+\.js)"/.exec(html);
+  const found = /<script[^>]+src="([^"]+\.js)"/.exec(html);
   if (found?.[1] === undefined) throw new Error("the built page names no script");
   return found[1].replace(/^\/+/, "");
 };

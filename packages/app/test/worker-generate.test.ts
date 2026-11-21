@@ -41,7 +41,9 @@ const main = async (): Promise<void> => {
     ok("the worker serves each model by name", source.includes('"archive": model0,') && source.includes('"note": model1,'));
 
     const entry = readFileSync(generated.main, "utf8");
-    ok("the entry starts with the worker option", entry.includes('await start(manifest, { worker: () => new Worker(new URL("./worker.js", import.meta.url), { type: "module" }) });'));
+    ok("the entry imports the IndexedDB kind", entry.includes('import { IndexedDBKind } from "@lightstart/app/web/indexeddb.ts";'));
+    ok("the entry imports the worker feature", entry.includes('import { WorkerStores } from "@lightstart/app/web/worker.ts";'));
+    ok("the entry starts with the worker option", entry.includes('worker: new WorkerStores(() => new Worker(new URL("./worker.js", import.meta.url), { type: "module" })),'));
 
     const again = await generate(project);
     ok("a second run changes nothing", again !== null && !again.changed);
@@ -55,7 +57,7 @@ const main = async (): Promise<void> => {
     ok("the plain fixture generates", generated !== null);
     if (generated === null) return done();
     ok("a project without a worker store writes no worker", !existsSync(join(generated.dir, "worker.js")));
-    ok("and its entry starts without the option", readFileSync(generated.main, "utf8").includes("await start(manifest);"));
+    ok("and its entry starts without the worker option", !readFileSync(generated.main, "utf8").includes("WorkerStores"));
   } finally {
     rmSync(plainProject, { recursive: true, force: true });
   }

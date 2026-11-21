@@ -62,7 +62,7 @@ export default defineApp({
 
 An app keeps rows in stores by name, several at once. A model picks one through its schema's `$adapter` (the store's name) and gets `main` when it names none; `main` is always there, of the host's default kind unless the app says otherwise. One run opens them all over one engine store, which routes each model to its store.
 
-- A store's `kind` is an adapter: light has `memory`, `indexeddb`, `jsonl` and `sql` (SQLite over `@lightstart/sqlite`). The host says which it runs and which is its default: the web host runs `indexeddb` (its default where the page has IndexedDB, else memory) and `memory`; the terminal host runs `jsonl` (its default) and `memory`; every host runs `memory`, and a test opens every store in memory. A kind's module loads when a store of that kind opens: an app on memory stores never fetches the IndexedDB adapter, on the page or in its worker.
+- A store's `kind` is an adapter: light has `memory`, `indexeddb`, `jsonl` and `sql` (SQLite over `@lightstart/sqlite`). The host says which it runs and which is its default: the web host runs `indexeddb` and `memory`, the terminal host `jsonl` (its default) and `memory`; every host runs `memory`, and a test opens every store in memory. On the web a store with no `kind` means IndexedDB: the generated entry imports that kind, so it is in the page's bundle. An app whose every store names `memory` carries neither the kind nor its adapter. The terminal host's default is `jsonl`.
 - A store whose kind its host cannot run is an error naming the host and the kinds it has; so is a model naming a store the app does not declare, before anything opens.
 - `kind` may be a function of the arguments, as `at` may: `kind: (args) => (args.flag("ephemeral") ? "memory" : "jsonl")` keeps nothing for a run that asks so.
 - `at` is what the kind opens: a folder for `jsonl` (the terminal's `--data` when absent), a database's name for `indexeddb` (the app's name for `main`, `<name>:<store>` for another), nothing for `memory`. It may be a function of the arguments.
@@ -183,9 +183,20 @@ The host's own part of the generation (`@lightstart/app/<host>/generate.ts`) wri
 ```ts
 import { start } from "@lightstart/app/web";
 import manifest from "./app.ts";
+import { IndexedDBKind } from "@lightstart/app/web/indexeddb.ts";
+import { WorkerStores } from "@lightstart/app/web/worker.ts";
+import { Transitions } from "@lightstart/app/web/transitions.ts";
+import { queryArgs } from "@lightstart/app/web/args.ts";
 
-await start(manifest);
+await start(manifest, {
+  kinds: [new IndexedDBKind()],
+  worker: new WorkerStores(() => new Worker(new URL("./worker.js", import.meta.url), { type: "module" })),
+  transitions: new Transitions(),
+  args: queryArgs,
+});
 ```
+
+The generator reads `src/app.ts` and writes only the imports the config uses: `web/indexeddb.ts` when a store names `indexeddb` or names no kind (the web default), `web/worker.ts` when a store says `worker: true`, `web/transitions.ts` with `transitions: true`, and `web/args.ts` when `args` is not empty. A store whose `kind` is a function may return any web kind, so the entry imports the IndexedDB kind too. Everything else stays out of the bundle by construction. A hand-written entry may call `start(manifest)` and gets memory stores, no transitions and no arguments; the generated entry is the supported path.
 
 On the web, `scheme` is applied before the theme: `"dark"` puts the `dark` class on `<html>` and stops following the preference, `"light"` removes it, and `"system"` follows the reader's choice and the OS. The build writes the class into a prerendered page's `<html>`, so a dark app paints dark on the first frame. The terminal host ignores it.
 
@@ -241,7 +252,7 @@ A project that depends on `@lightstart/app` gets these rules from `light check`,
 
 ## The web host
 
-`@lightstart/app/web`'s `start(manifest)` runs the app in the page: its kinds `indexeddb` and `memory`, the arguments from the URL query (`?name=value`, a bare `?flag`; a parameter the app does not declare is left out), the browser's history for the routes with `configureNavigation(router.navigation)`, the app's scheme applied before the theme preset, and the root view mounted (an existing `<app-root>` replaced by a fresh one, another placeholder replaced, or appended to `<body>`). On a prerendered page (`window.__PRERENDERED__ === true` and the root already holding markup) the host keeps that element, so light's views adopt the served DOM, and `<app-container>` keeps the served view of the path. A view's first renders on such a page come before its data, so the host gives light a `settle` hook: a render that does not match the served DOM is held until the run has mounted and the work views handed to `trackWork` is done, then adopts if it matches by then, and renders fresh only if it still differs. The wait also ends at the user's first `input`, `change`, `pointerdown` or `keydown`, so what they asked for shows while loads continue. The first client navigation clears the marker. `<app-container>` is a component drawing `currentView`. It answers `{ stop() }`.
+`@lightstart/app/web`'s `start(manifest, features)` runs the app in the page. `memory` is always there; the generated entry passes the optional features the config uses as module objects: extra store kinds, the worker feature, the transition feature and the URL-query arguments (`?name=value`, a bare `?flag`; a parameter the app does not declare is left out). Without them the host answers no arguments and its `transition` just runs `apply`. It follows the browser's history for the routes with `configureNavigation(router.navigation)`, applies the app's scheme before the theme preset, and mounts the root view (an existing `<app-root>` replaced by a fresh one, another placeholder replaced, or appended to `<body>`). On a prerendered page (`window.__PRERENDERED__ === true` and the root already holding markup) the host keeps that element, so light's views adopt the served DOM, and `<app-container>` keeps the served view of the path. A view's first renders on such a page come before its data, so the host gives light a `settle` hook: a render that does not match the served DOM is held until the run has mounted and the work views handed to `trackWork` is done, then adopts if it matches by then, and renders fresh only if it still differs. The wait also ends at the user's first `input`, `change`, `pointerdown` or `keydown`, so what they asked for shows while loads continue. The first client navigation clears the marker. `<app-container>` is a component drawing `currentView`. It answers `{ stop() }`.
 
 A project on `@lightstart/components` has its tags defined by the generated `.light/components.ts`, which `.light/app.ts` imports before the views, so every component exists before the root view is made. The stylesheets come from `.light/components.css` through the app's own stylesheet.
 

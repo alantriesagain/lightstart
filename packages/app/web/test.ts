@@ -19,6 +19,8 @@ import { AppRun, currentView } from "../run.ts";
 import type { NavigateOptions } from "../run.ts";
 import { MemoryKind, StoreKind } from "../stores.ts";
 import { WebHost } from "./index.ts";
+import { Transitions } from "./transitions.ts";
+import { WorkerStores } from "./worker.ts";
 
 /** What a test opens a page with: where the routes start, the app's arguments (an argv list or a record over the defaults), and the store kinds it runs (every store in memory when absent). */
 export interface OpenPageOptions {
@@ -70,7 +72,8 @@ class PageHost extends WebHost {
     super({
       kinds: kinds.length > 0 ? kinds : [new MemoryKind()],
       defaultKind: kinds[0]?.name ?? "memory",
-      worker,
+      worker: worker === undefined ? undefined : new WorkerStores(worker),
+      transitions: new Transitions(),
     });
     this.path = path;
     this.given = given;
