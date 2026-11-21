@@ -20,6 +20,15 @@ export default {
   "lc-toc": {
     title: "Nesta página",
   },
+  "lc-tabs": {
+    close: "Fechar {label}",
+  },
+  "lc-tile": {
+    close: "Fechar {label}",
+  },
+  "lc-media-card": {
+    close: "Fechar {label}",
+  },
   "lc-clipboard": {
     copy: "Copiar",
     copied: "Copiado",

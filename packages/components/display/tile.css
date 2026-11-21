@@ -105,7 +105,24 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    & [part~=lc-tile-shimmer] {
+  & [part~=lc-tile-close] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--lc-tile-close-padding, 0.15rem);
+    border: none;
+    border-radius: var(--lc-tile-close-border-radius, var(--radius-selector, 999px));
+    background: var(--lc-tile-close-background, rgba(8, 8, 7, 0.55));
+    color: var(--lc-tile-close-color, #fff);
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--lc-tile-close-hover-background, rgba(8, 8, 7, 0.8));
+    }
+  }
+
+  & [part~=lc-tile-shimmer] {
       animation: none;
     }
   }

@@ -28,5 +28,14 @@ export default {
         </lc-media-card>
       `,
     },
+    {
+      title: "Closable",
+      description: "The close button sits in the top-right corner and emits `close`.",
+      render: () => html`
+        <lc-media-card src=${PHOTO} alt="Rio de Janeiro from above" closable style="width:200px">
+          <strong slot="bottom">Sunset run</strong>
+        </lc-media-card>
+      `,
+    },
   ],
 };

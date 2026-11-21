@@ -62,6 +62,19 @@ describe("@lightstart/light - lc-tile", () => {
     assert.equal(el.hasAttribute("tabindex"), false, "and leaves the tab order");
   });
 
+  it("closes from its close button without selecting the tile", async () => {
+    const el = await mount({ label: "Quote card", closable: "", interactive: "" });
+    let closed = 0;
+    let selected = 0;
+    el.addEventListener("close", () => closed++);
+    el.addEventListener("select", () => selected++);
+    const close = el.querySelector("[part~=lc-tile-close]");
+    assert.equal(close?.getAttribute("aria-label"), "Close Quote card");
+    close.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    assert.equal(closed, 1);
+    assert.equal(selected, 0);
+  });
+
   it("shimmers while loading and shows the icon when there is no image", async () => {
     const el = await mount({ icon: "music", label: "song.mp3", loading: "" });
     assert.ok(el.querySelector(".shimmer"));

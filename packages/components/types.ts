@@ -369,6 +369,9 @@ export interface CommandPaletteElement extends HTMLElement {
   open: boolean;
 }
 
+/** overlay/command-palette.js: the element or selector/id an anchored palette opens under. */
+export type PaletteAnchor = Element | string;
+
 /** form/radio.js: a sibling `<lc-radio>` in the same radio group. */
 export interface RadioElement extends Element {
   checked?: boolean;
@@ -873,6 +876,16 @@ export interface TocItem {
   id: string;
   label: string;
   level?: number;
+}
+
+/** One entry of `<lc-tabs>`'s `tabs`: a tab drawn from data instead of a slotted child. */
+export interface TabItem {
+  id?: string;
+  label: string;
+  icon?: string;
+  badge?: string;
+  closable?: boolean;
+  disabled?: boolean;
 }
 
 /** A single row of `<lc-dropdown>`'s structured `items` array. */

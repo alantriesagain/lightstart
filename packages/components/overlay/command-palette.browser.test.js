@@ -104,3 +104,101 @@ describe("lc-command-palette", () => {
     assert.equal(el.open, false);
   });
 });
+
+describe("lc-command-palette anchored", () => {
+  /** @type {HTMLElement & { open: boolean, hideTrigger: boolean, anchor: string, docs: Array<Record<string, string>>, groups: string[], $requestUpdate: () => Promise<unknown> }} */
+  let palette;
+  /** @type {HTMLInputElement} */
+  let anchor;
+  /** @type {string[]} */
+  const picked = [];
+
+  const panel = () => /** @type {HTMLElement | null} */ (palette.querySelector("[part~=lc-command-palette-panel]"));
+
+  before(async () => {
+    document.addEventListener("click", keepThePage, true);
+    define("lc-kbd", kbdDef);
+    define("lc-search", searchDef);
+    define("lc-modal", modalDef);
+    define("lc-command-palette", paletteDef);
+    anchor = document.createElement("input");
+    anchor.id = "palette-anchor-field";
+    anchor.style.cssText = "display:block; width: 320px; margin: 60px 20px;";
+    palette = document.createElement("lc-command-palette");
+    palette.hideTrigger = true;
+    palette.setAttribute("anchor", anchor.id);
+    palette.docs = [
+      { id: "button", group: "Components", title: "Button", href: "/components/display/button" },
+      { id: "switch", group: "Components", title: "Switch", href: "/components/form/switch" },
+    ];
+    palette.groups = ["Components"];
+    palette.addEventListener("command-select", (e) => picked.push(e.detail.id));
+    document.body.append(anchor, palette);
+    await rendered(palette);
+  });
+
+  after(async () => {
+    palette.remove();
+    anchor.remove();
+    document.removeEventListener("click", keepThePage, true);
+  });
+
+  const open = async () => {
+    palette.open = true;
+    await rendered(palette);
+    await settle();
+    await until(() => {
+      const el = panel();
+      return Boolean(el && !el.hidden && el.getBoundingClientRect().height > 0);
+    });
+  };
+
+  const close = async () => {
+    palette.open = false;
+    await rendered(palette);
+    await settle();
+  };
+
+  it("opens below the anchor, at least as wide as it", async () => {
+    await open();
+    const box = /** @type {HTMLElement} */ (panel()).getBoundingClientRect();
+    const field = anchor.getBoundingClientRect();
+    assert.ok(box.top >= field.bottom, JSON.stringify({ top: box.top, bottom: field.bottom }));
+    assert.ok(box.width >= field.width - 1, JSON.stringify({ width: box.width, field: field.width }));
+    assert.equal(palette.querySelector("dialog"), null, "there is no modal in anchored mode");
+    await close();
+  });
+
+  it("closes on Escape and hands focus back to the anchor", async () => {
+    await open();
+    key({ key: "Escape" });
+    await rendered(palette);
+    await settle();
+    assert.equal(palette.open, false);
+    assert.equal(document.activeElement, anchor);
+  });
+
+  it("closes on a pointer down outside the panel and the anchor", async () => {
+    await open();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, composed: true }));
+    await rendered(palette);
+    await settle();
+    assert.equal(palette.open, false);
+  });
+
+  it("reports a pick the way the modal does", async () => {
+    picked.length = 0;
+    await open();
+    const search = palette.querySelector("lc-search");
+    search.query = "sw";
+    await rendered(search);
+    await settle();
+    const result = search.querySelector(".search-result, [role=option]");
+    assert.ok(result, "a result is listed");
+    result.click();
+    await rendered(palette);
+    assert.deepEqual(picked, ["switch"]);
+    assert.equal(palette.open, false);
+  });
+});

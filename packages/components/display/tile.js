@@ -1,6 +1,7 @@
 import { html, nothing } from "@lightstart/light/html";
 import T from "@lightstart/light/types";
 import { defineComponent } from "@lightstart/light";
+import { lcText } from "../utils/text.js";
 
 const ASPECTS = ["1/1", "9/16", "16/9", "4/5", "auto"];
 
@@ -20,9 +21,11 @@ export default defineComponent({
     disabled: false,
     loading: false,
     interactive: false,
+    closable: false,
   },
   events: {
     select: T.object({}),
+    close: T.object({}),
   },
   connected() {
     this._reflectInteractive();
@@ -49,6 +52,11 @@ export default defineComponent({
     }
     this.$emit("select", {});
   },
+  /** @param {Event} e */
+  _close(e) {
+    e.stopPropagation();
+    this.$emit("close", {});
+  },
   render() {
     const media = this.loading
       ? html`<span part="lc-tile-shimmer" class="shimmer"></span>`
@@ -61,7 +69,18 @@ export default defineComponent({
       <div part="lc-tile-media" class="media" style="--lc-tile-aspect: ${this.aspect === "auto" ? "auto" : this.aspect.replace("/", " / ")}" @click=${this._activate} @keydown=${this._activate}>
         <slot name="media">${media}</slot>
         <slot name="badge">${this.badge && !this.loading ? html`<span part="lc-tile-badge" class="badge">${this.badge}</span>` : nothing}</slot>
-        <div part="lc-tile-actions" class="actions"><slot name="actions"></slot></div>
+        <div part="lc-tile-actions" class="actions">
+          ${this.closable
+            ? html`<button
+                type="button"
+                part="lc-tile-close"
+                class="close"
+                aria-label=${lcText("lc-tile", "close", { label: this.label || this.alt })}
+                @click=${this._close}
+              ><lc-icon name="x" size="xs"></lc-icon></button>`
+            : nothing}
+          <slot name="actions"></slot>
+        </div>
       </div>
       <slot name="footer">
         ${this.label || this.meta
@@ -84,7 +103,8 @@ export default defineComponent({
  * corner and actions in the other, and shimmers while `loading`. Slots
  * `media`, `badge`, `actions` and `footer` replace each part; `interactive`
  * makes the tile a button that emits `select` on click, Enter or Space, and
- * `selected` draws the selection ring.
+ * `selected` draws the selection ring. `closable` adds a close button that
+ * emits `close` without selecting the tile.
  *
  * @example A media file
  * ```html

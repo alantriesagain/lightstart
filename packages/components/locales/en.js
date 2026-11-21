@@ -25,6 +25,15 @@ export default {
   "lc-toc": {
     title: "On this page",
   },
+  "lc-tabs": {
+    close: "Close {label}",
+  },
+  "lc-tile": {
+    close: "Close {label}",
+  },
+  "lc-media-card": {
+    close: "Close {label}",
+  },
   "lc-clipboard": {
     copy: "Copy",
     copied: "Copied",

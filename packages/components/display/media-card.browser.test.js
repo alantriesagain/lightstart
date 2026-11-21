@@ -78,6 +78,19 @@ describe("@lightstart/light - lc-media-card", () => {
     assert.equal(root.querySelector("[part~=lc-media-card-body]").hidden, false);
   });
 
+  it("closes from its close button without reaching the card", async () => {
+    const { el, root } = await mount({ src: PIXEL, alt: "A photo", closable: "" });
+    let closed = 0;
+    let reached = 0;
+    el.addEventListener("close", () => closed++);
+    root.querySelector("[part~=lc-media-card-media]").addEventListener("click", () => reached++);
+    const close = root.querySelector("[part~=lc-media-card-close]");
+    assert.equal(close?.getAttribute("aria-label"), "Close A photo");
+    close.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    assert.equal(closed, 1);
+    assert.equal(reached, 0);
+  });
+
   it("collapses the space under the image when nothing is slotted there", async () => {
     const { root } = await mount({ src: PIXEL }, '<span slot="top">Reel</span>');
     assert.equal(root.querySelector("[part~=lc-media-card-body]").hidden, true);
