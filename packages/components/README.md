@@ -1,6 +1,6 @@
 # light's components
 
-132 web components in nine categories, with the mixins, libs and two stores they are built from. They are `@lightstart/components` and depend on light alone: a component reads its host through light (`env`, `navigation`, `translate`, `trackWork`, `@lightstart/light/theme`).
+135 web components in nine categories, with the mixins, libs and two stores they are built from. They are `@lightstart/components` and depend on light alone: a component reads its host through light (`env`, `navigation`, `translate`, `trackWork`, `@lightstart/light/theme`).
 
 ```html
 <lc-card>
@@ -52,9 +52,9 @@ Every component is documented by its `props` block and the `<component>.demo.js`
 |---|---|
 | **form** (25) | auth-form, checkbox, color-picker, day-strip, file-upload, form, icon-picker, image-crop, input, join, label, month-picker, number-input, radio, radio-group, rating, ruler, search, segmented, select, slider, switch, textarea, time, week-hours |
 | **display** (36) | avatar, avatar-group, badge, bar-chart, button, calendar, circle, code-block, comment, data-table, editable, example, flow, icon, image, kanban, kbd, line-chart, link, link-preview, list, list-item, list-row, markdown, media-card, palette, pattern, pie-chart, sparkline, stat, story-circle, table, tag, text, tile, timeline |
-| **layout** (11) | card, container, divider, flex, grid, page, panel, prose, section, split-pane, toolbar |
+| **layout** (12) | card, container, divider, flex, grid, page, panel, prose, section, setting-row, split-pane, toolbar |
 | **navigation** (15) | accordion, breadcrumbs, language-switcher, menu, nav-item, nav-tree, navbar, pagination, sidebar, sidebar-section, tabs, toc, tree, tree-item, wizard |
-| **overlay** (10) | alert-dialog, bottom-sheet, command-palette, context-menu, drawer, dropdown, float-panel, modal, popover, tooltip |
+| **overlay** (11) | alert-dialog, bottom-sheet, command-palette, context-menu, drawer, dropdown, float-panel, modal, popover, scrim, tooltip |
 | **feedback** (8) | alert, empty-state, progress-bar, pull-indicator, skeleton, spinner, stepper, toast |
 | **app shell** (9) | app-container, app-header, app-shell, bottom-nav, page-header, scroller, stories, swipe-deck, title-bar |
 | **page sections** (14) | about-section, cta-section, faq-section, feature-grid, float-card, footer, hero-section, pricing-card, pricing-table, showcase-section, site-header, stats-section, steps-section, testimonial-section |
@@ -334,7 +334,7 @@ A page without the framework defines these too, one level deep; follow the table
 | `lc-list-item` |  |
 | `lc-list-row` | `lc-badge`, `lc-button`, `lc-icon` |
 | `lc-markdown` | `lc-code-block` |
-| `lc-media-card` | `lc-badge` |
+| `lc-media-card` | `lc-badge`, `lc-icon` |
 | `lc-menu` | `lc-button`, `lc-dropdown`, `lc-icon` |
 | `lc-modal` | `lc-button` |
 | `lc-month-picker` | `lc-icon` |
@@ -359,11 +359,13 @@ A page without the framework defines these too, one level deep; follow the table
 | `lc-radio-group` | `lc-radio` |
 | `lc-rating` | `lc-icon` |
 | `lc-ruler` |  |
+| `lc-scrim` |  |
 | `lc-scroller` | `lc-icon` |
 | `lc-search` | `lc-icon`, `lc-join` |
 | `lc-section` | `lc-button`, `lc-icon`, `lc-panel` |
 | `lc-segmented` | `lc-icon` |
 | `lc-select` | `lc-icon`, `lc-label`, `lc-tag` |
+| `lc-setting-row` | `lc-icon` |
 | `lc-showcase-section` | `lc-markdown` |
 | `lc-sidebar` | `lc-darkmode`, `lc-icon`, `lc-link`, `lc-menu` |
 | `lc-sidebar-section` | `lc-badge`, `lc-icon` |

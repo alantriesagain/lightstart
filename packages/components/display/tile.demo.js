@@ -23,5 +23,12 @@ export default {
         </lc-tile>
       `,
     },
+    {
+      title: "Closable",
+      description: "The close button emits `close` without selecting the tile.",
+      render: () => html`
+        <lc-tile icon="file-text" label="notes.md" meta="Markdown · 4 KB" closable></lc-tile>
+      `,
+    },
   ],
 };

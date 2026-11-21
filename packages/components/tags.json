@@ -806,7 +806,7 @@
     ],
     "loads": [],
     "doc": {
-      "description": "",
+      "description": "Command Palette Component",
       "parts": [],
       "slots": []
     }
@@ -1450,7 +1450,9 @@
     "module": "display/media-card.js",
     "style": "display/media-card.css",
     "extends": null,
-    "uses": [],
+    "uses": [
+      "lc-icon"
+    ],
     "loads": [],
     "doc": {
       "description": "Media Card Component",
@@ -1470,6 +1472,10 @@
         {
           "name": "top",
           "description": "The top-left wrapper"
+        },
+        {
+          "name": "close",
+          "description": "The close button, when `closable`"
         },
         {
           "name": "bottom",
@@ -1937,6 +1943,18 @@
       "slots": []
     }
   },
+  "lc-scrim": {
+    "module": "overlay/scrim.js",
+    "style": "overlay/scrim.css",
+    "extends": null,
+    "uses": [],
+    "loads": [],
+    "doc": {
+      "description": "Scrim Component",
+      "parts": [],
+      "slots": []
+    }
+  },
   "lc-scroller": {
     "module": "app/scroller.js",
     "style": "app/scroller.css",
@@ -2020,6 +2038,33 @@
       "description": "Copyright (c) Alan Carlos Meira Leal\n\nSelect Component",
       "parts": [],
       "slots": []
+    }
+  },
+  "lc-setting-row": {
+    "module": "layout/setting-row.js",
+    "style": "layout/setting-row.css",
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ],
+    "loads": [],
+    "doc": {
+      "description": "Setting Row Component",
+      "parts": [],
+      "slots": [
+        {
+          "name": "default",
+          "description": "The control at the end of the row"
+        },
+        {
+          "name": "label",
+          "description": "Rich content in place of `label`"
+        },
+        {
+          "name": "description",
+          "description": "Rich content in place of `description`"
+        }
+      ]
     }
   },
   "lc-showcase-section": {
@@ -2340,7 +2385,9 @@
     "module": "navigation/tabs.js",
     "style": "navigation/tabs.css",
     "extends": null,
-    "uses": [],
+    "uses": [
+      "lc-icon"
+    ],
     "loads": [],
     "doc": {
       "description": "Tabs Component",

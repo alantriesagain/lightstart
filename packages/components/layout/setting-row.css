@@ -1,0 +1,71 @@
+:where(.lc-setting-row, lc-setting-row) {
+  display: block;
+  container: lc-setting-row / inline-size;
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    gap: var(--lc-setting-row-gap, var(--spacing-md, 0.75rem));
+    padding: var(--lc-setting-row-padding, var(--spacing-md, 0.75rem) var(--spacing-lg, 1rem));
+    border-bottom: var(--border-width, 1px) solid var(--lc-setting-row-border-color, var(--border-color));
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .setting-row-icon {
+    flex: 0 0 auto;
+    color: var(--lc-setting-row-icon-color, var(--text-muted));
+    font-size: var(--lc-setting-row-icon-size, 18px);
+  }
+
+  .setting-row-text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--lc-setting-row-text-gap, 0.125rem);
+    min-width: 0;
+  }
+
+  .setting-row-label {
+    color: var(--lc-setting-row-label-color, var(--text-color));
+    font-size: var(--lc-setting-row-label-font-size, var(--text-sm, 0.875rem));
+    font-weight: var(--lc-setting-row-label-font-weight, var(--control-weight, var(--font-medium, 500)));
+    line-height: 1.4;
+    cursor: pointer;
+  }
+
+  .setting-row-description {
+    color: var(--lc-setting-row-description-color, var(--text-muted));
+    font-size: var(--lc-setting-row-description-font-size, var(--text-xs, 0.75rem));
+    line-height: 1.4;
+  }
+
+  .setting-row-control {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--lc-setting-row-control-gap, var(--spacing-sm, 0.5rem));
+    margin-left: auto;
+    min-width: var(--lc-setting-row-control-min-width, 0);
+  }
+}
+
+@container lc-setting-row (max-width: 30rem) {
+  :where(.lc-setting-row, lc-setting-row) .setting-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  :where(.lc-setting-row, lc-setting-row) .setting-row-text {
+    flex: 1 1 12rem;
+  }
+
+  :where(.lc-setting-row, lc-setting-row) .setting-row-control {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+}

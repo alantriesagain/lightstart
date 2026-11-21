@@ -55,5 +55,31 @@ export default {
         </lc-tabs>
       `,
     },
+    {
+      title: "Closable and reorderable",
+      description: "Delete or a middle-click closes a `closable` tab, and dragging one emits `tab-reorder`. A drawn close button comes with `tabs` data.",
+      render: () => html`
+        <lc-tabs reorderable>
+          <button slot="tab" value="inbox" closable>Inbox</button>
+          <button slot="tab" value="drafts" closable>Drafts</button>
+          <button slot="tab" value="sent">Sent</button>
+          <div slot="panel">Inbox</div>
+          <div slot="panel">Drafts</div>
+          <div slot="panel">Sent</div>
+        </lc-tabs>
+      `,
+    },
+    {
+      title: "Tabs from data, with drawn close buttons",
+      render: () => html`
+        <lc-tabs .tabs=${[
+          { id: "inbox", label: "Inbox", icon: "inbox", badge: "3", closable: true },
+          { id: "drafts", label: "Drafts", icon: "file-text" },
+        ]}>
+          <div slot="panel">Inbox</div>
+          <div slot="panel">Drafts</div>
+        </lc-tabs>
+      `,
+    },
   ],
 };

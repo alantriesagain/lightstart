@@ -67,6 +67,77 @@
       cursor: not-allowed;
       pointer-events: none;
     }
+
+    & [part~=lc-tabs-badge] {
+      padding: 0 var(--lc-tabs-badge-padding, 0.35rem);
+      border-radius: var(--lc-tabs-badge-border-radius, 999px);
+      background: var(--lc-tabs-badge-background, var(--color-surface-lighter, var(--color-surface-dark)));
+      color: var(--lc-tabs-badge-color, var(--text-secondary));
+      font-size: var(--lc-tabs-badge-font-size, var(--text-xs, 0.7rem));
+      font-weight: var(--lc-tabs-badge-font-weight, var(--font-medium, 500));
+      line-height: 1.5;
+    }
+
+  }
+
+  & [part~=lc-tabs-item] {
+    position: relative;
+    display: flex;
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  & [part~=lc-tabs-item] > [data-lc-tab] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  & [part~=lc-tabs-item][closable] > [data-lc-tab] {
+    padding-inline-end: var(--lc-tabs-close-space, 1.65rem);
+  }
+
+  & [part~=lc-tabs-close] {
+    position: absolute;
+    inset-inline-end: var(--lc-tabs-close-inset, 0.45rem);
+    top: 50%;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--lc-tabs-close-padding, 0.1rem);
+    border: none;
+    border-radius: var(--lc-tabs-close-border-radius, var(--radius-selector, 999px));
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+    transform: translateY(-50%);
+
+    &:hover {
+      background: var(--lc-tabs-close-hover-background, var(--color-surface-lighter, rgba(0, 0, 0, 0.08)));
+    }
+  }
+
+  &[reorderable] [slot="tab"],
+  &[reorderable] [part~=lc-tabs-item] {
+    cursor: grab;
+    touch-action: none;
+  }
+
+  [slot="tab"][dragging],
+  [part~=lc-tabs-item][dragging] {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+    cursor: grabbing;
+    opacity: var(--lc-tabs-dragging-opacity, 0.6);
+  }
+
+  [slot="tab"][drag-over] {
+    outline: var(--lc-tabs-drag-over-width, 2px) solid
+      var(--lc-tabs-drag-over-color, var(--color-primary));
+    outline-offset: -2px;
   }
 
   &[variant="pills"] {
@@ -107,7 +178,8 @@
     }
   }
 
-  &[fullWidth] [slot="tab"] {
+  &[fullWidth] [slot="tab"],
+  &[fullWidth] [part~=lc-tabs-item] {
     flex: 1;
   }
 

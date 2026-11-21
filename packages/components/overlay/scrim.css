@@ -1,0 +1,29 @@
+:where(.lc-scrim, lc-scrim) {
+  position: fixed;
+  inset: 0;
+  z-index: var(--lc-scrim-z-index, 900);
+  display: block;
+  background-color: var(--lc-scrim-background, var(--canvas-backdrop, rgba(0, 0, 0, 0.5)));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--lc-scrim-transition-duration, 0.2s) ease;
+
+  &[open] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &[contained] {
+    position: absolute;
+  }
+
+  &[blurred],
+  &[blur] {
+    backdrop-filter: blur(var(--lc-scrim-blur, 2px));
+    -webkit-backdrop-filter: blur(var(--lc-scrim-blur, 2px));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

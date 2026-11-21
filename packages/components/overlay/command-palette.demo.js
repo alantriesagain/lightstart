@@ -30,10 +30,24 @@ export default {
         <lc-button @click=${OPEN_PALETTE}>Search</lc-button>
       `,
     },
+    {
+      title: "Anchored under a field",
+      description: "`anchor` names the field; the panel opens below it as a floating layer, without a backdrop.",
+      render: () => html`
+        <input id="palette-anchor-demo" placeholder="Search the app" style="width: 320px; height: 2.25rem; padding: 0 0.75rem; font: inherit;" />
+        <lc-command-palette id="palette-anchored-demo" hide-trigger anchor="palette-anchor-demo" .docs=${DOCS} .groups=${["Components", "Pages"]}></lc-command-palette>
+        <lc-button @click=${OPEN_ANCHORED_PALETTE}>Search</lc-button>
+      `,
+    },
   ],
 };
 
 const OPEN_PALETTE = () => {
   const palette = /** @type {CommandPaletteElement | null} */ (document.getElementById("palette-demo"));
+  if (palette) palette.open = true;
+};
+
+const OPEN_ANCHORED_PALETTE = () => {
+  const palette = /** @type {CommandPaletteElement | null} */ (document.getElementById("palette-anchored-demo"));
   if (palette) palette.open = true;
 };
