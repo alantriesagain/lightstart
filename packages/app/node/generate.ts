@@ -158,6 +158,8 @@ export interface AppInfo {
   host: string;
   root: string;
   locale: string;
+  /** The Iconify set the app's icons come from. */
+  icons: string;
   /** The site's address without a trailing slash, or `undefined` when the app names none. */
   url: string | undefined;
   /** Whether the app runs its model layer in a worker. */
@@ -174,7 +176,7 @@ export interface AppInfo {
 export const infoOf = async (app: string): Promise<AppInfo> => {
   try {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
-    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; url?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; args?: unknown; argsSchema?: unknown } }).default;
+    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; icons?: unknown; url?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; args?: unknown; argsSchema?: unknown } }).default;
     const worker = config !== undefined && config.worker === true;
     let indexeddb = false;
     if (config !== undefined && isRecord(config.stores)) {
@@ -189,6 +191,7 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
       host: config !== undefined && typeof config.host === "string" && config.host.length > 0 ? config.host : "web",
       root: config !== undefined && typeof config.root === "string" ? config.root : "app-root",
       locale: config !== undefined && typeof config.locale === "string" && config.locale.length > 0 ? config.locale : "en",
+      icons: config !== undefined && typeof config.icons === "string" && config.icons.length > 0 ? config.icons : "lucide",
       url: config !== undefined && typeof config.url === "string" && config.url.length > 0 ? config.url.replace(/\/+$/, "") : undefined,
       worker,
       indexeddb,
@@ -196,7 +199,7 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
       args: config !== undefined && isRecord(config.argsSchema ?? config.args) && Object.keys(config.argsSchema ?? config.args ?? {}).length > 0,
     };
   } catch {
-    return { host: "web", root: "app-root", locale: "en", url: undefined, worker: false, indexeddb: false, transitions: false, args: false };
+    return { host: "web", root: "app-root", locale: "en", icons: "lucide", url: undefined, worker: false, indexeddb: false, transitions: false, args: false };
   }
 };
 

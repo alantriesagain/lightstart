@@ -20,6 +20,25 @@ describe("openPage", () => {
     }
   });
 
+  it("draws an icon from the generated stylesheet with no loader", async () => {
+    const styles = document.createElement("link");
+    styles.rel = "stylesheet";
+    styles.href = "/.light/components.css";
+    document.head.append(styles);
+    await new Promise<void>((resolve, reject) => {
+      styles.onload = () => resolve();
+      styles.onerror = () => reject(new Error("the components stylesheet did not load"));
+    });
+    const page = await openPage(manifest, { path: "/" });
+    try {
+      const icon = await page.find("app-home lc-icon");
+      assert.ok(getComputedStyle(icon).getPropertyValue("--lc-icon-mask").trim().length > 0, "the used name has a mask");
+    } finally {
+      await page.stop();
+      styles.remove();
+    }
+  });
+
   it("takes its arguments from the test and goes to another route", async () => {
     const withArgs = defineApp({ name: "fixture-web", host: "web", args: { greeting: { default: "hi" } } });
     const page = await openPage({ ...manifest, app: withArgs } as AppManifest, { args: { greeting: "hello" } });

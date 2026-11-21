@@ -20,6 +20,7 @@ export const web: Kind = {
     verify: "light verify",
   },
   devDependencies: {
+    "@iconify-json/lucide": "^1.2.157",
     "@lightstart/cli": "^0.1.0",
     "@lightstart/dev": "^0.1.0",
     "@lightstart/build": "^0.1.0",
