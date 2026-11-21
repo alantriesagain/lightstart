@@ -147,6 +147,28 @@ const main = async (): Promise<void> => {
       ok("components.css imports the icons", readFileSync(join(iconApp.dir, "components.css"), "utf8").includes('@import "./icons.css";'));
     }
 
+    const iconFolder = join(withComponents, "icons");
+    mkdirSync(iconFolder, { recursive: true });
+    writeFileSync(join(iconFolder, "brand-mark.svg"), '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><!-- a mark --><path d="M1 1" /></svg>\n');
+    writeFileSync(join(iconFolder, "house.svg"), '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 2" /></svg>\n');
+    const ownApp = await generate(withComponents);
+    ok("an app icon app generates", ownApp !== null);
+    if (ownApp !== null) {
+      const own = readFileSync(join(ownApp.dir, "icons.css"), "utf8");
+      ok("an app icon has a mask even when no source names it", own.includes('[name="brand-mark"]'));
+      ok("the app icon wins over the set icon of the same name", own.includes("M2 2"));
+    }
+
+    rmSync(join(withComponents, "node_modules", "@iconify-json"), { recursive: true, force: true });
+    const withoutSet = await generate(withComponents);
+    ok("app icons generate with no set installed", withoutSet !== null && existsSync(join(withoutSet.dir, "icons.css")));
+    if (withoutSet !== null) {
+      const own = readFileSync(join(withoutSet.dir, "icons.css"), "utf8");
+      ok("only the app's icons are written", own.includes('[name="brand-mark"]') && own.includes('[name="house"]') && !own.includes('[name="menu"]'));
+    }
+
+    rmSync(iconFolder, { recursive: true, force: true });
+
     writeFileSync(view, 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppHome extends View {\n  render() {\n    return html`<lc-form .fields=${[]}></lc-form>`;\n  }\n}\n\nView.register("app-home", AppHome);\n');
     const onDemandApp = await generate(withComponents);
     ok("a form app generates", onDemandApp !== null);

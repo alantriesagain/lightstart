@@ -14,6 +14,7 @@ __LANGUAGE_INTRO__A web app on `@lightstart/app`: the folders are the app, and l
 | `src/routes.__EXT__` | Optional: `{ "/path": { view: "<tag>", name?, title? } }`; `/notes/:id` sets `id` on the view as a prop |
 | `src/locales/<lang>.__EXT__` | With `@lightstart/i18n` installed: the app's words, read with `t(key)`, merged over the words its packages ship |
 | `src/styles.css` | The generated components' stylesheet, then the app's own rules |
+| `icons/<name>.svg` | The app's own icons: the file name is the icon name, `viewBox` its size, the markup inside its body |
 | `test/` | Browser tests, run by `light test` |
 
 A view reaches its controller with an import, `import notes from "../controllers/notes.__EXT__"`. A controller imports its models the same way, `import note from "../models/note.__EXT__"`. __ROW_TYPE__ One controller follows another's state by name with `sync:` (the file name is the name), and imports it to call its methods: the run starts an imported controller first.
@@ -35,6 +36,10 @@ light new view note-list
 ```
 
 A field is `name:type`, types are `string`, `boolean`, `number`, `array` and `object`, and a `!` after the type makes it required (`title:string!`); a `?`, or nothing, is optional with a default (`""`, `false`, `0`, `[]`, `{}`). The commands refuse a file that already exists, and a view tag needs a hyphen.
+
+## Icons
+
+For a mark of the app's own, a logo or a project glyph, draw an icon with `light new icon <name>` and then edit its shapes in the set's style: a 24×24 `viewBox`, `fill="none"`, `stroke="currentColor"`, `stroke-width="2"`, round caps and joins, no text, and no colour other than `currentColor` or `none`. The file is `icons/<name>.svg`, named by the icon name, and `<lc-icon name="<name>">` or `icon="<name>"` draws it like a set icon.
 
 ## Scripts
 

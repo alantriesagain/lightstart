@@ -1,9 +1,9 @@
 // node-only
 /**
- * @file `light new model|view|controller` inside a JavaScript web app, a
+ * @file `light new model|view|controller|icon` inside a JavaScript web app, a
  * TypeScript web app and a tui app: each command writes the scaffold's shape,
- * the app still passes check and typecheck, and a second model of the same
- * name is refused.
+ * the app still passes check and typecheck, and a second piece of the same
+ * name and an invalid icon name are refused.
  */
 import { spawn } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -62,7 +62,11 @@ const main = async (): Promise<void> => {
       ok(`${label}light new view exits 0`, view.code === 0);
       if (view.code !== 0) console.log(view.output);
 
-      const files = [`src/models/note2.${variant.ext}`, `src/controllers/notes2.${variant.ext}`, `src/views/note-list.${variant.ext}`];
+      const icon = await run(process.execPath, [light, "new", "icon", "brand-mark"], target);
+      ok(`${label}light new icon exits 0`, icon.code === 0);
+      if (icon.code !== 0) console.log(icon.output);
+
+      const files = [`src/models/note2.${variant.ext}`, `src/controllers/notes2.${variant.ext}`, `src/views/note-list.${variant.ext}`, "icons/brand-mark.svg"];
       for (const file of files) ok(`${label}the app has ${file}`, existsSync(join(target, file)));
 
       const modelSource = existsSync(join(target, files[0])) ? readFileSync(join(target, files[0]), "utf8") : "";
@@ -71,9 +75,15 @@ const main = async (): Promise<void> => {
       ok(`${label}the controller follows the model`, controllerSource.includes("liveRows"));
       const viewSource = existsSync(join(target, files[2])) ? readFileSync(join(target, files[2]), "utf8") : "";
       ok(`${label}the view registers its tag`, viewSource.includes("note-list"));
+      const iconSource = existsSync(join(target, files[3])) ? readFileSync(join(target, files[3]), "utf8") : "";
+      ok(`${label}the icon follows the set's conventions`, iconSource.includes('viewBox="0 0 24 24"') && iconSource.includes('stroke="currentColor"'));
 
       const again = await run(process.execPath, [light, "new", "model", "note2", "--fields", "title:string"], target);
       ok(`${label}a second model is refused`, again.code !== 0);
+      const againIcon = await run(process.execPath, [light, "new", "icon", "brand-mark"], target);
+      ok(`${label}a second icon is refused`, againIcon.code !== 0);
+      const badIcon = await run(process.execPath, [light, "new", "icon", "Brand"], target);
+      ok(`${label}a bad icon name is refused`, badIcon.code !== 0);
 
       const checked = await run("pnpm", ["run", "check"], target);
       ok(`${label}the app's check passes`, checked.code === 0);

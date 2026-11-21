@@ -13,7 +13,7 @@ import { icon } from "@lightstart/light/theme/icons.js";
 import type { IconEntry } from "@lightstart/light/theme";
 import { workerPathOf } from "../node/generate.ts";
 import type { GenerationHelpers, HostGeneration, HostPrepared } from "../node/generate.ts";
-import { collectionOf, scanIcons } from "../node/icons.ts";
+import { collectionOf, ownIcons, scanIcons } from "../node/icons.ts";
 import type { ScannedIcons } from "../node/icons.ts";
 
 interface TagEntry {
@@ -149,10 +149,32 @@ const componentSources = (project: string, tags: ReadonlySet<string>, table: Tag
   return files;
 };
 
+const FRONTMATTER_ICON = /^icon\s*:\s*["']?([a-z][a-z0-9-]*)["']?\s*$/gm;
+
+/** The `content/` Markdown files, whose frontmatter may name an icon (`icon: zap`). */
+const markdown = (dir: string): string[] => {
+  if (!existsSync(dir)) return [];
+  const files: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) files.push(...markdown(path));
+    else if (entry.name.endsWith(".md")) files.push(path);
+  }
+  return files.sort();
+};
+
+/** A Markdown file's frontmatter icons, as the scanner reads a data field. */
+const frontmatterIcons = (text: string): string => {
+  const end = text.startsWith("---") ? text.indexOf("\n---", 3) : -1;
+  if (end < 0) return "";
+  return [...text.slice(0, end).matchAll(FRONTMATTER_ICON)].map((match) => `icon: "${match[1] ?? ""}"`).join("\n");
+};
+
 /** Every icon the project's own sources and the component modules it uses name. */
 const iconScans = (project: string, tags: ReadonlySet<string>, table: TagTable): ScannedIcons[] => {
   const files = [...sources(join(project, "src")), ...componentSources(project, tags, table)];
-  return files.map((file) => scanIcons(readFileSync(file, "utf8")));
+  const content = markdown(join(project, "content")).map((file) => scanIcons(frontmatterIcons(readFileSync(file, "utf8"))));
+  return [...files.map((file) => scanIcons(readFileSync(file, "utf8"))), ...content];
 };
 
 interface IconMaskModule {
@@ -160,26 +182,34 @@ interface IconMaskModule {
   iconSizeCSS(sizes: Iterable<number | string>): string;
 }
 
-/** The `.light/icons.css` source for the names found, or null when none is used, the collection is missing or the mask module does not resolve. */
+/** The `.light/icons.css` source for the names found and the app's own icons, or null when there is nothing to draw or the mask module does not resolve. */
 const iconsSource = (project: string, scans: readonly ScannedIcons[], set: string): string | null => {
   const names = new Set<string>();
   const solid = new Set<string>();
   const bold = new Set<string>();
   const sizes = new Set<string>();
+  const own = ownIcons(project);
+  const ownByName = new Map(own.map((item) => [item.name, item.entry]));
   for (const scan of scans) {
     for (const name of scan.names) names.add(name);
     for (const name of scan.solid) solid.add(name);
     for (const name of scan.bold) bold.add(name);
     for (const size of scan.sizes) sizes.add(size);
   }
+  for (const name of ownByName.keys()) names.add(name);
   if (names.size === 0) return null;
   const collection = collectionOf(project, set);
-  if (collection === null) return null;
   const icons: Array<{ name: string; entry: IconEntry }> = [];
   for (const name of [...names].sort()) {
-    const entry = icon(collection, name);
+    const appEntry = ownByName.get(name);
+    if (appEntry !== undefined) {
+      icons.push({ name, entry: appEntry });
+      continue;
+    }
+    const entry = collection === null ? null : icon(collection, name);
     if (entry !== null) icons.push({ name, entry });
   }
+  if (icons.length === 0) return null;
   let mask: IconMaskModule;
   try {
     mask = createRequire(join(project, "package.json"))("@lightstart/components/display/icon-mask.js") as IconMaskModule;
