@@ -80,6 +80,8 @@ export interface AppConfig {
   stores?: Record<string, StoreConfig>;
   /** The root view's tag; `"app-root"` when absent. */
   root?: string;
+  /** The layout tag a top-level route wraps its view in unless the route declares its own `layout`; none when absent. */
+  layout?: string;
   /** The arguments the app takes; the host fills them from its source (argv, the URL) into `args`. */
   args?: ArgsSchema;
 }
@@ -147,6 +149,8 @@ export class App {
   /** The stores the config declares, `main` among them (of the host's default adapter unless it says). */
   readonly stores: Record<string, StoreConfig>;
   readonly root: string | undefined;
+  /** The default layout tag for top-level routes, when the config names one. */
+  readonly layout: string | undefined;
   /** The argument schema the config declares; empty when it declares none. */
   readonly argsSchema: ArgsSchema;
   /** The values the host parsed. */
@@ -175,6 +179,7 @@ export class App {
     for (const name of Object.keys(declared)) stores[name] = declared[name] ?? {};
     this.stores = stores;
     this.root = config.root;
+    this.layout = config.layout;
     this.argsSchema = config.args ?? {};
   }
 

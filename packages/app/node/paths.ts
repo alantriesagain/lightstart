@@ -52,7 +52,8 @@ const collect = async (routes: RoutesMap, base: string, out: Set<string>): Promi
       continue;
     }
 
-    const skipped = typeof route.redirect === "string" || route.spa === true || isWildcard(path);
+    const grouping = isRecord(route.routes) && typeof route.view !== "string";
+    const skipped = grouping || typeof route.redirect === "string" || route.spa === true || isWildcard(path);
     if (!skipped) {
       const names = parameterNames(path);
       if (names.length === 0) {

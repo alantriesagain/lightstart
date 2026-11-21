@@ -48,6 +48,15 @@ const main = async (): Promise<void> => {
     const note = await renderApp(app, { path: "/notes/7" });
     ok("a route parameter reaches the view as a prop", note.includes('class="id"') && note.includes("<!--$-->7<!--/-->"));
 
+    const settings = await renderApp(app, { path: "/settings/profile" });
+    const shellAt = settings.indexOf("<app-shell-layout");
+    const settingsAt = settings.indexOf("<app-settings");
+    const profileAt = settings.indexOf("<app-profile");
+    ok("a layout wraps its view and a nested child is drawn inside its parent view", shellAt >= 0 && settingsAt > shellAt && profileAt > settingsAt);
+
+    const plain = await renderApp(app, { path: "/plain" });
+    ok("a layout: null route renders without the app's layout", plain.includes("<app-plain") && !plain.includes("<app-shell-layout"));
+
     const page = readFileSync(join(fixture, "index.html"), "utf8");
     const rendered = await renderPage(app, page, { path: "/about" });
     ok("the page holds the rendered root view", rendered.includes("<p>About</p>") && rendered.includes("<h1>Notes</h1>"));

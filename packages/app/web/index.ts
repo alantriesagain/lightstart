@@ -26,8 +26,10 @@ import { withBase } from "@lightstart/router/url";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
-import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
+import { AppHost, AppRun, currentParams, currentView, outletAt } from "../run.ts";
 import type { RouteTransition, RunStore } from "../run.ts";
+import { convertParam } from "../outlet.ts";
+import type { OutletPosition } from "../outlet.ts";
 import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
 import type { Head } from "../head.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
@@ -84,23 +86,71 @@ if (prerenderedPage()) {
   });
 }
 
-/** The view the routes answer, its path's parameters set on it as props; the same element while the tag stays. */
+interface MadePosition {
+  level: number;
+  kind: "layout" | "view";
+}
+
+/** Every element a container made, and the level it draws: a nested container finds its position from the nearest one above it. */
+const madePositions = new WeakMap<Element, MadePosition>();
+
+const propTypeOf = (tag: string, key: string): string | null => {
+  const constructor = customElements.get(tag) as unknown as { properties?: Record<string, unknown> } | undefined;
+  const properties = constructor?.properties ?? {};
+  const property = properties[key];
+  if (typeof property !== "object" || property === null) return null;
+  const type = (property as { $type?: unknown }).$type;
+  return typeof type === "string" ? type : null;
+};
+
+const positionOf = (container: AppContainer): OutletPosition => {
+  let node: Element | null = container.parentElement;
+  while (node !== null) {
+    const made = madePositions.get(node);
+    if (made !== undefined) return made.kind === "layout" ? { level: made.level, kind: "layout" } : { level: made.level + 1, kind: "root" };
+    node = node.parentElement;
+  }
+  return { level: 0, kind: "root" };
+};
+
+/** The view the routes answer, wrapped in its layout and its parameters set as props; the same layout and view elements while their tags stay. */
 class AppContainer extends View {
-  private tag = "";
-  private made: HTMLElement | null = null;
+  private layoutTag: string | null = null;
+  private layoutElement: HTMLElement | null = null;
+  private viewTag: string | null = null;
+  private viewElement: HTMLElement | null = null;
 
   render(): unknown {
-    const tag = currentView.value;
-    const params = currentParams.value;
-    if (tag === null) return html``;
-    if (tag !== this.tag || this.made === null) {
-      this.tag = tag;
-      // A prerendered page's container already holds the served view: keep it, so its own render adopts the served DOM.
-      const served = this.made === null ? this.querySelector(tag) : null;
-      this.made = served instanceof HTMLElement && served.parentElement === this ? served : document.createElement(tag);
+    const outlet = outletAt(positionOf(this));
+    const view = outlet.view;
+    if (view === null) return html``;
+    if (outlet.layout !== null) {
+      if (outlet.layout !== this.layoutTag || this.layoutElement === null) {
+        this.layoutTag = outlet.layout;
+        // A prerendered page's container already holds the served layout: keep it, so its own render adopts the served DOM.
+        const served = this.layoutElement === null ? this.querySelector(outlet.layout) : null;
+        this.layoutElement = served instanceof HTMLElement && served.parentElement === this ? served : document.createElement(outlet.layout);
+        this.viewTag = null;
+        this.viewElement = null;
+      }
+      madePositions.set(this.layoutElement, { level: outlet.level, kind: "layout" });
+      return html`${this.layoutElement}`;
     }
-    for (const [key, value] of Object.entries(params)) Reflect.set(this.made, key, value);
-    return html`${this.made}`;
+    this.layoutTag = null;
+    this.layoutElement = null;
+    if (view !== this.viewTag || this.viewElement === null) {
+      this.viewTag = view;
+      // A prerendered page's container already holds the served view: keep it, so its own render adopts the served DOM.
+      const served = this.viewElement === null ? this.querySelector(view) : null;
+      this.viewElement = served instanceof HTMLElement && served.parentElement === this ? served : document.createElement(view);
+    }
+    madePositions.set(this.viewElement, { level: outlet.level, kind: "view" });
+    const params = currentParams.value;
+    for (const key of Object.keys(outlet.props)) {
+      const value = key in params ? convertParam(params[key], propTypeOf(view, key)) : outlet.props[key];
+      Reflect.set(this.viewElement, key, value);
+    }
+    return html`${this.viewElement}`;
   }
 }
 

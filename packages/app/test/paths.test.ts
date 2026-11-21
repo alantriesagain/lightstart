@@ -7,7 +7,7 @@
  * parent's path.
  */
 
-import { done, eq } from "@lightstart/test/assert.ts";
+import { done, eq, ok } from "@lightstart/test/assert.ts";
 import type { RoutesMap } from "@lightstart/router";
 import { pathsOf } from "../node/paths.ts";
 
@@ -36,13 +36,21 @@ const routes: RoutesMap = {
       "/index": { name: "index", view: "index" },
     },
   },
+  "/group": {
+    name: "group",
+    layout: "group-layout",
+    routes: {
+      "/child": { name: "group-child", view: "child" },
+    },
+  },
 };
 
-const expected = ["/", "/about", "/docs", "/docs/index", "/docs/intro", "/items/9", "/notes/1", "/notes/a%2Fb", "/notes/two%20words"];
+const expected = ["/", "/about", "/docs", "/docs/index", "/docs/intro", "/group/child", "/items/9", "/notes/1", "/notes/a%2Fb", "/notes/two%20words"];
 
 const main = async (): Promise<void> => {
   const paths = await pathsOf(routes);
   eq("every concrete path, sorted and unique", JSON.stringify(paths), JSON.stringify(expected));
+  ok("a grouping route with no view is left out", !paths.includes("/group"));
   done();
 };
 

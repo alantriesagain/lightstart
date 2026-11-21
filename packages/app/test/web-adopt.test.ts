@@ -57,6 +57,16 @@ globalThis.__kept = () => marked.map((s, i) => (document.querySelector(s)?.getAt
     await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 800)));
     const kept = await page.evaluate(() => (globalThis as { __kept?: () => string }).__kept?.() ?? "");
     eq("the served root, container, page and its content are kept through the boot", String(kept), marked.map(() => "kept").join(", "));
+
+    const layoutPage = await browser.newPage();
+    const layoutMarked = ["app-root", "app-shell-layout", "app-settings", "app-profile"];
+    await layoutPage.addInitScript(`const marked = ${JSON.stringify(layoutMarked)};
+document.addEventListener("DOMContentLoaded", () => marked.forEach((s, i) => document.querySelector(s)?.setAttribute("data-served", String(i))));
+globalThis.__kept = () => marked.map((s, i) => (document.querySelector(s)?.getAttribute("data-served") === String(i) ? "kept" : "drawn again")).join(", ");`);
+    await layoutPage.goto(`http://127.0.0.1:${String((server.address() as AddressInfo).port)}/settings/profile`, { waitUntil: "networkidle" });
+    await layoutPage.evaluate(() => new Promise((resolve) => setTimeout(resolve, 800)));
+    const layoutKept = await layoutPage.evaluate(() => (globalThis as { __kept?: () => string }).__kept?.() ?? "");
+    eq("a served layout and nested view are kept through the boot", String(layoutKept), layoutMarked.map(() => "kept").join(", "));
   } finally {
     await browser.close();
     server.close();

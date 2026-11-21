@@ -74,7 +74,7 @@ const main = async (): Promise<void> => {
 
     ok("it finds the note model", first.models.join(",") === "note");
     eq("it finds the controllers", first.controllers.join(","), "notes,settings");
-    eq("it sorts the views", first.views.join(","), "app-about,app-form,app-home,app-legal,app-root,app-search");
+    eq("it sorts the views", first.views.join(","), "app-about,app-billing,app-fixed,app-form,app-home,app-item,app-legal,app-plain,app-profile,app-root,app-search,app-settings,app-shell-layout");
     ok("it finds the routes", first.routes);
     ok("the first run wrote", first.changed);
 
@@ -85,7 +85,7 @@ const main = async (): Promise<void> => {
     ok("a view import is relative and side-effect only", source.includes('import "../src/views/app-root.ts";'));
     ok("the model keeps its file name", source.includes('{ name: "note", model: model0 }'));
     ok("the controller keeps its file name", source.includes('{ name: "notes", controller: controller0 }'));
-    ok("the views are named", source.includes('views: ["app-about", "app-form", "app-home", "app-legal", "app-root", "app-search"]'));
+    ok("the views are named", source.includes('views: ["app-about", "app-billing", "app-fixed", "app-form", "app-home", "app-item", "app-legal", "app-plain", "app-profile", "app-root", "app-search", "app-settings", "app-shell-layout"]'));
     eq("the entry starts the web host with the default adapter", readFileSync(first.main, "utf8"), 'import { start } from "@lightstart/app/web";\nimport manifest from "./app.ts";\nimport { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";\nimport { LocalStores } from "@lightstart/app/web/local.ts";\n\nawait start(manifest, {\n  adapters: [new IndexedDBAdapterType()],\n  stores: new LocalStores(),\n});\n');
     ok("a project without the components writes none", !existsSync(join(first.dir, "components.ts")) && !existsSync(join(first.dir, "components.css")));
     ok("a project without i18n writes no locales", !existsSync(join(first.dir, "locales.ts")) && !source.includes('import "./locales.ts";'));
