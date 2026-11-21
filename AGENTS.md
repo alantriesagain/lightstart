@@ -46,8 +46,9 @@ Reach for these before writing your own; each package's README is its reference.
 | SQLite | `@lightstart/sqlite` | one synchronous driver, node's or native |
 | Markdown, syntax colours | `@lightstart/markdown`, `@lightstart/highlight` | `parse`; a line tokenizer for terminal views and `lc-code-block` |
 | Markdown files as an app's content | `@lightstart/content` | `content/<model>/*.md`, frontmatter and a body; `collect` at build, `renderContent` on the page with no parser |
+| Design canvases | `@lightstart/design` | `design/<canvas>/` with a `canvas.json` index and its `*.dc.html` boards: `light design`, `design:build`, `design:serve`, `design:render`, and `layoutCanvas` for the band layout |
 | Terminal UI pieces | `@lightstart/tui`, `@lightstart/tui-markdown` | the palette and what package views draw with |
-| The `light` commands | `@lightstart/cli` with `@lightstart/dev`, `@lightstart/build`, `@lightstart/native` | `serve`, `build`, `run`, `test`, `check`, `lint`, `typecheck`, `verify`, `new` |
+| The `light` commands | `@lightstart/cli` with `@lightstart/dev`, `@lightstart/build`, `@lightstart/design`, `@lightstart/native` | `serve`, `build`, `run`, `test`, `check`, `lint`, `typecheck`, `verify`, `new`, `design` |
 | Tests that run under node and natively | `@lightstart/test` | `ok`, `eq`, `done` in `assert.ts` |
 
 ## Patterns an app keeps
