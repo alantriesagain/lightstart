@@ -14,6 +14,7 @@ export default defineWorker({
   mirror: { lastArchived: { signal: lastArchived, owner: true } },
   async opened(context) {
     store = context.store;
+    context.serve({ "worker.later": () => "served after open" });
     modelChanged.on((change) => {
       if (change.model !== "archive" || change.row === undefined) return;
       if (change.action !== "add" && change.action !== "sync") return;

@@ -101,6 +101,7 @@ describe("worker stores", () => {
       assert.equal(row.text, "crossing the channel", "the relayed event carries the row");
       await waitFor(() => lastArchived.value === "crossing the channel", "the mirrored signal");
       assert.equal(await worker.request("worker.greeting"), "hello from the page for worker", "the worker read the page's answer");
+      assert.equal(await worker.request("worker.later"), "served after open", "a handler opened serves after the stores open answers");
     } finally {
       await page.stop();
       lastArchived.value = null;

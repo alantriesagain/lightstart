@@ -33,6 +33,8 @@ export interface WorkerContext {
   app: App;
   store: Store;
   request(name: string, payload?: unknown): Promise<unknown>;
+  /** Serve more requests from now on, beside light's (a name light uses is an error; a project name served before is replaced). */
+  serve(handlers: Record<string, (payload: unknown) => unknown>): void;
 }
 
 /** A worker app's own part of the worker: requests, events, mirrored signals and the work its stores opening calls for. */
@@ -96,6 +98,10 @@ export const serveModels = (input: WorkerInput): { dispose(): void } => {
   const ownServe = worker.serve ?? {};
   const ownRelay = worker.relay ?? {};
   refuseClash(Object.keys(ownServe), [...LIGHT_REQUESTS], "serve table");
+  const addHandlers = (handlers: Record<string, (payload: unknown) => unknown>): void => {
+    refuseClash(Object.keys(handlers), [...LIGHT_REQUESTS], "serve table");
+    Object.assign(table, handlers);
+  };
   refuseClash(Object.keys(ownRelay), Object.keys(RELAYED), "relay table");
   const port = input.port ?? portOf(globalThis);
   const workerClient = client(port, { timeoutMs: REQUEST_TIMEOUT, idPrefix: "worker:" });
@@ -122,7 +128,7 @@ export const serveModels = (input: WorkerInput): { dispose(): void } => {
     store = made;
     if (worker.opened !== undefined) {
       try {
-        await worker.opened({ app, store: made, request: (name, requestPayload) => workerClient.request(name, requestPayload) });
+        await worker.opened({ app, store: made, request: (name, requestPayload) => workerClient.request(name, requestPayload), serve: addHandlers });
       } catch (error) {
         store = null;
         await made.close();
@@ -159,7 +165,8 @@ export const serveModels = (input: WorkerInput): { dispose(): void } => {
       return closing === null ? undefined : closing.close();
     },
   };
-  const served = serve(port, { ...lightServe, ...ownServe });
+  const table: Record<string, Handler> = { ...lightServe, ...ownServe };
+  const served = serve(port, table);
   const relayed = relay(port, { ...RELAYED, ...ownRelay });
   const mirrored = Object.entries(worker.mirror ?? {}).map(([name, entry]) => mirror(port, name, entry.signal, { owner: entry.owner }));
   return {
