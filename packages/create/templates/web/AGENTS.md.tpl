@@ -74,7 +74,7 @@ A test opens the app in the page with `openPage(manifest, { path, args })` from 
 
 A form over a model is `<lc-form .fields=${fieldsForModel(schema)}>` with `@lightstart/form`, its submit checked with `validateForm`. Words go through `t(key)` from `@lightstart/i18n`, and `<lc-language-switcher>` changes the language.
 
-A `View` subclass's render follows the signals it reads. A view written as a definition (`View.define({ tag, props, render })`) does not: it reads a `defineController`'s state through props declared `sync: "<controller>"`, which needs `View.use(syncPlugin)` from `@lightstart/light/controller/view` in `src/app.__EXT__`.
+A `View` subclass's render follows the signals it reads. A view written as a definition (`View.define({ tag, props, render })`) does not: it reads a `defineController`'s state through props declared `sync: "<controller>"`, and the generation installs `View.use(syncPlugin)` from `@lightstart/light/controller/view` before the views, plus `registerSyncBinder(modelBinder)` when a `sync:` names a model api.
 
 ## Read more
 

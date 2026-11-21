@@ -47,7 +47,7 @@ const main = async (): Promise<void> => {
 
   const generated = spawnSync(process.execPath, ["--no-warnings", cli, "app"], { cwd: fixture, env, encoding: "utf8" });
   eqn("light app exits 0", generated.status ?? 1, 0);
-  ok("light app prints what it found", (generated.stdout ?? "").includes("1 models, 1 controllers, 6 views, routes"));
+  ok("light app prints what it found", (generated.stdout ?? "").includes("1 models, 2 controllers, 6 views, routes"));
 
   const built = spawnSync(process.execPath, ["--no-warnings", cli, "build"], { cwd: fixture, env, encoding: "utf8" });
   eqn("light build exits 0", built.status ?? 1, 0);

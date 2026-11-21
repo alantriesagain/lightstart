@@ -4,12 +4,7 @@
  * the component tree, the search palette) around `<app-container>`. Nothing is stored: the skin a
  * reader picks is kept in localStorage by the catalogue controller.
  */
-import View from "@lightstart/light";
-import { syncPlugin } from "@lightstart/light/controller/view";
 import { defineApp } from "@lightstart/app";
-
-// The views' props declared with `sync:` follow the catalogue controller; installed before any view is defined.
-View.use(syncPlugin);
 
 export default defineApp({
   name: "light-website",
