@@ -18,7 +18,7 @@ light build                # generate as the build's first step
 | `src/models/<name>.ts` | one model, default-exported | opens its store with every model |
 | `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready`, each after the controllers it imports |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
-| `src/routes.ts` | optional: `{ "/path": { view: "<tag>", name?, title? } }` | follows them on every host; `<app-container>` draws the view |
+| `src/routes.ts` | optional: `{ "/path": { view: "<tag>", name?, title?, layout?, props?, routes? } }` | follows them on every host; `<app-container>` draws the view, wrapped in its layout |
 | `src/modes/<name>.ts` | optional, a terminal app's: `main(argv)` and maybe `matches(argv)` | runs before the host when `argv` matches |
 
 A file's name is its name in the manifest, without the extension and unchanged: `src/models/note.ts` is the model `note`, `src/controllers/notes.ts` is the controller `notes`. `.ts` and `.js` files are read the same way, in sorted order; `.d.ts` and `*.test.*` are skipped. Keep a model's file name equal to the name it passes `defineModel`, and a controller's file name equal to the name its controller carries.
@@ -56,6 +56,7 @@ export default defineApp({
 | `focusOnNavigate` | `true` | Move focus to the new view's first `h1`, else the view itself, after a route change that is not the first load |
 | `stores` | `{ main: {} }` | The stores by name, several at once: `{ adapter?, at? }` each |
 | `root` | `"app-root"` | The root view's tag |
+| `layout` | none | The layout tag a top-level route wraps its view in unless the route declares its own `layout` |
 | `args` | `{}` | The arguments the app takes, as a `@lightstart/cli` schema |
 
 `defineApp` makes the app, an `App`: the config's fields, `args` (an `AppArgs` the host fills) and `restart` and `quit`, which reach the run. A controller imports the app and reads an argument by name: `app.args.string("dir")` for an option (`undefined` when it was not given and has no default), `app.args.flag("trust")` for a flag, `app.args.list("files")` for a rest positional. The app is one instance, the one the generated manifest holds and the host writes, so what a controller reads is what the host filled, natively as under node (a shape scriptc would convert is a copy).
@@ -132,6 +133,27 @@ View.register("app-note", NotePage);
 ```
 
 A plain class may keep `static props = { slug: "" }` instead. An app without `routes.ts` mounts its root view alone. A deploy base never reaches a view: the router adds it to its own `href` and strips it from the location, so a route matches the same `/accounts` under `/budget`.
+
+A route may declare `layout`, the tag of an ordinary view (in `src/views`) that holds an `<app-container>` where the routed view goes. `defineApp({ layout })` names the default for top-level routes only, and `layout: null` opts a route out. While a navigation keeps the layout tag, the layout element stays (its state survives) and only its container's view changes; a parameter change keeps the view element too.
+
+```js
+export default {
+  "/settings": {
+    view: "app-settings",
+    layout: "app-shell",
+    routes: {
+      "/profile": { view: "app-profile", title: "Profile" },
+      "/billing": { view: "app-billing", title: "Billing" },
+    },
+  },
+  "/plain": { view: "app-plain", layout: null },
+  "/notes/:id": { view: "app-note", props: { tab: "body" } },
+};
+```
+
+Nested `routes` join their parent's path, and the chain is drawn one level at a time. The root's `<app-container>` draws level 0: its layout holding its view. An `<app-container>` inside a layout draws the view that layout wraps; one inside a routed view draws the next level (with that route's own `layout`, the app default not applying below the top). A route with no `view` only groups its children: it takes no level, and its `layout` wraps the next view. A container with no level left draws nothing.
+
+A route's `props` sets fixed values on its view, and a path or query parameter of the same name wins. A parameter reaches the view as the type it declares for that prop: `T.number()` gets a number (left as the string when it is not finite), a boolean gets `true` for `""`, `"true"` and `"1"` and `false` for `"false"` and `"0"`, and other types arrive as strings. A route's own `props` values are set as written.
 
 With `transitions: true` the web host runs each route change (a `navigate`, a link through the router, the browser's back and forward) inside `document.startViewTransition` where the browser has it, and waits for `<app-container>` to draw the next view, so the browser snapshots the old view and the new one.
 

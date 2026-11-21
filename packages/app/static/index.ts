@@ -27,8 +27,10 @@ import { get as registeredView } from "@lightstart/light/markup/registry.js";
 import { config, configureView } from "@lightstart/light/view/core.js";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
-import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
+import { AppHost, AppRun, currentParams, outletAt } from "../run.ts";
 import type { RunStore } from "../run.ts";
+import { convertParam } from "../outlet.ts";
+import type { OutletPosition } from "../outlet.ts";
 import { openStores as openLocalStores } from "../engine.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import { PRERENDER_SCRIPT } from "../node/prerender.ts";
@@ -44,21 +46,67 @@ export interface RenderOptions {
   adapters?: readonly AdapterType[];
 }
 
-/** The view the routes answer, its path's parameters set on it as props; drawn as the markup host's element for the tag. */
+interface MadePosition {
+  level: number;
+  kind: "layout" | "view";
+}
+
+/** Every element a container made, and the level it draws: a nested container finds its position from the nearest one above it. */
+const madePositions = new WeakMap<MElement, MadePosition>();
+
+const propTypeOf = (tag: string, key: string): string | null => {
+  const constructor = registeredView(tag) as unknown as { properties?: Record<string, unknown> } | undefined;
+  const properties = constructor?.properties ?? {};
+  const property = properties[key];
+  if (typeof property !== "object" || property === null) return null;
+  const type = (property as { $type?: unknown }).$type;
+  return typeof type === "string" ? type : null;
+};
+
+const positionOf = (container: StaticAppContainer): OutletPosition => {
+  let node: MElement | null = (container as unknown as MElement).parentElement;
+  while (node !== null) {
+    const made = madePositions.get(node);
+    if (made !== undefined) return made.kind === "layout" ? { level: made.level, kind: "layout" } : { level: made.level + 1, kind: "root" };
+    node = node.parentElement;
+  }
+  return { level: 0, kind: "root" };
+};
+
+/** The view the routes answer, wrapped in its layout and its parameters set as props; drawn as the markup host's elements for the tags. */
 class StaticAppContainer extends View {
-  private shown = "";
-  private made: MElement | null = null;
+  private layoutTag: string | null = null;
+  private layoutElement: MElement | null = null;
+  private viewTag: string | null = null;
+  private viewElement: MElement | null = null;
 
   override render(): unknown {
-    const tag = currentView.value;
-    const params = currentParams.value;
-    if (tag === null) return html``;
-    if (tag !== this.shown || this.made === null) {
-      this.shown = tag;
-      this.made = currentHost().createElement(tag) as MElement;
+    const outlet = outletAt(positionOf(this));
+    const view = outlet.view;
+    if (view === null) return html``;
+    if (outlet.layout !== null) {
+      if (outlet.layout !== this.layoutTag || this.layoutElement === null) {
+        this.layoutTag = outlet.layout;
+        this.layoutElement = currentHost().createElement(outlet.layout) as MElement;
+        this.viewTag = null;
+        this.viewElement = null;
+      }
+      madePositions.set(this.layoutElement, { level: outlet.level, kind: "layout" });
+      return html`${this.layoutElement}`;
     }
-    for (const [key, value] of Object.entries(params)) Reflect.set(this.made, key, value);
-    return html`${this.made}`;
+    this.layoutTag = null;
+    this.layoutElement = null;
+    if (view !== this.viewTag || this.viewElement === null) {
+      this.viewTag = view;
+      this.viewElement = currentHost().createElement(view) as MElement;
+    }
+    madePositions.set(this.viewElement, { level: outlet.level, kind: "view" });
+    const params = currentParams.value;
+    for (const key of Object.keys(outlet.props)) {
+      const value = key in params ? convertParam(params[key], propTypeOf(view, key)) : outlet.props[key];
+      Reflect.set(this.viewElement, key, value);
+    }
+    return html`${this.viewElement}`;
   }
 }
 

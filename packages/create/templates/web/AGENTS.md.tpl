@@ -11,7 +11,7 @@ __LANGUAGE_INTRO__A web app on `@lightstart/app`: the folders are the app, and l
 | `src/seed.__EXT__` | Optional: rows by model name (`{ note: [{ text: "…" }] }`), added once into an empty store before the controllers start; `src/seed.dev.__EXT__` holds demo rows `light build` leaves out |
 | `src/controllers/<name>.__EXT__` | One controller, default-exported; the file name is its name |
 | `src/views/<tag>.__EXT__` | One view, registering its tag; the file name is the tag |
-| `src/routes.__EXT__` | Optional: `{ "/path": { view: "<tag>", name?, title? } }`; `/notes/:id` sets `id` on the view as a prop |
+| `src/routes.__EXT__` | Optional: `{ "/path": { view: "<tag>", name?, title?, layout?, props?, routes? } }`; `/notes/:id` sets `id` on the view as a prop |
 | `src/locales/<lang>.__EXT__` | With `@lightstart/i18n` installed: the app's words, read with `t(key)`, merged over the words its packages ship |
 | `src/styles.css` | The generated components' stylesheet, then the app's own rules |
 | `icons/<name>.svg` | The app's own icons: the file name is the icon name, `viewBox` its size, the markup inside its body |
@@ -66,7 +66,7 @@ __VIEW_EXAMPLE__
 
 ## Routes, tests, forms and words
 
-`<app-container>` in the root view draws the view the path answers; `navigate(path)` from `@lightstart/app/web` goes to another, and a plain `<a href="/path">` does too. A view that a path with parameters answers declares a prop for each one.
+`<app-container>` in the root view draws the view the path answers; `navigate(path)` from `@lightstart/app/web` goes to another, and a plain `<a href="/path">` does too. A view that a path with parameters answers declares a prop for each one, typed with `T.number()` or the like when it wants a number or boolean rather than the string. A route's `layout` (or `defineApp({ layout })` for top-level routes, `layout: null` to opt out) wraps the view in an ordinary view holding `<app-container>`; nested `routes` join the parent path, a routed view holds an `<app-container>` for the next level, a route without a `view` only groups its children, and a route's `props` are fixed values a param of the same name overrides.
 
 A test opens the app in the page with `openPage(manifest, { path, args })` from `@lightstart/app/web/test` (stores and history in memory): `await page.find(selector)`, `await page.shows(text)`, `await page.navigate(path)`, then `await page.stop()`. Name a test that opens a page `*.browser.test.*`, so `pnpm test` runs it in Chromium; a `*.test.*` file that needs no page runs under node instead, and `light check` rejects one that imports `@lightstart/app/web/test` without the browser name.
 

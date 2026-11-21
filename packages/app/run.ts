@@ -13,13 +13,15 @@ import { signal } from "@lightstart/light/signals";
 import { RouterCore } from "@lightstart/router/core";
 import { setAppBase } from "./base.ts";
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
-import type { RouterAdapter } from "@lightstart/router/contracts.ts";
+import type { MatchedRoute, RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { QueryOptions, Row, WriteOptions } from "@lightstart/light/model/types.ts";
 import { startControllers, stopControllers } from "./controllers.ts";
 import type { App } from "./index.ts";
 import type { AppManifest } from "./manifest.ts";
 import type { AdapterType, StoreHost } from "./stores.ts";
 import { setAppHead, setRouteHead } from "./head.ts";
+import { leafRoute, paramsOf, resolveOutlet, viewOf } from "./outlet.ts";
+import type { Outlet, OutletPosition } from "./outlet.ts";
 
 /** What a run needs of its store: open, count to tell an empty one, add the seeds, close; a host's engine store or a worker proxy answers it. */
 export interface RunStore {
@@ -49,12 +51,13 @@ export const currentView = signal<string | null>(null);
 /** The parameters of the path the routes answer now (`/components/:category` gives `{ category }`), which the container sets on the view. */
 export const currentParams = signal<Record<string, string>>({});
 
-const paramsOf = (matched: { params?: unknown } | null): Record<string, string> => {
-  const params = matched !== null && typeof matched.params === "object" && matched.params !== null ? (matched.params as Record<string, unknown>) : {};
-  const out: Record<string, string> = {};
-  for (const [key, value] of Object.entries(params)) if (typeof value === "string") out[key] = value;
-  return out;
-};
+/** The route the router matched now, the chain `<app-container>` resolves its drawn levels from. */
+export const currentMatch = signal<MatchedRoute | null>(null);
+
+let appLayout: string | null = null;
+
+/** What the container at `position` draws now, following the route and the app's default layout. */
+export const outletAt = (position: OutletPosition): Outlet => resolveOutlet(currentMatch.value, position, appLayout);
 
 /**
  * What runs an app on a surface: the adapter types it has and its default, where the arguments come
@@ -119,12 +122,6 @@ export class AppHost implements StoreHost {
   }
 }
 
-const viewOf = (route: unknown): string | null => {
-  if (typeof route !== "object" || route === null) return null;
-  const view = (route as { view?: unknown }).view;
-  return typeof view === "string" ? view : null;
-};
-
 let running: AppRun | null = null;
 
 /** What a one-call navigation may override. */
@@ -170,6 +167,7 @@ export class AppRun {
   async start(): Promise<void> {
     this.app.args.values = this.host.args(this.app);
     setAppBase(this.app.base);
+    appLayout = this.app.layout ?? null;
     await this.open();
     this.app.lifecycle = {
       restart: (next?: Record<string, unknown>): Promise<void> => this.restart(next),
@@ -215,17 +213,19 @@ export class AppRun {
     }
   }
 
-  /** Write the matched route into `currentView` and `currentParams`, and reset the page head from it. */
-  private applyRoute(matched: { params?: unknown; route?: unknown; path?: unknown }): void {
+  /** Write the matched route into `currentMatch`, `currentView` and `currentParams`, and reset the page head from its leaf. */
+  private applyRoute(matched: MatchedRoute): void {
     const params = paramsOf(matched);
+    const leaf = leafRoute(matched);
     const path = typeof matched.path === "string" ? matched.path : "/";
-    setRouteHead(this.app, matched.route, params, path);
+    setRouteHead(this.app, leaf, params, path);
+    currentMatch.value = matched;
     currentParams.value = params;
-    currentView.value = viewOf(matched.route);
+    currentView.value = viewOf(leaf);
   }
 
   /** Apply a route change, through the host's transition when the app asks for one or this call overrides it; then let the host move focus. */
-  private followRoute(matched: { params?: unknown; route?: unknown; path?: unknown }): void {
+  private followRoute(matched: MatchedRoute): void {
     const apply = (): void => this.applyRoute(matched);
     const after = (): Promise<void> => this.host.routeChanged(this, false);
     const transition = this.overrideTransition ?? this.app.transitions;
@@ -243,6 +243,7 @@ export class AppRun {
 
   private route(): void {
     const routes = this.manifest.routes;
+    currentMatch.value = null;
     currentView.value = null;
     currentParams.value = {};
     if (routes === null) {
@@ -265,8 +266,9 @@ export class AppRun {
     this.following = router.subscribe((matched) => {
       this.followRoute(matched);
     });
+    currentMatch.value = router.currentRoute;
     currentParams.value = paramsOf(router.currentRoute);
-    currentView.value = router.currentRoute === null ? null : viewOf(router.currentRoute.route);
+    currentView.value = viewOf(leafRoute(router.currentRoute));
     this.router = router;
   }
 

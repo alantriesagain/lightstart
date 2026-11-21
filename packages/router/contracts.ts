@@ -36,6 +36,12 @@ export interface RouteConfig {
   spa?: boolean;
   /** Locale tag stamped by localized route expansion. */
   locale?: string;
+  /** The view tag the route draws; a route without one only groups its children. */
+  view?: string;
+  /** The layout tag wrapping this route's view; `null` opts out, absent inherits the app default for a top-level route. */
+  layout?: string | null;
+  /** Fixed props set on the route's view; a path or query param of the same name wins. */
+  props?: Record<string, unknown>;
   /** Nested routes, joined relative to this route's path. */
   routes?: RoutesMap;
   /** Optional positional param suffix list. */

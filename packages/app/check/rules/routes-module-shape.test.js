@@ -17,3 +17,11 @@ test("stays silent on a default-exported table of paths", async () => {
   });
   assert.deepEqual(findings, []);
 });
+
+test("stays silent on a route with layout, props and nested routes", async () => {
+  const findings = await runRuleOn(rule, {
+    "src/routes.ts":
+      'export default { "/settings": { layout: "app-shell", props: { tab: "main" }, routes: { "/profile": { view: "app-profile", layout: null } } } };\n',
+  });
+  assert.deepEqual(findings, []);
+});
