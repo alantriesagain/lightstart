@@ -4,7 +4,8 @@
  * or `../.light/main.js` for a JavaScript app. In a project with `src/app.ts`
  * or `src/app.js`, the named files are split: `*.browser.test.*` runs in
  * headless Chromium as before, every other `*.test.*` runs under node with
- * light's markup host loaded first, and both parts are reported.
+ * light's markup host loaded first, and both parts are reported. A based
+ * app's files answer under its base too, as `appUrl` asks for them.
  */
 
 import { spawn } from "node:child_process";
@@ -14,7 +15,7 @@ import { defineExtension } from "@lightstart/cli";
 import type {} from "@lightstart/light/cli/extensions.ts";
 import type { TestInput } from "@lightstart/light/cli/extensions.ts";
 import { RUNNER_PATH } from "@lightstart/light/test/serve.js";
-import { generate } from "../../node/generate.ts";
+import { appOf, generate, infoOf } from "../../node/generate.ts";
 import { partitionTestFiles } from "../../node/test-partition.ts";
 
 const isApp = (dir: string): boolean => existsSync(join(dir, "src/app.ts")) || existsSync(join(dir, "src/app.js"));
@@ -26,8 +27,8 @@ const runUnderNode = (files: readonly string[], projectDir: string): Promise<boo
     child.once("close", (code) => settle(code === 0));
   });
 
-const runInChromium = async (files: readonly string[], input: TestInput): Promise<boolean> => {
-  const { server, url } = await input.serve(input.root);
+const runInChromium = async (files: readonly string[], input: TestInput, base: string): Promise<boolean> => {
+  const { server, url } = await input.serve(input.root, 0, base);
   try {
     return await input.runFiles({
       files: files.map((file) => {
@@ -41,6 +42,11 @@ const runInChromium = async (files: readonly string[], input: TestInput): Promis
   } finally {
     server.close();
   }
+};
+
+const baseOf = async (projectDir: string): Promise<string> => {
+  const found = appOf(projectDir);
+  return found === null ? "" : (await infoOf(found.path)).base;
 };
 
 const report = (part: string, count: number, passed: boolean): void => {
@@ -61,7 +67,7 @@ export default defineExtension("test", {
         passed = passed && nodePassed;
       }
       if (browser.length > 0) {
-        const browserPassed = await runInChromium(browser, input);
+        const browserPassed = await runInChromium(browser, input, await baseOf(input.projectDir));
         report("browser", browser.length, browserPassed);
         passed = passed && browserPassed;
       }

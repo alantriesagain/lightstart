@@ -20,6 +20,8 @@ light build --page app.html --out dist --keep 3
 | `--no-minify` | minified | Keep the bundles readable |
 | `--keep` | `5` | How many builds to keep; at least 1 |
 
+The programmatic `BuildOptions` also takes `base`, the path the built site is deployed under (`""` at the root): the files stay at the build folder's root, while every root-relative `href` and `src` in the page carries the base. `light build` gets it from the app's `defineApp` extension.
+
 The programmatic `build(options)` takes the same as `BuildOptions`, plus `steps`, extra steps inserted before `write`, `mode` (default `"spa"`) and `data` (a `Map` the steps share), and `log`, a `(message) => void` a step may write through. It answers a `BuildReport`: the id, the build folder, the files with their sizes, and the elapsed milliseconds. The command prints each file and the total, and answers exit code 1 on a failed build.
 
 ## Extending light build
@@ -29,7 +31,7 @@ A package the project declares extends the command with `cli/extend/build.ts`, d
 | `api` field | What |
 |---|---|
 | `steps` | The ordered step list; `add`, `before`, `after`, `replace`, `remove` and `names` |
-| `options` | The resolved options (`root`, `page`, `outDir`, `minify`, `keep`), writable during setup |
+| `options` | The resolved options (`root`, `page`, `outDir`, `minify`, `keep`, `base`), writable during setup |
 | `mode` | A string the steps read; `"spa"` until an extension sets it |
 | `data` | A `Map<string, unknown>` shared by the steps of one build; seed it during setup |
 
@@ -100,7 +102,7 @@ A bare specifier is resolved through the page's importmap before esbuild sees it
 - removes every importmap script;
 - replaces each module script with `<script type="module" src="...">` pointing at its hashed bundle, the inline script's code included;
 - rewrites each stylesheet link's `href` to its hashed output;
-- leaves the rest of the page byte for byte as it was.
+- leaves the rest of the page byte for byte as it was, unless `base` is set: then every root-relative `href` and `src` gets the base before it.
 
 `public/` is copied after the bundles are collected, and an output the bundles already wrote is not overwritten.
 

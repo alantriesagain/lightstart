@@ -12,6 +12,8 @@ export type BuildExtensionOptions = {
   outDir: string;
   minify: boolean;
   keep: number;
+  /** The path the built site is deployed under; `""` at the root. Root-relative URLs in the built page carry it. */
+  base: string;
 };
 
 const throwUnknown = (name: string, names: readonly string[]): never => {

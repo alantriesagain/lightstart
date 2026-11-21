@@ -35,6 +35,8 @@ export class ServeExtension {
   readonly watches: ServeWatch[];
   /** The base paths the app is also answered under. */
   readonly basePaths: string[];
+  /** The paths that redirect elsewhere before the app answers them. */
+  readonly redirects: { from: string; to: string }[];
   /** The ports a strict build preview is started on. */
   readonly previews: number[];
   /** The fields every serve hook's payload carries, writable during setup. */
@@ -53,6 +55,7 @@ export class ServeExtension {
     this.roots = [];
     this.watches = [];
     this.basePaths = [];
+    this.redirects = [];
     this.previews = [];
     this.payload = {};
     this.routeContext = {};
@@ -105,6 +108,11 @@ export class ServeExtension {
   basePath(path: string): void {
     const trimmed = path.endsWith("/") ? path.slice(0, -1) : path;
     this.basePaths.push(trimmed.startsWith("/") ? trimmed : "/" + trimmed);
+  }
+
+  /** Redirect `from` to `to`, keeping the request's query string. */
+  redirect(from: string, to: string): void {
+    this.redirects.push({ from, to });
   }
 
   /** Start the strict build preview over `.deployed/current` on `port` beside the dev server. */

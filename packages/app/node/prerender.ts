@@ -14,6 +14,7 @@ import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { stripBase, withBase } from "@lightstart/router/url";
 import type { PrerenderRenderer } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 
@@ -30,6 +31,8 @@ export interface PrerenderOptions {
   paths: readonly string[];
   /** `"markup"` (the default) renders in node; `"browser"` through Playwright. */
   renderer?: PrerenderRenderer;
+  /** The path the built site is deployed under; `""` at the root. */
+  base?: string;
   /** Where a view's error goes while rendering; printed as a warning by the build. */
   warn?: (message: string) => void;
 }
@@ -108,8 +111,8 @@ export const chromiumFrom = async (root: string): Promise<Chromium> => {
   throw new Error("Prerendering needs Playwright. Install it with `pnpm add -D playwright` and `npx playwright install chromium`.");
 };
 
-const fileFor = (pathname: string, outputs: Map<string, Uint8Array | string>): { content: Uint8Array | string; type: string } | null => {
-  let path = pathname.replace(/^\/+/, "");
+const fileFor = (pathname: string, outputs: Map<string, Uint8Array | string>, base = ""): { content: Uint8Array | string; type: string } | null => {
+  let path = stripBase(base, pathname).replace(/^\/+/, "");
   try {
     path = decodeURIComponent(path);
   } catch {
@@ -201,12 +204,13 @@ const prerenderMarkup = async (options: PrerenderOptions): Promise<number> => {
  */
 const prerenderBrowser = async (options: PrerenderOptions): Promise<number> => {
   const { root, outputs, paths } = options;
+  const base = options.base ?? "";
   if (paths.length === 0) return 0;
 
   const chromium = await chromiumFrom(root);
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? "/", "http://127.0.0.1");
-    const found = fileFor(url.pathname, outputs);
+    const found = fileFor(url.pathname, outputs, base);
     if (found === null) {
       response.statusCode = 404;
       response.end("Not found");
@@ -233,7 +237,7 @@ const prerenderBrowser = async (options: PrerenderOptions): Promise<number> => {
       const errors: string[] = [];
       page.on("pageerror", (error) => errors.push(error instanceof Error ? error.message : String(error)));
       try {
-        await page.goto(`${origin}${path}`, { waitUntil: "networkidle", timeout: 30_000 });
+        await page.goto(`${origin}${withBase(base, path)}`, { waitUntil: "networkidle", timeout: 30_000 });
         await page.evaluate(
           () =>
             new Promise<void>((resolve) => {

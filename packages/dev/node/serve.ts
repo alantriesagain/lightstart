@@ -7,7 +7,7 @@ import { readFile, stat } from "node:fs/promises";
 import { networkInterfaces } from "node:os";
 import { join, resolve as resolvePath } from "node:path";
 import type { CommandContext } from "@lightstart/cli";
-import { App, fail } from "@lightstart/server";
+import { App, fail, redirect } from "@lightstart/server";
 import { serve, type NodeServer } from "@lightstart/server/node";
 import { MAX_PORT_ATTEMPTS, resolvePort } from "../config.ts";
 import { ServeExtension, withBasePaths } from "../extension.ts";
@@ -160,7 +160,9 @@ export const startServer = async (ctx: CommandContext, args: ServeArgs): Promise
     extension,
   });
   extension.app.all("/*", async (c) => (await pipeline.handle(c)) ?? fail("Not found: " + c.path, 404));
-  const app = withBasePaths(extension.app, extension.basePaths);
+  const based = withBasePaths(extension.app, extension.basePaths);
+  const app = extension.redirects.length === 0 ? based : new App().all("/*", async (c) => (await based.handle(c)) ?? fail("Not found: " + c.path, 404));
+  if (app !== based) for (const rule of extension.redirects) app.all(rule.from, (c) => redirect(`${rule.to}${c.search === "" ? "" : `?${c.search}`}`));
   const server = await listenOnFreePort(app, basePort, host);
   const sockets = attachSockets(server.server, pipeline.apps);
   const watchers: Watcher[] = [];

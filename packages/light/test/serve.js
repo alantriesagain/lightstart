@@ -102,13 +102,17 @@ export const RUNNER_PATH = "/__light/runner";
 /**
  * Serve `root` on `port` (0 picks a free one). `RUNNER_PATH?file=<url>` is the
  * runner page for one test file; a folder answers its `index.html`. `render`
- * replaces the runner page light serves.
+ * replaces the runner page light serves. With a `base` (`/budget`), a path
+ * under it answers the same file as the path without it, for an app that
+ * reaches its own files through its deploy base.
  * @param {string} root
  * @param {number} [port]
  * @param {(options: import("../cli/extensions.ts").RunnerPageOptions) => string} [render]
+ * @param {string} [base]
  * @returns {Promise<{ server: import("node:http").Server, url: string }>}
  */
-export const serve = async (root, port = 0, render = runnerPage) => {
+export const serve = async (root, port = 0, render = runnerPage, base = "") => {
+  const prefix = base.replace(/^\/+|\/+$/g, "");
   const { imports, lightDir } = importmapFor(root);
   const harnessUrl = `/${path.relative(root, path.join(lightDir, "test/harness.js")).split(path.sep).join("/")}`;
   const reportUrl = `/${path.relative(root, path.join(lightDir, "test/report.js")).split(path.sep).join("/")}`;
@@ -117,7 +121,8 @@ export const serve = async (root, port = 0, render = runnerPage) => {
   const app = new App()
     .get(RUNNER_PATH, (c) => html(render({ file: c.query("file") ?? "", importmap: imports, harnessUrl, reportUrl })).header("cache-control", "no-store"))
     .get("/*", async (c) => {
-      const rest = c.param("*") ?? "";
+      const given = c.param("*") ?? "";
+      const rest = prefix !== "" && given.startsWith(`${prefix}/`) ? given.slice(prefix.length + 1) : given;
       const found = await files.find(rest);
       if (found === null) {
         const fromPublic = await publicFiles.find(rest);

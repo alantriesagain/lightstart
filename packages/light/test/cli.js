@@ -117,7 +117,7 @@ export const runTestCommand = async (ctx, args) => {
   };
   await ctx.cli.extend("test", api);
   /** @type {import("../cli/extensions.ts").TestInput} */
-  const input = { args, files, projectDir: ctx.projectDir, root, headless, timeoutMs, runFiles, serve: (dir, port = 0) => serve(dir, port, render) };
+  const input = { args, files, projectDir: ctx.projectDir, root, headless, timeoutMs, runFiles, serve: (dir, port = 0, base = "") => serve(dir, port, render, base) };
   if (replacements.length > 0) return replacements[0](input);
   if (groups.length === 0) {
     if (files.length > 0) return runTestFiles({ files, root, headless, timeoutMs, render });

@@ -138,6 +138,7 @@ export default defineExtension("serve", {
 | `pageFile(path)` | Names another file as the page when the project has no `index.html`; a relative path is from the project |
 | `watch(dir, label)` | One more folder watched under `--watch`; its changes reach `serve:file-changed` with `path` as `label` and the relative path |
 | `basePath(path)` | Answers the app under `path` as well as at the root (the path is stripped before the pipeline); `/path` itself answers the app's root |
+| `redirect(from, to)` | Answers `from` with a 302 to `to`, keeping the request's query string; it runs before the app and its bases |
 | `preview(port)` | Starts the strict build preview over `.deployed/current` on that port beside the dev server, skipped with a warning when the port is taken |
 | `projectDir` | The folder being served |
 | `defaultPort(port)` | The port to start from when neither `--port`, `light.dev.port` nor `PORT` names one |

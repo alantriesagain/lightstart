@@ -14,7 +14,7 @@ light build                # generate as the build's first step
 
 | Path | Holds | The app does |
 |---|---|---|
-| `src/app.ts` or `src/app.js` | `defineApp({ name, host, theme, scheme, locale, url, prerender, transitions, stores, root, args })` | reads it first |
+| `src/app.ts` or `src/app.js` | `defineApp({ name, host, theme, scheme, locale, url, base, prerender, transitions, stores, root, args })` | reads it first |
 | `src/models/<name>.ts` | one model, default-exported | opens its store with every model |
 | `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready`, each after the controllers it imports |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
@@ -48,7 +48,8 @@ export default defineApp({
 | `theme` | `"default"` | A preset name, applied by the web host |
 | `scheme` | `"system"` | The page's color scheme: `"dark"` or `"light"` pins it, `"system"` follows the reader's preference; the web host applies it before the theme |
 | `locale` | `"en"` | The default language the app's words are in |
-| `url` | none | The site's address (`https://lightstart.dev`), which the build's sitemap is written against |
+| `url` | none | The site's address (`https://lightstart.dev`), which the build's sitemap is written against; its path is the base the app is served under (`https://user.github.io/budget` lives under `/budget`) |
+| `base` | the `url`'s path | The path the app lives under, overriding the path `url` names; `/` means the root |
 | `prerender` | `false` | Render every concrete route into its own `index.html` during `light build`: `true` or `"markup"` renders in node, `"browser"` through Playwright |
 | `worker` | `false` | Run the whole web model layer in one worker: every declared store opens there and the page reaches it over `@lightstart/rpc` |
 | `transitions` | `false` | Run every web route change inside `document.startViewTransition` where the browser has it |
@@ -130,9 +131,11 @@ class NotePage extends View.props({ slug: "" }) {
 View.register("app-note", NotePage);
 ```
 
-A plain class may keep `static props = { slug: "" }` instead. An app without `routes.ts` mounts its root view alone.
+A plain class may keep `static props = { slug: "" }` instead. An app without `routes.ts` mounts its root view alone. A deploy base never reaches a view: the router adds it to its own `href` and strips it from the location, so a route matches the same `/accounts` under `/budget`.
 
 With `transitions: true` the web host runs each route change (a `navigate`, a link through the router, the browser's back and forward) inside `document.startViewTransition` where the browser has it, and waits for `<app-container>` to draw the next view, so the browser snapshots the old view and the new one.
+
+Paths are the app's own, without the base: `navigate("/accounts")`, `currentView`, route params and `currentParams` all see `/accounts`, whether the app is at the root or under `/budget`. The web host puts the base before every root-relative `<a href>` in the app's DOM (a link drawn later too), leaving a link with `data-no-router` or `rel="external"` alone; a middle-click or a crawler sees the right URL too. `appUrl(path)` from `@lightstart/app` puts the running app's base before a root-relative path (`appUrl("/rates.json")` is `/budget/rates.json`), for code that fetches its own files.
 
 A route change that comes from a link click, or from `navigate(path, { from: element })`, morphs that element into the next view: the host gives the clicked element the transition name `morph` for the old snapshot, and the next view's first `[data-morph]` element (the view element itself when none is marked) the same name for the new one. Only one element carries the name at a time, so a site with many links leading to one page has no names to collide. Going back reverses it: the host remembers, per history entry, the path a morph-forward navigation led to, and on a history navigation to that page names the current view's `[data-morph]` element before the update and, on the restored page, the first link whose `href` is the path being left (preferring one marked `data-morph-source`) after it; when there is none, the change cross-fades.
 
@@ -278,9 +281,13 @@ A project that depends on `@lightstart/app` gets these rules from `light check`,
 - `controller-has-test` (warning): a controller under `src/controllers/` is named by a file under `test/` or `tests/`, or one that opens the generated app.
 - `piece-file-names` (warning): a file under `src/models`, `src/controllers` or `src/views` is kebab-case.
 
+## Deploying under a path
+
+An app deployed to a project page lives under its path. `defineApp({ url: "https://user.github.io/budget" })` makes `/budget` the base (or name one with `base`; `"/"` means the root). The web host hands the base to the router, so views keep writing app paths; it builds the canonical link from the app's `url` and app path without adding the base twice. `light serve` answers the app at `/budget/`, redirects `/` there, resolves `/budget/src/styles.css` like `/src/styles.css`, and keeps the unprefixed paths working for the page's root-relative imports. `light build` writes the files at the build folder's root (the folder is deployed at the base) and puts the base before every root-relative URL in the built HTML.
+
 ## Building
 
-`public/` is the place for an app's static files, served at the root in development, in a browser test and in the build; `index.html` references them with an absolute path. `light build` runs the same generator before it reads the page, then adds the files a static host needs after it rewrites the page, for a project with `src/app.ts` or `src/app.js`:
+`public/` is the place for an app's static files, served at the root in development, in a browser test and in the build; `index.html` references them with an absolute path. `light build` runs the same generator before it reads the page, then adds the files a static host needs after it rewrites the page, for a project with `src/app.ts` or `src/app.js`. The build folder's files stay at its root, since the folder is deployed at the app's base: every root-relative URL in the built HTML (bundles, stylesheets, preloads, the favicon and anchors) carries it, as do `404.html`, the sitemap, `robots.txt` and `_headers`.
 
 - `404.html`, the built page itself (the same contents as `index.html`), so a path the host has no file for still boots the app and its router.
 - `sitemap.xml` and `robots.txt` when `defineApp` has a `url`: the sitemap lists every concrete path of `src/routes.ts`, as absolute URLs joined with `url`, sorted. A static route is its own path; a route with parameters (`/notes/:id`) is filled from the values its `params` answers, when it has one (`params: () => [{ id: "1" }, { id: "2" }]`), so a parameter route without `params`, a wildcard, a `spa: true` route and a redirect are left out. `robots.txt` is `User-agent: *`, `Allow: /` and a `Sitemap:` line. Without a `url` there is no sitemap, and `robots.txt` has no `Sitemap:` line.
@@ -370,7 +377,7 @@ await page.evaluate(() => document.title); // run a script in the page
 await page.close();
 ```
 
-`openBuilt(dir, path, { timeoutMs })` serves `dir` as a static host does: the file, else `<path>/index.html`, else `404.html` with status 404 (the SPA fallback). It waits for `load` and the network to go idle (Playwright's `networkidle`, 500 ms quiet) plus two animation frames before answering. The document's own 404 is not reported when `404.html` answered it, since that is the expected fallback; every other failed same-origin request, page error and console error is. It needs Playwright and a built folder; `latestBuild` reads `.deployed`, in the test that has the disk.
+`openBuilt(dir, path, { timeoutMs, base })` serves `dir` as a static host does: the file, else `<path>/index.html`, else `404.html` with status 404 (the SPA fallback). It reads the app's base from the project when `dir` is under its `.deployed` folder (or takes `base`), serves the build under that base, and takes the app path without it. It waits for `load` and the network to go idle (Playwright's `networkidle`, 500 ms quiet) plus two animation frames before answering. The document's own 404 is not reported when `404.html` answered it, since that is the expected fallback; every other failed same-origin request, page error and console error is. It needs Playwright and a built folder; `latestBuild` reads `.deployed`, in the test that has the disk.
 
 A terminal test mounts the root view on light's `TestTerminal` with `@lightstart/app/tui/test`'s `mountApp`:
 

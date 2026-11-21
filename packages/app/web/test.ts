@@ -11,6 +11,7 @@
  */
 
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
+import { stripBase, withBase } from "@lightstart/router/url";
 import { parseArgs } from "@lightstart/cli/argv.ts";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { App } from "../index.ts";
@@ -197,6 +198,8 @@ export const openPage = async (manifest: AppManifest, options: OpenPageOptions =
 export interface OpenBuiltOptions {
   /** Milliseconds `goto` waits for the page to load and the network to go idle. */
   timeoutMs?: number;
+  /** The path the build is deployed under; read from the project when the build sits under its `.deployed` folder. */
+  base?: string;
 }
 
 interface BuiltPageLike {
@@ -336,9 +339,19 @@ export const openBuilt = async (dir: string, path = "/", options: OpenBuiltOptio
   const { chromiumFrom } = await import("../node/prerender.ts");
 
   const root = resolve(dir);
+  let base = options.base ?? "";
+  if (options.base === undefined) {
+    const marker = `${sep}.deployed${sep}`;
+    const at = root.indexOf(marker);
+    if (at >= 0) {
+      const { appOf, infoOf } = await import("../node/generate.ts");
+      const app = appOf(root.slice(0, at));
+      if (app !== null) base = (await infoOf(app.path)).base;
+    }
+  }
   const fallbacks = new Set<string>();
   const answer = async (pathname: string, send: (status: number, file: string | null) => void): Promise<void> => {
-    let relative = pathname.replace(/^\/+/, "");
+    let relative = stripBase(base, pathname).replace(/^\/+/, "");
     try {
       relative = decodeURIComponent(relative);
     } catch {
@@ -418,7 +431,7 @@ export const openBuilt = async (dir: string, path = "/", options: OpenBuiltOptio
     if (url.origin === origin) failed.push(`failed ${url.pathname}`);
   });
   try {
-    await page.goto(`${origin}${path}`, { waitUntil: "networkidle", timeout: options.timeoutMs ?? 30_000 });
+    await page.goto(`${origin}${withBase(base, path)}`, { waitUntil: "networkidle", timeout: options.timeoutMs ?? 30_000 });
     await page.evaluate(
       () =>
         new Promise<void>((settle) => {
