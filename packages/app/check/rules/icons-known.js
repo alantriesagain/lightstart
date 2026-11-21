@@ -5,6 +5,7 @@ import { collectionOf, ownIcons, scanIcons, svgProblems } from "../../node/icons
 const SOURCE = /^src\/.*\.(?:js|ts)$/;
 const ICON_FILE = /^icons\/.+\.svg$/;
 const ICON_NAME = /^[a-z][a-z0-9-]*$/;
+const RUNTIME_LOADER = /\bconfigureIcons\s*\(\s*\{[^}]*\bload\s*:/;
 
 /** @param {import("@lightstart/light/check/types.ts").ProjectModel} ctx */
 const setOf = (ctx) => {
@@ -23,7 +24,7 @@ const scansOf = (ctx) =>
 export default defineRule({
   severity: "error",
   description: "an app's icons are known to its set or its icons/ folder, and its dynamic names have names to take",
-  why: "the generation writes a CSS mask for each icon name it finds, so a name the set does not have draws nothing, and a name built at run time is only in the page when a literal somewhere names it or it is one of the app's own icons; which literal a binding takes is only known on the page, where lc-icon warns for a name no stylesheet draws; the npm set is what the masks are made from, so it has to be installed",
+  why: "the generation writes a CSS mask for each icon name it finds, so a name the set does not have draws nothing, and a name built at run time is only in the page when a literal somewhere names it or it is one of the app's own icons; which literal a binding takes is only known on the page, where lc-icon warns for a name no stylesheet draws; the npm set is what the masks are made from, so it has to be installed; an app that loads its icons at run time (`configureIcons({ load })`) draws any name its loader answers, so only its icon files are checked",
   check(ctx) {
     const own = ownIcons(ctx.projectDir);
     const appIcons = new Set(own.map((item) => item.name));
@@ -34,6 +35,7 @@ export default defineRule({
       for (const problem of svgProblems(ctx.read(file) ?? "")) ctx.report({ file, line: 1, message: `the icon file ${file} ${problem}` });
     }
     const scans = scansOf(ctx);
+    if (ctx.files().some((file) => SOURCE.test(file) && RUNTIME_LOADER.test(ctx.code(file) ?? ""))) return;
     const drawnNames = (/** @type {import("../../node/icons.ts").ScannedIcons} */ scan) => scan.names.filter((name) => !scan.properties.includes(name));
     const used = scans.filter(({ scan }) => drawnNames(scan).length > 0 || scan.dynamic.length > 0);
     const namesAnywhere = appIcons.size > 0 || scans.some(({ scan }) => scan.names.length > 0);

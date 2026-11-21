@@ -246,3 +246,19 @@ test("an app drawing only its own icons from data needs no set and reports nothi
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("an app that loads its icons at run time needs no set, and its names and bindings are its loader's", async () => {
+  const dir = project(null);
+  try {
+    const findings = await runRuleOn(
+      rule,
+      {
+        "src/views/app-shell.ts": 'import { configureIcons, iconify } from "@lightstart/light/theme/icons.js";\nconfigureIcons({ load: iconify("tabler") });\nconst view = (name) => `<lc-icon name="anything"></lc-icon><lc-icon name=${name}></lc-icon>`;\n',
+      },
+      { projectDir: dir },
+    );
+    assert.deepEqual(findings, []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

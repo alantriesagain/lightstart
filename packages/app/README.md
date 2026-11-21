@@ -311,7 +311,7 @@ A project that depends on `@lightstart/app` gets these rules from `light check`,
 - `no-view-import-by-hand`: a module imports no view module for its side effect or its default; `.light/` defines the views, and `import type` is fine.
 - `no-duplicate-route-path`: two keys of the routes table never name the same path once a trailing slash is ignored.
 - `no-location-in-views`: a module under `src/views/` reads `currentRoute` rather than `location.pathname`, which carries the base and is not the route where the history is in memory (a test, a prerender, the terminal).
-- `icons-known`: an icon name is one the app's set or its `icons/` folder has, a binding has names somewhere to take, and each `icons/*.svg` is a safe mask; a project that uses icons installs `@iconify-json/<set>`.
+- `icons-known`: an icon name is one the app's set or its `icons/` folder has, a binding has names somewhere to take, and each `icons/*.svg` is a safe mask; a project that uses icons installs `@iconify-json/<set>`. An app that loads its icons at run time (`configureIcons({ load })`) has only its icon files checked.
 - `no-server-module-in-page`: in a web app (`host: "web"` in `src/app.*`), nothing under `src/` imports `node:*`, `@lightstart/server` or `@lightstart/sqlite`.
 - `page-test-name`: a `*.test.*` file that imports `@lightstart/app/web/test` is named `*.browser.test.*`, since a page test needs Chromium.
 - `test-conventions`: no committed `.only` on `describe`, `it` or `test`.
