@@ -1,13 +1,14 @@
 /// <reference lib="dom" />
 /**
- * @file `@lightstart/app/web`: the web host. Its store kinds are `indexeddb`
- * (the default where the page has IndexedDB, memory where it has none) and
- * `memory`, and a project's own. The arguments come from the page's URL
- * query (`?greeting=hi&trust`). The routes follow the browser's history, the
- * theme preset is applied as CSS variables, and the root view is mounted in
- * the page, `<app-container>` drawing the view the routes answer. The views were
- * imported by the generated manifest, so every tag exists before the root
- * view is made.
+ * @file `@lightstart/app/web`: the web host. It always runs `memory`; the
+ * generated entry imports the optional features the app's config uses and
+ * hands them to `start`: the IndexedDB kind (`web/indexeddb.ts`), worker
+ * stores (`web/worker.ts`), view transitions and their morph
+ * (`web/transitions.ts`), and the URL's arguments (`web/args.ts`). The routes
+ * follow the browser's history, the theme preset is applied as CSS variables,
+ * and the root view is mounted in the page, `<app-container>` drawing the view
+ * the routes answer. The views were imported by the generated manifest, so
+ * every tag exists before the root view is made.
  */
 
 import View, { configureView } from "@lightstart/light";
@@ -21,22 +22,19 @@ import { applyScheme } from "@lightstart/light/theme/color-scheme.js";
 import { loadPreset } from "@lightstart/light/theme/presets.js";
 import { createBrowserAdapter } from "@lightstart/router/adapters/browser";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
-import { parseArgs } from "@lightstart/cli/argv.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { createStore, storeRequest } from "@lightstart/light/model/store";
 import type { StorageAdapter, Store } from "@lightstart/light/model/types.ts";
 import { configureModel } from "@lightstart/light/model";
 import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
-import type { NavigationSource, RouteTransition } from "../run.ts";
+import type { RouteTransition } from "../run.ts";
 import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
 import type { Head } from "../head.ts";
 import { MemoryKind, plan, schemasOf, StoreKind } from "../stores.ts";
-import { IndexedDBKind } from "./indexeddb.ts";
-import { MODEL_OPERATORS, WorkerAdapter, WorkerConnection } from "./worker.ts";
+import type { WebArgsFeature, WebTransitionFeature, WebTransitionPort, WebWorkerConnection, WebWorkerFeature } from "./features.ts";
 
 export { currentParams, currentView, navigate } from "../run.ts";
-export { IndexedDBKind } from "./indexeddb.ts";
 
 /** A running app: `stop()` takes the view down, disposes its controllers, stops following the routes and closes its stores. */
 export interface AppHandle {
@@ -115,20 +113,6 @@ const registerContainer = (): void => {
   registered = true;
 };
 
-/** The URL query as argv tokens for the app's own arguments: `?name=value` and a bare `?flag`; a parameter the app does not declare is left out. */
-const queryArgv = (app: App): string[] => {
-  const out: string[] = [];
-  const query = new URLSearchParams(globalThis.location?.search ?? "");
-  for (const [key, value] of query) {
-    const spec = app.argsSchema[key];
-    if (spec === undefined) continue;
-    if ("flag" in spec && spec.flag === true) {
-      if (value === "" || value === "true") out.push("--" + key);
-    } else out.push("--" + key, value);
-  }
-  return out;
-};
-
 const setMeta = (head: HTMLElement, attribute: "name" | "property", key: string, value: string): void => {
   const existing = head.querySelector(`meta[${attribute}="${key}"]`);
   if (value === "") {
@@ -173,144 +157,76 @@ const applyHead = (head: Head): void => {
   setMeta(root, "name", "twitter:card", head.image === "" ? "summary" : "summary_large_image");
 };
 
-const morphStyles = `
-@layer light {
-  ::view-transition-group(morph) {
-    animation-duration: 420ms;
-    animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
-  }
-  ::view-transition-old(morph),
-  ::view-transition-new(morph) {
-    height: 100%;
-    width: 100%;
-    object-fit: none;
-    object-position: left top;
-  }
-  ::view-transition-image-pair(morph) {
-    overflow: clip;
-  }
-  ::view-transition-old(morph) {
-    animation: light-morph-out 420ms cubic-bezier(0.2, 0, 0, 1);
-  }
-  ::view-transition-new(morph) {
-    animation: light-morph-in 420ms cubic-bezier(0.2, 0, 0, 1);
-  }
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 220ms;
-  }
-  @keyframes light-morph-out {
-    0% { opacity: 1; }
-    35% { opacity: 0; }
-    100% { opacity: 0; }
-  }
-  @keyframes light-morph-in {
-    0% { opacity: 0; }
-    35% { opacity: 1; }
-    100% { opacity: 1; }
-  }
-}
-`;
-
-let morphStylesInstalled = false;
-
-/** Install light's default `morph` transition rules once, in the `light` layer so an app's own rules win. */
-const installMorphStyles = (): void => {
-  if (morphStylesInstalled) return;
-  if (document.getElementById("light-morph") !== null) {
-    morphStylesInstalled = true;
-    return;
-  }
-  const style = document.createElement("style");
-  style.id = "light-morph";
-  style.textContent = morphStyles;
-  document.head.append(style);
-  morphStylesInstalled = true;
-};
-
-/** The path of an `href`, for matching a remembered entry against the route now shown. */
-const pathOfHref = (href: string): string => {
-  try {
-    return new URL(href, globalThis.location?.href ?? "http://memory").pathname;
-  } catch {
-    return href;
-  }
-};
-
-/** A click that may start a navigation: the anchor, the path it leads to, and when it happened. */
-interface ClickSource {
-  element: Element;
-  path: string;
-  at: number;
-}
-
-/** What a web host may start with instead of the page's: the kinds it runs and its default kind (a test's kinds and memory). */
+/** What a web host may start with instead of the page's: the kinds it runs and its default kind (a test's kinds and memory), and the optional features the entry imported. */
 export interface WebHostOptions {
+  /** The kinds beyond `memory`, which the host always has. */
   kinds?: readonly StoreKind[];
   defaultKind?: string;
-  /** Spawn the worker a store declared `worker: true` opens in; absent, every store opens on the page. */
-  worker?: () => Worker;
+  /** The worker feature for stores declared `worker: true`; absent, every store opens on the page. */
+  worker?: WebWorkerFeature;
+  /** The view-transition and morph feature; absent, the host's `transition` is the plain default. */
+  transitions?: WebTransitionFeature;
+  /** The URL's arguments; absent, the host answers no values. */
+  args?: WebArgsFeature;
 }
 
 /** The web host. */
 export class WebHost extends AppHost {
   readonly name = "web";
-  readonly kinds: readonly StoreKind[] = [new IndexedDBKind(), new MemoryKind()];
-  readonly defaultKind: string = (globalThis as { indexedDB?: unknown }).indexedDB !== undefined ? "indexeddb" : "memory";
+  readonly kinds: readonly StoreKind[];
+  readonly defaultKind: string;
   private mounted: Element | null = null;
   /** Stops handing the page's link clicks to the run's router. */
   private unlisten: (() => void) | null = null;
-  private readonly workerFactory: (() => Worker) | null;
-  private connection: WorkerConnection | null = null;
+  private readonly workerFeature: WebWorkerFeature | null;
+  private readonly transitions: WebTransitionFeature | null;
+  private readonly argsFeature: WebArgsFeature | null;
+  private connection: WebWorkerConnection | null = null;
   private headEffect: { dispose(): void } | null = null;
   private onScroll: (() => void) | null = null;
   private onPopState: (() => void) | null = null;
   private previousScrollRestoration: ScrollRestoration | null = null;
   private historyNavigation = false;
   private readonly scrollPositions = new Map<string, number>();
-  /** The `href` of the page on screen, and for each entry, the route path a morph-forward navigation led to. */
+  /** The `href` of the page on screen. */
   private currentHref: string | null = null;
-  private readonly ledTo = new Map<string, string>();
-  /** The anchor a recent click went through, dropped once a navigation uses it or another route change happens. */
-  private clickSource: ClickSource | null = null;
-  /** The element carrying the `morph` name now, with the inline value to restore. */
-  private named: { element: HTMLElement; previous: string } | null = null;
 
   constructor(options: WebHostOptions = {}) {
     super();
-    if (options.kinds !== undefined) this.kinds = options.kinds;
-    if (options.defaultKind !== undefined) this.defaultKind = options.defaultKind;
-    this.workerFactory = options.worker ?? null;
+    const given = options.kinds ?? [];
+    this.kinds = given.some((kind) => kind.name === "memory") ? given : [...given, new MemoryKind()];
+    this.defaultKind = options.defaultKind ?? (this.kinds.some((kind) => kind.name === "indexeddb") ? "indexeddb" : "memory");
+    this.workerFeature = options.worker ?? null;
+    this.transitions = options.transitions ?? null;
+    this.argsFeature = options.args ?? null;
   }
 
   /** Open every store as the host does; a store declared `worker: true` opens in a worker spawned once for the run. */
   openStores(manifest: AppManifest, memoryOnly: boolean): Promise<Store> {
     const models = schemasOf(manifest);
     const databases: Record<string, StorageAdapter> = {};
-    const factory = this.workerFactory;
-    let connection: WorkerConnection | null = null;
+    const feature = this.workerFeature;
+    let connection: WebWorkerConnection | null = null;
     const openOne = async (p: ReturnType<typeof plan>[number]): Promise<void> => {
-      if (!p.worker || factory === null) {
+      if (!p.worker || feature === null) {
         databases[p.store] = await p.kind.open(manifest.app, p.store, p.at, models, p.store === "main");
         return;
       }
       if (connection === null) {
-        const made = await WorkerConnection.connect(factory(), () => {
+        const made = await feature.connect(() => {
           if (this.connection === made) this.connection = null;
         });
         this.connection = made;
         connection = made;
       }
       connection.retain();
-      const adapter = new WorkerAdapter(connection, p.store, p.kindName, p.at, p.store === "main", memoryOnly, MODEL_OPERATORS);
       try {
-        await adapter.init();
+        databases[p.store] = await feature.open(connection, p, memoryOnly);
       } catch (error) {
         const message = connection.failedMessage();
         connection.release();
         throw message === "" ? error : new Error(message);
       }
-      databases[p.store] = adapter;
     };
     const opened = plan(manifest, this, memoryOnly).reduce((before, p) => before.then(() => openOne(p)), Promise.resolve());
     return opened.then(() => {
@@ -320,8 +236,9 @@ export class WebHost extends AppHost {
     });
   }
 
+  /** The URL's arguments when the entry passed the feature; none otherwise. */
   args(app: App): Record<string, unknown> {
-    return parseArgs(app.argsSchema, queryArgv(app)) as Record<string, unknown>;
+    return this.argsFeature === null ? {} : this.argsFeature(app);
   }
 
   history(): RouterAdapter {
@@ -336,94 +253,21 @@ export class WebHost extends AppHost {
     (globalThis as { __PRERENDERED__?: boolean }).__PRERENDERED__ = false;
   }
 
-  /** Run the route change inside `document.startViewTransition` where the browser has it, morphing the source into the next view, then wait for `<app-container>` to draw it. */
+  /** Run the route change inside the transition feature when the entry passed one; otherwise plainly. */
   transition(apply: () => Promise<void> | void, route?: RouteTransition): Promise<void> {
-    installMorphStyles();
-    const doc = globalThis.document;
-    const start = (doc as unknown as { startViewTransition?: (callback: () => Promise<void> | void) => { finished: Promise<void> } }).startViewTransition;
-    if (typeof start !== "function") return Promise.resolve(apply()).then(() => undefined);
-    const reduced = typeof globalThis.matchMedia === "function" && globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const path = route?.path ?? "";
-    const historyNavigation = this.historyNavigation;
-    const from = this.sourceOf(route?.from, path);
-    const leftPath = this.currentHref === null ? null : pathOfHref(this.currentHref);
-    const reverse = historyNavigation && leftPath !== null && route?.href !== undefined && this.ledTo.get(route.href) === leftPath;
-    const morph = !reduced && (historyNavigation ? reverse : from !== null);
-    if (morph) {
-      if (historyNavigation) this.nameMorph(this.oldMorphElement());
-      else if (from !== null) {
-        this.nameMorph(from);
-        if (this.currentHref !== null) this.ledTo.set(this.currentHref, path);
-      }
-    }
-    this.clickSource = null;
-    // The browser pauses rendering, and with it the frame light's host flushes on, until this callback settles: draw the
-    // container and the next view now, so the snapshot has the page the user will see and the callback never waits on a frame.
-    const update = (): Promise<void> => Promise.resolve(apply()).then(async () => {
-      await this.drawNextView();
-      if (!morph) return;
-      this.clearMorph();
-      if (historyNavigation) this.nameMorph(leftPath === null ? null : this.returnMorphElement(leftPath));
-      else this.nameMorph(this.newMorphElement());
-    });
-    const done = new Promise<void>((resolve, reject) => {
-      let transition: { finished: Promise<void> };
-      try {
-        transition = start.call(doc, update);
-      } catch (error) {
-        this.clearMorph();
-        reject(error);
-        return;
-      }
-      transition.finished.then(() => resolve(), () => resolve());
-    });
-    return done.then(() => {
-      this.clearMorph();
-    }, (error: unknown) => {
-      this.clearMorph();
-      throw error;
-    });
+    const transitions = this.transitions;
+    if (transitions === null) return Promise.resolve(apply()).then(() => undefined);
+    return transitions.transition(apply, route, this.transitionPort());
   }
 
-  /** Flush the pending updates until `<app-container>` holds the view the route now answers, so a morph's target can be found. */
-  private async drawNextView(): Promise<void> {
-    for (let round = 0; round < 50; round++) {
-      flushUpdates();
-      const view = currentView.peek();
-      const first = this.containerElement()?.firstElementChild ?? null;
-      if (view === null ? first === null : first !== null && first.tagName.toLowerCase() === view) return;
-      await Promise.resolve();
-    }
-    flushUpdates();
-  }
-
-  /** The source a navigation morphs from: the one the call names, else a fresh click on the path this navigation takes. */
-  private sourceOf(given: NavigationSource | undefined, path: string): Element | null {
-    if (given instanceof Element) return given;
-    const click = this.clickSource;
-    if (click === null) return null;
-    if (Date.now() - click.at > 1000 || click.path !== path) {
-      this.clickSource = null;
-      return null;
-    }
-    return click.element;
-  }
-
-  /** Name `element` the transition's `morph`, keeping the name to itself and remembering its inline value. */
-  private nameMorph(element: Element | null): void {
-    if (!(element instanceof HTMLElement)) return;
-    if (this.named !== null && this.named.element !== element) this.clearMorph();
-    if (this.named !== null && this.named.element === element) return;
-    this.named = { element, previous: element.style.viewTransitionName };
-    element.style.viewTransitionName = "morph";
-  }
-
-  /** Clear the `morph` name, restoring the inline value the element had. */
-  private clearMorph(): void {
-    const named = this.named;
-    this.named = null;
-    if (named === null) return;
-    named.element.style.viewTransitionName = named.previous;
+  /** What the transition feature reads of this host. */
+  private transitionPort(): WebTransitionPort {
+    return {
+      container: () => this.containerElement(),
+      root: () => this.mounted,
+      href: () => this.currentHref,
+      historyNavigation: () => this.historyNavigation,
+    };
   }
 
   /** The route container in the mounted root, when the page has one. */
@@ -432,59 +276,13 @@ export class WebHost extends AppHost {
     return mounted === null ? null : mounted.querySelector("app-container");
   }
 
-  /** The current view's `[data-morph]` element, else the view element itself. */
-  private oldMorphElement(): Element | null {
-    const container = this.containerElement();
-    if (container === null) return null;
-    return container.querySelector("[data-morph]") ?? container.firstElementChild;
-  }
-
-  /** The next view's first `[data-morph]` element, else the view element itself. */
-  private newMorphElement(): Element | null {
-    return this.oldMorphElement();
-  }
-
-  /** On the restored page, the first anchor to `path`, preferring one marked `data-morph-source`; none is a plain cross-fade. */
-  private returnMorphElement(path: string): Element | null {
-    const scope = this.mounted;
-    if (scope === null) return null;
-    let plain: Element | null = null;
-    for (const anchor of scope.querySelectorAll("a[href]")) {
-      if (!(anchor instanceof HTMLAnchorElement) || pathOfHref(anchor.href) !== path) continue;
-      if (anchor.hasAttribute("data-morph-source")) return anchor;
-      if (plain === null) plain = anchor;
-    }
-    return plain;
-  }
-
-  /** Record the anchor a document click goes through, before the router's own listener sees it. */
-  private recordClick(event: Event): void {
-    if (!(event instanceof MouseEvent)) return;
-    let anchor: Element | null = null;
-    for (const node of event.composedPath()) {
-      if (node instanceof Element && node.tagName === "A") {
-        anchor = node;
-        break;
-      }
-    }
-    if (!(anchor instanceof HTMLAnchorElement) || anchor.href === "") {
-      this.clickSource = null;
-      return;
-    }
-    try {
-      this.clickSource = { element: anchor, path: new URL(anchor.href).pathname, at: Date.now() };
-    } catch {
-      this.clickSource = null;
-    }
-  }
-
   mount(run: AppRun): Promise<void> {
     return this.put(run);
   }
 
   private async put(run: AppRun): Promise<void> {
     registerContainer();
-    installMorphStyles();
+    this.transitions?.installStyles();
     applyScheme(run.app.scheme);
     const theme = await loadPreset(run.app.theme ?? "default");
     if (theme !== null) applyTheme(theme);
@@ -495,11 +293,12 @@ export class WebHost extends AppHost {
       // A plain link to a path of the app goes through the router too, not only an lc-link.
       this.unlisten?.();
       const off = listen(document, run.router);
-      const capture = (event: Event): void => this.recordClick(event);
-      document.addEventListener("click", capture, true);
+      const transitions = this.transitions;
+      const capture = transitions === null ? null : (event: Event): void => transitions.recordClick(event);
+      if (capture !== null) document.addEventListener("click", capture, true);
       this.unlisten = () => {
         off();
-        document.removeEventListener("click", capture, true);
+        if (capture !== null) document.removeEventListener("click", capture, true);
       };
     }
     const tag = run.app.root ?? "app-root";
@@ -558,7 +357,7 @@ export class WebHost extends AppHost {
   routeChanged(run: AppRun, _first: boolean): Promise<void> {
     flushUpdates();
     this.currentHref = run.router?.adapter.getLocation().href ?? this.currentHref;
-    this.clickSource = null;
+    this.transitions?.clearClick();
     const historyNavigation = this.historyNavigation;
     this.historyNavigation = false;
     const win = globalThis.window;
@@ -614,8 +413,7 @@ export class WebHost extends AppHost {
   }
 
   unmount(_run: AppRun): void {
-    this.clearMorph();
-    this.clickSource = null;
+    this.transitions?.reset();
     this.stopListening();
     this.stopPage();
     const mounted = this.mounted;
@@ -626,15 +424,12 @@ export class WebHost extends AppHost {
   exit(_code: number): void {}
 }
 
-/** What `start` takes beside the manifest: how to spawn the worker a store may ask for. */
-export interface WebStartOptions {
-  /** Spawn the worker a store declared `worker: true` opens in. */
-  worker?: () => Worker;
-}
+/** What `start` takes beside the manifest: the optional features the generated entry imported. */
+export interface WebStartOptions extends WebHostOptions {}
 
-/** Start the app on the web; answers the handle that stops it. */
+/** Start the app on the web; answers the handle that stops it. A hand-written entry may pass nothing and gets memory stores, no transitions and no arguments; the generated entry is the supported path. */
 export const start = async (manifest: AppManifest, options: WebStartOptions = {}): Promise<AppHandle> => {
-  const run = new AppRun(manifest, new WebHost({ worker: options.worker }));
+  const run = new AppRun(manifest, new WebHost(options));
   await run.start();
   return { stop: () => run.stop() };
 };

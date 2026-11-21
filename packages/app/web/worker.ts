@@ -12,6 +12,8 @@ import type { Relayed, RpcClient } from "@lightstart/rpc";
 import type { Emitter } from "@lightstart/light/signals";
 import { idbError, idbLog, idbWarn, modelError, modelWarn } from "@lightstart/light/model/events";
 import type { FacetResult, QueryOptions, QueryPage, Row, StorageAdapter, WhereClause, WriteOptions } from "@lightstart/light/model/types.ts";
+import type { PlannedStore } from "../stores.ts";
+import type { WebWorkerConnection, WebWorkerFeature } from "./features.ts";
 
 /** The operators the engine asks an adapter about (`supportsOperator`); the worker answers which it has. */
 export const MODEL_OPERATORS: readonly string[] = ["like"];
@@ -84,6 +86,28 @@ export class WorkerConnection implements WorkerChannel {
     this.client.close();
     this.worker.terminate();
     this.onEmpty();
+  }
+}
+
+/** The worker feature the generated entry passes to `start` when a store declares `worker: true`. */
+export class WorkerStores implements WebWorkerFeature {
+  private readonly factory: () => Worker;
+
+  /** Spawn the worker entry with `factory` when the first worker store opens. */
+  constructor(factory: () => Worker) {
+    this.factory = factory;
+  }
+
+  /** Open the channel over one worker spawned by the factory. */
+  connect(onEmpty: () => void): Promise<WebWorkerConnection> {
+    return WorkerConnection.connect(this.factory(), onEmpty);
+  }
+
+  /** Open `store` through `connection` and answer the page's adapter. */
+  async open(connection: WebWorkerConnection, store: PlannedStore, memoryOnly: boolean): Promise<StorageAdapter> {
+    const adapter = new WorkerAdapter(connection, store.store, store.kindName, store.at, store.store === "main", memoryOnly, MODEL_OPERATORS);
+    await adapter.init();
+    return adapter;
   }
 }
 

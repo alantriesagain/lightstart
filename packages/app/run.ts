@@ -12,7 +12,6 @@
 import { signal } from "@lightstart/light/signals";
 import { RouterCore } from "@lightstart/router/core";
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
-import { parseArgs } from "@lightstart/cli/argv.ts";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { Row, Store } from "@lightstart/light/model/types.ts";
 import { startControllers, stopControllers } from "./controllers.ts";
@@ -62,9 +61,9 @@ export class AppHost implements StoreHost {
   kinds: readonly StoreKind[] = [];
   defaultKind: string = "memory";
 
-  /** The app's argument values, from the host's source (argv, the URL); an error for arguments it cannot take. */
-  args(app: App): Record<string, unknown> {
-    return parseArgs(app.argsSchema, []) as Record<string, unknown>;
+  /** The app's argument values, from the host's source (argv, the URL); a host with no source answers none. */
+  args(_app: App): Record<string, unknown> {
+    return {};
   }
 
   /** The history the routes follow. */

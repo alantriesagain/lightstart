@@ -47,6 +47,8 @@ export interface GenerationHelpers {
   readonly extension: ".ts" | ".js";
   /** Whether a store declares `worker: true`, so the host writes its worker entry. */
   readonly worker: boolean;
+  /** The app's choices the host's part of the generation reads. */
+  readonly info: AppInfo;
   flatFiles(dir: string): string[];
   specifierFor(from: string, to: string): string;
   nameOf(file: string): string;
@@ -160,16 +162,29 @@ export interface AppInfo {
   url: string | undefined;
   /** Whether any store declares `worker: true`. */
   worker: boolean;
+  /** Whether a web store is `indexeddb`, or names no kind (the web default). */
+  indexeddb: boolean;
+  /** Whether the app runs route changes inside a view transition. */
+  transitions: boolean;
+  /** Whether the app declares any arguments. */
+  args: boolean;
 }
 
 /** Read `src/app.ts` without its views: the app module imports only `@lightstart/app`. */
 export const infoOf = async (app: string): Promise<AppInfo> => {
   try {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
-    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; url?: unknown; stores?: unknown } }).default;
+    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; url?: unknown; stores?: unknown; transitions?: unknown; args?: unknown; argsSchema?: unknown } }).default;
     let worker = false;
+    let indexeddb = false;
     if (config !== undefined && isRecord(config.stores)) {
-      for (const value of Object.values(config.stores)) if (isRecord(value) && value["worker"] === true) worker = true;
+      for (const value of Object.values(config.stores)) {
+        if (!isRecord(value)) continue;
+        if (value["worker"] === true) worker = true;
+        const kind = value["kind"];
+        if (typeof kind === "function") indexeddb = true;
+        else if (kind === undefined || kind === "indexeddb") indexeddb = true;
+      }
     }
     return {
       host: config !== undefined && typeof config.host === "string" && config.host.length > 0 ? config.host : "web",
@@ -177,9 +192,12 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
       locale: config !== undefined && typeof config.locale === "string" && config.locale.length > 0 ? config.locale : "en",
       url: config !== undefined && typeof config.url === "string" && config.url.length > 0 ? config.url.replace(/\/+$/, "") : undefined,
       worker,
+      indexeddb,
+      transitions: config !== undefined && config.transitions === true,
+      args: config !== undefined && isRecord(config.argsSchema ?? config.args) && Object.keys(config.argsSchema ?? config.args ?? {}).length > 0,
     };
   } catch {
-    return { host: "web", root: "app-root", locale: "en", url: undefined, worker: false };
+    return { host: "web", root: "app-root", locale: "en", url: undefined, worker: false, indexeddb: false, transitions: false, args: false };
   }
 };
 
@@ -467,7 +485,7 @@ export const generate = async (projectPath: string, options: GenerateOptions = {
   const main = join(dir, `main${extension}`);
   const part = await hostGeneration(info.host);
   const rootFile = part.rootView ? rootFileOf(views, info.root) : null;
-  const helpers = { extension, worker: info.worker, flatFiles, specifierFor, nameOf, writeWhenChanged };
+  const helpers = { extension, worker: info.worker, info, flatFiles, specifierFor, nameOf, writeWhenChanged };
   const locales = writeLocales(project, dir, info.locale, helpers);
   const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
   const appImports = [...locales.imports, ...prepared.imports];

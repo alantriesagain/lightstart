@@ -223,7 +223,6 @@ const generation: HostGeneration = {
   async write(project, dir, main, helpers) {
     const workerPath = join(dir, "worker.js");
     let changed = false;
-    let source: string;
     if (helpers.worker) {
       const models = helpers.flatFiles(join(project, "src", "models"));
       const lines = ['import { serveStores } from "@lightstart/app/web/worker-entry";', `import app from "${helpers.specifierFor(project, join(project, "src", `app${helpers.extension}`))}";`];
@@ -232,18 +231,36 @@ const generation: HostGeneration = {
       models.forEach((file, index) => lines.push(`  ${JSON.stringify(helpers.nameOf(file))}: model${String(index)},`));
       lines.push("});", "");
       changed = helpers.writeWhenChanged(workerPath, lines.join("\n"));
-      source = [
-        'import { start } from "@lightstart/app/web";',
-        `import manifest from "./app${helpers.extension}";`,
-        "",
-        'await start(manifest, { worker: () => new Worker(new URL("./worker.js", import.meta.url), { type: "module" }) });',
-        "",
-      ].join("\n");
     } else {
       changed = remove(workerPath);
-      source = ['import { start } from "@lightstart/app/web";', `import manifest from "./app${helpers.extension}";`, "", "await start(manifest);", ""].join("\n");
     }
-    return { changed: helpers.writeWhenChanged(main, source) || changed, classes: null, modes: [] };
+    const featureImports: string[] = [];
+    const options: string[] = [];
+    if (helpers.info.indexeddb) {
+      featureImports.push('import { IndexedDBKind } from "@lightstart/app/web/indexeddb.ts";');
+      options.push("kinds: [new IndexedDBKind()],");
+    }
+    if (helpers.worker) {
+      featureImports.push('import { WorkerStores } from "@lightstart/app/web/worker.ts";');
+      options.push('worker: new WorkerStores(() => new Worker(new URL("./worker.js", import.meta.url), { type: "module" })),');
+    }
+    if (helpers.info.transitions) {
+      featureImports.push('import { Transitions } from "@lightstart/app/web/transitions.ts";');
+      options.push("transitions: new Transitions(),");
+    }
+    if (helpers.info.args) {
+      featureImports.push('import { queryArgs } from "@lightstart/app/web/args.ts";');
+      options.push("args: queryArgs,");
+    }
+    const lines = ['import { start } from "@lightstart/app/web";', `import manifest from "./app${helpers.extension}";`, ...featureImports, ""];
+    if (options.length === 0) lines.push("await start(manifest);");
+    else {
+      lines.push("await start(manifest, {");
+      for (const option of options) lines.push(`  ${option}`);
+      lines.push("});");
+    }
+    lines.push("");
+    return { changed: helpers.writeWhenChanged(main, lines.join("\n")) || changed, classes: null, modes: [] };
   },
 };
 
