@@ -6,7 +6,7 @@ class AppRoot extends View {
     return html`
       <main>
         <h1>Notes</h1>
-        <nav><a href="/">Home</a> <a href="/about">About</a></nav>
+        <nav><a href="/">Home</a> <a href="/about" data-morph-source>About</a></nav>
         <app-container></app-container>
       </main>
     `;

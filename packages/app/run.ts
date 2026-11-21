@@ -22,6 +22,21 @@ import { openStores } from "./stores.ts";
 import type { StoreHost, StoreKind } from "./stores.ts";
 import { setAppHead, setRouteHead } from "./head.ts";
 
+/** The element a navigation started from (usually the clicked link); a host that morphs reads it as the DOM element it is. */
+export interface NavigationSource {
+  readonly tagName: string;
+}
+
+/** What a host's transition may need: the path navigated to, the history entry it now shows, and where the navigation started. */
+export interface RouteTransition {
+  /** The route path the navigation lands on. */
+  path: string;
+  /** The history entry's `href` after the navigation, when the host's history has one. */
+  href?: string;
+  /** The element the navigation started from, for a host that morphs it into the next view. */
+  from?: NavigationSource;
+}
+
 /** The view tag the routes answer now; null without routes or without a view for the path. */
 export const currentView = signal<string | null>(null);
 
@@ -68,7 +83,7 @@ export class AppHost implements StoreHost {
   }
 
   /** Run `apply` inside the host's transition, then wait for its surface to draw; by default it just runs `apply`. */
-  transition(apply: () => Promise<void> | void): Promise<void> {
+  transition(apply: () => Promise<void> | void, _route?: RouteTransition): Promise<void> {
     return Promise.resolve(apply()).then(() => undefined);
   }
 
@@ -110,12 +125,14 @@ let running: AppRun | null = null;
 export interface NavigateOptions {
   /** Run this navigation inside the host's transition (`true`), or plainly (`false`), whatever the app chose. */
   transition?: boolean;
+  /** The element the navigation starts from; the web host morphs it into the next view's `data-morph` element. */
+  from?: NavigationSource;
 }
 
 /** Go to `path` in the app running now; nothing without routes. `options.transition` overrides the app's choice for this call. */
 export const navigate = (path: string, options: NavigateOptions = {}): void => {
   const run = running;
-  if (run !== null) run.go(path, options.transition);
+  if (run !== null) run.go(path, options.transition, options.from);
 };
 
 /** An app running on a host. */
@@ -129,6 +146,7 @@ export class AppRun {
   router: RouterCore | null = null;
   private following: (() => void) | null = null;
   private overrideTransition: boolean | undefined = undefined;
+  private overrideFrom: NavigationSource | undefined = undefined;
   private readonly seed: boolean;
 
   constructor(manifest: AppManifest, host: AppHost, memoryOnly = false, seed = true) {
@@ -204,7 +222,12 @@ export class AppRun {
     const apply = (): void => this.applyRoute(matched);
     const after = (): Promise<void> => this.host.routeChanged(this, false);
     const transition = this.overrideTransition ?? this.app.transitions;
-    if (transition) void this.host.transition(apply).then(after);
+    const route: RouteTransition = {
+      path: typeof matched.path === "string" ? matched.path : "/",
+      from: this.overrideFrom,
+      href: this.router?.adapter.getLocation().href,
+    };
+    if (transition) void this.host.transition(apply, route).then(after);
     else {
       apply();
       void after();
@@ -239,15 +262,17 @@ export class AppRun {
     this.router = router;
   }
 
-  /** Go to `path`, choosing whether this one navigation uses the host's transition. */
-  go(path: string, transition?: boolean): void {
+  /** Go to `path`, choosing whether this one navigation uses the host's transition and where it starts from. */
+  go(path: string, transition?: boolean, from?: NavigationSource): void {
     const router = this.router;
     if (router === null) return;
     this.overrideTransition = transition;
+    this.overrideFrom = from;
     try {
       router.go(path);
     } finally {
       this.overrideTransition = undefined;
+      this.overrideFrom = undefined;
     }
   }
 

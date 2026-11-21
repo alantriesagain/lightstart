@@ -5,7 +5,7 @@ class AppAbout extends View {
   static props = { id: "" };
 
   render() {
-    return html`<h1>About</h1><p>About</p>${this.id === "" ? "" : html`<p class="id">${this.id}</p>`}`;
+      return html`<h1 data-morph>About</h1><p>About</p>${this.id === "" ? "" : html`<p class="id">${this.id}</p>`}`;
   }
 }
 

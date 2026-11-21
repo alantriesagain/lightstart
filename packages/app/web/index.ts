@@ -28,6 +28,7 @@ import { createStore, storeRequest } from "@lightstart/light/model/store";
 import type { StorageAdapter, Store } from "@lightstart/light/model/types.ts";
 import { configureModel } from "@lightstart/light/model";
 import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
+import type { NavigationSource, RouteTransition } from "../run.ts";
 import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
 import type { Head } from "../head.ts";
 import { MemoryKind, plan, schemasOf, StoreKind } from "../stores.ts";
@@ -172,8 +173,80 @@ const applyHead = (head: Head): void => {
   setMeta(root, "name", "twitter:card", head.image === "" ? "summary" : "summary_large_image");
 };
 
+const morphStyles = `
+@layer light {
+  ::view-transition-group(morph) {
+    animation-duration: 420ms;
+    animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+  ::view-transition-old(morph),
+  ::view-transition-new(morph) {
+    height: 100%;
+    width: 100%;
+    object-fit: none;
+    object-position: left top;
+  }
+  ::view-transition-image-pair(morph) {
+    overflow: clip;
+  }
+  ::view-transition-old(morph) {
+    animation: light-morph-out 420ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  ::view-transition-new(morph) {
+    animation: light-morph-in 420ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 220ms;
+  }
+  @keyframes light-morph-out {
+    0% { opacity: 1; }
+    35% { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  @keyframes light-morph-in {
+    0% { opacity: 0; }
+    35% { opacity: 1; }
+    100% { opacity: 1; }
+  }
+}
+`;
+
+let morphStylesInstalled = false;
+
+/** Install light's default `morph` transition rules once, in the `light` layer so an app's own rules win. */
+const installMorphStyles = (): void => {
+  if (morphStylesInstalled) return;
+  if (document.getElementById("light-morph") !== null) {
+    morphStylesInstalled = true;
+    return;
+  }
+  const style = document.createElement("style");
+  style.id = "light-morph";
+  style.textContent = morphStyles;
+  document.head.append(style);
+  morphStylesInstalled = true;
+};
+
+/** The path of an `href`, for matching a remembered entry against the route now shown. */
+const pathOfHref = (href: string): string => {
+  try {
+    return new URL(href, globalThis.location?.href ?? "http://memory").pathname;
+  } catch {
+    return href;
+  }
+};
+
+/** A click that may start a navigation: the anchor, the path it leads to, and when it happened. */
+interface ClickSource {
+  element: Element;
+  path: string;
+  at: number;
+}
+
 /** What a web host may start with instead of the page's: the kinds it runs and its default kind (a test's kinds and memory). */
-export interface WebHostOptions {  kinds?: readonly StoreKind[];
+export interface WebHostOptions {
+  kinds?: readonly StoreKind[];
   defaultKind?: string;
   /** Spawn the worker a store declared `worker: true` opens in; absent, every store opens on the page. */
   worker?: () => Worker;
@@ -195,6 +268,13 @@ export class WebHost extends AppHost {
   private previousScrollRestoration: ScrollRestoration | null = null;
   private historyNavigation = false;
   private readonly scrollPositions = new Map<string, number>();
+  /** The `href` of the page on screen, and for each entry, the route path a morph-forward navigation led to. */
+  private currentHref: string | null = null;
+  private readonly ledTo = new Map<string, string>();
+  /** The anchor a recent click went through, dropped once a navigation uses it or another route change happens. */
+  private clickSource: ClickSource | null = null;
+  /** The element carrying the `morph` name now, with the inline value to restore. */
+  private named: { element: HTMLElement; previous: string } | null = null;
 
   constructor(options: WebHostOptions = {}) {
     super();
@@ -256,24 +336,146 @@ export class WebHost extends AppHost {
     (globalThis as { __PRERENDERED__?: boolean }).__PRERENDERED__ = false;
   }
 
-  /** Run the route change inside `document.startViewTransition` where the browser has it, then wait for `<app-container>` to draw the next view. */
-  transition(apply: () => Promise<void> | void): Promise<void> {
+  /** Run the route change inside `document.startViewTransition` where the browser has it, morphing the source into the next view, then wait for `<app-container>` to draw it. */
+  transition(apply: () => Promise<void> | void, route?: RouteTransition): Promise<void> {
+    installMorphStyles();
     const doc = globalThis.document;
     const start = (doc as unknown as { startViewTransition?: (callback: () => Promise<void> | void) => { finished: Promise<void> } }).startViewTransition;
     if (typeof start !== "function") return Promise.resolve(apply()).then(() => undefined);
+    const reduced = typeof globalThis.matchMedia === "function" && globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const path = route?.path ?? "";
+    const historyNavigation = this.historyNavigation;
+    const from = this.sourceOf(route?.from, path);
+    const leftPath = this.currentHref === null ? null : pathOfHref(this.currentHref);
+    const reverse = historyNavigation && leftPath !== null && route?.href !== undefined && this.ledTo.get(route.href) === leftPath;
+    const morph = !reduced && (historyNavigation ? reverse : from !== null);
+    if (morph) {
+      if (historyNavigation) this.nameMorph(this.oldMorphElement());
+      else if (from !== null) {
+        this.nameMorph(from);
+        if (this.currentHref !== null) this.ledTo.set(this.currentHref, path);
+      }
+    }
+    this.clickSource = null;
     // The browser pauses rendering, and with it the frame light's host flushes on, until this callback settles: draw the
     // container and the next view now, so the snapshot has the page the user will see and the callback never waits on a frame.
-    const update = (): Promise<void> => Promise.resolve(apply()).then(() => flushUpdates());
-    return new Promise<void>((resolve, reject) => {
+    const update = (): Promise<void> => Promise.resolve(apply()).then(async () => {
+      await this.drawNextView();
+      if (!morph) return;
+      this.clearMorph();
+      if (historyNavigation) this.nameMorph(leftPath === null ? null : this.returnMorphElement(leftPath));
+      else this.nameMorph(this.newMorphElement());
+    });
+    const done = new Promise<void>((resolve, reject) => {
       let transition: { finished: Promise<void> };
       try {
         transition = start.call(doc, update);
       } catch (error) {
+        this.clearMorph();
         reject(error);
         return;
       }
       transition.finished.then(() => resolve(), () => resolve());
     });
+    return done.then(() => {
+      this.clearMorph();
+    }, (error: unknown) => {
+      this.clearMorph();
+      throw error;
+    });
+  }
+
+  /** Flush the pending updates until `<app-container>` holds the view the route now answers, so a morph's target can be found. */
+  private async drawNextView(): Promise<void> {
+    for (let round = 0; round < 50; round++) {
+      flushUpdates();
+      const view = currentView.peek();
+      const first = this.containerElement()?.firstElementChild ?? null;
+      if (view === null ? first === null : first !== null && first.tagName.toLowerCase() === view) return;
+      await Promise.resolve();
+    }
+    flushUpdates();
+  }
+
+  /** The source a navigation morphs from: the one the call names, else a fresh click on the path this navigation takes. */
+  private sourceOf(given: NavigationSource | undefined, path: string): Element | null {
+    if (given instanceof Element) return given;
+    const click = this.clickSource;
+    if (click === null) return null;
+    if (Date.now() - click.at > 1000 || click.path !== path) {
+      this.clickSource = null;
+      return null;
+    }
+    return click.element;
+  }
+
+  /** Name `element` the transition's `morph`, keeping the name to itself and remembering its inline value. */
+  private nameMorph(element: Element | null): void {
+    if (!(element instanceof HTMLElement)) return;
+    if (this.named !== null && this.named.element !== element) this.clearMorph();
+    if (this.named !== null && this.named.element === element) return;
+    this.named = { element, previous: element.style.viewTransitionName };
+    element.style.viewTransitionName = "morph";
+  }
+
+  /** Clear the `morph` name, restoring the inline value the element had. */
+  private clearMorph(): void {
+    const named = this.named;
+    this.named = null;
+    if (named === null) return;
+    named.element.style.viewTransitionName = named.previous;
+  }
+
+  /** The route container in the mounted root, when the page has one. */
+  private containerElement(): Element | null {
+    const mounted = this.mounted;
+    return mounted === null ? null : mounted.querySelector("app-container");
+  }
+
+  /** The current view's `[data-morph]` element, else the view element itself. */
+  private oldMorphElement(): Element | null {
+    const container = this.containerElement();
+    if (container === null) return null;
+    return container.querySelector("[data-morph]") ?? container.firstElementChild;
+  }
+
+  /** The next view's first `[data-morph]` element, else the view element itself. */
+  private newMorphElement(): Element | null {
+    return this.oldMorphElement();
+  }
+
+  /** On the restored page, the first anchor to `path`, preferring one marked `data-morph-source`; none is a plain cross-fade. */
+  private returnMorphElement(path: string): Element | null {
+    const scope = this.mounted;
+    if (scope === null) return null;
+    let plain: Element | null = null;
+    for (const anchor of scope.querySelectorAll("a[href]")) {
+      if (!(anchor instanceof HTMLAnchorElement) || pathOfHref(anchor.href) !== path) continue;
+      if (anchor.hasAttribute("data-morph-source")) return anchor;
+      if (plain === null) plain = anchor;
+    }
+    return plain;
+  }
+
+  /** Record the anchor a document click goes through, before the router's own listener sees it. */
+  private recordClick(event: Event): void {
+    if (!(event instanceof MouseEvent)) return;
+    let anchor: Element | null = null;
+    for (const node of event.composedPath()) {
+      if (node instanceof Element && node.tagName === "A") {
+        anchor = node;
+        break;
+      }
+    }
+    if (!(anchor instanceof HTMLAnchorElement) || anchor.href === "") {
+      this.clickSource = null;
+      return;
+    }
+    try {
+      this.clickSource = { element: anchor, path: new URL(anchor.href).pathname, at: Date.now() };
+    } catch {
+      this.clickSource = null;
+    }
   }
 
   mount(run: AppRun): Promise<void> {
@@ -282,15 +484,23 @@ export class WebHost extends AppHost {
 
   private async put(run: AppRun): Promise<void> {
     registerContainer();
+    installMorphStyles();
     applyScheme(run.app.scheme);
     const theme = await loadPreset(run.app.theme ?? "default");
     if (theme !== null) applyTheme(theme);
     this.startPage();
+    this.currentHref = run.router?.adapter.getLocation().href ?? null;
     if (run.router !== null) {
       configureNavigation(run.router.navigation);
       // A plain link to a path of the app goes through the router too, not only an lc-link.
       this.unlisten?.();
-      this.unlisten = listen(document, run.router);
+      const off = listen(document, run.router);
+      const capture = (event: Event): void => this.recordClick(event);
+      document.addEventListener("click", capture, true);
+      this.unlisten = () => {
+        off();
+        document.removeEventListener("click", capture, true);
+      };
     }
     const tag = run.app.root ?? "app-root";
     const placeholder = document.querySelector(tag);
@@ -347,6 +557,8 @@ export class WebHost extends AppHost {
   /** After a route change, once the next view has drawn: scroll, move focus and announce the page's title. */
   routeChanged(run: AppRun, _first: boolean): Promise<void> {
     flushUpdates();
+    this.currentHref = run.router?.adapter.getLocation().href ?? this.currentHref;
+    this.clickSource = null;
     const historyNavigation = this.historyNavigation;
     this.historyNavigation = false;
     const win = globalThis.window;
@@ -402,6 +614,8 @@ export class WebHost extends AppHost {
   }
 
   unmount(_run: AppRun): void {
+    this.clearMorph();
+    this.clickSource = null;
     this.stopListening();
     this.stopPage();
     const mounted = this.mounted;
