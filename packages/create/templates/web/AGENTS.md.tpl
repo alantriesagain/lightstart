@@ -22,7 +22,7 @@ A view reaches its controller with an import, `import notes from "../controllers
 
 `.light/app.__EXT__`, `.light/__MAIN__` and the manifest are written by `light app` (and by `serve`, `build` and `test` before they start). Never edit them, and never commit them: `.light/` is in `.gitignore` beside `.deployed/`.
 
-The app layer opens the stores (a model picks one with its schema's `$store`, `main` when it names none), names and starts the controllers, applies the theme, builds the router from `src/routes.__EXT__` and mounts the root view. It also writes `.light/components.__EXT__` and `.light/components.css` for a project on `@lightstart/components`: the views write `lc-*` tags and the generation defines them and imports their stylesheets, so a view imports no component and calls no `View.define`.
+The app layer opens the stores (a model picks one with its schema's `$store`, `main` when it names none), names and starts the controllers, applies the theme, builds the router from `src/routes.__EXT__` and mounts the root view. It also writes `.light/components.__EXT__` and `.light/components.css` for a project on `@lightstart/components`: the views write `lc-*` tags and the generation defines them and imports their stylesheets, so a view imports no component and calls no `View.define`. When a source names an icon, `.light/icons.css` holds each name's mask from the `@iconify-json/lucide` set (`defineApp({ icons })` names another), and a name built at run time that no literal names (a bare string in a map) is declared in the module's `icons: [...]`.
 
 ## Writing a piece
 

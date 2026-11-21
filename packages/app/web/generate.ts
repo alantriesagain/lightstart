@@ -9,8 +9,12 @@
 import { existsSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
+import { icon } from "@lightstart/light/theme/icons.js";
+import type { IconEntry } from "@lightstart/light/theme";
 import { workerPathOf } from "../node/generate.ts";
 import type { GenerationHelpers, HostGeneration, HostPrepared } from "../node/generate.ts";
+import { collectionOf, scanIcons } from "../node/icons.ts";
+import type { ScannedIcons } from "../node/icons.ts";
 
 interface TagEntry {
   module: string;
@@ -128,6 +132,64 @@ const neededTags = (start: readonly string[], table: TagTable): Set<string> => {
 
 const dependenciesOf = (entry: TagEntry): string[] => (entry.extends === null ? entry.uses : [entry.extends, ...entry.uses]);
 
+/** The component source files the tags are written from, resolved from the project; a module that does not resolve is left out. */
+const componentSources = (project: string, tags: ReadonlySet<string>, table: TagTable): string[] => {
+  const require = createRequire(join(project, "package.json"));
+  const files: string[] = [];
+  for (const tag of [...tags].sort()) {
+    const entry = table[tag];
+    if (entry === undefined) continue;
+    try {
+      const file = require.resolve(`@lightstart/components/${entry.module}`);
+      if (!files.includes(file)) files.push(file);
+    } catch {
+      continue;
+    }
+  }
+  return files;
+};
+
+/** Every icon the project's own sources and the component modules it uses name. */
+const iconScans = (project: string, tags: ReadonlySet<string>, table: TagTable): ScannedIcons[] => {
+  const files = [...sources(join(project, "src")), ...componentSources(project, tags, table)];
+  return files.map((file) => scanIcons(readFileSync(file, "utf8")));
+};
+
+interface IconMaskModule {
+  iconMaskCSS(icons: Array<{ name: string; entry: IconEntry }>, options?: { solid?: Set<string>; bold?: Set<string> }): string;
+  iconSizeCSS(sizes: Iterable<number | string>): string;
+}
+
+/** The `.light/icons.css` source for the names found, or null when none is used, the collection is missing or the mask module does not resolve. */
+const iconsSource = (project: string, scans: readonly ScannedIcons[], set: string): string | null => {
+  const names = new Set<string>();
+  const solid = new Set<string>();
+  const bold = new Set<string>();
+  const sizes = new Set<string>();
+  for (const scan of scans) {
+    for (const name of scan.names) names.add(name);
+    for (const name of scan.solid) solid.add(name);
+    for (const name of scan.bold) bold.add(name);
+    for (const size of scan.sizes) sizes.add(size);
+  }
+  if (names.size === 0) return null;
+  const collection = collectionOf(project, set);
+  if (collection === null) return null;
+  const icons: Array<{ name: string; entry: IconEntry }> = [];
+  for (const name of [...names].sort()) {
+    const entry = icon(collection, name);
+    if (entry !== null) icons.push({ name, entry });
+  }
+  let mask: IconMaskModule;
+  try {
+    mask = createRequire(join(project, "package.json"))("@lightstart/components/display/icon-mask.js") as IconMaskModule;
+  } catch {
+    return null;
+  }
+  const css = `${mask.iconMaskCSS(icons, { solid, bold })}${mask.iconSizeCSS(sizes)}`;
+  return css.length > 0 ? css : null;
+};
+
 /** Every base and used tag before the tag that needs it; ties by tag. */
 const inOrder = (wanted: ReadonlySet<string>, table: TagTable): string[] => {
   const ordered: string[] = [];
@@ -177,8 +239,9 @@ const moduleSource = (order: readonly string[], onDemand: readonly string[], tab
   return lines.join("\n");
 };
 
-const styleSource = (order: readonly string[], table: TagTable): string => {
+const styleSource = (order: readonly string[], table: TagTable, icons: boolean): string => {
   const lines = ['@import "../node_modules/@lightstart/light/theme/theme.css";'];
+  if (icons) lines.push('@import "./icons.css";');
   for (const tag of order) {
     const entry = table[tag];
     if (entry !== undefined && entry.style !== null) lines.push(`@import "../node_modules/@lightstart/components/${entry.style}";`);
@@ -198,22 +261,26 @@ const writeComponents = (project: string, dir: string, helpers: GenerationHelper
   const extension = helpers.extension;
   const modulePath = join(dir, `components${extension}`);
   const stylePath = join(dir, "components.css");
+  const iconPath = join(dir, "icons.css");
   const table = tableFor(project);
   const written = table === null ? [] : writtenTags(project, table);
   const wanted = table === null ? new Set<string>() : neededTags(written, table);
   if (table === null || wanted.size === 0) {
     const found = remove(modulePath);
     const style = remove(stylePath);
-    return { changed: found || style, imports: [] };
+    const icons = remove(iconPath);
+    return { changed: found || style || icons, imports: [] };
   }
   const order = inOrder(wanted, table);
   const later = new Set<string>();
   for (const tag of wanted) for (const load of table[tag]?.loads ?? []) if (!wanted.has(load)) later.add(load);
   const onDemand = [...later].sort();
   const styled = new Set([...wanted, ...later]);
+  const icons = iconsSource(project, iconScans(project, styled, table), helpers.info.icons);
+  const iconChanged = icons === null ? remove(iconPath) : helpers.writeWhenChanged(iconPath, icons);
   const moduleChanged = helpers.writeWhenChanged(modulePath, moduleSource(order, onDemand, table));
-  const styleChanged = helpers.writeWhenChanged(stylePath, styleSource(inOrder(styled, table), table));
-  return { changed: moduleChanged || styleChanged, imports: [`./components${extension}`] };
+  const styleChanged = helpers.writeWhenChanged(stylePath, styleSource(inOrder(styled, table), table, icons !== null));
+  return { changed: moduleChanged || styleChanged || iconChanged, imports: [`./components${extension}`] };
 };
 
 const generation: HostGeneration = {

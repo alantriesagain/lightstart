@@ -44,6 +44,29 @@ const entryFor = (name) => {
   return entry;
 };
 
+/** @type {Set<string>} */
+const unmasked = new Set();
+
+/**
+ * Warn once for a name the page's stylesheets draw no mask for, when no loader
+ * can fetch one: a name built at run time that the build never saw.
+ * @param {HTMLElement & { name?: string }} el
+ * @param {string} name
+ */
+const checkMask = (el, name) => {
+  const doc = globalThis.document;
+  if (unmasked.has(name) || !doc || typeof getComputedStyle !== "function" || typeof requestAnimationFrame !== "function") return;
+  const look = () =>
+    requestAnimationFrame(() => {
+      if (!el.isConnected || el.name !== name || unmasked.has(name) || icons.load) return;
+      if (getComputedStyle(el).getPropertyValue("--lc-icon-mask").trim() !== "") return;
+      unmasked.add(name);
+      console.warn(`lc-icon "${name}" has no mask: no stylesheet on the page draws it and no icon loader is configured. In an app, write the name as a literal or list it in a module-level \`icons: [...]\` so the generation adds it.`);
+    });
+  if (doc.readyState === "complete") look();
+  else globalThis.addEventListener("load", look, { once: true });
+};
+
 /** @type {(name: string, variant: IconVariant) => string} */
 const ruleKey = (name, variant) => (variant ? `${name}[${variant}]` : name);
 
@@ -97,6 +120,7 @@ export default defineComponent({
    * @param {boolean} [bold]
    */
   getIcon(name, solid = false, bold = false) {
+    if (isIconName(name) && !icons.load) checkMask(this, name);
     if (!isIconName(name) || !icons.load || variantsOf(solid, bold).every((variant) => drawn.has(ruleKey(name, variant)))) return;
     return trackWork(drawIcon(name, solid, bold), "icon").then(
       () => { if (this.isConnected) this.$requestUpdate(); },

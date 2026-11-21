@@ -34,6 +34,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `tui/test.ts` | `mountApp`: the root view on a `TestTerminal` over an opened app |
 | `test/index.ts` | `openApp(manifest, { args })`: a run over memory stores with no surface, and `OpenedApp` |
 | `node/generate.ts` | The generator's core: find `src/app.ts` or `src/app.js` (its exported `appOf`), read it (its exported `infoOf`) and the routes (its exported `routesOf`, `routesPathOf`) without their views, read the folders, `src/seed` (with `src/seed.dev` unless a release build passes `{ dev: false }`) and, for a project on `@lightstart/content`, each `content/<model>` folder through `collect`, write `.light/app.ts` (or `.js`), `.light/content.ts` (or `.js`) and, for a project on `@lightstart/i18n`, `.light/locales.ts` (or `.js`), then hand `.light/main.ts` (or `.js`) to the host's `generate.ts` (`HostGeneration`) |
+| `node/icons.ts` | `scanIcons(source)` (`ScannedIcons`: the literal and declared names, the `solid`/`bold` variants, the numeric sizes, and the dynamic bindings with their line) and `collectionOf(project, set)`: an Iconify collection from the app's `@iconify-json/<set>` |
+| `check/rules/icons-known.js` | The `light check` rule: a dynamic name needs the module's `icons: [...]`, a name must be in the app's set, and the collection package must be installed |
 | `cli/commands/app.ts` | `light app` |
 | `cli/hooks/serve.before.ts` | Generate before `light serve` starts |
 | `cli/hooks/serve.file-changed.ts` | Regenerate when a named source is added, removed or renamed |
@@ -58,6 +60,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - The app module is `src/app.ts` or `src/app.js`, exactly one (both is an error naming both). A `.js` app gets `.light/app.js`, `.light/main.js`, `.light/components.js` and `.light/locales.js`, with `.js` imports between them and no TypeScript syntax; a terminal app keeps `.ts` generated files.
 - `.light/app.ts` uses static imports only: relative from `.light/`, one per file, views side-effect only, the same for every host but `rootView`, which a host that makes the root view (`HostGeneration.rootView`) gets, the core's `.light/locales.ts` (or `.js`) for a project on `@lightstart/i18n`, and the host's own side-effect imports (`HostGeneration.prepare`), all before the views. A file is rewritten only when its content changes.
 - A folder with no `src/app.ts` or `src/app.js` is untouched by every entry point: the command, both serve hooks, the build steps and the test extension.
+- Icons are CSS masks generated into `.light/icons.css` from the names the app's `src/` and its used component modules carry, by the app's set `icons` (`"lucide"` by default) and its installed `@iconify-json/<set>`. A dynamic binding is covered by icon literals in its module or a module it imports, or by the module's `icons: [...]` (`static icons = [...]` on a class); the check reports a binding with neither, an unknown name and a missing collection, and `lc-icon` warns once on the page for a name no stylesheet draws. The generation writes no file when no name is used or the collection does not resolve, and a source change under `src/` regenerates it.
 - The manifest is a plain typed record of arrays, never a `Map` of functions. Controllers cross as `unknown` and are narrowed by the run.
 - Routes are the core's on every host: the router's core (`@lightstart/router/core`) over the host's `history()`; `currentView` follows the match and is null once a run stops; `<app-container>` is each host's. The browser adapter and `configureNavigation` stay the web host's.
 - The terminal host takes argv with its own `--data` (default `.data`), `--scheme` (default `dark`) and `--route` (default `/`) merged in, an app declaring those names keeping its own; an `ArgError` prints its message and exits 2. Without a TTY it exits 2. Keys go to the root view's `onKey` when it has one, and its `mounted(renderer)` is called once `runApp` answers.
@@ -78,7 +81,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Contract | Who relies on it |
 |---|---|
-| `defineApp`, `AppConfig` and its fields (`name`, `title`, `host`, `theme`, `scheme`, `locale`, `url`, `prerender`, `worker`, `transitions`, `focusOnNavigate`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`adapter`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
+| `defineApp`, `AppConfig` and its fields (`name`, `title`, `host`, `theme`, `scheme`, `locale`, `icons`, `url`, `prerender`, `worker`, `transitions`, `focusOnNavigate`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`adapter`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
 | `pageHead` and `PageHead` | a view setting its page's title, description and image |
 | A route's `title` and `description` as strings or functions of its params | a project's `src/routes.ts` and the run's head |
 | `AdapterType`, `registerAdapterType` and `openStores` (from `engine.ts`) | a project bringing an adapter type of its own, and a host opening stores locally |
@@ -87,6 +90,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | The file-name rule and the default exports of models, controllers, the root view and routes | project folders and the generator |
 | `.light/app.ts` (or `.js`), `.light/main.ts` (or `.js`) and, for a terminal, `.light/classes.baked.ts` and `.light/models.ts` | `light serve`, `light build`, `light test`, `light app`, and a project's page or native entry |
 | `.light/components.ts` (or `.js`) and `.light/components.css` | a web project on `@lightstart/components`, imported by `.light/app.ts` (or `.js`) and its own stylesheet |
+| `.light/icons.css` | a web project on `@lightstart/components` that names an icon, imported by `.light/components.css` |
 | `.light/locales.ts` (or `.js`) | a project on `@lightstart/i18n`, imported by `.light/app.ts` (or `.js`) before the views |
 | `.light/content.ts` (or `.js`) | a project on `@lightstart/content`, imported by `.light/app.ts` (or `.js`) as a seed before `src/seed` |
 | `currentView`, `navigate` and `<app-container>` | root views and controllers of web and terminal apps |

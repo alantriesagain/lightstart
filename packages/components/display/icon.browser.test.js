@@ -77,6 +77,27 @@ describe("@lightstart/light - lc-icon", () => {
     assert.equal(getComputedStyle(el).backgroundColor, "rgba(0, 0, 0, 0)", "so the box stays transparent");
   });
 
+  it("warns once for a name no stylesheet draws when no loader is configured, and not for one it does", async () => {
+    const warnings = [];
+    const original = console.warn;
+    console.warn = (message) => warnings.push(String(message));
+    try {
+      const drawnOne = mount("lc-icon");
+      drawnOne.name = ICON;
+      const missing = mount("lc-icon");
+      missing.name = "never-drawn-anywhere";
+      const again = mount("lc-icon");
+      again.name = "never-drawn-anywhere";
+      await waitFor(() => warnings.length > 0, "the warning");
+      await new Promise((r) => setTimeout(r, 100));
+      assert.equal(warnings.filter((w) => w.includes('"never-drawn-anywhere"')).length, 1, "one warning per name");
+      assert.ok(!warnings.some((w) => w.includes(`"${ICON}"`)), "a drawn name does not warn");
+      assert.match(warnings[0], /icons: \[\.\.\.\]/);
+    } finally {
+      console.warn = original;
+    }
+  });
+
   it("solid resolves a different mask from the same name", async () => {
     const outline = mount("lc-icon");
     outline.name = ICON;

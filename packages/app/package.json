@@ -41,6 +41,7 @@
     "@lightstart/rpc": "workspace:*"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.157",
     "@lightstart/build": "workspace:*",
     "@lightstart/dev": "workspace:*",
     "@lightstart/test": "workspace:*",

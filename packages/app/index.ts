@@ -50,6 +50,11 @@ export interface AppConfig {
   scheme?: "dark" | "light" | "system";
   /** The default language the app's words are in; `"en"` when absent. */
   locale?: string;
+  /**
+   * The Iconify set the app's icons come from, installed as `@iconify-json/<set>`; `"lucide"` when
+   * absent. The generation writes each name its sources use into `.light/icons.css`.
+   */
+  icons?: string;
   /** The site's address, absolute and without a trailing slash (`https://lightstart.dev`); the build writes its sitemap against it. */
   url?: string;
   /** Render every concrete route to its own `index.html` at build time; `light build --prerender` when absent. `true` and `"markup"` render in node, `"browser"` through Playwright. */
@@ -120,6 +125,8 @@ export class App {
   readonly scheme: "dark" | "light" | "system";
   /** The default language the app's words are in. */
   readonly locale: string;
+  /** The Iconify set the app's icons come from, `"lucide"` when the config names none. */
+  readonly icons: string;
   /** The site's address, when the config names one, without a trailing slash. */
   readonly url: string | undefined;
   /** Whether the build renders every concrete route ahead of time. */
@@ -149,6 +156,7 @@ export class App {
     this.theme = config.theme;
     this.scheme = config.scheme ?? "system";
     this.locale = config.locale ?? "en";
+    this.icons = config.icons ?? "lucide";
     this.url = config.url === undefined ? undefined : config.url.replace(/\/+$/, "");
     this.prerender = config.prerender === true || typeof config.prerender === "string";
     this.prerenderRenderer = config.prerender === "markup" || config.prerender === "browser" ? config.prerender : undefined;

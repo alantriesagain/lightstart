@@ -103,6 +103,14 @@ rows after. Remove the seed entry for a model that moved to `content`, so it doe
 twice. [@lightstart/content](../content/README.md) documents the frontmatter subset, `collect`
 and `renderContent`.
 
+## Icons
+
+Icons come from an Iconify set, `lucide` unless `defineApp({ icons: "lucide" })` names another. Its collection is the npm package `@iconify-json/<set>`, a devDependency of the app: versioned, in the lockfile, and offline once installed, with no Iconify API request at run time.
+
+The generation, in the same pass that finds the `lc-*` tags, reads the icon names the app's own `src/` and the source of every component it uses carry: `<lc-icon name="x">`, `icon="x"`, `icon: "x"`, `iconName: "x"`, and a module's `icons: ["x", ...]` array. It keeps the `solid` and `bold` variants an element asks for and the numeric `size`s, then writes `.light/icons.css` from the collection with one CSS mask rule per name; `.light/components.css` imports it, so development, tests, the build and a prerendered page draw the same icons without a loader. A project that names no icon gets no file, and a project without the set installed gets none either (`light check` reports it).
+
+A name built at run time, `<lc-icon name=${name}>` or `icon=${name}`, cannot be read by the generator, so the names it can take must be written as literals somewhere it reads: usually they already are (`icon: "house"` in a list the module or one it imports holds). A name that is only a bare string (`{ checking: "landmark" }`) is declared in a module-level `icons: ["x", ...]`, the components' own convention, or a class's `static icons = [...]`. `light check` reports a binding whose module and direct imports name no icon at all; what it cannot see, a bare string in a map, `lc-icon` reports once on the page: a name no stylesheet draws, with no loader configured, warns naming itself. `light check` also fails a name the set does not have, and a project that uses icons without `@iconify-json/<set>`, naming the `pnpm add -D @iconify-json/<set>` to run. `configureIcons` stays for a page outside an app that loads its own icons.
+
 ## Routes and views
 
 `src/routes.ts` maps paths to view tags on every host. The run makes the router (`@lightstart/router`'s core) over the host's history: the browser's on the web, one in memory on the terminal (starting at `/`, or the path `--route` names). `currentView` is the view tag the path answers, `currentParams` the parameters of its path (`/components/:category` gives `{ category }`), and `navigate(path)` goes to another; all come from the host's subpath. A root view that shows routes writes `<app-container>` (the app's, drawing the routed view; not `lc-app-container`, the components' page layout), which the host gives: a component in the page, a terminal view on the terminal. The container sets the parameters on the view as props, keeping the same element while the tag stays, so a view declares a prop for each parameter its path has:
@@ -224,7 +232,7 @@ The generator reads `src/app.ts` and writes only the imports the config uses: `w
 
 On the web, `scheme` is applied before the theme: `"dark"` puts the `dark` class on `<html>` and stops following the preference, `"light"` removes it, and `"system"` follows the reader's choice and the OS. The build writes the class into a prerendered page's `<html>`, so a dark app paints dark on the first frame. The terminal host ignores it.
 
-A web project that declares `@lightstart/components` and writes an `lc-*` tag in `src/` gets two more files. `.light/components.ts` (or `.js`) imports each component module, follows every `extends` and `uses`, and defines each base and used tag before the tag that needs it; `.light/components.css` imports the theme and each component's stylesheet in the same order. `.light/app.ts` (or `.js`) imports `./components.ts` (or `.js`) before the views. A project without the package, or writing no tag, gets neither file.
+A web project that declares `@lightstart/components` and writes an `lc-*` tag in `src/` gets two more files. `.light/components.ts` (or `.js`) imports each component module, follows every `extends` and `uses`, and defines each base and used tag before the tag that needs it; `.light/components.css` imports the theme and each component's stylesheet in the same order. When a source names an icon, it also gets `.light/icons.css` (see [Icons](#icons)), which `.light/components.css` imports. `.light/app.ts` (or `.js`) imports `./components.ts` (or `.js`) before the views. A project without the package, or writing no tag, gets none of them.
 
 A project that declares `@lightstart/i18n` gets `.light/locales.ts` (or `.js`), imported by `.light/app.ts` (or `.js`) before the views. It imports `locales/<lang>.js` from every dependency whose `package.json` says `light.locales: true`, and the project's own `src/locales/<lang>.ts`/`.js`, then calls `configureI18n({ locales, defaultLocale, dictionaries })`: every language found, the app's `locale` as the default, and each language's dictionary the packages' merged first with the project's over them (a deep merge, so a key the project writes wins). A project without the package gets no file, and may plug another library into `configureTranslation` itself.
 
@@ -258,6 +266,7 @@ A project that depends on `@lightstart/app` gets these rules from `light check`,
 - `routes-module-shape`: `src/routes.(js|ts)` default-exports an object literal (or a name bound to one) whose keys are paths starting with `/`.
 - `no-view-import-by-hand`: a module imports no view module for its side effect or its default; `.light/` defines the views, and `import type` is fine.
 - `no-duplicate-route-path`: two keys of the routes table never name the same path once a trailing slash is ignored.
+- `icons-known`: an icon name is a literal the app's set has, and a binding's module or one it imports names icons (or declares them in `icons: [...]`); a project that uses icons installs `@iconify-json/<set>`.
 - `no-server-module-in-page`: in a web app (`host: "web"` in `src/app.*`), nothing under `src/` imports `node:*`, `@lightstart/server` or `@lightstart/sqlite`.
 - `test-conventions`: no committed `.only` on `describe`, `it` or `test`.
 - `test-touches-browser` (warning): a test that reads `document` or `window` is named `*.browser.test.*` or `*.e2e.*`.
