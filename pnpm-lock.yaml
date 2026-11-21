@@ -99,6 +99,9 @@ importers:
       '@lightstart/router':
         specifier: workspace:*
         version: link:../router
+      '@lightstart/rpc':
+        specifier: workspace:*
+        version: link:../rpc
     devDependencies:
       '@lightstart/build':
         specifier: workspace:*
@@ -178,6 +181,22 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+
+  packages/content:
+    dependencies:
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/markdown':
+        specifier: workspace:*
+        version: link:../markdown
+    devDependencies:
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
 
   packages/create:
     devDependencies:

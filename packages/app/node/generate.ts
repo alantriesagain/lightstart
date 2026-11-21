@@ -10,7 +10,7 @@
  * `src/app.ts` or `src/app.js` is left alone.
  */
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -212,11 +212,12 @@ export const routesOf = async (routes: string): Promise<Record<string, unknown> 
   }
 };
 
-const manifestSource = (project: string, app: string, extension: ".ts" | ".js", models: string[], seeds: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[]): string => {
+const manifestSource = (project: string, app: string, extension: ".ts" | ".js", models: string[], content: string | null, seeds: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[]): string => {
   const lines: string[] = [];
   if (extension === ".ts") lines.push('import type { AppManifest } from "@lightstart/app/manifest.ts";');
   lines.push(`import app from "${specifierFor(project, app)}";`);
   models.forEach((file, index) => lines.push(`import model${String(index)} from "${specifierFor(project, file)}";`));
+  if (content !== null) lines.push(`import content from ${JSON.stringify(content)};`);
   seeds.forEach((file, index) => lines.push(`import seed${String(index)} from "${specifierFor(project, file)}";`));
   controllers.forEach((file, index) => lines.push(`import controller${String(index)} from "${specifierFor(project, file)}";`));
   if (routes !== null) lines.push(`import routes from "${specifierFor(project, routes)}";`);
@@ -236,9 +237,10 @@ const manifestSource = (project: string, app: string, extension: ".ts" | ".js", 
     models.forEach((file, index) => lines.push(`    { name: ${JSON.stringify(nameOf(file))}, model: model${String(index)} },`));
     lines.push("  ],");
   }
-  if (seeds.length === 0) lines.push("  seeds: [],");
+  if (seeds.length === 0 && content === null) lines.push("  seeds: [],");
   else {
     lines.push("  seeds: [");
+    if (content !== null) lines.push("    content,");
     seeds.forEach((_file, index) => lines.push(`    seed${String(index)},`));
     lines.push("  ],");
   }
@@ -418,6 +420,57 @@ const writeLocales = (project: string, dir: string, locale: string, helpers: Gen
   return { changed: helpers.writeWhenChanged(path, lines.join("\n")), imports: [`./locales${extension}`] };
 };
 
+const declaresContent = (project: string): boolean =>
+  dependencyNames(project).includes("@lightstart/content");
+
+/** The `content/<model>` folders, sorted by model name. */
+const contentFolders = (project: string): { name: string; dir: string }[] => {
+  const root = join(project, "content");
+  if (!existsSync(root)) return [];
+  return readdirSync(root)
+    .filter((name) => statSync(join(root, name)).isDirectory())
+    .sort()
+    .map((name) => ({ name, dir: join(root, name) }));
+};
+
+/**
+ * Write `.light/content.ts` (or `.js`) as `{ <model>: [rows] }` from each
+ * `content/<model>` folder, checked against that model's schema; remove it
+ * when the project does not depend on `@lightstart/content` or has no folder.
+ * A folder naming a model the app does not have is an error naming both.
+ */
+const writeContent = async (project: string, dir: string, models: string[], extension: ".ts" | ".js", helpers: GenerationHelpers): Promise<{ changed: boolean; specifier: string | null }> => {
+  const path = join(dir, `content${extension}`);
+  if (!declaresContent(project)) return { changed: remove(path), specifier: null };
+  const folders = contentFolders(project);
+  if (folders.length === 0) return { changed: remove(path), specifier: null };
+
+  const byName = new Map(models.map((file) => [nameOf(file), file]));
+  const require = createRequire(join(project, "package.json"));
+  let entry = "";
+  try {
+    entry = require.resolve("@lightstart/content/collect.ts");
+  } catch {
+    throw new Error('The project depends on @lightstart/content, and "@lightstart/content/collect.ts" does not resolve');
+  }
+  const module = await import(pathToFileURL(entry).href);
+  const collect = (module as { collect?: (folder: string, options: { model?: unknown }) => Record<string, unknown>[] }).collect;
+  if (collect === undefined) throw new Error("@lightstart/content/collect.ts exports no collect");
+
+  const data: Record<string, unknown> = {};
+  for (const folder of folders) {
+    const file = byName.get(folder.name);
+    if (file === undefined) {
+      throw new Error(`The content folder "content/${folder.name}" names model "${folder.name}", and the app has no such model (its models are ${[...byName.keys()].sort().join(", ") || "none"})`);
+    }
+    const loaded = (await import(`${pathToFileURL(file).href}?mtime=${String(Date.now())}`)) as { default?: { schema?: unknown } };
+    data[folder.name] = collect(folder.dir, { model: loaded.default?.schema });
+  }
+
+  const source = `const content = ${JSON.stringify(data, null, 2)};\n\nexport default content;\n`;
+  return { changed: helpers.writeWhenChanged(path, source), specifier: `./content${extension}` };
+};
+
 /** The generation of host `host` (`@lightstart/app/<host>/generate.ts`); an error naming it when there is none. */
 const hostGeneration = async (host: string): Promise<HostGeneration> => {
   if (!/^[a-z][a-z0-9-]*$/.test(host)) throw new Error(`The app's host "${host}" is not a host's name (web, tui)`);
@@ -487,9 +540,10 @@ export const generate = async (projectPath: string, options: GenerateOptions = {
   const rootFile = part.rootView ? rootFileOf(views, info.root) : null;
   const helpers = { extension, worker: info.worker, info, flatFiles, specifierFor, nameOf, writeWhenChanged };
   const locales = writeLocales(project, dir, info.locale, helpers);
+  const content = await writeContent(project, dir, models, extension, helpers);
   const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
   const appImports = [...locales.imports, ...prepared.imports];
-  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, app, extension, models, seeds, controllers, views, routes, rootFile, appImports));
+  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, app, extension, models, content.specifier, seeds, controllers, views, routes, rootFile, appImports));
   const written = await part.write(project, dir, main, helpers);
 
   return {
@@ -506,6 +560,6 @@ export const generate = async (projectPath: string, options: GenerateOptions = {
     views: views.map(nameOf),
     modes: written.modes,
     routes: routes !== null,
-    changed: wroteManifest || locales.changed || prepared.changed || written.changed,
+    changed: wroteManifest || locales.changed || content.changed || prepared.changed || written.changed,
   };
 };

@@ -31,7 +31,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `tui/file.ts` | `fileIO`: the JSONL adapter's files through `node:fs`, the folder made on the first write |
 | `tui/test.ts` | `mountApp`: the root view on a `TestTerminal` over an opened app |
 | `test/index.ts` | `openApp(manifest, { args })`: a run over memory stores with no surface, and `OpenedApp` |
-| `node/generate.ts` | The generator's core: find `src/app.ts` or `src/app.js` (its exported `appOf`), read it (its exported `infoOf`) and the routes (its exported `routesOf`, `routesPathOf`) without their views, read the folders and `src/seed` (with `src/seed.dev` unless a release build passes `{ dev: false }`), write `.light/app.ts` (or `.js`) and, for a project on `@lightstart/i18n`, `.light/locales.ts` (or `.js`), then hand `.light/main.ts` (or `.js`) to the host's `generate.ts` (`HostGeneration`) |
+| `node/generate.ts` | The generator's core: find `src/app.ts` or `src/app.js` (its exported `appOf`), read it (its exported `infoOf`) and the routes (its exported `routesOf`, `routesPathOf`) without their views, read the folders, `src/seed` (with `src/seed.dev` unless a release build passes `{ dev: false }`) and, for a project on `@lightstart/content`, each `content/<model>` folder through `collect`, write `.light/app.ts` (or `.js`), `.light/content.ts` (or `.js`) and, for a project on `@lightstart/i18n`, `.light/locales.ts` (or `.js`), then hand `.light/main.ts` (or `.js`) to the host's `generate.ts` (`HostGeneration`) |
 | `cli/commands/app.ts` | `light app` |
 | `cli/hooks/serve.before.ts` | Generate before `light serve` starts |
 | `cli/hooks/serve.file-changed.ts` | Regenerate when a named source is added, removed or renamed |
@@ -85,6 +85,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `.light/app.ts` (or `.js`), `.light/main.ts` (or `.js`) and, for a terminal, `.light/classes.baked.ts` and `.light/models.ts` | `light serve`, `light build`, `light test`, `light app`, and a project's page or native entry |
 | `.light/components.ts` (or `.js`) and `.light/components.css` | a web project on `@lightstart/components`, imported by `.light/app.ts` (or `.js`) and its own stylesheet |
 | `.light/locales.ts` (or `.js`) | a project on `@lightstart/i18n`, imported by `.light/app.ts` (or `.js`) before the views |
+| `.light/content.ts` (or `.js`) | a project on `@lightstart/content`, imported by `.light/app.ts` (or `.js`) as a seed before `src/seed` |
 | `currentView`, `navigate` and `<app-container>` | root views and controllers of web and terminal apps |
 | `navigate`'s `transition` and `from` options, `RouteTransition`, `NavigationSource`, `[data-morph]` and `data-morph-source` | web views pairing a link with the view it opens, and a host's `transition` |
 | `start(manifest, { kinds, worker, transitions, args })` and `{ stop() }` | web apps and their generated entry |
