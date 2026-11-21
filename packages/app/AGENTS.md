@@ -40,6 +40,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `node/test-partition.ts` | `partitionTestFiles(files)`: the `*.test.*` files that run under node, and the `*.browser.test.*` files (with any file that is neither, such as `*.e2e.*`) that run in Chromium |
 | `node/sync.ts` | `scanSync(source)` (`ScannedSync`: whether a source declares a `sync:`, and whether a target is a model api imported from `src/models/`) |
 | `check/rules/icons-known.js` | The `light check` rule: an icon file's name and drawing, a dynamic name needs the module's `icons: [...]`, a name must be in the app's set or `icons/`, an app icon must not shadow the set's, and the collection package must be installed |
+| `check/rules/no-location-in-views.js` | The `light check` rule: a view reads `currentRoute`, not `location.pathname` |
 | `check/rules/page-test-name.js` | The `light check` rule: a `*.test.*` file that imports `@lightstart/app/web/test` must be named `*.browser.test.*`, since it needs a page |
 | `cli/commands/app.ts` | `light app` |
 | `cli/hooks/serve.before.ts` | Generate before `light serve` starts |
