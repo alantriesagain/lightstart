@@ -8,7 +8,7 @@ import { defineModel } from "@lightstart/light/model";
 import type { ModelRow } from "@lightstart/light/model";
 
 const event = defineModel("event", {
-  $adapter: "activity",
+  $store: "activity",
   text: T.string({ required: true }),
   at: T.number({ required: true }),
 });

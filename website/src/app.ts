@@ -20,6 +20,6 @@ export default defineApp({
     skin: { description: "The skin the site renders in" },
   },
   stores: {
-    main: { kind: "memory" },
+    main: { adapter: "memory" },
   },
 });

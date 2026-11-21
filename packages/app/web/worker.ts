@@ -4,7 +4,7 @@
  * is one request on the worker's port. The engine store keeps the model layer
  * (validation, ids, hooks and `modelChanged`), so a write made here announces
  * once, on the page, exactly as a local store would. The worker holds the same
- * kind of adapter and answers each method; the operators it supports come back
+ * adapter and answers each method; the operators it supports come back
  * once, in the open request's answer.
  */
 
@@ -105,7 +105,7 @@ export class WorkerStores implements WebWorkerFeature {
 
   /** Open `store` through `connection` and answer the page's adapter. */
   async open(connection: WebWorkerConnection, store: PlannedStore, memoryOnly: boolean): Promise<StorageAdapter> {
-    const adapter = new WorkerAdapter(connection, store.store, store.kindName, store.at, store.store === "main", memoryOnly, MODEL_OPERATORS);
+    const adapter = new WorkerAdapter(connection, store.store, store.adapterName, store.at, store.store === "main", memoryOnly, MODEL_OPERATORS);
     await adapter.init();
     return adapter;
   }
@@ -117,7 +117,7 @@ export class WorkerAdapter implements StorageAdapter {
   type: string | undefined;
   private readonly channel: WorkerChannel;
   private readonly store: string;
-  private readonly kind: string;
+  private readonly adapter: string;
   private readonly at: string;
   private readonly main: boolean;
   private readonly memoryOnly: boolean;
@@ -125,10 +125,10 @@ export class WorkerAdapter implements StorageAdapter {
   private supported: string[] = [];
   private closed = false;
 
-  constructor(channel: WorkerChannel, store: string, kind: string, at: string, main: boolean, memoryOnly: boolean, operators: readonly string[] = MODEL_OPERATORS) {
+  constructor(channel: WorkerChannel, store: string, adapter: string, at: string, main: boolean, memoryOnly: boolean, operators: readonly string[] = MODEL_OPERATORS) {
     this.channel = channel;
     this.store = store;
-    this.kind = kind;
+    this.adapter = adapter;
     this.at = at;
     this.main = main;
     this.memoryOnly = memoryOnly;
@@ -138,7 +138,7 @@ export class WorkerAdapter implements StorageAdapter {
   async init(): Promise<void> {
     const answer = await this.channel.request("store.open", {
       store: this.store,
-      kind: this.kind,
+      adapter: this.adapter,
       at: this.at,
       main: this.main,
       memoryOnly: this.memoryOnly,

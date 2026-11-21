@@ -1,5 +1,5 @@
 /**
- * @file `@lightstart/app/tui`: the terminal host. Its store kinds are `jsonl`
+ * @file `@lightstart/app/tui`: the terminal host. Its store adapter types are `jsonl`
  * (the default: files in the store's folder, `at`, else `--data`, `.data` in
  * the current folder by default) and `memory`, and a project's own. The arguments come
  * from argv: the app's, and the host's own `--data`, `--scheme dark|light`
@@ -28,7 +28,7 @@ import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { AppHost, AppRun } from "../run.ts";
 import "./container.ts";
-import { MemoryKind, StoreKind } from "../stores.ts";
+import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import { fileIO } from "./file.ts";
 import { callMounted, handlerOf } from "./root.ts";
 
@@ -68,7 +68,7 @@ const openJsonl = async (store: string, dir: string): Promise<StorageAdapter> =>
 };
 
 /** JSON Lines files: a file per model in the store's folder (`at`, else `--data`). */
-export class JsonlKind extends StoreKind {
+export class JsonlAdapterType extends AdapterType {
   readonly name = "jsonl";
 
   open(app: App, store: string, at: string, _models: Record<string, ModelSchema>, _main: boolean): Promise<StorageAdapter> {
@@ -81,8 +81,8 @@ const isClass = (value: unknown): value is new () => View => typeof value === "f
 /** The terminal host. */
 export class TuiHost extends AppHost {
   readonly name = "tui";
-  readonly kinds: readonly StoreKind[] = [new JsonlKind(), new MemoryKind()];
-  readonly defaultKind = "jsonl";
+  readonly adapters: readonly AdapterType[] = [new JsonlAdapterType(), new MemoryAdapterType()];
+  readonly defaultAdapter = "jsonl";
   readonly argv: readonly string[];
   readonly classes: TuiClasses | null;
   term: Terminal | null;

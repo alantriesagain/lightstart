@@ -14,7 +14,7 @@ import { build, createBuildExtension } from "@lightstart/build";
 import type { AppManifest } from "../manifest.ts";
 import { generate as generateProject } from "../node/generate.ts";
 import { openApp } from "../test/index.ts";
-import { JsonlKind } from "../tui/index.ts";
+import { JsonlAdapterType } from "../tui/index.ts";
 import { done, eqn, ok } from "@lightstart/test/assert.ts";
 import appBuild from "../cli/extend/build.ts";
 
@@ -83,10 +83,10 @@ const main = async (): Promise<void> => {
 
     const data = mkdtempSync(join(tmpdir(), "light-app-seed-data-"));
     try {
-      const first = await openApp(manifest, { args: { data }, kinds: [new JsonlKind()] });
+      const first = await openApp(manifest, { args: { data }, adapters: [new JsonlAdapterType()] });
       eqn("the first run seeds the store", (await first.store.getAll("note")).length, 1);
       await first.stop();
-      const second = await openApp(manifest, { args: { data }, kinds: [new JsonlKind()] });
+      const second = await openApp(manifest, { args: { data }, adapters: [new JsonlAdapterType()] });
       eqn("a second run adds nothing to the store", (await second.store.getAll("note")).length, 1);
       await second.stop();
     } finally {

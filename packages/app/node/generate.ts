@@ -162,7 +162,7 @@ export interface AppInfo {
   url: string | undefined;
   /** Whether any store declares `worker: true`. */
   worker: boolean;
-  /** Whether a web store is `indexeddb`, or names no kind (the web default). */
+  /** Whether a web store is `indexeddb`, or names no adapter (the web default). */
   indexeddb: boolean;
   /** Whether the app runs route changes inside a view transition. */
   transitions: boolean;
@@ -181,9 +181,9 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
       for (const value of Object.values(config.stores)) {
         if (!isRecord(value)) continue;
         if (value["worker"] === true) worker = true;
-        const kind = value["kind"];
-        if (typeof kind === "function") indexeddb = true;
-        else if (kind === undefined || kind === "indexeddb") indexeddb = true;
+        const adapter = value["adapter"];
+        if (typeof adapter === "function") indexeddb = true;
+        else if (adapter === undefined || adapter === "indexeddb") indexeddb = true;
       }
     }
     return {

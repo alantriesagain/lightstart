@@ -29,7 +29,7 @@ Type a task and press Enter. Tab moves the focus, Space toggles the focused task
 | | Where |
 |---|---|
 | The app's choices: the host, a flag (`--list`), two stores | `src/app.ts` |
-| Two stores at once: `main` (JSON Lines files under `--data`, the terminal's default kind) for lists and tasks; `activity` (memory) for the run's events, a model naming it with `$adapter` | `src/app.ts`, `src/models/event.ts` |
+| Two stores at once: `main` (JSON Lines files under `--data`, the terminal's default adapter) for lists and tasks; `activity` (memory) for the run's events, a model naming it with `$store` | `src/app.ts`, `src/models/event.ts` |
 | Models, one per file, the file's name the model's | `src/models/list.ts`, `task.ts`, `event.ts` |
 | Controllers starting in the order their imports give: `activity`, then `lists` (which reads `--list` and says what it made), then `tasks` | `src/controllers/` |
 | Routes on a terminal: three pages, `<app-container>` in the root view drawing the one the path answers, `navigate` from a key | `src/routes.ts`, `src/views/app-root.ts`, `src/views/lists-page.ts` |

@@ -1,12 +1,12 @@
 /**
- * @file An app's stores: each declared store opened by its kind, all of them
- * over one engine store, which routes each model to the store its schema's
- * `$adapter` names (`main` when it names none). A kind is a `StoreKind`: the
- * core's `memory`, a host's (`indexeddb` on the web, `jsonl` on the terminal),
- * or one a project registers. A host runs the kinds it lists and its own
- * default; a store of a kind it cannot run, or a model naming a store the app
- * does not declare, is an error before anything opens. `configureModel` hands
- * every model api the store in this runtime.
+ * @file An app's stores: each declared store opened by its adapter type, all of
+ * them over one engine store, which routes each model to the store its schema's
+ * `$store` names (`main` when it names none). An adapter type is an
+ * `AdapterType`: the core's `memory`, a host's (`indexeddb` on the web, `jsonl`
+ * on the terminal), or one a project registers. A host runs the adapter types it
+ * lists and its own default; a store of an adapter type it cannot run, or a
+ * model naming a store the app does not declare, is an error before anything
+ * opens. `configureModel` hands every model api the store in this runtime.
  */
 
 import { configureModel } from "@lightstart/light/model";
@@ -17,8 +17,8 @@ import type { App } from "./index.ts";
 import type { AppManifest } from "./manifest.ts";
 import { MemoryAdapter } from "./memory.ts";
 
-/** An adapter a store may be of: its name, and how it opens one store. */
-export abstract class StoreKind {
+/** An adapter type a store may be of: its name, and how it opens one store. */
+export abstract class AdapterType {
   abstract readonly name: string;
 
   /** Open store `store` of `app` at `at` ("" when the app named none) over `models`; `main` is the default store. An implementation answers a promise rather than being `async` (scriptc dispatches no async override). */
@@ -32,8 +32,8 @@ const openMemory = async (app: App, store: string, models: Record<string, ModelS
   return db;
 };
 
-/** The core's kind: rows held in memory, for tests and for what need not outlast the process. */
-export class MemoryKind extends StoreKind {
+/** The core's adapter type: rows held in memory, for tests and for what need not outlast the process. */
+export class MemoryAdapterType extends AdapterType {
   readonly name = "memory";
 
   open(app: App, store: string, _at: string, models: Record<string, ModelSchema>, main: boolean): Promise<StorageAdapter> {
@@ -41,20 +41,20 @@ export class MemoryKind extends StoreKind {
   }
 }
 
-/** What runs a store: the kinds a host has and its default. */
+/** What runs a store: the adapter types a host has and its default. */
 export interface StoreHost {
   readonly name: string;
-  readonly kinds: readonly StoreKind[];
-  readonly defaultKind: string;
+  readonly adapters: readonly AdapterType[];
+  readonly defaultAdapter: string;
 }
 
-const projectKinds: StoreKind[] = [];
+const projectAdapterTypes: AdapterType[] = [];
 
-/** Make `kind` one every host can run, for a project's own adapter (registered before the app starts). */
-export const registerStoreKind = (kind: StoreKind): void => {
-  const at = projectKinds.findIndex((k) => k.name === kind.name);
-  if (at >= 0) projectKinds[at] = kind;
-  else projectKinds.push(kind);
+/** Make `adapter` one every host can run, for a project's own adapter type (registered before the app starts). */
+export const registerAdapterType = (adapter: AdapterType): void => {
+  const at = projectAdapterTypes.findIndex((a) => a.name === adapter.name);
+  if (at >= 0) projectAdapterTypes[at] = adapter;
+  else projectAdapterTypes.push(adapter);
 };
 
 /** Every model's schema, by the name its file gives it. */
@@ -67,46 +67,46 @@ export const schemasOf = (manifest: AppManifest): Record<string, ModelSchema> =>
   return models;
 };
 
-/** The kind named `name` that `host` can run, `memory` always among them; null when it has none. */
-export const kindNamed = (host: StoreHost, name: string): StoreKind | null => {
-  for (const k of projectKinds) if (k.name === name) return k;
-  for (const k of host.kinds) if (k.name === name) return k;
-  return name === "memory" ? new MemoryKind() : null;
+/** The adapter type named `name` that `host` can run, `memory` always among them; null when it has none. */
+export const adapterTypeNamed = (host: StoreHost, name: string): AdapterType | null => {
+  for (const a of projectAdapterTypes) if (a.name === name) return a;
+  for (const a of host.adapters) if (a.name === name) return a;
+  return name === "memory" ? new MemoryAdapterType() : null;
 };
 
-/** The kinds `host` can run, by name, for an error. */
-export const kindsOf = (host: StoreHost): string => {
-  const names = host.kinds.map((k) => k.name);
-  for (const k of projectKinds) if (!names.includes(k.name)) names.push(k.name);
+/** The adapter types `host` can run, by name, for an error. */
+export const adapterTypesOf = (host: StoreHost): string => {
+  const names = host.adapters.map((a) => a.name);
+  for (const a of projectAdapterTypes) if (!names.includes(a.name)) names.push(a.name);
   if (!names.includes("memory")) names.push("memory");
   return names.join(", ");
 };
 
-/** One declared store's plan: the store, the kind it opens with (memory in a test), and the name of the kind it asked for. */
+/** One declared store's plan: the store, the adapter type it opens with (memory in a test), and the name of the adapter it asked for. */
 export interface PlannedStore {
   store: string;
-  kind: StoreKind;
-  kindName: string;
+  type: AdapterType;
+  adapterName: string;
   at: string;
   worker: boolean;
 }
 
-/** The kind each store opens with: its own, or the host's default; `memoryOnly` makes every one memory (a test). */
+/** The adapter type each store opens with: its own, or the host's default; `memoryOnly` makes every one memory (a test). */
 export const plan = (manifest: AppManifest, host: StoreHost, memoryOnly: boolean): PlannedStore[] => {
   const app = manifest.app;
   const out: PlannedStore[] = [];
   for (const store of Object.keys(app.stores)) {
     const config = app.stores[store] ?? {};
-    const given = config.kind;
-    const wanted = typeof given === "function" ? given(app.args) : given ?? host.defaultKind;
-    const kind = memoryOnly ? new MemoryKind() : kindNamed(host, wanted);
-    if (kind === null) throw new Error(`The ${host.name} host cannot run the "${wanted}" store "${store}"; it runs ${kindsOf(host)}`);
+    const given = config.adapter;
+    const wanted = typeof given === "function" ? given(app.args) : given ?? host.defaultAdapter;
+    const type = memoryOnly ? new MemoryAdapterType() : adapterTypeNamed(host, wanted);
+    if (type === null) throw new Error(`The ${host.name} host cannot run the "${wanted}" store "${store}"; it runs ${adapterTypesOf(host)}`);
     const at = config.at;
-    out.push({ store, kind, kindName: wanted, at: typeof at === "function" ? at(app.args) : at ?? "", worker: config.worker === true });
+    out.push({ store, type, adapterName: wanted, at: typeof at === "function" ? at(app.args) : at ?? "", worker: config.worker === true });
   }
   const models = schemasOf(manifest);
   for (const name of Object.keys(models)) {
-    const named = models[name]?.$adapter;
+    const named = models[name]?.$store;
     if (typeof named === "string" && !out.some((p) => p.store === named))
       throw new Error(`The model "${name}" keeps its rows in the store "${named}", which the app does not declare (src/app.ts stores)`);
   }
@@ -117,7 +117,7 @@ export const plan = (manifest: AppManifest, host: StoreHost, memoryOnly: boolean
 export const openStores = async (manifest: AppManifest, host: StoreHost, memoryOnly = false): Promise<Store> => {
   const models = schemasOf(manifest);
   const databases: Record<string, StorageAdapter> = {};
-  for (const p of plan(manifest, host, memoryOnly)) databases[p.store] = await p.kind.open(manifest.app, p.store, p.at, models, p.store === "main");
+  for (const p of plan(manifest, host, memoryOnly)) databases[p.store] = await p.type.open(manifest.app, p.store, p.at, models, p.store === "main");
   const store = createStore({
     models,
     databases,

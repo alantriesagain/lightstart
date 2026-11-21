@@ -7,7 +7,7 @@ import { defineModel } from "@lightstart/light/model";
 import type { ModelSchema } from "@lightstart/light/model";
 
 const schema: ModelSchema = {
-  $adapter: "user",
+  $store: "user",
   name: T.string({ required: true }),
 };
 

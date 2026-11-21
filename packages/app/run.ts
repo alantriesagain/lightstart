@@ -18,7 +18,7 @@ import { startControllers, stopControllers } from "./controllers.ts";
 import type { App } from "./index.ts";
 import type { AppManifest } from "./manifest.ts";
 import { openStores } from "./stores.ts";
-import type { StoreHost, StoreKind } from "./stores.ts";
+import type { AdapterType, StoreHost } from "./stores.ts";
 import { setAppHead, setRouteHead } from "./head.ts";
 
 /** The element a navigation started from (usually the clicked link); a host that morphs reads it as the DOM element it is. */
@@ -50,7 +50,7 @@ const paramsOf = (matched: { params?: unknown } | null): Record<string, string> 
 };
 
 /**
- * What runs an app on a surface: the store kinds it has and its default, where the arguments come
+ * What runs an app on a surface: the adapter types it has and its default, where the arguments come
  * from, the history the routes follow, and how the view is put up and taken down. Each method has
  * what a host with no surface does (a test's): the app's argument defaults, a history in memory,
  * nothing to mount, nothing to leave; a host overrides what it changes. Its methods answer
@@ -58,8 +58,8 @@ const paramsOf = (matched: { params?: unknown } | null): Record<string, string> 
  */
 export class AppHost implements StoreHost {
   readonly name: string = "none";
-  kinds: readonly StoreKind[] = [];
-  defaultKind: string = "memory";
+  adapters: readonly AdapterType[] = [];
+  defaultAdapter: string = "memory";
 
   /** The app's argument values, from the host's source (argv, the URL); a host with no source answers none. */
   args(_app: App): Record<string, unknown> {
@@ -106,7 +106,7 @@ export class AppHost implements StoreHost {
     return;
   }
 
-  /** Open every store, the memory kind for each when `memoryOnly` (a test's run). */
+  /** Open every store, the memory adapter type for each when `memoryOnly` (a test's run). */
   openStores(manifest: AppManifest, memoryOnly: boolean): Promise<Store> {
     return openStores(manifest, this, memoryOnly);
   }

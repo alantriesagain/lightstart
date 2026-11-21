@@ -55,7 +55,7 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
     decorated.clear();
     for (const [name, schema] of Object.entries(models)) {
       if (name.startsWith("$")) continue;
-      const wanted = schema.$extension ? `ext:${schema.$extension}` : (schema.$adapter || defaultAdapter);
+      const wanted = schema.$extension ? `ext:${schema.$extension}` : (schema.$store || defaultAdapter);
       const target = entryOf(databases, wanted);
       if (!target) console.warn(`[store] no "${wanted}" database for model "${name}"; using "${defaultAdapter}"`);
       routes.set(name, target ? wanted : defaultAdapter);

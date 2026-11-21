@@ -1,7 +1,7 @@
 /**
  * @file `@lightstart/app/test`: an app's run without a host's surface, for a
  * test. `openApp` fills the arguments (an argv list, or a record over the
- * defaults), opens every store in memory (or with the kinds the test names), starts the controllers and the
+ * defaults), opens every store in memory (or with the adapter types the test names), starts the controllers and the
  * routes (over a history in memory) and mounts nothing; a test writes through
  * a controller and reads the rows back. The run's `restart` and `quit` are
  * the app's, as on a host. A host's own test mount is its: the terminal's
@@ -13,13 +13,13 @@ import type { Store } from "@lightstart/light/model/types.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { AppHost, AppRun } from "../run.ts";
-import { MemoryKind, StoreKind } from "../stores.ts";
+import { MemoryAdapterType, AdapterType } from "../stores.ts";
 
-/** What a test opens the app with: its arguments (an argv list or a record over the defaults), and the store kinds it runs (every store in memory when absent). */
+/** What a test opens the app with: its arguments (an argv list or a record over the defaults), and the store adapter types it runs (every store in memory when absent). */
 export interface OpenAppOptions {
   args?: readonly string[] | Record<string, unknown>;
-  /** The kinds the stores open with, the first the default, `memory` beside them; a test that checks what lands on disk passes a host's (`JsonlKind`). */
-  kinds?: readonly StoreKind[];
+  /** The adapter types the stores open with, the first the default, `memory` beside them; a test that checks what lands on disk passes a host's (`JsonlAdapterType`). */
+  adapters?: readonly AdapterType[];
   /** Whether the manifest's seeds load; `true` when absent. */
   seed?: boolean;
 }
@@ -56,16 +56,16 @@ export class OpenedApp {
   }
 }
 
-/** A test's host: the kinds it was given (memory), the arguments it was given, nothing to mount. */
+/** A test's host: the adapter types it was given (memory), the arguments it was given, nothing to mount. */
 class TestHost extends AppHost {
   readonly name = "test";
   private readonly given: readonly string[] | Record<string, unknown> | undefined;
 
-  constructor(given: readonly string[] | Record<string, unknown> | undefined, kinds: readonly StoreKind[]) {
+  constructor(given: readonly string[] | Record<string, unknown> | undefined, adapters: readonly AdapterType[]) {
     super();
     this.given = given;
-    this.kinds = kinds.length > 0 ? kinds : [new MemoryKind()];
-    this.defaultKind = this.kinds[0]?.name ?? "memory";
+    this.adapters = adapters.length > 0 ? adapters : [new MemoryAdapterType()];
+    this.defaultAdapter = this.adapters[0]?.name ?? "memory";
   }
 
   args(app: App): Record<string, unknown> {
@@ -81,8 +81,8 @@ class TestHost extends AppHost {
 
 /** Open the manifest's run over memory stores, mounting nothing. */
 export const openApp = async (manifest: AppManifest, options: OpenAppOptions = {}): Promise<OpenedApp> => {
-  const kinds = options.kinds ?? [];
-  const run = new AppRun(manifest, new TestHost(options.args, kinds), kinds.length === 0, options.seed !== false);
+  const adapters = options.adapters ?? [];
+  const run = new AppRun(manifest, new TestHost(options.args, adapters), adapters.length === 0, options.seed !== false);
   await run.start();
   return new OpenedApp(run);
 };

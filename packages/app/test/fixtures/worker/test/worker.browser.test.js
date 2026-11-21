@@ -2,13 +2,13 @@
  * @file The worker fixture in the page: a write to each store reads back, the
  * page follows a write to the worker model, its seed lands once, the page
  * stays responsive during a large write, and a worker-side failure rejects the
- * run naming the kinds the worker runs.
+ * run naming the adapter types the worker runs.
  */
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { defineApp } from "@lightstart/app";
-import { StoreKind } from "@lightstart/app/stores.ts";
+import { AdapterType } from "@lightstart/app/stores.ts";
 import { openPage } from "@lightstart/app/web/test";
 import manifest from "../.light/app.js";
 
@@ -29,7 +29,7 @@ const waitFor = async (check, label) => {
   throw new Error(`timed out waiting for ${label}`);
 };
 
-class CustomKind extends StoreKind {
+class CustomAdapterType extends AdapterType {
   name = "custom";
 
   open() {
@@ -71,20 +71,20 @@ describe("worker stores", () => {
     }
   });
 
-  it("rejects the run when the worker cannot run a store's kind", async () => {
+  it("rejects the run when the worker cannot run a store's adapter type", async () => {
     const app = defineApp({
       name: "fixture-worker-bad",
       host: "web",
-      stores: { main: { kind: "memory" }, archive: { kind: "custom", worker: true } },
+      stores: { main: { adapter: "memory" }, archive: { adapter: "custom", worker: true } },
     });
     let message = "";
     try {
-      await openPage({ ...manifest, app }, { kinds: [new CustomKind()], worker: spawn });
-      assert.fail("a worker store of a kind the worker lacks should reject");
+      await openPage({ ...manifest, app }, { adapters: [new CustomAdapterType()], worker: spawn });
+      assert.fail("a worker store of an adapter type the worker lacks should reject");
     } catch (error) {
       message = error instanceof Error ? error.message : String(error);
     }
-    assert.ok(message.includes("custom"), `the rejection names the kind: ${message}`);
-    assert.ok(message.includes("indexeddb") && message.includes("memory"), `the rejection names the worker's kinds: ${message}`);
+    assert.ok(message.includes("custom"), `the rejection names the adapter type: ${message}`);
+    assert.ok(message.includes("indexeddb") && message.includes("memory"), `the rejection names the worker's adapter types: ${message}`);
   });
 });

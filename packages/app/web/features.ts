@@ -2,7 +2,7 @@
 /**
  * @file The web host's seam to its optional features. The host itself imports
  * no optional feature: the generated entry imports the ones the app's config
- * uses (`web/indexeddb.ts` for the IndexedDB kind, `web/worker.ts` for worker
+ * uses (`web/indexeddb.ts` for the IndexedDB adapter type, `web/worker.ts` for worker
  * stores, `web/transitions.ts` for view transitions and `web/args.ts` for the
  * URL's arguments) and hands them to `start` as these shapes.
  */

@@ -2,7 +2,7 @@
 /**
  * @file The web entry imports exactly the feature modules the app's config
  * uses: nothing for a memory app, the transitions and args modules when it
- * declares them, and the IndexedDB kind for a store with no kind or a kind
+ * declares them, and the IndexedDB adapter type for a store with no adapter or an adapter
  * that is a function.
  */
 
@@ -46,25 +46,25 @@ const entryFor = async (source: string): Promise<string> => {
   }
 };
 
-const APP = (extra: string): string => `import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", host: "web", ${extra}stores: { main: { kind: "memory" } } });\n`;
+const APP = (extra: string): string => `import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", host: "web", ${extra}stores: { main: { adapter: "memory" } } });\n`;
 
 const main = async (): Promise<void> => {
   const plain = await entryFor(APP(""));
-  ok("a memory app imports only the host", !plain.includes("IndexedDBKind") && !plain.includes("Transitions") && !plain.includes("queryArgs") && !plain.includes("WorkerStores"));
+  ok("a memory app imports only the host", !plain.includes("IndexedDBAdapterType") && !plain.includes("Transitions") && !plain.includes("queryArgs") && !plain.includes("WorkerStores"));
   ok("a memory app starts with no options", plain.includes("await start(manifest);"));
 
   const features = await entryFor(APP('transitions: true, args: { greeting: { default: "hi" } }, '));
   ok("transitions import their module", features.includes('import { Transitions } from "@lightstart/app/web/transitions.ts";'));
   ok("args import the query parser", features.includes('import { queryArgs } from "@lightstart/app/web/args.ts";'));
-  ok("transitions and args import no IndexedDB kind", !features.includes("IndexedDBKind"));
+  ok("transitions and args import no IndexedDB adapter type", !features.includes("IndexedDBAdapterType"));
   ok("the options are passed to start", features.includes("transitions: new Transitions(),") && features.includes("args: queryArgs,"));
 
   const implied = await entryFor('import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", host: "web" });\n');
-  ok("a store with no kind imports the IndexedDB kind", implied.includes('import { IndexedDBKind } from "@lightstart/app/web/indexeddb.ts";'));
-  ok("and passes its kinds", implied.includes("kinds: [new IndexedDBKind()],"));
+  ok("a store with no adapter imports the IndexedDB adapter type", implied.includes('import { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";'));
+  ok("and passes its adapter types", implied.includes("adapters: [new IndexedDBAdapterType()],"));
 
-  const chosen = await entryFor('import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", host: "web", stores: { main: { kind: (args) => (args.flag("memory") ? "memory" : "indexeddb") } } });\n');
-  ok("a kind that is a function imports every web kind", chosen.includes("IndexedDBKind"));
+  const chosen = await entryFor('import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", host: "web", stores: { main: { adapter: (args) => (args.flag("memory") ? "memory" : "indexeddb") } } });\n');
+  ok("an adapter that is a function imports every web adapter type", chosen.includes("IndexedDBAdapterType"));
   done();
 };
 

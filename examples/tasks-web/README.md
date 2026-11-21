@@ -26,7 +26,7 @@ pnpm dev                       # light serve --watch, then open the page
 | | Where |
 |---|---|
 | The app's choices: the host, an argument (`list`, from the URL query), two stores | `src/app.ts` |
-| Two stores at once: `main` (IndexedDB, the web host's default kind) for lists and tasks; `activity` (memory) for the page's events, a model naming it with `$adapter` | `src/app.ts`, `src/models/event.ts` |
+| Two stores at once: `main` (IndexedDB, the web host's default adapter) for lists and tasks; `activity` (memory) for the page's events, a model naming it with `$store` | `src/app.ts`, `src/models/event.ts` |
 | Models, one per file, the file's name the model's | `src/models/list.ts`, `task.ts`, `event.ts` |
 | Controllers starting in the order their imports give: `activity`, then `lists` (which reads `list` and says what it made), then `tasks`; the same files as the terminal app's | `src/controllers/` |
 | Routes: three pages, `<app-container>` in the root view drawing the one the path answers, links and `navigate` going to them | `src/routes.ts`, `src/views/app-root.ts`, `src/views/lists-page.ts` |

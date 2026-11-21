@@ -41,7 +41,7 @@ const main = async (): Promise<void> => {
     ok("the worker serves each model by name", source.includes('"archive": model0,') && source.includes('"note": model1,'));
 
     const entry = readFileSync(generated.main, "utf8");
-    ok("the entry imports the IndexedDB kind", entry.includes('import { IndexedDBKind } from "@lightstart/app/web/indexeddb.ts";'));
+    ok("the entry imports the IndexedDB adapter type", entry.includes('import { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";'));
     ok("the entry imports the worker feature", entry.includes('import { WorkerStores } from "@lightstart/app/web/worker.ts";'));
     ok("the entry starts with the worker option", entry.includes('worker: new WorkerStores(() => new Worker(new URL("./worker.js", import.meta.url), { type: "module" })),'));
 

@@ -8,7 +8,7 @@ import { defineModel } from "@lightstart/light/model";
 import type { ModelSchema } from "@lightstart/light/model";
 
 const schema: ModelSchema = {
-  $adapter: "activity",
+  $store: "activity",
   text: T.string({ required: true }),
   at: T.number({ required: true }),
 };

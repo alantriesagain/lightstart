@@ -12,6 +12,6 @@ export default defineApp({
     list: { default: "Inbox", description: "The list to open first, by its name" },
   },
   stores: {
-    activity: { kind: "memory" },
+    activity: { adapter: "memory" },
   },
 });

@@ -42,7 +42,7 @@ const memoryAdapter = (extra = {}) => {
 const models = () => ({
   account: { name: T.string({ required: true }), kind: T.string({ defaultValue: "checking" }), tags: T.array({ defaultValue: [] }), transactions: T.many("transaction", "accountId") },
   transaction: { accountId: T.belongs("account"), amount: T.number({ required: true }), slug: T.string({ immutable: true }) },
-  note: { $adapter: "file", title: T.string() },
+  note: { $store: "file", title: T.string() },
   unit_item: { $extension: "unit", n: T.number() },
   heavy: { $heavy: ["body"], title: T.string(), body: T.string() },
   counter: { id: T.number(), n: T.number() },
@@ -68,7 +68,7 @@ const setup = ({ hooks = {}, extra = {} } = {}) => {
 afterEach(() => setFileStorage(null));
 
 describe("store: routing", () => {
-  it("maps a model to its $adapter, its $extension database, or the default", async () => {
+  it("maps a model to its $store, its $extension database, or the default", async () => {
     const { store, main, file, ext } = setup();
     assert.equal(store.adapterFor("account"), main);
     assert.equal(store.adapterFor("note"), file);
@@ -80,7 +80,7 @@ describe("store: routing", () => {
     const { store } = setup();
     const pb = memoryAdapter({ supportsOperator: (op) => op === "like" });
     store.addDatabase("pocketbase", pb);
-    store.addModels({ remote: { $adapter: "pocketbase", x: T.string() } });
+    store.addModels({ remote: { $store: "pocketbase", x: T.string() } });
     assert.equal(store.adapterFor("remote"), pb);
     assert.equal(store.supportsOperator("remote", "like"), true);
     assert.equal(store.supportsOperator("account", "like"), false);
@@ -343,7 +343,7 @@ describe("store: decorators and the shadow", () => {
       delete: (model, id, opts) => { seen.push(["delete", opts]); return base.delete(model, id, opts); },
     };
   });
-  const draft = { $adapter: "file", $shadow: "indexeddb", $wrapped: true, title: T.string() };
+  const draft = { $store: "file", $shadow: "indexeddb", $wrapped: true, title: T.string() };
 
   beforeEach(() => { seen.length = 0; contexts.length = 0; });
 

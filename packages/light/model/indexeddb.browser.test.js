@@ -97,7 +97,7 @@ describe("IndexedDB adapter", () => {
 
   it("a model whose $shadow names this adapter gets a store and its indexes here, beside the models that live here", async () => {
     await adapter.close();
-    const shadowed = open(name, { version: "auto", models: { ...models, draft: { $adapter: "file", $shadow: "indexeddb", title: T.string({ index: true }) } } });
+    const shadowed = open(name, { version: "auto", models: { ...models, draft: { $store: "file", $shadow: "indexeddb", title: T.string({ index: true }) } } });
     const db = await shadowed.init();
     assert.equal(db.objectStoreNames.contains("draft"), true);
     assert.equal(db.transaction("draft").objectStore("draft").indexNames.contains("title"), true);

@@ -6,7 +6,7 @@ __LANGUAGE_INTRO__A web app on `@lightstart/app`: the folders are the app, and l
 
 | Path | Holds |
 |---|---|
-| `src/app.__EXT__` | `defineApp({ name, host: "web", theme?, stores?, root?, args?, url?, locale? })`: `url` is the site's address (the build's sitemap), `locale` the default language; `stores` by name (`main` is IndexedDB unless it names another kind, `{ cache: { kind: "memory" } }` beside it), `args` read from the URL query |
+| `src/app.__EXT__` | `defineApp({ name, host: "web", theme?, stores?, root?, args?, url?, locale? })`: `url` is the site's address (the build's sitemap), `locale` the default language; `stores` by name (`main` is IndexedDB unless it names another adapter, `{ cache: { adapter: "memory" } }` beside it), `args` read from the URL query |
 | `src/models/<name>.__EXT__` | One model, default-exported; the file name is the model's name |
 | `src/seed.__EXT__` | Optional: rows by model name (`{ note: [{ text: "…" }] }`), added once into an empty store before the controllers start; `src/seed.dev.__EXT__` holds demo rows `light build` leaves out |
 | `src/controllers/<name>.__EXT__` | One controller, default-exported; the file name is its name |
@@ -22,7 +22,7 @@ A view reaches its controller with an import, `import notes from "../controllers
 
 `.light/app.__EXT__`, `.light/__MAIN__` and the manifest are written by `light app` (and by `serve`, `build` and `test` before they start). Never edit them, and never commit them: `.light/` is in `.gitignore` beside `.deployed/`.
 
-The app layer opens the stores (a model picks one with its schema's `$adapter`, `main` when it names none), names and starts the controllers, applies the theme, builds the router from `src/routes.__EXT__` and mounts the root view. It also writes `.light/components.__EXT__` and `.light/components.css` for a project on `@lightstart/components`: the views write `lc-*` tags and the generation defines them and imports their stylesheets, so a view imports no component and calls no `View.define`.
+The app layer opens the stores (a model picks one with its schema's `$store`, `main` when it names none), names and starts the controllers, applies the theme, builds the router from `src/routes.__EXT__` and mounts the root view. It also writes `.light/components.__EXT__` and `.light/components.css` for a project on `@lightstart/components`: the views write `lc-*` tags and the generation defines them and imports their stylesheets, so a view imports no component and calls no `View.define`.
 
 ## Writing a piece
 

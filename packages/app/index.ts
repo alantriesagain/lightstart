@@ -11,22 +11,22 @@
 
 import type { ArgsSchema } from "@lightstart/cli/types/command.ts";
 
-/** Where a store keeps its rows, as its kind takes it: a folder, a file, a database's name; or one read from the parsed arguments. */
+/** Where a store keeps its rows, as its adapter takes it: a folder, a file, a database's name; or one read from the parsed arguments. */
 export type StoreAt = string | ((args: AppArgs) => string);
 
-/** A store's kind, or one read from the parsed arguments (memory for a run that keeps nothing, say). */
-export type StoreKindOf = string | ((args: AppArgs) => string);
+/** A store's adapter, or one read from the parsed arguments (memory for a run that keeps nothing, say). */
+export type StoreAdapterOf = string | ((args: AppArgs) => string);
 
 /** How the build renders a prerendered page: light's markup host in node, or headless Chromium through Playwright. */
 export type PrerenderRenderer = "markup" | "browser";
 
 /**
- * One store an app keeps rows in. `kind` is an adapter its host can run (`memory`, `indexeddb`,
+ * One store an app keeps rows in. `adapter` is an adapter type its host can run (`memory`, `indexeddb`,
  * `jsonl`, `sql`, or one the project registers), the host's default when absent; `at` is what that
- * kind opens. Either may be a function of the arguments.
+ * adapter opens. Either may be a function of the arguments.
  */
 export interface StoreConfig {
-  kind?: StoreKindOf;
+  adapter?: StoreAdapterOf;
   at?: StoreAt;
   /** Open the store in a worker the web host spawns; a host without one ignores it. */
   worker?: boolean;
@@ -59,8 +59,8 @@ export interface AppConfig {
   /** Move focus to the new view's heading after a route change; `true` when absent. */
   focusOnNavigate?: boolean;
   /**
-   * The stores by name, several at once of any kinds the host runs; a model picks one with its
-   * schema's `$adapter`, and gets `main` when it names none. `main` is the host's default kind when
+   * The stores by name, several at once of any adapter types the host runs; a model picks one with its
+   * schema's `$store`, and gets `main` when it names none. `main` is the host's default adapter when
    * the app declares no store of that name.
    */
   stores?: Record<string, StoreConfig>;
@@ -124,7 +124,7 @@ export class App {
   readonly transitions: boolean;
   /** Whether the web host moves focus to the new view after a route change. */
   readonly focusOnNavigate: boolean;
-  /** The stores the config declares, `main` among them (of the host's default kind unless it says). */
+  /** The stores the config declares, `main` among them (of the host's default adapter unless it says). */
   readonly stores: Record<string, StoreConfig>;
   readonly root: string | undefined;
   /** The argument schema the config declares; empty when it declares none. */
