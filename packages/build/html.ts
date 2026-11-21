@@ -44,10 +44,13 @@ const rangeOf = (match: RegExpMatchArray): PageRange => {
   return { start, end: start + match[0].length };
 };
 
-/** Scan a page's HTML for its importmap, module scripts and stylesheet links. */
 /** A page's URL as a path: from the site's root when it starts with `/` (not `//`), else from the page's folder. */
 const pathOf = (url: string, pageDir: string, root: string): string => (url.startsWith("/") && !url.startsWith("//") ? resolve(root, "." + url) : resolve(pageDir, url));
 
+/** Whether a URL names another origin (`https://…`, `//cdn…`, `data:`), which the build leaves on the page as it is. */
+const isRemote = (url: string): boolean => url.startsWith("//") || /^[a-z][a-z0-9+.-]*:/i.test(url);
+
+/** Scan a page's HTML for its importmap, module scripts and stylesheet links; a remote script or stylesheet is not the build's and stays as written. */
 export const parsePage = (html: string, pageDir: string, root: string = pageDir): ParsedPage => {
   const parsed: ParsedPage = {
     html,
@@ -70,6 +73,7 @@ export const parsePage = (html: string, pageDir: string, root: string = pageDir)
     }
     if (type !== "module") continue;
     const src = attrs.get("src");
+    if (src !== undefined && isRemote(src)) continue;
     parsed.modules.push(src === undefined ? { kind: "inline", code: match[2] ?? "" } : { kind: "external", src, path: pathOf(src, pageDir, root) });
     parsed.moduleRanges.push(range);
   }
@@ -78,7 +82,7 @@ export const parsePage = (html: string, pageDir: string, root: string = pageDir)
     const attrs = parseAttributes(match[1] ?? "");
     const rel = (attrs.get("rel") ?? "").toLowerCase().split(/\s+/);
     const href = attrs.get("href");
-    if (href === undefined || !rel.includes("stylesheet")) continue;
+    if (href === undefined || !rel.includes("stylesheet") || isRemote(href)) continue;
     parsed.stylesheets.push({ href, path: pathOf(href, pageDir, root) });
     parsed.stylesheetRanges.push(rangeOf(match));
   }

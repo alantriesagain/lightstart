@@ -27,7 +27,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - Every build is `<root>/<outDir>/builds/<id>/`; `<outDir>/current` is a symlink to `builds/<id>` and is replaced each time. An id that already exists takes a `-2`, `-3`, … suffix.
 - `keep` is at least 1 and 5 when it is not a finite number; pruning removes the oldest builds first, never `current`.
 - The page's importmap is the only resolver: an exact key, then the longest trailing-slash prefix, to a path relative to the page. A remote target is not a local path. A specifier the map does not name is left to esbuild.
-- The HTML rewrite removes the importmap, points each module script at its bundle and each stylesheet link at its output, and leaves the rest of the page unchanged.
+- The HTML rewrite removes the importmap, points each module script at its bundle and each stylesheet link at its output, and leaves the rest of the page unchanged. A script or stylesheet on another origin (a scheme such as `https:`, or `//`) is not the build's: the scanner skips it and it stays as written.
 - The package is node-only: esbuild is a native node module and the build reads and writes the disk. The scanner, resolver, id and versioning helpers stay pure.
 - Tests are plain scripts on `@lightstart/test/assert.ts`; a node-only test starts with `// node-only`.
 - Comments are a JSDoc module header and JSDoc on exported symbols, nothing else.
