@@ -42,8 +42,8 @@ const writeApp = (project: string, source: string): void => {
   writeFileSync(join(project, "src", "app.js"), source);
 };
 
-const MEMORY = 'import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", title: "Fixture Web", host: "web", stores: { main: { kind: "memory" } } });\n';
-const EVERYTHING = 'import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", title: "Fixture Web", host: "web", transitions: true, args: { greeting: { default: "hi" } }, stores: { main: { kind: "indexeddb" }, archive: { kind: "memory", worker: true } } });\n';
+const MEMORY = 'import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", title: "Fixture Web", host: "web", stores: { main: { adapter: "memory" } } });\n';
+const EVERYTHING = 'import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", title: "Fixture Web", host: "web", transitions: true, args: { greeting: { default: "hi" } }, stores: { main: { adapter: "indexeddb" }, archive: { adapter: "memory", worker: true } } });\n';
 
 const builtChunkOf = (dir: string): string => {
   const html = readFileSync(join(dir, "index.html"), "utf8");

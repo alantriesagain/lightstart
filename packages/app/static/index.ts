@@ -1,7 +1,7 @@
 /**
  * @file `@lightstart/app/static`: an app's page rendered in node, without a
  * browser. `renderApp` runs the app as `openApp` does (memory stores unless
- * `kinds`, the arguments, the controllers ready) over a history in memory at
+ * `adapters`, the arguments, the controllers ready) over a history in memory at
  * a path, and mounts its root view on light's markup host; it answers the
  * root element's markup with the engine's markers. `renderPage` puts that
  * markup in a built page in place of its root placeholder and marks the page
@@ -27,18 +27,18 @@ import { config, configureView } from "@lightstart/light/view/core.js";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
-import { MemoryKind, StoreKind } from "../stores.ts";
+import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import { PRERENDER_SCRIPT } from "../node/prerender.ts";
 import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
 import type { Head } from "../head.ts";
 
-/** What a static render runs with: where the routes start, the app's arguments (an argv list or a record over the defaults), and the store kinds it runs (every store in memory when absent). */
+/** What a static render runs with: where the routes start, the app's arguments (an argv list or a record over the defaults), and the adapter types it runs (every store in memory when absent). */
 export interface RenderOptions {
   /** The path the in-memory history starts at. */
   path?: string;
   args?: readonly string[] | Record<string, unknown>;
-  /** The kinds the stores open with, the first the default; `memory` is always available. None opens every store in memory. */
-  kinds?: readonly StoreKind[];
+  /** The adapter types the stores open with, the first the default; `memory` is always available. None opens every store in memory. */
+  adapters?: readonly AdapterType[];
 }
 
 /** The view the routes answer, its path's parameters set on it as props; drawn as the markup host's element for the tag. */
@@ -77,12 +77,12 @@ class StaticHost extends AppHost {
   private root: MRoot | null = null;
   private element: MElement | null = null;
 
-  constructor(path: string, given: readonly string[] | Record<string, unknown> | undefined, kinds: readonly StoreKind[]) {
+  constructor(path: string, given: readonly string[] | Record<string, unknown> | undefined, adapters: readonly AdapterType[]) {
     super();
     this.path = path;
     this.given = given;
-    this.kinds = kinds.length > 0 ? kinds : [new MemoryKind()];
-    this.defaultKind = this.kinds[0]?.name ?? "memory";
+    this.adapters = adapters.length > 0 ? adapters : [new MemoryAdapterType()];
+    this.defaultAdapter = this.adapters[0]?.name ?? "memory";
   }
 
   args(app: App): Record<string, unknown> {
@@ -137,9 +137,9 @@ class StaticHost extends AppHost {
 
 /** Render the manifest's app at a path on the markup host, and answer the root element's markup with markers. */
 export const renderApp = async (manifest: AppManifest, options: RenderOptions = {}): Promise<string> => {
-  const kinds = options.kinds ?? [];
-  const host = new StaticHost(options.path ?? "/", options.args, kinds);
-  const run = new AppRun(manifest, host, kinds.length === 0);
+  const adapters = options.adapters ?? [];
+  const host = new StaticHost(options.path ?? "/", options.args, adapters);
+  const run = new AppRun(manifest, host, adapters.length === 0);
   const previousWrap = config.wrap;
   configureView({
     wrap: (work, label) => {

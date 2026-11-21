@@ -227,4 +227,4 @@ The store calls the factory once per such model with the routed adapter and answ
 
 ### Routing
 
-The store routes each model to its `$adapter` (or the database named `ext:<id>` for a model with `$extension: id`), falling back to the default. `$heavy` lists the fields an adapter leaves out of a list read; a `get` by `where` reads such a row again by its id, whole.
+The store routes each model to its `$store` (or the database named `ext:<id>` for a model with `$extension: id`), falling back to the default. `$heavy` lists the fields an adapter leaves out of a list read; a `get` by `where` reads such a row again by its id, whole.

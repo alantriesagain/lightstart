@@ -176,12 +176,12 @@ const IndexedDBAdapter: StorageAdapter = {
 
   _modelBelongs(this: IdbAdapter, modelName: string, schema: ModelSchema | undefined) {
     if (!schema || modelName.startsWith("$")) return false;
-    const adapterPreference = schema.$adapter;
+    const storePreference = schema.$store;
     if (this.storePrefix) return modelName.startsWith(this.storePrefix);
     if (schema.$extension) return false;
     if (schema.$shadow === this.type) return true;
-    if (this.isDefaultAdapter) return !(adapterPreference && adapterPreference !== "indexeddb");
-    return adapterPreference === "indexeddb";
+    if (this.isDefaultAdapter) return !(storePreference && storePreference !== "indexeddb");
+    return storePreference === "indexeddb";
   },
 
   _expectedStores(this: IdbAdapter) {

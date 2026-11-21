@@ -237,8 +237,8 @@ const generation: HostGeneration = {
     const featureImports: string[] = [];
     const options: string[] = [];
     if (helpers.info.indexeddb) {
-      featureImports.push('import { IndexedDBKind } from "@lightstart/app/web/indexeddb.ts";');
-      options.push("kinds: [new IndexedDBKind()],");
+      featureImports.push('import { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";');
+      options.push("adapters: [new IndexedDBAdapterType()],");
     }
     if (helpers.worker) {
       featureImports.push('import { WorkerStores } from "@lightstart/app/web/worker.ts";');

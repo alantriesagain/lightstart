@@ -34,7 +34,7 @@ Reach for these before writing your own; each package's README is its reference.
 
 | A project needs | Package | The part to know |
 |---|---|---|
-| The app's folders, wiring and run | `@lightstart/app` | `defineApp`, stores by name (`memory`, `indexeddb`, `jsonl`, `sql`, a `StoreKind` of the project's own, a web store `worker: true` opened in a worker), routes, `<app-container>`, `navigate`, `currentView`, `currentParams`; hosts `@lightstart/app/web` and `/tui`, and `@lightstart/app/static` rendering a page in node |
+| The app's folders, wiring and run | `@lightstart/app` | `defineApp`, stores by name (`memory`, `indexeddb`, `jsonl`, `sql`, an `AdapterType` of the project's own, a web store `worker: true` opened in a worker), routes, `<app-container>`, `navigate`, `currentView`, `currentParams`; hosts `@lightstart/app/web` and `/tui`, and `@lightstart/app/static` rendering a page in node |
 | Views, templates, signals, models, controllers, the theme | `@lightstart/light` | `View`, `html`, `signal`, `event`, `defineModel` with `T` fields, `defineController` and the `Controller` class, `liveRows`, `applyTheme` |
 | UI components | `@lightstart/components` | the `lc-*` tags; in an app the generation defines the tags a view writes and their stylesheets |
 | Forms from a model | `@lightstart/form` | `fieldsForModel(schema)` for `<lc-form .fields>`, `inferFields`, `validateForm` on submit |
@@ -52,7 +52,7 @@ Reach for these before writing your own; each package's README is its reference.
 
 ## Patterns an app keeps
 
-Follow the shape `light new` gave the project and the choices it already made (its host, its store kinds, its controller style); extend them rather than introduce a second way.
+Follow the shape `light new` gave the project and the choices it already made (its host, its store adapter types, its controller style); extend them rather than introduce a second way.
 
 - **One file, one piece.** `src/models/<name>.js`, `src/controllers/<name>.js`, `src/views/<tag>.js` (`.ts` in a TypeScript app): the file name is the name, a view module defines its tag (`View.register(tag, Class)` or `View.define(definition)`), and `.light/` picks them all up. Never import a view's module by hand to make it exist.
 - **Seeds.** `src/seed.js` (or `.ts`) default-exports rows by model name; a run adds them once into an empty store before the controllers start, and `src/seed.dev.js` (or `.ts`) holds demo rows a release build leaves out. `openApp` and `openPage` load them; `{ seed: false }` skips them.
@@ -68,7 +68,7 @@ Follow the shape `light new` gave the project and the choices it already made (i
 
 ## Testing
 
-- An app's logic: `openApp(manifest, { args, kinds })` from `@lightstart/app/test`, over memory stores.
+- An app's logic: `openApp(manifest, { args, adapters })` from `@lightstart/app/test`, over memory stores.
 - A terminal app's screen: `mountApp(manifest, opened, { cols, rows })` from `@lightstart/app/tui/test`, keys through `renderer.decoder.pushText`.
 - A web app's page: `openPage(manifest, { path, args })` from `@lightstart/app/web/test`, in headless Chromium: `find`, `shows`, `navigate`, `stop`. It mounts in the test page with memory stores and a history in memory; link the app's stylesheet when a test measures layout.
 - A web app's build: `openBuilt(latestBuild(projectDir), path)` from `@lightstart/app/web/test` serves `.deployed` as a static host and opens the page in headless Chromium, reporting errors and failed requests; `pnpm test:e2e` in a web scaffold does this for every concrete route.

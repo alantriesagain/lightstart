@@ -1,6 +1,6 @@
 /**
  * @file Reading a model schema as the fields' functions need it: a schema is any object (a light
- * `ModelSchema` with its `$adapter` and hooks, or a plain record), its entries narrowed to field
+ * `ModelSchema` with its `$store` and hooks, or a plain record), its entries narrowed to field
  * definitions and its `$form` block to the shape this package reads.
  */
 import type { ModelFieldDef, ModelFormBlock } from "./types.ts";

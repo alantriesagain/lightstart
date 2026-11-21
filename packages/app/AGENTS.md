@@ -9,7 +9,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `index.ts` | `defineApp`, `AppConfig` (including the site's `title`, how it `prerender`s, its `focusOnNavigate` and its `url`), `PrerenderRenderer`, `StoreConfig`, the `App` and `AppArgs` classes, `AppLifecycle` |
 | `head.ts` | `pageHead`, `currentHead` and the head shape: the route's title, description and path, the app's display title, the computed document title, canonical and absolute image |
 | `manifest.ts` | `AppManifest`, `AppModel`, `AppController`, `AppSeeds`: the plain records `.light/app.ts` (or `.js`) exports |
-| `stores.ts` | `StoreKind`, `MemoryKind`, `registerStoreKind`, `schemasOf` and `openStores`: every declared store opened by its kind over one engine store, checked against the host's kinds and the models' `$adapter` |
+| `stores.ts` | `AdapterType`, `MemoryAdapterType`, `registerAdapterType`, `schemasOf` and `openStores`: every declared store opened by its adapter type over one engine store, checked against the host's adapter types and the models' `$store` |
 | `memory.ts` | `MemoryAdapter`, the in-memory storage adapter |
 | `controllers.ts` | `startControllers` and `stopControllers`: name, start, await `$ready`, dispose |
 | `run.ts` | `AppHost` (the host contract, with a surface-less default for each method, `transition(apply)` and `routeChanged(run, first)` among them), `AppRun` (the run: arguments, stores, seeds, controllers, routes, mount; `stop`, `restart`, `quit`), `currentView` and `navigate` |
@@ -17,13 +17,13 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `web/features.ts` | The seam's shapes: `WebWorkerFeature`, `WebTransitionFeature`, `WebTransitionPort`, `WebWorkerConnection`, `WebArgsFeature` |
 | `web/args.ts` | `queryArgs`: the URL query as the app's arguments, imported only when the app declares `args` |
 | `web/transitions.ts` | `Transitions`: the view-transition `transition`, the morph (a click or `from` source, the next `[data-morph]` element, a reversed history entry), the default `light-morph` stylesheet, imported only with `transitions: true` |
-| `web/indexeddb.ts` | `IndexedDBKind`, kept apart from the host's DOM pieces so the worker entry can open it |
-| `web/test.ts` | `openPage(manifest, { path, args, kinds })`: the web host's root mount, theme and routed links over memory stores and a history in memory, and `OpenedPage` (`run`, `root`, `find`, `text`, `shows`, `navigate`, `settle`, `stop`) |
+| `web/indexeddb.ts` | `IndexedDBAdapterType`, kept apart from the host's DOM pieces so the worker entry can open it |
+| `web/test.ts` | `openPage(manifest, { path, args, adapters })`: the web host's root mount, theme and routed links over memory stores and a history in memory, and `OpenedPage` (`run`, `root`, `find`, `text`, `shows`, `navigate`, `settle`, `stop`) |
 | `web/generate.ts` | The web host's part of the generation: `.light/main.ts` (or `.js`), `.light/worker.js` when a store declares `worker: true`, and `.light/components.ts` (or `.js`) and `.light/components.css` for a project on `@lightstart/components` |
 | `web/worker.ts` | `WorkerStores` (the feature the entry passes), `WorkerAdapter` (the page's `StorageAdapter` over one worker request per method, with `store.open` in its `init`) and `WorkerConnection` (one rpc client and diagnostic relay per worker) |
-| `web/worker-entry.ts` | `serveStores(app, models)`: the worker's `store.open` and one `store.<method>` per adapter method, relayed diagnostics, and the kinds it runs |
-| `static/index.ts` | `renderApp(manifest, { path, args, kinds })` and `renderPage(manifest, page, options)`: the app's root view rendered on light's markup host over memory stores and a history in memory, with `<app-container>` as a markup view, and that markup put in a built page with the prerender marker |
-| `tui/index.ts` | The terminal host: `TuiHost`, `JsonlKind`, `hostArgs` (`--data`, `--scheme`, `--route`), argv, the history in memory, `<app-container>` as a terminal view, the baked table, `runApp`, `start` |
+| `web/worker-entry.ts` | `serveStores(app, models)`: the worker's `store.open` and one `store.<method>` per adapter method, relayed diagnostics, and the adapter types it runs |
+| `static/index.ts` | `renderApp(manifest, { path, args, adapters })` and `renderPage(manifest, page, options)`: the app's root view rendered on light's markup host over memory stores and a history in memory, with `<app-container>` as a markup view, and that markup put in a built page with the prerender marker |
+| `tui/index.ts` | The terminal host: `TuiHost`, `JsonlAdapterType`, `hostArgs` (`--data`, `--scheme`, `--route`), argv, the history in memory, `<app-container>` as a terminal view, the baked table, `runApp`, `start` |
 | `tui/generate.ts` | The terminal host's part of the generation: the modes dispatch in `.light/main.ts`, `.light/classes.baked.ts`, and `.light/models.ts` |
 | `tui/models.ts` | The row classes `.light/models.ts` holds: each model's fields typed by its schema, and a `static of` reading a row once and skipping a damaged one |
 | `tui/container.ts` | `AppContainer`: `<app-container>` as a terminal view, defined on import |
@@ -43,13 +43,13 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 ## Rules the sources keep
 
-- The core names no host. What only one host does (its store kinds, where its arguments come from, its history, its surface, its generated entry and files) is that host's subpath; the core reaches it through `AppHost` and `HostGeneration`.
-- The web host imports no optional feature: the generated entry imports the IndexedDB kind, the worker feature, the transition feature and the URL-argument parser only when the config uses them, and passes them to `start`. `start(manifest)` without them runs memory stores, no transitions and no arguments; the generated entry is the supported path. A store with no kind means IndexedDB on the web, and a `kind` that is a function makes the entry import every web kind.
+- The core names no host. What only one host does (its store adapter types, where its arguments come from, its history, its surface, its generated entry and files) is that host's subpath; the core reaches it through `AppHost` and `HostGeneration`.
+- The web host imports no optional feature: the generated entry imports the IndexedDB adapter type, the worker feature, the transition feature and the URL-argument parser only when the config uses them, and passes them to `start`. `start(manifest)` without them runs memory stores, no transitions and no arguments; the generated entry is the supported path. A store with no adapter means IndexedDB on the web, and an `adapter` that is a function makes the entry import every web adapter type.
 - The web host applies the app's `scheme` before the theme: `"dark"` and `"light"` pin the `dark` class on `<html>` and stop following the preference, `"system"` follows as before, and `color-scheme` matches. `renderPage` writes `class="dark"` on a dark app's `<html>`, and `openPage` restores the page's scheme on `stop`.
 - A route change applies inside the host's `transition(apply, route)`: the run calls it when `app.transitions` is on or `navigate(path, { transition: true })` asks, passes the route's path, new `href` and `from` source, and the web host wraps it in `document.startViewTransition` where the browser has it and waits for `<app-container>` to draw. Every other host and `openApp` run `apply` as it is. `navigate(path, { transition: false })` runs plainly. The web host morphs the clicked link (its own capture listener) or the `from` element into the next view's first `[data-morph]` element, else the view element, names only one element `morph` at a time, remembers per entry the path a morph forward led to so a history navigation reverses it onto the restored page's link (preferring `data-morph-source`), installs the default `morph` rules in the `light` layer, and sets no name under `prefers-reduced-motion: reduce`.
 - One run, the same on every host: arguments, stores, seeds into empty stores, controllers in import order, routes, mount. `stop` is the reverse: unmount, routes, controllers in reverse, stores. `restart` and `quit` are the run's, installed on `app` by every host and by `openApp`; they reject with "the app is not running" before a run.
-- `AppHost` is a class whose methods all have a default, not an abstract class, and a method answering a promise is not `async`: scriptc does not dispatch an abstract method's override reliably, nor an async override. A `StoreKind`'s `open` follows the same rule.
-- Stores: `main` is always declared, of the host's default kind unless the app says. A store's kind must be one the host runs, a project's registered one, or `memory`; a model's `$adapter` must name a declared store. Both are errors before anything opens. A test opens every store in memory. A worker store is the same kind opened in the worker behind a `StorageAdapter` proxy; the model layer runs once, on the page.
+- `AppHost` is a class whose methods all have a default, not an abstract class, and a method answering a promise is not `async`: scriptc does not dispatch an abstract method's override reliably, nor an async override. An `AdapterType`'s `open` follows the same rule.
+- Stores: `main` is always declared, of the host's default adapter unless the app says. A store's adapter must be one the host runs, a project's registered one, or `memory`; a model's `$store` must name a declared store. Both are errors before anything opens. A test opens every store in memory. A worker store is the same adapter type opened in the worker behind a `StorageAdapter` proxy; the model layer runs once, on the page.
 - The manifest lists the controllers in the order they start: taken by name, each after the controllers it imports for their values (`import type` does not count), read from its relative imports. A cycle is an error that names it.
 - A file name is the manifest name: without the extension and unchanged (kebab-case stays). `.ts` and `.js` are read, `.d.ts` and `*.test.*` are not. Generation sorts its input and its output.
 - The app module is `src/app.ts` or `src/app.js`, exactly one (both is an error naming both). A `.js` app gets `.light/app.js`, `.light/main.js`, `.light/components.js` and `.light/locales.js`, with `.js` imports between them and no TypeScript syntax; a terminal app keeps `.ts` generated files.
@@ -75,10 +75,10 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Contract | Who relies on it |
 |---|---|
-| `defineApp`, `AppConfig` and its fields (`name`, `title`, `host`, `theme`, `scheme`, `locale`, `url`, `prerender`, `transitions`, `focusOnNavigate`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`kind`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
+| `defineApp`, `AppConfig` and its fields (`name`, `title`, `host`, `theme`, `scheme`, `locale`, `url`, `prerender`, `transitions`, `focusOnNavigate`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`adapter`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
 | `pageHead` and `PageHead` | a view setting its page's title, description and image |
 | A route's `title` and `description` as strings or functions of its params | a project's `src/routes.ts` and the run's head |
-| `StoreKind` and `registerStoreKind` | a project bringing a store kind of its own |
+| `AdapterType` and `registerAdapterType` | a project bringing an adapter type of its own |
 | `AppHost` and `HostGeneration` | the hosts, and a host a project would bring later |
 | `AppManifest` and its records (`app`, `rootView`, `models`, `seeds`, `controllers`, `routes`, `views`) | the generated `.light/app.ts` (or `.js`) and the run |
 | The file-name rule and the default exports of models, controllers, the root view and routes | project folders and the generator |
@@ -88,11 +88,11 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `.light/content.ts` (or `.js`) | a project on `@lightstart/content`, imported by `.light/app.ts` (or `.js`) as a seed before `src/seed` |
 | `currentView`, `navigate` and `<app-container>` | root views and controllers of web and terminal apps |
 | `navigate`'s `transition` and `from` options, `RouteTransition`, `NavigationSource`, `[data-morph]` and `data-morph-source` | web views pairing a link with the view it opens, and a host's `transition` |
-| `start(manifest, { kinds, worker, transitions, args })` and `{ stop() }` | web apps and their generated entry |
+| `start(manifest, { adapters, worker, transitions, args })` and `{ stop() }` | web apps and their generated entry |
 | `start(manifest, { classes, argv, term })` and `{ stop() }` | terminal apps and their generated entry |
-| `openApp(manifest, { args, kinds })` and `mountApp(manifest, opened, { cols, rows, classes })` | a project's tests |
-| `openPage(manifest, { path, args, kinds })` and `OpenedPage` | a web project's tests |
-| `renderApp(manifest, { path, args, kinds })` and `renderPage(manifest, page, options)` | the build's prerenderer and a server rendering a page in node |
+| `openApp(manifest, { args, adapters })` and `mountApp(manifest, opened, { cols, rows, classes })` | a project's tests |
+| `openPage(manifest, { path, args, adapters })` and `OpenedPage` | a web project's tests |
+| `renderApp(manifest, { path, args, adapters })` and `renderPage(manifest, page, options)` | the build's prerenderer and a server rendering a page in node |
 | A mode's `main(argv: readonly string[])` and optional `matches(argv)` | the terminal generation and `.light/main.ts` |
 
 ## Gates

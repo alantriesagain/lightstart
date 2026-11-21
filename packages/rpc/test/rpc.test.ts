@@ -232,7 +232,7 @@ const main = async (): Promise<void> => {
   {
     const { a, b, stop } = pair();
     const store = createStore({
-      models: { note: { $adapter: "memory", title: T.string({ required: true }) } },
+      models: { note: { $store: "memory", title: T.string({ required: true }) } },
       databases: { memory: memoryAdapter() },
       defaultAdapter: "memory",
     });

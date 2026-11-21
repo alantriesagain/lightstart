@@ -5,7 +5,7 @@ import T from "@lightstart/light/types";
 import type { ModelSchema } from "@lightstart/light/model";
 
 const MODEL = {
-  $adapter: "file",
+  $store: "file",
   $form: {
     label: "Meetup",
     fields: ["name", "category", "startsAt", "excerpt", "ghost"],

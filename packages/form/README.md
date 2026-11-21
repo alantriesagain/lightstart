@@ -14,7 +14,7 @@ The fields a form shows, from a light model's schema, and the validation of what
 | `validateForm(models, model, data, fields, { operation? })` | The model's `validateRow` on the whole row, its errors narrowed to `fields` and keyed to their labels |
 | `validateRequired(data, fields)` | The required fields a form checks without a model |
 
-A schema is any object: a light `ModelSchema`, with its `$adapter` and hooks, or a plain record. Importing `@lightstart/form` also types a `ModelSchema`'s `$form` block, so a model's schema declares it without a cast.
+A schema is any object: a light `ModelSchema`, with its `$store` and hooks, or a plain record. Importing `@lightstart/form` also types a `ModelSchema`'s `$form` block, so a model's schema declares it without a cast.
 
 ```ts
 import T from "@lightstart/light/types";

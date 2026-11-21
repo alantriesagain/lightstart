@@ -221,6 +221,6 @@ describe("buildAddColumnSQL: a schema that grew a field", () => {
   });
 
   it("skips the id and the $ keys, which are not columns", () => {
-    assert.deepEqual(buildAddColumnSQL("t", { id: { $type: "string" }, $adapter: "d1" }, []), []);
+    assert.deepEqual(buildAddColumnSQL("t", { id: { $type: "string" }, $store: "d1" }, []), []);
   });
 });

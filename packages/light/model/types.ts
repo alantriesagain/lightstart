@@ -14,7 +14,7 @@ import type { Resource } from "../controller/types.ts";
 /**
  * The keys of a schema that are not fields:
  * - `$hooks`: lifecycle callbacks
- * - `$adapter`: the adapter this model lives in
+ * - `$store`: the store this model lives in
  * - `$extension`: the extension that owns the model; the store routes it to the database named `ext:<id>`
  * - `$heavy`: fields an adapter leaves out of a list read; a `get` by `where`
  *   reads such a row again by its id, whole
@@ -27,7 +27,7 @@ import type { Resource } from "../controller/types.ts";
  */
 export interface ModelSchemaDirectives {
   $hooks?: ModelHookSlots;
-  $adapter?: string;
+  $store?: string;
   $shadow?: string;
   $extension?: string;
   $heavy?: string[];

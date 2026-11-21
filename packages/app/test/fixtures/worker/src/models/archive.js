@@ -3,5 +3,5 @@ import { defineModel } from "@lightstart/light/model";
 
 export default defineModel("archive", {
   text: T.string({ required: true }),
-  $adapter: "archive",
+  $store: "archive",
 });

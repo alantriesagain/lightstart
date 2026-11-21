@@ -34,7 +34,7 @@ export default defineApp({
   args: { dir: { default: "notes", description: "The notes folder" } },
   stores: {
     main: { at: (args) => args.string("dir") ?? "notes" },
-    cache: { kind: "memory" },
+    cache: { adapter: "memory" },
     user: { at: (args) => `${args.string("dir") ?? "notes"}/user` },
   },
 });
@@ -52,7 +52,7 @@ export default defineApp({
 | `prerender` | `false` | Render every concrete route into its own `index.html` during `light build`: `true` or `"markup"` renders in node, `"browser"` through Playwright |
 | `transitions` | `false` | Run every web route change inside `document.startViewTransition` where the browser has it |
 | `focusOnNavigate` | `true` | Move focus to the new view's first `h1`, else the view itself, after a route change that is not the first load |
-| `stores` | `{ main: {} }` | The stores by name, several at once: `{ kind?, at? }` each |
+| `stores` | `{ main: {} }` | The stores by name, several at once: `{ adapter?, at? }` each |
 | `root` | `"app-root"` | The root view's tag |
 | `args` | `{}` | The arguments the app takes, as a `@lightstart/cli` schema |
 
@@ -60,14 +60,14 @@ export default defineApp({
 
 ## Stores
 
-An app keeps rows in stores by name, several at once. A model picks one through its schema's `$adapter` (the store's name) and gets `main` when it names none; `main` is always there, of the host's default kind unless the app says otherwise. One run opens them all over one engine store, which routes each model to its store.
+An app keeps rows in stores by name, several at once. A model picks one through its schema's `$store` (the store's name) and gets `main` when it names none; `main` is always there, of the host's default adapter unless the app says otherwise. One run opens them all over one engine store, which routes each model to its store.
 
-- A store's `kind` is an adapter: light has `memory`, `indexeddb`, `jsonl` and `sql` (SQLite over `@lightstart/sqlite`). The host says which it runs and which is its default: the web host runs `indexeddb` and `memory`, the terminal host `jsonl` (its default) and `memory`; every host runs `memory`, and a test opens every store in memory. On the web a store with no `kind` means IndexedDB: the generated entry imports that kind, so it is in the page's bundle. An app whose every store names `memory` carries neither the kind nor its adapter. The terminal host's default is `jsonl`.
-- A store whose kind its host cannot run is an error naming the host and the kinds it has; so is a model naming a store the app does not declare, before anything opens.
-- `kind` may be a function of the arguments, as `at` may: `kind: (args) => (args.flag("ephemeral") ? "memory" : "jsonl")` keeps nothing for a run that asks so.
-- `at` is what the kind opens: a folder for `jsonl` (the terminal's `--data` when absent), a database's name for `indexeddb` (the app's name for `main`, `<name>:<store>` for another), nothing for `memory`. It may be a function of the arguments.
-- A project brings a kind of its own (an adapter over its server's API, SQLite with its driver) by registering a `StoreKind` before the run: `registerStoreKind(new MyKind())`. Its `open(app, store, at, models, main)` answers the opened adapter.
-- A store declared `worker: true` opens in a worker the web host spawns on the first such store, over `@lightstart/rpc`. It is the same kind, opened inside the worker; the page's engine store keeps every model semantic (validation, ids, hooks and `modelChanged`), so a write announces once, on the page, and `onChange`, `liveRows` and `modelQuery` work unchanged. The terminal host has no worker and ignores the flag; `openApp` keeps every store in memory on the page, as today. A kind the worker does not run is an error naming the kinds it has; `main` is not special, and a store may be `worker: true` too. Seeds load through the page's engine store, so a worker model's seed crosses the channel as rows and loads once; the worker does not seed. The project lists `@lightstart/rpc` in its dependencies: the page loads it when the first worker store opens, and the generated `.light/worker.js` imports it. A test passes `worker: () => new Worker(new URL("../.light/worker.js", import.meta.url), { type: "module" })` to `openPage` to run the worker too (the others stay in memory on the page).
+- A store's `adapter` is an adapter type: light has `memory`, `indexeddb`, `jsonl` and `sql` (SQLite over `@lightstart/sqlite`). The host says which it runs and which is its default: the web host runs `indexeddb` and `memory`, the terminal host `jsonl` (its default) and `memory`; every host runs `memory`, and a test opens every store in memory. On the web a store with no `adapter` means IndexedDB: the generated entry imports that adapter type, so it is in the page's bundle. An app whose every store names `memory` carries neither the adapter type nor its implementation. The terminal host's default is `jsonl`.
+- A store of an adapter type its host cannot run is an error naming the host and the adapter types it has; so is a model naming a store the app does not declare, before anything opens.
+- `adapter` may be a function of the arguments, as `at` may: `adapter: (args) => (args.flag("ephemeral") ? "memory" : "jsonl")` keeps nothing for a run that asks so.
+- `at` is what the adapter type opens: a folder for `jsonl` (the terminal's `--data` when absent), a database's name for `indexeddb` (the app's name for `main`, `<name>:<store>` for another), nothing for `memory`. It may be a function of the arguments.
+- A project brings an adapter type of its own (an adapter over its server's API, SQLite with its driver) by registering an `AdapterType` before the run: `registerAdapterType(new MyAdapterType())`. Its `open(app, store, at, models, main)` answers the opened adapter.
+- A store declared `worker: true` opens in a worker the web host spawns on the first such store, over `@lightstart/rpc`. It is the same adapter type, opened inside the worker; the page's engine store keeps every model semantic (validation, ids, hooks and `modelChanged`), so a write announces once, on the page, and `onChange`, `liveRows` and `modelQuery` work unchanged. The terminal host has no worker and ignores the flag; `openApp` keeps every store in memory on the page, as today. An adapter type the worker does not run is an error naming the adapter types it has; `main` is not special, and a store may be `worker: true` too. Seeds load through the page's engine store, so a worker model's seed crosses the channel as rows and loads once; the worker does not seed. The project lists `@lightstart/rpc` in its dependencies: the page loads it when the first worker store opens, and the generated `.light/worker.js` imports it. A test passes `worker: () => new Worker(new URL("../.light/worker.js", import.meta.url), { type: "module" })` to `openPage` to run the worker too (the others stay in memory on the page).
 
 ## Seeds
 
@@ -162,7 +162,7 @@ One run, the same on every host (`run.ts`):
 
 It installs `app.restart(args?)` (stop, merge the arguments, open, start and mount again) and `app.quit(code?)` (stop, then leave as the host does: a terminal app exits with `code`). Both answer promises, and reject with "the app is not running" before a run. `stop()` takes the view down, stops following the routes, disposes the controllers in reverse order and closes the stores.
 
-A host is an `AppHost`: its name, the store kinds it runs and its default, `args(app)`, `history()`, `mount(run)`, `unmount(run)`, `transition(apply)` and `exit(code)`. Each has what a host with no surface does, and a host overrides what it changes.
+A host is an `AppHost`: its name, the store adapter types it runs and its default, `args(app)`, `history()`, `mount(run)`, `unmount(run)`, `transition(apply)` and `exit(code)`. Each has what a host with no surface does, and a host overrides what it changes.
 
 ## The order controllers start in
 
@@ -200,20 +200,20 @@ The host's own part of the generation (`@lightstart/app/<host>/generate.ts`) wri
 ```ts
 import { start } from "@lightstart/app/web";
 import manifest from "./app.ts";
-import { IndexedDBKind } from "@lightstart/app/web/indexeddb.ts";
+import { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";
 import { WorkerStores } from "@lightstart/app/web/worker.ts";
 import { Transitions } from "@lightstart/app/web/transitions.ts";
 import { queryArgs } from "@lightstart/app/web/args.ts";
 
 await start(manifest, {
-  kinds: [new IndexedDBKind()],
+  adapters: [new IndexedDBAdapterType()],
   worker: new WorkerStores(() => new Worker(new URL("./worker.js", import.meta.url), { type: "module" })),
   transitions: new Transitions(),
   args: queryArgs,
 });
 ```
 
-The generator reads `src/app.ts` and writes only the imports the config uses: `web/indexeddb.ts` when a store names `indexeddb` or names no kind (the web default), `web/worker.ts` when a store says `worker: true`, `web/transitions.ts` with `transitions: true`, and `web/args.ts` when `args` is not empty. A store whose `kind` is a function may return any web kind, so the entry imports the IndexedDB kind too. Everything else stays out of the bundle by construction. A hand-written entry may call `start(manifest)` and gets memory stores, no transitions and no arguments; the generated entry is the supported path.
+The generator reads `src/app.ts` and writes only the imports the config uses: `web/indexeddb.ts` when a store names `indexeddb` or names no adapter (the web default), `web/worker.ts` when a store says `worker: true`, `web/transitions.ts` with `transitions: true`, and `web/args.ts` when `args` is not empty. A store whose `adapter` is a function may return any web adapter type, so the entry imports the IndexedDB adapter type too. Everything else stays out of the bundle by construction. A hand-written entry may call `start(manifest)` and gets memory stores, no transitions and no arguments; the generated entry is the supported path.
 
 On the web, `scheme` is applied before the theme: `"dark"` puts the `dark` class on `<html>` and stops following the preference, `"light"` removes it, and `"system"` follows the reader's choice and the OS. The build writes the class into a prerendered page's `<html>`, so a dark app paints dark on the first frame. The terminal host ignores it.
 
@@ -269,13 +269,13 @@ A project that depends on `@lightstart/app` gets these rules from `light check`,
 
 ## The web host
 
-`@lightstart/app/web`'s `start(manifest, features)` runs the app in the page. `memory` is always there; the generated entry passes the optional features the config uses as module objects: extra store kinds, the worker feature, the transition feature and the URL-query arguments (`?name=value`, a bare `?flag`; a parameter the app does not declare is left out). Without them the host answers no arguments and its `transition` just runs `apply`. It follows the browser's history for the routes with `configureNavigation(router.navigation)`, applies the app's scheme before the theme preset, and mounts the root view (an existing `<app-root>` replaced by a fresh one, another placeholder replaced, or appended to `<body>`). On a prerendered page (`window.__PRERENDERED__ === true` and the root already holding markup) the host keeps that element, so light's views adopt the served DOM, and `<app-container>` keeps the served view of the path. A view's first renders on such a page come before its data, so the host gives light a `settle` hook: a render that does not match the served DOM is held until the run has mounted and the work views handed to `trackWork` is done, then adopts if it matches by then, and renders fresh only if it still differs. The wait also ends at the user's first `input`, `change`, `pointerdown` or `keydown`, so what they asked for shows while loads continue. The first client navigation clears the marker. `<app-container>` is a component drawing `currentView`. It answers `{ stop() }`.
+`@lightstart/app/web`'s `start(manifest, features)` runs the app in the page. `memory` is always there; the generated entry passes the optional features the config uses as module objects: extra store adapter types, the worker feature, the transition feature and the URL-query arguments (`?name=value`, a bare `?flag`; a parameter the app does not declare is left out). Without them the host answers no arguments and its `transition` just runs `apply`. It follows the browser's history for the routes with `configureNavigation(router.navigation)`, applies the app's scheme before the theme preset, and mounts the root view (an existing `<app-root>` replaced by a fresh one, another placeholder replaced, or appended to `<body>`). On a prerendered page (`window.__PRERENDERED__ === true` and the root already holding markup) the host keeps that element, so light's views adopt the served DOM, and `<app-container>` keeps the served view of the path. A view's first renders on such a page come before its data, so the host gives light a `settle` hook: a render that does not match the served DOM is held until the run has mounted and the work views handed to `trackWork` is done, then adopts if it matches by then, and renders fresh only if it still differs. The wait also ends at the user's first `input`, `change`, `pointerdown` or `keydown`, so what they asked for shows while loads continue. The first client navigation clears the marker. `<app-container>` is a component drawing `currentView`. It answers `{ stop() }`.
 
 A project on `@lightstart/components` has its tags defined by the generated `.light/components.ts`, which `.light/app.ts` imports before the views, so every component exists before the root view is made. The stylesheets come from `.light/components.css` through the app's own stylesheet.
 
 ## The terminal host
 
-`@lightstart/app/tui`'s `start(manifest, { classes, argv?, term? })` runs the app on a terminal: its kinds `jsonl` and `memory`, the arguments from argv (the app's, and the host's own `--data <dir>` (`.data` by default), `--scheme dark|light` and `--route <path>`, each unless the app declares that name; an argument error prints its message and exits 2), a history in memory for the routes, and `<app-container>` as a terminal view. It makes the manifest's root view and runs it with `runApp` and the baked table for the scheme; keys go to the root view's `onKey`, and its `mounted(renderer)` runs once the renderer does, so the view reaches the renderer and its terminal (`renderer.term`). A restart mounts a new root view on the same terminal. It needs a TTY: without one it prints a clear message and exits 2. It answers `{ stop() }`.
+`@lightstart/app/tui`'s `start(manifest, { classes, argv?, term? })` runs the app on a terminal: its adapter types `jsonl` and `memory`, the arguments from argv (the app's, and the host's own `--data <dir>` (`.data` by default), `--scheme dark|light` and `--route <path>`, each unless the app declares that name; an argument error prints its message and exits 2), a history in memory for the routes, and `<app-container>` as a terminal view. It makes the manifest's root view and runs it with `runApp` and the baked table for the scheme; keys go to the root view's `onKey`, and its `mounted(renderer)` runs once the renderer does, so the view reaches the renderer and its terminal (`renderer.term`). A restart mounts a new root view on the same terminal. It needs a TTY: without one it prints a clear message and exits 2. It answers `{ stop() }`.
 
 A terminal project's `package.json` names the entry and its binary:
 
@@ -287,7 +287,7 @@ The views, models and controllers a terminal app ships follow light's scriptc ru
 
 ## Rendering in node
 
-`@lightstart/app/static` renders an app's page in node, without a browser: the build's default markup renderer prerenders from it, and a server can render a page with it. `renderApp` runs the app as `openApp` does (the arguments, every store in memory unless `kinds`, the controllers started and ready) over a history in memory at `path`, and mounts the root view (`app.root`, `"app-root"` by default) on light's markup host. It answers the root element's serialized markup with the engine's markers. `renderPage` puts that markup into the app's built HTML in place of the root placeholder (`<app-root></app-root>`, or the app's own tag) and inserts `<script>window.__PRERENDERED__ = true</script>` first in `<head>`.
+`@lightstart/app/static` renders an app's page in node, without a browser: the build's default markup renderer prerenders from it, and a server can render a page with it. `renderApp` runs the app as `openApp` does (the arguments, every store in memory unless `adapters`, the controllers started and ready) over a history in memory at `path`, and mounts the root view (`app.root`, `"app-root"` by default) on light's markup host. It answers the root element's serialized markup with the engine's markers. `renderPage` puts that markup into the app's built HTML in place of the root placeholder (`<app-root></app-root>`, or the app's own tag) and inserts `<script>window.__PRERENDERED__ = true</script>` first in `<head>`.
 
 ```ts
 import "@lightstart/light/markup";
@@ -312,7 +312,7 @@ const rows = await note.getAll();
 await app.stop();
 ```
 
-`openApp` fills the arguments (an array of `argv` tokens, or a record merged over the defaults), opens every store in memory (or, given `kinds: [new JsonlKind()]`, with the kinds a test names, so what lands on disk can be checked), starts the controllers and the routes (in memory), and answers an `OpenedApp`: `run`, `store`, `controllers`, `restart`, `quit` and `stop`. A web test opens the page itself with `@lightstart/app/web/test`'s `openPage`:
+`openApp` fills the arguments (an array of `argv` tokens, or a record merged over the defaults), opens every store in memory (or, given `adapters: [new JsonlAdapterType()]`, with the adapter types a test names, so what lands on disk can be checked), starts the controllers and the routes (in memory), and answers an `OpenedApp`: `run`, `store`, `controllers`, `restart`, `quit` and `stop`. A web test opens the page itself with `@lightstart/app/web/test`'s `openPage`:
 
 ```ts
 import { openPage } from "@lightstart/app/web/test";
@@ -328,7 +328,7 @@ await page.settle();     // pending updates and microtasks
 await page.stop();       // stops the run and removes the root element
 ```
 
-`openPage` mounts the root view as the web host does, with the theme applied and the routes drawn by `<app-container>` over a history in memory that starts at `path` (`"/"` by default), so the test page's URL is no route of the app's. It takes the app's arguments as `openApp` does (`args`, rather than the URL's) and opens every store in memory unless `kinds` names others. With `worker`, a store declared `worker: true` opens in that worker (still in memory when every store is memory); without it, every store stays on the page. It answers an `OpenedPage`: `run`, `root` (the mounted root element), `find(selector, { timeout })` (waits for the element, waits for its pending update, then answers it), `text()`, `shows(text, { timeout })`, `navigate(path, { transition })`, `settle()` and `stop()`. A helper waits 2 s by default and throws naming what it wanted beside the page's text.
+`openPage` mounts the root view as the web host does, with the theme applied and the routes drawn by `<app-container>` over a history in memory that starts at `path` (`"/"` by default), so the test page's URL is no route of the app's. It takes the app's arguments as `openApp` does (`args`, rather than the URL's) and opens every store in memory unless `adapters` names others. With `worker`, a store declared `worker: true` opens in that worker (still in memory when every store is memory); without it, every store stays on the page. It answers an `OpenedPage`: `run`, `root` (the mounted root element), `find(selector, { timeout })` (waits for the element, waits for its pending update, then answers it), `text()`, `shows(text, { timeout })`, `navigate(path, { transition })`, `settle()` and `stop()`. A helper waits 2 s by default and throws naming what it wanted beside the page's text.
 
 A test of the build itself serves a build folder and opens it in a fresh headless Chromium context with `openBuilt`:
 

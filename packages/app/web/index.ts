@@ -2,7 +2,7 @@
 /**
  * @file `@lightstart/app/web`: the web host. It always runs `memory`; the
  * generated entry imports the optional features the app's config uses and
- * hands them to `start`: the IndexedDB kind (`web/indexeddb.ts`), worker
+ * hands them to `start`: the IndexedDB adapter type (`web/indexeddb.ts`), worker
  * stores (`web/worker.ts`), view transitions and their morph
  * (`web/transitions.ts`), and the URL's arguments (`web/args.ts`). The routes
  * follow the browser's history, the theme preset is applied as CSS variables,
@@ -31,7 +31,7 @@ import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
 import type { RouteTransition } from "../run.ts";
 import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
 import type { Head } from "../head.ts";
-import { MemoryKind, plan, schemasOf, StoreKind } from "../stores.ts";
+import { MemoryAdapterType, plan, schemasOf, AdapterType } from "../stores.ts";
 import type { WebArgsFeature, WebTransitionFeature, WebTransitionPort, WebWorkerConnection, WebWorkerFeature } from "./features.ts";
 
 export { currentParams, currentView, navigate } from "../run.ts";
@@ -157,11 +157,11 @@ const applyHead = (head: Head): void => {
   setMeta(root, "name", "twitter:card", head.image === "" ? "summary" : "summary_large_image");
 };
 
-/** What a web host may start with instead of the page's: the kinds it runs and its default kind (a test's kinds and memory), and the optional features the entry imported. */
+/** What a web host may start with instead of the page's: the adapter types it runs and its default (a test's adapter types and memory), and the optional features the entry imported. */
 export interface WebHostOptions {
-  /** The kinds beyond `memory`, which the host always has. */
-  kinds?: readonly StoreKind[];
-  defaultKind?: string;
+  /** The adapter types beyond `memory`, which the host always has. */
+  adapters?: readonly AdapterType[];
+  defaultAdapter?: string;
   /** The worker feature for stores declared `worker: true`; absent, every store opens on the page. */
   worker?: WebWorkerFeature;
   /** The view-transition and morph feature; absent, the host's `transition` is the plain default. */
@@ -188,8 +188,8 @@ const hashTarget = (run: AppRun): HTMLElement | null => {
 
 export class WebHost extends AppHost {
   readonly name = "web";
-  readonly kinds: readonly StoreKind[];
-  readonly defaultKind: string;
+  readonly adapters: readonly AdapterType[];
+  readonly defaultAdapter: string;
   private mounted: Element | null = null;
   /** Stops handing the page's link clicks to the run's router. */
   private unlisten: (() => void) | null = null;
@@ -208,9 +208,9 @@ export class WebHost extends AppHost {
 
   constructor(options: WebHostOptions = {}) {
     super();
-    const given = options.kinds ?? [];
-    this.kinds = given.some((kind) => kind.name === "memory") ? given : [...given, new MemoryKind()];
-    this.defaultKind = options.defaultKind ?? (this.kinds.some((kind) => kind.name === "indexeddb") ? "indexeddb" : "memory");
+    const given = options.adapters ?? [];
+    this.adapters = given.some((adapter) => adapter.name === "memory") ? given : [...given, new MemoryAdapterType()];
+    this.defaultAdapter = options.defaultAdapter ?? (this.adapters.some((adapter) => adapter.name === "indexeddb") ? "indexeddb" : "memory");
     this.workerFeature = options.worker ?? null;
     this.transitions = options.transitions ?? null;
     this.argsFeature = options.args ?? null;
@@ -224,7 +224,7 @@ export class WebHost extends AppHost {
     let connection: WebWorkerConnection | null = null;
     const openOne = async (p: ReturnType<typeof plan>[number]): Promise<void> => {
       if (!p.worker || feature === null) {
-        databases[p.store] = await p.kind.open(manifest.app, p.store, p.at, models, p.store === "main");
+        databases[p.store] = await p.type.open(manifest.app, p.store, p.at, models, p.store === "main");
         return;
       }
       if (connection === null) {

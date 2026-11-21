@@ -1,7 +1,7 @@
 // node-only
 /**
  * @file More than one store: a model whose schema names the `user` store
- * writes there in memory and on disk, beside `main`; a store of a kind the
+ * writes there in memory and on disk, beside `main`; a store of an adapter type the
  * host cannot run, and a model naming a store the app does not declare, are
  * errors before anything opens.
  */
@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { done, eq, ok } from "@lightstart/test/assert.ts";
 import { openApp } from "../test/index.ts";
-import { JsonlKind, TuiHost } from "../tui/index.ts";
+import { JsonlAdapterType, TuiHost } from "../tui/index.ts";
 import { defineApp } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import app from "./fixtures/tui/src/app.ts";
@@ -57,22 +57,22 @@ const main = async (): Promise<void> => {
     rmSync(dir, { recursive: true, force: true });
   }
 
-  const browserOnly = defineApp({ name: "browser-only", host: "tui", stores: { cache: { kind: "indexeddb" } } });
+  const browserOnly = defineApp({ name: "browser-only", host: "tui", stores: { cache: { adapter: "indexeddb" } } });
   let refused = "";
   try {
     await new TuiHost({ argv: [] }).openStores({ app: browserOnly, models: [], controllers: [], routes: null, views: [] }, false);
   } catch (error) {
     refused = error instanceof Error ? error.message : String(error);
   }
-  ok("a kind the host cannot run is an error naming the host and its kinds", refused.includes('The tui host cannot run the "indexeddb" store "cache"') && refused.includes("jsonl, memory"));
+  ok("an adapter type the host cannot run is an error naming the host and its adapter types", refused.includes('The tui host cannot run the "indexeddb" store "cache"') && refused.includes("jsonl, memory"));
 
-  const onDiskDir = mkdtempSync(join(tmpdir(), "light-app-kinds-"));
+  const onDiskDir = mkdtempSync(join(tmpdir(), "light-app-adapters-"));
   try {
     const onDisk = defineApp({ name: "on-disk", host: "tui", stores: { main: { at: onDiskDir } } });
-    const opened = await openApp({ app: onDisk, models: [{ name: "note", model: note }], controllers: [], routes: null, views: [] }, { kinds: [new JsonlKind()] });
+    const opened = await openApp({ app: onDisk, models: [{ name: "note", model: note }], controllers: [], routes: null, views: [] }, { adapters: [new JsonlAdapterType()] });
     await note.add({ text: "written" });
     await opened.stop();
-    ok("a test opens the stores with the kinds it names: the row is on disk", readFileSync(join(onDiskDir, "note.jsonl"), "utf8").includes("written"));
+    ok("a test opens the stores with the adapter types it names: the row is on disk", readFileSync(join(onDiskDir, "note.jsonl"), "utf8").includes("written"));
   } finally {
     rmSync(onDiskDir, { recursive: true, force: true });
   }
@@ -86,15 +86,15 @@ const main = async (): Promise<void> => {
   }
   ok("a model naming a store the app does not declare is an error", missing.includes('keeps its rows in the store "user"'));
 
-  const chosen = defineApp({ name: "chosen", host: "tui", args: { keep: { flag: true, description: "Keep the rows" } }, stores: { main: { kind: (args) => (args.flag("keep") ? "jsonl" : "memory") } } });
-  const kept = mkdtempSync(join(tmpdir(), "light-app-kind-"));
+  const chosen = defineApp({ name: "chosen", host: "tui", args: { keep: { flag: true, description: "Keep the rows" } }, stores: { main: { adapter: (args) => (args.flag("keep") ? "jsonl" : "memory") } } });
+  const kept = mkdtempSync(join(tmpdir(), "light-app-adapter-"));
   try {
     const keepHost = new TuiHost({ argv: ["--keep", "--data", kept] });
     chosen.args.values = keepHost.args(chosen);
     const onDisk = await keepHost.openStores({ app: chosen, models: [{ name: "note", model: note }], controllers: [], routes: null, views: [] }, false);
     await note.add({ text: "kept" });
     await onDisk.close();
-    ok("a kind read from the arguments: jsonl when they ask to keep", existsSync(join(kept, "note.jsonl")));
+    ok("an adapter read from the arguments: jsonl when they ask to keep", existsSync(join(kept, "note.jsonl")));
     const untouched = join(kept, "untouched");
     const quietHost = new TuiHost({ argv: ["--keep", "--data", untouched] });
     chosen.args.values = quietHost.args(chosen);

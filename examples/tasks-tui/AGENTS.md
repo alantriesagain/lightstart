@@ -6,7 +6,7 @@ A terminal app on `@lightstart/app`: the folders are the app, and light writes t
 
 | Path | Holds |
 |---|---|
-| `src/app.ts` | `defineApp({ name, host: "tui", theme?, stores?, root?, args? })`: `stores` by name (`main` is JSONL files under `--data` unless it names another kind or folder, `at`), `args` from argv beside the host's `--data`, `--scheme` and `--route` |
+| `src/app.ts` | `defineApp({ name, host: "tui", theme?, stores?, root?, args? })`: `stores` by name (`main` is JSONL files under `--data` unless it names another adapter or folder, `at`), `args` from argv beside the host's `--data`, `--scheme` and `--route` |
 | `src/models/<name>.ts` | One model, default-exported; the file name is the model's name |
 | `src/controllers/<name>.ts` | One controller, default-exported; the file name is its name |
 | `src/views/<tag>.ts` | One view; the file name is its tag, and the root view default-exports its class |
