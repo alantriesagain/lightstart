@@ -27,7 +27,9 @@ import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { AppHost, AppRun } from "../run.ts";
+import type { RunStore } from "../run.ts";
 import "./container.ts";
+import { openStores as openLocalStores } from "../engine.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import { fileIO } from "./file.ts";
 import { callMounted, handlerOf } from "./root.ts";
@@ -90,6 +92,7 @@ export class TuiHost extends AppHost {
 
   constructor(options: TuiOptions = {}) {
     super();
+    this.openStores = (manifest: AppManifest, memoryOnly: boolean): Promise<RunStore> => openLocalStores(manifest, this, memoryOnly);
     this.argv = options.argv ?? process.argv.slice(2);
     this.classes = options.classes ?? null;
     this.term = options.term ?? null;

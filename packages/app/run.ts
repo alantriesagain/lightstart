@@ -13,13 +13,19 @@ import { signal } from "@lightstart/light/signals";
 import { RouterCore } from "@lightstart/router/core";
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
-import type { Row, Store } from "@lightstart/light/model/types.ts";
+import type { QueryOptions, Row, WriteOptions } from "@lightstart/light/model/types.ts";
 import { startControllers, stopControllers } from "./controllers.ts";
 import type { App } from "./index.ts";
 import type { AppManifest } from "./manifest.ts";
-import { openStores } from "./stores.ts";
 import type { AdapterType, StoreHost } from "./stores.ts";
 import { setAppHead, setRouteHead } from "./head.ts";
+
+/** What a run needs of its store: open, count to tell an empty one, add the seeds, close; a host's engine store or a worker proxy answers it. */
+export interface RunStore {
+  count(model: string, options?: QueryOptions): Promise<number>;
+  addMany(model: string, rows: Row[], options?: WriteOptions): Promise<Row[]>;
+  close(): Promise<void>;
+}
 
 /** The element a navigation started from (usually the clicked link); a host that morphs reads it as the DOM element it is. */
 export interface NavigationSource {
@@ -60,7 +66,12 @@ export class AppHost implements StoreHost {
   readonly name: string = "none";
   adapters: readonly AdapterType[] = [];
   defaultAdapter: string = "memory";
+  /** Open every store, the memory adapter type for each when `memoryOnly` (a test's run); a host that keeps rows sets its own in its constructor. */
+  openStores: (manifest: AppManifest, memoryOnly: boolean) => Promise<RunStore>;
 
+  constructor() {
+    this.openStores = (_manifest: AppManifest, _memoryOnly: boolean) => Promise.reject(new Error(`The ${this.name} host opens no stores`));
+  }
   /** The app's argument values, from the host's source (argv, the URL); a host with no source answers none. */
   args(_app: App): Record<string, unknown> {
     return {};
@@ -105,11 +116,6 @@ export class AppHost implements StoreHost {
   exit(_code: number): void {
     return;
   }
-
-  /** Open every store, the memory adapter type for each when `memoryOnly` (a test's run). */
-  openStores(manifest: AppManifest, memoryOnly: boolean): Promise<Store> {
-    return openStores(manifest, this, memoryOnly);
-  }
 }
 
 const viewOf = (route: unknown): string | null => {
@@ -140,7 +146,7 @@ export class AppRun {
   readonly host: AppHost;
   /** Every store in a test is memory. */
   readonly memoryOnly: boolean;
-  store: Store | null = null;
+  store: RunStore | null = null;
   controllers: readonly unknown[] = [];
   router: RouterCore | null = null;
   private following: (() => void) | null = null;

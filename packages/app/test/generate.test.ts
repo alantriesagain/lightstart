@@ -83,7 +83,7 @@ const main = async (): Promise<void> => {
     ok("the model keeps its file name", source.includes('{ name: "note", model: model0 }'));
     ok("the controller keeps its file name", source.includes('{ name: "notes", controller: controller0 }'));
     ok("the views are named", source.includes('views: ["app-about", "app-form", "app-home", "app-legal", "app-root", "app-search"]'));
-    eq("the entry starts the web host with the default adapter", readFileSync(first.main, "utf8"), 'import { start } from "@lightstart/app/web";\nimport manifest from "./app.ts";\nimport { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";\n\nawait start(manifest, {\n  adapters: [new IndexedDBAdapterType()],\n});\n');
+    eq("the entry starts the web host with the default adapter", readFileSync(first.main, "utf8"), 'import { start } from "@lightstart/app/web";\nimport manifest from "./app.ts";\nimport { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";\nimport { LocalStores } from "@lightstart/app/web/local.ts";\n\nawait start(manifest, {\n  adapters: [new IndexedDBAdapterType()],\n  stores: new LocalStores(),\n});\n');
     ok("a project without the components writes none", !existsSync(join(first.dir, "components.ts")) && !existsSync(join(first.dir, "components.css")));
     ok("a project without i18n writes no locales", !existsSync(join(first.dir, "locales.ts")) && !source.includes('import "./locales.ts";'));
 

@@ -27,6 +27,8 @@ import { config, configureView } from "@lightstart/light/view/core.js";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { AppHost, AppRun, currentParams, currentView } from "../run.ts";
+import type { RunStore } from "../run.ts";
+import { openStores as openLocalStores } from "../engine.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import { PRERENDER_SCRIPT } from "../node/prerender.ts";
 import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
@@ -79,6 +81,7 @@ class StaticHost extends AppHost {
 
   constructor(path: string, given: readonly string[] | Record<string, unknown> | undefined, adapters: readonly AdapterType[]) {
     super();
+    this.openStores = (manifest: AppManifest, memoryOnly: boolean): Promise<RunStore> => openLocalStores(manifest, this, memoryOnly);
     this.path = path;
     this.given = given;
     this.adapters = adapters.length > 0 ? adapters : [new MemoryAdapterType()];

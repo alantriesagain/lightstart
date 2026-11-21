@@ -1,18 +1,22 @@
 /**
  * @file The worker fixture in the page: a write to each store reads back, the
- * page follows a write to the worker model, its seed lands once, the page
- * stays responsive during a large write, and a worker-side failure rejects the
- * run naming the adapter types the worker runs.
+ * archive model's hook runs in the worker, its seed lands once, the page
+ * follows a write through the worker, the page stays responsive during a
+ * large write, a validation failure reaches the page with its name and
+ * fields, and a store of an adapter type the worker lacks rejects the run
+ * naming the adapter types the worker runs (the page names an adapter type so
+ * the run is not memory-only, and the worker opens its stores as declared).
  */
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { defineApp } from "@lightstart/app";
 import { AdapterType } from "@lightstart/app/stores.ts";
 import { openPage } from "@lightstart/app/web/test";
+import { WorkerStores } from "@lightstart/app/web/worker.ts";
 import manifest from "../.light/app.js";
 
-const spawn = () => new Worker(new URL("../.light/worker.js", import.meta.url), { type: "module" });
+const inWorker = () => new WorkerStores(() => new Worker(new URL("../.light/worker.js", import.meta.url), { type: "module" }));
+const inBadWorker = () => new WorkerStores(() => new Worker(new URL("./bad-worker.js", import.meta.url), { type: "module" }));
 
 const modelNamed = (name) => {
   const found = manifest.models.find((entry) => entry.name === name);
@@ -38,23 +42,27 @@ class CustomAdapterType extends AdapterType {
 }
 
 describe("worker stores", () => {
-  it("writes to each store, follows the worker's rows and stays responsive", async () => {
+  it("writes to each store, runs hooks in the worker, follows the worker's rows and stays responsive", async () => {
     const archive = modelNamed("archive");
     const note = modelNamed("note");
-    const page = await openPage(manifest, { worker: spawn });
+    const page = await openPage(manifest, { stores: inWorker() });
     try {
       const wroteNote = await note.add({ text: "page write" });
-      assert.equal((await note.get(wroteNote.id)).text, "page write", "a write to the page store reads back");
+      assert.equal((await note.get(wroteNote.id)).text, "page write", "a write to the main store reads back");
 
       const wroteArchive = await archive.add({ text: "worker write" });
-      assert.equal((await archive.get(wroteArchive.id)).text, "worker write", "a write to the worker store reads back");
+      assert.equal((await archive.get(wroteArchive.id)).text, "worker write", "a write to the archive store reads back");
+      assert.equal(wroteArchive.ranInWorker, true, "the model hook ran in the worker");
       assert.equal(await archive.count({ where: { text: "Archived note" } }), 1, "the worker seed is present once");
+      const seeded = await archive.getAll({ where: { text: "Archived note" } });
+      assert.equal(seeded[0].ranInWorker, true, "the seed ran through the worker's hook too");
 
       const controller = page.run.controllers[0];
       const before = controller.rows.value.length;
       await archive.add({ text: "late note" });
       await waitFor(() => controller.rows.value.length === before + 1, "the controller's rows to follow the worker write");
       assert.ok(controller.rows.value.some((row) => row.text === "late note"), "the page's live rows follow a worker write");
+      controller.rows.dispose();
 
       let ticks = 0;
       const timer = setInterval(() => {
@@ -71,15 +79,28 @@ describe("worker stores", () => {
     }
   });
 
+  it("reaches the page with a validation error's name and fields", async () => {
+    const note = modelNamed("note");
+    const page = await openPage(manifest, { stores: inWorker() });
+    try {
+      let caught = null;
+      try {
+        await note.add({});
+        assert.fail("a missing required field should reject");
+      } catch (error) {
+        caught = error;
+      }
+      assert.equal(caught.name, "ValidationError");
+      assert.ok(caught.errors !== undefined && typeof caught.errors.text === "string", `the error carries its fields: ${String(caught.errors)}`);
+    } finally {
+      await page.stop();
+    }
+  });
+
   it("rejects the run when the worker cannot run a store's adapter type", async () => {
-    const app = defineApp({
-      name: "fixture-worker-bad",
-      host: "web",
-      stores: { main: { adapter: "memory" }, archive: { adapter: "custom", worker: true } },
-    });
     let message = "";
     try {
-      await openPage({ ...manifest, app }, { adapters: [new CustomAdapterType()], worker: spawn });
+      await openPage(manifest, { adapters: [new CustomAdapterType()], stores: inBadWorker() });
       assert.fail("a worker store of an adapter type the worker lacks should reject");
     } catch (error) {
       message = error instanceof Error ? error.message : String(error);

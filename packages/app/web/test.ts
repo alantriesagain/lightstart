@@ -20,7 +20,8 @@ import type { NavigateOptions } from "../run.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import { WebHost } from "./index.ts";
 import { Transitions } from "./transitions.ts";
-import { WorkerStores } from "./worker.ts";
+import { LocalStores } from "./local.ts";
+import type { WebStoresFeature } from "./features.ts";
 
 /** What a test opens a page with: where the routes start, the app's arguments (an argv list or a record over the defaults), and the store adapter types it runs (every store in memory when absent). */
 export interface OpenPageOptions {
@@ -31,8 +32,8 @@ export interface OpenPageOptions {
   adapters?: readonly AdapterType[];
   /** Whether the manifest's seeds load; `true` when absent. */
   seed?: boolean;
-  /** Spawn the worker a store declared `worker: true` opens in; absent, every store stays on the page. */
-  worker?: () => Worker;
+  /** Where the run's stores open: `new WorkerStores(spawn)` for a `worker: true` app; absent, every store opens on the page. */
+  stores?: WebStoresFeature;
 }
 
 /** How long a helper waits before it throws. */
@@ -68,11 +69,11 @@ class PageHost extends WebHost {
   private readonly given: readonly string[] | Record<string, unknown> | undefined;
   mountedRoot: HTMLElement | null = null;
 
-  constructor(path: string, given: readonly string[] | Record<string, unknown> | undefined, adapters: readonly AdapterType[], worker: (() => Worker) | undefined) {
+  constructor(path: string, given: readonly string[] | Record<string, unknown> | undefined, adapters: readonly AdapterType[], stores: WebStoresFeature | undefined) {
     super({
       adapters: adapters.length > 0 ? adapters : [new MemoryAdapterType()],
       defaultAdapter: adapters[0]?.name ?? "memory",
-      worker: worker === undefined ? undefined : new WorkerStores(worker),
+      stores: stores ?? new LocalStores(),
       transitions: new Transitions(),
     });
     this.path = path;
@@ -178,7 +179,7 @@ export class OpenedPage {
 /** Open the manifest's app in the page over memory stores, a history in memory and the given arguments. */
 export const openPage = async (manifest: AppManifest, options: OpenPageOptions = {}): Promise<OpenedPage> => {
   const adapters = options.adapters ?? [];
-  const host = new PageHost(options.path ?? "/", options.args, adapters, options.worker);
+  const host = new PageHost(options.path ?? "/", options.args, adapters, options.stores);
   const run = new AppRun(manifest, host, adapters.length === 0, options.seed !== false);
   const root = document.documentElement;
   const previous = { dark: root.classList.contains("dark"), colorScheme: root.style.colorScheme };

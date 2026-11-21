@@ -2,31 +2,21 @@
 /**
  * @file The web host's seam to its optional features. The host itself imports
  * no optional feature: the generated entry imports the ones the app's config
- * uses (`web/indexeddb.ts` for the IndexedDB adapter type, `web/worker.ts` for worker
- * stores, `web/transitions.ts` for view transitions and `web/args.ts` for the
- * URL's arguments) and hands them to `start` as these shapes.
+ * uses (`web/indexeddb.ts` for the IndexedDB adapter type, `web/local.ts` for
+ * stores on the page, `web/worker.ts` for stores in a worker,
+ * `web/transitions.ts` for view transitions and `web/args.ts` for the URL's
+ * arguments) and hands them to `start` as these shapes.
  */
 
 import type { App } from "../index.ts";
-import type { RouteTransition } from "../run.ts";
-import type { PlannedStore } from "../stores.ts";
-import type { StorageAdapter } from "@lightstart/light/model/types.ts";
+import type { AppManifest } from "../manifest.ts";
+import type { RunStore, RouteTransition } from "../run.ts";
+import type { StoreHost } from "../stores.ts";
 
-/** One worker a page opened, as the host and the worker feature see it. */
-export interface WebWorkerConnection {
-  retain(): void;
-  release(): void;
-  failedMessage(): string;
-  request(name: string, payload: unknown): Promise<unknown>;
-  post(name: string, payload: unknown): void;
-}
-
-/** What the entry hands `start` when a store declares `worker: true`. */
-export interface WebWorkerFeature {
-  /** Spawn one worker and open the channel to it; `onEmpty` runs when the last store releases it. */
-  connect(onEmpty: () => void): Promise<WebWorkerConnection>;
-  /** Open `store` through `connection`, answering the page's adapter. */
-  open(connection: WebWorkerConnection, store: PlannedStore, memoryOnly: boolean): Promise<StorageAdapter>;
+/** What the entry hands `start`: where the run's stores open, on the page (`web/local.ts`) or in a worker (`web/worker.ts`). */
+export interface WebStoresFeature {
+  /** Open every store the app declares, and hand the run what it needs of it. */
+  open(manifest: AppManifest, host: StoreHost, memoryOnly: boolean): Promise<RunStore>;
 }
 
 /** What a transition feature reads of the host while it wraps a route change. */
