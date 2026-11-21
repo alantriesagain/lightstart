@@ -19,6 +19,7 @@ import { html } from "@lightstart/light/html";
 import { configure, currentHost, disposeTree, setHost } from "@lightstart/light/html/core.js";
 import { effect } from "@lightstart/light/signals";
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
+import { withBase } from "@lightstart/router/url";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import { parseArgs } from "@lightstart/cli/argv.ts";
 import type { MElement } from "@lightstart/light/markup/node.js";
@@ -161,6 +162,11 @@ export const renderApp = async (manifest: AppManifest, options: RenderOptions = 
   }
 };
 
+const ATTRIBUTE_URL = /(\b(?:href|src)\s*=\s*)(["'])(\/(?!\/)[^"']*)\2/gi;
+
+/** Put the app's base before every root-relative `href` and `src` in rendered markup; unchanged with no base. */
+const markupWithBase = (markup: string, base: string): string => (base === "" ? markup : markup.replace(ATTRIBUTE_URL, (_match, lead: string, quote: string, url: string) => `${lead}${quote}${withBase(base, url)}${quote}`));
+
 const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const escapeAttribute = (text: string): string => text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
@@ -226,7 +232,7 @@ export const renderPage = async (manifest: AppManifest, page: string, options: R
   const name = escapeRegExp(tag);
   const placeholder = new RegExp(`<${name}(?:\\s[^>]*)?>\\s*</${name}>`);
   if (!placeholder.test(page)) throw new Error(`The page has no <${tag}></${tag}> placeholder for the app's root view`);
-  const markup = await renderApp(manifest, options);
+  const markup = markupWithBase(await renderApp(manifest, options), manifest.app.base);
   const head = currentHead.peek();
   const withRoot = withScheme(page.replace(placeholder, () => markup), manifest.app.scheme);
   const withHead = putHead(withRoot, head);

@@ -14,6 +14,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, wri
 import { createRequire } from "node:module";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
+import { appBase } from "../base.ts";
 
 /** What one generation found and wrote. */
 export interface Generated {
@@ -162,6 +163,8 @@ export interface AppInfo {
   icons: string;
   /** The site's address without a trailing slash, or `undefined` when the app names none. */
   url: string | undefined;
+  /** The path the app lives under, `""` at the root. */
+  base: string;
   /** Whether the app runs its model layer in a worker. */
   worker: boolean;
   /** Whether a web store is `indexeddb`, or names no adapter (the web default). */
@@ -176,7 +179,7 @@ export interface AppInfo {
 export const infoOf = async (app: string): Promise<AppInfo> => {
   try {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
-    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; icons?: unknown; url?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; args?: unknown; argsSchema?: unknown } }).default;
+    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; icons?: unknown; url?: unknown; base?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; args?: unknown; argsSchema?: unknown } }).default;
     const worker = config !== undefined && config.worker === true;
     let indexeddb = false;
     if (config !== undefined && isRecord(config.stores)) {
@@ -193,13 +196,14 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
       locale: config !== undefined && typeof config.locale === "string" && config.locale.length > 0 ? config.locale : "en",
       icons: config !== undefined && typeof config.icons === "string" && config.icons.length > 0 ? config.icons : "lucide",
       url: config !== undefined && typeof config.url === "string" && config.url.length > 0 ? config.url.replace(/\/+$/, "") : undefined,
+      base: appBase({ base: config !== undefined && typeof config.base === "string" ? config.base : undefined, url: config !== undefined && typeof config.url === "string" ? config.url : undefined }),
       worker,
       indexeddb,
       transitions: config !== undefined && config.transitions === true,
       args: config !== undefined && isRecord(config.argsSchema ?? config.args) && Object.keys(config.argsSchema ?? config.args ?? {}).length > 0,
     };
   } catch {
-    return { host: "web", root: "app-root", locale: "en", icons: "lucide", url: undefined, worker: false, indexeddb: false, transitions: false, args: false };
+    return { host: "web", root: "app-root", locale: "en", icons: "lucide", url: undefined, base: "", worker: false, indexeddb: false, transitions: false, args: false };
   }
 };
 

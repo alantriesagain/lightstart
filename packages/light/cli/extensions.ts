@@ -54,7 +54,8 @@ export interface TestInput {
   headless: boolean;
   timeoutMs: number;
   runFiles: typeof runFiles;
-  serve: typeof serve;
+  /** Serve `dir` with light's runner page (and any `runnerPage` replacement); a `base` answers the same files under it. */
+  serve: (dir: string, port?: number, base?: string) => ReturnType<typeof serve>;
 }
 
 /** One test group a `cli/extend/test.ts` adds. */

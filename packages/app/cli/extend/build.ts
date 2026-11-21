@@ -11,6 +11,7 @@ import { defineExtension } from "@lightstart/cli";
 import type {} from "@lightstart/build";
 import type { RoutesMap } from "@lightstart/router";
 import { relative } from "node:path";
+import { normalizeBasePath, withBase } from "@lightstart/router/url";
 import { pathToFileURL } from "node:url";
 import type { PrerenderRenderer } from "../../index.ts";
 import { appOf, generate, infoOf, routesOf, routesPathOf } from "../../node/generate.ts";
@@ -19,19 +20,28 @@ import { prerender } from "../../node/prerender.ts";
 
 const HASHED = /-[A-Za-z0-9_-]+\.(?:js|css)$/;
 
+const siteRoot = (url: string, base: string): string => {
+  if (base === "") return url;
+  try {
+    return normalizeBasePath(new URL(url).pathname) === base ? url : `${url}${base}`;
+  } catch {
+    return `${url}${base}`;
+  }
+};
+
 const sitemapOf = (url: string, paths: readonly string[]): string => {
   const urls = paths.filter((path) => !path.includes(":") && !path.includes("*")).map((path) => `${url}${path.startsWith("/") ? path : `/${path}`}`).sort();
   const entries = urls.map((loc) => `  <url>\n    <loc>${loc}</loc>\n  </url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
 };
 
-const headersOf = (paths: readonly string[]): string => {
+const headersOf = (base: string, paths: readonly string[]): string => {
   const hashed = paths
     .filter((path) => path !== "worker.js" && HASHED.test(path))
-    .map((path) => `/${path}`)
+    .map((path) => withBase(base, `/${path}`))
     .sort();
   const rules = [
-    ...[...new Set(["/index.html", "/404.html", "/"])].sort().map((path) => `${path}\n  Cache-Control: no-cache`),
+    ...[...new Set(["/index.html", "/404.html", "/"])].map((path) => withBase(base, path)).sort().map((path) => `${path}\n  Cache-Control: no-cache`),
     ...hashed.map((path) => `${path}\n  Cache-Control: public, max-age=31536000, immutable`),
   ];
   return `${rules.join("\n\n")}\n`;
@@ -63,7 +73,9 @@ export default defineExtension("build", {
     prerender: { flag: true, description: "Render every concrete route into its own index.html" },
     renderer: { choices: ["markup", "browser"] as const, description: "How to prerender: light's markup host in node (default) or headless Chromium" },
   },
-  setup(_ctx, args, api) {
+  async setup(_ctx, args, api) {
+    const found = appOf(api.options.root);
+    if (found !== null) api.options.base = (await infoOf(found.path)).base;
     const given = args as { prerender?: unknown; renderer?: unknown } | undefined;
     const wanted = given?.prerender === true;
     const chosen = given?.renderer === "browser" || given?.renderer === "markup" ? given.renderer : undefined;
@@ -91,11 +103,12 @@ export default defineExtension("build", {
           ctx.outputs.set("robots.txt", "User-agent: *\nAllow: /\n");
         } else {
           const paths = routes === null ? [] : await pathsOf(routes as RoutesMap);
-          ctx.outputs.set("sitemap.xml", sitemapOf(info.url, paths));
-          ctx.outputs.set("robots.txt", `User-agent: *\nAllow: /\nSitemap: ${info.url}/sitemap.xml\n`);
+          const site = siteRoot(info.url, info.base);
+          ctx.outputs.set("sitemap.xml", sitemapOf(site, paths));
+          ctx.outputs.set("robots.txt", `User-agent: *\nAllow: /\nSitemap: ${site}/sitemap.xml\n`);
         }
 
-        ctx.outputs.set("_headers", headersOf([...ctx.outputs.keys()]));
+        ctx.outputs.set("_headers", headersOf(info.base, [...ctx.outputs.keys()]));
       },
     });
     api.steps.after("static", {
@@ -112,7 +125,7 @@ export default defineExtension("build", {
 
         const renderer = chosen ?? fromApp.renderer ?? "markup";
         const started = Date.now();
-        const written = await prerender({ root: ctx.root, outputs: ctx.outputs, paths, renderer, warn: (message) => console.warn(message) });
+        const written = await prerender({ root: ctx.root, outputs: ctx.outputs, paths, renderer, base: ctx.base, warn: (message) => console.warn(message) });
         ctx.log(`prerendered ${String(written)} pages with ${renderer} in ${String(Date.now() - started)} ms`);
       },
     });

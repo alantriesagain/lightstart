@@ -40,6 +40,17 @@ const copyPublic = async (ctx: BuildContext): Promise<void> => {
   if (existsSync(publicDir)) await copyDirectory(ctx, publicDir, "");
 };
 
+const rootUrl = (base: string, url: string): string => {
+  if (base === "" || !url.startsWith("/") || url.startsWith("//")) return url;
+  if (url === base || url.startsWith(`${base}/`)) return url;
+  return `${base}${url}`;
+};
+
+const ATTRIBUTE_URL = /(\b(?:href|src)\s*=\s*)(["'])(\/(?!\/)[^"']*)\2/gi;
+
+/** Put the build's base before every root-relative `href` and `src` in the page; unchanged with no base. */
+const withBase = (html: string, base: string): string => (base === "" ? html : html.replace(ATTRIBUTE_URL, (_match, lead: string, quote: string, url: string) => `${lead}${quote}${rootUrl(base, url)}${quote}`));
+
 const pageUrl = (ctx: BuildContext, output: string): string => {
   const from = dirname(relative(ctx.root, ctx.pagePath)).split("\\").join("/");
   const url = relative(from === "" ? "." : from, output).split("\\").join("/");
@@ -57,7 +68,7 @@ const writePage = async (ctx: BuildContext): Promise<void> => {
   });
   const styles = ctx.styleOutputs.map((output, index) => (output === undefined ? undefined : outputUrl(ctx, ctx.parsed.stylesheets[index]?.href, output)));
   const preloads = ctx.modulePreloads.map((output) => `/${output}`);
-  const html = renderPage(ctx.parsed, modules, styles, preloads);
+  const html = withBase(renderPage(ctx.parsed, modules, styles, preloads), ctx.base);
   ctx.outputs.set(relative(ctx.root, ctx.pagePath).split("\\").join("/"), html);
 };
 
@@ -104,6 +115,7 @@ const resolvedOptions = (options: BuildOptions): BuildExtensionOptions => {
     outDir: resolve(root, options.outDir ?? ".deployed"),
     minify: options.minify ?? true,
     keep: Number.isFinite(keep) ? Math.max(1, keep) : 5,
+    base: options.base ?? "",
   };
 };
 
@@ -117,7 +129,7 @@ export const createBuildExtension = (options: BuildOptions): BuildExtension => (
 
 const runBuild = async (extension: BuildExtension, log: BuildLog): Promise<BuildReport> => {
   const started = Date.now();
-  const { root, page, outDir, minify } = extension.options;
+  const { root, page, outDir, minify, base } = extension.options;
   const keep = Number.isFinite(extension.options.keep) ? Math.max(1, extension.options.keep) : 5;
   const pagePath = resolve(root, page);
   const id = await uniqueId(outDir);
@@ -132,6 +144,7 @@ const runBuild = async (extension: BuildExtension, log: BuildLog): Promise<Build
     id,
     minify,
     keep,
+    base,
     mode: extension.mode,
     data: extension.data,
     importMap: { imports: {} },

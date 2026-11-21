@@ -11,6 +11,7 @@
 
 import { signal } from "@lightstart/light/signals";
 import { RouterCore } from "@lightstart/router/core";
+import { setAppBase } from "./base.ts";
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { QueryOptions, Row, WriteOptions } from "@lightstart/light/model/types.ts";
@@ -168,6 +169,7 @@ export class AppRun {
   /** Fill the arguments, open the stores, start the controllers and the routes, mount the view; the app's restart and quit reach this run. */
   async start(): Promise<void> {
     this.app.args.values = this.host.args(this.app);
+    setAppBase(this.app.base);
     await this.open();
     this.app.lifecycle = {
       restart: (next?: Record<string, unknown>): Promise<void> => this.restart(next),
@@ -252,6 +254,7 @@ export class AppRun {
     let initial = true;
     router.init(routes, {
       appName: this.app.name,
+      basePath: this.app.base,
       prerendered: () => this.host.prerendered(),
       clearPrerendered: () => this.host.clearPrerendered(),
       onRouteChange: (matched) => {

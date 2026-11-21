@@ -22,6 +22,7 @@ import { applyTheme } from "@lightstart/light/theme";
 import { applyScheme } from "@lightstart/light/theme/color-scheme.js";
 import { loadPreset } from "@lightstart/light/theme/presets.js";
 import { createBrowserAdapter } from "@lightstart/router/adapters/browser";
+import { withBase } from "@lightstart/router/url";
 import type { RouterAdapter } from "@lightstart/router/contracts.ts";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
@@ -109,6 +110,27 @@ const registerContainer = (): void => {
   if (registered) return;
   View.register("app-container", AppContainer);
   registered = true;
+};
+
+const linkIsExternal = (link: Element): boolean => {
+  if (link.hasAttribute("data-no-router")) return true;
+  const rel = link.getAttribute("rel") ?? "";
+  return rel.split(/\s+/).includes("external");
+};
+
+/** Put the app's base before an anchor's root-relative `href`, unless it is external. */
+const rebaseLink = (link: Element, base: string): void => {
+  if (!link.matches("a[href]") || linkIsExternal(link)) return;
+  const href = link.getAttribute("href");
+  if (href === null || href.startsWith("//")) return;
+  const next = withBase(base, href);
+  if (next !== href) link.setAttribute("href", next);
+};
+
+/** Put the app's base before every root-relative anchor `href` in `root` and under it. */
+const rebaseLinks = (root: Element, base: string): void => {
+  rebaseLink(root, base);
+  for (const link of root.querySelectorAll("a[href]")) rebaseLink(link, base);
 };
 
 const setMeta = (head: HTMLElement, attribute: "name" | "property", key: string, value: string): void => {
@@ -200,6 +222,8 @@ export class WebHost extends AppHost {
   private previousScrollRestoration: ScrollRestoration | null = null;
   private historyNavigation = false;
   private readonly scrollPositions = new Map<string, number>();
+  /** Keeps root-relative link attributes under the app's base, when it has one. */
+  private links: MutationObserver | null = null;
   /** The `href` of the page on screen. */
   private currentHref: string | null = null;
 
@@ -290,6 +314,7 @@ export class WebHost extends AppHost {
     const adopt = this.prerendered() && placeholder !== null && placeholder.childNodes.length > 0;
     if (adopt && placeholder !== null) {
       this.mounted = placeholder;
+      this.startLinks(run.app.base);
       markStarted();
       this.scrollToHash(run);
       return;
@@ -298,8 +323,32 @@ export class WebHost extends AppHost {
     if (placeholder === null) document.body.append(made);
     else placeholder.replaceWith(made);
     this.mounted = made;
+    this.startLinks(run.app.base);
     markStarted();
     this.scrollToHash(run);
+  }
+
+  /** Keep the root-relative `href` of every anchor in the app's DOM under its base, including links drawn later. */
+  private startLinks(base: string): void {
+    this.stopLinks();
+    const root = this.mounted;
+    if (base === "" || root === null) return;
+    rebaseLinks(root, base);
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.type === "attributes") {
+          if (record.target instanceof Element) rebaseLink(record.target, base);
+        } else for (const node of record.addedNodes) if (node instanceof Element) rebaseLinks(node, base);
+      }
+    });
+    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["href"] });
+    this.links = observer;
+  }
+
+  /** Stop keeping the links under the base. */
+  private stopLinks(): void {
+    this.links?.disconnect();
+    this.links = null;
   }
 
   /** On the first load, once the page has drawn, bring the element the `#hash` names into view: the browser looked for it before the app drew it. */
@@ -409,6 +458,7 @@ export class WebHost extends AppHost {
   unmount(_run: AppRun): void {
     this.transitions?.reset();
     this.stopListening();
+    this.stopLinks();
     this.stopPage();
     const mounted = this.mounted;
     this.mounted = null;

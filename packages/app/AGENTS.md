@@ -6,7 +6,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Where | What |
 |---|---|
-| `index.ts` | `defineApp`, `AppConfig` (including the site's `title`, how it `prerender`s, its `worker`, its `focusOnNavigate` and its `url`), `PrerenderRenderer`, `StoreConfig`, the `App` and `AppArgs` classes, `AppLifecycle` |
+| `index.ts` | `defineApp`, `AppConfig` (including the site's `title`, how it `prerender`s, its `worker`, its `focusOnNavigate`, its `url` and its `base`), `PrerenderRenderer`, `StoreConfig`, the `App` and `AppArgs` classes, `AppLifecycle`, and `appBase`/`appUrl` re-exported from `base.ts` |
+| `base.ts` | `appBase(config)` (the `url`'s path, or `base`, normalised), `setAppBase` and `appUrl(path)`: the one place the deploy base is read and applied |
 | `head.ts` | `pageHead`, `currentHead` and the head shape: the route's title, description and path, the app's display title, the computed document title, canonical and absolute image |
 | `manifest.ts` | `AppManifest`, `AppModel`, `AppController`, `AppSeeds`: the plain records `.light/app.ts` (or `.js`) exports |
 | `stores.ts` | `AdapterType`, `MemoryAdapterType`, `StoreHost`, `registerAdapterType`, `adapterTypeNamed`, `adapterTypesOf`, `schemasOf` and `plan`: each declared store checked against the host's adapter types and the models' `$store`, with no engine store in the page's import graph |
@@ -14,7 +15,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `memory.ts` | `MemoryAdapter`, the in-memory storage adapter |
 | `controllers.ts` | `startControllers` and `stopControllers`: name, start, await `$ready`, dispose |
 | `run.ts` | `AppHost` (the host contract, with a surface-less default for each method, `transition(apply)` and `routeChanged(run, first)` among them), `AppRun` (the run: arguments, stores, seeds, controllers, routes, mount; `stop`, `restart`, `quit`), `currentView` and `navigate` |
-| `web/index.ts` | The web host: `WebHost`, the browser history, the theme, `<app-container>` as a component, the root mount, the optional features the entry passes (`WebHostOptions`), the page head and its tags, focus and the live region after a route change, scroll restoration, `start` |
+| `web/index.ts` | The web host: `WebHost`, the browser history, the theme, `<app-container>` as a component, the root mount, the link observer that keeps root-relative anchors under the app's base, the optional features the entry passes (`WebHostOptions`), the page head and its tags, focus and the live region after a route change, scroll restoration, `start` |
 | `web/features.ts` | The seam's shapes: `WebStoresFeature`, `WebTransitionFeature`, `WebTransitionPort`, `WebArgsFeature` |
 | `web/args.ts` | `queryArgs`: the URL query as the app's arguments, imported only when the app declares `args` |
 | `web/local.ts` | `LocalStores`: the stores feature the entry passes when the app does not declare `worker: true`, opening every store on the page through `engine.ts` |
@@ -41,11 +42,13 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `check/rules/page-test-name.js` | The `light check` rule: a `*.test.*` file that imports `@lightstart/app/web/test` must be named `*.browser.test.*`, since it needs a page |
 | `cli/commands/app.ts` | `light app` |
 | `cli/hooks/serve.before.ts` | Generate before `light serve` starts |
+| `cli/extend/serve.ts` | Answer `light serve` under the app's base and redirect `/` there, through the dev server's `basePath` and `redirect` |
 | `cli/hooks/serve.file-changed.ts` | Regenerate when a named source is added, removed or renamed |
 | `cli/extend/build.ts` | A build step before `page` that generates, a step after `html` that writes `404.html`, `sitemap.xml`, `robots.txt` and `_headers` for a static host, and a step after that which prerenders with the app's or `--renderer`'s choice (`markup` by default, `browser` for Playwright) |
 | `cli/extend/test.ts` | Generate before `light test` picks its files, then, in an app, split the named files: `*.browser.test.*` in Chromium, every other `*.test.*` under node with `@lightstart/light/markup` preloaded, report both parts and fail if either fails |
 | `test/routes.test.ts`, `test/tui-routes.test.ts` | Routes without a page, and drawn by the terminal's `<app-container>`, under node and scriptc |
 | `test/fixtures/web/` | The fixture app: an app config, a note model, a notes controller, three views, two routes, a node test that opens it with `openApp`, and browser tests that open it with `openPage` |
+| `test/fixtures/web-base/` | The based fixture: `url` with `/budget`, links and a public file, a browser test of the link observer, and the dev and build tests that use it |
 | `test/fixtures/tui/` | The terminal fixture app: a `native` block, an argument, two models in two stores, a notes controller, a root view, a row view and a `hello` mode |
 
 ## Rules the sources keep
@@ -74,7 +77,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - `openApp` and `mountApp` import no IndexedDB and no node-only module, so both run natively.
 - `openPage` and `OpenedPage` are the web host's and the page's DOM, so they run in a browser test.
 - `static` renders on light's markup host: a caller imports `@lightstart/light/markup` before the app's manifest, the root view and `<app-container>` are markup-host views, the markup carries the engine's markers, and a root view the markup registry does not know is a clear error. `renderPage` replaces the root placeholder and puts the prerender marker first in `<head>`.
-- The build's static files read the app's `url` and the routes through the generator's `infoOf` and `routesOf`, never the generated manifest (which imports the views): `404.html` is the built page, the sitemap leaves out a path with a parameter or wildcard, and `_headers` caches the hashed `.js` and `.css` outputs but not the pages.
+- The deploy base is `appBase(config)`: the `url`'s path, or `base` overriding it (`"/"` is none), reused by the generator's `infoOf`, the run (the router's `basePath`), the web host's link observer, `appUrl`, `light serve` and `light build`. A view writes app paths; only the host adds or strips the base. The canonical is the app's `url` plus the app path, never the base twice. No base leaves generated and built files byte for byte as before.
+- The build's static files read the app's `url`, `base` and the routes through the generator's `infoOf` and `routesOf`, never the generated manifest (which imports the views): `404.html` is the built page, the sitemap leaves out a path with a parameter or wildcard, and `_headers` caches the hashed `.js` and `.css` outputs but not the pages, all under the base.
 - Prerendering defaults to the markup renderer in `node/prerender.ts`: it imports `@lightstart/light/markup` from the project before its generated `.light/app.ts` (or `.js`), renders each path with `renderPage` one after another, fails naming the path whose render throws, and passes a view's error to the build as a warning with the path. `--renderer browser` (or `defineApp({ prerender: "browser" })`) keeps the Playwright path.
 - `.light/` is not committed; the fixture's `.gitignore` names it beside `.deployed/`.
 - Tests are plain scripts on `@lightstart/test/assert.ts`, not a test framework. Most are node-only because they walk the disk and spawn the CLI.
@@ -86,7 +90,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Contract | Who relies on it |
 |---|---|
-| `defineApp`, `AppConfig` and its fields (`name`, `title`, `host`, `theme`, `scheme`, `locale`, `icons`, `url`, `prerender`, `worker`, `transitions`, `focusOnNavigate`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`adapter`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
+| `defineApp`, `AppConfig` and its fields (`name`, `title`, `host`, `theme`, `scheme`, `locale`, `icons`, `url`, `base`, `prerender`, `worker`, `transitions`, `focusOnNavigate`, `stores`, `root`, `args`), `PrerenderRenderer`, `StoreConfig` (`adapter`, `at`, either a function of the arguments), and `App`'s `args` (`string`, `flag`, `list`), `restart` and `quit` | project `src/app.ts` files, controllers, the generator and the build's static and prerender steps |
+| `appBase(config)` and `appUrl(path)`, and `App.base` | the generator's `infoOf`, the run and the hosts, the build's static and prerender steps, and app code fetching its own files |
 | `pageHead` and `PageHead` | a view setting its page's title, description and image |
 | A route's `title` and `description` as strings or functions of its params | a project's `src/routes.ts` and the run's head |
 | `AdapterType`, `registerAdapterType` and `openStores` (from `engine.ts`) | a project bringing an adapter type of its own, and a host opening stores locally |
@@ -105,7 +110,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `start(manifest, { stores, adapters, transitions, args })` and `{ stop() }` | web apps and their generated entry |
 | `start(manifest, { classes, argv, term })` and `{ stop() }` | terminal apps and their generated entry |
 | `openApp(manifest, { args, adapters })` (`OpenedApp.store` is the full `Store`) and `mountApp(manifest, opened, { cols, rows, classes })` | a project's tests |
-| `openPage(manifest, { path, args, adapters, stores })` and `OpenedPage` | a web project's tests |
+| `openPage(manifest, { path, args, adapters, stores })` and `OpenedPage`, and `openBuilt(dir, path, { timeoutMs, base })` | a web project's tests |
 | `defineWorker`, `WorkerDefinition`, `WorkerContext` and `serveModels({ app, models, worker, port })` | a worker app's `src/worker.ts` (or `.js`), its generated `.light/worker.js`, and a backend serving the channel over a port |
 | `worker` (`request`, `relay`, `mirror`, `serve`) and `WorkerStores` over a `Worker` or `MessagePort` | a worker app's page, views and controllers, and a test opening its page |
 | `renderApp(manifest, { path, args, adapters })` and `renderPage(manifest, page, options)` | the build's prerenderer and a server rendering a page in node |

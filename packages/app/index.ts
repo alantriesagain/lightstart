@@ -10,6 +10,7 @@
  */
 
 import type { ArgsSchema } from "@lightstart/cli/types/command.ts";
+import { appBase } from "./base.ts";
 
 /** Where a store keeps its rows, as its adapter takes it: a folder, a file, a database's name; or one read from the parsed arguments. */
 export type StoreAt = string | ((args: AppArgs) => string);
@@ -55,8 +56,10 @@ export interface AppConfig {
    * absent. The generation writes each name its sources use into `.light/icons.css`.
    */
   icons?: string;
-  /** The site's address, absolute and without a trailing slash (`https://lightstart.dev`); the build writes its sitemap against it. */
+  /** The site's address, absolute and without a trailing slash (`https://lightstart.dev`); the build writes its sitemap against it, and its path is the base the app is served under. */
   url?: string;
+  /** The path the app lives under (`/budget` for `https://user.github.io/budget`), overriding the path `url` names; `"/"` means the root. */
+  base?: string;
   /** Render every concrete route to its own `index.html` at build time; `light build --prerender` when absent. `true` and `"markup"` render in node, `"browser"` through Playwright. */
   prerender?: boolean | PrerenderRenderer;
   /**
@@ -129,6 +132,8 @@ export class App {
   readonly icons: string;
   /** The site's address, when the config names one, without a trailing slash. */
   readonly url: string | undefined;
+  /** The path the app lives under, `""` at the root. */
+  readonly base: string;
   /** Whether the build renders every concrete route ahead of time. */
   readonly prerender: boolean;
   /** The renderer the config names, when it names one; `undefined` asks for the build's default. */
@@ -158,6 +163,7 @@ export class App {
     this.locale = config.locale ?? "en";
     this.icons = config.icons ?? "lucide";
     this.url = config.url === undefined ? undefined : config.url.replace(/\/+$/, "");
+    this.base = appBase(config);
     this.prerender = config.prerender === true || typeof config.prerender === "string";
     this.prerenderRenderer = config.prerender === "markup" || config.prerender === "browser" ? config.prerender : undefined;
     this.worker = config.worker === true;
@@ -190,3 +196,5 @@ export const defineApp = (config: AppConfig): App => new App(config);
 
 export { pageHead } from "./head.ts";
 export type { PageHead } from "./head.ts";
+export { appBase, appUrl } from "./base.ts";
+export type { BaseConfig } from "./base.ts";

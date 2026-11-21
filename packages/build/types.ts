@@ -23,6 +23,8 @@ export type BuildContext = {
   id: string;
   minify: boolean;
   keep: number;
+  /** The path the built site is deployed under; `""` at the root. */
+  base: string;
   mode: string;
   data: Map<string, unknown>;
   importMap: ImportMap;
@@ -44,6 +46,8 @@ export type BuildOptions = {
   outDir?: string;
   minify?: boolean;
   keep?: number;
+  /** The path the built site is deployed under; `""` at the root. */
+  base?: string;
   mode?: string;
   data?: Map<string, unknown>;
   steps?: readonly BuildStep[];
