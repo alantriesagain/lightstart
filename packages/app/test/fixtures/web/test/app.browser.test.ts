@@ -297,3 +297,24 @@ describe("morphing view transitions", () => {
     }
   });
 });
+
+describe("a hash in the path", () => {
+  it("scrolls to and focuses the element the hash names after a navigation", async () => {
+    const proto = Element.prototype as unknown as { scrollIntoView: (this: Element) => void };
+    const original = proto.scrollIntoView;
+    const scrolled: string[] = [];
+    proto.scrollIntoView = function (this: Element) {
+      scrolled.push(this.id);
+    };
+    const page = await openPage(manifest);
+    try {
+      await page.navigate("/about#more");
+      await page.shows("More");
+      assert.ok(scrolled.includes("more"), `the named element was scrolled to: ${JSON.stringify(scrolled)}`);
+      assert.equal(document.activeElement?.id, "more", "and it has the focus");
+    } finally {
+      await page.stop();
+      proto.scrollIntoView = original;
+    }
+  });
+});

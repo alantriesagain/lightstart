@@ -148,7 +148,7 @@ A field left out keeps the route's value until the next route change. With `defi
 
 ### Navigation and focus
 
-After a route change that is not the first load, the web host moves focus to the new view's first `h1`, else to the view element itself (given `tabindex="-1"` and stripped of it on blur) with `{ preventScroll: true }`, and writes the new document title into a visually hidden polite live region, so a keyboard user and a screen reader start at the new page. `defineApp({ focusOnNavigate: false })` keeps focus where it is. A new navigation scrolls to the top; the browser's back and forward restore the scroll position the page had, and the web host sets `history.scrollRestoration = "manual"` to keep it.
+After a route change that is not the first load, the web host moves focus to the new view's first `h1`, else to the view element itself (given `tabindex="-1"` and stripped of it on blur) with `{ preventScroll: true }`, and writes the new document title into a visually hidden polite live region, so a keyboard user and a screen reader start at the new page. `defineApp({ focusOnNavigate: false })` keeps focus where it is. A new navigation scrolls to the top, or to the element its `#hash` names (which then takes the focus instead of the `h1`), and a first load scrolls to that element once the page has drawn; the browser's back and forward restore the scroll position the page had, and the web host sets `history.scrollRestoration = "manual"` to keep it.
 
 ## The run
 

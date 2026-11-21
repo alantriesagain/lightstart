@@ -171,6 +171,21 @@ export interface WebHostOptions {
 }
 
 /** The web host. */
+/** The element the location's `#hash` names, when the page has one: read from the router's location, so an in-memory history answers too. */
+const hashTarget = (run: AppRun): HTMLElement | null => {
+  const href = run.router?.adapter.getLocation().href ?? globalThis.location.href;
+  const hash = new URL(href, globalThis.location.origin).hash;
+  if (hash.length < 2) return null;
+  let id = hash.slice(1);
+  try {
+    id = decodeURIComponent(id);
+  } catch {
+    id = hash.slice(1);
+  }
+  const found = document.getElementById(id);
+  return found instanceof HTMLElement ? found : null;
+};
+
 export class WebHost extends AppHost {
   readonly name = "web";
   readonly kinds: readonly StoreKind[];
@@ -307,6 +322,7 @@ export class WebHost extends AppHost {
     if (adopt && placeholder !== null) {
       this.mounted = placeholder;
       markStarted();
+      this.scrollToHash(run);
       return;
     }
     const made = document.createElement(tag);
@@ -314,6 +330,13 @@ export class WebHost extends AppHost {
     else placeholder.replaceWith(made);
     this.mounted = made;
     markStarted();
+    this.scrollToHash(run);
+  }
+
+  /** On the first load, once the page has drawn, bring the element the `#hash` names into view: the browser looked for it before the app drew it. */
+  private scrollToHash(run: AppRun): void {
+    flushUpdates();
+    hashTarget(run)?.scrollIntoView();
   }
 
   /** Follow the page head into the title and tags, take over scroll restoration, and record each entry's scroll position. */
@@ -361,23 +384,25 @@ export class WebHost extends AppHost {
     const historyNavigation = this.historyNavigation;
     this.historyNavigation = false;
     const win = globalThis.window;
+    const target = historyNavigation ? null : hashTarget(run);
     if (historyNavigation) win.scrollTo(0, this.scrollPositions.get(win.location.href) ?? 0);
+    else if (target !== null) target.scrollIntoView();
     else win.scrollTo(0, 0);
-    if (run.app.focusOnNavigate) this.focusView();
+    if (run.app.focusOnNavigate) this.focusView(target);
     const region = this.liveRegion();
     region.textContent = document.title;
     return Promise.resolve();
   }
 
-  /** Move focus to the new view's first `h1`, else to the view itself, made focusable only until it loses focus. */
-  private focusView(): void {
+  /** Move focus to the element the `#hash` named when there is one, else the new view's first `h1`, else the view itself, made focusable only until it loses focus. */
+  private focusView(anchor: HTMLElement | null = null): void {
     const container = this.mounted;
     const tag = currentView.peek();
     if (container === null || tag === null) return;
     const view = container.querySelector(tag);
     if (!(view instanceof HTMLElement)) return;
     const heading = view.querySelector("h1");
-    const target = heading instanceof HTMLElement ? heading : view;
+    const target = anchor ?? (heading instanceof HTMLElement ? heading : view);
     if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
     target.addEventListener("blur", () => {
       if (target.getAttribute("tabindex") === "-1") target.removeAttribute("tabindex");
