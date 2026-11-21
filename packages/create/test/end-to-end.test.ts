@@ -91,7 +91,7 @@ const main = async (): Promise<void> => {
           `src/views/app-root.${variant.ext}`,
           `src/views/app-home.${variant.ext}`,
           `src/views/app-about.${variant.ext}`,
-          `test/app.test.${variant.ext}`,
+          `test/app.browser.test.${variant.ext}`,
           `test/smoke.e2e.${variant.ext}`,
           "README.md",
           "AGENTS.md",

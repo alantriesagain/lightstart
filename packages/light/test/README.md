@@ -30,6 +30,8 @@ npx light test --headed counter.browser.test.js                  # watch it
 
 `light test` runs exactly the files it is given, in headless Chromium through [Playwright](https://playwright.dev) (`npm i -D playwright && npx playwright install chromium`). It serves the current package folder on a free port, builds an importmap from the package's `exports` and those of the packages it declares, opens one page per file and reports what each registered. Which files run, and which of them need a browser, is the caller's business: a `test` script in `package.json` names them. A file that registers no tests fails, as does a run with no tests at all.
 
+In a project that is an app on `@lightstart/app` (it has `src/app.ts` or `src/app.js`), `light test` splits the files it is given: `*.browser.test.*` runs in headless Chromium as above, every other `*.test.*` runs under `node --test` from the project folder with `@lightstart/light/markup` preloaded (so a test can import the generated manifest and call `openApp`), and a file that is neither, such as `*.e2e.*`, keeps the browser runner. It reports both parts and fails if either fails. Anywhere else every file runs in headless Chromium, as before.
+
 | Flag | Meaning |
 |---|---|
 | `--headed` | A visible browser |

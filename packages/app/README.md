@@ -272,6 +272,7 @@ A project that depends on `@lightstart/app` gets these rules from `light check`,
 - `no-duplicate-route-path`: two keys of the routes table never name the same path once a trailing slash is ignored.
 - `icons-known`: an icon name is one the app's set or its `icons/` folder has, a binding has names somewhere to take, and each `icons/*.svg` is a safe mask; a project that uses icons installs `@iconify-json/<set>`.
 - `no-server-module-in-page`: in a web app (`host: "web"` in `src/app.*`), nothing under `src/` imports `node:*`, `@lightstart/server` or `@lightstart/sqlite`.
+- `page-test-name`: a `*.test.*` file that imports `@lightstart/app/web/test` is named `*.browser.test.*`, since a page test needs Chromium.
 - `test-conventions`: no committed `.only` on `describe`, `it` or `test`.
 - `test-touches-browser` (warning): a test that reads `document` or `window` is named `*.browser.test.*` or `*.e2e.*`.
 - `controller-has-test` (warning): a controller under `src/controllers/` is named by a file under `test/` or `tests/`, or one that opens the generated app.
@@ -332,7 +333,7 @@ const rows = await note.getAll();
 await app.stop();
 ```
 
-`openApp` fills the arguments (an array of `argv` tokens, or a record merged over the defaults), opens every store in memory (or, given `adapters: [new JsonlAdapterType()]`, with the adapter types a test names, so what lands on disk can be checked), starts the controllers and the routes (in memory), and answers an `OpenedApp`: `run`, `store`, `controllers`, `restart`, `quit` and `stop`. A web test opens the page itself with `@lightstart/app/web/test`'s `openPage`:
+`openApp` fills the arguments (an array of `argv` tokens, or a record merged over the defaults), opens every store in memory (or, given `adapters: [new JsonlAdapterType()]`, with the adapter types a test names, so what lands on disk can be checked), starts the controllers and the routes (in memory), and answers an `OpenedApp`: `run`, `store`, `controllers`, `restart`, `quit` and `stop`. In an app, `light test` gives a node test the generated manifest: it loads `@lightstart/light/markup` before the node run, so a test importing `../.light/app.ts` (or `.js`) registers the app's views without a browser. Name a test that opens a page `*.browser.test.*`; every other `*.test.*` file runs under node, and a file that is neither (such as `*.e2e.*`) keeps the browser runner. `light test` reports both parts and fails if either fails. A web test opens the page itself with `@lightstart/app/web/test`'s `openPage`:
 
 ```ts
 import { openPage } from "@lightstart/app/web/test";

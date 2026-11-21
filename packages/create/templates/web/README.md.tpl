@@ -15,7 +15,7 @@ pnpm dev
 |---|---|
 | `dev` | `light serve --watch` |
 | `build` | `light build` into `.deployed/current` |
-| `test` | `light test test/*.test.*` in headless Chromium |
+| `test` | `light test test/*.test.*`: `*.browser.test.*` in headless Chromium, the rest under node |
 | `test:e2e` | builds the app, then opens the built pages in headless Chromium |
 | `check` | `light check` |
 | `lint` | `light lint`: eslint with the project's config |
@@ -36,7 +36,7 @@ The browser tests need Chromium: `pnpm exec playwright install chromium`. Run `p
 | `src/routes.__EXT__` | `/` and `/about` to their views |
 | `src/styles.css` | The generated components' stylesheet, and the page's own rules |
 | `.light/` | Generated wiring: never edit, never commit |
-| `test/app.test.__EXT__` | The browser test |
+| `test/app.browser.test.__EXT__` | The browser test |
 
 ## Light
 
