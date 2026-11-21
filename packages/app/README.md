@@ -173,6 +173,8 @@ A host is an `AppHost`: its name, the store adapter types it runs and its defaul
 
 The run starts the controllers one after the other, each once the one before it is `$ready`, and disposes them in reverse. A controller starts after every controller it imports (`import folder from "./folder.ts"`), so the one it reads in its `connected()` is already running; an `import type` does not count. Otherwise they go by name. Controllers that import each other in a cycle are an error that names the cycle.
 
+A `Controller` subclass follows a model with `liveRows`, which needs nothing registered. A `defineController` literal or a view whose `sync:` names a model api (`sync: { rows: { to: transaction, query } }`) needs light's model binder, which the app does not register for it, so a page that has no such binding bundles none: the module declaring the binding registers it once at its top, `registerSyncBinder(modelBinder)` (`@lightstart/light/controller` and `@lightstart/light/model/binder`).
+
 ## What is generated
 
 `light app`, `serve:before`, `serve:file-changed`, the build extension and the test extension all call the same generator. It does nothing in a folder without `src/app.ts` or `src/app.js`, and a project with both is an error naming both.

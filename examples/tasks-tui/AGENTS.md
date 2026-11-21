@@ -15,7 +15,7 @@ A terminal app on `@lightstart/app`: the folders are the app, and light writes t
 | `test/` | Tests that drive the app on light's `TestTerminal` |
 | `tsconfig.json` | The editor's settings and the options `scriptc` compiles with |
 
-A view reaches its controller with an import, `import todos from "../controllers/todos.ts"`. A controller imports its models the same way, `import todo from "../models/todo.ts"`. One controller reaches another by name with `sync:` (the file name is the name), never by importing its instance.
+A view reaches its controller with an import, `import todos from "../controllers/todos.ts"`. A controller imports its models the same way, `import todo from "../models/todo.ts"`. One controller follows another's state by name with `sync:` (the file name is the name), and imports it to call its methods: the run starts an imported controller first.
 
 ## Generated files
 
