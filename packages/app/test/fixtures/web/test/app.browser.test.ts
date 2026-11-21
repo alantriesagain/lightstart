@@ -4,6 +4,7 @@ import { defineApp } from "@lightstart/app";
 import type { AppManifest } from "@lightstart/app/manifest.ts";
 import { openPage } from "@lightstart/app/web/test";
 import manifest from "../.light/app.ts";
+import settings from "../src/controllers/settings.ts";
 
 describe("openPage", () => {
   it("mounts the root view at a path and adds a note through its controller", async () => {
@@ -15,6 +16,17 @@ describe("openPage", () => {
       const button = await page.find("app-root button");
       button.click();
       assert.ok((await page.shows("note 1")).includes("note 1"), "the note is listed");
+    } finally {
+      await page.stop();
+    }
+  });
+
+  it("follows a controller through a sync prop without the page installing the plugin", async () => {
+    const page = await openPage(manifest, { path: "/" });
+    try {
+      await page.shows("Home");
+      settings.heading = "Synced heading";
+      assert.ok((await page.shows("Synced heading")).includes("Synced heading"), "the view follows the controller");
     } finally {
       await page.stop();
     }

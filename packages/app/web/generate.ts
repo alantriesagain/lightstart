@@ -15,6 +15,7 @@ import { workerPathOf } from "../node/generate.ts";
 import type { GenerationHelpers, HostGeneration, HostPrepared } from "../node/generate.ts";
 import { collectionOf, ownIcons, scanIcons } from "../node/icons.ts";
 import type { ScannedIcons } from "../node/icons.ts";
+import { scanSync } from "../node/sync.ts";
 
 interface TagEntry {
   module: string;
@@ -313,10 +314,35 @@ const writeComponents = (project: string, dir: string, helpers: GenerationHelper
   return { changed: moduleChanged || styleChanged || iconChanged, imports: [`./components${extension}`] };
 };
 
+/** Write the sync install the manifest imports before the views, remove it when no source declares a sync. */
+const writeSync = (project: string, dir: string, helpers: GenerationHelpers): HostPrepared => {
+  const extension = helpers.extension;
+  const path = join(dir, `sync${extension}`);
+  let sync = false;
+  let binder = false;
+  for (const file of sources(join(project, "src"))) {
+    const scan = scanSync(readFileSync(file, "utf8"));
+    sync = sync || scan.sync;
+    binder = binder || scan.binder;
+  }
+  if (!sync) return { changed: remove(path), imports: [] };
+  const lines = ['import View from "@lightstart/light";', 'import { syncPlugin } from "@lightstart/light/controller/view";'];
+  if (binder) {
+    lines.push('import { registerSyncBinder } from "@lightstart/light/controller";');
+    lines.push('import { modelBinder } from "@lightstart/light/model/binder";');
+  }
+  lines.push("", "View.use(syncPlugin);");
+  if (binder) lines.push("registerSyncBinder(modelBinder);");
+  lines.push("");
+  return { changed: helpers.writeWhenChanged(path, lines.join("\n")), imports: [`./sync${extension}`] };
+};
+
 const generation: HostGeneration = {
   rootView: false,
   async prepare(project, dir, helpers) {
-    return writeComponents(project, dir, helpers);
+    const sync = writeSync(project, dir, helpers);
+    const components = writeComponents(project, dir, helpers);
+    return { changed: sync.changed || components.changed, imports: [...sync.imports, ...components.imports] };
   },
   async write(project, dir, main, helpers) {
     const workerPath = join(dir, "worker.js");

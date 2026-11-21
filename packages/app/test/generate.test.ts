@@ -73,7 +73,7 @@ const main = async (): Promise<void> => {
     if (first === null) return done();
 
     ok("it finds the note model", first.models.join(",") === "note");
-    ok("it finds the notes controller", first.controllers.join(",") === "notes");
+    eq("it finds the controllers", first.controllers.join(","), "notes,settings");
     eq("it sorts the views", first.views.join(","), "app-about,app-form,app-home,app-legal,app-root,app-search");
     ok("it finds the routes", first.routes);
     ok("the first run wrote", first.changed);
@@ -89,6 +89,15 @@ const main = async (): Promise<void> => {
     eq("the entry starts the web host with the default adapter", readFileSync(first.main, "utf8"), 'import { start } from "@lightstart/app/web";\nimport manifest from "./app.ts";\nimport { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";\nimport { LocalStores } from "@lightstart/app/web/local.ts";\n\nawait start(manifest, {\n  adapters: [new IndexedDBAdapterType()],\n  stores: new LocalStores(),\n});\n');
     ok("a project without the components writes none", !existsSync(join(first.dir, "components.ts")) && !existsSync(join(first.dir, "components.css")));
     ok("a project without i18n writes no locales", !existsSync(join(first.dir, "locales.ts")) && !source.includes('import "./locales.ts";'));
+
+    const syncPath = join(first.dir, "sync.ts");
+    ok("a project declaring a sync gets .light/sync.ts", existsSync(syncPath));
+    const sync = readFileSync(syncPath, "utf8");
+    ok("a string-controller sync installs the view plugin", sync.includes("View.use(syncPlugin);"));
+    ok("a string-controller sync registers no binder", !sync.includes("registerSyncBinder"));
+    const syncAt = source.indexOf('import "./sync.ts";');
+    ok("the manifest imports the sync", syncAt >= 0);
+    ok("the sync import is before the views", syncAt < source.indexOf('import "../src/views/app-home.ts";'));
 
     const before = statSync(first.manifest).mtimeMs;
     const second = await generate(project);
@@ -231,6 +240,39 @@ const main = async (): Promise<void> => {
     ok("and app.ts no longer imports it", cleared !== null && !readFileSync(cleared.manifest, "utf8").includes('import "./locales.ts";'));
   } finally {
     rmSync(withI18n, { recursive: true, force: true });
+  }
+
+  const withModelSync = copy();
+  try {
+    writeFileSync(
+      join(withModelSync, "src", "views", "app-home.ts"),
+      'import View from "@lightstart/light";\nimport T from "@lightstart/light/types";\nimport { html } from "@lightstart/light/html";\nimport note from "../models/note.ts";\n\nclass AppHome extends View {\n  static props = { rows: T.array({ sync: note, query: { order: "text" } }) };\n\n  render() {\n    return html`<p>Home</p>`;\n  }\n}\n\nView.register("app-home", AppHome);\n',
+    );
+    const first = await generate(withModelSync);
+    ok("the model-sync app has an app", first !== null);
+    if (first === null) return done();
+    const path = join(first.dir, "sync.ts");
+    const source = readFileSync(path, "utf8");
+    ok("a model sync installs the view plugin", source.includes("View.use(syncPlugin);"));
+    ok("a model sync registers the binder", source.includes('import { registerSyncBinder } from "@lightstart/light/controller";') && source.includes('import { modelBinder } from "@lightstart/light/model/binder";') && source.includes("registerSyncBinder(modelBinder);"));
+
+    writeFileSync(join(withModelSync, "src", "views", "app-home.ts"), 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppHome extends View {\n  render() {\n    return html`<p>Home</p>`;\n  }\n}\n\nView.register("app-home", AppHome);\n');
+    const cleared = await generate(withModelSync);
+    ok("a project with no sync removes the install file", cleared !== null && cleared.changed && !existsSync(path));
+    ok("and app.ts no longer imports it", cleared !== null && !readFileSync(cleared.manifest, "utf8").includes('import "./sync.ts";'));
+  } finally {
+    rmSync(withModelSync, { recursive: true, force: true });
+  }
+
+  const jsApp = copy();
+  try {
+    writeFileSync(join(jsApp, "src", "app.js"), 'import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web", host: "web" });\n');
+    rmSync(join(jsApp, "src", "app.ts"));
+    const first = await generate(jsApp);
+    ok("a JavaScript app gets .light/sync.js", first !== null && existsSync(join(first.dir, "sync.js")));
+    ok("a JavaScript app does not get a TypeScript install", first !== null && !existsSync(join(first.dir, "sync.ts")));
+  } finally {
+    rmSync(jsApp, { recursive: true, force: true });
   }
   done();
 };
