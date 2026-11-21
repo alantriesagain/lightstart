@@ -338,8 +338,9 @@ interface LocaleImport {
 /**
  * Write `.light/locales.ts`, which imports the language files of every package shipping
  * `light.locales: true` and the project's own `src/locales`, and gives them to
- * `configureI18n` (a package's words first, the project's over them); remove it when the
- * project does not depend on `@lightstart/i18n`.
+ * `configureI18n` (a package's words first, the project's over them, and a regional language
+ * such as `pt-BR` over its base language's words, `pt`); remove it when the project does not
+ * depend on `@lightstart/i18n`.
  */
 const writeLocales = (project: string, dir: string, locale: string, helpers: GenerationHelpers): HostPrepared => {
   const extension = helpers.extension;
@@ -367,9 +368,14 @@ const writeLocales = (project: string, dir: string, locale: string, helpers: Gen
 
   const languages = [...new Set([...fromPackages.map((entry) => entry.language), ...fromProject.map((entry) => entry.language)])].sort();
   const dictionaryFor = (language: string): string => {
+    const base = language.split("-")[0] ?? language;
+    const of = (entries: LocaleImport[], wanted: string): string[] => entries.filter((entry) => entry.language === wanted).map((entry) => entry.alias);
+    const regional = base !== language;
     const aliases = [
-      ...fromPackages.filter((entry) => entry.language === language).map((entry) => entry.alias),
-      ...fromProject.filter((entry) => entry.language === language).map((entry) => entry.alias),
+      ...(regional ? of(fromPackages, base) : []),
+      ...of(fromPackages, language),
+      ...(regional ? of(fromProject, base) : []),
+      ...of(fromProject, language),
     ];
     let expression = "{}";
     for (const alias of aliases) expression = `merge(${expression}, ${alias})`;
@@ -378,6 +384,7 @@ const writeLocales = (project: string, dir: string, locale: string, helpers: Gen
 
   const lines: string[] = ['import { configureI18n } from "@lightstart/i18n";'];
   if (languages.length > 0 && extension === ".ts") lines.push('import type { TranslationTree } from "@lightstart/i18n";');
+  if (languages.length > 0 && extension === ".js") lines.push('/** @import { TranslationTree } from "@lightstart/i18n" */');
   lines.push(...imports);
   if (languages.length > 0) {
     lines.push("");
@@ -387,9 +394,12 @@ const writeLocales = (project: string, dir: string, locale: string, helpers: Gen
       lines.push("const merge = (base: TranslationTree, over: TranslationTree): TranslationTree => {");
       lines.push("  const merged: TranslationTree = {};");
     } else {
+      lines.push("/** @param {unknown} value @returns {value is TranslationTree} */");
       lines.push('const isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);');
       lines.push("");
+      lines.push("/** @param {TranslationTree} base @param {TranslationTree} over @returns {TranslationTree} */");
       lines.push("const merge = (base, over) => {");
+      lines.push("  /** @type {TranslationTree} */");
       lines.push("  const merged = {};");
     }
     lines.push("  for (const key of Object.keys(base)) merged[key] = base[key];");

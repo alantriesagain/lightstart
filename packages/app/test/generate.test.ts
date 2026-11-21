@@ -170,6 +170,12 @@ const main = async (): Promise<void> => {
     const second = await generate(withI18n);
     ok("a second i18n run changes nothing", second !== null && !second.changed);
 
+    writeFileSync(join(withI18n, "src", "locales", "pt-BR.ts"), 'export default { greeting: "Oi" };\n');
+    const regional = await generate(withI18n);
+    const regionalSource = regional === null ? "" : readFileSync(path, "utf8");
+    ok("a regional language merges over its base language's words, the packages' then the project's", regionalSource.includes('"pt-BR": merge(merge(merge({}, locale2), locale5), locale4),'));
+    ok("the base language keeps only its own", regionalSource.includes("pt: merge(merge({}, locale2), locale5),"));
+
     const manifestPath = join(withI18n, "package.json");
     const pkg = JSON.parse(readFileSync(manifestPath, "utf8")) as { dependencies?: Record<string, string> };
     if (pkg.dependencies !== undefined) delete pkg.dependencies["@lightstart/i18n"];
