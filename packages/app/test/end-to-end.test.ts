@@ -53,9 +53,11 @@ const main = async (): Promise<void> => {
   eqn("light build exits 0", built.status ?? 1, 0);
   ok("light build writes a build", existsSync(join(fixture, ".deployed", "current", "index.html")));
 
-  const browser = spawnSync(process.execPath, ["--no-warnings", cli, "test", "test/app.browser.test.ts", "test/app-form.browser.test.ts"], { cwd: fixture, env, encoding: "utf8" });
-  eqn("light test runs the fixture's browser test", browser.status ?? 1, 0);
-  if ((browser.status ?? 1) !== 0) console.log(browser.stdout, browser.stderr);
+  const mixed = spawnSync(process.execPath, ["--no-warnings", cli, "test", "test/app.test.ts", "test/app.browser.test.ts", "test/app-form.browser.test.ts"], { cwd: fixture, env, encoding: "utf8" });
+  eqn("light test runs the fixture's node and browser tests", mixed.status ?? 1, 0);
+  ok("it reports the node part", (mixed.stdout ?? "").includes("node: passed (1 file)"));
+  ok("it reports the browser part", (mixed.stdout ?? "").includes("browser: passed (2 files)"));
+  if ((mixed.status ?? 1) !== 0) console.log(mixed.stdout, mixed.stderr);
 
   const port = await freePort();
   const child: ChildProcessWithoutNullStreams = spawn(process.execPath, ["--no-warnings", cli, "serve", "--port", String(port), "--ephemeral"], { cwd: fixture, env });

@@ -35,15 +35,17 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `test/index.ts` | `openApp(manifest, { args })`: a run over memory stores with no surface, and `OpenedApp` |
 | `node/generate.ts` | The generator's core: find `src/app.ts` or `src/app.js` (its exported `appOf`), read it (its exported `infoOf`) and the routes (its exported `routesOf`, `routesPathOf`) without their views, read the folders, `src/seed` (with `src/seed.dev` unless a release build passes `{ dev: false }`) and, for a project on `@lightstart/content`, each `content/<model>` folder through `collect`, write `.light/app.ts` (or `.js`), `.light/content.ts` (or `.js`) and, for a project on `@lightstart/i18n`, `.light/locales.ts` (or `.js`), then hand `.light/main.ts` (or `.js`) to the host's `generate.ts` (`HostGeneration`) |
 | `node/icons.ts` | `scanIcons(source)` (`ScannedIcons`: the literal and declared names, the `solid`/`bold` variants, the numeric sizes, and the dynamic bindings with their line), `collectionOf(project, set)`: an Iconify collection from the app's `@iconify-json/<set>`, `ownIcons(project)`: the app's `icons/<name>.svg` files as Iconify entries, and `svgProblems(text)`: what keeps one file from being a safe mask |
+| `node/test-partition.ts` | `partitionTestFiles(files)`: the `*.test.*` files that run under node, and the `*.browser.test.*` files (with any file that is neither, such as `*.e2e.*`) that run in Chromium |
 | `node/sync.ts` | `scanSync(source)` (`ScannedSync`: whether a source declares a `sync:`, and whether a target is a model api imported from `src/models/`) |
 | `check/rules/icons-known.js` | The `light check` rule: an icon file's name and drawing, a dynamic name needs the module's `icons: [...]`, a name must be in the app's set or `icons/`, an app icon must not shadow the set's, and the collection package must be installed |
+| `check/rules/page-test-name.js` | The `light check` rule: a `*.test.*` file that imports `@lightstart/app/web/test` must be named `*.browser.test.*`, since it needs a page |
 | `cli/commands/app.ts` | `light app` |
 | `cli/hooks/serve.before.ts` | Generate before `light serve` starts |
 | `cli/hooks/serve.file-changed.ts` | Regenerate when a named source is added, removed or renamed |
 | `cli/extend/build.ts` | A build step before `page` that generates, a step after `html` that writes `404.html`, `sitemap.xml`, `robots.txt` and `_headers` for a static host, and a step after that which prerenders with the app's or `--renderer`'s choice (`markup` by default, `browser` for Playwright) |
-| `cli/extend/test.ts` | Generate before `light test` picks its files |
+| `cli/extend/test.ts` | Generate before `light test` picks its files, then, in an app, split the named files: `*.browser.test.*` in Chromium, every other `*.test.*` under node with `@lightstart/light/markup` preloaded, report both parts and fail if either fails |
 | `test/routes.test.ts`, `test/tui-routes.test.ts` | Routes without a page, and drawn by the terminal's `<app-container>`, under node and scriptc |
-| `test/fixtures/web/` | The fixture app: an app config, a note model, a notes controller, three views, two routes and a browser test that opens it with `openPage` |
+| `test/fixtures/web/` | The fixture app: an app config, a note model, a notes controller, three views, two routes, a node test that opens it with `openApp`, and browser tests that open it with `openPage` |
 | `test/fixtures/tui/` | The terminal fixture app: a `native` block, an argument, two models in two stores, a notes controller, a root view, a row view and a `hello` mode |
 
 ## Rules the sources keep
@@ -76,6 +78,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - Prerendering defaults to the markup renderer in `node/prerender.ts`: it imports `@lightstart/light/markup` from the project before its generated `.light/app.ts` (or `.js`), renders each path with `renderPage` one after another, fails naming the path whose render throws, and passes a view's error to the build as a warning with the path. `--renderer browser` (or `defineApp({ prerender: "browser" })`) keeps the Playwright path.
 - `.light/` is not committed; the fixture's `.gitignore` names it beside `.deployed/`.
 - Tests are plain scripts on `@lightstart/test/assert.ts`, not a test framework. Most are node-only because they walk the disk and spawn the CLI.
+- In an app, `light test` sends `*.browser.test.*` (and any file that is neither kind of test, such as `*.e2e.*`) to headless Chromium and every other `*.test.*` to node, with `@lightstart/light/markup` preloaded so the generated manifest's views register; a `*.test.*` file importing `@lightstart/app/web/test` is a `light check` error (`page-test-name`). The partition itself is `node/test-partition.ts` and is unit-tested natively.
 - Comments are a JSDoc module header and JSDoc on exported symbols, nothing else.
 - TypeScript with erasable syntax only; the package ships its sources and needs no build step.
 
