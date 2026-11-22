@@ -40,7 +40,9 @@ for (const mode of ["link", "file", "npm"] as const) {
   eq(`${mode}: router comes with the app`, manifest.dependencies["@lightstart/router"], mode === "npm" ? "^0.1.0" : `${mode}:${relative(target, join(root, "packages", "router"))}`);
   eq(`${mode}: markdown is in the closure`, manifest.dependencies["@lightstart/markdown"], mode === "npm" ? "^0.1.0" : `${mode}:${relative(target, join(root, "packages", "markdown"))}`);
   eq(`${mode}: highlight is in the closure`, manifest.dependencies["@lightstart/highlight"], mode === "npm" ? "^0.1.0" : `${mode}:${relative(target, join(root, "packages", "highlight"))}`);
-  eq(`${mode}: the cli comes with the app`, manifest.dependencies["@lightstart/cli"], mode === "npm" ? "^0.1.0" : `${mode}:${relative(target, join(root, "packages", "cli"))}`);
+  eq(`${mode}: the cli comes with the app, as a devDependency`, manifest.devDependencies["@lightstart/cli"], mode === "npm" ? "^0.1.0" : `${mode}:${relative(target, join(root, "packages", "cli"))}`);
+  ok(`${mode}: no tooling package is a runtime dependency`, ["@lightstart/cli", "@lightstart/create", "@lightstart/dev", "@lightstart/build", "@lightstart/test"].every((name) => manifest.dependencies[name] === undefined));
+  ok(`${mode}: create comes with the cli, as a devDependency`, manifest.devDependencies["@lightstart/create"] !== undefined);
   if (mode !== "npm") ok(`${mode}: light is linked relative to the project`, manifest.dependencies["@lightstart/light"]?.startsWith(`${mode}:..`) === true);
   ok(`${mode}: dev is a devDependency`, manifest.devDependencies["@lightstart/dev"] !== undefined);
   ok(`${mode}: build is a devDependency`, manifest.devDependencies["@lightstart/build"] !== undefined);

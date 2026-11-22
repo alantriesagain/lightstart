@@ -67,7 +67,7 @@ Light's packages are not on npm yet. The generator links a checkout: the one it 
 | `file` (`--pm npm`) | `"@lightstart/light": "file:../light/packages/light"` |
 | `npm` (`--npm`) | `"@lightstart/light": "^0.1.0"` |
 
-Every package a linked package depends on from the same checkout is added too, so an outside project can resolve light's workspace dependencies: `@lightstart/components` brings `@lightstart/markdown` and `@lightstart/highlight`, `@lightstart/dev` brings `@lightstart/cli` and `@lightstart/server`.
+Every package a linked package depends on from the same checkout is added too, so an outside project can resolve light's workspace dependencies: `@lightstart/components` brings `@lightstart/markdown` and `@lightstart/highlight`, `@lightstart/dev` brings `@lightstart/cli` and `@lightstart/server`. Light's tooling (`@lightstart/cli`, `@lightstart/create`, `@lightstart/dev`, `@lightstart/build`, `@lightstart/test`) is always a devDependency, even when a runtime package depends on one: a project needs it to build and test, never to run.
 
 ## Templates
 

@@ -51,6 +51,9 @@ type PackageManifest = {
 };
 
 const SCOPE = "@lightstart/";
+
+/** Light's tooling: the `light` commands and what they run. A project needs them to build and test, never at run time, so they are devDependencies even when a runtime package depends on one. */
+const TOOLING: ReadonlySet<string> = new Set(["@lightstart/cli", "@lightstart/create", "@lightstart/dev", "@lightstart/build", "@lightstart/test"]);
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** Whether `dir` is a light checkout: it holds `packages/light`. */
@@ -130,10 +133,13 @@ const mapTokens = (value: unknown, name: string, title: string): unknown => {
 /** The package.json for a kind, with light linked (`link`/`file`) or named by version (`npm`). */
 export const manifestFor = (kind: Kind, name: string, root: string, mode: InstallMode, target: string): GeneratedManifest => {
   const dependencies: Record<string, string> = {};
-  for (const pkg of dependencyClosure(root, kind.packages)) dependencies[pkg] = installValue(root, pkg, mode, target);
+  const devLight: string[] = [];
+  for (const pkg of dependencyClosure(root, kind.packages)) {
+    if (TOOLING.has(pkg)) devLight.push(pkg);
+    else dependencies[pkg] = installValue(root, pkg, mode, target);
+  }
 
   const devDependencies: Record<string, string> = {};
-  const devLight: string[] = [];
   for (const [pkg, range] of Object.entries(kind.devDependencies)) {
     if (pkg.startsWith(SCOPE)) devLight.push(pkg);
     else devDependencies[pkg] = range;
