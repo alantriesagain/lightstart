@@ -260,6 +260,8 @@ export interface WebHostOptions {
   router?: RouterOptions;
   /** `false` when the page applies its own theme and color scheme; the host then applies neither. */
   theme?: boolean;
+  /** Called with the run's router once it has its first route, before the root view mounts, so what the page shares the router through is in place for the views. */
+  routed?: (router: RouterCore) => void;
 }
 
 /** The web host. */
@@ -288,6 +290,7 @@ export class WebHost extends AppHost {
   private readonly storesFeature: WebStoresFeature | null;
   private readonly routerExtra: RouterOptions;
   private readonly ownTheme: boolean;
+  private readonly onRouted: ((router: RouterCore) => void) | null;
   private readonly transitions: WebTransitionFeature | null;
   private readonly argsFeature: WebArgsFeature | null;
   private headEffect: { dispose(): void } | null = null;
@@ -320,6 +323,7 @@ export class WebHost extends AppHost {
     this.argsFeature = options.args ?? null;
     this.routerExtra = options.router ?? {};
     this.ownTheme = options.theme !== false;
+    this.onRouted = options.routed ?? null;
   }
 
   /** The URL's arguments when the entry passed the feature; none otherwise. */
@@ -333,6 +337,10 @@ export class WebHost extends AppHost {
 
   routerOptions(): RouterOptions {
     return this.routerExtra;
+  }
+
+  routed(router: RouterCore): void {
+    this.onRouted?.(router);
   }
 
   prerendered(): boolean {

@@ -2,7 +2,8 @@
 /**
  * @file A host's router options reach the run's router: its locales, its
  * origin and a tracker for a route change's work, beside the app's own base
- * and name, which a host cannot replace.
+ * and name, which a host cannot replace; and the host is handed the router
+ * before the root view mounts.
  */
 
 import { done, eq, ok } from "@lightstart/test/assert.ts";
@@ -11,10 +12,13 @@ import { defineApp } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { openStores } from "../engine.ts";
 import { AppHost, AppRun, navigate } from "../run.ts";
+import type { RouterCore } from "@lightstart/router/core";
 import type { RunStore } from "../run.ts";
 import { MemoryAdapterType } from "../stores.ts";
 
 const tracked: string[] = [];
+const order: string[] = [];
+let given: RouterCore | null = null;
 
 class OptionsHost extends AppHost {
   constructor() {
@@ -22,6 +26,16 @@ class OptionsHost extends AppHost {
     this.adapters = [new MemoryAdapterType()];
     this.defaultAdapter = "memory";
     this.openStores = (manifest: AppManifest, memoryOnly: boolean): Promise<RunStore> => openStores(manifest, this, memoryOnly);
+  }
+
+  routed(router: RouterCore): void {
+    given = router;
+    order.push("routed");
+  }
+
+  mount(_run: AppRun): Promise<void> {
+    order.push("mount");
+    return Promise.resolve();
   }
 
   routerOptions(): RouterOptions {
@@ -54,6 +68,8 @@ const main = async (): Promise<void> => {
   await run.start();
   const router = run.router;
   ok("the run has a router", router !== null);
+  ok("the host is handed the run's router", given === router);
+  eq("before the root view mounts", order.join(","), "routed,mount");
   eq("the host's locales reach it", JSON.stringify(router?.options.locales), '["en","pt-BR"]');
   eq("and its origin", String(router?.options.origin), "https://example.test");
   eq("the app's base is the run's, not the host's", String(router?.options.basePath), "/app");
