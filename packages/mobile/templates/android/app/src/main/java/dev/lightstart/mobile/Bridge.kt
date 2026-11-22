@@ -1,6 +1,7 @@
 package dev.lightstart.mobile
 
 import androidx.webkit.JavaScriptReplyProxy
+import __APP_ID__.BuildConfig
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -29,6 +30,26 @@ class Bridge(private val activity: MainActivity) {
                     activity.runOnUiThread { activity.share(options) }
                     answer(id, true, JSONObject().put("shared", true))
                 }
+                "capture" -> {
+                    val options = args.optJSONObject(0) ?: JSONObject()
+                    activity.runOnUiThread { activity.capture(options) { value -> answer(id, true, value) } }
+                }
+                "reminders.set" -> {
+                    val reminders = args.optJSONArray(0) ?: JSONArray()
+                    activity.runOnUiThread {
+                        activity.requestNotificationPermission()
+                        Reminders.set(activity.applicationContext, reminders)
+                    }
+                    answer(id, true, JSONObject().put("supported", true))
+                }
+                "reminders.get" -> answer(
+                    id, true,
+                    JSONObject().put("supported", true).put("reminders", Reminders.get(activity.applicationContext)),
+                )
+                "reminders.clear" -> {
+                    activity.runOnUiThread { Reminders.clear(activity.applicationContext) }
+                    answer(id, true, JSONObject().put("supported", true))
+                }
                 else -> answer(id, false, "no method $method")
             }
         } catch (e: Exception) {
@@ -40,9 +61,11 @@ class Bridge(private val activity: MainActivity) {
         send(JSONObject().put("event", event).put("payload", payload ?: JSONObject.NULL).toString())
     }
 
-    private fun ready(): JSONObject = JSONObject()
-        .put("platform", "android")
-        .put("capabilities", JSONArray().put("share"))
+    private fun ready(): JSONObject {
+        val capabilities = JSONArray().put("share").put("capture").put("reminders")
+        if (BuildConfig.SHARE_TARGETS.isNotEmpty()) capabilities.put("shareTarget")
+        return JSONObject().put("platform", "android").put("capabilities", capabilities)
+    }
 
     private fun answer(id: Any?, ok: Boolean, value: Any?) {
         val message = JSONObject().put("id", id ?: JSONObject.NULL).put("ok", ok)

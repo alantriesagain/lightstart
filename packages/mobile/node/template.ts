@@ -58,6 +58,36 @@ const gradleName = (name: string): string => name.replace(/^\.+|\.+$/g, "").repl
 
 const xml = (value: string): string => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
+const gradle = (value: string): string => value.replaceAll("\\", "\\\\").replaceAll("'", "\\'");
+
+const typesOf = (target: { types?: string[] }): string[] => target.types ?? ["text/plain"];
+
+const shareTargetsToken = (mobile: ResolvedMobile): string =>
+  (mobile.shareTarget ?? []).map((target) => `${target.path}|${typesOf(target).join(",")}`).join(";");
+
+const shareIntentFilters = (mobile: ResolvedMobile): string => {
+  const filters: string[] = [];
+  const seen = new Set<string>();
+  for (const target of mobile.shareTarget ?? []) {
+    for (const type of typesOf(target)) {
+      if (seen.has(type)) continue;
+      seen.add(type);
+      const actions = type === "text/plain"
+        ? '                <action android:name="android.intent.action.SEND" />'
+        : '                <action android:name="android.intent.action.SEND" />\n                <action android:name="android.intent.action.SEND_MULTIPLE" />';
+      filters.push(
+        `            <intent-filter>\n${actions}\n                <category android:name="android.intent.category.DEFAULT" />\n                <data android:mimeType="${xml(type)}" />\n            </intent-filter>`,
+      );
+    }
+  }
+  return filters.length === 0 ? "" : `\n${filters.join("\n")}`;
+};
+
+const queriesToken = (mobile: ResolvedMobile): string =>
+  mobile.cameraApp === undefined
+    ? ""
+    : `\n    <queries>\n        <package android:name="${xml(mobile.cameraApp)}" />\n    </queries>`;
+
 const tokensOf = (mobile: ResolvedMobile, targetSdk: number): Record<string, string> => ({
   APP_ID: mobile.appId,
   APP_NAME: xml(mobile.name),
@@ -68,6 +98,10 @@ const tokensOf = (mobile: ResolvedMobile, targetSdk: number): Record<string, str
   MIN_SDK: String(mobile.minSdk),
   TARGET_SDK: String(targetSdk),
   BASE_PATH: mobile.base,
+  SHARE_TARGETS: gradle(shareTargetsToken(mobile)),
+  CAMERA_APP: gradle(mobile.cameraApp ?? ""),
+  SHARE_INTENT_FILTERS: shareIntentFilters(mobile),
+  QUERIES: queriesToken(mobile),
 });
 
 const fill = (text: string, tokens: Record<string, string>): string => {

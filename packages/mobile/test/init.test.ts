@@ -58,6 +58,17 @@ const main = (): void => {
     ok("the activity is the shell's own package", text(project, "app/src/main/AndroidManifest.xml").includes("android:name=\"dev.lightstart.mobile.MainActivity\""));
     ok("the app name reaches strings.xml", text(project, "app/src/main/res/values/strings.xml").includes(">Mobile Fixture<"));
 
+    const manifest = text(project, "app/src/main/AndroidManifest.xml");
+    ok("the share target adds ACTION_SEND", manifest.includes("android.intent.action.SEND\""));
+    ok("files add ACTION_SEND_MULTIPLE", manifest.includes("android.intent.action.SEND_MULTIPLE"));
+    ok("each configured share type is a data filter", ["image/*", "video/*", "text/plain"].every((type) => manifest.includes(`android:mimeType="${type}"`)));
+    ok("reminders ask for notifications", manifest.includes("android.permission.POST_NOTIFICATIONS"));
+    ok("reminders survive a reboot", manifest.includes("android.permission.RECEIVE_BOOT_COMPLETED"));
+    ok("the reminder receiver is declared", manifest.includes("dev.lightstart.mobile.ReminderReceiver"));
+    ok("a named camera app is queried", manifest.includes("<queries>") && manifest.includes("android:name=\"com.example.camera\""));
+    ok("the share targets reach build.gradle", gradle.includes("SHARE_TARGETS") && gradle.includes("/capture|image/*,video/*,text/plain"));
+    ok("the camera app reaches build.gradle", gradle.includes("CAMERA_APP") && gradle.includes("com.example.camera"));
+
     const leftovers = files(join(project, "mobile", "android"))
       .filter((path) => !path.endsWith(".jar"))
       .flatMap((path) => {

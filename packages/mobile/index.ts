@@ -5,7 +5,19 @@
  * API lives at `@lightstart/mobile/page`.
  */
 
-export type { MobileApi, MobileReady, MobileShareFile, MobileShareOptions, MobileShareResult } from "./page.ts";
+export type {
+  MobileApi,
+  MobileReady,
+  MobileShareFile,
+  MobileShareOptions,
+  MobileShareResult,
+  MobileShared,
+  MobileSharedFile,
+  MobileReminder,
+  MobileRemindersApi,
+  MobileCaptureOptions,
+  MobileCaptureResult,
+} from "./page.ts";
 
 /** The orientation the shell holds: `"any"` follows the device. */
 export type MobileOrientation = "portrait" | "landscape" | "any";
@@ -16,7 +28,7 @@ export interface MobileVersion {
   code: number;
 }
 
-/** What the shell accepts from another app's share sheet in pass 2. */
+/** What the shell accepts from another app's share sheet. */
 export interface MobileShareTarget {
   path: string;
   types?: string[];
@@ -29,7 +41,7 @@ export interface MobileConfig {
   version?: Partial<MobileVersion>;
   orientation?: MobileOrientation;
   minSdk?: number;
-  shareTarget?: MobileShareTarget;
+  shareTarget?: MobileShareTarget | MobileShareTarget[];
   cameraApp?: string;
 }
 
@@ -40,7 +52,7 @@ export interface ResolvedMobile {
   version: MobileVersion;
   orientation: MobileOrientation;
   minSdk: number;
-  shareTarget?: MobileShareTarget;
+  shareTarget?: MobileShareTarget[];
   cameraApp?: string;
   base: string;
 }

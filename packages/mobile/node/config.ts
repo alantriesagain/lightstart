@@ -7,7 +7,7 @@
 import { existsSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { isOrientation, type MobileConfig, type ResolvedMobile } from "../index.ts";
+import { isOrientation, type MobileConfig, type MobileShareTarget, type ResolvedMobile } from "../index.ts";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -89,6 +89,29 @@ const positive = (value: unknown, fallback: number, label: string): number => {
   return value;
 };
 
+const shareTargetOf = (value: unknown, path: string): MobileShareTarget[] => {
+  const entries = Array.isArray(value) ? value : [value];
+  if (entries.length === 0) throw new Error(`${path} has an empty shareTarget; give it a path`);
+  return entries.map((entry, index) => {
+    if (!isRecord(entry)) throw new Error(`${path} has shareTarget[${index}] that is not an object; use { path, types? }`);
+    const targetPath = entry["path"];
+    if (typeof targetPath !== "string" || targetPath.trim() === "" || !targetPath.startsWith("/"))
+      throw new Error(`${path} has shareTarget[${index}].path ${JSON.stringify(targetPath)}; it must start with "/"`);
+    const types = entry["types"];
+    if (types === undefined) return { path: targetPath, types: ["text/plain"] };
+    if (!Array.isArray(types) || types.length === 0 || types.some((type) => typeof type !== "string" || type.trim() === "" || /[|;,]/.test(type)))
+      throw new Error(`${path} has shareTarget[${index}].types; give a list of MIME types such as ["image/*"]`);
+    return { path: targetPath, types: types as string[] };
+  });
+};
+
+const cameraAppOf = (value: unknown, path: string): string | undefined => {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || value.trim() === "" || /\s/.test(value))
+    throw new Error(`${path} has cameraApp ${JSON.stringify(value)}; give an Android application id`);
+  return value;
+};
+
 /** Fill a config's defaults from the app identity and refuse values Android cannot use. */
 export const resolveMobile = (config: MobileConfig, identity: AppIdentity): ResolvedMobile => {
   const name = config.name ?? identity.title ?? identity.name;
@@ -101,7 +124,8 @@ export const resolveMobile = (config: MobileConfig, identity: AppIdentity): Reso
     minSdk: positive(config.minSdk, 26, "minSdk"),
     base: identity.base,
   };
-  if (config.shareTarget !== undefined) resolved.shareTarget = config.shareTarget;
-  if (config.cameraApp !== undefined) resolved.cameraApp = config.cameraApp;
+  if (config.shareTarget !== undefined) resolved.shareTarget = shareTargetOf(config.shareTarget, "src/mobile");
+  const cameraApp = cameraAppOf(config.cameraApp, "src/mobile");
+  if (cameraApp !== undefined) resolved.cameraApp = cameraApp;
   return resolved;
 };
