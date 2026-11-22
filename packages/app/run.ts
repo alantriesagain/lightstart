@@ -16,7 +16,7 @@ import { RouterCore } from "@lightstart/router/core";
 import { appUrl, setAppBase } from "./base.ts";
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
 import { stripBase, withQuery } from "@lightstart/router/url";
-import type { MatchedRoute, RouteConfig, RouterAdapter } from "@lightstart/router/contracts.ts";
+import type { MatchedRoute, RouteConfig, RouterAdapter, RouterOptions } from "@lightstart/router/contracts.ts";
 import type { QueryOptions, Row, WriteOptions } from "@lightstart/light/model/types.ts";
 import { startControllers, stopControllers } from "./controllers.ts";
 import type { App } from "./index.ts";
@@ -157,6 +157,11 @@ export class AppHost implements StoreHost {
   /** Whether the page on screen was rendered ahead of time; only a host with a page answers true. */
   prerendered(): boolean {
     return false;
+  }
+
+  /** What the host adds to the router's options (its locales, its origin, a tracker for a route change's work, a navigation hook); none by default. */
+  routerOptions(): RouterOptions {
+    return {};
   }
 
   /** Clear the prerender flag before a client navigation; nothing without one. */
@@ -375,7 +380,15 @@ export class AppRun {
     const router = new RouterCore(this.host.history(), { plugins: [] });
     // The first match happens inside `init`; every later one reaches the subscriber.
     let initial = true;
+    const extra = this.host.routerOptions();
     router.init(routes, {
+      isProduction: extra.isProduction,
+      navigation: extra.navigation,
+      locales: extra.locales,
+      defaultLocale: extra.defaultLocale,
+      origin: extra.origin,
+      track: extra.track,
+      beforeNavigate: extra.beforeNavigate,
       appName: this.app.name,
       basePath: this.app.base,
       prerendered: () => this.host.prerendered(),

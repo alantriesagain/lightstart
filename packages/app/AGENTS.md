@@ -99,7 +99,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `pageHead` and `PageHead` | a view setting its page's title, description and image |
 | A route's `title` and `description` as strings or functions of its params, and its `view`, `layout`, `props` and nested `routes` | a project's `src/routes.ts`, the run's head and `<app-container>` |
 | `AdapterType`, `registerAdapterType` and `openStores` (from `engine.ts`) | a project bringing an adapter type of its own, and a host opening stores locally |
-| `AppHost` and `HostGeneration` | the hosts, and a host a project would bring later |
+| `AppHost` (including `routerOptions()`, what a host adds to the router's options) and `HostGeneration` | the hosts, and a host a project would bring later |
 | `AppManifest` and its records (`app`, `rootView`, `models`, `seeds`, `controllers`, `routes`, `views`) | the generated `.light/app.ts` (or `.js`) and the run |
 | The file-name rule and the default exports of models, controllers, the root view and routes | project folders and the generator |
 | `.light/app.ts` (or `.js`), `.light/main.ts` (or `.js`) and, for a terminal, `.light/classes.baked.ts` and `.light/models.ts` | `light serve`, `light build`, `light test`, `light app`, and a project's page or native entry |
@@ -111,7 +111,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `.light/content.ts` (or `.js`) | a project on `@lightstart/content`, imported by `.light/app.ts` (or `.js`) as a seed before `src/seed` |
 | `currentRoute`, `currentView`, `currentParams`, `href`, `url`, `navigate`, `outletAt`/`resolveOutlet`, `convertParam` and `<app-container>` | root views, controllers and hosts of web and terminal apps, and the static renderer |
 | `navigate`'s `transition` and `from` options, `href`/`url`'s `params` and `query` options, `RouteTransition`, `NavigationSource`, `[data-morph]` and `data-morph-source` | web views pairing a link with the view it opens, and a host's `transition` |
-| `start(manifest, { stores, adapters, transitions, args })` and `{ stop() }` | web apps and their generated entry |
+| `start(manifest, { stores, adapters, transitions, args, router, theme })` and `{ router, stop() }` | web apps and their generated entry, and a page that boots more than the app |
 | `start(manifest, { classes, argv, term })` and `{ stop() }` | terminal apps and their generated entry |
 | `openApp(manifest, { args, adapters })` (`OpenedApp.store` is the full `Store`) and `mountApp(manifest, opened, { cols, rows, classes })` | a project's tests |
 | `openPage(manifest, { path, args, adapters, stores })` and `OpenedPage`, and `openBuilt(dir, path, { timeoutMs, base })` | a web project's tests |

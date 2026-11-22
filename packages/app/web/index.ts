@@ -23,7 +23,8 @@ import { applyScheme } from "@lightstart/light/theme/color-scheme.js";
 import { loadPreset } from "@lightstart/light/theme/presets.js";
 import { createBrowserAdapter } from "@lightstart/router/adapters/browser";
 import { withBase } from "@lightstart/router/url";
-import type { RouterAdapter } from "@lightstart/router/contracts.ts";
+import type { RouterAdapter, RouterOptions } from "@lightstart/router/contracts.ts";
+import type { RouterCore } from "@lightstart/router/core";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { AppHost, AppRun, currentParams, currentView, outletAt } from "../run.ts";
@@ -39,6 +40,8 @@ export { currentParams, currentRoute, currentView, href, navigate, url } from ".
 
 /** A running app: `stop()` takes the view down, disposes its controllers, stops following the routes and closes its stores. */
 export interface AppHandle {
+  /** The run's router, for a page that drives or reads it beside the app's own API; null without routes. */
+  router: RouterCore | null;
   stop(): Promise<void>;
 }
 
@@ -238,6 +241,10 @@ export interface WebHostOptions {
   transitions?: WebTransitionFeature;
   /** The URL's arguments; absent, the host answers no values. */
   args?: WebArgsFeature;
+  /** What the page adds to the router's options: its locales, its origin, a tracker for a route change's work, a navigation hook. */
+  router?: RouterOptions;
+  /** `false` when the page applies its own theme and color scheme; the host then applies neither. */
+  theme?: boolean;
 }
 
 /** The web host. */
@@ -264,6 +271,8 @@ export class WebHost extends AppHost {
   /** Stops handing the page's link clicks to the run's router. */
   private unlisten: (() => void) | null = null;
   private readonly storesFeature: WebStoresFeature | null;
+  private readonly routerExtra: RouterOptions;
+  private readonly ownTheme: boolean;
   private readonly transitions: WebTransitionFeature | null;
   private readonly argsFeature: WebArgsFeature | null;
   private headEffect: { dispose(): void } | null = null;
@@ -292,6 +301,8 @@ export class WebHost extends AppHost {
     this.storesFeature = options.stores ?? null;
     this.transitions = options.transitions ?? null;
     this.argsFeature = options.args ?? null;
+    this.routerExtra = options.router ?? {};
+    this.ownTheme = options.theme !== false;
   }
 
   /** The URL's arguments when the entry passed the feature; none otherwise. */
@@ -301,6 +312,10 @@ export class WebHost extends AppHost {
 
   history(): RouterAdapter {
     return createBrowserAdapter();
+  }
+
+  routerOptions(): RouterOptions {
+    return this.routerExtra;
   }
 
   prerendered(): boolean {
@@ -341,9 +356,11 @@ export class WebHost extends AppHost {
   private async put(run: AppRun): Promise<void> {
     registerContainer();
     this.transitions?.installStyles();
-    applyScheme(run.app.scheme);
-    const theme = await loadPreset(run.app.theme ?? "default");
-    if (theme !== null) applyTheme(theme);
+    if (this.ownTheme) {
+      applyScheme(run.app.scheme);
+      const theme = await loadPreset(run.app.theme ?? "default");
+      if (theme !== null) applyTheme(theme);
+    }
     this.startPage();
     this.currentHref = run.router?.adapter.getLocation().href ?? null;
     if (run.router !== null) {
@@ -525,5 +542,5 @@ export interface WebStartOptions extends WebHostOptions {}
 export const start = async (manifest: AppManifest, options: WebStartOptions = {}): Promise<AppHandle> => {
   const run = new AppRun(manifest, new WebHost(options));
   await run.start();
-  return { stop: () => run.stop() };
+  return { router: run.router, stop: () => run.stop() };
 };
