@@ -195,6 +195,7 @@
       },
       "noAny": {}
     },
-    "locales": true
+    "locales": true,
+    "tags": "tags.json"
   }
 }

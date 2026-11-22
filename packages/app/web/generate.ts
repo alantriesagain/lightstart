@@ -1,17 +1,17 @@
 /**
  * @file The web host's part of the generation: `.light/main.ts`, which starts
- * the manifest with `@lightstart/app/web`, and, for a project on
- * `@lightstart/components`, the components its views write as
+ * the manifest with `@lightstart/app/web`, and, for a project on a package
+ * that declares `light.tags`, the tags its views write as
  * `.light/components.ts` and `.light/components.css`. The root view is the
  * page's tag, so the manifest carries no class for it.
  */
 
 import { existsSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { icon } from "@lightstart/light/theme/icons.js";
 import type { IconEntry } from "@lightstart/light/theme";
-import { workerPathOf } from "../node/generate.ts";
+import { dependencyNames, packageJsonOf, workerPathOf } from "../node/generate.ts";
 import type { GenerationHelpers, HostGeneration, HostPrepared } from "../node/generate.ts";
 import { collectionOf, ownIcons, scanIcons } from "../node/icons.ts";
 import type { ScannedIcons } from "../node/icons.ts";
@@ -25,9 +25,15 @@ interface TagEntry {
   loads: string[];
 }
 
-type TagTable = Record<string, TagEntry>;
+interface PackageTagEntry extends TagEntry {
+  package: string;
+}
 
-const WRITTEN = /<\s*(lc-[a-z0-9-]+)/g;
+type RawTagTable = Record<string, TagEntry>;
+
+type TagTable = Record<string, PackageTagEntry>;
+
+const WRITTEN = /<\s*([a-z][a-z0-9]*(?:-[a-z0-9]+)+)/g;
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -39,25 +45,16 @@ const readJson = (path: string): unknown => {
   }
 };
 
-/** Whether the project's manifest declares `@lightstart/components`. */
-const declaresComponents = (value: unknown): boolean => {
-  if (!isRecord(value)) return false;
-  for (const field of [value["dependencies"], value["devDependencies"]]) {
-    if (isRecord(field) && Object.prototype.hasOwnProperty.call(field, "@lightstart/components")) return true;
-  }
-  return false;
-};
-
 /** The tags a `tags.json` value holds, or null when it is not one. */
-const tagTable = (value: unknown): TagTable | null => {
+const tagTable = (value: unknown): RawTagTable | null => {
   if (!isRecord(value)) return null;
-  const table: TagTable = {};
+  const table: RawTagTable = {};
   for (const [tag, entry] of Object.entries(value)) {
     if (!isRecord(entry)) return null;
     const module = entry["module"];
-    const style = entry["style"];
-    const base = entry["extends"];
-    const uses = entry["uses"];
+    const style = entry["style"] ?? null;
+    const base = entry["extends"] ?? null;
+    const uses = entry["uses"] ?? [];
     const loads = entry["loads"] ?? [];
     if (typeof module !== "string") return null;
     if (style !== null && typeof style !== "string") return null;
@@ -78,17 +75,36 @@ const tagTable = (value: unknown): TagTable | null => {
   return table;
 };
 
-/** The project's tag table: only when it declares the package and its `tags.json` resolves from the project. */
-const tableFor = (project: string): TagTable | null => {
-  if (!declaresComponents(readJson(join(project, "package.json")))) return null;
+/** The packages the project declares whose package.json names a tags file under `light.tags`, sorted by name. */
+const tagPackages = (project: string): Array<{ name: string; table: RawTagTable }> => {
   const require = createRequire(join(project, "package.json"));
-  let path: string;
-  try {
-    path = require.resolve("@lightstart/components/tags.json");
-  } catch {
-    return null;
+  const found: Array<{ name: string; table: RawTagTable }> = [];
+  for (const name of dependencyNames(project)) {
+    const path = packageJsonOf(require, name);
+    if (path === null) continue;
+    const pkg = readJson(path);
+    if (!isRecord(pkg) || !isRecord(pkg["light"])) continue;
+    const tags = pkg["light"]["tags"];
+    if (typeof tags !== "string") continue;
+    const table = tagTable(readJson(join(dirname(path), tags)));
+    if (table !== null) found.push({ name, table });
   }
-  return tagTable(readJson(path));
+  return found;
+};
+
+/** Every declared package's tags, each naming the package it comes from; a tag two packages define is an error. */
+const tableFor = (project: string): TagTable | null => {
+  const table: TagTable = {};
+  let found = false;
+  for (const pkg of tagPackages(project)) {
+    found = true;
+    for (const [tag, entry] of Object.entries(pkg.table)) {
+      const existing = table[tag];
+      if (existing !== undefined) throw new Error(`The tag "${tag}" is defined by both ${existing.package} and ${pkg.name}`);
+      table[tag] = { ...entry, package: pkg.name };
+    }
+  }
+  return found ? table : null;
 };
 
 /** The project's `src/` TypeScript and JavaScript files, skipping declarations and tests. */
@@ -133,7 +149,7 @@ const neededTags = (start: readonly string[], table: TagTable): Set<string> => {
 
 const dependenciesOf = (entry: TagEntry): string[] => (entry.extends === null ? entry.uses : [entry.extends, ...entry.uses]);
 
-/** The component source files the tags are written from, resolved from the project; a module that does not resolve is left out. */
+/** The tag modules' source files, resolved from the project; a module that does not resolve is left out. */
 const componentSources = (project: string, tags: ReadonlySet<string>, table: TagTable): string[] => {
   const require = createRequire(join(project, "package.json"));
   const files: string[] = [];
@@ -141,7 +157,7 @@ const componentSources = (project: string, tags: ReadonlySet<string>, table: Tag
     const entry = table[tag];
     if (entry === undefined) continue;
     try {
-      const file = require.resolve(`@lightstart/components/${entry.module}`);
+      const file = require.resolve(`${entry.package}/${entry.module}`);
       if (!files.includes(file)) files.push(file);
     } catch {
       continue;
@@ -252,17 +268,17 @@ const moduleSource = (order: readonly string[], onDemand: readonly string[], tab
   const lines = ['import View from "@lightstart/light";'];
   for (const tag of order) {
     const entry = table[tag];
-    if (entry !== undefined) lines.push(`import ${identifier(tag)} from "@lightstart/components/${entry.module}";`);
+    if (entry !== undefined) lines.push(`import ${identifier(tag)} from "${entry.package}/${entry.module}";`);
   }
   if (onDemand.length > 0) lines.push('import { configureOnDemand } from "@lightstart/components/utils/on-demand.js";');
   lines.push("");
   for (const tag of order) lines.push(`View.define(${identifier(tag)});`);
   if (onDemand.length > 0) {
-    // One branch per tag, each import typed on its own, in a TypeScript app and a JavaScript one alike.
+    // The on-demand helper is @lightstart/components': one branch per tag, each import typed on its own.
     lines.push("", "configureOnDemand((tag) => {");
     for (const tag of onDemand) {
       const entry = table[tag];
-      if (entry !== undefined) lines.push(`  if (tag === ${JSON.stringify(tag)}) return import("@lightstart/components/${entry.module}").then((module) => View.define(module.default));`);
+      if (entry !== undefined) lines.push(`  if (tag === ${JSON.stringify(tag)}) return import("${entry.package}/${entry.module}").then((module) => View.define(module.default));`);
     }
     lines.push("  return Promise.resolve();", "});");
   }
@@ -275,7 +291,7 @@ const styleSource = (order: readonly string[], table: TagTable, icons: boolean):
   if (icons) lines.push('@import "./icons.css";');
   for (const tag of order) {
     const entry = table[tag];
-    if (entry !== undefined && entry.style !== null) lines.push(`@import "../node_modules/@lightstart/components/${entry.style}";`);
+    if (entry !== undefined && entry.style !== null) lines.push(`@import "../node_modules/${entry.package}/${entry.style}";`);
   }
   lines.push("");
   return lines.join("\n");
