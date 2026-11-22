@@ -32,6 +32,11 @@ test("run takes the app's arguments after --", () => {
   assert.deepEqual(parseArgs(schemaOf(runCommand), []), { "no-build": false, release: false, appArgs: [] });
 });
 
+test("run takes a bare -- with nothing after it, as the terminal scaffold's dev script ends", () => {
+  assert.deepEqual(parseArgs(schemaOf(runCommand), ["--"]), { "no-build": false, release: false, appArgs: [] });
+  assert.deepEqual(parseArgs(schemaOf(runCommand), ["--", "--list", "Work"]), { "no-build": false, release: false, appArgs: ["--list", "Work"] });
+});
+
 test("run parses --release and does not pass it to the app", () => {
   assert.deepEqual(parseArgs(schemaOf(runCommand), ["--release", "--", "--flag"]), { "no-build": false, release: true, appArgs: ["--flag"] });
 });

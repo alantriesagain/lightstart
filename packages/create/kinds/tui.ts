@@ -9,7 +9,7 @@ export const tui: Kind = {
   description: "A terminal app on @lightstart/app: a model, a controller and views, compiled by scriptc",
   packages: ["@lightstart/light", "@lightstart/app"],
   scripts: {
-    dev: "light run",
+    dev: "light run --",
     test: "light test",
     build: "light build",
     check: "light check",
