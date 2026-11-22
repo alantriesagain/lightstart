@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace '__APP_ID__'
+    compileSdk __TARGET_SDK__
+
+    defaultConfig {
+        applicationId '__APP_ID__'
+        minSdk __MIN_SDK__
+        targetSdk __TARGET_SDK__
+        versionCode __VERSION_CODE__
+        versionName '__VERSION_NAME__'
+        buildConfigField "String", "BASE_PATH", '"__BASE_PATH__"'
+        buildConfigField "String", "ORIENTATION", '"__ORIENTATION__"'
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1'
+        dependencySubstitution {
+            substitute module('org.jetbrains.kotlinx:kotlinx-coroutines-core') using module('org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.1')
+            substitute module('org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm') using module('org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.1')
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.activity:activity:1.9.3'
+    implementation 'androidx.webkit:webkit:1.11.0'
+}
