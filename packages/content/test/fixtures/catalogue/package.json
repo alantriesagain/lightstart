@@ -1,0 +1,10 @@
+{
+  "name": "catalogue-fixture",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/content": "workspace:*",
+    "@lightstart/light": "workspace:*"
+  }
+}

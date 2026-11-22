@@ -31,11 +31,21 @@
     "./*": "./*"
   },
   "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/dev": "workspace:*",
     "@lightstart/light": "workspace:*",
-    "@lightstart/markdown": "workspace:*"
+    "@lightstart/markdown": "workspace:*",
+    "@lightstart/server": "workspace:*"
   },
   "devDependencies": {
+    "@lightstart/build": "workspace:*",
     "@lightstart/test": "workspace:*",
     "@types/node": "^26.6.5"
+  },
+  "light": {
+    "adapters": {
+      "content": "./store.ts#ContentAdapterType"
+    }
   }
 }

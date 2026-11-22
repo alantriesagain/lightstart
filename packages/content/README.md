@@ -77,8 +77,9 @@ const rows = collect("content/note", { model: note.schema });
 `collect(dir, { model? })` reads every `.md` file in `dir`, sorted by name, and answers one row
 per file: its frontmatter fields, its `slug`, and its `body` as `ContentBlock[]`. Given
 `model`, each row is checked by light's model validation and a field the schema rejects throws,
-naming the file and the field. `collect` is node-only (`node:fs`); the package's other entries
-are safe on the page.
+naming the file and the field. `collectFile(path, { model? })` reads one file the same way.
+`collect` and `collectFile` are node-only (`node:fs`); the package's other entries are safe on
+the page.
 
 ## Page: `renderContent`
 
@@ -120,12 +121,66 @@ and `ContentInline` from the package's root, along with `parseFrontmatter`, `blo
 ## In an app
 
 An app whose `package.json` depends on `@lightstart/content` gets `.light/content.ts` (or
-`.js`), exporting `{ <model>: [rows] }` for every `content/<model>/` folder, imported by
-`.light/app.ts` and seeded before `src/seed`. A folder naming a model the app does not have is
-an error naming both. The dev server regenerates on a change under `content/`.
+`.js`), exporting `{ <model>: [rows] }` for every `content/<model>/` folder whose model is in
+another store, imported by `.light/app.ts` and seeded before `src/seed`. A folder naming a model
+the app does not have is an error naming both. The dev server regenerates on a change under
+`content/`.
 
 Content seeds load before `src/seed`, and the two are additive: a model that moved to
 `content` should drop its `src/seed` entry, or its rows load twice.
+
+## A content store
+
+For a large catalogue, put the model in a store whose adapter is `content` rather than seeding
+it:
+
+```js
+// src/app.js
+export default defineApp({
+  name: "catalogue",
+  host: "web",
+  stores: {
+    main: { adapter: "memory" },
+    catalogue: { adapter: "content" },
+  },
+});
+```
+
+```js
+// src/models/guide.js
+export default defineModel("guide", {
+  $store: "catalogue",
+  $heavy: ["setup", "cues", "mistakes"],
+  title: T.string({ required: true }),
+  areas: T.array(),
+  setup: T.array(),
+  cues: T.array(),
+  mistakes: T.array(),
+  body: T.array(),
+});
+```
+
+`@lightstart/content` declares the adapter type in its `package.json`'s
+`light.adapters` table, so the generation imports it into the page's entry, or registers it in
+a `worker: true` app's worker. The store fetches `<base>/content/<model>.json` once: every row
+without the model's `$heavy` fields. It loads those rows into light's memory adapter and
+answers every read (`query`, `get`, `count`, ...) through it, so `where`, `order`, `limit`,
+`offset`, `fields` and `count` behave exactly as they do in memory. `get(id)` accepts an id or
+a slug, fetches `<base>/content/<model>/<slug>.json` for the whole row, heavy fields included,
+and caches it. The base is the app's own (`url`/`base`), or the store's `at` when it names
+another path. Every write rejects with an error naming the model: the store is read-only.
+
+A model in a `content` store is not seeded through `.light/content`. Instead `light build`
+writes `content/<model>.json` and `content/<model>/<slug>.json` into the build folder from the
+Markdown, and `light serve` answers the same paths on request, rebuilt from the Markdown each
+time with `cache-control: no-store` (no cache, so an edit shows on the next read). Each row is
+`collect`ed and validated against the model's schema, and carries `id` and `slug` (the id is the
+slug when the frontmatter has none).
+
+Choose the store for a catalogue queried with `where`, `order`, `fields` and `count`, and read
+one entry whole by its slug; choose the seed path for a handful of rows a controller reads
+whole. light's query language has no full-text search operator: `like` and `ilike` match a
+substring, and any richer search belongs in the controller.
 
 ## Tests
 

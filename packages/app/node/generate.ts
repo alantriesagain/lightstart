@@ -169,6 +169,12 @@ export interface AppInfo {
   worker: boolean;
   /** Whether a web store is `indexeddb`, or names no adapter (the web default). */
   indexeddb: boolean;
+  /** The adapter type names the app's stores name literally, sorted. */
+  adapterNames: string[];
+  /** Whether any store's adapter is a function, so any adapter type may be needed. */
+  adapterFunction: boolean;
+  /** The names of the stores whose adapter is literally `content`. */
+  contentStores: string[];
   /** Whether the app runs route changes inside a view transition. */
   transitions: boolean;
   /** Whether the app declares any arguments. */
@@ -182,12 +188,21 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
     const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; icons?: unknown; url?: unknown; base?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; args?: unknown; argsSchema?: unknown } }).default;
     const worker = config !== undefined && config.worker === true;
     let indexeddb = false;
+    let adapterFunction = false;
+    const adapterNames = new Set<string>();
+    const contentStores: string[] = [];
     if (config !== undefined && isRecord(config.stores)) {
-      for (const value of Object.values(config.stores)) {
+      for (const [store, value] of Object.entries(config.stores)) {
         if (!isRecord(value)) continue;
         const adapter = value["adapter"];
-        if (typeof adapter === "function") indexeddb = true;
-        else if (adapter === undefined || adapter === "indexeddb") indexeddb = true;
+        if (typeof adapter === "function") {
+          indexeddb = true;
+          adapterFunction = true;
+        } else if (adapter === undefined || adapter === "indexeddb") indexeddb = true;
+        else if (typeof adapter === "string") {
+          adapterNames.add(adapter);
+          if (adapter === "content") contentStores.push(store);
+        }
       }
     }
     return {
@@ -199,11 +214,14 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
       base: appBase({ base: config !== undefined && typeof config.base === "string" ? config.base : undefined, url: config !== undefined && typeof config.url === "string" ? config.url : undefined }),
       worker,
       indexeddb,
+      adapterNames: [...adapterNames].sort(),
+      adapterFunction,
+      contentStores: contentStores.sort(),
       transitions: config !== undefined && config.transitions === true,
       args: config !== undefined && isRecord(config.argsSchema ?? config.args) && Object.keys(config.argsSchema ?? config.args ?? {}).length > 0,
     };
   } catch {
-    return { host: "web", root: "app-root", locale: "en", icons: "lucide", url: undefined, base: "", worker: false, indexeddb: false, transitions: false, args: false };
+    return { host: "web", root: "app-root", locale: "en", icons: "lucide", url: undefined, base: "", worker: false, indexeddb: false, adapterNames: [], adapterFunction: false, contentStores: [], transitions: false, args: false };
   }
 };
 
@@ -453,7 +471,9 @@ const contentFolders = (project: string): { name: string; dir: string }[] => {
  * Write `.light/content.ts` (or `.js`) as `{ <model>: [rows] }` from each
  * `content/<model>` folder, checked against that model's schema; remove it
  * when the project does not depend on `@lightstart/content` or has no folder.
- * A folder naming a model the app does not have is an error naming both.
+ * A model whose store's adapter is `content` is left out: its rows are served
+ * as built JSON files and read through the content store instead. A folder
+ * naming a model the app does not have is an error naming both.
  */
 const writeContent = async (project: string, dir: string, models: string[], extension: ".ts" | ".js", helpers: GenerationHelpers): Promise<{ changed: boolean; specifier: string | null }> => {
   const path = join(dir, `content${extension}`);
@@ -480,8 +500,12 @@ const writeContent = async (project: string, dir: string, models: string[], exte
       throw new Error(`The content folder "content/${folder.name}" names model "${folder.name}", and the app has no such model (its models are ${[...byName.keys()].sort().join(", ") || "none"})`);
     }
     const loaded = (await import(`${pathToFileURL(file).href}?mtime=${String(Date.now())}`)) as { default?: { schema?: unknown } };
-    data[folder.name] = collect(folder.dir, { model: loaded.default?.schema });
+    const schema = loaded.default?.schema;
+    const store = isRecord(schema) && typeof schema["$store"] === "string" ? schema["$store"] : "main";
+    if (helpers.info.contentStores.includes(store)) continue;
+    data[folder.name] = collect(folder.dir, { model: schema });
   }
+  if (Object.keys(data).length === 0) return { changed: remove(path), specifier: null };
 
   const source = `const content = ${JSON.stringify(data, null, 2)};\n\nexport default content;\n`;
   return { changed: helpers.writeWhenChanged(path, source), specifier: `./content${extension}` };
