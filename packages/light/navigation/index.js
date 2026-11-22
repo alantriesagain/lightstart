@@ -5,6 +5,8 @@
  * router configured, links are plain anchors and the location is the route.
  */
 
+import { signal } from "../signals/index.ts";
+
 /** @import { Navigation } from "./types.ts" */
 
 /** @type {Navigation} */
@@ -23,6 +25,14 @@ const plain = {
 let host = plain;
 
 /**
+ * The router configured now, as state: a link that resolved its URL before the
+ * host's router was handed over (it rendered first) follows this and resolves
+ * it again.
+ * @type {import("../signals/index.ts").Signal<Navigation>}
+ */
+export const configuredNavigation = signal(plain);
+
+/**
  * Hand the engine the host's router, a plain object or a class instance whose
  * members live on its prototype. Missing members keep the plain behaviour.
  * @param {Partial<Navigation>} router
@@ -33,6 +43,7 @@ export const configureNavigation = (router) => {
     return typeof fn === "function" ? /** @type {Navigation[typeof key]} */ (fn.bind(router)) : plain[key];
   });
   host = { href: member("href"), go: member("go"), click: member("click"), path: member("path"), subscribe: member("subscribe") };
+  configuredNavigation.value = host;
 };
 
 /** @type {Navigation} */

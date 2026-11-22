@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { configureNavigation, navigation } from "./index.js";
+import { configureNavigation, configuredNavigation, navigation } from "./index.js";
 
 test("without a router, a link is a plain anchor", () => {
   assert.equal(navigation.href("/docs"), "/docs");
@@ -33,4 +33,14 @@ test("a router handed over as a class instance answers through its prototype's m
   assert.equal(navigation.href("/agenda"), "/pt/agenda");
   assert.equal(navigation.path(), "/places");
   assert.equal(navigation.click(/** @type {MouseEvent} */ ({})), false);
+});
+
+test("the configured router is state a link follows: it changes when a router is handed over", () => {
+  /** @type {string[]} */
+  const seen = [];
+  const stop = configuredNavigation.subscribe((current) => seen.push(current.href("/agenda")));
+  configureNavigation({ href: (path) => `/es${path}` });
+  stop();
+  assert.deepEqual(seen.slice(-1), ["/es/agenda"]);
+  assert.equal(configuredNavigation.peek().href("/agenda"), "/es/agenda");
 });

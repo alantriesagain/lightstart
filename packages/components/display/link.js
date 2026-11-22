@@ -8,7 +8,7 @@ import T from "@lightstart/light/types";
 
 import { defineComponent } from "@lightstart/light";
 import { isActivePath } from "../utils/active-path.js";
-import { navigation } from "@lightstart/light/navigation";
+import { configuredNavigation, navigation } from "@lightstart/light/navigation";
 
 export default defineComponent({
   tag: "lc-link",
@@ -49,6 +49,15 @@ export default defineComponent({
   connected() {
     this.addEventListener("click", this._forwardHostClick);
     this.$own(() => this.removeEventListener("click", this._forwardHostClick));
+    let first = true;
+    this.$own(configuredNavigation.subscribe(() => {
+      if (first) {
+        first = false;
+        return;
+      }
+      if (this.activeMatch || this.exact) this.active = this._isActive();
+      this.$requestUpdate();
+    }));
     if (!this.activeMatch && !this.exact) return;
     this.active = this._isActive();
     this.$own(navigation.subscribe(() => {
