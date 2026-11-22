@@ -383,7 +383,8 @@ export class WebHost extends AppHost {
     this.transitions?.installStyles();
     if (this.ownTheme) {
       applyScheme(run.app.scheme);
-      const theme = await loadPreset(run.app.theme ?? "default");
+      const given = run.app.theme;
+      const theme = typeof given === "object" && given !== null ? given : await loadPreset(given ?? "default");
       if (theme !== null) applyTheme(theme);
     }
     this.startPage();
