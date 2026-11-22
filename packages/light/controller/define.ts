@@ -312,6 +312,9 @@ export function defineController(rawDefinition: DefinitionSource): Record<string
   return createController(composeDefinition(rawDefinition));
 }
 
+/** Whether `value` is a handle `defineController` made: every member it declares is the app's, and light's own all begin with `$`. */
+export const isControllerHandle = (value: unknown): boolean => typeof value === "object" && value !== null && handles.has(value as Record<string, unknown>);
+
 /**
  * Make each controller a sync target by its name: `sync: "<name>"` binds to
  * it, building it on the first binding, and after `dispose()` a later binding

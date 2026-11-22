@@ -8,7 +8,7 @@ Each piece is its own entry, and an entry loads only its own code. Nothing else 
 
 | Entry | Holds |
 |---|---|
-| `@lightstart/light/controller` | `defineController`, `defineMixin`, `nameControllers`, `registerAdapter`, `registerSyncType`, `registerSyncBinder`, `getAdapter`, `pendingAdapterNames`, `configureControllers` |
+| `@lightstart/light/controller` | `defineController`, `defineMixin`, `isControllerHandle`, `nameControllers`, `registerAdapter`, `registerSyncType`, `registerSyncBinder`, `getAdapter`, `pendingAdapterNames`, `configureControllers` |
 | `@lightstart/light/controller/resource` | `resource`, `keyedResource` |
 | `@lightstart/light/controller/storage` | `localStorage`, `sessionStorage`, `memoryStorage`, `createStorageAdapter` |
 | `@lightstart/light/controller/document` | `createDocumentAdapter` |
@@ -99,7 +99,7 @@ A controller composed from fragments lists them under `mixins: [...]`; each frag
 
 ## Names
 
-`nameControllers([...])` makes each controller a sync target by its name: `sync: "<name>"` binds to it and builds it on the first binding, and after `dispose()` a later binding reaches the next instance. A name an adapter holds is refused, since `sync: "<name>"` could then mean either.
+`isControllerHandle(value)` says whether `defineController` made `value`. Every member such a handle declares is the app's, and the members light adds all begin with `$`, so a host starting controllers never calls a handle's `start`. `nameControllers([...])` makes each controller a sync target by its name: `sync: "<name>"` binds to it and builds it on the first binding, and after `dispose()` a later binding reaches the next instance. A name an adapter holds is refused, since `sync: "<name>"` could then mean either.
 
 Adapters are named by the page: `registerAdapter("local", localStorage)`. Importing an adapter registers nothing and starts nothing, so a page names the ones it uses. A binding to a name nobody registered waits for it; `pendingAdapterNames()` lists the names still waited on, which after boot are typos.
 

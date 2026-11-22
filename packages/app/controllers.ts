@@ -1,11 +1,13 @@
 /**
  * @file Naming and starting the manifest's controllers, and disposing them
  * again. A `defineController` handle is named so `sync:` reaches it by name
- * and its own build starts it; a `Controller` subclass is named too, then
- * `start()` runs its `connected()`. Either way the host waits for `$ready`.
+ * and its own build starts it: a member it declares, `start` included, is the
+ * app's and is never called here (the members light adds all begin with `$`).
+ * A `Controller` subclass (or any other controller with a `start()` hook) is
+ * named too, then its `start()` runs. Either way the host waits for `$ready`.
  */
 
-import { nameControllers } from "@lightstart/light/controller";
+import { isControllerHandle, nameControllers } from "@lightstart/light/controller";
 import type { AppManifest } from "./manifest.ts";
 
 const recordOf = (value: unknown): Record<string, unknown> | null =>
@@ -30,6 +32,7 @@ export const startControllers = async (manifest: AppManifest): Promise<unknown[]
   }
   nameControllers(handles);
   for (const controller of handles) {
+    if (isControllerHandle(controller)) continue;
     const start = functionOf(controller, "start");
     if (start !== null) await start.call(controller);
   }
