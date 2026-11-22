@@ -164,7 +164,7 @@ export class AppHost implements StoreHost {
     return {};
   }
 
-  /** The run's router exists and has its first route, before the root view mounts; nothing by default. */
+  /** The run's router exists and has its first route, before the root view mounts and before the run follows it, so what the host subscribes hears a route change before the views draw it; nothing by default. */
   routed(_router: RouterCore): void {
     return;
   }
@@ -403,6 +403,8 @@ export class AppRun {
       },
     });
     initial = false;
+    this.router = router;
+    this.host.routed(router);
     this.following = router.subscribe((matched) => {
       this.followRoute(matched);
     });
@@ -410,8 +412,6 @@ export class AppRun {
     currentRoute.value = routeStateOf(router.currentRoute, this.app.base);
     currentParams.value = paramsOf(router.currentRoute);
     currentView.value = viewOf(leafRoute(router.currentRoute));
-    this.router = router;
-    this.host.routed(router);
   }
 
   /** Go to `path`, choosing whether this one navigation uses the host's transition and where it starts from. */

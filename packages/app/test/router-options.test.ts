@@ -3,7 +3,7 @@
  * @file A host's router options reach the run's router: its locales, its
  * origin and a tracker for a route change's work, beside the app's own base
  * and name, which a host cannot replace; and the host is handed the router
- * before the root view mounts.
+ * before the root view mounts and before the run follows it.
  */
 
 import { done, eq, ok } from "@lightstart/test/assert.ts";
@@ -11,7 +11,7 @@ import type { RouterOptions } from "@lightstart/router/contracts.ts";
 import { defineApp } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { openStores } from "../engine.ts";
-import { AppHost, AppRun, navigate } from "../run.ts";
+import { AppHost, AppRun, currentView, navigate } from "../run.ts";
 import type { RouterCore } from "@lightstart/router/core";
 import type { RunStore } from "../run.ts";
 import { MemoryAdapterType } from "../stores.ts";
@@ -19,6 +19,7 @@ import { MemoryAdapterType } from "../stores.ts";
 const tracked: string[] = [];
 const order: string[] = [];
 let given: RouterCore | null = null;
+const heard: string[] = [];
 
 class OptionsHost extends AppHost {
   constructor() {
@@ -31,6 +32,9 @@ class OptionsHost extends AppHost {
   routed(router: RouterCore): void {
     given = router;
     order.push("routed");
+    router.subscribe(() => {
+      heard.push(String(currentView.value));
+    });
   }
 
   mount(_run: AppRun): Promise<void> {
@@ -75,6 +79,7 @@ const main = async (): Promise<void> => {
   eq("the app's base is the run's, not the host's", String(router?.options.basePath), "/app");
   navigate("/about");
   await new Promise((resolve) => setTimeout(resolve, 0));
+  eq("the host's subscription hears a route change before the run applies it", heard.join(","), "app-home");
   ok("a route change's work is tracked through the host's tracker", tracked.some((label) => label.includes("/about")));
   await run.stop();
   done();
