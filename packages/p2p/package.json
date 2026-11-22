@@ -1,0 +1,58 @@
+{
+  "name": "@lightstart/p2p",
+  "version": "0.1.0",
+  "description": "Pair a phone or any second device into a running app over a WebRTC mesh, with relay, torrent and MQTT signalers.",
+  "type": "module",
+  "types": "./types.ts",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/p2p"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "p2p",
+    "webrtc",
+    "pairing",
+    "relay",
+    "signaling",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "types.ts",
+    "crypto.js",
+    "pair-payload.js",
+    "room.js",
+    "strategy.js",
+    "rtc/",
+    "signal/",
+    "cli/",
+    "lib/",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/server": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/dev": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3",
+    "@lightstart/light": "workspace:*"
+  }
+}

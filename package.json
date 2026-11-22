@@ -34,6 +34,7 @@
     "@lightstart/maps": "workspace:*",
     "@lightstart/mobile": "workspace:*",
     "@lightstart/native": "workspace:*",
+    "@lightstart/p2p": "workspace:*",
     "@lightstart/pwa": "workspace:*",
     "@lightstart/server": "workspace:*",
     "@types/node": "^26.6.5",
