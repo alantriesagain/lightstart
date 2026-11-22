@@ -119,7 +119,9 @@ export const scanIcons = (source: string): ScannedIcons => {
   for (const name of properties) push(names, name);
 
   for (const match of code.matchAll(DECLARED)) {
-    for (const string of (match[1] ?? "").matchAll(STRING)) {
+    const list = match[1] ?? "";
+    if (/[{(]/.test(list)) continue;
+    for (const string of list.matchAll(STRING)) {
       const name = string[1] ?? string[2];
       if (name === undefined || !ICON_NAME.test(name)) continue;
       push(declared, name);

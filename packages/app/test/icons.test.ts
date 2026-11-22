@@ -38,6 +38,9 @@ eq("and still among the names", data.names.join(","), "house,terminal");
 const staticField = scanIcons('class Accounts extends View {\n  static icons = ["landmark", "credit-card"];\n}');
 eq("a class's static icons field declares names too", staticField.declared.join(","), "landmark,credit-card");
 
+const manifestIcons = scanIcons('export default definePwa({ icons: [{ src: "/icon.svg", sizes: "any", purpose: "any maskable" }] });');
+eq("a list of objects (a web manifest's icons) declares no names", manifestIcons.declared.join(","), "");
+
 const commentOnly = scanIcons('// <lc-icon name="ghost"></lc-icon>\n/* icon: "phantom" */\nconst view = `<p>Hi</p>`;');
 eqn("a name in a comment is not counted", commentOnly.names.length, 0);
 
