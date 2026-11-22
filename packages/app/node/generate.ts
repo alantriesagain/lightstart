@@ -240,12 +240,12 @@ const manifestSource = (project: string, app: string, extension: ".ts" | ".js", 
   const lines: string[] = [];
   if (extension === ".ts") lines.push('import type { AppManifest } from "@lightstart/app/manifest.ts";');
   lines.push(`import app from "${specifierFor(project, app)}";`);
+  for (const specifier of appImports) lines.push(`import ${JSON.stringify(specifier)};`);
   models.forEach((file, index) => lines.push(`import model${String(index)} from "${specifierFor(project, file)}";`));
   if (content !== null) lines.push(`import content from ${JSON.stringify(content)};`);
   seeds.forEach((file, index) => lines.push(`import seed${String(index)} from "${specifierFor(project, file)}";`));
   controllers.forEach((file, index) => lines.push(`import controller${String(index)} from "${specifierFor(project, file)}";`));
   if (routes !== null) lines.push(`import routes from "${specifierFor(project, routes)}";`);
-  for (const specifier of appImports) lines.push(`import ${JSON.stringify(specifier)};`);
   for (const file of views) {
     if (rootFile !== null && file === rootFile) lines.push(`import rootView from "${specifierFor(project, file)}";`);
     else lines.push(`import "${specifierFor(project, file)}";`);

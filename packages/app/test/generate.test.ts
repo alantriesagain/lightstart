@@ -118,6 +118,7 @@ const main = async (): Promise<void> => {
     const syncAt = source.indexOf('import "./sync.ts";');
     ok("the manifest imports the sync", syncAt >= 0);
     ok("the sync import is before the views", syncAt < source.indexOf('import "../src/views/app-home.ts";'));
+    ok("and before every model and controller, whose sync: is checked as it is defined", syncAt < source.indexOf("import model0") && syncAt < source.indexOf("import controller0"));
 
     const before = statSync(first.manifest).mtimeMs;
     const second = await generate(project);
