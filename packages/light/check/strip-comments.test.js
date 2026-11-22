@@ -31,3 +31,14 @@ test("stripComments stays linear on a long run of blank lines", () => {
   assert.ok(!out.includes("tail"));
   assert.ok(out.includes("const x = 1;"));
 });
+
+test("stripComments reads a string past whole, so a /* inside one opens no comment", () => {
+  const source = 'const accept = "image/*,video/*";\nconst icon = "house"; /* a real comment */\nconst tpl = `<input accept="image/*">`;\nconst after = "kept";\n';
+  const out = stripComments(source);
+  assert.equal(out.length, source.length);
+  assert.ok(out.includes('"image/*,video/*"'), "the string stays");
+  assert.ok(out.includes('"house"'), "a name after the string is not swallowed");
+  assert.ok(!out.includes("a real comment"), "a real comment still goes");
+  assert.ok(out.includes('accept="image/*"'), "a template literal stays too");
+  assert.ok(out.includes('"kept"'));
+});
