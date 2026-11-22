@@ -464,6 +464,10 @@ const generation: HostGeneration = {
       featureImports.push('import { Transitions } from "@lightstart/app/web/transitions.ts";');
       options.push("transitions: new Transitions(),");
     }
+    if (helpers.info.utilities) {
+      featureImports.push('import { Utilities } from "@lightstart/app/web/utilities.ts";');
+      options.push("utilities: new Utilities(),");
+    }
     if (helpers.info.args) {
       featureImports.push('import { queryArgs } from "@lightstart/app/web/args.ts";');
       options.push("args: queryArgs,");

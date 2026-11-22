@@ -50,7 +50,7 @@ const APP = (extra: string): string => `import { defineApp } from "@lightstart/a
 
 const main = async (): Promise<void> => {
   const plain = await entryFor(APP(""));
-  ok("a memory app imports no optional adapter or feature", !plain.includes("IndexedDBAdapterType") && !plain.includes("Transitions") && !plain.includes("queryArgs") && !plain.includes("WorkerStores"));
+  ok("a memory app imports no optional adapter or feature", !plain.includes("IndexedDBAdapterType") && !plain.includes("Transitions") && !plain.includes("Utilities") && !plain.includes("queryArgs") && !plain.includes("WorkerStores"));
   ok("a memory app starts with the local stores", plain.includes('import { LocalStores } from "@lightstart/app/web/local.ts";') && plain.includes("stores: new LocalStores(),"));
 
   const features = await entryFor(APP('transitions: true, args: { greeting: { default: "hi" } }, '));
@@ -58,6 +58,11 @@ const main = async (): Promise<void> => {
   ok("args import the query parser", features.includes('import { queryArgs } from "@lightstart/app/web/args.ts";'));
   ok("transitions and args import no IndexedDB adapter type", !features.includes("IndexedDBAdapterType"));
   ok("the options are passed to start", features.includes("transitions: new Transitions(),") && features.includes("args: queryArgs,"));
+
+  const utilities = await entryFor(APP("utilities: true, "));
+  ok("utilities import their module", utilities.includes('import { Utilities } from "@lightstart/app/web/utilities.ts";'));
+  ok("utilities import no IndexedDB adapter type", !utilities.includes("IndexedDBAdapterType"));
+  ok("the utilities option is passed to start", utilities.includes("utilities: new Utilities(),"));
 
   const implied = await entryFor('import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web-js", host: "web" });\n');
   ok("a store with no adapter imports the IndexedDB adapter type", implied.includes('import { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";'));

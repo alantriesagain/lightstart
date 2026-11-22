@@ -21,6 +21,7 @@ import type { NavigateOptions } from "../run.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import { WebHost } from "./index.ts";
 import { Transitions } from "./transitions.ts";
+import { Utilities } from "./utilities.ts";
 import { LocalStores } from "./local.ts";
 import type { WebStoresFeature } from "./features.ts";
 
@@ -76,6 +77,7 @@ class PageHost extends WebHost {
       defaultAdapter: adapters[0]?.name ?? "memory",
       stores: stores ?? new LocalStores(),
       transitions: new Transitions(),
+      utilities: new Utilities(),
     });
     this.path = path;
     this.given = given;
@@ -101,6 +103,7 @@ class PageHost extends WebHost {
   unmount(_run: AppRun): void {
     this.stopListening();
     this.stopPage();
+    this.utilities?.stop();
     const root = this.mountedRoot;
     this.mountedRoot = null;
     if (root !== null) root.remove();
