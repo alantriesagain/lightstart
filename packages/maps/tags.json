@@ -1,0 +1,12 @@
+{
+  "maps-view": {
+    "module": "views/view.js",
+    "style": "views/view.css",
+    "extends": null,
+    "uses": [
+      "lc-button",
+      "lc-icon"
+    ],
+    "loads": []
+  }
+}
