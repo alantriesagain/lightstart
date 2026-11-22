@@ -1,0 +1,9 @@
+{
+  "pwa-update-toast": {
+    "module": "views/update-toast.ts",
+    "style": "views/update-toast.css",
+    "extends": null,
+    "uses": [],
+    "loads": []
+  }
+}

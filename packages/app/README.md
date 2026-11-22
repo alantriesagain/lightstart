@@ -270,6 +270,8 @@ await start(manifest, {
 
 For `worker: true` the entry passes `stores: new WorkerStores(() => new Worker(new URL("./worker.js", import.meta.url), { type: "module" }))` instead, and imports no IndexedDB adapter type on the page: the worker opens them. `.light/worker.js` also imports the project's `src/worker.ts` or `src/worker.js` when it has one and passes it to `serveModels`; a project with both is an error naming both.
 
+A project on `@lightstart/pwa` with `src/pwa.ts` or `src/pwa.js` gets its registration in the entry: `.light/main` imports the config and `registerPwa` from `@lightstart/pwa/page`, and calls `registerPwa(pwaConfig, { base })` once `start` answers, with the app's base. A project without either file keeps its entry unchanged; one with a file but without the package is an error naming `@lightstart/pwa`. `@lightstart/pwa` documents the manifest, the worker, the page API and the update policy.
+
 The generator reads `src/app.ts` and writes only the imports the config uses: `web/local.ts` or, for `worker: true`, `web/worker.ts` for the run's stores; `web/indexeddb.ts` when a non-worker store names `indexeddb` or names no adapter (the web default); `web/transitions.ts` with `transitions: true`; and `web/args.ts` when `args` is not empty. A store whose `adapter` is a function may return any web adapter type, so the entry imports the IndexedDB adapter type too. Everything else stays out of the bundle by construction. A hand-written entry passes its own stores feature; without one the run rejects, naming the generated entry.
 
 On the web, `scheme` is applied before the theme: `"dark"` puts the `dark` class on `<html>` and stops following the preference, `"light"` removes it, and `"system"` follows the reader's choice and the OS. The build writes the class into a prerendered page's `<html>`, so a dark app paints dark on the first frame. The terminal host ignores it.
@@ -428,6 +430,8 @@ await page.text(); // document.body.innerText
 await page.click('a[href="/"]'); // as a reader clicks: a link goes through the router
 await page.shows("Home"); // waits for the text (2 s by default), else throws with the page's text
 await page.back(); // the browser's back, then forward()
+await page.reload(); // the reader's reload, waiting for the page to draw
+await page.offline(true); // the browser context goes offline; false brings it back
 await page.path(); // location.pathname
 await page.evaluate(() => document.title); // run a script in the page
 await page.close();

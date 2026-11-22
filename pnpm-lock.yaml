@@ -36,6 +36,9 @@ importers:
       '@lightstart/native':
         specifier: workspace:*
         version: link:packages/native
+      '@lightstart/pwa':
+        specifier: workspace:*
+        version: link:packages/pwa
       '@lightstart/server':
         specifier: workspace:*
         version: link:packages/server
@@ -426,6 +429,40 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
+
+  packages/pwa:
+    dependencies:
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
+      '@lightstart/dev':
+        specifier: workspace:*
+        version: link:../dev
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
+    devDependencies:
+      '@lightstart/build':
+        specifier: workspace:*
+        version: link:../build
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/router:
     devDependencies:

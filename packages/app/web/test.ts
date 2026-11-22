@@ -210,14 +210,20 @@ interface BuiltPageLike {
   goto(url: string, options: { waitUntil: string; timeout: number }): Promise<unknown>;
   goBack(options: { timeout: number }): Promise<unknown>;
   goForward(options: { timeout: number }): Promise<unknown>;
+  reload(options: { waitUntil: string; timeout: number }): Promise<unknown>;
   click(selector: string, options: { timeout: number }): Promise<void>;
   waitForFunction<A>(run: (arg: A) => unknown, arg: A, options: { timeout: number }): Promise<unknown>;
   evaluate<T>(run: () => T | Promise<T>): Promise<T>;
   close(): Promise<void>;
 }
 
-interface BuiltBrowserLike {
+interface BuiltContextLike {
   newPage(): Promise<BuiltPageLike>;
+  setOffline(offline: boolean): Promise<void>;
+}
+
+interface BuiltBrowserLike {
+  newContext(): Promise<BuiltContextLike>;
   close(): Promise<void>;
 }
 
@@ -257,14 +263,16 @@ export class OpenedBuiltPage {
   /** The same-origin requests that failed or answered 4xx or 5xx, with their paths. */
   readonly failed: string[];
   private readonly page: BuiltPageLike;
+  private readonly context: BuiltContextLike;
   private readonly browser: BuiltBrowserLike;
   private readonly server: { close(callback: () => void): unknown };
   private closed = false;
 
-  constructor(errors: string[], failed: string[], page: BuiltPageLike, browser: BuiltBrowserLike, server: { close(callback: () => void): unknown }) {
+  constructor(errors: string[], failed: string[], page: BuiltPageLike, context: BuiltContextLike, browser: BuiltBrowserLike, server: { close(callback: () => void): unknown }) {
     this.errors = errors;
     this.failed = failed;
     this.page = page;
+    this.context = context;
     this.browser = browser;
     this.server = server;
   }
@@ -308,6 +316,22 @@ export class OpenedBuiltPage {
   /** The browser's forward button. */
   async forward(): Promise<void> {
     await this.page.goForward({ timeout: 2000 });
+  }
+
+  /** Reload the page as a reader does, waiting for it to load and draw. */
+  async reload(): Promise<void> {
+    await this.page.reload({ waitUntil: "load", timeout: 30_000 });
+    await this.page.evaluate(
+      () =>
+        new Promise<void>((settle) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(settle, 50)));
+        }),
+    );
+  }
+
+  /** Set the browser context offline, so every request fails as it does with no network. */
+  offline(offline: boolean): Promise<void> {
+    return this.context.setOffline(offline);
   }
 
   /** Close the page, the browser and the server. */
@@ -406,7 +430,8 @@ export const openBuilt = async (dir: string, path = "/", options: OpenBuiltOptio
 
   const chromium = (await chromiumFrom(process.cwd())) as unknown as ChromiumLike;
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   const errors: string[] = [];
   const failed: string[] = [];
   page.on("pageerror", (error) => errors.push(builtMessageOf(error)));
@@ -441,7 +466,7 @@ export const openBuilt = async (dir: string, path = "/", options: OpenBuiltOptio
   } catch (error) {
     errors.push(builtMessageOf(error));
   }
-  return new OpenedBuiltPage(errors, failed, page, browser, server);
+  return new OpenedBuiltPage(errors, failed, page, context, browser, server);
 };
 
 /** The newest build folder in `projectDir`: `.deployed/current` when the build wrote it, else `.deployed/builds/<id>` by name. */

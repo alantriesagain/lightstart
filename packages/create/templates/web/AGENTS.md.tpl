@@ -25,6 +25,8 @@ A view reaches its controller with an import, `import notes from "../controllers
 
 The app layer opens the stores (a model picks one with its schema's `$store`, `main` when it names none), names and starts the controllers, applies the theme, builds the router from `src/routes.__EXT__` and mounts the root view. It also writes `.light/components.__EXT__` and `.light/components.css` for a project on `@lightstart/components`: the views write `lc-*` tags and the generation defines them and imports their stylesheets, so a view imports no component and calls no `View.define`. When a source names an icon, `.light/icons.css` holds each name's mask from the `@iconify-json/lucide` set (`defineApp({ icons })` names another), and a name built at run time that no literal names (a bare string in a map) is declared in the module's `icons: [...]`.
 
+To make the app installable and work offline, add `@lightstart/pwa` and a `src/pwa.__EXT__` whose `definePwa({ ... })` sets the manifest and its `update` policy; the generated entry registers the worker, and a view writes `<pwa-update-toast>` for a Reload prompt.
+
 ## Writing a piece
 
 Write a model, a controller or a view from the app's folder, in the app's language and with the shape the scaffold uses:

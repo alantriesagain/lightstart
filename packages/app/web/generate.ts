@@ -303,6 +303,18 @@ const remove = (path: string): boolean => {
   return true;
 };
 
+/** The project's optional PWA config, `src/pwa.ts` or `.js`; null when it has none, an error naming both when it has both. */
+const pwaPathOf = (project: string): string | null => {
+  const ts = join(project, "src", "pwa.ts");
+  const js = join(project, "src", "pwa.js");
+  const hasTs = existsSync(ts);
+  const hasJs = existsSync(js);
+  if (hasTs && hasJs) throw new Error(`The app has both src/pwa.ts and src/pwa.js; keep one of them`);
+  if (hasTs) return ts;
+  if (hasJs) return js;
+  return null;
+};
+
 /** Write the components files the project needs, remove them when it needs none. */
 const writeComponents = (project: string, dir: string, helpers: GenerationHelpers): HostPrepared => {
   const extension = helpers.extension;
@@ -361,6 +373,8 @@ const generation: HostGeneration = {
     return { changed: sync.changed || components.changed, imports: [...sync.imports, ...components.imports] };
   },
   async write(project, dir, main, helpers) {
+    const pwaPath = pwaPathOf(project);
+    if (pwaPath !== null && !dependencyNames(project).includes("@lightstart/pwa")) throw new Error(`The app has ${pwaPath.slice(project.length + 1)} but does not declare @lightstart/pwa; add it to package.json`);
     const workerPath = join(dir, "worker.js");
     let changed = false;
     if (helpers.worker) {
@@ -401,13 +415,19 @@ const generation: HostGeneration = {
       featureImports.push('import { queryArgs } from "@lightstart/app/web/args.ts";');
       options.push("args: queryArgs,");
     }
-    const lines = ['import { start } from "@lightstart/app/web";', `import manifest from "./app${helpers.extension}";`, ...featureImports, ""];
+    const lines = ['import { start } from "@lightstart/app/web";', `import manifest from "./app${helpers.extension}";`];
+    if (pwaPath !== null) {
+      lines.push(`import pwaConfig from "${helpers.specifierFor(project, pwaPath)}";`);
+      lines.push('import { registerPwa } from "@lightstart/pwa/page";');
+    }
+    lines.push(...featureImports, "");
     if (options.length === 0) lines.push("await start(manifest);");
     else {
       lines.push("await start(manifest, {");
       for (const option of options) lines.push(`  ${option}`);
       lines.push("});");
     }
+    if (pwaPath !== null) lines.push(`registerPwa(pwaConfig, { base: ${JSON.stringify(helpers.info.base)} });`);
     lines.push("");
     return { changed: helpers.writeWhenChanged(main, lines.join("\n")) || changed, classes: null, modes: [] };
   },
