@@ -1,0 +1,21 @@
+{
+  "name": "fixture-maps",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "light": {
+    "scopes": ["@lightstart"]
+  },
+  "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/components": "workspace:*",
+    "@lightstart/content": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/maps": "workspace:*",
+    "@lightstart/router": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/build": "workspace:*",
+    "@lightstart/cli": "workspace:*"
+  }
+}

@@ -33,6 +33,12 @@ importers:
       '@lightstart/dev':
         specifier: workspace:*
         version: link:packages/dev
+      '@lightstart/maps':
+        specifier: workspace:*
+        version: link:packages/maps
+      '@lightstart/mobile':
+        specifier: workspace:*
+        version: link:packages/mobile
       '@lightstart/native':
         specifier: workspace:*
         version: link:packages/native
@@ -193,13 +199,28 @@ importers:
 
   packages/content:
     dependencies:
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
+      '@lightstart/dev':
+        specifier: workspace:*
+        version: link:../dev
       '@lightstart/light':
         specifier: workspace:*
         version: link:../light
       '@lightstart/markdown':
         specifier: workspace:*
         version: link:../markdown
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
     devDependencies:
+      '@lightstart/build':
+        specifier: workspace:*
+        version: link:../build
       '@lightstart/test':
         specifier: workspace:*
         version: link:../test
@@ -389,6 +410,40 @@ importers:
         specifier: workspace:*
         version: link:../light
 
+  packages/maps:
+    dependencies:
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
+      '@lightstart/components':
+        specifier: workspace:*
+        version: link:../components
+      '@lightstart/content':
+        specifier: workspace:*
+        version: link:../content
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/router':
+        specifier: workspace:*
+        version: link:../router
+    devDependencies:
+      '@lightstart/build':
+        specifier: workspace:*
+        version: link:../build
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/markdown:
     devDependencies:
       '@lightstart/test':
@@ -397,6 +452,28 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
+
+  packages/mobile:
+    dependencies:
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
+    devDependencies:
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/native:
     dependencies:
