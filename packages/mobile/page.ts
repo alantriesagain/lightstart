@@ -3,7 +3,7 @@
  * @file @lightstart/mobile/page: the page's side of the Android shell. The
  * shell installs `window.__lightMobile` at document start and a `lightMobile`
  * message channel; this module speaks light's request protocol over it and
- * falls back to the web share API outside the shell. The desktop client is
+ * falls back to the web APIs outside the shell. The desktop client is
  * deliberately not reused: it binds `window.__desktop`, carries no request id
  * and knows no capabilities.
  */
@@ -35,6 +35,60 @@ export interface MobileShareResult {
   shared: boolean;
 }
 
+/** One file that arrived with a share, served under `/__mobile/`. */
+export interface MobileSharedFile {
+  url: string;
+  type: string;
+  name: string;
+}
+
+/** The share the current URL carries, from the shell or a PWA's GET share target. */
+export interface MobileShared {
+  text?: string;
+  title?: string;
+  files?: MobileSharedFile[];
+}
+
+/** One daily reminder. */
+export interface MobileReminder {
+  id: string;
+  hour: number;
+  minute: number;
+  title: string;
+  body: string;
+  path?: string;
+}
+
+/** What `mobile.reminders` answers: `supported` is false outside a shell that has them. */
+export interface MobileRemindersResult {
+  supported: boolean;
+}
+
+/** What `mobile.reminders.get` answers. */
+export interface MobileRemindersList extends MobileRemindersResult {
+  reminders: MobileReminder[];
+}
+
+/** The daily reminders of the shell; unsupported on the web. */
+export interface MobileRemindersApi {
+  set(reminders: MobileReminder[]): Promise<MobileRemindersResult>;
+  get(): Promise<MobileRemindersList>;
+  clear(): Promise<MobileRemindersResult>;
+}
+
+/** What `mobile.capture` asks for. */
+export interface MobileCaptureOptions {
+  kind?: "image" | "video";
+  app?: string;
+}
+
+/** The photo or clip captured, served under `/__mobile/`; null when cancelled. */
+export interface MobileCaptureResult {
+  url: string;
+  type: string;
+  name: string;
+}
+
 /** The page's mobile shell: presence, readiness, capabilities, requests and events. */
 export interface MobileApi {
   readonly present: boolean;
@@ -43,6 +97,9 @@ export interface MobileApi {
   request<T = unknown>(method: string, args?: unknown[]): Promise<T>;
   on(event: string, fn: (payload: unknown) => void): () => void;
   share(options: MobileShareOptions): Promise<MobileShareResult>;
+  shared(): MobileShared | null;
+  readonly reminders: MobileRemindersApi;
+  capture(options?: MobileCaptureOptions): Promise<MobileCaptureResult | null>;
 }
 
 interface ShellEvent {
@@ -169,5 +226,76 @@ const share = async (options: MobileShareOptions): Promise<MobileShareResult> =>
   return { shared: true };
 };
 
+const searchOf = (): string => {
+  const location = (globalThis as unknown as { location?: { search?: string } }).location;
+  return typeof location?.search === "string" ? location.search : "";
+};
+
+const shared = (): MobileShared | null => {
+  let params: URLSearchParams;
+  try {
+    params = new URLSearchParams(searchOf());
+  } catch {
+    return null;
+  }
+  const text = params.get("text") || undefined;
+  const title = params.get("title") || undefined;
+  const urls = params.getAll("file");
+  const types = params.getAll("type");
+  const names = params.getAll("name");
+  const files: MobileSharedFile[] = urls.map((url, index) => ({
+    url,
+    type: types[index] ?? "",
+    name: names[index] ?? "",
+  }));
+  if (text === undefined && title === undefined && files.length === 0) return null;
+  const result: MobileShared = {};
+  if (text !== undefined) result.text = text;
+  if (title !== undefined) result.title = title;
+  if (files.length > 0) result.files = files;
+  return result;
+};
+
+const reminders: MobileRemindersApi = {
+  async set(list: MobileReminder[]): Promise<MobileRemindersResult> {
+    if (!present || !can("reminders")) return { supported: false };
+    return request<MobileRemindersResult>("reminders.set", [list]);
+  },
+  async get(): Promise<MobileRemindersList> {
+    if (!present || !can("reminders")) return { supported: false, reminders: [] };
+    return request<MobileRemindersList>("reminders.get");
+  },
+  async clear(): Promise<MobileRemindersResult> {
+    if (!present || !can("reminders")) return { supported: false };
+    return request<MobileRemindersResult>("reminders.clear");
+  },
+};
+
+const captureOnWeb = (kind: "image" | "video"): Promise<MobileCaptureResult | null> => {
+  const doc = (globalThis as unknown as { document?: Document }).document;
+  if (doc === undefined) return Promise.reject(new Error("[mobile] capturing needs a document"));
+  const input = doc.createElement("input");
+  input.type = "file";
+  input.accept = kind === "video" ? "video/*" : "image/*";
+  input.setAttribute("capture", "environment");
+  return new Promise((resolve) => {
+    input.addEventListener("change", () => {
+      const file = input.files?.[0];
+      if (file === undefined) {
+        resolve(null);
+        return;
+      }
+      resolve({ url: URL.createObjectURL(file), type: file.type, name: file.name });
+    }, { once: true });
+    input.click();
+  });
+};
+
+const capture = async (options: MobileCaptureOptions = {}): Promise<MobileCaptureResult | null> => {
+  const kind = options.kind ?? "image";
+  if (present) return request<MobileCaptureResult | null>("capture", [{ ...options, kind }]);
+  return captureOnWeb(kind);
+};
+
 /** The page's mobile shell, present or not. */
-export const mobile: MobileApi = { present, ready: readyPromise, can, request, on, share };
+export const mobile: MobileApi = { present, ready: readyPromise, can, request, on, share, shared, reminders, capture };

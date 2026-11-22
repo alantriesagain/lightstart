@@ -48,6 +48,7 @@ export default defineMobile({
   version: { name: "2.0.0", code: 7 },
   orientation: "landscape",
   minSdk: 28,
+  shareTarget: { path: "/listen", types: ["audio/*"] },
 });
 `);
 
@@ -62,6 +63,12 @@ export default defineMobile({
     ok("the new minSdk reaches build.gradle", text(project, "app/build.gradle").includes("minSdk 28"));
     ok("the new orientation reaches build.gradle", text(project, "app/build.gradle").includes('"ORIENTATION", \'"landscape"\''));
     ok("the new name reaches strings.xml", text(project, "app/src/main/res/values/strings.xml").includes(">Changed<"));
+    const manifest = text(project, "app/src/main/AndroidManifest.xml");
+    ok("a changed shareTarget reaches the manifest", manifest.includes('android:mimeType="audio/*"'));
+    ok("the old share types leave the manifest", !manifest.includes('android:mimeType="image/*"') && !manifest.includes('android:mimeType="video/*"'));
+    ok("removing cameraApp removes the query", !manifest.includes("<queries>"));
+    ok("the new shareTarget reaches build.gradle", text(project, "app/build.gradle").includes("/listen|audio/*"));
+    ok("no template placeholders remain after sync", !/__[A-Z_]+__/.test(manifest));
   } finally {
     rmSync(project, { recursive: true, force: true });
   }

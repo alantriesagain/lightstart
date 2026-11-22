@@ -33,6 +33,32 @@ const main = async (): Promise<void> => {
   eq("the orientation defaults to any", defaults.orientation, "any");
   eqn("minSdk defaults to 26", defaults.minSdk, 26);
   eq("the app id is kept", defaults.appId, "com.example.app");
+  ok("shareTarget defaults to none", defaults.shareTarget === undefined);
+  ok("cameraApp defaults to none", defaults.cameraApp === undefined);
+
+  const one = resolveMobile({ appId: "com.example.app", shareTarget: { path: "/capture", types: ["image/*"] } }, { name: "app", base: "" });
+  eq("one shareTarget is kept", one.shareTarget?.map((target) => `${target.path}:${(target.types ?? []).join(",")}`).join(";") ?? "", "/capture:image/*");
+  const many = resolveMobile({ appId: "com.example.app", shareTarget: [{ path: "/text" }, { path: "/media", types: ["image/*"] }] }, { name: "app", base: "" });
+  eq("a list of shareTargets is kept", many.shareTarget?.map((target) => `${target.path}:${(target.types ?? []).join(",")}`).join(";") ?? "", "/text:text/plain;/media:image/*");
+  eq("cameraApp is kept", resolveMobile({ appId: "com.example.app", cameraApp: "com.example.camera" }, { name: "app", base: "" }).cameraApp ?? "", "com.example.camera");
+  const badPath = (() => {
+    try {
+      resolveMobile({ appId: "com.example.app", shareTarget: { path: "capture" } }, { name: "app", base: "" });
+      return "";
+    } catch (error: unknown) {
+      return error instanceof Error ? error.message : String(error);
+    }
+  })();
+  ok("a shareTarget path must start with /", badPath.includes("must start with"));
+  const badCamera = (() => {
+    try {
+      resolveMobile({ appId: "com.example.app", cameraApp: "com example" }, { name: "app", base: "" });
+      return "";
+    } catch (error: unknown) {
+      return error instanceof Error ? error.message : String(error);
+    }
+  })();
+  ok("cameraApp must be an application id", badCamera.includes("application id"));
 
   const project = copy();
   try {
