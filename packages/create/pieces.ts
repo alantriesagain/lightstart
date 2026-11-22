@@ -228,7 +228,7 @@ const viewSource = (tag: string, info: AppInfo): string => {
       "/**",
       ` * @file The ${tag} view.`,
       " */",
-      'import { View, define, html } from "@lightstart/light/native/tui";',
+      'import { View, html } from "@lightstart/light/native/tui";',
       "",
       `export default class ${className} extends View {`,
       "  override render(): unknown {",
@@ -236,7 +236,7 @@ const viewSource = (tag: string, info: AppInfo): string => {
       "  }",
       "}",
       "",
-      `define("${tag}", ${className});`,
+      `View.register("${tag}", ${className});`,
       "",
     ].join("\n");
   }

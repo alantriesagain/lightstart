@@ -45,10 +45,10 @@ export default new Todos();
 
 ## A view
 
-A view is a `View` subclass from `@lightstart/light/native/tui` whose `render()` returns an `html` template. The root view default-exports its class and may handle keys in `onKey(renderer, e)`. Another view writes its tag with `define(tag, Class)` and takes props with `this.prop<T>(name, initial)`.
+A view is a `View` subclass from `@lightstart/light/native/tui` whose `render()` returns an `html` template. The root view default-exports its class and may handle keys in `onKey(renderer, e)`. Another view registers its tag with `View.register(tag, Class)`, the same name a web view uses, and takes props with `this.prop<T>(name, initial)`.
 
 ```ts
-import { define, html, View } from "@lightstart/light/native/tui";
+import { html, View } from "@lightstart/light/native/tui";
 import todos from "../controllers/todos.ts";
 import type { KeyEvent } from "@lightstart/light/native/tui";
 import type { TodoRow } from "../../.light/models.ts";
@@ -61,7 +61,7 @@ class TodoRowView extends View {
   }
 }
 
-define("todo-row", TodoRowView);
+View.register("todo-row", TodoRowView);
 ```
 
 ## Writing a piece

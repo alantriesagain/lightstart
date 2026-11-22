@@ -55,6 +55,11 @@ export class View extends ViewCore {
   $slots: TSlotPart[];
   $projectQueued: boolean;
 
+  /** Register `tag` for `cls`, as the web's `View.register` does: the same as `define(tag, cls)`. */
+  static register(tag: string, cls: new () => View): void {
+    define(tag, cls);
+  }
+
   constructor() {
     super();
     this.box = new TBox("view");
