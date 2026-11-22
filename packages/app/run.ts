@@ -164,6 +164,11 @@ export class AppHost implements StoreHost {
     return {};
   }
 
+  /** The run's router exists and has its first route, before the root view mounts; nothing by default. */
+  routed(_router: RouterCore): void {
+    return;
+  }
+
   /** Clear the prerender flag before a client navigation; nothing without one. */
   clearPrerendered(): void {
     return;
@@ -406,6 +411,7 @@ export class AppRun {
     currentParams.value = paramsOf(router.currentRoute);
     currentView.value = viewOf(leafRoute(router.currentRoute));
     this.router = router;
+    this.host.routed(router);
   }
 
   /** Go to `path`, choosing whether this one navigation uses the host's transition and where it starts from. */
