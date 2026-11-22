@@ -1,0 +1,49 @@
+{
+  "name": "@lightstart/mobile",
+  "version": "0.1.0",
+  "description": "A light app as an Android app: defineMobile in src/mobile, mobile:init/sync/build/run, and the bridge and share API.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/mobile"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "android",
+    "mobile",
+    "webview",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "page.ts",
+    "node/",
+    "cli/",
+    "templates/",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./page": "./page.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/cli": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
