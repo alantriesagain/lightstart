@@ -1,0 +1,19 @@
+{
+  "name": "fixture-pwa",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "light": {
+    "scopes": ["@lightstart"]
+  },
+  "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/pwa": "workspace:*",
+    "@lightstart/router": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/build": "workspace:*",
+    "@lightstart/cli": "workspace:*"
+  }
+}

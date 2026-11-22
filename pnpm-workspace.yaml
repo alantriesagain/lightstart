@@ -21,6 +21,7 @@ packages:
   - 'packages/sqlite'
   - 'packages/markdown'
   - 'packages/content'
+  - 'packages/pwa'
   - 'packages/highlight'
   - 'packages/form'
   - 'packages/i18n'

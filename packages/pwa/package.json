@@ -1,0 +1,63 @@
+{
+  "name": "@lightstart/pwa",
+  "version": "0.1.0",
+  "description": "An app's web manifest and service worker: definePwa in src/pwa, and light build writes manifest.webmanifest and sw.js beside the page.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/pwa"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "pwa",
+    "service-worker",
+    "manifest",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "page.ts",
+    "manifest.ts",
+    "base.ts",
+    "html.ts",
+    "tags.json",
+    "views/",
+    "cli/",
+    "node/",
+    "worker/",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./page": "./page.ts",
+    "./manifest": "./manifest.ts",
+    "./worker/logic": "./worker/logic.ts",
+    "./*": "./*"
+  },
+  "light": {
+    "tags": "tags.json"
+  },
+  "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/dev": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/server": "workspace:*",
+    "esbuild": "^0.28.2"
+  },
+  "devDependencies": {
+    "@lightstart/build": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
