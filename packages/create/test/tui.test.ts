@@ -67,7 +67,7 @@ const main = async (): Promise<void> => {
     eq("the binary is named after the project", manifest.native?.binary, "demo");
     eq("the prepare step generates the app", JSON.stringify(manifest.native?.prepare), JSON.stringify(["light app"]));
     eq("the scripts are the kind's", Object.keys(manifest.scripts).join(","), "dev,test,build,check,lint,typecheck,verify");
-    eq("dev runs the app", manifest.scripts["dev"], "light run");
+    eq("dev runs the app, handing what pnpm appends to it", manifest.scripts["dev"], "light run --");
     eq("test runs light test under node and natively", manifest.scripts["test"], "light test");
     eq("build runs light build", manifest.scripts["build"], "light build");
     eq("check runs light check", manifest.scripts["check"], "light check");

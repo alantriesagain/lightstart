@@ -32,7 +32,7 @@ ok("tui is in the table", tui !== undefined);
 if (tui !== undefined) {
   eq("tui depends on light and the app layer", tui.packages.join(","), "@lightstart/light,@lightstart/app");
   eq("tui's scripts", Object.keys(tui.scripts).join(","), "dev,test,build,check,lint,typecheck,verify");
-  eq("dev runs the app", tui.scripts.dev, "light run");
+  eq("dev runs the app, handing what pnpm appends to it", tui.scripts.dev, "light run --");
   eq("test runs light test under node and natively", tui.scripts.test, "light test");
   eq("build runs light build", tui.scripts.build, "light build");
   eq("check runs light check", tui.scripts.check, "light check");
