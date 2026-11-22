@@ -45,6 +45,43 @@ const readJson = (path: string): unknown => {
   }
 };
 
+/** One adapter type a declared package ships, as the entry imports and instantiates it. */
+interface AdapterImport {
+  adapter: string;
+  specifier: string;
+  exported: string;
+}
+
+/** Every adapter type `info` needs from the packages the project declares under `light.adapters`. */
+const projectAdapterTypes = (project: string, info: { readonly adapterNames: readonly string[]; readonly adapterFunction: boolean }): AdapterImport[] => {
+  const wanted = info.adapterFunction ? null : new Set(info.adapterNames);
+  const require = createRequire(join(project, "package.json"));
+  const found: AdapterImport[] = [];
+  const seen = new Map<string, string>();
+  for (const name of dependencyNames(project)) {
+    const path = packageJsonOf(require, name);
+    if (path === null) continue;
+    const pkg = readJson(path);
+    if (!isRecord(pkg) || !isRecord(pkg["light"])) continue;
+    const adapters = pkg["light"]["adapters"];
+    if (!isRecord(adapters)) continue;
+    for (const [adapter, value] of Object.entries(adapters)) {
+      if (typeof value !== "string") continue;
+      if (wanted !== null && !wanted.has(adapter)) continue;
+      const hash = value.lastIndexOf("#");
+      if (hash <= 0 || hash === value.length - 1) continue;
+      const module = value.slice(0, hash).replace(/^\.\//, "");
+      if (module.length === 0) continue;
+      const specifier = `${name}/${module}`;
+      const previous = seen.get(adapter);
+      if (previous !== undefined && previous !== specifier) throw new Error(`The adapter type "${adapter}" is declared by both ${previous} and ${specifier}`);
+      seen.set(adapter, specifier);
+      found.push({ adapter, specifier, exported: value.slice(hash + 1) });
+    }
+  }
+  return found.sort((a, b) => (a.adapter < b.adapter ? -1 : a.adapter > b.adapter ? 1 : 0));
+};
+
 /** The tags a `tags.json` value holds, or null when it is not one. */
 const tagTable = (value: unknown): RawTagTable | null => {
   if (!isRecord(value)) return null;
@@ -376,6 +413,9 @@ const generation: HostGeneration = {
     const pwaPath = pwaPathOf(project);
     if (pwaPath !== null && !dependencyNames(project).includes("@lightstart/pwa")) throw new Error(`The app has ${pwaPath.slice(project.length + 1)} but does not declare @lightstart/pwa; add it to package.json`);
     const workerPath = join(dir, "worker.js");
+    const adapterTypes = projectAdapterTypes(project, helpers.info);
+    const adapterLines = adapterTypes.map((entry, index) => `import { ${entry.exported} as ProjectAdapter${String(index)} } from ${JSON.stringify(entry.specifier)};`);
+    const adapterExpressions = adapterTypes.map((_entry, index) => `new ProjectAdapter${String(index)}()`);
     let changed = false;
     if (helpers.worker) {
       const models = helpers.flatFiles(join(project, "src", "models"));
@@ -383,7 +423,14 @@ const generation: HostGeneration = {
       const lines = ['import { serveModels } from "@lightstart/app/web/worker-entry";', `import app from "${helpers.specifierFor(project, join(project, "src", `app${helpers.extension}`))}";`];
       models.forEach((file, index) => lines.push(`import model${String(index)} from "${helpers.specifierFor(project, file)}";`));
       if (ownWorker !== null) lines.push(`import worker from "${helpers.specifierFor(project, ownWorker)}";`);
-      lines.push("", "serveModels({");
+      if (adapterTypes.length > 0) {
+        lines.push('import { registerAdapterType } from "@lightstart/app/stores.ts";');
+        lines.push(...adapterLines);
+      }
+      lines.push("");
+      for (const expression of adapterExpressions) lines.push(`registerAdapterType(${expression});`);
+      if (adapterTypes.length > 0) lines.push("");
+      lines.push("serveModels({");
       lines.push("  app,");
       lines.push("  models: {");
       models.forEach((file, index) => lines.push(`    ${JSON.stringify(helpers.nameOf(file))}: model${String(index)},`));
@@ -396,9 +443,15 @@ const generation: HostGeneration = {
     }
     const featureImports: string[] = [];
     const options: string[] = [];
-    if (!helpers.worker && helpers.info.indexeddb) {
-      featureImports.push('import { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";');
-      options.push("adapters: [new IndexedDBAdapterType()],");
+    if (!helpers.worker) {
+      const expressions: string[] = [];
+      if (helpers.info.indexeddb) {
+        featureImports.push('import { IndexedDBAdapterType } from "@lightstart/app/web/indexeddb.ts";');
+        expressions.push("new IndexedDBAdapterType()");
+      }
+      featureImports.push(...adapterLines);
+      expressions.push(...adapterExpressions);
+      if (expressions.length > 0) options.push(`adapters: [${expressions.join(", ")}],`);
     }
     if (helpers.worker) {
       featureImports.push('import { WorkerStores } from "@lightstart/app/web/worker.ts";');
