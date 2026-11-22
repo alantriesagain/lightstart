@@ -13,9 +13,9 @@ const defaults = manifestOf(app, {});
 eq("the name defaults to the app's title", defaults.name, "Budget");
 eq("the short name defaults to the app's name", defaults.short_name, "budget");
 eq("the display defaults to standalone", defaults.display, "standalone");
-eq("the start url is the app's base", defaults.start_url, "/app");
-eq("the scope is the app's base", defaults.scope, "/app");
-eq("an unnamed field stays out", JSON.stringify(defaults), '{"name":"Budget","short_name":"budget","display":"standalone","start_url":"/app","scope":"/app"}');
+eq("the start url is the app's base with its slash", defaults.start_url, "/app/");
+eq("the scope is the worker's: the base with its slash, so /appx is outside it", defaults.scope, "/app/");
+eq("an unnamed field stays out", JSON.stringify(defaults), '{"name":"Budget","short_name":"budget","display":"standalone","start_url":"/app/","scope":"/app/"}');
 
 const root = manifestOf({ name: "budget", base: "" }, {});
 eq("at the root the start url is a slash", root.start_url, "/");

@@ -1,11 +1,12 @@
 /**
  * @file The manifest an app's config and `src/pwa` answer: `name` and
  * `short_name` default from the app, the base goes before each root-relative
- * path, and `start_url` and `scope` are the app's base when not given.
+ * path, and `start_url` and `scope` are the app's base with its trailing slash
+ * (the worker's scope) when not given.
  */
 
 import type { PwaConfig, PwaIcon, PwaManifest, PwaScreenshot, PwaShortcut } from "./index.ts";
-import { basedPath, normalizeBase } from "./base.ts";
+import { baseScope, basedPath, normalizeBase } from "./base.ts";
 
 /** The part of an app's config the manifest reads. */
 export interface PwaApp {
@@ -43,8 +44,8 @@ export const manifestOf = (app: PwaApp, pwa: PwaConfig): PwaManifest => {
     name: pwa.name ?? app.title ?? app.name,
     short_name: pwa.short_name ?? app.name,
     display: pwa.display ?? "standalone",
-    start_url: basedPath(base, pwa.start_url ?? (base === "" ? "/" : base)),
-    scope: basedPath(base, pwa.scope ?? (base === "" ? "/" : base)),
+    start_url: pwa.start_url === undefined ? baseScope(base) : basedPath(base, pwa.start_url),
+    scope: pwa.scope === undefined ? baseScope(base) : basedPath(base, pwa.scope),
   };
   if (pwa.description !== undefined) manifest.description = pwa.description;
   if (pwa.icons !== undefined) manifest.icons = pwa.icons.map((icon) => iconOf(base, icon));

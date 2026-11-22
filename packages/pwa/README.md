@@ -36,8 +36,8 @@ Both `src/pwa.ts` and `src/pwa.js` is an error naming both, as an app has one
 | `theme_color` | none | The manifest's theme colour, and the page's `<meta name="theme-color">` |
 | `background_color` | none | The manifest's background colour |
 | `display` | `"standalone"` | The manifest's display mode |
-| `start_url` | the app's base, or `/` at the root | Where an installed app starts |
-| `scope` | the app's base, or `/` at the root | The paths the app owns |
+| `start_url` | the app's base with its slash (`/budget/`), or `/` at the root | Where an installed app starts |
+| `scope` | the app's base with its slash (`/budget/`, the worker's scope), or `/` at the root | The paths the app owns |
 | `shortcuts` | none | `{ name, short_name?, description?, url, icons? }[]` |
 | `screenshots` | none | `{ src, sizes?, type?, form_factor?, label? }[]` |
 | `categories` | none | The manifest's categories |

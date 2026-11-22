@@ -47,8 +47,8 @@ const check = (project: string, base: string, label: string): void => {
   eq(`${label}: the short name comes from the app's config`, String(manifest["short_name"]), "PWA");
   eq(`${label}: the description is kept`, String(manifest["description"]), "A PWA fixture");
   eq(`${label}: the display defaults to standalone`, String(manifest["display"]), "standalone");
-  eq(`${label}: the start url is the base`, String(manifest["start_url"]), prefix === "" ? "/" : prefix);
-  eq(`${label}: the scope is the base`, String(manifest["scope"]), prefix === "" ? "/" : prefix);
+  eq(`${label}: the start url is the base with its slash`, String(manifest["start_url"]), `${prefix}/`);
+  eq(`${label}: the scope is the base with its slash`, String(manifest["scope"]), `${prefix}/`);
   eq(`${label}: an icon takes the base`, String((manifest["icons"] as { src?: string }[])[0]?.src), `${prefix}/icon.svg`);
 
   const worker = readBuild(project, "sw.js");
