@@ -51,6 +51,17 @@ describe("openPage", () => {
     }
   });
 
+  it("applies a theme the app hands over as an object, not only a preset's name", async () => {
+    const themed = defineApp({ name: "fixture-web", host: "web", theme: { color: { primary: "#123456" } } });
+    const page = await openPage({ ...manifest, app: themed } as AppManifest, { path: "/" });
+    try {
+      await page.shows("Home");
+      assert.equal(getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim(), "#123456");
+    } finally {
+      await page.stop();
+    }
+  });
+
   it("takes its arguments from the test and goes to another route", async () => {
     const withArgs = defineApp({ name: "fixture-web", host: "web", args: { greeting: { default: "hi" } } });
     const page = await openPage({ ...manifest, app: withArgs } as AppManifest, { args: { greeting: "hello" } });

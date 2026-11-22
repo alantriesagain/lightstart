@@ -10,6 +10,7 @@
  */
 
 import type { ArgsSchema } from "@lightstart/cli/types/command.ts";
+import type { ThemeData } from "@lightstart/light/theme/tokens";
 import { appBase } from "./base.ts";
 
 /** Where a store keeps its rows, as its adapter takes it: a folder, a file, a database's name; or one read from the parsed arguments. */
@@ -45,8 +46,8 @@ export interface AppConfig {
    * and the app's `name` with ` | ` between them, as before.
    */
   title?: string;
-  /** A theme preset name; `"default"` when absent. */
-  theme?: string;
+  /** A theme preset name, or the theme itself (the object `applyTheme` takes, tokens and a `dark` side); `"default"` when absent. */
+  theme?: string | ThemeData;
   /** The page's color scheme: `"dark"` or `"light"` pins it, `"system"` follows the reader's preference; `"system"` when absent. */
   scheme?: "dark" | "light" | "system";
   /** The default language the app's words are in; `"en"` when absent. */
@@ -125,7 +126,7 @@ export class App {
   readonly host: string;
   /** The site's display name, when the config names one. */
   readonly title: string | undefined;
-  readonly theme: string | undefined;
+  readonly theme: string | ThemeData | undefined;
   /** The page's color scheme: `"dark"`, `"light"` or `"system"`. */
   readonly scheme: "dark" | "light" | "system";
   /** The default language the app's words are in. */
