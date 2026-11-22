@@ -65,6 +65,26 @@ const copyWithI18n = (): string => {
   return project;
 };
 
+/** Add a dependency name to the project's package.json. */
+const declareDependency = (project: string, name: string): void => {
+  const path = join(project, "package.json");
+  const pkg = JSON.parse(readFileSync(path, "utf8")) as { dependencies?: Record<string, string> };
+  pkg.dependencies = { ...(pkg.dependencies ?? {}), [name]: "workspace:*" };
+  writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
+};
+
+/** A fake package under the project's node_modules, its package.json naming a one-tag table under `light.tags`. */
+const addTagPackage = (project: string, name: string, tag: string, module: string): void => {
+  const dir = join(project, "node_modules", name);
+  mkdirSync(dir, { recursive: true });
+  const style = module.replace(/\.js$/, ".css");
+  writeFileSync(join(dir, "package.json"), `${JSON.stringify({ name, version: "0.0.0", type: "module", light: { tags: "tags.json" } }, null, 2)}\n`);
+  writeFileSync(join(dir, "tags.json"), `${JSON.stringify({ [tag]: { module, style, extends: null, uses: [], loads: [] } }, null, 2)}\n`);
+  writeFileSync(join(dir, module), `import { defineComponent } from "@lightstart/light";\n\nexport default defineComponent({ tag: ${JSON.stringify(tag)} });\n`);
+  writeFileSync(join(dir, style), `:where(${tag}) {}\n`);
+  declareDependency(project, name);
+};
+
 const main = async (): Promise<void> => {
   const project = copy();
   try {
@@ -197,6 +217,44 @@ const main = async (): Promise<void> => {
     ok("and app.ts no longer imports them", cleared !== null && !readFileSync(cleared.manifest, "utf8").includes('import "./components.ts";'));
   } finally {
     rmSync(withComponents, { recursive: true, force: true });
+  }
+
+  const withTags = copyWithComponents();
+  try {
+    addTagPackage(withTags, "@acme/camera", "cam-preview", "cam-preview.js");
+    writeFileSync(join(withTags, "src", "views", "app-home.ts"), 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppHome extends View {\n  render() {\n    return html`<lc-card><cam-preview></cam-preview></lc-card>`;\n  }\n}\n\nView.register("app-home", AppHome);\n');
+    const first = await generate(withTags);
+    ok("a project with a tags package has an app", first !== null);
+    if (first === null) return done();
+
+    const module = readFileSync(join(first.dir, "components.ts"), "utf8");
+    ok("a component's module is imported from its package", module.includes('import lcCard from "@lightstart/components/layout/card.js";'));
+    ok("the package's module is imported from its package", module.includes('import camPreview from "@acme/camera/cam-preview.js";'));
+    ok("the package's tag is defined", module.includes("View.define(camPreview);"));
+
+    const style = readFileSync(join(first.dir, "components.css"), "utf8");
+    ok("a component's style is imported from its package", style.includes('@import "../node_modules/@lightstart/components/layout/card.css";'));
+    ok("the package's style is imported from its package", style.includes('@import "../node_modules/@acme/camera/cam-preview.css";'));
+
+    const second = await generate(withTags);
+    ok("a second tags run changes nothing", second !== null && !second.changed);
+  } finally {
+    rmSync(withTags, { recursive: true, force: true });
+  }
+
+  const withClash = copyWithComponents();
+  try {
+    addTagPackage(withClash, "@acme/camera", "cam-preview", "cam-preview.js");
+    addTagPackage(withClash, "@acme/maps", "cam-preview", "cam-preview.js");
+    writeFileSync(join(withClash, "src", "views", "app-home.ts"), 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppHome extends View {\n  render() {\n    return html`<cam-preview></cam-preview>`;\n  }\n}\n\nView.register("app-home", AppHome);\n');
+    const message = await generate(withClash).then(
+      () => "",
+      (error: unknown) => (error instanceof Error ? error.message : String(error)),
+    );
+    ok("a tag two packages define fails naming the tag", message.includes("cam-preview"));
+    ok("the collision names both packages", message.includes("@acme/camera") && message.includes("@acme/maps"));
+  } finally {
+    rmSync(withClash, { recursive: true, force: true });
   }
 
   const withI18n = copyWithI18n();

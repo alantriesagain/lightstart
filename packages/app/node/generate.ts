@@ -281,7 +281,7 @@ const declaresI18n = (project: string): boolean => {
 };
 
 /** Every dependency the project's manifest names, sorted. */
-const dependencyNames = (project: string): string[] => {
+export const dependencyNames = (project: string): string[] => {
   const pkg = readJson(join(project, "package.json"));
   if (!isRecord(pkg)) return [];
   const names = new Set<string>();
@@ -293,7 +293,7 @@ const dependencyNames = (project: string): string[] => {
 };
 
 /** The path of a dependency's package.json, resolved from the project, or null when it does not resolve. */
-const packageJsonOf = (require: ReturnType<typeof createRequire>, name: string): string | null => {
+export const packageJsonOf = (require: ReturnType<typeof createRequire>, name: string): string | null => {
   try {
     return require.resolve(`${name}/package.json`);
   } catch {

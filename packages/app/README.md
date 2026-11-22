@@ -274,7 +274,23 @@ The generator reads `src/app.ts` and writes only the imports the config uses: `w
 
 On the web, `scheme` is applied before the theme: `"dark"` puts the `dark` class on `<html>` and stops following the preference, `"light"` removes it, and `"system"` follows the reader's choice and the OS. The build writes the class into a prerendered page's `<html>`, so a dark app paints dark on the first frame. The terminal host ignores it.
 
-A web project that declares `@lightstart/components` and writes an `lc-*` tag in `src/` gets two more files. `.light/components.ts` (or `.js`) imports each component module, follows every `extends` and `uses`, and defines each base and used tag before the tag that needs it; `.light/components.css` imports the theme and each component's stylesheet in the same order. When a source names an icon, it also gets `.light/icons.css` (see [Icons](#icons)), which `.light/components.css` imports. `.light/app.ts` (or `.js`) imports `./components.ts` (or `.js`) before the views. A project without the package, or writing no tag, gets none of them.
+A web project that declares a package whose `package.json` names a tag table under `light.tags`, and writes one of its tags in `src/`, gets two more files. `.light/components.ts` (or `.js`) imports each tag's module, follows every `extends` and `uses`, and defines each base and used tag before the tag that needs it; `.light/components.css` imports the theme and each tag's stylesheet in the same order. When a source names an icon, it also gets `.light/icons.css` (see [Icons](#icons)), which `.light/components.css` imports. `.light/app.ts` (or `.js`) imports `./components.ts` (or `.js`) before the views. A project without such a package, or writing no tag, gets none of them. A tag two packages both define is an error naming the tag and both packages.
+
+`@lightstart/components` is one such package: its `package.json` says `"light": { "tags": "tags.json" }`, and its 135 `lc-*` tags come from that table. Any package ships tags the same way. Two parts of the generation stay `@lightstart/components`' own: the mask writer `.light/icons.css` is built with, `@lightstart/components/display/icon-mask.js`, and the helper a table's `loads` tags are defined through, `@lightstart/components/utils/on-demand.js`; a project whose packages use either still needs `@lightstart/components` installed.
+
+### A package's tag table
+
+`light.tags` names a JSON file in the package, resolved from the package's folder. It maps each tag to an entry:
+
+| Field | What |
+|---|---|
+| `module` | The tag module's path in the package, after the package name (`cam-preview.js` or `display/cam-preview.js`); it default-exports what `View.define` takes |
+| `style` | The stylesheet's path in the package, or `null` when the tag has none; the generation imports it from `../node_modules/<package>/<style>` |
+| `extends` | The tag this one extends, or `null`; its module is defined first |
+| `uses` | The tags this one draws, defined before it |
+| `loads` | The tags it defines only when about to draw them (the `@tags-on-demand` case), or `[]`; their modules are imported on demand through `@lightstart/components/utils/on-demand.js` |
+
+A tag's icon names are read from its module source, the same scan the app's own `src/` goes through, so no field carries them. `@lightstart/components` writes its table with `node scripts/tags.js`; a package with a handful of tags can write one by hand or with a small script of its own, as long as the field names above agree.
 
 A project that declares `@lightstart/i18n` gets `.light/locales.ts` (or `.js`), imported by `.light/app.ts` (or `.js`) before the views. It imports `locales/<lang>.js` from every dependency whose `package.json` says `light.locales: true`, and the project's own `src/locales/<lang>.ts`/`.js`, then calls `configureI18n({ locales, defaultLocale, dictionaries })`: every language found, the app's `locale` as the default, and each language's dictionary the packages' merged first with the project's over them (a deep merge, so a key the project writes wins). A project without the package gets no file, and may plug another library into `configureTranslation` itself.
 

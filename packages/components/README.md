@@ -44,6 +44,8 @@ A component that draws other tags needs them defined too, or they stay inert; th
 
 A web app on `@lightstart/app` writes the tags in its views. There is no import and no registration call in the view. Declare `@lightstart/light` and `@lightstart/components` in the project's `package.json`, and `light app` (and `serve`, `build` and `test`, before they start) scans `src/` for the tags. It follows each component's `extends` and the tags it writes, then writes `.light/components.ts` to define every base and used tag before the tag that needs it, and `.light/components.css` with the theme and their stylesheets in that order. `.light/app.ts` imports the definitions before the views, and the app's own stylesheet starts with `@import "../.light/components.css";`. A project without the package, or writing no tag, gets neither file.
 
+This package declares its table with `"light": { "tags": "tags.json" }` in `package.json`, so the generation finds it the same way it finds any other package's tags; `@lightstart/app`'s README documents the table's fields. Two modules stay its own in the generation: `display/icon-mask.js` writes `.light/icons.css`, and `utils/on-demand.js` defines the tags a table lists under `loads`.
+
 ## The catalogue
 
 Every component is documented by its `props` block and the `<component>.demo.js` beside it: the sentence that describes it, its worked examples, and the content a playground puts inside it.
