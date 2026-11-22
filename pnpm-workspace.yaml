@@ -24,6 +24,7 @@ packages:
   - 'packages/pwa'
   - 'packages/mobile'
   - 'packages/maps'
+  - 'packages/p2p'
   - 'packages/highlight'
   - 'packages/form'
   - 'packages/i18n'

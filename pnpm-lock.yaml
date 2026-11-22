@@ -42,6 +42,9 @@ importers:
       '@lightstart/native':
         specifier: workspace:*
         version: link:packages/native
+      '@lightstart/p2p':
+        specifier: workspace:*
+        version: link:packages/p2p
       '@lightstart/pwa':
         specifier: workspace:*
         version: link:packages/pwa
@@ -490,6 +493,34 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
+
+  packages/p2p:
+    dependencies:
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
+    devDependencies:
+      '@lightstart/dev':
+        specifier: workspace:*
+        version: link:../dev
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/plugins:
     dependencies:
