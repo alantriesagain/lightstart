@@ -71,6 +71,11 @@ export interface AppConfig {
   worker?: boolean;
   /** Run every route change inside the browser's view transition where it has one; `false` when absent. */
   transitions?: boolean;
+  /**
+   * Compile the theme's utility classes as the page's views use them; `false` when absent, leaving the
+   * page to its own stylesheet. The web host starts the engine before the root view draws.
+   */
+  utilities?: boolean;
   /** Move focus to the new view's heading after a route change; `true` when absent. */
   focusOnNavigate?: boolean;
   /**
@@ -145,6 +150,8 @@ export class App {
   readonly worker: boolean;
   /** Whether the web host runs each route change inside a view transition. */
   readonly transitions: boolean;
+  /** Whether the web host compiles the theme's utility classes for the views. */
+  readonly utilities: boolean;
   /** Whether the web host moves focus to the new view after a route change. */
   readonly focusOnNavigate: boolean;
   /** The stores the config declares, `main` among them (of the host's default adapter unless it says). */
@@ -173,6 +180,7 @@ export class App {
     this.prerenderRenderer = config.prerender === "markup" || config.prerender === "browser" ? config.prerender : undefined;
     this.worker = config.worker === true;
     this.transitions = config.transitions === true;
+    this.utilities = config.utilities === true;
     this.focusOnNavigate = config.focusOnNavigate !== false;
     const stores: Record<string, StoreConfig> = {};
     stores["main"] = {};

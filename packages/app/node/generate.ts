@@ -177,6 +177,8 @@ export interface AppInfo {
   contentStores: string[];
   /** Whether the app runs route changes inside a view transition. */
   transitions: boolean;
+  /** Whether the app compiles the theme's utility classes. */
+  utilities: boolean;
   /** Whether the app declares any arguments. */
   args: boolean;
 }
@@ -185,7 +187,7 @@ export interface AppInfo {
 export const infoOf = async (app: string): Promise<AppInfo> => {
   try {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
-    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; icons?: unknown; url?: unknown; base?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; args?: unknown; argsSchema?: unknown } }).default;
+    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; icons?: unknown; url?: unknown; base?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; utilities?: unknown; args?: unknown; argsSchema?: unknown } }).default;
     const worker = config !== undefined && config.worker === true;
     let indexeddb = false;
     let adapterFunction = false;
@@ -218,10 +220,11 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
       adapterFunction,
       contentStores: contentStores.sort(),
       transitions: config !== undefined && config.transitions === true,
+      utilities: config !== undefined && config.utilities === true,
       args: config !== undefined && isRecord(config.argsSchema ?? config.args) && Object.keys(config.argsSchema ?? config.args ?? {}).length > 0,
     };
   } catch {
-    return { host: "web", root: "app-root", locale: "en", icons: "lucide", url: undefined, base: "", worker: false, indexeddb: false, adapterNames: [], adapterFunction: false, contentStores: [], transitions: false, args: false };
+    return { host: "web", root: "app-root", locale: "en", icons: "lucide", url: undefined, base: "", worker: false, indexeddb: false, adapterNames: [], adapterFunction: false, contentStores: [], transitions: false, utilities: false, args: false };
   }
 };
 

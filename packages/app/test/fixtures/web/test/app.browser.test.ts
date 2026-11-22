@@ -103,6 +103,30 @@ describe("openPage", () => {
   });
 });
 
+describe("utility classes", () => {
+  it("leaves a utility class uncompiled when the app does not ask", async () => {
+    const page = await openPage(manifest);
+    try {
+      const heading = await page.find("app-home h2");
+      assert.equal(getComputedStyle(heading).paddingLeft, "0px", "a plain app gets no utility rule");
+    } finally {
+      await page.stop();
+    }
+  });
+
+  it("compiles a view's utility class for an app with utilities: true", async () => {
+    const themed = defineApp({ name: "fixture-web", host: "web", url: "https://fixture.example", utilities: true });
+    const page = await openPage({ ...manifest, app: themed } as AppManifest, { path: "/" });
+    try {
+      const heading = await page.find("app-home h2");
+      assert.equal(getComputedStyle(heading).paddingLeft, "16px", "px-4 gives the view its padding");
+    } finally {
+      await page.stop();
+      document.querySelector("style[data-tw-runtime]")?.remove();
+    }
+  });
+});
+
 interface TransitionDocument {
   startViewTransition?: (callback: () => Promise<void> | void) => { finished: Promise<void> };
 }

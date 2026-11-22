@@ -4,14 +4,16 @@
  * no optional feature: the generated entry imports the ones the app's config
  * uses (`web/indexeddb.ts` for the IndexedDB adapter type, `web/local.ts` for
  * stores on the page, `web/worker.ts` for stores in a worker,
- * `web/transitions.ts` for view transitions and `web/args.ts` for the URL's
- * arguments) and hands them to `start` as these shapes.
+ * `web/transitions.ts` for view transitions, `web/utilities.ts` for the
+ * theme's utility classes and `web/args.ts` for the URL's arguments) and hands
+ * them to `start` as these shapes.
  */
 
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import type { RunStore, RouteTransition } from "../run.ts";
 import type { StoreHost } from "../stores.ts";
+import type { ThemeData } from "@lightstart/light/theme/tokens";
 
 /** What the entry hands `start`: where the run's stores open, on the page (`web/local.ts`) or in a worker (`web/worker.ts`). */
 export interface WebStoresFeature {
@@ -47,3 +49,11 @@ export interface WebTransitionFeature {
 
 /** What the entry hands `start` when the app declares arguments. */
 export type WebArgsFeature = (app: App) => Record<string, unknown>;
+
+/** What the entry hands `start` when the app declares `utilities: true`. */
+export interface WebUtilitiesFeature {
+  /** Start the utility-class engine over `theme`; a second start does nothing. */
+  start(theme: ThemeData): void;
+  /** Stop watching the document for utility classes. */
+  stop(): void;
+}

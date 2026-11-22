@@ -4,7 +4,8 @@
  * generated entry imports the optional features the app's config uses and
  * hands them to `start`: the IndexedDB adapter type (`web/indexeddb.ts`), the
  * stores feature (`web/local.ts` or, for `worker: true`, `web/worker.ts`), view
- * transitions and their morph (`web/transitions.ts`), and the URL's arguments
+ * transitions and their morph (`web/transitions.ts`), the theme's utility
+ * classes (`web/utilities.ts`), and the URL's arguments
  * (`web/args.ts`). The routes
  * follow the browser's history, the theme preset is applied as CSS variables,
  * and the root view is mounted in the page, `<app-container>` drawing the view
@@ -34,7 +35,7 @@ import type { OutletPosition } from "../outlet.ts";
 import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
 import type { Head } from "../head.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
-import type { WebArgsFeature, WebStoresFeature, WebTransitionFeature, WebTransitionPort } from "./features.ts";
+import type { WebArgsFeature, WebStoresFeature, WebTransitionFeature, WebTransitionPort, WebUtilitiesFeature } from "./features.ts";
 
 export { currentParams, currentRoute, currentView, href, navigate, url } from "../run.ts";
 
@@ -256,6 +257,8 @@ export interface WebHostOptions {
   transitions?: WebTransitionFeature;
   /** The URL's arguments; absent, the host answers no values. */
   args?: WebArgsFeature;
+  /** The utility-class engine; absent, the host compiles no classes. */
+  utilities?: WebUtilitiesFeature;
   /** What the page adds to the router's options: its locales, its origin, a tracker for a route change's work, a navigation hook. */
   router?: RouterOptions;
   /** `false` when the page applies its own theme and color scheme; the host then applies neither. */
@@ -293,6 +296,7 @@ export class WebHost extends AppHost {
   private readonly onRouted: ((router: RouterCore) => void) | null;
   private readonly transitions: WebTransitionFeature | null;
   private readonly argsFeature: WebArgsFeature | null;
+  protected readonly utilities: WebUtilitiesFeature | null;
   private headEffect: { dispose(): void } | null = null;
   private onScroll: (() => void) | null = null;
   private onPopState: (() => void) | null = null;
@@ -321,6 +325,7 @@ export class WebHost extends AppHost {
     this.storesFeature = options.stores ?? null;
     this.transitions = options.transitions ?? null;
     this.argsFeature = options.args ?? null;
+    this.utilities = options.utilities ?? null;
     this.routerExtra = options.router ?? {};
     this.ownTheme = options.theme !== false;
     this.onRouted = options.routed ?? null;
@@ -381,12 +386,17 @@ export class WebHost extends AppHost {
   private async put(run: AppRun): Promise<void> {
     registerContainer();
     this.transitions?.installStyles();
+    const compileClasses = this.utilities !== null && run.app.utilities;
+    let theme = null;
+    if (this.ownTheme || compileClasses) {
+      const given = run.app.theme;
+      theme = typeof given === "object" && given !== null ? given : await loadPreset(given ?? "default");
+    }
     if (this.ownTheme) {
       applyScheme(run.app.scheme);
-      const given = run.app.theme;
-      const theme = typeof given === "object" && given !== null ? given : await loadPreset(given ?? "default");
       if (theme !== null) applyTheme(theme);
     }
+    if (this.utilities !== null && compileClasses && theme !== null) this.utilities.start(theme);
     this.startPage();
     this.currentHref = run.router?.adapter.getLocation().href ?? null;
     if (run.router !== null) {
@@ -575,6 +585,7 @@ export class WebHost extends AppHost {
 
   unmount(_run: AppRun): void {
     this.transitions?.reset();
+    this.utilities?.stop();
     this.stopListening();
     this.stopLinks();
     this.stopPage();
