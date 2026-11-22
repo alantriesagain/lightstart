@@ -45,6 +45,21 @@ export interface AppHandle {
   stop(): Promise<void>;
 }
 
+/** How long a restored position is held while the page grows into it. */
+const RESTORE_MS = 1500;
+const READER_INPUT = ["wheel", "touchstart", "pointerdown", "keydown"];
+
+/** The column the page scrolls in: an element marked `data-scroll-root`, else none (the window). */
+const scrollRoot = (): Element | null => document.querySelector("[data-scroll-root]");
+
+const readScroll = (): number => scrollRoot()?.scrollTop ?? globalThis.window.scrollY;
+
+const writeScroll = (y: number): void => {
+  const root = scrollRoot();
+  if (root !== null) root.scrollTop = y;
+  else globalThis.window.scrollTo(0, y);
+};
+
 /** Whether this page was rendered ahead of time (`light build --prerender` marks it). */
 const prerenderedPage = (): boolean => (globalThis as { __PRERENDERED__?: unknown }).__PRERENDERED__ === true;
 
@@ -278,6 +293,8 @@ export class WebHost extends AppHost {
   private headEffect: { dispose(): void } | null = null;
   private onScroll: (() => void) | null = null;
   private onPopState: (() => void) | null = null;
+  /** Lets go of a position being restored. */
+  private releaseScroll: () => void = () => undefined;
   private previousScrollRestoration: ScrollRestoration | null = null;
   private historyNavigation = false;
   private readonly scrollPositions = new Map<string, number>();
@@ -435,9 +452,9 @@ export class WebHost extends AppHost {
     this.previousScrollRestoration = win.history.scrollRestoration;
     win.history.scrollRestoration = "manual";
     this.onScroll = (): void => {
-      this.scrollPositions.set(win.location.href, win.scrollY);
+      this.scrollPositions.set(win.location.href, readScroll());
     };
-    win.addEventListener("scroll", this.onScroll, { passive: true });
+    document.addEventListener("scroll", this.onScroll, { capture: true, passive: true });
     this.onPopState = (): void => {
       this.historyNavigation = true;
     };
@@ -451,7 +468,8 @@ export class WebHost extends AppHost {
     const win = globalThis.window;
     const scroll = this.onScroll;
     const pop = this.onPopState;
-    if (scroll !== null) win.removeEventListener("scroll", scroll);
+    if (scroll !== null) document.removeEventListener("scroll", scroll, { capture: true });
+    this.releaseScroll();
     if (pop !== null) win.removeEventListener("popstate", pop);
     this.onScroll = null;
     this.onPopState = null;
@@ -459,6 +477,29 @@ export class WebHost extends AppHost {
       win.history.scrollRestoration = this.previousScrollRestoration;
       this.previousScrollRestoration = null;
     }
+  }
+
+  /** Put a saved position back and hold it for a moment while the page grows into it; the reader's own input, or the next navigation, lets go. */
+  private restoreScroll(y: number): void {
+    writeScroll(y);
+    const until = performance.now() + RESTORE_MS;
+    let held = true;
+    const letGo = (): void => {
+      held = false;
+      for (const type of READER_INPUT) globalThis.window.removeEventListener(type, letGo, { capture: true });
+    };
+    for (const type of READER_INPUT) globalThis.window.addEventListener(type, letGo, { capture: true, passive: true });
+    this.releaseScroll = letGo;
+    const step = (): void => {
+      if (!held) return;
+      if (performance.now() > until) {
+        letGo();
+        return;
+      }
+      if (Math.abs(readScroll() - y) > 1) writeScroll(y);
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
 
   /** After a route change, once the next view has drawn: scroll, move focus and announce the page's title. */
@@ -470,9 +511,10 @@ export class WebHost extends AppHost {
     this.historyNavigation = false;
     const win = globalThis.window;
     const target = historyNavigation ? null : hashTarget(run);
-    if (historyNavigation) win.scrollTo(0, this.scrollPositions.get(win.location.href) ?? 0);
+    this.releaseScroll();
+    if (historyNavigation) this.restoreScroll(this.scrollPositions.get(win.location.href) ?? 0);
     else if (target !== null) target.scrollIntoView();
-    else win.scrollTo(0, 0);
+    else writeScroll(0);
     if (run.app.focusOnNavigate) this.focusView(target);
     const region = this.liveRegion();
     region.textContent = document.title;

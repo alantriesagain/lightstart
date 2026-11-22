@@ -117,6 +117,39 @@ const main = async (): Promise<void> => {
       await walk.close();
     }
 
+    const column = await openBuilt(report.dir, "/");
+    try {
+      await column.evaluate(() => {
+        const root = document.createElement("div");
+        root.setAttribute("data-scroll-root", "");
+        root.style.cssText = "position:fixed;inset:0;overflow-y:auto";
+        root.innerHTML = '<div style="height:4000px"></div>';
+        document.body.append(root);
+        root.scrollTop = 700;
+      });
+      await column.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+      await column.evaluate(() => {
+        const link = document.querySelector('a[href="/about"]');
+        if (link instanceof HTMLElement) link.click();
+      });
+      await column.shows("About these notes");
+      ok("a push starts the scroll root at its top", (await column.evaluate(() => document.querySelector("[data-scroll-root]")?.scrollTop ?? -1)) === 0);
+      await column.back();
+      await column.shows("Seeded note");
+      const back = await column.evaluate(() => new Promise<number>((resolve) => {
+        let left = 200;
+        const check = (): void => {
+          const top = document.querySelector("[data-scroll-root]")?.scrollTop ?? -1;
+          if (top === 700 || left-- <= 0) resolve(top);
+          else setTimeout(check, 10);
+        };
+        check();
+      }));
+      ok("back restores the scroll root where it was", back === 700);
+    } finally {
+      await column.close();
+    }
+
     const morph = await openBuilt(report.dir, "/");
     try {
       await morph.evaluate(() => {
