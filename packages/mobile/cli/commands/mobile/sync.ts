@@ -7,6 +7,7 @@
 import { cpSync, existsSync, mkdirSync, realpathSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { defineCommand } from "@lightstart/cli";
+import { discoverAddons } from "../../../node/addons.ts";
 import { appIdentityOf, readMobile, resolveMobile } from "../../../node/config.ts";
 import { androidDir, assetsDir, rewriteAndroid, targetSdkOf, writeLocalProperties } from "../../../node/template.ts";
 
@@ -37,9 +38,13 @@ export default defineCommand({
     mkdirSync(target, { recursive: true });
     cpSync(build, target, { recursive: true });
     const identity = await appIdentityOf(ctx.projectDir);
-    rewriteAndroid(ctx.projectDir, resolveMobile(config, identity), targetSdkOf(ctx.env));
+    const mobile = resolveMobile(config, identity);
+    const found = discoverAddons(ctx.projectDir, mobile.addons);
+    for (const warning of found.warnings) ctx.log.warn(warning);
+    rewriteAndroid(ctx.projectDir, mobile, targetSdkOf(ctx.env), found.addons);
     writeLocalProperties(ctx.projectDir, ctx.env);
     ctx.log.log(`Synced ${build} to ${target}`);
+    if (found.addons.length > 0) ctx.log.log(`Add-ons: ${found.addons.map((addon) => addon.package).join(", ")}`);
     return 0;
   },
 });

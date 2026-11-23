@@ -4,10 +4,11 @@
  * so a project's own edits survive.
  */
 
-import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ResolvedMobile } from "../index.ts";
+import type { MobileAddon } from "./addons.ts";
 
 const TEMPLATE = join(dirname(fileURLToPath(import.meta.url)), "..", "templates", "android");
 
@@ -88,7 +89,42 @@ const queriesToken = (mobile: ResolvedMobile): string =>
     ? ""
     : `\n    <queries>\n        <package android:name="${xml(mobile.cameraApp)}" />\n    </queries>`;
 
-const tokensOf = (mobile: ResolvedMobile, targetSdk: number): Record<string, string> => ({
+const addonUsesToken = (addons: MobileAddon[]): string => {
+  const seen = new Set<string>();
+  const lines: string[] = [];
+  for (const addon of addons) {
+    for (const permission of addon.permissions) {
+      if (seen.has(permission.name)) continue;
+      seen.add(permission.name);
+      const max = permission.maxSdkVersion === undefined ? "" : ` android:maxSdkVersion="${String(permission.maxSdkVersion)}"`;
+      lines.push(`\n    <uses-permission android:name="${xml(permission.name)}"${max} />`);
+    }
+  }
+  for (const addon of addons) {
+    for (const feature of addon.features) {
+      if (seen.has(feature.name)) continue;
+      seen.add(feature.name);
+      const required = feature.required === undefined ? "" : ` android:required="${feature.required ? "true" : "false"}"`;
+      lines.push(`\n    <uses-feature android:name="${xml(feature.name)}"${required} />`);
+    }
+  }
+  return lines.join("");
+};
+
+const addonDependenciesToken = (addons: MobileAddon[]): string => {
+  const seen = new Set<string>();
+  const lines: string[] = [];
+  for (const addon of addons) {
+    for (const dependency of addon.dependencies) {
+      if (seen.has(dependency)) continue;
+      seen.add(dependency);
+      lines.push(`\n    implementation '${gradle(dependency)}'`);
+    }
+  }
+  return lines.join("");
+};
+
+const tokensOf = (mobile: ResolvedMobile, targetSdk: number, addons: MobileAddon[]): Record<string, string> => ({
   APP_ID: mobile.appId,
   APP_NAME: xml(mobile.name),
   GRADLE_NAME: gradleName(mobile.name),
@@ -101,6 +137,8 @@ const tokensOf = (mobile: ResolvedMobile, targetSdk: number): Record<string, str
   SHARE_TARGETS: gradle(shareTargetsToken(mobile)),
   CAMERA_APP: gradle(mobile.cameraApp ?? ""),
   SHARE_INTENT_FILTERS: shareIntentFilters(mobile),
+  ADDON_USES: addonUsesToken(addons),
+  ADDON_DEPENDENCIES: addonDependenciesToken(addons),
   QUERIES: queriesToken(mobile),
 });
 
@@ -128,22 +166,52 @@ const walk = (source: string, target: string, tokens: Record<string, string>, re
   }
 };
 
-/** Write the whole shell into `mobile/android`, applying the config. */
-export const writeAndroid = (project: string, mobile: ResolvedMobile, targetSdk: number): void => {
-  const target = androidDir(project);
-  mkdirSync(target, { recursive: true });
-  walk(TEMPLATE, target, tokensOf(mobile, targetSdk));
-  chmodSync(join(target, "gradlew"), 0o755);
+const addonsKotlin = (addons: MobileAddon[]): string => {
+  const imports = addons.map((addon) => `import dev.lightstart.mobile.addons.${addon.entry}`);
+  const header = imports.length === 0 ? "" : `${imports.join("\n")}\n\n`;
+  const entries = addons.map((addon) => `        ${addon.entry}(),`).join("\n");
+  const body = entries.length === 0 ? "listOf()" : `listOf(\n${entries}\n    )`;
+  return `package dev.lightstart.mobile\n\n${header}/** The add-ons this shell compiles, in package order. */\nobject Addons {\n    fun create(): List<MobileAddon> = ${body}\n}\n`;
 };
 
-/** Rewrite only the files the config feeds, leaving the project's other edits alone. */
-export const rewriteAndroid = (project: string, mobile: ResolvedMobile, targetSdk: number): void => {
+/** Copy every add-on's Kotlin sources and write `Addons.kt`, clearing the files a removed add-on left. */
+export const writeAddons = (project: string, addons: MobileAddon[]): void => {
+  const packageDir = join(androidDir(project), "app", "src", "main", "java", "dev", "lightstart", "mobile");
+  const addonsDir = join(packageDir, "addons");
+  rmSync(addonsDir, { recursive: true, force: true });
+  mkdirSync(addonsDir, { recursive: true });
+  const owners = new Map<string, string>();
+  for (const addon of addons) {
+    const sourceDir = join(addon.dir, addon.sources);
+    for (const entry of readdirSync(sourceDir)) {
+      if (!entry.endsWith(".kt") || !statSync(join(sourceDir, entry)).isFile()) continue;
+      const owner = owners.get(entry);
+      if (owner !== undefined) throw new Error(`Add-ons ${owner} and ${addon.package} both ship ${entry}; rename one of them`);
+      owners.set(entry, addon.package);
+      cpSync(join(sourceDir, entry), join(addonsDir, entry));
+    }
+  }
+  writeFileSync(join(packageDir, "Addons.kt"), addonsKotlin(addons), "utf8");
+};
+
+/** Write the whole shell into `mobile/android`, applying the config and the discovered add-ons. */
+export const writeAndroid = (project: string, mobile: ResolvedMobile, targetSdk: number, addons: MobileAddon[] = []): void => {
   const target = androidDir(project);
-  const tokens = tokensOf(mobile, targetSdk);
+  mkdirSync(target, { recursive: true });
+  walk(TEMPLATE, target, tokensOf(mobile, targetSdk, addons));
+  chmodSync(join(target, "gradlew"), 0o755);
+  writeAddons(project, addons);
+};
+
+/** Rewrite only the files the config feeds, leaving the project's other edits alone, and sync the add-ons. */
+export const rewriteAndroid = (project: string, mobile: ResolvedMobile, targetSdk: number, addons: MobileAddon[] = []): void => {
+  const target = androidDir(project);
+  const tokens = tokensOf(mobile, targetSdk, addons);
   for (const relative of CONFIG_FILES) {
     mkdirSync(dirname(join(target, relative)), { recursive: true });
     writeFileSync(join(target, relative), render(relative, tokens), "utf8");
   }
+  writeAddons(project, addons);
 };
 
 /** Point Gradle at the SDK, so a build needs no `ANDROID_HOME` in its own environment. */

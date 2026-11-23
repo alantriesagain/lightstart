@@ -6,7 +6,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** The shell half of light's request protocol: `[id, method, args]` in, `{ id, ok, value | error }` out. */
-class Bridge(private val activity: MainActivity) {
+class Bridge(private val activity: MainActivity, private val addons: List<MobileAddon> = emptyList()) {
 
     @Volatile private var reply: JavaScriptReplyProxy? = null
     private val outbox = ArrayDeque<String>()
@@ -23,6 +23,15 @@ class Bridge(private val activity: MainActivity) {
         val method = request.optString(1, "")
         val args = request.optJSONArray(2) ?: JSONArray()
         try {
+            for (addon in addons) {
+                val owned = addon.handle(
+                    method,
+                    args,
+                    { value -> answer(id, true, value) },
+                    { message -> answer(id, false, message) },
+                )
+                if (owned) return
+            }
             when (method) {
                 "\$ready" -> answer(id, true, ready())
                 "share" -> {
@@ -62,8 +71,14 @@ class Bridge(private val activity: MainActivity) {
     }
 
     private fun ready(): JSONObject {
-        val capabilities = JSONArray().put("share").put("capture").put("reminders")
-        if (BuildConfig.SHARE_TARGETS.isNotEmpty()) capabilities.put("shareTarget")
+        val families = LinkedHashSet<String>()
+        families.add("share")
+        families.add("capture")
+        families.add("reminders")
+        if (BuildConfig.SHARE_TARGETS.isNotEmpty()) families.add("shareTarget")
+        for (addon in addons) families.addAll(addon.families)
+        val capabilities = JSONArray()
+        for (family in families) capabilities.put(family)
         return JSONObject().put("platform", "android").put("capabilities", capabilities)
     }
 

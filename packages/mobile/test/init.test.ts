@@ -69,6 +69,12 @@ const main = (): void => {
     ok("the share targets reach build.gradle", gradle.includes("SHARE_TARGETS") && gradle.includes("/capture|image/*,video/*,text/plain"));
     ok("the camera app reaches build.gradle", gradle.includes("CAMERA_APP") && gradle.includes("com.example.camera"));
 
+    const addonsDir = join(project, "mobile", "android", "app", "src", "main", "java", "dev", "lightstart", "mobile", "addons");
+    ok("the add-on's Kotlin file is copied", existsSync(join(addonsDir, "EchoAddon.kt")));
+    ok("Addons.kt lists the add-on", text(project, "app/src/main/java/dev/lightstart/mobile/Addons.kt").includes("EchoAddon()"));
+    ok("the add-on's permission reaches the manifest", manifest.includes('android:name="android.permission.RECORD_AUDIO"'));
+    ok("the add-on's feature reaches the manifest", manifest.includes('android:name="android.hardware.microphone"') && manifest.includes('android:required="false"'));
+
     const leftovers = files(join(project, "mobile", "android"))
       .filter((path) => !path.endsWith(".jar"))
       .flatMap((path) => {
@@ -88,6 +94,21 @@ const main = (): void => {
     ok("the forced init restores the app name", text(project, "app/src/main/res/values/strings.xml").includes(">Mobile Fixture<"));
   } finally {
     rmSync(project, { recursive: true, force: true });
+  }
+
+  const withGradle = copy();
+  try {
+    const manifestPath = join(withGradle, "package.json");
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { dependencies: Record<string, string> };
+    manifest.dependencies["@fixture/gradle-addon"] = "*";
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    const init = run(withGradle, ["mobile:init"]);
+    eqn("an add-on with a dependency initialises", init.status, 0);
+    const gradle = readFileSync(join(withGradle, "mobile", "android", "app", "build.gradle"), "utf8");
+    ok("a declared Gradle dependency reaches build.gradle", gradle.includes("implementation 'com.example:demo:1.0.0'"));
+    ok("the unit-only add-on's file is copied", existsSync(join(withGradle, "mobile", "android", "app", "src", "main", "java", "dev", "lightstart", "mobile", "addons", "GradleAddon.kt")));
+  } finally {
+    rmSync(withGradle, { recursive: true, force: true });
   }
   done();
 };
