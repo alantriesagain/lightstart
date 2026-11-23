@@ -14,7 +14,7 @@ import {
   resolveSpacing,
 } from "./resolve.js";
 import { parseArbitrary } from "./parse.js";
-/** @import { ColorScale, DynamicRuleFn, MatchedRule, ParsedClass, RuleInput, RuleResult, SpacingOptions, ValueScale } from "./types.ts" */
+/** @import { ColorScale, DynamicRuleFn, MatchedRule, ParsedClass, RuleInput, SpacingOptions, ValueScale } from "./types.ts" */
 
 /** @param {string} value */
 const negate = (value) =>
