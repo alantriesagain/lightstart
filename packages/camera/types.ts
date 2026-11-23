@@ -64,7 +64,7 @@ export interface CameraExif {
   iso: number | null;
 }
 
-/** What a devices backend would be handed: the slot a devices package installs, named here so the camera package needs no import of it. */
+/** The `devices` controller handle the device backend reads: its preview, controls, shutter and media. */
 export interface DevicesSlot {
   available: boolean;
   device?: { id: string } | null;
@@ -75,7 +75,7 @@ export interface DevicesSlot {
   startPreview: (opts?: { fit?: "contain" | "cover"; expires?: boolean }) => Promise<boolean>;
   stopPreview?: () => Promise<void>;
   setPreviewBounds?: (rect: { x?: number; y?: number; width?: number; height?: number; fit?: string } | null) => void;
-  capturePreviewFrame: () => Promise<string | null>;
+  capturePreviewFrame: () => Promise<string | { url: string } | null>;
   capturePhoto?: () => Promise<unknown>;
   startRecording: () => Promise<unknown>;
   stopRecording: () => Promise<unknown>;

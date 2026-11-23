@@ -25,6 +25,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `lib/pair.js` | The `#cam=` v1 payload codec |
 | `lib/link-backend.js` | Another phone's camera behind `CameraBackend` |
 | `lib/link-slot.js` | Where the controller leaves its handle for the link backend |
+| `lib/device-backend.js` | A connected action camera behind `CameraBackend`: the `devices` controller handle's preview, controls, lenses and shutter |
 | `controllers/link.js` | The `cameraLink` controller: host, serve, scan, shoot, controls, the remembered pair |
 | `views/preview.js`, `views/preview.css` | `<camera-preview>` and its stylesheet |
 | `views/pair.js`, `views/scan.js`, `views/link.js` | The pairing sheet, the QR scanner and the serving screen |
@@ -42,6 +43,7 @@ The framework-free modules stay JavaScript with JSDoc types, as light's componen
 - The mobile shell is the environment seam: `mobile.present`, `mobile.can("camera")`, `mobile.request(type, [payload])`, `mobile.on(name, fn)` from `@lightstart/mobile/page`. There is no `$APP`.
 - The native file URLs the shell answers are fetched as URLs (`/__mobile/native/<file>`); the backend does not rebuild paths.
 - State is a signal and an occurrence is an event: `cameraOrientation` and `cameraMeter` are signals holding the latest reading, `cameraFrame` is an event. `installCameraSignals` installs the shell listeners once, lazily, when the native backend starts.
+- The device source is loaded on demand: `select-backend.js` imports `lib/device-backend.js` dynamically, so an app that never asks for a device does not load `@lightstart/devices`. The backend reads the `devices` controller handle, and its options take another handle so a test drives a fake.
 - The peer room is structural: `remote.js` imports nothing of `@lightstart/p2p`, and a `Room` joined with `video: true` satisfies `RemoteRoom`. `controllers/link.js` uses `joinRoom`, `randomId`, `resolveSignalers` and `p2pConfig`.
 - The pairing payload (`lib/pair.js`) is unchanged: the v1 `#cam=` codec.
 - The controller is a `defineController({ name: "cameraLink", ... })` literal; views import its handle directly and bind `sync:` props to it. `remembered` syncs to the `local` adapter under `camera-link:pair`.
@@ -55,7 +57,8 @@ The framework-free modules stay JavaScript with JSDoc types, as light's componen
 |---|---|
 | `createCamera(opts)` and the `CameraInstance` methods | an app's capture screen |
 | `selectBackend`, `isSupported`, `isNativeShell`, `hasNativeCamera` | an app choosing a backend and the link controller |
-| `CameraBackend` and its result shapes | the web, native and link backends |
+| `CameraBackend` and its result shapes | the web, native, link and device backends |
+| `createDeviceBackend`, `DevicesSlot` and the device source | an app's capture screen and a test's fake devices handle |
 | `serveCamera` / `viewCamera` and `RemoteRoom` | an app's own pair flow and the link controller |
 | `cameraOrientation`, `cameraMeter`, `cameraFrame` and `installCameraSignals` | a viewfinder guide and a native-frame consumer |
 | `openCameraLink()` | an app booting from a `#cam=` link |
