@@ -1,0 +1,46 @@
+{
+  "devices-connect": {
+    "module": "views/connect.js",
+    "style": null,
+    "extends": null,
+    "uses": [
+      "lc-empty-state",
+      "lc-flex",
+      "lc-button",
+      "lc-badge"
+    ],
+    "loads": []
+  },
+  "devices-manager": {
+    "module": "views/manager.js",
+    "style": null,
+    "extends": null,
+    "uses": [
+      "lc-empty-state",
+      "lc-flex",
+      "lc-button",
+      "lc-icon",
+      "lc-spinner"
+    ],
+    "loads": []
+  },
+  "devices-controls": {
+    "module": "views/controls.js",
+    "style": null,
+    "extends": null,
+    "uses": [
+      "lc-flex",
+      "lc-label"
+    ],
+    "loads": []
+  },
+  "devices-status": {
+    "module": "views/status.js",
+    "style": null,
+    "extends": null,
+    "uses": [
+      "lc-icon"
+    ],
+    "loads": []
+  }
+}

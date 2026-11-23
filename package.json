@@ -32,6 +32,8 @@
     "@lightstart/create": "workspace:*",
     "@lightstart/design": "workspace:*",
     "@lightstart/dev": "workspace:*",
+    "@lightstart/devices": "workspace:*",
+    "@lightstart/gopro": "workspace:*",
     "@lightstart/maps": "workspace:*",
     "@lightstart/mobile": "workspace:*",
     "@lightstart/native": "workspace:*",
