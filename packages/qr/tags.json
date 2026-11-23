@@ -1,0 +1,9 @@
+{
+  "qr-code": {
+    "module": "views/code.js",
+    "style": null,
+    "extends": null,
+    "uses": [],
+    "loads": []
+  }
+}

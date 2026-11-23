@@ -36,6 +36,7 @@
     "@lightstart/native": "workspace:*",
     "@lightstart/p2p": "workspace:*",
     "@lightstart/pwa": "workspace:*",
+    "@lightstart/qr": "workspace:*",
     "@lightstart/server": "workspace:*",
     "@types/node": "^26.6.5",
     "eslint": "^9.17.0",
