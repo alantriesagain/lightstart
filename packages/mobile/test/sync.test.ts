@@ -41,6 +41,8 @@ const main = (): void => {
     eqn("mobile:init exits 0", run(project, ["mobile:init"]).status, 0);
     const addonsDir = join(project, "mobile", "android", "app", "src", "main", "java", "dev", "lightstart", "mobile", "addons");
     ok("init copies the add-on's Kotlin file", existsSync(join(addonsDir, "EchoAddon.kt")));
+    ok("init writes the add-on's permission flags", text(project, "app/src/main/AndroidManifest.xml").includes('android:usesPermissionFlags="neverForLocation"'));
+    ok("init writes the add-on's service", text(project, "app/src/main/AndroidManifest.xml").includes("dev.lightstart.mobile.addons.EchoService"));
 
     const manifestPath = join(project, "package.json");
     const projectManifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { dependencies: Record<string, string> };
@@ -79,9 +81,12 @@ export default defineMobile({
     ok("the new shareTarget reaches build.gradle", text(project, "app/build.gradle").includes("/listen|audio/*"));
     ok("no template placeholders remain after sync", !/__[A-Z_]+__/.test(manifest));
     ok("removing the add-on dependency removes its Kotlin file", !existsSync(join(addonsDir, "EchoAddon.kt")));
+    ok("removing the add-on dependency removes its service file", !existsSync(join(addonsDir, "EchoService.kt")));
     ok("removing the add-on dependency empties Addons.kt", text(project, "app/src/main/java/dev/lightstart/mobile/Addons.kt").includes("listOf()") && !text(project, "app/src/main/java/dev/lightstart/mobile/Addons.kt").includes("EchoAddon"));
     ok("removing the add-on dependency removes its permission", !manifest.includes("android.permission.RECORD_AUDIO"));
+    ok("removing the add-on dependency removes its permission flags", !manifest.includes("android.permission.BLUETOOTH_SCAN") && !manifest.includes("neverForLocation"));
     ok("removing the add-on dependency removes its feature", !manifest.includes("android.hardware.microphone"));
+    ok("removing the add-on dependency removes its service", !manifest.includes("dev.lightstart.mobile.addons.EchoService"));
   } finally {
     rmSync(project, { recursive: true, force: true });
   }

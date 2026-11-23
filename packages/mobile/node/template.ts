@@ -9,6 +9,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ResolvedMobile } from "../index.ts";
 import type { MobileAddon } from "./addons.ts";
+import { mergeAddonUses } from "./addons.ts";
 
 const TEMPLATE = join(dirname(fileURLToPath(import.meta.url)), "..", "templates", "android");
 
@@ -119,26 +120,27 @@ const queriesToken = (mobile: ResolvedMobile): string =>
     : `\n    <queries>\n        <package android:name="${xml(mobile.cameraApp)}" />\n    </queries>`;
 
 const addonUsesToken = (addons: MobileAddon[]): string => {
-  const seen = new Set<string>();
+  const uses = mergeAddonUses(addons);
   const lines: string[] = [];
-  for (const addon of addons) {
-    for (const permission of addon.permissions) {
-      if (seen.has(permission.name)) continue;
-      seen.add(permission.name);
-      const max = permission.maxSdkVersion === undefined ? "" : ` android:maxSdkVersion="${String(permission.maxSdkVersion)}"`;
-      lines.push(`\n    <uses-permission android:name="${xml(permission.name)}"${max} />`);
-    }
+  for (const permission of uses.permissions) {
+    const max = permission.maxSdkVersion === undefined ? "" : ` android:maxSdkVersion="${String(permission.maxSdkVersion)}"`;
+    const flags = permission.usesPermissionFlags === undefined ? "" : ` android:usesPermissionFlags="${xml(permission.usesPermissionFlags)}"`;
+    lines.push(`\n    <uses-permission android:name="${xml(permission.name)}"${max}${flags} />`);
   }
-  for (const addon of addons) {
-    for (const feature of addon.features) {
-      if (seen.has(feature.name)) continue;
-      seen.add(feature.name);
-      const required = feature.required === undefined ? "" : ` android:required="${feature.required ? "true" : "false"}"`;
-      lines.push(`\n    <uses-feature android:name="${xml(feature.name)}"${required} />`);
-    }
+  for (const feature of uses.features) {
+    const required = feature.required === undefined ? "" : ` android:required="${feature.required ? "true" : "false"}"`;
+    lines.push(`\n    <uses-feature android:name="${xml(feature.name)}"${required} />`);
   }
   return lines.join("");
 };
+
+const addonServicesToken = (addons: MobileAddon[]): string =>
+  mergeAddonUses(addons)
+    .services.map((service) => {
+      const type = service.foregroundServiceType === undefined ? "" : ` android:foregroundServiceType="${xml(service.foregroundServiceType)}"`;
+      return `\n\n        <service android:name="dev.lightstart.mobile.addons.${service.name}" android:exported="${service.exported === true ? "true" : "false"}"${type} />`;
+    })
+    .join("");
 
 const addonDependenciesToken = (addons: MobileAddon[]): string => {
   const seen = new Set<string>();
@@ -170,6 +172,7 @@ const tokensOf = (mobile: ResolvedMobile, targetSdk: number, addons: MobileAddon
   SHARE_INTENT_FILTERS: shareIntentFilters(mobile),
   RESULT_ACTIVITIES: resultActivitiesToken(mobile),
   ADDON_USES: addonUsesToken(addons),
+  ADDON_SERVICES: addonServicesToken(addons),
   ADDON_DEPENDENCIES: addonDependenciesToken(addons),
   QUERIES: queriesToken(mobile),
 });

@@ -76,9 +76,12 @@ const main = (): void => {
 
     const addonsDir = join(project, "mobile", "android", "app", "src", "main", "java", "dev", "lightstart", "mobile", "addons");
     ok("the add-on's Kotlin file is copied", existsSync(join(addonsDir, "EchoAddon.kt")));
+    ok("the add-on's service file is copied", existsSync(join(addonsDir, "EchoService.kt")));
     ok("Addons.kt lists the add-on", text(project, "app/src/main/java/dev/lightstart/mobile/Addons.kt").includes("EchoAddon()"));
     ok("the add-on's permission reaches the manifest", manifest.includes('android:name="android.permission.RECORD_AUDIO"'));
+    ok("the add-on's permission flags reach the manifest", manifest.includes('android:name="android.permission.BLUETOOTH_SCAN"') && manifest.includes('android:usesPermissionFlags="neverForLocation"'));
     ok("the add-on's feature reaches the manifest", manifest.includes('android:name="android.hardware.microphone"') && manifest.includes('android:required="false"'));
+    ok("the add-on's service reaches the manifest", manifest.includes('android:name="dev.lightstart.mobile.addons.EchoService"') && manifest.includes('android:exported="false"') && manifest.includes('android:foregroundServiceType="dataSync"'));
 
     const leftovers = files(join(project, "mobile", "android"))
       .filter((path) => !path.endsWith(".jar"))

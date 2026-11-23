@@ -9,16 +9,24 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { MobileAddonsConfig } from "../index.ts";
 
-/** One `<uses-permission>` an add-on needs, with Android's optional maximum API. */
+/** One `<uses-permission>` an add-on needs, with Android's optional maximum API and flags. */
 export interface MobileAddonPermission {
   name: string;
   maxSdkVersion?: number;
+  usesPermissionFlags?: string;
 }
 
 /** One `<uses-feature>` an add-on needs. */
 export interface MobileAddonFeature {
   name: string;
   required?: boolean;
+}
+
+/** One `<service>` an add-on declares, as a class name in its own Kotlin sources. */
+export interface MobileAddonService {
+  name: string;
+  foregroundServiceType?: string;
+  exported?: boolean;
 }
 
 /** A package's `light.android` declaration, as read and validated. */
@@ -29,8 +37,36 @@ export interface MobileAddon {
   entry: string;
   permissions: MobileAddonPermission[];
   features: MobileAddonFeature[];
+  services: MobileAddonService[];
   dependencies: string[];
 }
+
+/** The permissions, features and services the add-ons together ask the manifest for. */
+export interface AddonUses {
+  permissions: MobileAddonPermission[];
+  features: MobileAddonFeature[];
+  services: MobileAddonService[];
+}
+
+/** Android's foreground service types, the values `android:foregroundServiceType` accepts. */
+const FOREGROUND_SERVICE_TYPES = [
+  "camera",
+  "connectedDevice",
+  "dataSync",
+  "location",
+  "mediaPlayback",
+  "mediaProjection",
+  "microphone",
+  "phoneCall",
+  "remoteMessaging",
+  "shortService",
+  "specialUse",
+  "systemExempted",
+  "health",
+];
+
+const FLAGS = /^[A-Za-z]+(?:\|[A-Za-z]+)*$/;
+const CLASS_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 /** What discovery found, plus the warnings the commands print. */
 export interface AddonDiscovery {
@@ -60,10 +96,36 @@ const permissionOf = (value: unknown, addon: string, index: number): MobileAddon
   const name = value["name"];
   if (!nonEmpty(name)) throw new Error(`${addon} has light.android.permissions[${index}].name that is not a permission name`);
   const maxSdkVersion = value["maxSdkVersion"];
-  if (maxSdkVersion === undefined) return { name };
-  if (typeof maxSdkVersion !== "number" || !Number.isInteger(maxSdkVersion) || maxSdkVersion <= 0)
+  if (maxSdkVersion !== undefined && (typeof maxSdkVersion !== "number" || !Number.isInteger(maxSdkVersion) || maxSdkVersion <= 0))
     throw new Error(`${addon} has light.android.permissions[${index}].maxSdkVersion that is not a positive integer`);
-  return { name, maxSdkVersion };
+  const usesPermissionFlags = value["usesPermissionFlags"];
+  if (usesPermissionFlags !== undefined && (typeof usesPermissionFlags !== "string" || !FLAGS.test(usesPermissionFlags)))
+    throw new Error(`${addon} has light.android.permissions[${index}].usesPermissionFlags that is not a "|"-separated list of flag names`);
+  const permission: MobileAddonPermission = { name };
+  if (maxSdkVersion !== undefined) permission.maxSdkVersion = maxSdkVersion;
+  if (usesPermissionFlags !== undefined) permission.usesPermissionFlags = usesPermissionFlags;
+  return permission;
+};
+
+const serviceOf = (value: unknown, addon: string, index: number): MobileAddonService => {
+  if (!isRecord(value)) throw new Error(`${addon} has light.android.services[${index}] that is not an object; use { name, foregroundServiceType?, exported? }`);
+  const name = value["name"];
+  if (!nonEmpty(name) || !CLASS_NAME.test(name))
+    throw new Error(`${addon} has light.android.services[${index}].name that is not a Kotlin class name`);
+  const foregroundServiceType = value["foregroundServiceType"];
+  if (foregroundServiceType !== undefined) {
+    if (typeof foregroundServiceType !== "string" || foregroundServiceType === "" || !foregroundServiceType.split("|").every((type) => FOREGROUND_SERVICE_TYPES.includes(type)))
+      throw new Error(
+        `${addon} has light.android.services[${index}].foregroundServiceType that is not a "|"-separated set of Android foreground service types (${FOREGROUND_SERVICE_TYPES.join(", ")})`,
+      );
+  }
+  const exported = value["exported"];
+  if (exported !== undefined && typeof exported !== "boolean")
+    throw new Error(`${addon} has light.android.services[${index}].exported that is not a boolean`);
+  const service: MobileAddonService = { name };
+  if (foregroundServiceType !== undefined) service.foregroundServiceType = foregroundServiceType;
+  if (exported !== undefined) service.exported = exported;
+  return service;
 };
 
 const featureOf = (value: unknown, addon: string, index: number): MobileAddonFeature => {
@@ -85,7 +147,7 @@ const listOf = <T>(value: unknown, addon: string, field: string, item: (entry: u
 };
 
 const addonOf = (pkg: string, dir: string, value: unknown): MobileAddon => {
-  if (!isRecord(value)) throw new Error(`${pkg} has light.android that is not an object; declare sources, entry, permissions, features or dependencies`);
+  if (!isRecord(value)) throw new Error(`${pkg} has light.android that is not an object; declare sources, entry, permissions, features, services or dependencies`);
   const sources = value["sources"] ?? "android";
   if (!nonEmpty(sources) || sources.startsWith("/") || sources.split("/").includes(".."))
     throw new Error(`${pkg} has light.android.sources that is not a folder relative to the package`);
@@ -106,6 +168,7 @@ const addonOf = (pkg: string, dir: string, value: unknown): MobileAddon => {
     entry,
     permissions: listOf(value["permissions"], pkg, "permissions", (permission, index) => permissionOf(permission, pkg, index)),
     features: listOf(value["features"], pkg, "features", (feature, index) => featureOf(feature, pkg, index)),
+    services: listOf(value["services"], pkg, "services", (service, index) => serviceOf(service, pkg, index)),
     dependencies,
   };
 };
@@ -114,6 +177,56 @@ const dependenciesOf = (project: string): string[] => {
   const manifest = readJson(join(project, "package.json"));
   const dependencies = manifest?.["dependencies"];
   return isRecord(dependencies) ? Object.keys(dependencies).sort() : [];
+};
+
+const samePermission = (a: MobileAddonPermission, b: MobileAddonPermission): boolean =>
+  a.name === b.name && a.maxSdkVersion === b.maxSdkVersion && a.usesPermissionFlags === b.usesPermissionFlags;
+
+const sameService = (a: MobileAddonService, b: MobileAddonService): boolean =>
+  a.name === b.name && a.foregroundServiceType === b.foregroundServiceType && a.exported === b.exported;
+
+/**
+ * Merge what the add-ons ask the manifest for, keeping each name once. Two
+ * add-ons that declare one permission with different flags or `maxSdkVersion`,
+ * or one service name, are an error naming both packages.
+ */
+export const mergeAddonUses = (addons: MobileAddon[]): AddonUses => {
+  const permissions: MobileAddonPermission[] = [];
+  const permissionOwners = new Map<string, { addon: string; permission: MobileAddonPermission }>();
+  const features: MobileAddonFeature[] = [];
+  const featureOwners = new Map<string, string>();
+  const services: MobileAddonService[] = [];
+  const serviceOwners = new Map<string, { addon: string; service: MobileAddonService }>();
+  for (const addon of addons) {
+    for (const permission of addon.permissions) {
+      const owner = permissionOwners.get(permission.name);
+      if (owner === undefined) {
+        permissionOwners.set(permission.name, { addon: addon.package, permission });
+        permissions.push(permission);
+        continue;
+      }
+      if (!samePermission(owner.permission, permission))
+        throw new Error(`Add-ons ${owner.addon} and ${addon.package} both declare ${permission.name} with different flags or maxSdkVersion; make their declarations equal`);
+    }
+    for (const feature of addon.features) {
+      if (featureOwners.has(feature.name)) continue;
+      featureOwners.set(feature.name, addon.package);
+      features.push(feature);
+    }
+    for (const service of addon.services) {
+      const owner = serviceOwners.get(service.name);
+      if (owner === undefined) {
+        serviceOwners.set(service.name, { addon: addon.package, service });
+        services.push(service);
+        continue;
+      }
+      if (owner.addon !== addon.package)
+        throw new Error(`Add-ons ${owner.addon} and ${addon.package} both declare service ${service.name}; rename one of them`);
+      if (!sameService(owner.service, service))
+        throw new Error(`${addon.package} declares service ${service.name} twice with different settings; make its declarations equal`);
+    }
+  }
+  return { permissions, features, services };
 };
 
 /**
@@ -137,5 +250,7 @@ export const discoverAddons = (project: string, options: MobileAddonsConfig = {}
     if (!addons.some((addon) => addon.package === name))
       warnings.push(`addons.disable names ${name}, which is not a discovered Android add-on`);
   }
-  return { addons: addons.filter((addon) => !disabled.has(addon.package)), warnings };
+  const enabled = addons.filter((addon) => !disabled.has(addon.package));
+  mergeAddonUses(enabled);
+  return { addons: enabled, warnings };
 };
