@@ -89,6 +89,20 @@ export interface MobileCaptureResult {
   name: string;
 }
 
+/** What another app asked this app for, when the shell opened a result request. */
+export interface MobileResultRequest {
+  kind: "capture" | "pick";
+  type: string;
+  output: boolean;
+}
+
+/** The page's side of answering another app's capture or pick request. */
+export interface MobileResultApi {
+  request(): Promise<MobileResultRequest | null>;
+  answer(file: Blob | string): Promise<void>;
+  cancel(): Promise<void>;
+}
+
 /** The page's mobile shell: presence, readiness, capabilities, requests and events. */
 export interface MobileApi {
   readonly present: boolean;
@@ -100,6 +114,7 @@ export interface MobileApi {
   shared(): MobileShared | null;
   readonly reminders: MobileRemindersApi;
   capture(options?: MobileCaptureOptions): Promise<MobileCaptureResult | null>;
+  readonly result: MobileResultApi;
 }
 
 interface ShellEvent {
@@ -297,5 +312,54 @@ const capture = async (options: MobileCaptureOptions = {}): Promise<MobileCaptur
   return captureOnWeb(kind);
 };
 
+const base64Of = async (blob: Blob): Promise<string> => {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = "";
+  const step = 0x8000;
+  for (let index = 0; index < bytes.length; index += step) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + step));
+  }
+  return btoa(binary);
+};
+
+const blobOf = async (file: Blob | string): Promise<Blob> => {
+  if (typeof file !== "string") return file;
+  const response = await fetch(file);
+  if (!response.ok) throw new Error(`[mobile] the result file cannot be read: ${response.status}`);
+  return response.blob();
+};
+
+const fileNameOf = (blob: Blob, type: string): string => {
+  const name = (blob as { name?: unknown }).name;
+  if (typeof name === "string" && name.trim() !== "") return name;
+  const extension = type.split("/")[1]?.split("+")[0] ?? "bin";
+  return `result.${extension}`;
+};
+
+const resultRequest = async (): Promise<MobileResultRequest | null> => {
+  if (!present) return null;
+  const value = await request<unknown>("result.request");
+  if (!isRecord(value)) return null;
+  const kind = value["kind"];
+  const type = value["type"];
+  if ((kind !== "capture" && kind !== "pick") || typeof type !== "string") return null;
+  return { kind, type, output: value["output"] === true };
+};
+
+const resultAnswer = async (file: Blob | string): Promise<void> => {
+  if (!present) throw new Error("[mobile] answering a result needs the mobile shell");
+  const blob = await blobOf(file);
+  const type = blob.type === "" ? "application/octet-stream" : blob.type;
+  const data = await base64Of(blob);
+  await request("result.answer", [{ data, type, name: fileNameOf(blob, type) }]);
+};
+
+const resultCancel = async (): Promise<void> => {
+  if (!present) throw new Error("[mobile] cancelling a result needs the mobile shell");
+  await request("result.cancel");
+};
+
+const result: MobileResultApi = { request: resultRequest, answer: resultAnswer, cancel: resultCancel };
+
 /** The page's mobile shell, present or not. */
-export const mobile: MobileApi = { present, ready: readyPromise, can, request, on, share, shared, reminders, capture };
+export const mobile: MobileApi = { present, ready: readyPromise, can, request, on, share, shared, reminders, capture, result };

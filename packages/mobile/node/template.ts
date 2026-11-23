@@ -84,6 +84,35 @@ const shareIntentFilters = (mobile: ResolvedMobile): string => {
   return filters.length === 0 ? "" : `\n${filters.join("\n")}`;
 };
 
+const resultTypes = (mobile: ResolvedMobile): string[] => mobile.resultTarget?.types ?? ["image/*", "video/*"];
+
+const resultActivitiesToken = (mobile: ResolvedMobile): string => {
+  const target = mobile.resultTarget;
+  if (target === undefined) return "";
+  const types = resultTypes(mobile);
+  const image = types.some((type) => type === "image/*" || type.startsWith("image/"));
+  const video = types.some((type) => type === "video/*" || type.startsWith("video/"));
+  const filters: string[] = [];
+  if (target.capture !== undefined) {
+    const actions: string[] = [];
+    if (image) actions.push('                <action android:name="android.media.action.IMAGE_CAPTURE" />');
+    if (video) actions.push('                <action android:name="android.media.action.VIDEO_CAPTURE" />');
+    filters.push(
+      `            <intent-filter>\n${actions.join("\n")}\n                <category android:name="android.intent.category.DEFAULT" />\n            </intent-filter>`,
+    );
+  }
+  if (target.pick !== undefined) {
+    const data = types.map((type) => `                <data android:mimeType="${xml(type)}" />`).join("\n");
+    filters.push(
+      `            <intent-filter>\n                <action android:name="android.intent.action.GET_CONTENT" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.OPENABLE" />\n${data}\n            </intent-filter>`,
+    );
+    filters.push(
+      `            <intent-filter>\n                <action android:name="android.intent.action.PICK" />\n                <category android:name="android.intent.category.DEFAULT" />\n${data}\n            </intent-filter>`,
+    );
+  }
+  return `\n\n        <activity\n            android:name="dev.lightstart.mobile.ResultActivity"\n            android:exported="true"\n            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"\n            android:windowSoftInputMode="adjustResize">\n${filters.join("\n")}\n        </activity>`;
+};
+
 const queriesToken = (mobile: ResolvedMobile): string =>
   mobile.cameraApp === undefined
     ? ""
@@ -135,8 +164,11 @@ const tokensOf = (mobile: ResolvedMobile, targetSdk: number, addons: MobileAddon
   TARGET_SDK: String(targetSdk),
   BASE_PATH: mobile.base,
   SHARE_TARGETS: gradle(shareTargetsToken(mobile)),
+  RESULT_CAPTURE: gradle(mobile.resultTarget?.capture ?? ""),
+  RESULT_PICK: gradle(mobile.resultTarget?.pick ?? ""),
   CAMERA_APP: gradle(mobile.cameraApp ?? ""),
   SHARE_INTENT_FILTERS: shareIntentFilters(mobile),
+  RESULT_ACTIVITIES: resultActivitiesToken(mobile),
   ADDON_USES: addonUsesToken(addons),
   ADDON_DEPENDENCIES: addonDependenciesToken(addons),
   QUERIES: queriesToken(mobile),

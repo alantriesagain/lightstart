@@ -74,6 +74,8 @@ export default defineMobile({
     ok("a changed shareTarget reaches the manifest", manifest.includes('android:mimeType="audio/*"'));
     ok("the old share types leave the manifest", !manifest.includes('android:mimeType="image/*"') && !manifest.includes('android:mimeType="video/*"'));
     ok("removing cameraApp removes the query", !manifest.includes("<queries>"));
+    ok("removing resultTarget removes ResultActivity", !manifest.includes("dev.lightstart.mobile.ResultActivity"));
+    ok("removing resultTarget clears the baked paths", text(project, "app/build.gradle").includes('"RESULT_CAPTURE", \'""\'') && text(project, "app/build.gradle").includes('"RESULT_PICK", \'""\''));
     ok("the new shareTarget reaches build.gradle", text(project, "app/build.gradle").includes("/listen|audio/*"));
     ok("no template placeholders remain after sync", !/__[A-Z_]+__/.test(manifest));
     ok("removing the add-on dependency removes its Kotlin file", !existsSync(join(addonsDir, "EchoAddon.kt")));

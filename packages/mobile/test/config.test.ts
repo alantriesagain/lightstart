@@ -34,7 +34,33 @@ const main = async (): Promise<void> => {
   eqn("minSdk defaults to 26", defaults.minSdk, 26);
   eq("the app id is kept", defaults.appId, "com.example.app");
   ok("shareTarget defaults to none", defaults.shareTarget === undefined);
+  ok("resultTarget defaults to none", defaults.resultTarget === undefined);
   ok("cameraApp defaults to none", defaults.cameraApp === undefined);
+
+  const captureOnly = resolveMobile({ appId: "com.example.app", resultTarget: { capture: "/camera" } }, { name: "app", base: "" });
+  eq("resultTarget capture is kept", captureOnly.resultTarget?.capture ?? "", "/camera");
+  ok("resultTarget pick is absent with capture only", captureOnly.resultTarget?.pick === undefined);
+  eq("resultTarget types default to image then video", (captureOnly.resultTarget?.types ?? []).join(","), "image/*,video/*");
+  const pickOnly = resolveMobile({ appId: "com.example.app", resultTarget: { pick: "/pick", types: ["image/*"] } }, { name: "app", base: "" });
+  eq("resultTarget pick is kept", pickOnly.resultTarget?.pick ?? "", "/pick");
+  ok("resultTarget capture is absent with pick only", pickOnly.resultTarget?.capture === undefined);
+  eq("resultTarget types keep an image-only list", (pickOnly.resultTarget?.types ?? []).join(","), "image/*");
+  const bothResult = resolveMobile({ appId: "com.example.app", resultTarget: { capture: "/camera", pick: "/pick" } }, { name: "app", base: "" });
+  eq("resultTarget keeps both paths", `${bothResult.resultTarget?.capture ?? ""}:${bothResult.resultTarget?.pick ?? ""}`, "/camera:/pick");
+
+  const resultError = (target: unknown): string => {
+    try {
+      resolveMobile({ appId: "com.example.app", resultTarget: target as never }, { name: "app", base: "" });
+      return "";
+    } catch (error: unknown) {
+      return error instanceof Error ? error.message : String(error);
+    }
+  };
+  ok("a resultTarget with no path is an error", resultError({}).includes("no capture or pick"));
+  ok("a resultTarget capture must start with /", resultError({ capture: "camera" }).includes("must start with"));
+  ok("a resultTarget pick must start with /", resultError({ pick: "pick" }).includes("must start with"));
+  ok("a resultTarget type outside image and video is an error", resultError({ pick: "/pick", types: ["text/plain"] }).includes("image/video"));
+  ok("an empty resultTarget types is an error", resultError({ pick: "/pick", types: [] }).includes("image/video"));
 
   const one = resolveMobile({ appId: "com.example.app", shareTarget: { path: "/capture", types: ["image/*"] } }, { name: "app", base: "" });
   eq("one shareTarget is kept", one.shareTarget?.map((target) => `${target.path}:${(target.types ?? []).join(",")}`).join(";") ?? "", "/capture:image/*");

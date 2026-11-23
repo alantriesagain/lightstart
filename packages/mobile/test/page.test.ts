@@ -45,6 +45,17 @@ const main = async (): Promise<void> => {
     const data = shared as { title?: string; text?: string } | null;
     eq("the fallback keeps the title", data?.title ?? "", "Hello");
     eq("the fallback keeps the text", data?.text ?? "", "hi");
+    ok("result.request outside the shell is null", await outside.mobile.result.request() === null);
+    const answerOutside = await outside.mobile.result.answer(new Blob(["x"])).then(
+      () => "",
+      (error: unknown) => (error instanceof Error ? error.message : String(error)),
+    );
+    ok("result.answer outside the shell rejects", answerOutside.includes("needs the mobile shell"));
+    const cancelOutside = await outside.mobile.result.cancel().then(
+      () => "",
+      (error: unknown) => (error instanceof Error ? error.message : String(error)),
+    );
+    ok("result.cancel outside the shell rejects", cancelOutside.includes("needs the mobile shell"));
 
     const previousLocation = Object.getOwnPropertyDescriptor(globalThis, "location");
     const locate = (search: string): void => {
@@ -117,21 +128,30 @@ const main = async (): Promise<void> => {
   }
 
   let listener: Listener | null = null;
+  let resultAnswer: { data?: string; type?: string; name?: string } | null = null;
+  let resultCancelled = false;
   const push = (data: unknown): void => {
     if (listener !== null) listener({ data });
   };
   const channel = {
     postMessage(text: string): void {
       const request = JSON.parse(text) as [number, string, unknown[]];
-      const [id, method] = request;
+      const [id, method, args] = request;
       let reply: Record<string, unknown>;
-      if (method === "$ready") reply = { id, ok: true, value: { platform: "android", capabilities: ["share", "shareTarget", "capture", "reminders"] } };
+      if (method === "$ready") reply = { id, ok: true, value: { platform: "android", capabilities: ["share", "shareTarget", "capture", "reminders", "result"] } };
       else if (method === "share") reply = { id, ok: true, value: { shared: true } };
       else if (method === "capture") reply = { id, ok: true, value: { url: "/__mobile/capture/1.jpg", type: "image/jpeg", name: "1.jpg" } };
       else if (method === "reminders.set") reply = { id, ok: true, value: { supported: true } };
       else if (method === "reminders.get") reply = { id, ok: true, value: { supported: true, reminders: [] } };
       else if (method === "reminders.clear") reply = { id, ok: true, value: { supported: true } };
-      else reply = { id, ok: false, error: `no method ${method}` };
+      else if (method === "result.request") reply = { id, ok: true, value: { kind: "capture", type: "image/*", output: true } };
+      else if (method === "result.answer") {
+        resultAnswer = (args[0] ?? {}) as { data?: string; type?: string; name?: string };
+        reply = { id, ok: true, value: null };
+      } else if (method === "result.cancel") {
+        resultCancelled = true;
+        reply = { id, ok: true, value: null };
+      } else reply = { id, ok: false, error: `no method ${method}` };
       queueMicrotask(() => listener?.({ data: JSON.stringify(reply) }));
     },
     addEventListener(_type: "message", fn: Listener): void {
@@ -150,8 +170,9 @@ const main = async (): Promise<void> => {
     ok("inside the shell ready is a promise", inside.mobile.ready !== null);
     const ready = await inside.mobile.ready;
     eq("ready names the platform", ready?.platform ?? "", "android");
-    eq("ready lists the shell's capabilities", (ready?.capabilities ?? []).join(","), "share,shareTarget,capture,reminders");
+    eq("ready lists the shell's capabilities", (ready?.capabilities ?? []).join(","), "share,shareTarget,capture,reminders,result");
     ok("can follows the capabilities", inside.mobile.can("share"));
+    ok("result is a capability when configured", inside.mobile.can("result"));
     ok("can is false for a capability the shell does not have", !inside.mobile.can("camera"));
 
     const sharedResult = await inside.mobile.request<{ shared: boolean }>("share", [{ text: "hi" }]);
@@ -175,6 +196,18 @@ const main = async (): Promise<void> => {
 
     const captured = await inside.mobile.capture({ kind: "image" });
     eq("capture inside the shell answers the shell's file", captured?.url ?? "", "/__mobile/capture/1.jpg");
+
+    const openRequest = await inside.mobile.result.request();
+    eq("result.request answers the open capture", openRequest?.kind ?? "", "capture");
+    eq("result.request answers the wanted type", openRequest?.type ?? "", "image/*");
+    ok("result.request reports the caller's output", openRequest?.output === true);
+    await inside.mobile.result.answer(new Blob(["hi"], { type: "image/png" }));
+    const lastAnswer = resultAnswer as { data?: string; type?: string; name?: string } | null;
+    eq("result.answer sends the bytes as base64", lastAnswer?.data ?? "", "aGk=");
+    eq("result.answer sends the blob's type", lastAnswer?.type ?? "", "image/png");
+    eq("result.answer names a blob by its type", lastAnswer?.name ?? "", "result.png");
+    await inside.mobile.result.cancel();
+    ok("result.cancel asks the shell to cancel", resultCancelled);
     const remindersSet = await inside.mobile.reminders.set([{ id: "r", hour: 7, minute: 30, title: "Go", body: "Now" }]);
     ok("reminders inside the shell are supported", remindersSet.supported);
     const remindersList = await inside.mobile.reminders.get();

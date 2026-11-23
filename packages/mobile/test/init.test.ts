@@ -68,6 +68,11 @@ const main = (): void => {
     ok("a named camera app is queried", manifest.includes("<queries>") && manifest.includes("android:name=\"com.example.camera\""));
     ok("the share targets reach build.gradle", gradle.includes("SHARE_TARGETS") && gradle.includes("/capture|image/*,video/*,text/plain"));
     ok("the camera app reaches build.gradle", gradle.includes("CAMERA_APP") && gradle.includes("com.example.camera"));
+    ok("the result target declares ResultActivity", manifest.includes("dev.lightstart.mobile.ResultActivity"));
+    ok("a capture result target filters IMAGE_CAPTURE", manifest.includes("android.media.action.IMAGE_CAPTURE"));
+    ok("a pick result target filters GET_CONTENT", manifest.includes("android.intent.action.GET_CONTENT"));
+    ok("the result paths reach build.gradle", gradle.includes('"RESULT_CAPTURE", \'"/camera"\'') && gradle.includes('"RESULT_PICK", \'"/pick"\''));
+    ok("ResultActivity ships with init", existsSync(join(project, "mobile", "android", "app", "src", "main", "java", "dev", "lightstart", "mobile", "ResultActivity.kt")));
 
     const addonsDir = join(project, "mobile", "android", "app", "src", "main", "java", "dev", "lightstart", "mobile", "addons");
     ok("the add-on's Kotlin file is copied", existsSync(join(addonsDir, "EchoAddon.kt")));

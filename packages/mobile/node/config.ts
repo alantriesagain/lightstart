@@ -7,7 +7,7 @@
 import { existsSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { isOrientation, type MobileAddonsConfig, type MobileConfig, type MobileShareTarget, type ResolvedMobile } from "../index.ts";
+import { isOrientation, type MobileAddonsConfig, type MobileConfig, type MobileResultTarget, type MobileShareTarget, type ResolvedMobile } from "../index.ts";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -105,6 +105,33 @@ const shareTargetOf = (value: unknown, path: string): MobileShareTarget[] => {
   });
 };
 
+const RESULT_TYPE = /^(image|video)\/(\*|[a-z0-9.+-]+)$/;
+
+const resultPathOf = (value: unknown, key: string, path: string): string | undefined => {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || value.trim() === "" || !value.startsWith("/"))
+    throw new Error(`${path} has resultTarget.${key} ${JSON.stringify(value)}; it must start with "/"`);
+  return value;
+};
+
+const resultTargetOf = (value: unknown, path: string): MobileResultTarget => {
+  if (!isRecord(value)) throw new Error(`${path} has resultTarget that is not an object; use { capture?, pick?, types? }`);
+  const capture = resultPathOf(value["capture"], "capture", path);
+  const pick = resultPathOf(value["pick"], "pick", path);
+  if (capture === undefined && pick === undefined) throw new Error(`${path} has a resultTarget with no capture or pick path; give at least one`);
+  const target: MobileResultTarget = {};
+  if (capture !== undefined) target.capture = capture;
+  if (pick !== undefined) target.pick = pick;
+  const types = value["types"];
+  if (types === undefined) target.types = ["image/*", "video/*"];
+  else {
+    if (!Array.isArray(types) || types.length === 0 || types.some((type) => typeof type !== "string" || !RESULT_TYPE.test(type)))
+      throw new Error(`${path} has resultTarget.types; give image/video MIME types such as ["image/*", "video/*"]`);
+    target.types = types as string[];
+  }
+  return target;
+};
+
 const addonsOf = (value: unknown, path: string): MobileAddonsConfig | undefined => {
   if (value === undefined) return undefined;
   if (!isRecord(value)) throw new Error(`${path} has addons that is not an object; use { disable: ["@scope/package"] }`);
@@ -135,6 +162,7 @@ export const resolveMobile = (config: MobileConfig, identity: AppIdentity): Reso
     base: identity.base,
   };
   if (config.shareTarget !== undefined) resolved.shareTarget = shareTargetOf(config.shareTarget, "src/mobile");
+  if (config.resultTarget !== undefined) resolved.resultTarget = resultTargetOf(config.resultTarget, "src/mobile");
   const cameraApp = cameraAppOf(config.cameraApp, "src/mobile");
   if (cameraApp !== undefined) resolved.cameraApp = cameraApp;
   const addons = addonsOf(config.addons, "src/mobile");

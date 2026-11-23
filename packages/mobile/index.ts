@@ -17,6 +17,8 @@ export type {
   MobileRemindersApi,
   MobileCaptureOptions,
   MobileCaptureResult,
+  MobileResultRequest,
+  MobileResultApi,
 } from "./page.ts";
 
 /** The orientation the shell holds: `"any"` follows the device. */
@@ -34,6 +36,13 @@ export interface MobileShareTarget {
   types?: string[];
 }
 
+/** What another app may start this app for: a capture, a pick, or both. */
+export interface MobileResultTarget {
+  capture?: string;
+  pick?: string;
+  types?: string[];
+}
+
 /** Which discovered Android add-ons to leave out of the shell. */
 export interface MobileAddonsConfig {
   disable?: string[];
@@ -47,6 +56,7 @@ export interface MobileConfig {
   orientation?: MobileOrientation;
   minSdk?: number;
   shareTarget?: MobileShareTarget | MobileShareTarget[];
+  resultTarget?: MobileResultTarget;
   cameraApp?: string;
   addons?: MobileAddonsConfig;
 }
@@ -59,6 +69,7 @@ export interface ResolvedMobile {
   orientation: MobileOrientation;
   minSdk: number;
   shareTarget?: MobileShareTarget[];
+  resultTarget?: MobileResultTarget;
   cameraApp?: string;
   addons?: MobileAddonsConfig;
   base: string;
