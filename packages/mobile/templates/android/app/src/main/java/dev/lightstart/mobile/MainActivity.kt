@@ -236,7 +236,16 @@ open class MainActivity : AppCompatActivity() {
         }
         @Suppress("DEPRECATION")
         val output = intent?.getParcelableExtra<Uri>(MediaStore.EXTRA_OUTPUT) != null
-        return JSONObject().put("kind", kind).put("type", type).put("output", output)
+        return JSONObject().put("kind", kind).put("type", type).put("output", output).put("from", callerLabel() ?: JSONObject.NULL)
+    }
+
+    /** The name of the app that asked for the result, which may see us because it started us. */
+    private fun callerLabel(): String? = try {
+        val caller = callingActivity?.packageName ?: callingPackage
+        if (caller == null) null
+        else packageManager.getApplicationLabel(packageManager.getApplicationInfo(caller, 0)).toString().ifEmpty { null }
+    } catch (e: Exception) {
+        null
     }
 
     /** Answer the open request with the page's bytes, written to the caller's output or offered through the FileProvider. */

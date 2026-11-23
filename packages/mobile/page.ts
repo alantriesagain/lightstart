@@ -94,6 +94,8 @@ export interface MobileResultRequest {
   kind: "capture" | "pick";
   type: string;
   output: boolean;
+  /** The asking app's name, or null when the shell cannot tell. */
+  from: string | null;
 }
 
 /** The page's side of answering another app's capture or pick request. */
@@ -343,7 +345,8 @@ const resultRequest = async (): Promise<MobileResultRequest | null> => {
   const kind = value["kind"];
   const type = value["type"];
   if ((kind !== "capture" && kind !== "pick") || typeof type !== "string") return null;
-  return { kind, type, output: value["output"] === true };
+  const from = value["from"];
+  return { kind, type, output: value["output"] === true, from: typeof from === "string" && from !== "" ? from : null };
 };
 
 const resultAnswer = async (file: Blob | string): Promise<void> => {

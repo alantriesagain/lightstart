@@ -144,7 +144,7 @@ const main = async (): Promise<void> => {
       else if (method === "reminders.set") reply = { id, ok: true, value: { supported: true } };
       else if (method === "reminders.get") reply = { id, ok: true, value: { supported: true, reminders: [] } };
       else if (method === "reminders.clear") reply = { id, ok: true, value: { supported: true } };
-      else if (method === "result.request") reply = { id, ok: true, value: { kind: "capture", type: "image/*", output: true } };
+      else if (method === "result.request") reply = { id, ok: true, value: { kind: "capture", type: "image/*", output: true, from: "Gym" } };
       else if (method === "result.answer") {
         resultAnswer = (args[0] ?? {}) as { data?: string; type?: string; name?: string };
         reply = { id, ok: true, value: null };
@@ -201,6 +201,7 @@ const main = async (): Promise<void> => {
     eq("result.request answers the open capture", openRequest?.kind ?? "", "capture");
     eq("result.request answers the wanted type", openRequest?.type ?? "", "image/*");
     ok("result.request reports the caller's output", openRequest?.output === true);
+    eq("result.request names the asking app", openRequest?.from ?? "", "Gym");
     await inside.mobile.result.answer(new Blob(["hi"], { type: "image/png" }));
     const lastAnswer = resultAnswer as { data?: string; type?: string; name?: string } | null;
     eq("result.answer sends the bytes as base64", lastAnswer?.data ?? "", "aGk=");

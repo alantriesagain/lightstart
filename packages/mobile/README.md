@@ -321,7 +321,7 @@ was asked and answers:
 import { mobile } from "@lightstart/mobile/page";
 
 const request = await mobile.result.request();
-// { kind: "capture" | "pick", type, output } or null
+// { kind: "capture" | "pick", type, output, from } or null
 if (request !== null) {
   const shot = await takeTheShot(request.type);
   await mobile.result.answer(shot); // a Blob, or a URL it can fetch
