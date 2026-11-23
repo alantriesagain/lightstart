@@ -33,6 +33,7 @@ one `src/app` module.
 | `orientation` | `"any"` | `"portrait"`, `"landscape"` or `"any"`; held at run time |
 | `minSdk` | `26` | The app's minimum Android API |
 | `shareTarget` | none | `{ path, types? }` or a list of them, what another app may share into the shell; `types` defaults to `["text/plain"]` |
+| `resultTarget` | none | `{ capture?, pick?, types? }`, what another app may start this one for a photo, a clip or a file; at least one path, `types` defaults to `["image/*", "video/*"]` |
 | `cameraApp` | none | An app id the page's `mobile.capture` asks first, and the manifest queries |
 | `addons` | none | `{ disable: ["@scope/package"] }`, the discoverable Android add-ons to leave out |
 
@@ -195,6 +196,7 @@ import { mobile } from "@lightstart/mobile/page";
 | `mobile.shared()` | The share the current URL carries, or `null`; works on the web too |
 | `mobile.reminders` | `set(list)`, `get()` and `clear()` daily reminders |
 | `mobile.capture(options)` | Ask another app for a photo or a clip, or open a file input on the web |
+| `mobile.result` | `request()`, `answer(file)` and `cancel()` for another app's capture or pick request |
 
 ### share
 
@@ -265,6 +267,56 @@ chooser. It answers `{ url, type, name }` with the shot served under
 `<input type="file" accept="image/*" capture>` (or `video/*`) and answers a
 blob URL in the same shape.
 
+### Answering another app
+
+`resultTarget` makes the app a camera or file source another app can start for
+a result, the way it starts the system camera or a file picker:
+
+```js
+// src/mobile.js
+export default defineMobile({
+  appId: "com.example.budget",
+  resultTarget: {
+    capture: "/camera",
+    pick: "/pick",
+    types: ["image/*", "image/jpeg", "video/*"],
+  },
+});
+```
+
+`capture` and `pick` are app paths starting with `/`, and at least one is
+required. `types` defaults to `["image/*", "video/*"]` and may hold only
+`image/*`, `video/*` or specific image and video MIME types. `mobile:init` and
+`mobile:sync` add a second activity, `ResultActivity`, with an `IMAGE_CAPTURE`
+filter when an image type is allowed and a `VIDEO_CAPTURE` filter when a video
+type is, and a `GET_CONTENT` and `PICK` filter over each type for `pick`.
+`RESULT_CAPTURE` and `RESULT_PICK` in `BuildConfig` carry the paths, as
+`SHARE_TARGETS` does.
+
+A request opens `<capture>?request=capture&type=image%2F*` (or `video%2F*`),
+or `<pick>?request=pick&type=<the MIME the caller wants>`. A page reads what
+was asked and answers:
+
+```js
+import { mobile } from "@lightstart/mobile/page";
+
+const request = await mobile.result.request();
+// { kind: "capture" | "pick", type, output } or null
+if (request !== null) {
+  const shot = await takeTheShot(request.type);
+  await mobile.result.answer(shot); // a Blob, or a URL it can fetch
+  // or: await mobile.result.cancel();
+}
+```
+
+`answer(file)` takes a `Blob`, or a string URL the page can fetch (a `data:`,
+`blob:` or same-origin URL); the page reads the bytes and sends them base64.
+The shell writes them to the caller's `EXTRA_OUTPUT` when the request carried
+one (`request.output`), otherwise to a file offered through the `FileProvider`
+with a read grant, then finishes with `RESULT_OK`. `cancel()` finishes with
+`RESULT_CANCELED`, as Back does when the page has nothing to hand back. Both
+reject outside the shell; `request()` answers `null` there.
+
 The desktop page client is not reused: it binds `window.__desktop`, has no
 request id and knows no capabilities. This package mirrors the shared shape
 (signal-free request/reply, events, listeners) over the Android channel.
@@ -272,11 +324,10 @@ request id and knows no capabilities. This package mirrors the shared shape
 ## Pass 2 and later
 
 Pass 1 is the package, the shell, the bridge, the commands and sharing out.
-Pass 2 adds receiving a share (`shareTarget`), daily reminders and asking
-another app for a capture (`cameraApp`). Answering another app's capture or
-pick request (`resultTarget`) is not in this pass. Later work can add
-`resultTarget`, an iOS shell, camera control, device access, kiosk mode, OTA
-updates, icons, signing and release bundles.
+Pass 2 adds receiving a share (`shareTarget`), daily reminders, asking another
+app for a capture (`cameraApp`) and answering another app's capture or pick
+request (`resultTarget`). Later work can add an iOS shell, camera control,
+device access, kiosk mode, OTA updates, icons, signing and release bundles.
 
 ## Tests
 

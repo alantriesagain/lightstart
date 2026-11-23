@@ -16,6 +16,8 @@ android {
         buildConfigField "String", "BASE_PATH", '"__BASE_PATH__"'
         buildConfigField "String", "ORIENTATION", '"__ORIENTATION__"'
         buildConfigField "String", "SHARE_TARGETS", '"__SHARE_TARGETS__"'
+        buildConfigField "String", "RESULT_CAPTURE", '"__RESULT_CAPTURE__"'
+        buildConfigField "String", "RESULT_PICK", '"__RESULT_PICK__"'
         buildConfigField "String", "CAMERA_APP", '"__CAMERA_APP__"'
     }
 

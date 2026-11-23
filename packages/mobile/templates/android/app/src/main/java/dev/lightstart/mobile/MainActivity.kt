@@ -35,8 +35,8 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
 
-/** One WebView over the app served from the APK's assets, and the share, reminder and capture capabilities. */
-class MainActivity : AppCompatActivity() {
+/** One WebView over the app served from the APK's assets, and the share, reminder, capture and result capabilities. */
+open class MainActivity : AppCompatActivity() {
 
     companion object {
         const val HOST = "appassets.androidplatform.net"
@@ -70,6 +70,9 @@ class MainActivity : AppCompatActivity() {
     private var permissionDone: ((Boolean) -> Unit)? = null
     private val transparentOwners = LinkedHashSet<String>()
 
+    /** Whether another app started this one for a result (`ResultActivity`), which finishes with what the page returns. */
+    open val forResult: Boolean get() = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -84,7 +87,9 @@ class MainActivity : AppCompatActivity() {
         for (addon in addons) addon.onCreate(this, root, webView)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (webView.canGoBack()) webView.goBack() else finish()
+                if (webView.canGoBack()) webView.goBack()
+                else if (forResult) endWithResult(RESULT_CANCELED, null)
+                else finish()
             }
         })
     }
@@ -193,6 +198,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initialUrl(): String {
+        if (forResult) resultLaunchUrl(intent)?.let { return it }
         sharedIn(intent)?.let { return originUrl("${it.path}?${it.query}") }
         intent?.getStringExtra("notif_path")?.takeIf { it.isNotEmpty() }?.let { return originUrl(it) }
         return homeUrl()
@@ -201,6 +207,88 @@ class MainActivity : AppCompatActivity() {
     private fun homeUrl(): String = if (BuildConfig.BASE_PATH.isEmpty()) "$ORIGIN/" else "$ORIGIN${BuildConfig.BASE_PATH}/"
 
     private fun originUrl(path: String): String = if (path.startsWith("http")) path else "$ORIGIN${if (path.startsWith("/")) path else "/$path"}"
+
+    /** The capture or pick page for a request for a result, with what the caller asked in the query. */
+    private fun resultLaunchUrl(intent: Intent?): String? {
+        val action = intent?.action ?: return null
+        return when (action) {
+            MediaStore.ACTION_IMAGE_CAPTURE ->
+                BuildConfig.RESULT_CAPTURE.takeIf { it.isNotEmpty() }?.let { "$ORIGIN$it?request=capture&type=${Uri.encode("image/*")}" }
+            MediaStore.ACTION_VIDEO_CAPTURE ->
+                BuildConfig.RESULT_CAPTURE.takeIf { it.isNotEmpty() }?.let { "$ORIGIN$it?request=capture&type=${Uri.encode("video/*")}" }
+            Intent.ACTION_GET_CONTENT, Intent.ACTION_PICK ->
+                BuildConfig.RESULT_PICK.takeIf { it.isNotEmpty() }?.let { "$ORIGIN$it?request=pick&type=${Uri.encode(intent.type ?: "*/*")}" }
+            else -> null
+        }
+    }
+
+    /** What the caller asked for, or null when this shell was not started for a result. */
+    fun resultRequest(): JSONObject? {
+        if (!forResult) return null
+        val action = intent?.action ?: return null
+        val kind: String
+        val type: String
+        when (action) {
+            MediaStore.ACTION_IMAGE_CAPTURE -> { kind = "capture"; type = "image/*" }
+            MediaStore.ACTION_VIDEO_CAPTURE -> { kind = "capture"; type = "video/*" }
+            Intent.ACTION_GET_CONTENT, Intent.ACTION_PICK -> { kind = "pick"; type = intent?.type ?: "*/*" }
+            else -> return null
+        }
+        @Suppress("DEPRECATION")
+        val output = intent?.getParcelableExtra<Uri>(MediaStore.EXTRA_OUTPUT) != null
+        return JSONObject().put("kind", kind).put("type", type).put("output", output)
+    }
+
+    /** Answer the open request with the page's bytes, written to the caller's output or offered through the FileProvider. */
+    fun answerResult(payload: JSONObject?) {
+        if (!forResult) return
+        val data = payload?.optString("data", "") ?: ""
+        if (payload == null || data.isEmpty()) {
+            cancelResult()
+            return
+        }
+        val name = payload.optString("name", "").replace(Regex("[^A-Za-z0-9._-]"), "_").takeUnless { it.trim('.').isEmpty() } ?: "result"
+        val type = payload.optString("type", "").ifEmpty { "application/octet-stream" }
+        @Suppress("DEPRECATION")
+        val output = intent?.getParcelableExtra<Uri>(MediaStore.EXTRA_OUTPUT)
+        Thread {
+            val result = try {
+                val bytes = android.util.Base64.decode(data, android.util.Base64.DEFAULT)
+                if (output != null) {
+                    contentResolver.openOutputStream(output, "w")?.use { it.write(bytes) }
+                        ?: throw IllegalStateException("the caller's output cannot be opened")
+                    Intent().setData(output).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } else {
+                    val root = File(servedRoot(), "result").apply { mkdirs() }
+                    prune(root, 3600_000L)
+                    val file = File(File(root, System.currentTimeMillis().toString()).apply { mkdirs() }, name)
+                    file.writeBytes(bytes)
+                    val uri = FileProvider.getUriForFile(this, "${BuildConfig.APPLICATION_ID}.files", file)
+                    Intent()
+                        .setDataAndType(uri, type)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        .also { it.clipData = ClipData.newRawUri("", uri) }
+                }
+            } catch (e: Exception) {
+                null
+            }
+            runOnUiThread { endWithResult(if (result != null) RESULT_OK else RESULT_CANCELED, result) }
+        }.start()
+    }
+
+    /** Hand the caller nothing and close. */
+    fun cancelResult() {
+        if (!forResult) return
+        endWithResult(RESULT_CANCELED, null)
+    }
+
+    /** Finish from the main looper: a finish inside a bridge callback has been seen to do nothing. */
+    private fun endWithResult(code: Int, data: Intent?) {
+        window.decorView.post {
+            setResult(code, data)
+            finish()
+        }
+    }
 
     private fun installStartScript() {
         val script = "window.__lightMobile = { present: true, platform: \"android\" };"

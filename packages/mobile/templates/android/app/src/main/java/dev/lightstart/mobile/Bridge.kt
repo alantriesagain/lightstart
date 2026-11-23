@@ -43,6 +43,16 @@ class Bridge(private val activity: MainActivity, private val addons: List<Mobile
                     val options = args.optJSONObject(0) ?: JSONObject()
                     activity.runOnUiThread { activity.capture(options) { value -> answer(id, true, value) } }
                 }
+                "result.request" -> answer(id, true, activity.resultRequest())
+                "result.answer" -> {
+                    val payload = args.optJSONObject(0) ?: JSONObject()
+                    answer(id, true, null)
+                    activity.runOnUiThread { activity.answerResult(payload) }
+                }
+                "result.cancel" -> {
+                    answer(id, true, null)
+                    activity.runOnUiThread { activity.cancelResult() }
+                }
                 "reminders.set" -> {
                     val reminders = args.optJSONArray(0) ?: JSONArray()
                     activity.runOnUiThread {
@@ -76,6 +86,7 @@ class Bridge(private val activity: MainActivity, private val addons: List<Mobile
         families.add("capture")
         families.add("reminders")
         if (BuildConfig.SHARE_TARGETS.isNotEmpty()) families.add("shareTarget")
+        if (BuildConfig.RESULT_CAPTURE.isNotEmpty() || BuildConfig.RESULT_PICK.isNotEmpty()) families.add("result")
         for (addon in addons) families.addAll(addon.families)
         val capabilities = JSONArray()
         for (family in families) capabilities.put(family)

@@ -7,5 +7,6 @@ export default defineMobile({
   orientation: "portrait",
   minSdk: 26,
   shareTarget: { path: "/capture", types: ["image/*", "video/*", "text/plain"] },
+  resultTarget: { capture: "/camera", pick: "/pick" },
   cameraApp: "com.example.camera",
 });
