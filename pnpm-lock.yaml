@@ -21,6 +21,9 @@ importers:
       '@lightstart/build':
         specifier: workspace:*
         version: link:packages/build
+      '@lightstart/camera':
+        specifier: workspace:*
+        version: link:packages/camera
       '@lightstart/cli':
         specifier: workspace:*
         version: link:packages/cli
@@ -158,6 +161,37 @@ importers:
       '@lightstart/server':
         specifier: workspace:*
         version: link:../server
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/camera:
+    dependencies:
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/components':
+        specifier: workspace:*
+        version: link:../components
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/mobile':
+        specifier: workspace:*
+        version: link:../mobile
+      '@lightstart/p2p':
+        specifier: workspace:*
+        version: link:../p2p
+      '@lightstart/qr':
+        specifier: workspace:*
+        version: link:../qr
+    devDependencies:
       '@lightstart/test':
         specifier: workspace:*
         version: link:../test

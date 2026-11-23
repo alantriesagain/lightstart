@@ -27,6 +27,7 @@
   "devDependencies": {
     "@lightstart/app": "workspace:*",
     "@lightstart/build": "workspace:*",
+    "@lightstart/camera": "workspace:*",
     "@lightstart/cli": "workspace:*",
     "@lightstart/create": "workspace:*",
     "@lightstart/design": "workspace:*",

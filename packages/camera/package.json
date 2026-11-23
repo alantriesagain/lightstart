@@ -1,0 +1,69 @@
+{
+  "name": "@lightstart/camera",
+  "version": "0.1.0",
+  "description": "A hardware-abstracted camera (web getUserMedia in browsers, CameraX through the light mobile shell on phones), the learning control registry, lens and EXIF helpers, the camera-preview surface, and a second phone as the camera over a peer room.",
+  "type": "module",
+  "types": "./types.ts",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/camera"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "camera",
+    "getusermedia",
+    "photography",
+    "camerax",
+    "web-components",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "camera.js",
+    "index.ts",
+    "types.ts",
+    "select-backend.js",
+    "web-backend.js",
+    "native-backend.js",
+    "remote.js",
+    "signals.js",
+    "frontend.js",
+    "commands.js",
+    "capabilities.js",
+    "events.js",
+    "controllers/",
+    "lib/",
+    "views/",
+    "tags.json",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "light": {
+    "tags": "tags.json"
+  },
+  "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/components": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/mobile": "workspace:*",
+    "@lightstart/p2p": "workspace:*",
+    "@lightstart/qr": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
