@@ -22,7 +22,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>__SHARE_INTENT_FILTERS__
-        </activity>__RESULT_ACTIVITIES__
+        </activity>__RESULT_ACTIVITIES____ADDON_SERVICES__
 
         <receiver
             android:name="dev.lightstart.mobile.ReminderReceiver"

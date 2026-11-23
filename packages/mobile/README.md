@@ -114,8 +114,13 @@ its `package.json` under `light.android`:
     "android": {
       "sources": "android",
       "entry": "LocationAddon",
-      "permissions": ["android.permission.ACCESS_FINE_LOCATION", { "name": "android.permission.READ_PHONE_STATE", "maxSdkVersion": 32 }],
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        { "name": "android.permission.READ_PHONE_STATE", "maxSdkVersion": 32 },
+        { "name": "android.permission.BLUETOOTH_SCAN", "usesPermissionFlags": "neverForLocation" }
+      ],
       "features": [{ "name": "android.hardware.location.gps", "required": false }],
+      "services": [{ "name": "LocationService", "foregroundServiceType": "connectedDevice", "exported": false }],
       "dependencies": ["com.example:location:1.2.3"]
     }
   }
@@ -126,17 +131,32 @@ its `package.json` under `light.android`:
 |---|---|
 | `sources` | A folder relative to the package holding its `.kt` files; defaults to `android` |
 | `entry` | The Kotlin class implementing `MobileAddon`, with a no-arg constructor |
-| `permissions` | Permission names, or `{ name, maxSdkVersion? }`, written into the manifest |
+| `permissions` | Permission names, or `{ name, maxSdkVersion?, usesPermissionFlags? }`, written into the manifest |
 | `features` | `{ name, required? }`, written as `<uses-feature>` |
+| `services` | `{ name, foregroundServiceType?, exported? }`, written as `<service>` |
 | `dependencies` | Gradle coordinates, each written as `implementation '…'` |
+
+`usesPermissionFlags` is a `|`-separated list of Android flag names, such as
+`neverForLocation`, written as `android:usesPermissionFlags` on the
+`<uses-permission>`. Add-ons that declare one permission must agree on its
+flags and `maxSdkVersion`; discover reports both packages when they do not, and
+keeps the flags when the declarations are equal.
+
+A service's `name` is a bare Kotlin class name in the add-on's sources; the
+manifest writes it as `dev.lightstart.mobile.addons.<name>`. Its
+`foregroundServiceType` is a `|`-separated set of Android's types (`camera`,
+`connectedDevice`, `dataSync`, `location`, `mediaPlayback`, `mediaProjection`,
+`microphone`, `phoneCall`, `remoteMessaging`, `shortService`, `specialUse`,
+`systemExempted`, `health`) and `exported` defaults to `false`. Two add-ons
+that declare one service name are an error naming both.
 
 `mobile:init` and `mobile:sync` read the project's `dependencies` (not
 `devDependencies`), keep the packages that declare `light.android`, sort them by
 package name, and copy their `.kt` files into
 `app/src/main/java/dev/lightstart/mobile/addons/`. They write `Addons.kt`, add
-the permissions, features and Gradle dependencies, and log the add-ons they
-found. `sync` also removes the files and lines of an add-on whose dependency is
-gone, so an existing shell follows the project.
+the permissions, features, services and Gradle dependencies, and log the add-ons
+they found. `sync` also removes the files and lines of an add-on whose
+dependency is gone, so an existing shell follows the project.
 
 The add-on's Kotlin files use `package dev.lightstart.mobile.addons` and import
 `dev.lightstart.mobile.*`. The interface the shell compiles against is:
