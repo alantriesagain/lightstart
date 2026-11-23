@@ -12,6 +12,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `select-backend.js` | `selectBackend`, `isSupported`, `isNativeShell`, `hasNativeCamera` |
 | `web-backend.js` | `createWebBackend`: getUserMedia, ImageCapture and MediaRecorder |
 | `native-backend.js` | `createNativeBackend`: the mobile shell bridge, the preview frames on a canvas |
+| `android/CameraAddon.kt` | The CameraX add-on the mobile shell compiles: the preview and its controls, captures, clips, frames, meter and orientation, over the `CAMERA:*` commands |
 | `remote.js` | `serveCamera`, `viewCamera`: one phone as another's camera over a `RemoteRoom` |
 | `signals.js` | `cameraOrientation` and `cameraMeter` signals, the `cameraFrame` event, the one-time installer |
 | `frontend.js` | `openCameraLink()` (imported from `@lightstart/camera/frontend.js`): mounts `<camera-link>` on a `#cam=` page |
@@ -58,6 +59,8 @@ The framework-free modules stay JavaScript with JSDoc types, as light's componen
 | `serveCamera` / `viewCamera` and `RemoteRoom` | an app's own pair flow and the link controller |
 | `cameraOrientation`, `cameraMeter`, `cameraFrame` and `installCameraSignals` | a viewfinder guide and a native-frame consumer |
 | `openCameraLink()` | an app booting from a `#cam=` link |
+| The `CAMERA:*` command names and the `camera:frame`, `camera:meter`, `camera:orientation` events | `commands.js`, `signals.js` and `android/CameraAddon.kt` |
+| `/__mobile/native/<name>` for captures and clips | `native-backend.js` fetching a capture |
 | `tags.json`, `<camera-preview>`, `<camera-pair>`, `<camera-scan>`, `<camera-link>` | the web generation and an app's views |
 | `encodePair`, `decodePair`, `isFresh` and `CameraPair` | the link codec |
 | The `cameraLink` controller's props and methods | a view's `sync:` and an app's capture screen |

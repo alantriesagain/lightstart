@@ -1,8 +1,9 @@
 // node-only
 /**
  * @file An offline Gradle build of the initialised fixture. When a cached
- * artifact is missing the test skips itself with that artifact's name instead
- * of failing, and never tries the network.
+ * artifact is missing the test skips itself with that artifact's name; any
+ * other failure, a compile error among them, fails it. It never tries the
+ * network.
  */
 
 import { spawnSync } from "node:child_process";
@@ -58,9 +59,10 @@ const main = (): void => {
     const apk = join(project, "mobile", "android", "app", "build", "outputs", "apk", "debug", "app-debug.apk");
     if (built.status !== 0) {
       const missing = missingArtifact(built.output);
-      const lines = built.output.split("\n").filter((line) => /Could not find|No cached version|Could not resolve|FAILURE|error:/i.test(line)).slice(0, 15);
-      console.log(`SKIP mobile Gradle build: ${missing ?? "the offline caches could not build it"}`);
+      const lines = built.output.split("\n").filter((line) => /Could not find|No cached version|Could not resolve|FAILURE|error:|^e: /i.test(line)).slice(0, 15);
+      if (missing !== null) console.log(`SKIP mobile Gradle build: ${missing} is not in the offline cache`);
       for (const line of lines) console.log(`  ${line}`);
+      ok("the offline build fails only on an artifact the cache lacks", missing !== null);
     } else {
       eqn("the APK exists", existsSync(apk) ? 0 : 1, 0);
       if (existsSync(apk)) console.log(`APK ${apk} (${statSync(apk).size} bytes)`);

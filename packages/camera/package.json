@@ -41,6 +41,7 @@
     "controllers/",
     "lib/",
     "views/",
+    "android/",
     "tags.json",
     "README.md",
     "AGENTS.md",
@@ -51,7 +52,25 @@
     "./*": "./*"
   },
   "light": {
-    "tags": "tags.json"
+    "tags": "tags.json",
+    "android": {
+      "sources": "android",
+      "entry": "CameraAddon",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "features": [
+        { "name": "android.hardware.camera.any", "required": false }
+      ],
+      "dependencies": [
+        "androidx.camera:camera-core:1.6.2",
+        "androidx.camera:camera-camera2:1.6.2",
+        "androidx.camera:camera-lifecycle:1.6.2",
+        "androidx.camera:camera-view:1.6.2",
+        "androidx.camera:camera-video:1.6.2"
+      ]
+    }
   },
   "dependencies": {
     "@lightstart/app": "workspace:*",
