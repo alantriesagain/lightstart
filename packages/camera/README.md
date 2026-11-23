@@ -8,6 +8,12 @@ A camera for light apps: one `CameraInstance` over the web (`getUserMedia`) and 
 
 `source: { kind: "link" }` wraps the `cameraLink` controller as another phone's camera behind the same `CameraBackend` contract. `source: { kind: "device" }` is not available yet: light has no devices backend, so it throws.
 
+## On Android
+
+Inside light's mobile shell the package ships a CameraX add-on in `android/CameraAddon.kt`, declared by `package.json`'s `light.android` block. It draws the preview behind the transparent page, answers the `CAMERA:*` requests from `native-backend.js` (start, stop, bounds, controls, capture, recording, lenses, frames, view, diagnostics), and emits `camera:frame`, `camera:meter` and `camera:orientation` for `signals.js`. Captures and clips are written to the shell's native files and answered as `/__mobile/native/<name>`.
+
+`light mobile:init` and `light mobile:sync` discover the add-on from the project's dependencies, copy its Kotlin into the shell, list it in `Addons.kt`, and add the CAMERA and RECORD_AUDIO permissions, the optional camera feature and the CameraX dependencies.
+
 ## Another phone as the camera
 
 The package's views are defined from `tags.json` when an app writes them. Nothing pairs until the app asks.
