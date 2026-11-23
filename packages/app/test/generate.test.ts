@@ -319,6 +319,13 @@ const main = async (): Promise<void> => {
     const cleared = await generate(withModelSync);
     ok("a project with no sync removes the install file", cleared !== null && cleared.changed && !existsSync(path));
     ok("and app.ts no longer imports it", cleared !== null && !readFileSync(cleared.manifest, "utf8").includes('import "./sync.ts";'));
+
+    addTagPackage(withModelSync, "@acme/link", "link-sheet", "link-sheet.js");
+    writeFileSync(join(withModelSync, "node_modules", "@acme/link", "link-sheet.js"), 'import { defineComponent } from "@lightstart/light";\nimport T from "@lightstart/light/types";\nimport link from "./link.js";\n\nexport default defineComponent({ tag: "link-sheet", props: { status: T.string({ sync: link }) } });\n');
+    writeFileSync(join(withModelSync, "src", "views", "app-home.ts"), 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppHome extends View {\n  render() {\n    return html`<link-sheet></link-sheet>`;\n  }\n}\n\nView.register("app-home", AppHome);\n');
+    const packaged = await generate(withModelSync);
+    ok("a used package tag whose module declares a sync installs the view plugin", packaged !== null && existsSync(path) && readFileSync(path, "utf8").includes("View.use(syncPlugin);"));
+    ok("and its target registers no model binder", !readFileSync(path, "utf8").includes("registerSyncBinder"));
   } finally {
     rmSync(withModelSync, { recursive: true, force: true });
   }

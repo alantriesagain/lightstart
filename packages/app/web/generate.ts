@@ -379,13 +379,22 @@ const writeComponents = (project: string, dir: string, helpers: GenerationHelper
   return { changed: moduleChanged || styleChanged || iconChanged, imports: [`./components${extension}`] };
 };
 
-/** Write the sync install the manifest imports before the views, remove it when no source declares a sync. */
+/** The package tags the project's sources write, with those they use and load: the modules the generation defines. */
+const usedTags = (project: string, table: TagTable | null): Set<string> => {
+  if (table === null) return new Set();
+  const wanted = neededTags(writtenTags(project, table), table);
+  for (const tag of [...wanted]) for (const load of table[tag]?.loads ?? []) wanted.add(load);
+  return wanted;
+};
+
+/** Write the sync install the manifest imports before the views, remove it when no source declares a sync: the app's own, or a used package tag's module. */
 const writeSync = (project: string, dir: string, helpers: GenerationHelpers): HostPrepared => {
   const extension = helpers.extension;
   const path = join(dir, `sync${extension}`);
+  const table = tableFor(project);
   let sync = false;
   let binder = false;
-  for (const file of sources(join(project, "src"))) {
+  for (const file of [...sources(join(project, "src")), ...(table === null ? [] : componentSources(project, usedTags(project, table), table))]) {
     const scan = scanSync(readFileSync(file, "utf8"));
     sync = sync || scan.sync;
     binder = binder || scan.binder;
