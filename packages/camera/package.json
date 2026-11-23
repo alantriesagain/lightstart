@@ -75,6 +75,7 @@
   "dependencies": {
     "@lightstart/app": "workspace:*",
     "@lightstart/components": "workspace:*",
+    "@lightstart/devices": "workspace:*",
     "@lightstart/light": "workspace:*",
     "@lightstart/mobile": "workspace:*",
     "@lightstart/p2p": "workspace:*",

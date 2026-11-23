@@ -6,7 +6,7 @@ A camera for light apps: one `CameraInstance` over the web (`getUserMedia`) and 
 
 `createCamera(opts)` picks the backend: native inside a light mobile shell that carries the `camera` capability, the web otherwise; `{ backend: "web" }` keeps `getUserMedia` inside the shell for a caller that needs the stream in the page. `start({ facingMode })` answers `{ stream, track, lenses }` (no stream on native: the preview is a surface behind the page and `html.native-camera` clears the page's backgrounds over it), `capturePhoto()` answers `{ blob, exif, settings }`, `stop()` releases it. `<camera-preview .stream ?mirror fit>` draws a stream and owns no camera logic.
 
-`source: { kind: "link" }` wraps the `cameraLink` controller as another phone's camera behind the same `CameraBackend` contract. `source: { kind: "device" }` is not available yet: light has no devices backend, so it throws.
+`source: { kind: "link" }` wraps the `cameraLink` controller as another phone's camera behind the same `CameraBackend` contract. `source: { kind: "device", id }` shoots through a connected action camera that a driver of [`@lightstart/devices`](../devices/) runs: the shell's preview is the picture behind the page, its controls are the camera's settings, its lens control is the lens strip, and a press keeps the preview's frame while the full-size file stays on the camera until an import brings it over. An app registers the driver once, `registerDriver(goproDriver)`, and the device backend reads the `devices` controller handle; the module (and `@lightstart/devices`) loads only when a device source is asked for.
 
 ## On Android
 

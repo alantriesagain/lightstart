@@ -185,6 +185,9 @@ importers:
       '@lightstart/components':
         specifier: workspace:*
         version: link:../components
+      '@lightstart/devices':
+        specifier: workspace:*
+        version: link:../devices
       '@lightstart/light':
         specifier: workspace:*
         version: link:../light
