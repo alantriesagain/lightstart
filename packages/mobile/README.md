@@ -34,6 +34,7 @@ one `src/app` module.
 | `minSdk` | `26` | The app's minimum Android API |
 | `shareTarget` | none | `{ path, types? }` or a list of them, what another app may share into the shell; `types` defaults to `["text/plain"]` |
 | `cameraApp` | none | An app id the page's `mobile.capture` asks first, and the manifest queries |
+| `addons` | none | `{ disable: ["@scope/package"] }`, the discoverable Android add-ons to leave out |
 
 The app's deploy base (`defineApp({ url })`'s path, or `base`) is read at init
 and sync time, so a build rooted at `/budget` still resolves inside the shell.
@@ -46,8 +47,9 @@ applied. It refuses an existing folder without `--force`.
 `light mobile:sync` runs `light build`, copies `.deployed/current` into
 `mobile/android/app/src/main/assets/www`, and rewrites the config-derived files
 (`settings.gradle`, `app/build.gradle`, `AndroidManifest.xml`, `strings.xml`).
-It runs the build rather than reading the last one so the APK never carries a
-stale page.
+It also resyncs the add-ons: their Kotlin files and `Addons.kt` are rewritten
+and files an add-on no longer provides are removed. It runs the build rather
+than reading the last one so the APK never carries a stale page.
 
 `light mobile:build` runs `mobile:sync`, then `./gradlew assembleDebug
 --offline`, and prints the APK path
@@ -96,7 +98,85 @@ answers `{ "platform": "android", "capabilities": ["share", "capture",
 "reminders", "shareTarget"] }`; only a capability the shell actually has is
 listed, so `mobile.can` stays honest. `share` is sharing out, `shareTarget` is
 receiving a share and appears only with a configured `shareTarget`; `capture`
-and `reminders` are always there.
+and `reminders` are always there. An add-on's `families` are added to the list,
+so `mobile.can("<family>")` answers true when the shell compiled it in.
+
+## Add-ons
+
+A dependency may ship Kotlin the shell compiles in. It declares the add-on in
+its `package.json` under `light.android`:
+
+```json
+{
+  "name": "@example/location-addon",
+  "light": {
+    "android": {
+      "sources": "android",
+      "entry": "LocationAddon",
+      "permissions": ["android.permission.ACCESS_FINE_LOCATION", { "name": "android.permission.READ_PHONE_STATE", "maxSdkVersion": 32 }],
+      "features": [{ "name": "android.hardware.location.gps", "required": false }],
+      "dependencies": ["com.example:location:1.2.3"]
+    }
+  }
+}
+```
+
+| Field | What |
+|---|---|
+| `sources` | A folder relative to the package holding its `.kt` files; defaults to `android` |
+| `entry` | The Kotlin class implementing `MobileAddon`, with a no-arg constructor |
+| `permissions` | Permission names, or `{ name, maxSdkVersion? }`, written into the manifest |
+| `features` | `{ name, required? }`, written as `<uses-feature>` |
+| `dependencies` | Gradle coordinates, each written as `implementation '…'` |
+
+`mobile:init` and `mobile:sync` read the project's `dependencies` (not
+`devDependencies`), keep the packages that declare `light.android`, sort them by
+package name, and copy their `.kt` files into
+`app/src/main/java/dev/lightstart/mobile/addons/`. They write `Addons.kt`, add
+the permissions, features and Gradle dependencies, and log the add-ons they
+found. `sync` also removes the files and lines of an add-on whose dependency is
+gone, so an existing shell follows the project.
+
+The add-on's Kotlin files use `package dev.lightstart.mobile.addons` and import
+`dev.lightstart.mobile.*`. The interface the shell compiles against is:
+
+```kotlin
+interface MobileAddon {
+  val families: List<String>
+  fun onCreate(activity: MainActivity, root: FrameLayout, webView: WebView) {}
+  fun handle(method: String, args: JSONArray, respond: (Any?) -> Unit, fail: (String) -> Unit): Boolean
+  fun onDestroy() {}
+}
+```
+
+`handle` receives the request's method and `args` (`JSONArray`), and owns the
+call by returning `true`; it answers through `respond(value)` or
+`fail(message)`, which the bridge sends as the usual `{ id, ok, value | error }`.
+The first add-on that returns `true` owns the call, so its method names must not
+collide with the shell's. `onCreate` runs after the WebView is set up and
+`onDestroy` with the activity.
+
+`MainActivity` gives an add-on four helpers:
+
+- `ensurePermissions(permissions, then)` asks for the permissions that are
+  missing and calls `then(allGranted)`. A second request before the first
+  answers calls the first `then(false)`.
+- `emit(event, payload)` sends `{ event, payload }` to the page, which
+  `mobile.on(event, fn)` receives; it may be called from any thread.
+- `setWebViewTransparent(owner, on)` makes the page transparent while any owner
+  wants to draw behind it.
+- `nativeFiles` is a folder under `cacheDir`; a file written there is served at
+  `/__mobile/native/<name>` with byte ranges, so a player or a map can ask for
+  part of a large asset.
+
+The page needs no new API: `mobile.can("location")` follows its `families` and
+`mobile.request("location.where")` reaches its `handle`, and `mobile.on`
+receives what it passes to `activity.emit`. A fire-and-forget call is not added;
+a request replies.
+
+A project opts an add-on out with `defineMobile({ addons: { disable:
+["@example/location-addon"] } })`. A name there that matches no discovered
+add-on is a warning, not an error.
 
 ## The page API
 

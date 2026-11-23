@@ -34,6 +34,11 @@ export interface MobileShareTarget {
   types?: string[];
 }
 
+/** Which discovered Android add-ons to leave out of the shell. */
+export interface MobileAddonsConfig {
+  disable?: string[];
+}
+
 /** What `src/mobile.ts` (or `.js`) declares. */
 export interface MobileConfig {
   appId: string;
@@ -43,6 +48,7 @@ export interface MobileConfig {
   minSdk?: number;
   shareTarget?: MobileShareTarget | MobileShareTarget[];
   cameraApp?: string;
+  addons?: MobileAddonsConfig;
 }
 
 /** The defaults the commands fill in for a config. */
@@ -54,6 +60,7 @@ export interface ResolvedMobile {
   minSdk: number;
   shareTarget?: MobileShareTarget[];
   cameraApp?: string;
+  addons?: MobileAddonsConfig;
   base: string;
 }
 

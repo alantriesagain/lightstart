@@ -5,6 +5,7 @@
 
 import { existsSync, rmSync } from "node:fs";
 import { defineCommand } from "@lightstart/cli";
+import { discoverAddons } from "../../../node/addons.ts";
 import { appIdentityOf, readMobile, resolveMobile } from "../../../node/config.ts";
 import { androidDir, targetSdkOf, writeAndroid, writeLocalProperties } from "../../../node/template.ts";
 
@@ -22,15 +23,18 @@ export default defineCommand({
     }
     const identity = await appIdentityOf(ctx.projectDir);
     const mobile = resolveMobile(config, identity);
+    const found = discoverAddons(ctx.projectDir, mobile.addons);
+    for (const warning of found.warnings) ctx.log.warn(warning);
     const target = androidDir(ctx.projectDir);
     if (existsSync(target) && !args.force) {
       ctx.log.error(`${target} already exists (use --force to overwrite)`);
       return 1;
     }
     if (existsSync(target)) rmSync(target, { recursive: true, force: true });
-    writeAndroid(ctx.projectDir, mobile, targetSdkOf(ctx.env));
+    writeAndroid(ctx.projectDir, mobile, targetSdkOf(ctx.env), found.addons);
     writeLocalProperties(ctx.projectDir, ctx.env);
     ctx.log.log(`Wrote ${target} for ${mobile.appId}`);
+    if (found.addons.length > 0) ctx.log.log(`Add-ons: ${found.addons.map((addon) => addon.package).join(", ")}`);
     return 0;
   },
 });

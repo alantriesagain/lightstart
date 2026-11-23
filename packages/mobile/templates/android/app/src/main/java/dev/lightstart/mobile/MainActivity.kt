@@ -6,6 +6,7 @@ import android.content.ClipData
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -15,6 +16,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -42,7 +44,9 @@ class MainActivity : AppCompatActivity() {
         private const val CHANNEL = "lightMobile"
         private const val CAPTURE_REQUEST = 7301
         private const val NOTIFICATION_REQUEST = 7302
+        private const val ADDON_PERMISSION_REQUEST = 7303
         private const val SERVED = "mobile-served"
+        private const val NATIVE = "mobile-native"
 
         private val MIME = mapOf(
             "html" to "text/html", "js" to "text/javascript", "mjs" to "text/javascript",
@@ -56,22 +60,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var webView: WebView
+    private lateinit var root: FrameLayout
+    private lateinit var addons: List<MobileAddon>
     private lateinit var bridge: Bridge
     private lateinit var assetLoader: WebViewAssetLoader
     private var insetJs = ""
     private var captureFile: File? = null
     private var captureDone: ((JSONObject?) -> Unit)? = null
+    private var permissionDone: ((Boolean) -> Unit)? = null
+    private val transparentOwners = LinkedHashSet<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         holdOrientation()
-        bridge = Bridge(this)
+        addons = Addons.create()
+        bridge = Bridge(this, addons)
         assetLoader = WebViewAssetLoader.Builder()
             .setDomain(HOST)
             .addPathHandler("/", WebViewAssetLoader.PathHandler { path -> serveAsset(path) })
             .build()
         setupWebView()
+        for (addon in addons) addon.onCreate(this, root, webView)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (webView.canGoBack()) webView.goBack() else finish()
@@ -80,6 +90,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        if (::addons.isInitialized) for (addon in addons) addon.onDestroy()
         if (::webView.isInitialized) webView.destroy()
         super.onDestroy()
     }
@@ -116,7 +127,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == NOTIFICATION_REQUEST) return
+        if (requestCode != ADDON_PERMISSION_REQUEST) return
+        val done = permissionDone ?: return
+        permissionDone = null
+        val granted = permissions.indices.all { index ->
+            index < grantResults.size && grantResults[index] == PackageManager.PERMISSION_GRANTED
+        }
+        done(granted)
     }
 
     private fun holdOrientation() {
@@ -130,7 +147,9 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
         webView = WebView(this)
-        setContentView(webView)
+        root = FrameLayout(this)
+        root.addView(webView, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        setContentView(root)
         ViewCompat.setOnApplyWindowInsetsListener(webView) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
@@ -150,8 +169,11 @@ class MainActivity : AppCompatActivity() {
         installStartScript()
         installBridge()
         webView.webViewClient = object : WebViewClient() {
-            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
-                if (request.url.host == HOST) assetLoader.shouldInterceptRequest(request.url) else null
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                if (request.url.host != HOST) return null
+                if (request.url.path?.startsWith("/__mobile/native/") == true) return serveNative(request)
+                return assetLoader.shouldInterceptRequest(request.url)
+            }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 if (request.url.host == HOST) return false
@@ -256,6 +278,51 @@ class MainActivity : AppCompatActivity() {
         return WebResourceResponse(mime, charset, FileInputStream(file))
     }
 
+    /** A folder under the cache whose files the asset loader serves at `/__mobile/native/<name>`. */
+    val nativeFiles: File
+        get() = File(cacheDir, NATIVE).apply { mkdirs() }
+
+    private fun mimeOf(file: File): String {
+        val extension = file.extension.lowercase()
+        return MIME[extension] ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "application/octet-stream"
+    }
+
+    private fun serveNative(request: WebResourceRequest): WebResourceResponse {
+        val relative = request.url.path.orEmpty().removePrefix("/__mobile/native/")
+        if (relative.isEmpty() || relative.contains("..")) return notFound()
+        val folder = nativeFiles
+        val file = File(folder, relative)
+        if (!file.isFile || !file.canonicalPath.startsWith(folder.canonicalPath + File.separator)) return notFound()
+        val total = file.length()
+        val header = request.requestHeaders.entries.firstOrNull { it.key.equals("Range", ignoreCase = true) }?.value
+        val match = header?.let { Regex("bytes=(\\d*)-(\\d*)").find(it) }
+        if (match == null) return serveFile(file)
+        val startText = match.groupValues[1]
+        val endText = match.groupValues[2]
+        val start = if (startText.isEmpty()) {
+            (total - (endText.toLongOrNull() ?: 0L)).coerceAtLeast(0L)
+        } else {
+            startText.toLongOrNull() ?: 0L
+        }
+        var end = if (startText.isEmpty() || endText.isEmpty()) total - 1 else endText.toLongOrNull() ?: (total - 1)
+        if (end >= total) end = total - 1
+        if (start > end || start >= total) {
+            return WebResourceResponse(
+                "text/plain", "utf-8", 416, "Range Not Satisfiable",
+                mapOf("Content-Range" to "bytes */$total"), ByteArrayInputStream(ByteArray(0)),
+            )
+        }
+        val length = end - start + 1
+        val input = FileInputStream(file)
+        input.channel.position(start)
+        val headers = mapOf(
+            "Content-Range" to "bytes $start-$end/$total",
+            "Content-Length" to length.toString(),
+            "Accept-Ranges" to "bytes",
+        )
+        return WebResourceResponse(mimeOf(file), null, 206, "Partial Content", headers, BoundedInputStream(input, length))
+    }
+
     private fun prune(dir: File, ageMs: Long) {
         dir.listFiles()?.filter { it.lastModified() < System.currentTimeMillis() - ageMs }?.forEach { it.deleteRecursively() }
     }
@@ -340,6 +407,33 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
         }
         return uri.lastPathSegment ?: "shared"
+    }
+
+    /** Ask for the permissions an add-on lists that are missing, then say whether all are granted. */
+    fun ensurePermissions(permissions: Array<String>, then: (Boolean) -> Unit) {
+        val missing = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (missing.isEmpty()) {
+            then(true)
+            return
+        }
+        permissionDone?.invoke(false)
+        permissionDone = then
+        ActivityCompat.requestPermissions(this, missing.toTypedArray(), ADDON_PERMISSION_REQUEST)
+    }
+
+    /** Send an add-on's event to the page as `{ event, payload }`, which `mobile.on(event, ...)` receives. */
+    fun emit(event: String, payload: Any?) {
+        bridge.emit(event, payload)
+    }
+
+    /** Make the page transparent while any add-on wants to draw behind it. */
+    fun setWebViewTransparent(owner: String, on: Boolean) {
+        if (on) transparentOwners.add(owner) else transparentOwners.remove(owner)
+        val transparent = transparentOwners.isNotEmpty()
+        webView.setBackgroundColor(if (transparent) Color.TRANSPARENT else Color.WHITE)
+        if (::root.isInitialized) root.setBackgroundColor(if (transparent) Color.TRANSPARENT else Color.WHITE)
     }
 
     fun requestNotificationPermission() {
@@ -452,5 +546,26 @@ class MainActivity : AppCompatActivity() {
             }
         }
         startActivity(Intent.createChooser(intent, title ?: ""))
+    }
+}
+
+/** The requested byte range of a file, so a native asset answers a `Range` request without reading the rest. */
+private class BoundedInputStream(private val source: FileInputStream, private var left: Long) : java.io.InputStream() {
+    override fun read(): Int {
+        if (left <= 0L) return -1
+        val value = source.read()
+        if (value >= 0) left -= 1
+        return value
+    }
+
+    override fun read(bytes: ByteArray, offset: Int, length: Int): Int {
+        if (left <= 0L) return -1
+        val count = source.read(bytes, offset, minOf(length.toLong(), left).toInt())
+        if (count > 0) left -= count
+        return count
+    }
+
+    override fun close() {
+        source.close()
     }
 }

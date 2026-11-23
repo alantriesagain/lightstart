@@ -7,7 +7,7 @@
 import { existsSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { isOrientation, type MobileConfig, type MobileShareTarget, type ResolvedMobile } from "../index.ts";
+import { isOrientation, type MobileAddonsConfig, type MobileConfig, type MobileShareTarget, type ResolvedMobile } from "../index.ts";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -105,6 +105,16 @@ const shareTargetOf = (value: unknown, path: string): MobileShareTarget[] => {
   });
 };
 
+const addonsOf = (value: unknown, path: string): MobileAddonsConfig | undefined => {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) throw new Error(`${path} has addons that is not an object; use { disable: ["@scope/package"] }`);
+  const disable = value["disable"];
+  if (disable === undefined) return {};
+  if (!Array.isArray(disable) || disable.some((name) => typeof name !== "string" || name.trim() === ""))
+    throw new Error(`${path} has addons.disable; give a list of package names such as ["@scope/package"]`);
+  return { disable: disable as string[] };
+};
+
 const cameraAppOf = (value: unknown, path: string): string | undefined => {
   if (value === undefined) return undefined;
   if (typeof value !== "string" || value.trim() === "" || /\s/.test(value))
@@ -127,5 +137,7 @@ export const resolveMobile = (config: MobileConfig, identity: AppIdentity): Reso
   if (config.shareTarget !== undefined) resolved.shareTarget = shareTargetOf(config.shareTarget, "src/mobile");
   const cameraApp = cameraAppOf(config.cameraApp, "src/mobile");
   if (cameraApp !== undefined) resolved.cameraApp = cameraApp;
+  const addons = addonsOf(config.addons, "src/mobile");
+  if (addons !== undefined) resolved.addons = addons;
   return resolved;
 };

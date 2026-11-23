@@ -53,6 +53,7 @@ const main = (): void => {
   const project = copy();
   try {
     eqn("mobile:init exits 0", run(project, ["mobile:init"]).status, 0);
+    ok("the echo add-on reached the shell", existsSync(join(project, "mobile", "android", "app", "src", "main", "java", "dev", "lightstart", "mobile", "addons", "EchoAddon.kt")));
     const built = run(project, ["mobile:build"]);
     const apk = join(project, "mobile", "android", "app", "build", "outputs", "apk", "debug", "app-debug.apk");
     if (built.status !== 0) {

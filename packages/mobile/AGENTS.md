@@ -6,16 +6,17 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Where | What |
 |---|---|
-| `index.ts` | `defineMobile`, `MobileConfig`, `ResolvedMobile`, `MobileVersion`, `MobileOrientation`, `MobileShareTarget`, and the page API's types re-exported |
+| `index.ts` | `defineMobile`, `MobileConfig`, `MobileAddonsConfig`, `ResolvedMobile`, `MobileVersion`, `MobileOrientation`, `MobileShareTarget`, and the page API's types re-exported |
 | `page.ts` | `mobile`, `MobileApi`, `MobileReady`, the share out types, `MobileShared`, `MobileReminder`, `MobileCaptureOptions`: the request protocol, capabilities, events, `shared()`, reminders and the web fallbacks |
-| `node/config.ts` | `mobilePathOf`, `appPathOf`, `readMobile`, `appIdentityOf`, `resolveMobile`: read `src/mobile` and `src/app` without their views, and validate the share targets and camera app |
-| `node/template.ts` | `androidDir`, `assetsDir`, `sdkDirOf`, `targetSdkOf`, `writeAndroid`, `rewriteAndroid`, `writeLocalProperties`: the template and the config-derived files, including the share intent filters, reminder receiver and camera query |
-| `templates/android/` | The Gradle project: `MainActivity.kt`, `Bridge.kt`, `Reminders.kt`, `Notifications.kt`, the manifest, resources and the cached wrapper |
+| `node/config.ts` | `mobilePathOf`, `appPathOf`, `readMobile`, `appIdentityOf`, `resolveMobile`: read `src/mobile` and `src/app` without their views, and validate the share targets, camera app and add-on opt-out |
+| `node/addons.ts` | `discoverAddons`, `MobileAddon`, `MobileAddonPermission`, `MobileAddonFeature`, `AddonDiscovery`: find packages that declare `light.android`, validate them, sort them and apply `addons.disable` |
+| `node/template.ts` | `androidDir`, `assetsDir`, `sdkDirOf`, `targetSdkOf`, `writeAndroid`, `rewriteAndroid`, `writeAddons`, `writeLocalProperties`: the template and the config-derived files, including the share intent filters, reminder receiver, camera query and add-on sources, `Addons.kt`, manifest lines and Gradle dependencies |
+| `templates/android/` | The Gradle project: `MainActivity.kt`, `Bridge.kt`, `MobileAddon.kt`, `Reminders.kt`, `Notifications.kt`, the manifest, resources and the cached wrapper |
 | `cli/commands/mobile/init.ts` | `light mobile:init` |
 | `cli/commands/mobile/sync.ts` | `light mobile:sync` |
 | `cli/commands/mobile/build.ts` | `light mobile:build`, `apkPath` |
 | `cli/commands/mobile/run.ts` | `light mobile:run` |
-| `test/` | Plain node-only scripts on `@lightstart/test/assert.ts`; `test/fixtures/app` is the fixture |
+| `test/` | Plain node-only scripts on `@lightstart/test/assert.ts`; `test/fixtures/app` is the fixture, with `@fixture/echo-addon`, `@fixture/gradle-addon` and `@fixture/bad-addon` under its `node_modules` |
 
 ## Rules the sources keep
 
@@ -30,6 +31,9 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - `share` writes files under the cache, exposes them through a `FileProvider`, uses `ACTION_SEND` or `ACTION_SEND_MULTIPLE`, goes straight to `app` when it is installed, and answers `{ shared: true }`. The page falls back to `navigator.share` outside the shell.
 - `shareTarget` accepts one `{ path, types? }` or a list; `types` defaults to `["text/plain"]`. The manifest gets an `ACTION_SEND` filter per type and `ACTION_SEND_MULTIPLE` for files; `BuildConfig.SHARE_TARGETS` carries `path|type,type;…`. A share opens `<path>?text=&title=` and, for files, `file=/__mobile/shared/<name>&type=&name=` repeated per file; a running shell also emits the `share` event. The shell serves `/__mobile/shared/` and `/__mobile/capture/` from its cache through the asset loader.
 - `cameraApp` reaches `BuildConfig.CAMERA_APP` and a manifest `<queries>` package. `mobile.capture` fires `ACTION_IMAGE_CAPTURE` or `ACTION_VIDEO_CAPTURE` with a `FileProvider` output, at `app`, then `cameraApp`, then the chooser, and answers `{ url, type, name }` or `null`; the web opens a `capture` file input and answers a blob URL.
+- An add-on is a project dependency (not devDependency) whose `package.json` carries `light.android` with `sources` (default `android`), `entry` (a Kotlin class name), `permissions`, `features` and `dependencies`. Discovery sorts by package name and validates each field with an error naming the package and field. `addons.disable` names packages to leave out; a name that matches no discovered add-on is a warning. Its sources use `package dev.lightstart.mobile.addons` and import `dev.lightstart.mobile.*`.
+- `mobile:init` and `mobile:sync` copy each add-on's `.kt` files to `app/src/main/java/dev/lightstart/mobile/addons/`, write `Addons.kt`, deduplicate its permissions and features into the manifest and its coordinates into `app/build.gradle`, and log the add-ons found. Sync clears the add-on folder first, so removing a dependency removes its files and lines.
+- `MobileAddon.handle` runs before the bridge's own `when`; the first add-on returning true owns the call and answers through `respond`/`fail` as `{ id, ok, value | error }`. Its `families` join `$ready`'s capabilities. `MainActivity` holds the WebView in a root `FrameLayout`, calls `onCreate`/`onDestroy` on each add-on, and offers `ensurePermissions` (its own request code), `emit` (the bridge's event, from any thread), `setWebViewTransparent` and `nativeFiles` (served at `/__mobile/native/<name>` with byte ranges).
 - Reminders are a JSON list in `SharedPreferences`, one exact-or-inexact `AlarmManager` alarm each, a `ReminderReceiver` posting on the `reminders` channel and re-arming after `BOOT_COMPLETED`; the first `set` asks for `POST_NOTIFICATIONS` on API 33+. The page's `mobile.reminders` answers `{ supported: false }` outside the shell.
 - `mobile.shared()` reads `text`, `title` and repeated `file`/`type`/`name` from the current URL on both the shell and the web; it answers `null` when none is present.
 - TypeScript with erasable syntax only; no `any`. Kotlin in the template. Comments are a JSDoc module header and JSDoc on exported symbols in TypeScript, and short KDoc headers in Kotlin.
@@ -40,10 +44,12 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Contract | Who relies on it |
 |---|---|
-| `defineMobile`, `MobileConfig` and its fields (`appId`, `name`, `version`, `orientation`, `minSdk`, `shareTarget`, `cameraApp`) | a project's `src/mobile.ts` (or `.js`) |
+| `defineMobile`, `MobileConfig` and its fields (`appId`, `name`, `version`, `orientation`, `minSdk`, `shareTarget`, `cameraApp`, `addons`) | a project's `src/mobile.ts` (or `.js`) |
 | `readMobile`, `appIdentityOf`, `resolveMobile` | every `mobile:*` command |
-| `writeAndroid`, `rewriteAndroid`, `targetSdkOf`, `writeLocalProperties` | init and sync |
-| The request protocol and `$ready`'s capability list (`share`, `shareTarget`, `capture`, `reminders`) | `page.ts` and `Bridge.kt` |
+| `discoverAddons` and the `light.android` declaration (`sources`, `entry`, `permissions`, `features`, `dependencies`) | init, sync and a package shipping Kotlin |
+| `writeAndroid`, `rewriteAndroid`, `writeAddons`, `targetSdkOf`, `writeLocalProperties` | init and sync |
+| `MobileAddon`, `Addons.kt` and the `/__mobile/native/` path | a package's Kotlin sources and the page |
+| The request protocol and `$ready`'s capability list (`share`, `shareTarget`, `capture`, `reminders`, then each add-on's `families`) | `page.ts` and `Bridge.kt` |
 | `mobile.present`, `mobile.ready`, `mobile.can`, `mobile.request`, `mobile.on`, `mobile.share`, `mobile.shared`, `mobile.reminders`, `mobile.capture` | an app's page |
 | `mobile/android/app/src/main/assets/www` | sync, build and the shell |
 

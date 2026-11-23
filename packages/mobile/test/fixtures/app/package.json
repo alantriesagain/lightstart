@@ -7,6 +7,7 @@
     "scopes": ["@lightstart"]
   },
   "dependencies": {
+    "@fixture/echo-addon": "*",
     "@lightstart/app": "workspace:*",
     "@lightstart/light": "workspace:*",
     "@lightstart/mobile": "workspace:*",
