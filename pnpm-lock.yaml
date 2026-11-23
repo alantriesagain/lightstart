@@ -48,6 +48,9 @@ importers:
       '@lightstart/pwa':
         specifier: workspace:*
         version: link:packages/pwa
+      '@lightstart/qr':
+        specifier: workspace:*
+        version: link:packages/qr
       '@lightstart/server':
         specifier: workspace:*
         version: link:packages/server
@@ -558,6 +561,28 @@ importers:
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
+    devDependencies:
+      '@lightstart/build':
+        specifier: workspace:*
+        version: link:../build
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/qr:
+    dependencies:
+      '@lightstart/components':
+        specifier: workspace:*
+        version: link:../components
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
     devDependencies:
       '@lightstart/build':
         specifier: workspace:*
