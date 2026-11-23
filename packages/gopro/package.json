@@ -1,0 +1,49 @@
+{
+  "name": "@lightstart/gopro",
+  "version": "0.1.0",
+  "description": "A pure-JS GoPro driver for @lightstart/devices: Open GoPro BLE control and Wi-Fi media import over the generic device transports.",
+  "type": "module",
+  "types": "./types.ts",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/gopro"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "gopro",
+    "camera",
+    "bluetooth",
+    "ble",
+    "opengopro",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "types.ts",
+    "driver.js",
+    "lib/",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/devices": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
