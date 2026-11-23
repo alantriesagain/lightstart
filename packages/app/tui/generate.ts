@@ -1,9 +1,9 @@
 /**
  * @file The terminal host's part of the generation: `.light/main.ts`, which
  * runs the first run mode that matches (`src/modes/<name>.ts`, each imported
- * statically: `main(argv)` when its `matches(argv)` answers true, or argv
- * holds `--<name>`) and otherwise starts the manifest with
- * `@lightstart/app/tui`; and `.light/classes.baked.ts`, the theme's classes
+ * statically: `main(argv, context)` when its `matches(argv)` answers true,
+ * or argv holds `--<name>`; `context.open()` opens the app's stores) and
+ * otherwise starts the manifest with `@lightstart/app/tui`; and `.light/classes.baked.ts`, the theme's classes
  * the entry's views use baked into tables, one per scheme. The manifest
  * carries the root view's class, which the host makes.
  */
@@ -23,18 +23,17 @@ const modeDispatch = (helpers: GenerationHelpers, file: string, index: number): 
     `const matches${String(index)} = Reflect.get(mode${String(index)}, "matches");`,
     "",
     `if (typeof matches${String(index)} === "function" ? (matches${String(index)} as (given: readonly string[]) => boolean)(argv) : argv.includes(${JSON.stringify(`--${name}`)})) {`,
-    `  process.exit(await mode${String(index)}.main(argv));`,
+    `  process.exit(await (mode${String(index)}.main as (given: readonly string[], context: ModeContext) => Promise<number>)(argv, new ModeContext(manifest, argv.filter((given) => given !== ${JSON.stringify(`--${name}`)}))));`,
     "}",
   ];
 };
 
 const mainSource = (helpers: GenerationHelpers, project: string, modes: string[]): string => {
-  const lines: string[] = ['import { start } from "@lightstart/app/tui";', 'import manifest from "./app.ts";', 'import { dark, light } from "./classes.baked.ts";'];
+  const lines: string[] = [modes.length > 0 ? 'import { ModeContext, start } from "@lightstart/app/tui";' : 'import { start } from "@lightstart/app/tui";', 'import manifest from "./app.ts";', 'import { dark, light } from "./classes.baked.ts";'];
   modes.forEach((file, index) => lines.push(modeImport(helpers, project, file, index)));
   if (modes.length > 0) {
     lines.push("", "const argv = process.argv.slice(2);", "");
-    modes.forEach((file, index) => lines.push(...modeDispatch(helpers, file, index)));
-    lines.push("");
+    modes.forEach((file, index) => lines.push(...modeDispatch(helpers, file, index), ""));
   }
   lines.push("await start(manifest, { classes: { dark, light } });", "");
   return lines.join("\n");

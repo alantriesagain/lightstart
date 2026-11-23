@@ -33,7 +33,7 @@ const main = async (): Promise<void> => {
 
     eq("the host is the terminal", first.host, "tui");
     ok("the root view and row view are found", first.views.join(",") === "app-root,note-row");
-    ok("the modes are found", first.modes.join(",") === "hello");
+    ok("the modes are found", first.modes.join(",") === "count,hello");
     eq("the seed is found", first.seeds.join(","), "seed");
     ok("the first run wrote", first.changed);
 
@@ -43,7 +43,7 @@ const main = async (): Promise<void> => {
     ok("the manifest carries it", manifest.includes("  rootView,"));
     ok("the other view is side-effect only", manifest.includes('import "../src/views/note-row.ts";'));
 
-    eq("the entry runs the modes before the host", readFileSync(first.main, "utf8"), 'import { start } from "@lightstart/app/tui";\nimport manifest from "./app.ts";\nimport { dark, light } from "./classes.baked.ts";\nimport * as mode0 from "../src/modes/hello.ts";\n\nconst argv = process.argv.slice(2);\n\nconst matches0 = Reflect.get(mode0, "matches");\n\nif (typeof matches0 === "function" ? (matches0 as (given: readonly string[]) => boolean)(argv) : argv.includes("--hello")) {\n  process.exit(await mode0.main(argv));\n}\n\nawait start(manifest, { classes: { dark, light } });\n');
+    eq("the entry runs the modes before the host", readFileSync(first.main, "utf8"), 'import { ModeContext, start } from "@lightstart/app/tui";\nimport manifest from "./app.ts";\nimport { dark, light } from "./classes.baked.ts";\nimport * as mode0 from "../src/modes/count.ts";\nimport * as mode1 from "../src/modes/hello.ts";\n\nconst argv = process.argv.slice(2);\n\nconst matches0 = Reflect.get(mode0, "matches");\n\nif (typeof matches0 === "function" ? (matches0 as (given: readonly string[]) => boolean)(argv) : argv.includes("--count")) {\n  process.exit(await (mode0.main as (given: readonly string[], context: ModeContext) => Promise<number>)(argv, new ModeContext(manifest, argv.filter((given) => given !== "--count"))));\n}\n\nconst matches1 = Reflect.get(mode1, "matches");\n\nif (typeof matches1 === "function" ? (matches1 as (given: readonly string[]) => boolean)(argv) : argv.includes("--hello")) {\n  process.exit(await (mode1.main as (given: readonly string[], context: ModeContext) => Promise<number>)(argv, new ModeContext(manifest, argv.filter((given) => given !== "--hello"))));\n}\n\nawait start(manifest, { classes: { dark, light } });\n');
 
     ok("the baked table is written", first.classes !== null);
     if (first.classes !== null) {

@@ -19,7 +19,7 @@ light build                # generate as the build's first step
 | `src/controllers/<name>.ts` | one controller, default-exported | names each, starts it and waits for `$ready`, each after the controllers it imports |
 | `src/views/<tag>.ts` | one view, registering its tag | imports them all, so every tag exists |
 | `src/routes.ts` | optional: `{ "/path": { view: "<tag>", name?, title?, layout?, props?, routes? } }` | follows them on every host; `<app-container>` draws the view, wrapped in its layout |
-| `src/modes/<name>.ts` | optional, a terminal app's: `main(argv)` and maybe `matches(argv)` | runs before the host when `argv` matches |
+| `src/modes/<name>.ts` | optional, a terminal app's: `main(argv, context)` and maybe `matches(argv)` | runs before the host when `argv` matches; `await context.open()` opens the app's stores and starts its controllers with no surface |
 
 A file's name is its name in the manifest, without the extension and unchanged: `src/models/note.ts` is the model `note`, `src/controllers/notes.ts` is the controller `notes`. `.ts` and `.js` files are read the same way, in sorted order; `.d.ts` and `*.test.*` are skipped. Keep a model's file name equal to the name it passes `defineModel`, and a controller's file name equal to the name its controller carries.
 
@@ -302,10 +302,10 @@ A project that declares `@lightstart/i18n` gets `.light/locales.ts` (or `.js`), 
 
 A project whose `src/` declares a `sync:` gets `.light/sync.ts` (or `.js`), imported by `.light/app.ts` (or `.js`) before the views: it calls `View.use(syncPlugin)` so every view prop declared with `sync:` follows its target. When a `sync:` target is a model api imported from `src/models/`, it also calls `registerSyncBinder(modelBinder)`. A project with no such declaration gets no file.
 
-On the terminal, the manifest also carries the root view's class (`rootView`), `.light/classes.baked.ts` holds the theme's classes the views use baked into a table per scheme, and the entry runs the first run mode that matches before the host (`matches(argv)` when the mode has one, else `argv` holding `--<name>`; it exits with its code):
+On the terminal, the manifest also carries the root view's class (`rootView`), `.light/classes.baked.ts` holds the theme's classes the views use baked into a table per scheme, and the entry runs the first run mode that matches before the host (`matches(argv)` when the mode has one, else `argv` holding `--<name>`; it exits with its code). A mode is handed a `ModeContext`: `await context.open()` runs the app (arguments, stores under `--data`, seeds, controllers) with nothing on the terminal, over the mode's argv without its own `--<name>` (or the argv it passes), and answers the handle whose `stop()` closes the stores:
 
 ```ts
-import { start } from "@lightstart/app/tui";
+import { ModeContext, start } from "@lightstart/app/tui";
 import manifest from "./app.ts";
 import { dark, light } from "./classes.baked.ts";
 import * as mode0 from "../src/modes/hello.ts";
@@ -315,10 +315,23 @@ const argv = process.argv.slice(2);
 const matches0 = Reflect.get(mode0, "matches");
 
 if (typeof matches0 === "function" ? (matches0 as (given: readonly string[]) => boolean)(argv) : argv.includes("--hello")) {
-  process.exit(await mode0.main(argv));
+  process.exit(await (mode0.main as (given: readonly string[], context: ModeContext) => Promise<number>)(argv, new ModeContext(manifest, argv.filter((given) => given !== "--hello"))));
 }
 
 await start(manifest, { classes: { dark, light } });
+```
+
+```ts
+// src/modes/export.ts: `app --export` prints the notes and exits
+import type { ModeContext } from "@lightstart/app/tui";
+import note from "../models/note.ts";
+
+export const main = async (_argv: readonly string[], context: ModeContext): Promise<number> => {
+  const app = await context.open();
+  for (const row of await note.getAll()) console.log(JSON.stringify(row));
+  await app.stop();
+  return 0;
+};
 ```
 
 The output is deterministic (sorted, relative imports from `.light/`) and a file is written only when its content changes. `.light/` is not committed: add it to the project's `.gitignore`, beside `.deployed/`.

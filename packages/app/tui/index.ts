@@ -48,6 +48,8 @@ export interface TuiOptions {
   argv?: readonly string[];
   /** The terminal to run on; a new one by default. */
   term?: Terminal | null;
+  /** `false` for a run with nothing on the terminal (a run mode's `context.open()`); `true` by default. */
+  surface?: boolean;
 }
 
 /** A running app: `stop()` stops the renderer, disposes its controllers and closes its stores. */
@@ -90,12 +92,16 @@ export class TuiHost extends AppHost {
   term: Terminal | null;
   renderer: Renderer | null = null;
 
+  /** Whether the host puts the root view on the terminal; a run mode's host does not. */
+  readonly surface: boolean;
+
   constructor(options: TuiOptions = {}) {
     super();
     this.openStores = (manifest: AppManifest, memoryOnly: boolean): Promise<RunStore> => openLocalStores(manifest, this, memoryOnly);
     this.argv = options.argv ?? process.argv.slice(2);
     this.classes = options.classes ?? null;
     this.term = options.term ?? null;
+    this.surface = options.surface !== false;
   }
 
   args(app: App): Record<string, unknown> {
@@ -115,7 +121,7 @@ export class TuiHost extends AppHost {
   }
 
   mount(run: AppRun): Promise<void> {
-    this.put(run);
+    if (this.surface) this.put(run);
     return Promise.resolve();
   }
 
@@ -156,6 +162,30 @@ export class TuiHost extends AppHost {
 
   exit(code: number): void {
     process.exit(code);
+  }
+}
+
+/**
+ * What a run mode's `main(argv, context)` reaches the app through: `open()`
+ * runs the app as the terminal host would (its stores under `--data`, its
+ * arguments from argv, its controllers) with nothing on the terminal, so the
+ * mode reads and writes the app's data through its models; the mode stops it
+ * before it answers its exit code.
+ */
+export class ModeContext {
+  readonly manifest: AppManifest;
+  readonly argv: readonly string[];
+
+  constructor(manifest: AppManifest, argv: readonly string[]) {
+    this.manifest = manifest;
+    this.argv = argv;
+  }
+
+  /** Open the app's stores and start its controllers, with no surface, over `argv` (the mode's argv without its own `--<name>` by default; a mode with options of its own passes what is left for the app); answers the handle that stops them. */
+  async open(argv: readonly string[] = this.argv): Promise<AppHandle> {
+    const run = new AppRun(this.manifest, new TuiHost({ argv, surface: false }));
+    await run.start();
+    return { stop: () => run.stop() };
   }
 }
 

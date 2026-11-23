@@ -12,7 +12,7 @@ A terminal app on `@lightstart/app`: the folders are the app, and light writes t
 | `src/controllers/<name>.ts` | One controller, default-exported; the file name is its name |
 | `src/views/<tag>.ts` | One view; the file name is its tag, and the root view default-exports its class |
 | `src/routes.ts` | Optional: `{ "/path": { view: "<tag>", name?, title? } }`, drawn by `<app-container>` in the root view; `navigate(path)` from `@lightstart/app/tui` goes to a path |
-| `src/modes/<name>.ts` | Optional: exports `main(argv)` before the host when argv has `--<name>`, and may export `matches(argv)` |
+| `src/modes/<name>.ts` | Optional: exports `main(argv, context)`, run before the host when argv has `--<name>`, and may export `matches(argv)`; `await context.open()` opens the app's stores and starts its controllers with nothing drawn, and its `stop()` closes them |
 | `test/` | Tests that drive the app on light's `TestTerminal` |
 | `tsconfig.json` | The editor's settings and the options `scriptc` compiles with |
 
