@@ -73,7 +73,7 @@ const main = async (): Promise<void> => {
     eq("check runs light check", manifest.scripts["check"], "light check");
     ok("native is a devDependency", manifest.devDependencies["@lightstart/native"] !== undefined);
     ok("build is a devDependency", manifest.devDependencies["@lightstart/build"] !== undefined);
-    eq("scriptc is pinned", manifest.devDependencies["scriptc"], "0.4.12");
+    eq("scriptc is pinned", manifest.devDependencies["scriptc"], "0.4.16");
 
     const tested = await run("pnpm", ["run", "test"], target);
     ok("the project's test exits 0", tested.code === 0);

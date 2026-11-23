@@ -20,7 +20,7 @@ light desktop run native/desktop/demo/backend.js   # the desktop shell's demo: a
 
 ## Which scriptc
 
-Light's core is TypeScript (`html/`, `signals/`, `view/core.ts`, `native/tui/`, `controller/`, `model/`), and it compiles with the scriptc release its `package.json` pins (0.4.12), installed with the workspace's dependencies; it needs no fork or patch. Every fix the core needed has landed upstream in that release. Until it did, the native tools compiled with the `light-integration` branch of a fork; `native/scriptc.js` no longer looks for it.
+Light's core is TypeScript (`html/`, `signals/`, `view/core.ts`, `native/tui/`, `controller/`, `model/`), and it compiles with the scriptc release its `package.json` pins (0.4.16), installed with the workspace's dependencies; it needs no fork or patch. Every fix the core needed has landed upstream in that release. Until it did, the native tools compiled with the `light-integration` branch of a fork; `native/scriptc.js` no longer looks for it.
 
 ```
 SCRIPTC=/path/to/scriptc npm run verify

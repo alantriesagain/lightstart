@@ -27,7 +27,7 @@ export const tui: Kind = {
     eslint: "^9.17.0",
     "eslint-plugin-lit": "^2.3.1",
     globals: "^15.14.0",
-    scriptc: "0.4.12",
+    scriptc: "0.4.16",
     typescript: "^6.0.3",
   },
   manifest: {

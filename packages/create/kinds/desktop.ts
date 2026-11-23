@@ -20,7 +20,7 @@ export const desktop: Kind = {
   devDependencies: {
     "@lightstart/cli": "^0.1.0",
     "@lightstart/server": "^0.1.0",
-    scriptc: "0.4.12",
+    scriptc: "0.4.16",
     "@types/node": "^26.6.5",
     "@stylistic/eslint-plugin": "^2.13.0",
     eslint: "^9.17.0",

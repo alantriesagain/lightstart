@@ -64,8 +64,8 @@ importers:
         specifier: ^1.58.2
         version: 1.64.0
       scriptc:
-        specifier: 0.4.12
-        version: 0.4.12
+        specifier: 0.4.16
+        version: 0.4.16
       tsc-ts:
         specifier: 0.0.8
         version: 0.0.8
@@ -401,8 +401,8 @@ importers:
         specifier: ^1.58.2
         version: 1.64.0
       scriptc:
-        specifier: 0.4.12
-        version: 0.4.12
+        specifier: 0.4.16
+        version: 0.4.16
       tsc-ts:
         specifier: 0.0.8
         version: 0.0.8
@@ -990,102 +990,102 @@ packages:
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
 
-  '@scriptc/cli-darwin-arm64@0.4.12':
-    resolution: {integrity: sha512-OPNccLVp0bcp7LgwEswSZarFSA4qVaE3ktsldykn3m1rJHCf5c5AMDvESb0UuU2opXdWtf9XD0+eEaoG7gDa1g==}
+  '@scriptc/cli-darwin-arm64@0.4.16':
+    resolution: {integrity: sha512-IKHMu+UV3lhTmVjENv28sxv/Y8e75SERGxzC0LuStnhwTYimeFEz1nwttjbMxYgh+3ZCvN4P6PkyvVP9/zSazQ==}
     cpu: [arm64]
     os: [darwin]
 
-  '@scriptc/cli-darwin-x64@0.4.12':
-    resolution: {integrity: sha512-+zR8mWLWAoOafh92LqaMxuGs/lmCArxvXq00CZ1I/GYTZazQ2xeNQiqT8tvCOcoF6MpEkHMPxOi71nOssgp80Q==}
+  '@scriptc/cli-darwin-x64@0.4.16':
+    resolution: {integrity: sha512-5viGYRf+fnIjF4qa2txU+dHfATQjB4iCYeBXTVkoG8omsHgJKiGfxKNNBhIufe1BULhVnevxMKCimg9Uv514Gg==}
     cpu: [x64]
     os: [darwin]
 
-  '@scriptc/cli-linux-arm64-gnu@0.4.12':
-    resolution: {integrity: sha512-W9+qW4ewh2iUl7T3kzNQT5ck/ElqEXidt134Uj2v7VIKk0AVffY5PmlI8MV9IChnKiMvxlzO+LJGuOn8G+1Zvg==}
+  '@scriptc/cli-linux-arm64-gnu@0.4.16':
+    resolution: {integrity: sha512-BqPYO9NnsRUVRV2tIrQmDVJNgUOl1exS+4U8XkPKMTMbYN4wuGy1rKe7uCerkFrs8Jd3BA2rR0vBM5Kb4c2AaQ==}
     cpu: [arm64]
     os: [linux]
 
-  '@scriptc/cli-linux-arm64-musl@0.4.12':
-    resolution: {integrity: sha512-1PEzzVpokuNFu3NwNL2gLcM514GOZyr7WntjaPoGG4Y2m+jOX2I55YYLpYs+AK0OfvxmFrsuBVmZrjHxG7SXAw==}
+  '@scriptc/cli-linux-arm64-musl@0.4.16':
+    resolution: {integrity: sha512-8DHVkOqUeHaiRn0c1H0QT6Sc8JXd9/cj7i88zPeiKYq1O4lZm8VCN+VBKVHzoKiXeM6gbWHvWzSIbLNhUcJBBg==}
     cpu: [arm64]
     os: [linux]
 
-  '@scriptc/cli-linux-x64-gnu@0.4.12':
-    resolution: {integrity: sha512-dTz+X1PblSVwnkQrqH+synRfxXTgzVvPquUnPa92dPBY3prGU0XuVZHR1farl84w3ysQ0Ne4Fpwx9KQ1Kzt7nw==}
+  '@scriptc/cli-linux-x64-gnu@0.4.16':
+    resolution: {integrity: sha512-nq8mfWiERM+FeQTgBS2qv1CrCuybgAH+rVXq31RUC+4tJD+DYWenuT1vzpWSM2ToNHtWAXhgxNYSXcqtaE7Cfg==}
     cpu: [x64]
     os: [linux]
 
-  '@scriptc/cli-linux-x64-musl@0.4.12':
-    resolution: {integrity: sha512-xd9GtQ3ov3zSMpWY+C9DY1QhWNEvGwRBjiOtGxuPLR7GN0bREjeTd+P5lGgsyXMbpZexGhk3J0hkeVqNl83nrQ==}
+  '@scriptc/cli-linux-x64-musl@0.4.16':
+    resolution: {integrity: sha512-dCBjE5qv3GTDRXfEuhIW+o+xCZYnW4z2sJmFgh0mLWTE+Txvv2/Phsa84hZFIXrJLXYaYH7b5bZW+um1UrDCmA==}
     cpu: [x64]
     os: [linux]
 
-  '@scriptc/cli-win32-x64-msvc@0.4.12':
-    resolution: {integrity: sha512-NEmBaqcynJkVWeYJY0cmni0pZtZVVNuS+gTi4p+Dwx5nKFrMc+lMe3SKbHM88MaF8Kl3QMoDV1+thSz44Tmrfg==}
+  '@scriptc/cli-win32-x64-msvc@0.4.16':
+    resolution: {integrity: sha512-saiBzXfS6+/kC0ZYiW0MQDScsqPZs34tBVB8gdD7AGty9ARKvdDqzoQ3eQuGgTd/NWQ4BDR6i9Se/Yfqu2vTeg==}
     cpu: [x64]
     os: [win32]
 
-  '@scriptc/llvm-darwin-arm64@0.4.12':
-    resolution: {integrity: sha512-Jf+BhHaAFVvrquqGfgBvz+kypxYBUgLwmMyf2H9q8zoGxbMQugeLwv1RhC+Wzr9HykgAM/OvSSkmsaa2MM6dNA==}
+  '@scriptc/llvm-darwin-arm64@0.4.16':
+    resolution: {integrity: sha512-BbIQH7ItjKUeDHI3CeL9y4jcIHuaREr3nesOuI6I8gWdSFyBoWXIpQ/6/fJJIttrfl9LHRu/LGtOXFWygppzjQ==}
     cpu: [arm64]
     os: [darwin]
     hasBin: true
 
-  '@scriptc/llvm-darwin-x64@0.4.12':
-    resolution: {integrity: sha512-PUYQ8NslqYzSW1ZyRi0280KC1YZCrdMhnvKPgO2BZJqUdeXFiPDU4xVgkCIDDuScIpEszmaMEFgP73ZGs8vgvQ==}
+  '@scriptc/llvm-darwin-x64@0.4.16':
+    resolution: {integrity: sha512-DrH//qC1svOqvwbT/zmA45Vt3ll8WI6/Pn9pE8XminpI+aF5IfygAjqgV2o4QVbiUxp6jyJ1mQeEN7CiI8VQUg==}
     cpu: [x64]
     os: [darwin]
     hasBin: true
 
-  '@scriptc/llvm-linux-arm64-gnu@0.4.12':
-    resolution: {integrity: sha512-U89Rq7tLWwEvlwDk4Bbcp/+YDKHJf3GdDFDblH+t9Vdg6ReCzcVfD5OvfT6Cq4OaemU2iJY0dzwRwRi/GoC7wQ==}
+  '@scriptc/llvm-linux-arm64-gnu@0.4.16':
+    resolution: {integrity: sha512-8OitrV62uh9senXW38sYBjXMv4x/muX0cCcU24CpZ5a9YZbg2WPJYn6x3FCmDQQ1QX+2tfwecRyILUHfOGzaYw==}
     cpu: [arm64]
     os: [linux]
     hasBin: true
 
-  '@scriptc/llvm-linux-arm64-musl@0.4.12':
-    resolution: {integrity: sha512-lHDX5fdGQTO3mhuEMS52T2WEXa8pvBs6XDRD4cjkIHDQTx/vPCqiiFub6bJuZ0IP4GUcOLWfWwUBauAADx+U7Q==}
+  '@scriptc/llvm-linux-arm64-musl@0.4.16':
+    resolution: {integrity: sha512-FZUmKZamO/Re50Z0IQ4kOgVA3r85U9Z8L34tt+acY8A6aHBNn+MVMupuuTYPoJ9ZcfZ78WRBuelDLQ3y9jNrng==}
     cpu: [arm64]
     os: [linux]
     hasBin: true
 
-  '@scriptc/llvm-linux-x64-gnu@0.4.12':
-    resolution: {integrity: sha512-SJyS6KE0nx4EAP92Bnr0C8lK2wgi2zmW66D3AjHuiOGrSPdPjmJFbbE/8Q+sTWoohN+YZ5m7lBIRz1J45XQkTw==}
+  '@scriptc/llvm-linux-x64-gnu@0.4.16':
+    resolution: {integrity: sha512-E8B0y9NErQQKp7DEUtLnry5RjDC5v7veKNtpN7TlUZx8FixBKACvcbRtFtUR+zQal1xLhan3N5tu+y9w9H9Iwg==}
     cpu: [x64]
     os: [linux]
     hasBin: true
 
-  '@scriptc/llvm-linux-x64-musl@0.4.12':
-    resolution: {integrity: sha512-5b7r29PBpMIKOjAesEiXQxmx1/StPu5rEFxD1C1RoPyG1oF1Jb7Xq0sDUFBe8JwK5AJRRfFpiB2EEdInEufjhQ==}
+  '@scriptc/llvm-linux-x64-musl@0.4.16':
+    resolution: {integrity: sha512-GD/93NuaNXRTTgBAe34J3qJLq+e7nf8nvwDCAIfiuKeA/YEj2SOv++bAEzbCN9zx4Epr3c9/vVGRb1+3wSVKCw==}
     cpu: [x64]
     os: [linux]
     hasBin: true
 
-  '@scriptc/llvm-win32-x64-msvc@0.4.12':
-    resolution: {integrity: sha512-kFHiGHCXGxvhqZNKlg6bgrIZhyxg5xA1Ugwqg0rzK3h7W7oHQWlKK3Rx6lDbGoY5JFzUUHP9fupBVdlWzfHLgQ==}
+  '@scriptc/llvm-win32-x64-msvc@0.4.16':
+    resolution: {integrity: sha512-u5yOylaiyN23rkXmER3UiCwzpFKlv4MTw42tSI0nP9EaTE7HCXmCgZbb/+PNRR5HsduhkEe35bUjSIpsX1WbSg==}
     cpu: [x64]
     os: [win32]
 
-  '@scriptc/runtime-darwin-arm64@0.4.12':
-    resolution: {integrity: sha512-C9bgjZ/Vw1Ydi1T/yBwj6i4pAqObJSdPckvCu2IGh8R1UlU8uQam8mUY50eEtRxqy4ztHC/A3FywnqalSezu0Q==}
+  '@scriptc/runtime-darwin-arm64@0.4.16':
+    resolution: {integrity: sha512-NQCegw0wlcNMmyNioxirhIWTaNRGuI7pLd0qrbXcfVkHK5flypDJCmOIsmQkwXkpl9OvLx6A6l7AX1qjDdJoKw==}
 
-  '@scriptc/runtime-darwin-x64@0.4.12':
-    resolution: {integrity: sha512-KTl7cFLfK3WfoLGzXNC9sTr1AcbYJNgf9WbkpaGAOscWVB4oq6kS9I7OR0zK34xvKKHWTZ0hvVQk/FT2FXh2xA==}
+  '@scriptc/runtime-darwin-x64@0.4.16':
+    resolution: {integrity: sha512-zx7BE4XFD80BA6xDTOI/avx6SIkEImd1jvRtV2PoGqro4jkukgYivejrON8MtSB4Udc8v07YszXXwh8jLhNGyw==}
 
-  '@scriptc/runtime-linux-arm64-gnu@0.4.12':
-    resolution: {integrity: sha512-uy8Pa1WzbRHF8HZPR0SKEnQpc0Q0bCFrLeO6Q4bfjrBvSbn8oW9rYskcH4izB542y9nNIjI00qZ+pIO2nQptog==}
+  '@scriptc/runtime-linux-arm64-gnu@0.4.16':
+    resolution: {integrity: sha512-mULnAQzLHP6bCdydiPiY4D7GDgFeX5g/4q+b1N59FRjmljRsp7R2ntUk2Z7e4GynvMmdWbsE01B6iOuYbdckFg==}
 
-  '@scriptc/runtime-linux-arm64-musl@0.4.12':
-    resolution: {integrity: sha512-wcWjB0Zgsp0GFxTDdBwtdT9Ek9old2YJe9w6xHZTMEcG+B5NFyN0Ig43JJ0zk1OuXVCHqIMIjw31PVHhEJu3Dg==}
+  '@scriptc/runtime-linux-arm64-musl@0.4.16':
+    resolution: {integrity: sha512-Etd14fspTwWEyg1Ok2vJWldlgKCehzxECztmSe5aXL/AHfF34yajHIg5lHZ0RK4nXFAwZyDx0LVds0BziwTJ4Q==}
 
-  '@scriptc/runtime-linux-x64-gnu@0.4.12':
-    resolution: {integrity: sha512-0YTKmo/o5KFpGYJc3XANVmUPfAwSBdX2z4X1/5ymP1HfuBVcn43tmrGJeDm2+6jIot9owxwLGM3qDIkUfg86ig==}
+  '@scriptc/runtime-linux-x64-gnu@0.4.16':
+    resolution: {integrity: sha512-CuGi0fwKUtPEtfig/ooyBvLYT6GCK/dM9oVaFFcLp6oZV1fkGBJtUE4mhFAzfbjv+pA3zR+/6NPSfM+BsXUJ2w==}
 
-  '@scriptc/runtime-linux-x64-musl@0.4.12':
-    resolution: {integrity: sha512-n7+WNuOzoH6I1jEmBsThbgzXDVG+0We/TYMmPpSbFB/g9+fI9LfY7LH1juSCVhB7zr7XGx0fs0dA7oTltKjYzw==}
+  '@scriptc/runtime-linux-x64-musl@0.4.16':
+    resolution: {integrity: sha512-w3R22LhA42m96zWooa3SJtDesz59NYwXy57hpOk9UnOFt0ofJxt2hKuAHalG+FKT7iJC5YvRVkDhmfBwdfCfiA==}
 
-  '@scriptc/runtime-win32-x64-msvc@0.4.12':
-    resolution: {integrity: sha512-MT9YNT3Zs0pGFcmErDzMoNAHyuQmpf5cVcmhyI9/vpR5A3FSirdQ1rnyiLQ84xxncF62Rysb0AobvSDbN4vR3g==}
+  '@scriptc/runtime-win32-x64-msvc@0.4.16':
+    resolution: {integrity: sha512-hrRR+o6139wN4hc+a1MZJIl3BbF5Iau4R75rbsaoc9He7BZGVmbndtcCzE04rjXS1aVJPEqQYoU0NTcOxAJE/g==}
 
   '@scriptc/threads@0.4.2':
     resolution: {integrity: sha512-nR9FUxpOpgtTmJu6dejttElBL+JJTAZzJ2DZM+eNoujmLx9VpdlAVdgj3cu/MDsTUg/1sIUBq1ME1csC/Aa6yg==}
@@ -1828,8 +1828,8 @@ packages:
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
-  scriptc@0.4.12:
-    resolution: {integrity: sha512-Z5dtghgVyZ+l0/YVv3JXYQ8kNA7VoFQRyYkqUC3WFa2mzV4tv/bSAM2F4bJUvyX4BAcSC6DjA0M/5fm4V2H2Fw==}
+  scriptc@0.4.16:
+    resolution: {integrity: sha512-OvAkpd+GeviUk166+nymheYUeqvdkyNkemoeVALiukRrGBqOAmN7WQt6AHjRhXWDfXDAAfZ735Yg5wteVvs3yg==}
     engines: {node: '>=24'}
     hasBin: true
 
@@ -2147,88 +2147,88 @@ snapshots:
 
   '@pinojs/redact@0.4.0': {}
 
-  '@scriptc/cli-darwin-arm64@0.4.12':
+  '@scriptc/cli-darwin-arm64@0.4.16':
     dependencies:
-      '@scriptc/llvm-darwin-arm64': 0.4.12
-      '@scriptc/runtime-darwin-arm64': 0.4.12
+      '@scriptc/llvm-darwin-arm64': 0.4.16
+      '@scriptc/runtime-darwin-arm64': 0.4.16
     optional: true
 
-  '@scriptc/cli-darwin-x64@0.4.12':
+  '@scriptc/cli-darwin-x64@0.4.16':
     dependencies:
-      '@scriptc/llvm-darwin-x64': 0.4.12
-      '@scriptc/runtime-darwin-x64': 0.4.12
+      '@scriptc/llvm-darwin-x64': 0.4.16
+      '@scriptc/runtime-darwin-x64': 0.4.16
     optional: true
 
-  '@scriptc/cli-linux-arm64-gnu@0.4.12':
+  '@scriptc/cli-linux-arm64-gnu@0.4.16':
     dependencies:
-      '@scriptc/llvm-linux-arm64-gnu': 0.4.12
-      '@scriptc/runtime-linux-arm64-gnu': 0.4.12
+      '@scriptc/llvm-linux-arm64-gnu': 0.4.16
+      '@scriptc/runtime-linux-arm64-gnu': 0.4.16
     optional: true
 
-  '@scriptc/cli-linux-arm64-musl@0.4.12':
+  '@scriptc/cli-linux-arm64-musl@0.4.16':
     dependencies:
-      '@scriptc/llvm-linux-arm64-musl': 0.4.12
-      '@scriptc/runtime-linux-arm64-musl': 0.4.12
+      '@scriptc/llvm-linux-arm64-musl': 0.4.16
+      '@scriptc/runtime-linux-arm64-musl': 0.4.16
     optional: true
 
-  '@scriptc/cli-linux-x64-gnu@0.4.12':
+  '@scriptc/cli-linux-x64-gnu@0.4.16':
     dependencies:
-      '@scriptc/llvm-linux-x64-gnu': 0.4.12
-      '@scriptc/runtime-linux-x64-gnu': 0.4.12
+      '@scriptc/llvm-linux-x64-gnu': 0.4.16
+      '@scriptc/runtime-linux-x64-gnu': 0.4.16
     optional: true
 
-  '@scriptc/cli-linux-x64-musl@0.4.12':
+  '@scriptc/cli-linux-x64-musl@0.4.16':
     dependencies:
-      '@scriptc/llvm-linux-x64-musl': 0.4.12
-      '@scriptc/runtime-linux-x64-musl': 0.4.12
+      '@scriptc/llvm-linux-x64-musl': 0.4.16
+      '@scriptc/runtime-linux-x64-musl': 0.4.16
     optional: true
 
-  '@scriptc/cli-win32-x64-msvc@0.4.12':
+  '@scriptc/cli-win32-x64-msvc@0.4.16':
     dependencies:
-      '@scriptc/llvm-win32-x64-msvc': 0.4.12
-      '@scriptc/runtime-win32-x64-msvc': 0.4.12
+      '@scriptc/llvm-win32-x64-msvc': 0.4.16
+      '@scriptc/runtime-win32-x64-msvc': 0.4.16
     optional: true
 
-  '@scriptc/llvm-darwin-arm64@0.4.12':
+  '@scriptc/llvm-darwin-arm64@0.4.16':
     optional: true
 
-  '@scriptc/llvm-darwin-x64@0.4.12':
+  '@scriptc/llvm-darwin-x64@0.4.16':
     optional: true
 
-  '@scriptc/llvm-linux-arm64-gnu@0.4.12':
+  '@scriptc/llvm-linux-arm64-gnu@0.4.16':
     optional: true
 
-  '@scriptc/llvm-linux-arm64-musl@0.4.12':
+  '@scriptc/llvm-linux-arm64-musl@0.4.16':
     optional: true
 
-  '@scriptc/llvm-linux-x64-gnu@0.4.12':
+  '@scriptc/llvm-linux-x64-gnu@0.4.16':
     optional: true
 
-  '@scriptc/llvm-linux-x64-musl@0.4.12':
+  '@scriptc/llvm-linux-x64-musl@0.4.16':
     optional: true
 
-  '@scriptc/llvm-win32-x64-msvc@0.4.12':
+  '@scriptc/llvm-win32-x64-msvc@0.4.16':
     optional: true
 
-  '@scriptc/runtime-darwin-arm64@0.4.12':
+  '@scriptc/runtime-darwin-arm64@0.4.16':
     optional: true
 
-  '@scriptc/runtime-darwin-x64@0.4.12':
+  '@scriptc/runtime-darwin-x64@0.4.16':
     optional: true
 
-  '@scriptc/runtime-linux-arm64-gnu@0.4.12':
+  '@scriptc/runtime-linux-arm64-gnu@0.4.16':
     optional: true
 
-  '@scriptc/runtime-linux-arm64-musl@0.4.12':
+  '@scriptc/runtime-linux-arm64-musl@0.4.16':
     optional: true
 
-  '@scriptc/runtime-linux-x64-gnu@0.4.12':
+  '@scriptc/runtime-linux-x64-gnu@0.4.16':
     optional: true
 
-  '@scriptc/runtime-linux-x64-musl@0.4.12':
+  '@scriptc/runtime-linux-x64-musl@0.4.16':
     optional: true
 
-  '@scriptc/runtime-win32-x64-msvc@0.4.12':
+  '@scriptc/runtime-win32-x64-msvc@0.4.16':
     optional: true
 
   '@scriptc/threads@0.4.2': {}
@@ -3024,15 +3024,15 @@ snapshots:
 
   safer-buffer@2.1.2: {}
 
-  scriptc@0.4.12:
+  scriptc@0.4.16:
     optionalDependencies:
-      '@scriptc/cli-darwin-arm64': 0.4.12
-      '@scriptc/cli-darwin-x64': 0.4.12
-      '@scriptc/cli-linux-arm64-gnu': 0.4.12
-      '@scriptc/cli-linux-arm64-musl': 0.4.12
-      '@scriptc/cli-linux-x64-gnu': 0.4.12
-      '@scriptc/cli-linux-x64-musl': 0.4.12
-      '@scriptc/cli-win32-x64-msvc': 0.4.12
+      '@scriptc/cli-darwin-arm64': 0.4.16
+      '@scriptc/cli-darwin-x64': 0.4.16
+      '@scriptc/cli-linux-arm64-gnu': 0.4.16
+      '@scriptc/cli-linux-arm64-musl': 0.4.16
+      '@scriptc/cli-linux-x64-gnu': 0.4.16
+      '@scriptc/cli-linux-x64-musl': 0.4.16
+      '@scriptc/cli-win32-x64-msvc': 0.4.16
 
   secure-json-parse@4.1.1: {}
 

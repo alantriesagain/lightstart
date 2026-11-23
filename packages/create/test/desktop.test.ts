@@ -51,7 +51,7 @@ const main = async (): Promise<void> => {
     ok("build runs the desktop build", manifest.scripts.build?.startsWith("light desktop build") === true);
     ok("the manifest links light", manifest.dependencies["@lightstart/light"]?.startsWith("link:") === true);
     ok("the manifest links the components", manifest.dependencies["@lightstart/components"]?.startsWith("link:") === true);
-    ok("scriptc is a devDependency", manifest.devDependencies["scriptc"] === "0.4.12");
+    ok("scriptc is a devDependency", manifest.devDependencies["scriptc"] === "0.4.16");
     ok("server is a devDependency", manifest.devDependencies["@lightstart/server"] !== undefined);
 
     const tested = await run("pnpm", ["run", "test"], target);
