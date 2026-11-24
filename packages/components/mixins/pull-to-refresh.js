@@ -2,7 +2,7 @@ import T from "@lightstart/light/types";
 import { defineMixin } from "@lightstart/light";
 import { withPointerDrag } from "./pointer-drag.js";
 
-/** @import { Prop, PullToRefreshHost } from "../types.ts" */
+/** @import { PullToRefreshHost } from "../types.ts" */
 
 /**
  * @lightstart/components/mixins/pull-to-refresh
