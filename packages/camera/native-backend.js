@@ -107,7 +107,6 @@ export const createNativeBackend = (opts = {}, mobileApi = mobile) => {
 
   const startFrames = async () => {
     if (!frames) return;
-    installCameraSignals(mobileApi.on);
     canvas ??= document.createElement("canvas");
     canvas.width = frames.width;
     canvas.height = Math.round((frames.width * 4) / 3);
@@ -146,6 +145,7 @@ export const createNativeBackend = (opts = {}, mobileApi = mobile) => {
 
   /** @param {CameraStartOptions} [opts] */
   const start = async (opts = {}) => {
+    installCameraSignals(mobileApi.on);
     const res = /** @type {{ capabilities?: CameraCapabilities, settings?: CameraSettings } | null} */ (await request(CAMERA_START, {
       deviceId: opts.deviceId || null,
       facingMode: opts.facingMode || "environment",

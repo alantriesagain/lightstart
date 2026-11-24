@@ -8,6 +8,7 @@ import { done, eq as rawEq, ok } from "@lightstart/test/assert.ts";
 
 const eq = (name: string, actual: unknown, expected: unknown) => rawEq(name, String(actual), String(expected));
 import { createNativeBackend } from "../native-backend.js";
+import { cameraMeter, cameraOrientation } from "../signals.js";
 
 import type { MobileApi } from "@lightstart/mobile/page";
 
@@ -18,6 +19,7 @@ const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 const fakeMobile = () => {
   const calls: Array<[string, unknown[]]> = [];
+  const handlers = new Map<string, (payload: unknown) => void>();
   const api = {
     present: true,
     ready: null,
@@ -34,20 +36,27 @@ const fakeMobile = () => {
       if (method === "CAMERA:RECORD_STOP") return {};
       return {};
     },
-    on: () => () => {},
+    on: (event: string, fn: (payload: unknown) => void) => {
+      handlers.set(event, fn);
+      return () => handlers.delete(event);
+    },
     share: async () => ({ shared: true }),
     shared: () => null,
     reminders: { set: async () => ({ supported: false }), get: async () => ({ supported: false, reminders: [] }), clear: async () => ({ supported: false }) },
     capture: async () => null,
   };
-  return { api, calls };
+  return { api, calls, handlers };
 };
 
 {
-  const { api, calls } = fakeMobile();
+  const { api, calls, handlers } = fakeMobile();
   const backend = createNativeBackend({}, api as unknown as MobileApi);
   truth("the native backend says it is supported", backend.isSupported());
   const started = await backend.start({ facingMode: "user", width: 1920, height: 1440 });
+  handlers.get("camera:meter")?.({ iso: 400, exposureTime: 0.01 });
+  handlers.get("camera:orientation")?.({ rotation: 90 });
+  eqn("a start without frames still follows the shell's meter", (cameraMeter.value as { iso?: number }).iso, 400);
+  eqn("and its orientation", cameraOrientation.value.rotation, 90);
   eqn("native start answers no stream", started.stream, null);
   deep("the start command goes over the bridge", calls[0]?.[0], "CAMERA:START");
   const startPayload = calls[0]?.[1][0] as Record<string, unknown>;
