@@ -3,13 +3,15 @@
  * output or a compiler's report), inherited (a build or the app itself), a shell line (a prepare
  * step), and a pool that runs a list a few at a time while keeping the results in list order.
  */
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
 export class Run {
   /** @type {number} */
   code;
   /** @type {string} */
   out;
+  /** @type {boolean} */
+  timedOut = false;
 
   /**
    * @param {number} code
@@ -20,6 +22,45 @@ export class Run {
     this.out = out;
   }
 }
+
+/**
+ * Send `sig` to process `pid`; false when it is gone.
+ * @param {number} pid
+ * @param {NodeJS.Signals} sig
+ * @returns {boolean}
+ */
+const signal = (pid, sig) => {
+  try {
+    process.kill(pid, sig);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Kill `pid` and every process under it (a test's own children: the binary `scriptc run` started, an
+ * agent a test spawned), deepest first, on Linux and macOS alike.
+ * @param {number} pid
+ */
+const killTree = (pid) => {
+  const listed = spawnSync("ps", ["-A", "-o", "pid=,ppid="], { encoding: "utf8" });
+  /** @type {Map<number, number[]>} */
+  const children = new Map();
+  for (const line of (listed.stdout ?? "").split("\n")) {
+    const [child, parent] = line.trim().split(/\s+/).map(Number);
+    if (!Number.isFinite(child) || !Number.isFinite(parent)) continue;
+    const list = children.get(parent) ?? [];
+    list.push(child);
+    children.set(parent, list);
+  }
+  /** @param {number} p */
+  const kill = (p) => {
+    for (const c of children.get(p) ?? []) kill(c);
+    signal(p, "SIGKILL");
+  };
+  kill(pid);
+};
 
 /**
  * The environment the agents' CLIs expect: not inside another Claude Code session.
@@ -33,7 +74,8 @@ export const agentEnv = () => {
 };
 
 /**
- * Run `cmd` and gather what it writes on both streams, in order.
+ * Run `cmd` and gather what it writes on both streams, in order. Past `timeoutMs` it is killed with
+ * every process under it, and the run says it timed out.
  * @param {string} cmd
  * @param {string[]} args
  * @param {{ cwd?: string, env?: NodeJS.ProcessEnv, timeoutMs?: number }} [opts]
@@ -46,14 +88,23 @@ export const capture = (cmd, args, opts = {}) =>
     const chunks = [];
     child.stdout.on("data", (c) => chunks.push(c));
     child.stderr.on("data", (c) => chunks.push(c));
-    const timer = opts.timeoutMs !== undefined ? setTimeout(() => child.kill("SIGKILL"), opts.timeoutMs) : null;
+    let timedOut = false;
+    const timer =
+      opts.timeoutMs !== undefined
+        ? setTimeout(() => {
+            timedOut = true;
+            if (child.pid !== undefined) killTree(child.pid);
+          }, opts.timeoutMs)
+        : null;
     child.on("error", (error) => {
       if (timer !== null) clearTimeout(timer);
       resolvePromise(new Run(127, error.message + "\n"));
     });
     child.on("close", (code) => {
       if (timer !== null) clearTimeout(timer);
-      resolvePromise(new Run(code ?? 1, Buffer.concat(chunks).toString("utf8")));
+      const run = new Run(code ?? 1, Buffer.concat(chunks).toString("utf8"));
+      run.timedOut = timedOut;
+      resolvePromise(run);
     });
   });
 

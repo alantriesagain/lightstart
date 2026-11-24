@@ -2,7 +2,8 @@
  * @file The checks a native test uses, light's and its packages' (`@lightstart/test` re-exports them):
  * plain functions that print "ok <name>" or "FAIL <name>", then a tally that makes the exit code 1
  * when anything failed, since node:test is not available under scriptc. A test runs the same
- * under `node` and `scriptc run`, and the runner compares the two outputs.
+ * under `node` and `scriptc run`, and the runner compares the two outputs. `arm` lets the runner
+ * run several files in one program, each with its own tally.
  */
 let failures = 0;
 let count = 0;
@@ -59,8 +60,27 @@ export function budget(ms: number): number {
   return ms * (Number.isNaN(scale) || scale < 1 ? 1 : scale);
 }
 
+/** What the next `done()` resolves, while a runner has armed one. */
+let finished: (() => void) | null = null;
+
+/**
+ * For a runner that runs several test files in one program, one after another: the tally starts
+ * again, and the promise resolves once the next file's `done()` has printed its own. A test does
+ * not call it. The exit code stays 1 from any file that failed.
+ */
+export function arm(): Promise<void> {
+  failures = 0;
+  count = 0;
+  return new Promise<void>((resolve) => {
+    finished = resolve;
+  });
+}
+
 /** Print the tally, PASS or FAIL with the checks that passed, and make the exit code 1 when one failed. */
 export function done(): void {
   console.log((failures === 0 ? "PASS " : "FAIL ") + String(count - failures) + "/" + String(count));
   if (failures > 0) process.exitCode = 1;
+  const resolve = finished;
+  finished = null;
+  if (resolve !== null) resolve();
 }
