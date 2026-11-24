@@ -159,6 +159,8 @@ export interface AppInfo {
   host: string;
   root: string;
   locale: string;
+  /** The languages the app ships; the default alone when it names no others. */
+  locales: string[];
   /** The Iconify set the app's icons come from. */
   icons: string;
   /** The site's address without a trailing slash, or `undefined` when the app names none. */
@@ -187,7 +189,10 @@ export interface AppInfo {
 export const infoOf = async (app: string): Promise<AppInfo> => {
   try {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
-    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; icons?: unknown; url?: unknown; base?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; utilities?: unknown; args?: unknown; argsSchema?: unknown } }).default;
+    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; locales?: unknown; icons?: unknown; url?: unknown; base?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; utilities?: unknown; args?: unknown; argsSchema?: unknown } }).default;
+    const locale = config !== undefined && typeof config.locale === "string" && config.locale.length > 0 ? config.locale : "en";
+    const declared = config !== undefined && Array.isArray(config.locales) ? config.locales.filter((item): item is string => typeof item === "string" && item.length > 0) : [];
+    const locales = declared.length > 0 ? declared : [locale];
     const worker = config !== undefined && config.worker === true;
     let indexeddb = false;
     let adapterFunction = false;
@@ -210,7 +215,8 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
     return {
       host: config !== undefined && typeof config.host === "string" && config.host.length > 0 ? config.host : "web",
       root: config !== undefined && typeof config.root === "string" ? config.root : "app-root",
-      locale: config !== undefined && typeof config.locale === "string" && config.locale.length > 0 ? config.locale : "en",
+      locale,
+      locales,
       icons: config !== undefined && typeof config.icons === "string" && config.icons.length > 0 ? config.icons : "lucide",
       url: config !== undefined && typeof config.url === "string" && config.url.length > 0 ? config.url.replace(/\/+$/, "") : undefined,
       base: appBase({ base: config !== undefined && typeof config.base === "string" ? config.base : undefined, url: config !== undefined && typeof config.url === "string" ? config.url : undefined }),
@@ -224,7 +230,7 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
       args: config !== undefined && isRecord(config.argsSchema ?? config.args) && Object.keys(config.argsSchema ?? config.args ?? {}).length > 0,
     };
   } catch {
-    return { host: "web", root: "app-root", locale: "en", icons: "lucide", url: undefined, base: "", worker: false, indexeddb: false, adapterNames: [], adapterFunction: false, contentStores: [], transitions: false, utilities: false, args: false };
+    return { host: "web", root: "app-root", locale: "en", locales: ["en"], icons: "lucide", url: undefined, base: "", worker: false, indexeddb: false, adapterNames: [], adapterFunction: false, contentStores: [], transitions: false, utilities: false, args: false };
   }
 };
 
@@ -410,7 +416,8 @@ const writeLocales = (project: string, dir: string, locale: string, helpers: Gen
     return expression;
   };
 
-  const lines: string[] = ['import { configureI18n } from "@lightstart/i18n";'];
+  const lines: string[] = ['import { applyLanguage, configureI18n, onLanguageSet } from "@lightstart/i18n";'];
+  lines.push('import { navigateLocale, onRouteLocale } from "@lightstart/app/run.ts";');
   if (languages.length > 0 && extension === ".ts") lines.push('import type { TranslationTree } from "@lightstart/i18n";');
   if (languages.length > 0 && extension === ".js") lines.push('/** @import { TranslationTree } from "@lightstart/i18n" */');
   lines.push(...imports);
@@ -453,6 +460,9 @@ const writeLocales = (project: string, dir: string, locale: string, helpers: Gen
     lines.push("  },");
   }
   lines.push("});");
+  lines.push("");
+  lines.push("onRouteLocale((locale) => applyLanguage(locale));");
+  lines.push("onLanguageSet((locale) => navigateLocale(locale));");
   lines.push("");
   return { changed: helpers.writeWhenChanged(path, lines.join("\n")), imports: [`./locales${extension}`] };
 };

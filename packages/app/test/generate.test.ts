@@ -267,7 +267,9 @@ const main = async (): Promise<void> => {
     const path = join(first.dir, "locales.ts");
     ok("a project on i18n gets .light/locales.ts", existsSync(path));
     const source = readFileSync(path, "utf8");
-    ok("it configures i18n", source.includes('import { configureI18n } from "@lightstart/i18n";'));
+    ok("it configures i18n", source.includes('import { applyLanguage, configureI18n, onLanguageSet } from "@lightstart/i18n";'));
+    ok("it follows route locales", source.includes("onRouteLocale((locale) => applyLanguage(locale));"));
+    ok("it navigates when the language is set", source.includes("onLanguageSet((locale) => navigateLocale(locale));"));
     ok("it imports each package's language file", source.includes('import locale0 from "@lightstart/components/locales/en.js";'));
     ok("it imports the project's own words", source.includes('import locale3 from "../src/locales/en.ts";'));
     ok("the package's words come before the project's", source.indexOf('"@lightstart/components/locales/en.js"') < source.indexOf('"../src/locales/en.ts"'));

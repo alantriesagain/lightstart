@@ -15,8 +15,10 @@ import { signal } from "@lightstart/light/signals";
 import { RouterCore } from "@lightstart/router/core";
 import { appUrl, setAppBase } from "./base.ts";
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
+import { localeOfPath, stripLocale, withLocale } from "@lightstart/router/locale";
 import { stripBase, withQuery } from "@lightstart/router/url";
 import type { MatchedRoute, RouteConfig, RouterAdapter, RouterOptions } from "@lightstart/router/contracts.ts";
+import { expandRoutes } from "./routes.ts";
 import type { QueryOptions, Row, WriteOptions } from "@lightstart/light/model/types.ts";
 import { startControllers, stopControllers } from "./controllers.ts";
 import type { App } from "./index.ts";
@@ -57,10 +59,15 @@ export const currentParams = signal<Record<string, string>>({});
 /** The route the router matched now, the chain `<app-container>` resolves its drawn levels from. */
 export const currentMatch = signal<MatchedRoute | null>(null);
 
-/** Where the running app's routes stand: the matched route's name, its app path, its path params, its query and its leaf config. */
+/** Where the running app's routes stand: the matched route's name, its app path, its path params, its query, its locale and its leaf config. */
 export interface CurrentRoute {
   name: string | null;
+  /** The app path, the locale prefix included when the page carries one. */
   path: string;
+  /** The path without its locale prefix. */
+  routePath: string;
+  /** The matched locale; the default one when the path carries no prefix. */
+  locale: string;
   params: Record<string, string>;
   query: Record<string, string>;
   route: RouteConfig;
@@ -108,14 +115,22 @@ const appPathOf = (raw: string, base: string): string => {
   return trimmed === "" ? "/" : trimmed;
 };
 
-const routeStateOf = (matched: MatchedRoute | null, base: string): CurrentRoute | null => {
+const localeOf = (leaf: RouteConfig, path: string, app: App): string => {
+  if (typeof leaf.locale === "string" && leaf.locale !== "") return leaf.locale;
+  return localeOfPath(path, app.locales) ?? app.locale;
+};
+
+const routeStateOf = (matched: MatchedRoute | null, app: App): CurrentRoute | null => {
   if (matched === null) return null;
   const leaf = leafRoute(matched);
   if (leaf === null) return null;
   const raw = typeof matched.path === "string" ? matched.path : "/";
+  const path = appPathOf(raw, app.base);
   return {
     name: typeof matched.name === "string" ? matched.name : null,
-    path: appPathOf(raw, base),
+    path,
+    routePath: stripLocale(path, app.locales),
+    locale: localeOf(leaf, path, app),
     params: pathParamsOf(matched),
     query: queryOf(matched),
     route: leaf,
@@ -202,12 +217,14 @@ export class AppHost implements StoreHost {
 
 let running: AppRun | null = null;
 
-/** What a target may carry: the route's path params and the query to append. */
+/** What a target may carry: the route's path params, the query to append and the locale to read it in. */
 export interface TargetOptions {
   /** A route name's path params, each encoded into its `:name`; a missing one throws. */
   params?: Record<string, string | number>;
   /** The query to append to the path. */
   query?: Record<string, unknown>;
+  /** The locale to build the path in; the current route's when absent, so a link on `/pt/...` stays Portuguese. */
+  locale?: string;
 }
 
 const filledPath = (name: string, pattern: string, params: Record<string, string | number>): string =>
@@ -226,8 +243,46 @@ const pathOf = (target: string, options: TargetOptions): string => {
   return filledPath(target, pattern, options.params ?? {});
 };
 
-/** The app path for `target` (a path, or a route name with its params) with the query appended and the app's base before it. */
-export const href = (target: string, options: TargetOptions = {}): string => appUrl(withQuery(pathOf(target, options), options.query));
+const localeNow = (): string => currentRoute.value?.locale ?? running?.app.locale ?? "en";
+
+/** Whether `path` names a route that opted out of locale variants, so it keeps its one shape. */
+const isUnlocalized = (path: string): boolean => {
+  const router = running?.router;
+  if (router === null || router === undefined) return false;
+  const matched = router.matchRoute(path.split("?")[0]);
+  const leaf = matched === null ? null : leafRoute(matched);
+  return leaf !== null && leaf.localized === false;
+};
+
+/** `path` read in `locale`: the current route's when none is given, a path that already names a locale kept as written. */
+const localizedPath = (path: string, locale?: string): string => {
+  const app = running?.app;
+  if (app === undefined || !app.localized || !path.startsWith("/") || path.startsWith("//")) return path;
+  if (isUnlocalized(path)) return path;
+  if (locale === undefined && localeOfPath(path, app.locales) !== null) return path;
+  return withLocale(path, locale ?? localeNow(), app.locales, app.locale);
+};
+
+/** A route change hands its locale here, before the route's title and views run; the i18n generation sets it. */
+export type LocaleHandler = (locale: string) => void;
+
+let localeHandler: LocaleHandler | null = null;
+
+/** Set the handler a route change tells its locale to (the generated `@lightstart/i18n` wiring), or clear it. */
+export const onRouteLocale = (handler: LocaleHandler | null): void => {
+  localeHandler = handler;
+};
+
+/** Follow `locale` at the same route path, which is what `setLanguage` does on a localized app. */
+export const navigateLocale = (locale: string): void => {
+  const app = running?.app;
+  const current = currentRoute.value;
+  if (app === undefined || !app.localized || current === null) return;
+  navigate(current.routePath, { locale });
+};
+
+/** The app path for `target` (a path, or a route name with its params) in its locale, with the query appended and the app's base before it. */
+export const href = (target: string, options: TargetOptions = {}): string => appUrl(withQuery(localizedPath(pathOf(target, options), options.locale), options.query));
 
 const originOf = (site: string | undefined): string => {
   let origin = "";
@@ -261,11 +316,14 @@ export interface NavigateOptions extends TargetOptions {
   from?: NavigationSource;
 }
 
-/** Go to a path or a route name (with its params and query) in the app running now; nothing without routes. `options.transition` overrides the app's choice for this call. */
+/** Go to a path or a route name (with its params, query and locale) in the app running now; nothing without routes. `options.transition` overrides the app's choice for this call. */
 export const navigate = (target: string, options: NavigateOptions = {}): void => {
   const run = running;
   if (run === null || run.router === null) return;
-  run.go(withQuery(pathOf(target, options), options.query), options.transition, options.from);
+  const targetPath = pathOf(target, options);
+  const path = localizedPath(targetPath, options.locale);
+  const keepBare = run.app.localized && isUnlocalized(targetPath) ? run.app.locale : undefined;
+  run.go(withQuery(path, options.query), options.transition, options.from, keepBare);
 };
 
 /** An app running on a host. */
@@ -344,13 +402,19 @@ export class AppRun {
   }
 
   /** Write the matched route into `currentMatch`, `currentRoute`, `currentView` and `currentParams`, and reset the page head from its leaf. */
+  private tellLocale(matched: MatchedRoute, path: string): void {
+    if (!this.app.localized || localeHandler === null) return;
+    localeHandler(localeOf(leafRoute(matched) ?? {}, appPathOf(path, this.app.base), this.app));
+  }
+
   private applyRoute(matched: MatchedRoute): void {
     const params = paramsOf(matched);
     const leaf = leafRoute(matched);
     const path = typeof matched.path === "string" ? matched.path : "/";
+    this.tellLocale(matched, path);
     setRouteHead(this.app, leaf, params, path);
     currentMatch.value = matched;
-    currentRoute.value = routeStateOf(matched, this.app.base);
+    currentRoute.value = routeStateOf(matched, this.app);
     currentParams.value = params;
     currentView.value = viewOf(leaf);
   }
@@ -386,14 +450,19 @@ export class AppRun {
     // The first match happens inside `init`; every later one reaches the subscriber.
     let initial = true;
     const extra = this.host.routerOptions();
-    router.init(routes, {
+    const localized = expandRoutes(routes, { locales: this.app.locales, defaultLocale: this.app.locale });
+    router.init(localized, {
       isProduction: extra.isProduction,
       navigation: extra.navigation,
-      locales: extra.locales,
-      defaultLocale: extra.defaultLocale,
+      locales: extra.locales ?? [...this.app.locales],
+      defaultLocale: extra.defaultLocale ?? this.app.locale,
       origin: extra.origin,
       track: extra.track,
-      beforeNavigate: extra.beforeNavigate,
+      beforeNavigate: (path, matched) => {
+        this.tellLocale(matched, typeof matched.path === "string" ? matched.path : path);
+        const hook = extra.beforeNavigate;
+        return typeof hook === "function" ? hook(path, matched) : false;
+      },
       appName: this.app.name,
       basePath: this.app.base,
       prerendered: () => this.host.prerendered(),
@@ -409,19 +478,19 @@ export class AppRun {
       this.followRoute(matched);
     });
     currentMatch.value = router.currentRoute;
-    currentRoute.value = routeStateOf(router.currentRoute, this.app.base);
+    currentRoute.value = routeStateOf(router.currentRoute, this.app);
     currentParams.value = paramsOf(router.currentRoute);
     currentView.value = viewOf(leafRoute(router.currentRoute));
   }
 
-  /** Go to `path`, choosing whether this one navigation uses the host's transition and where it starts from. */
-  go(path: string, transition?: boolean, from?: NavigationSource): void {
+  /** Go to `path`, choosing whether this one navigation uses the host's transition, where it starts from, and the locale the router should read it in. */
+  go(path: string, transition?: boolean, from?: NavigationSource, locale?: string): void {
     const router = this.router;
     if (router === null) return;
     this.overrideTransition = transition;
     this.overrideFrom = from;
     try {
-      router.go(path);
+      router.go(path, undefined, locale);
     } finally {
       this.overrideTransition = undefined;
       this.overrideFrom = undefined;

@@ -6,6 +6,15 @@
  */
 
 import type { RoutesMap } from "@lightstart/router";
+import { withLocale } from "@lightstart/router/locale";
+
+/** How a build lists each concrete path: in every language the app ships, when it ships several. */
+export interface PathsOptions {
+  /** The languages the app ships. */
+  locales?: readonly string[];
+  /** The language that carries no path prefix. */
+  defaultLocale?: string;
+}
 
 /** The entries a route's `params` answers. */
 type ParamsAnswer = Array<Record<string, string>>;
@@ -41,14 +50,24 @@ const fillPath = (path: string, values: Record<string, unknown>): string | null 
   return segments.join("/");
 };
 
-const collect = async (routes: RoutesMap, base: string, out: Set<string>): Promise<void> => {
+const collect = async (routes: RoutesMap, base: string, out: Set<string>, options: PathsOptions, inherited: boolean): Promise<void> => {
+  const locales = options.locales ?? [];
+  const defaultLocale = options.defaultLocale ?? "en";
+  const add = (path: string, localized: boolean): void => {
+    out.add(path);
+    if (!localized || locales.length < 2) return;
+    for (const locale of locales) {
+      if (locale !== defaultLocale) out.add(withLocale(path, locale, locales, defaultLocale));
+    }
+  };
   for (const key of Object.keys(routes)) {
     const value = routes[key];
     const route = isRecord(value) ? value : null;
     const path = (base + key).replace(/\/+/g, "/") || "/";
+    const localized = inherited && (route === null || route.localized !== false);
 
     if (route === null) {
-      out.add(path);
+      add(path, localized);
       continue;
     }
 
@@ -57,26 +76,26 @@ const collect = async (routes: RoutesMap, base: string, out: Set<string>): Promi
     if (!skipped) {
       const names = parameterNames(path);
       if (names.length === 0) {
-        out.add(path);
+        add(path, localized);
       } else if (typeof route.params === "function") {
         const answer = await (route.params as ParamsOf)();
         if (Array.isArray(answer)) {
           for (const entry of answer) {
             if (!isRecord(entry)) continue;
             const filled = fillPath(path, entry);
-            if (filled !== null) out.add(filled);
+            if (filled !== null) add(filled, localized);
           }
         }
       }
     }
 
-    if (isRecord(route.routes)) await collect(route.routes as RoutesMap, path, out);
+    if (isRecord(route.routes)) await collect(route.routes as RoutesMap, path, out, options, localized);
   }
 };
 
-/** Every concrete path of `routes`, sorted and unique. */
-export const pathsOf = async (routes: RoutesMap): Promise<string[]> => {
+/** Every concrete path of `routes`, in each of the app's languages when it ships several; sorted and unique. */
+export const pathsOf = async (routes: RoutesMap, options: PathsOptions = {}): Promise<string[]> => {
   const out = new Set<string>();
-  await collect(routes, "", out);
+  await collect(routes, "", out, options, true);
   return [...out].sort();
 };

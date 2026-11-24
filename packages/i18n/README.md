@@ -7,7 +7,9 @@ Translations for a light app, as one implementation of light's translation contr
 | `configureI18n({ locales?, defaultLocale?, dictionaries?, onWarn? })` | Makes the instance, merges the dictionaries, gives it to light as its translation (`configureTranslation(new I18nTranslation())`), and reads `$i18n` models in the current language; answers the `I18n` |
 | `t(key, params?)` | The sentence for a key, or the key itself when there is none |
 | `language()` | The current language |
-| `setLanguage(locale)` | Loads the locale's registered dictionaries, makes it current, and keeps it in `localStorage`; answers a promise of the locale |
+| `setLanguage(locale)` | Loads the locale's registered dictionaries, makes it current, keeps it in `localStorage`, and tells the handler `onLanguageSet` registered (an app's URL follows); answers a promise of the locale |
+| `applyLanguage(locale)` | Makes a locale current at once, without waiting to load it again, for a route change that runs before a `t()` title or view |
+| `onLanguageSet(handler)` | Calls `handler` after `setLanguage` made a locale current, so a localized app can navigate to it; `null` clears it |
 | `addDictionary(locale, dictionary)` | Merges a dictionary into a language, keeping the keys it already had |
 | `I18nTranslation` | This package as light's `Translation`: what `configureI18n` hands `configureTranslation` |
 | `localizedUrl(url, locale, defaultLocale)` | A path in a locale: prefixed unless the locale is the default one or the path carries a prefix already |
@@ -76,6 +78,8 @@ export default defineApp({ name: "tasks", host: "web", locale: "en" });
 ```
 
 `light check` ships `locales-in-parity` with this package: each `src/locales/<lang>.(js|ts)` must have the default locale's keys (the app's `locale` in `defineApp`, else `"en"`) with no more and no fewer, and the finding names the missing and extra keys.
+
+When the app also declares `defineApp({ locales })`, the generated file wires the language to the route: a route change applies its locale with `applyLanguage` before the route's title function and views run, and `setLanguage(x)` calls `navigateLocale`, which moves to the same route path in `x`. With one language the URL never changes, and an unprefixed URL is not redirected to a stored or browser language: the URL wins, and the saved language is only the starting point when the URL names none.
 
 A project that does not depend on this package is left alone, and may pass its own `Translation` to `configureTranslation` instead.
 

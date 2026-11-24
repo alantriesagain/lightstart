@@ -43,6 +43,7 @@
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.157",
     "@lightstart/build": "workspace:*",
+    "@lightstart/i18n": "workspace:*",
     "@lightstart/dev": "workspace:*",
     "@lightstart/test": "workspace:*",
     "@types/node": "^26.6.5",

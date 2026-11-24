@@ -23,16 +23,17 @@ import { applyTheme } from "@lightstart/light/theme";
 import { applyScheme } from "@lightstart/light/theme/color-scheme.js";
 import { loadPreset } from "@lightstart/light/theme/presets.js";
 import { createBrowserAdapter } from "@lightstart/router/adapters/browser";
-import { withBase } from "@lightstart/router/url";
+import { localeOfPath, withLocale } from "@lightstart/router/locale";
+import { stripBase, withBase } from "@lightstart/router/url";
 import type { RouterAdapter, RouterOptions } from "@lightstart/router/contracts.ts";
 import type { RouterCore } from "@lightstart/router/core";
 import type { App } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
-import { AppHost, AppRun, currentParams, currentView, outletAt } from "../run.ts";
+import { AppHost, AppRun, currentParams, currentRoute, currentView, outletAt } from "../run.ts";
 import type { RouteTransition, RunStore } from "../run.ts";
 import { convertParam } from "../outlet.ts";
 import type { OutletPosition } from "../outlet.ts";
-import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
+import { absoluteImageOf, alternatesOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
 import type { Head } from "../head.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import type { WebArgsFeature, WebStoresFeature, WebTransitionFeature, WebTransitionPort, WebUtilitiesFeature } from "./features.ts";
@@ -187,19 +188,31 @@ const linkIsExternal = (link: Element): boolean => {
   return rel.split(/\s+/).includes("external");
 };
 
-/** Put the app's base before an anchor's root-relative `href`, unless it is external. */
-const rebaseLink = (link: Element, base: string): void => {
+/** Each link's `href` as written, before the base and the current locale were put before it. */
+const writtenHrefs = new WeakMap<Element, string>();
+
+const currentLocaleOf = (app: App): string => currentRoute.peek()?.locale ?? app.locale;
+
+/** Put the app's base and the current locale before an anchor's root-relative `href`, unless it is external or already names a locale. */
+const rebaseLink = (link: Element, app: App): void => {
   if (!link.matches("a[href]") || linkIsExternal(link)) return;
   const href = link.getAttribute("href");
   if (href === null || href.startsWith("//")) return;
-  const next = withBase(base, href);
+  let written = writtenHrefs.get(link);
+  if (written === undefined) {
+    written = stripBase(app.base, href);
+    writtenHrefs.set(link, written);
+  }
+  const locale = app.localized ? localeOfPath(written, app.locales) ?? currentLocaleOf(app) : null;
+  const path = app.localized ? withLocale(written, locale, app.locales, app.locale) : written;
+  const next = withBase(app.base, path);
   if (next !== href) link.setAttribute("href", next);
 };
 
-/** Put the app's base before every root-relative anchor `href` in `root` and under it. */
-const rebaseLinks = (root: Element, base: string): void => {
-  rebaseLink(root, base);
-  for (const link of root.querySelectorAll("a[href]")) rebaseLink(link, base);
+/** Put the app's base and current locale before every root-relative anchor `href` in `root` and under it. */
+const rebaseLinks = (root: Element, app: App): void => {
+  rebaseLink(root, app);
+  for (const link of root.querySelectorAll("a[href]")) rebaseLink(link, app);
 };
 
 const setMeta = (head: HTMLElement, attribute: "name" | "property", key: string, value: string): void => {
@@ -214,6 +227,28 @@ const setMeta = (head: HTMLElement, attribute: "name" | "property", key: string,
     head.append(tag);
   }
   tag.setAttribute("content", value);
+};
+
+const setAlternates = (head: HTMLElement, links: ReturnType<typeof alternatesOf>): void => {
+  for (const existing of head.querySelectorAll('link[rel="alternate"][hreflang]')) existing.remove();
+  for (const link of links) {
+    const tag = document.createElement("link");
+    tag.setAttribute("rel", "alternate");
+    tag.setAttribute("hreflang", link.hreflang);
+    tag.setAttribute("href", link.href);
+    head.append(tag);
+  }
+};
+
+const setJsonLd = (head: HTMLElement, blocks: readonly unknown[]): void => {
+  for (const existing of head.querySelectorAll('script[data-light-jsonld]')) existing.remove();
+  for (const block of blocks) {
+    const tag = document.createElement("script");
+    tag.setAttribute("type", "application/ld+json");
+    tag.setAttribute("data-light-jsonld", "");
+    tag.textContent = JSON.stringify(block).replace(/</g, "\\u003c");
+    head.append(tag);
+  }
 };
 
 const setCanonical = (head: HTMLElement, href: string): void => {
@@ -244,6 +279,9 @@ const applyHead = (head: Head): void => {
   setMeta(root, "property", "og:type", "website");
   setMeta(root, "property", "og:image", absoluteImageOf(head));
   setMeta(root, "name", "twitter:card", head.image === "" ? "summary" : "summary_large_image");
+  setMeta(root, "property", "og:locale", head.locales.length > 1 ? head.locale : "");
+  if (head.locales.length > 1) setAlternates(root, alternatesOf(head));
+  setJsonLd(root, head.jsonLd);
 };
 
 /** What a web host may start with instead of the page's: the adapter types it runs and its default (a test's adapter types and memory), and the optional features the entry imported. */
@@ -417,7 +455,7 @@ export class WebHost extends AppHost {
     const adopt = this.prerendered() && placeholder !== null && placeholder.childNodes.length > 0;
     if (adopt && placeholder !== null) {
       this.mounted = placeholder;
-      this.startLinks(run.app.base);
+      this.startLinks(run.app);
       markStarted();
       this.scrollToHash(run);
       return;
@@ -426,26 +464,33 @@ export class WebHost extends AppHost {
     if (placeholder === null) document.body.append(made);
     else placeholder.replaceWith(made);
     this.mounted = made;
-    this.startLinks(run.app.base);
+    this.startLinks(run.app);
     markStarted();
     this.scrollToHash(run);
   }
 
-  /** Keep the root-relative `href` of every anchor in the app's DOM under its base, including links drawn later. */
-  private startLinks(base: string): void {
+  /** Keep the root-relative `href` of every anchor in the app's DOM under its base and in the current locale, including links drawn later. */
+  private startLinks(app: App): void {
     this.stopLinks();
     const root = this.mounted;
-    if (base === "" || root === null) return;
-    rebaseLinks(root, base);
+    if (root === null || (app.base === "" && !app.localized)) return;
+    rebaseLinks(root, app);
     const observer = new MutationObserver((records) => {
       for (const record of records) {
         if (record.type === "attributes") {
-          if (record.target instanceof Element) rebaseLink(record.target, base);
-        } else for (const node of record.addedNodes) if (node instanceof Element) rebaseLinks(node, base);
+          if (record.target instanceof Element) rebaseLink(record.target, app);
+        } else for (const node of record.addedNodes) if (node instanceof Element) rebaseLinks(node, app);
       }
     });
     observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["href"] });
     this.links = observer;
+  }
+
+  /** Keep every drawn link in the current locale, after a locale change. */
+  private relocalizeLinks(app: App): void {
+    const root = this.mounted;
+    if (root === null || !app.localized) return;
+    rebaseLinks(root, app);
   }
 
   /** Stop keeping the links under the base. */
@@ -525,6 +570,7 @@ export class WebHost extends AppHost {
   routeChanged(run: AppRun, _first: boolean): Promise<void> {
     flushUpdates();
     this.currentHref = run.router?.adapter.getLocation().href ?? this.currentHref;
+    this.relocalizeLinks(run.app);
     this.transitions?.clearClick();
     const historyNavigation = this.historyNavigation;
     this.historyNavigation = false;

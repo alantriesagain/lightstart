@@ -50,8 +50,14 @@ export interface AppConfig {
   theme?: string | ThemeData;
   /** The page's color scheme: `"dark"` or `"light"` pins it, `"system"` follows the reader's preference; `"system"` when absent. */
   scheme?: "dark" | "light" | "system";
-  /** The default language the app's words are in; `"en"` when absent. */
+  /** The default language the app's words are in; `"en"` when absent. It must be one of `locales`. */
   locale?: string;
+  /**
+   * The languages the app ships, the default included. With more than one, the run answers every
+   * route in each language, the default at its bare path and the others under `/<lang>`; a route's
+   * `localized: false` opts out.
+   */
+  locales?: string[];
   /**
    * The Iconify set the app's icons come from, installed as `@iconify-json/<set>`; `"lucide"` when
    * absent. The generation writes each name its sources use into `.light/icons.css`.
@@ -136,6 +142,10 @@ export class App {
   readonly scheme: "dark" | "light" | "system";
   /** The default language the app's words are in. */
   readonly locale: string;
+  /** The languages the app ships, the default among them. */
+  readonly locales: readonly string[];
+  /** Whether the app ships more than one locale, so its routes carry variants. */
+  readonly localized: boolean;
   /** The Iconify set the app's icons come from, `"lucide"` when the config names none. */
   readonly icons: string;
   /** The site's address, when the config names one, without a trailing slash. */
@@ -173,6 +183,12 @@ export class App {
     this.theme = config.theme;
     this.scheme = config.scheme ?? "system";
     this.locale = config.locale ?? "en";
+    const locales = config.locales ?? [];
+    this.locales = locales.length > 0 ? [...locales] : [this.locale];
+    if (!this.locales.includes(this.locale)) {
+      throw new Error(`The app's locale "${this.locale}" is not among its locales (${this.locales.join(", ")})`);
+    }
+    this.localized = this.locales.length > 1;
     this.icons = config.icons ?? "lucide";
     this.url = config.url === undefined ? undefined : config.url.replace(/\/+$/, "");
     this.base = appBase(config);
