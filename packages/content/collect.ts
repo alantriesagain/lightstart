@@ -110,6 +110,8 @@ const readRecord = (path: string, file: FileName): Record<string, unknown> => {
   }
   const slug = typeof row["slug"] === "string" && row["slug"].length > 0 ? row["slug"] : file.stem;
   row["slug"] = slug;
+  const id = typeof row["id"] === "string" || typeof row["id"] === "number" ? row["id"] : slug;
+  if (id !== undefined) row["id"] = id;
   return row;
 };
 

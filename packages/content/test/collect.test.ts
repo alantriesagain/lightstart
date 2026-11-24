@@ -31,4 +31,19 @@ try {
 } finally {
   rmSync(dir, { recursive: true, force: true });
 }
+
+const idDir = mkdtempSync(join(tmpdir(), "light-content-id-"));
+try {
+  writeFileSync(join(idDir, "markdown.md"), "---\ntitle: Markdown\n---\nText\n");
+  writeFileSync(join(idDir, "json.json"), '{"title":"Json"}\n');
+  writeFileSync(join(idDir, "own.md"), "---\nid: custom\ntitle: Own\n---\nText\n");
+  const model = { id: T.string({ required: true }), title: T.string({ required: true }) } as unknown as ModelSchema;
+
+  const rows = collect(idDir, { model });
+  eq("a slug fills a required id in json", String(rows[0]?.["id"]), "json");
+  eq("a slug fills a required id in markdown", String(rows[1]?.["id"]), "markdown");
+  eq("a record with its own id keeps it", String(rows[2]?.["id"]), "custom");
+} finally {
+  rmSync(idDir, { recursive: true, force: true });
+}
 done();
