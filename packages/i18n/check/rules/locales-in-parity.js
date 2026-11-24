@@ -8,6 +8,20 @@ const LOCALE_FILE = /^src\/locales\/([^/]+)\.(js|ts)$/;
 const langOf = (file) => LOCALE_FILE.exec(file)?.[1] ?? null;
 
 /**
+ * A property name's key as JavaScript writes it: a bare numeric key takes the
+ * string form of its number, so `1` and `"1"` are the same key, while `1.5`
+ * stays `"1.5"` and `0x1` becomes `"1"`.
+ * @param {import("typescript").PropertyName | undefined} name
+ * @returns {string | null}
+ */
+const keyName = (name) => {
+  if (name === undefined) return null;
+  if (ts.isIdentifier(name) || ts.isStringLiteral(name)) return name.text;
+  if (ts.isNumericLiteral(name)) return String(Number(name.text));
+  return null;
+};
+
+/**
  * The leaf paths of an object, joined with dots, so `nav.map` is compared
  * rather than the whole `nav` object.
  * @param {import("typescript").ObjectLiteralExpression} literal
@@ -18,7 +32,7 @@ const langOf = (file) => LOCALE_FILE.exec(file)?.[1] ?? null;
 const keysOf = (literal, prefix = "", out = new Set()) => {
   for (const member of literal.properties) {
     if (ts.isSpreadAssignment(member)) continue;
-    const name = ts.isIdentifier(member.name) || ts.isStringLiteral(member.name) ? member.name.text : null;
+    const name = keyName(member.name);
     if (name === null) continue;
     const key = prefix ? `${prefix}.${name}` : name;
     if (ts.isPropertyAssignment(member)) {

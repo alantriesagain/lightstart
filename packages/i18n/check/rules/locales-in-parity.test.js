@@ -21,3 +21,20 @@ test("stays silent when the keys match", async () => {
   });
   assert.deepEqual(findings, []);
 });
+
+test("treats a bare numeric key and its quoted form alike", async () => {
+  const findings = await runRuleOn(rule, {
+    "src/locales/en.js": 'export default { 1: "first", 2: "second" };\n',
+    "src/locales/pt.js": 'export default { "1": "primeiro", "2": "segundo" };\n',
+  });
+  assert.deepEqual(findings, []);
+});
+
+test("still reports a missing numeric key", async () => {
+  const findings = await runRuleOn(rule, {
+    "src/locales/en.js": 'export default { 1: "first", 2: "second" };\n',
+    "src/locales/pt.js": 'export default { "1": "primeiro" };\n',
+  });
+  assert.equal(findings.length, 1);
+  assert.match(findings[0].message, /missing "2"/);
+});
