@@ -34,8 +34,8 @@ import type { OutletPosition } from "../outlet.ts";
 import { openStores as openLocalStores } from "../engine.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import { PRERENDER_SCRIPT } from "../node/prerender.ts";
-import { absoluteImageOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
-import type { Head } from "../head.ts";
+import { absoluteImageOf, alternatesOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
+import type { AlternateLink, Head } from "../head.ts";
 
 /** What a static render runs with: where the routes start, the app's arguments (an argv list or a record over the defaults), and the adapter types it runs (every store in memory when absent). */
 export interface RenderOptions {
@@ -243,6 +243,22 @@ const putCanonical = (page: string, href: string): string => {
   return page.replace(found[0], () => tag);
 };
 
+const putAlternates = (page: string, links: readonly AlternateLink[]): string => {
+  const without = page.replace(/<link\b[^>]*\brel=(["'])alternate\1[^>]*>\s*/gi, "");
+  if (links.length === 0) return without;
+  const tags = links.map((link) => `<link rel="alternate" hreflang="${escapeAttribute(link.hreflang)}" href="${escapeAttribute(link.href)}">`).join("");
+  return without.replace(/<\/head>/i, () => `${tags}</head>`);
+};
+
+const putJsonLd = (page: string, blocks: readonly unknown[]): string => {
+  const without = page.replace(/<script\b[^>]*\bdata-light-jsonld\b[^>]*>[\s\S]*?<\/script>\s*/gi, "");
+  if (blocks.length === 0) return without;
+  const tags = blocks
+    .map((block) => `<script type="application/ld+json" data-light-jsonld>${JSON.stringify(block).replace(/&/g, "\\u0026").replace(/</g, "\\u003c")}</script>`)
+    .join("");
+  return without.replace(/<\/head>/i, () => `${tags}</head>`);
+};
+
 /** Write a page head into a built page's `<head>`, updating an existing tag in place and creating a missing one. */
 const putHead = (page: string, head: Head): string => {
   const title = documentTitleOf(head);
@@ -258,6 +274,9 @@ const putHead = (page: string, head: Head): string => {
   out = putMeta(out, "property", "og:type", "website");
   out = putMeta(out, "property", "og:image", absoluteImageOf(head));
   out = putMeta(out, "name", "twitter:card", head.image === "" ? "summary" : "summary_large_image");
+  if (head.locales.length > 1) out = putMeta(out, "property", "og:locale", head.locale);
+  if (head.locales.length > 1) out = putAlternates(out, alternatesOf(head));
+  out = putJsonLd(out, head.jsonLd);
   return out;
 };
 

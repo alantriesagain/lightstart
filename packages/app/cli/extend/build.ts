@@ -11,6 +11,7 @@ import { defineExtension } from "@lightstart/cli";
 import type {} from "@lightstart/build";
 import type { RoutesMap } from "@lightstart/router";
 import { relative } from "node:path";
+import { stripLocale, withLocale } from "@lightstart/router/locale";
 import { normalizeBasePath, withBase } from "@lightstart/router/url";
 import { pathToFileURL } from "node:url";
 import type { PrerenderRenderer } from "../../index.ts";
@@ -29,10 +30,35 @@ const siteRoot = (url: string, base: string): string => {
   }
 };
 
-const sitemapOf = (url: string, paths: readonly string[]): string => {
-  const urls = paths.filter((path) => !path.includes(":") && !path.includes("*")).map((path) => `${url}${path.startsWith("/") ? path : `/${path}`}`).sort();
-  const entries = urls.map((loc) => `  <url>\n    <loc>${loc}</loc>\n  </url>`).join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
+const absolute = (url: string, path: string): string => `${url}${path.startsWith("/") ? path : `/${path}`}`;
+
+const sitemapOf = (url: string, paths: readonly string[], locales: readonly string[], defaultLocale: string): string => {
+  const concrete = paths.filter((path) => !path.includes(":") && !path.includes("*")).sort();
+  const localized = locales.length > 1;
+  if (!localized) {
+    const entries = concrete.map((path) => `  <url>\n    <loc>${absolute(url, path)}</loc>\n  </url>`).join("\n");
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
+  }
+  const present = new Map<string, Set<string>>();
+  for (const path of concrete) {
+    const routePath = stripLocale(path, locales);
+    const locale = locales.find((candidate) => withLocale(routePath, candidate, locales, defaultLocale) === path) ?? defaultLocale;
+    const group = present.get(routePath) ?? new Set<string>();
+    group.add(locale);
+    present.set(routePath, group);
+  }
+  const entries = concrete
+    .map((path) => {
+      const routePath = stripLocale(path, locales);
+      const group = present.get(routePath) ?? new Set<string>();
+      const links = locales
+        .filter((locale) => group.has(locale))
+        .map((locale) => `    <xhtml:link rel="alternate" hreflang="${locale}" href="${absolute(url, withLocale(routePath, locale, locales, defaultLocale))}"/>`);
+      if (group.has(defaultLocale)) links.push(`    <xhtml:link rel="alternate" hreflang="x-default" href="${absolute(url, withLocale(routePath, defaultLocale, locales, defaultLocale))}"/>`);
+      return `  <url>\n    <loc>${absolute(url, path)}</loc>\n${links.join("\n")}\n  </url>`;
+    })
+    .join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${entries}\n</urlset>\n`;
 };
 
 const headersOf = (base: string, paths: readonly string[]): string => {
@@ -102,9 +128,9 @@ export default defineExtension("build", {
         if (info.url === undefined) {
           ctx.outputs.set("robots.txt", "User-agent: *\nAllow: /\n");
         } else {
-          const paths = routes === null ? [] : await pathsOf(routes as RoutesMap);
+          const paths = routes === null ? [] : await pathsOf(routes as RoutesMap, { locales: info.locales, defaultLocale: info.locale });
           const site = siteRoot(info.url, info.base);
-          ctx.outputs.set("sitemap.xml", sitemapOf(site, paths));
+          ctx.outputs.set("sitemap.xml", sitemapOf(site, paths, info.locales, info.locale));
           ctx.outputs.set("robots.txt", `User-agent: *\nAllow: /\nSitemap: ${site}/sitemap.xml\n`);
         }
 
@@ -120,7 +146,8 @@ export default defineExtension("build", {
         if (!wanted && !fromApp.prerender) return;
 
         const routes = ctx.data.get("app-routes");
-        const paths = routes === null || routes === undefined ? [] : await pathsOf(routes as RoutesMap);
+        const info = await infoOf(app.path);
+        const paths = routes === null || routes === undefined ? [] : await pathsOf(routes as RoutesMap, { locales: info.locales, defaultLocale: info.locale });
         if (paths.length === 0) return;
 
         const renderer = chosen ?? fromApp.renderer ?? "markup";

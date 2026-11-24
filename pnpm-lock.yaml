@@ -139,6 +139,9 @@ importers:
       '@lightstart/dev':
         specifier: workspace:*
         version: link:../dev
+      '@lightstart/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       '@lightstart/test':
         specifier: workspace:*
         version: link:../test

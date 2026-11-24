@@ -70,6 +70,22 @@ export const t = (key: string, params?: Record<string, unknown>): string => curr
 /** The language the reader is in, as `t()` answers in and an `Intl` formatter is given. */
 export const language = (): string => currentI18n().getLanguage();
 
+let afterSet: ((locale: string) => void) | null = null;
+
+/** Tell `handler` when `setLanguage` made a language current, so an app can move to that language's URL; null clears it. */
+export const onLanguageSet = (handler: ((locale: string) => void) | null): void => {
+  afterSet = handler;
+};
+
+/** Make `locale` current at once, without loading its dictionaries again: what a route change asks before its title and views run. */
+export const applyLanguage = (locale: string): void => {
+  if (locale === "") return;
+  const instance = currentI18n();
+  if (instance.getLanguage() === locale) return;
+  instance.currentLocale = locale;
+  void instance.loadLocale(locale);
+};
+
 /** Load a language's registered dictionaries, make it current, and keep it for the next visit. */
 export const setLanguage = async (locale: string): Promise<string> => {
   const set = await currentI18n().setLanguage(locale);
@@ -78,6 +94,7 @@ export const setLanguage = async (locale: string): Promise<string> => {
   } catch {
     // Storage can be unavailable (private mode, disabled): the language still changes for this page.
   }
+  if (afterSet !== null) afterSet(set);
   return set;
 };
 
