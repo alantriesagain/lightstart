@@ -2,10 +2,12 @@
  * @file `@lightstart/app/static`: an app's page rendered in node, without a
  * browser. `renderApp` runs the app as `openApp` does (memory stores unless
  * `adapters`, the arguments, the controllers ready) over a history in memory at
- * a path, and mounts its root view on light's markup host; it answers the
- * root element's markup with the engine's markers. `renderPage` puts that
- * markup in a built page in place of its root placeholder and marks the page
- * prerendered, as `light build --prerender` does.
+ * a path, and mounts its root view on light's markup host, `<app-container>`
+ * drawing the routes' view and `<app-slot>` the items an extension filled a
+ * slot with; it answers the root element's markup with the engine's markers.
+ * `renderPage` puts that markup in a built page in place of its root
+ * placeholder and marks the page prerendered, as `light build --prerender`
+ * does.
  *
  * Render on the markup host only after `@lightstart/light/markup` is imported:
  * it names the markup element and registry to light's views, and a view
@@ -15,7 +17,8 @@
 
 import { MRoot, MarkupHost, serialize } from "@lightstart/light/markup";
 import View from "@lightstart/light";
-import { html } from "@lightstart/light/html";
+import { element, html, key } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
 import { configure, currentHost, disposeTree, setHost } from "@lightstart/light/html/core.js";
 import { effect } from "@lightstart/light/signals";
 import { createMemoryAdapter } from "@lightstart/router/adapters/memory";
@@ -33,6 +36,7 @@ import { convertParam } from "../outlet.ts";
 import type { OutletPosition } from "../outlet.ts";
 import { openStores as openLocalStores } from "../engine.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
+import { Slot } from "../slots.ts";
 import { PRERENDER_SCRIPT } from "../node/prerender.ts";
 import { absoluteImageOf, alternatesOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
 import type { AlternateLink, Head } from "../head.ts";
@@ -110,11 +114,32 @@ class StaticAppContainer extends View {
   }
 }
 
+/** The tag an item names, when it names one as a string. */
+const tagOf = (item: object): string | null => {
+  const tag = Reflect.get(item, "tag");
+  return typeof tag === "string" ? tag : null;
+};
+
+/** Every item a slot holds, each drawn by the tag it names with the slot's context and the item set on it; keyed by the item, so its element stays across a redraw. */
+class StaticAppSlot extends View.props({ slot: T.object({ defaultValue: null, attribute: false }), context: T.any({ attribute: false }) }) {
+
+  override render(): unknown {
+    const slot: unknown = this.slot;
+    if (!(slot instanceof Slot)) return html``;
+    const children = slot.items.value.flatMap((item) => {
+      const tag = tagOf(item);
+      return tag === null ? [] : [key(item, element(tag, { ".context": this.context, ".item": item }))];
+    });
+    return html`${children}`;
+  }
+}
+
 let registered = false;
 
 const registerContainer = (): void => {
   if (registered) return;
   View.register("app-container", StaticAppContainer);
+  View.register("app-slot", StaticAppSlot);
   registered = true;
 };
 

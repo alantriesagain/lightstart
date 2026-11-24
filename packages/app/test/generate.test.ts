@@ -85,6 +85,15 @@ const addTagPackage = (project: string, name: string, tag: string, module: strin
   declareDependency(project, name);
 };
 
+/** A fake package under the project's node_modules, its package.json naming a module under `light.extension`. */
+const addExtensionPackage = (project: string, name: string, module: string): void => {
+  const dir = join(project, "node_modules", name);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, "package.json"), `${JSON.stringify({ name, version: "0.0.0", type: "module", light: { extension: `./${module}` } }, null, 2)}\n`);
+  writeFileSync(join(dir, module), 'import { defineExtension } from "@lightstart/app/extensions.ts";\n\nexport default defineExtension({ name: "social" });\n');
+  declareDependency(project, name);
+};
+
 const main = async (): Promise<void> => {
   const project = copy();
   try {
@@ -341,6 +350,31 @@ const main = async (): Promise<void> => {
     ok("a JavaScript app does not get a TypeScript install", first !== null && !existsSync(join(first.dir, "sync.ts")));
   } finally {
     rmSync(jsApp, { recursive: true, force: true });
+  }
+
+  const withExtensions = copy();
+  try {
+    addExtensionPackage(withExtensions, "@acme/social", "extension.js");
+    const extensions = join(withExtensions, "src", "extensions");
+    mkdirSync(extensions);
+    writeFileSync(join(extensions, "local.js"), 'import { defineExtension } from "@lightstart/app/extensions.ts";\n\nexport default defineExtension({ name: "local" });\n');
+    const first = await generate(withExtensions);
+    ok("the extensions app has an app", first !== null);
+    if (first === null) return done();
+
+    const source = readFileSync(first.manifest, "utf8");
+    ok("a package's extension is imported from its package", source.includes('import extension0 from "@acme/social/extension.js";'));
+    ok("the app's own extension is imported relative from .light", source.includes('import extension1 from "../src/extensions/local.js";'));
+    ok("the package's extension comes before the app's own", source.indexOf('"@acme/social/extension.js"') < source.indexOf('"../src/extensions/local.js"'));
+    ok("the record lists the extensions in order", source.includes("extensions: [extension0, extension1],"));
+    const extensionAt = source.indexOf('import extension0 from "@acme/social/extension.js";');
+    ok("the extension imports are before the models", extensionAt < source.indexOf("import model0"));
+    ok("the extension imports are before the controllers and views", extensionAt < source.indexOf("import controller0") && extensionAt < source.indexOf('import "../src/views/app-root.ts";'));
+
+    const second = await generate(withExtensions);
+    ok("a second extensions run changes nothing", second !== null && !second.changed);
+  } finally {
+    rmSync(withExtensions, { recursive: true, force: true });
   }
   done();
 };

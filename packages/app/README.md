@@ -216,17 +216,70 @@ A named route keeps its base name for the default path; a variant is named `<nam
 
 `<a href="/places">` in a view is kept under the app's base and in the current locale by the web host, including links drawn later; an href that already names a declared locale stays as written. The prerender renders each language's paths, so `/pt/places` is titled with its Portuguese words, and the sitemap lists each language's concrete paths with their alternates.
 
+## Extensions and slots
+
+An app leaves places open that packages fill: a tab in the bar, a block on a detail page, a source for the agenda, its own pages. A **slot** is such a place, and an **extension** is a unit that fills slots and brings its controllers and routes.
+
+The module that owns a place defines its slot and exports the handle; whoever fills it or draws it imports the handle, so the item type is checked and a name cannot be misspelt:
+
+```js
+// src/lib/slots.js
+import { defineSlot } from "@lightstart/app";
+
+/** @type {import("@lightstart/app").Slot<{ id: string, tag: string, order?: number }>} */
+export const detailBlocks = defineSlot("detail.blocks");
+/** @type {import("@lightstart/app").Slot<{ id: string, list(): Promise<Row[]> }>} */
+export const agendaSources = defineSlot("agenda.sources");
+```
+
+`slot.items` is a signal of the items in order (by `order`, 0 when absent, then fill order), so a view or a controller reading it follows every fill and withdraw. `slot.fill(item)` adds one and answers its withdraw; `slot.extensionOf(item)` names the extension that filled it. Two slots with one name is an error.
+
+A UI slot holds items with a `tag`; `<app-slot>` draws them, each element with `context` and `item` set as properties, and nothing when the slot is empty, on the page and in a prerender:
+
+```js
+html`<app-slot .slot=${detailBlocks} .context=${place}></app-slot>`
+```
+
+A data slot is read where it is used:
+
+```js
+const rows = (await Promise.all(agendaSources.items.value.map((source) => source.list()))).flat();
+```
+
+An extension default-exports `defineExtension`:
+
+```js
+// node_modules/@meetup/social/extension.js, or the app's src/extensions/social.js
+import { defineExtension } from "@lightstart/app";
+import { agendaSources, detailBlocks } from "meetup/slots";
+import live from "./controllers/live.js";
+
+export default defineExtension({
+  name: "social",
+  fills: [detailBlocks.entry({ id: "going", tag: "social-going", order: 10 }), agendaSources.entry({ id: "meetups", list: () => live.upcoming() })],
+  controllers: [live],
+  routes: { "/meetups/:id": { name: "meetup", view: "social-meetup" } },
+  connected() {},
+  disconnected() {},
+});
+```
+
+The generation finds every extension: a dependency whose `package.json` says `"light": { "extension": "./extension.js" }` (by package name), then the app's own `src/extensions/*.js` (by file name), and lists them in the manifest's `extensions`. The run fills their slots before the app's controllers start, so the first render sees them; starts their controllers after the app's, then calls `connected`; and adds their routes to the app's table, localized like the rest (a path declared twice is an error naming the extension). `stop` undoes it in reverse. Two extensions with one name is an error.
+
+`defineApp({ extensions: { off: ["social"] } })` leaves an extension out, as a public build without its signed-in parts does; `openApp(manifest, { extensions: false })` and `openPage` run a suite with none, or `{ extensions: { off } }` without some.
+
 ## The run
 
 One run, the same on every host (`run.ts`):
 
 1. Fills the arguments from the host's source (argv, the URL query, a test's values).
 2. Opens every store, then adds each empty model's seeds.
-3. Names every controller (`nameControllers`, so `sync:` reaches it), starts them in import order and awaits each `$ready`.
-4. Follows the routes, when the app has them.
-5. Mounts the view on the host's surface.
+3. Fills the extensions' slots.
+4. Names every controller (`nameControllers`, so `sync:` reaches it), starts them in import order and awaits each `$ready`; then the extensions' controllers the same way, then each extension's `connected`.
+5. Follows the routes (the app's and its extensions'), when the app has them.
+6. Mounts the view on the host's surface.
 
-It installs `app.restart(args?)` (stop, merge the arguments, open, start and mount again) and `app.quit(code?)` (stop, then leave as the host does: a terminal app exits with `code`). Both answer promises, and reject with "the app is not running" before a run. `stop()` takes the view down, stops following the routes, disposes the controllers in reverse order and closes the stores.
+It installs `app.restart(args?)` (stop, merge the arguments, open, start and mount again) and `app.quit(code?)` (stop, then leave as the host does: a terminal app exits with `code`). Both answer promises, and reject with "the app is not running" before a run. `stop()` takes the view down, stops following the routes, calls the extensions' `disconnected` in reverse, disposes the controllers in reverse order (the extensions' before the app's), withdraws the extensions' fills and closes the stores.
 
 A host is an `AppHost`: its name, the store adapter types it runs and its default, `args(app)`, `history()`, `mount(run)`, `unmount(run)`, `transition(apply)` and `exit(code)`. Each has what a host with no surface does, and a host overrides what it changes.
 

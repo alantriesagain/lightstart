@@ -9,6 +9,7 @@
 import type { ModelApi, ModelSchema, Row } from "@lightstart/light/model/types.ts";
 import type { RoutesMap } from "@lightstart/router";
 import type { App } from "./index.ts";
+import type { AppExtension } from "./extensions.ts";
 
 /** One model: the file's name without its extension, and the api its module default-exports. */
 export interface AppModel {
@@ -36,4 +37,6 @@ export interface AppManifest {
   controllers: readonly AppController[];
   routes: RoutesMap | null;
   views: readonly string[];
+  /** The extensions the generation found: the dependencies' (by package name), then the app's own `src/extensions/`. */
+  extensions?: readonly AppExtension[];
 }
