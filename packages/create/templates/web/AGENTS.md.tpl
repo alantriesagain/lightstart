@@ -78,6 +78,18 @@ A form over a model is `<lc-form .fields=${fieldsForModel(schema)}>` with `@ligh
 
 A `View` subclass's render follows the signals it reads. A view written as a definition (`View.define({ tag, props, render })`) does not: it reads a `defineController`'s state through props declared `sync: "<controller>"`, and the generation installs `View.use(syncPlugin)` from `@lightstart/light/controller/view` before the views, plus `registerSyncBinder(modelBinder)` when a `sync:` names a model api.
 
+## Deploying
+
+`.deployed/current` is the whole site for a static host. To put it on Cloudflare Pages, add `@lightstart/cloudflare` and keep `CF_ACCOUNT_ID` and `CF_API_TOKEN` in `.env` (in `.gitignore`, never committed):
+
+```bash
+pnpm build
+light cf:deploy               # a preview at <branch>.<project>.pages.dev
+light cf:deploy --production  # the production branch: the project's domains
+```
+
+The Pages project is the package's name, or `defineCloudflare({ project })` in `src/cloudflare.__EXT__`; the first deploy creates it. Deploy a preview, open it, then production. `light cf:deploy --dry-run` shows the project, the build and the wrangler steps without uploading.
+
 ## Read more
 
 | What | Where |
@@ -87,3 +99,4 @@ A `View` subclass's render follows the signals it reads. A view written as a def
 | Every `lc-*` tag, its props and its stylesheet | `@lightstart/components`'s README |
 | Forms from a model; translations | `@lightstart/form`'s and `@lightstart/i18n`'s READMEs |
 | `light serve`, `light build`, `light test`, `light check` | `@lightstart/dev`, `@lightstart/build`, `@lightstart/cli` |
+| `light cf:deploy` to Cloudflare Pages | `@lightstart/cloudflare` |

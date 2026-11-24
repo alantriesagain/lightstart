@@ -24,6 +24,10 @@ pnpm dev
 
 The browser tests need Chromium: `pnpm exec playwright install chromium`. Run `pnpm verify` before committing.
 
+## Deploy
+
+`pnpm build` writes the whole site to `.deployed/current`, ready for any static host. For Cloudflare Pages, add `@lightstart/cloudflare`, put `CF_ACCOUNT_ID` and `CF_API_TOKEN` in `.env`, and run `light cf:deploy` (a preview) or `light cf:deploy --production`.
+
 ## Where things are
 
 | Path | What |
