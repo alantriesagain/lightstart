@@ -22,7 +22,7 @@ const repo = resolve(import.meta.dirname, "..", "..", "..");
 const fixtures = resolve(import.meta.dirname, "fixtures");
 
 /**
- * @param {import("@lightstart/cli").Command} command
+ * @param {{ args?: import("@lightstart/cli").ArgsSchema }} command
  * @returns {import("@lightstart/cli").ArgsSchema}
  */
 const schemaOf = (command) => command.args ?? {};

@@ -10,12 +10,8 @@ import { findRoot } from "../../src/workspace.js";
 import { run, runProject } from "../../src/commands/typecheck.js";
 import { targetsOf } from "../targets.js";
 
-/**
- * The project `dir` is in, or null.
- * @param {string} dir
- * @returns {import("../../src/project.js").Project | null}
- */
-const projectAt = (dir) => {
+/** The project `dir` is in, or null. */
+const projectAt = (dir: string): import("../../src/project.js").Project | null => {
   try {
     return findProject(dir);
   } catch {
