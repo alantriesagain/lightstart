@@ -59,7 +59,7 @@ const main = (): void => {
     ok("the link service is a connectedDevice service", manifest.includes('android:name="dev.lightstart.mobile.addons.DeviceLinkService"') && manifest.includes('android:foregroundServiceType="connectedDevice"'));
 
     const gradle = text(project, "app/build.gradle");
-    for (const coordinate of ["androidx.media3:media3-exoplayer:1.4.1", "androidx.media3:media3-datasource:1.4.1"]) {
+    for (const coordinate of ["androidx.media3:media3-exoplayer:1.9.0", "androidx.media3:media3-datasource:1.9.0"]) {
       ok(`build.gradle has ${coordinate}`, gradle.includes(`implementation '${coordinate}'`));
     }
   } finally {
