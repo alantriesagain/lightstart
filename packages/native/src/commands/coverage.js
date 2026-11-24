@@ -14,7 +14,7 @@ import { ffiHeader, nodeOnly, resolveAppFfi, resolveFfi } from "../ffi.js";
 import { prepare, prepareProject } from "../prepare.js";
 import { captureStreams, pool } from "../run.js";
 import { Member, memberByName, members } from "../workspace.js";
-import { testsOf } from "./test.js";
+import { ruleTest, testsOf } from "./test.js";
 
 class Entry {
   /** @type {Member} */
@@ -58,7 +58,7 @@ const entriesOf = (_root, targets, appsOnly) => {
   if (appsOnly) return out;
   for (const m of targets)
     for (const t of testsOf(m)) {
-      if (nodeOnly(t.path)) continue;
+      if (nodeOnly(t.path) || ruleTest(t.path)) continue;
       const header = ffiHeader(t.path);
       out.push(new Entry(m, t.path, header === null ? null : resolveFfi(m, header), true));
     }

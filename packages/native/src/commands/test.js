@@ -1,6 +1,7 @@
 /**
  * @file `light test [member…] [--node-only] [--jobs N] [--opt dev|release] [-- test…]`: every member's
- * test/*.test.ts (or the tests named) run under node (fast) and under scriptc (the gate); the
+ * test/*.test.ts (or the tests named) run under node (fast) and under scriptc (the gate), and its
+ * check/rules/*.test.js (light check rules, on node:test) under node alone; the
  * outputs must match byte for byte. A test whose first line is `// ffi: <manifest>` runs natively
  * with that manifest and under node with the manifest folder's node stand-in preloaded; one whose
  * first line is `// node-only` runs under node alone (it walks the file system or the repository).
@@ -38,18 +39,33 @@ export class TestFile {
 }
 
 /**
- * The tests of `member`: test/*.test.ts.
+ * The files in `dir` whose names end with `suffix`, sorted, as `member`'s tests.
+ * @param {Member} member
+ * @param {string} dir
+ * @param {string} suffix
+ * @returns {TestFile[]}
+ */
+const filesIn = (member, dir, suffix) =>
+  existsSync(dir)
+    ? readdirSync(dir)
+        .filter((f) => f.endsWith(suffix))
+        .sort()
+        .map((f) => new TestFile(member, join(dir, f)))
+    : [];
+
+/**
+ * The tests of `member`: test/*.test.ts, then the check rules' check/rules/*.test.js.
  * @param {Member} member
  * @returns {TestFile[]}
  */
-export const testsOf = (member) => {
-  const dir = join(member.dir, "test");
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((f) => f.endsWith(".test.ts"))
-    .sort()
-    .map((f) => new TestFile(member, join(dir, f)));
-};
+export const testsOf = (member) => [...filesIn(member, join(member.dir, "test"), ".test.ts"), ...filesIn(member, join(member.dir, "check", "rules"), ".test.js")];
+
+/**
+ * Whether `path` is a check rule's test, which runs on node:test under node alone.
+ * @param {string} path
+ * @returns {boolean}
+ */
+export const ruleTest = (path) => path.endsWith(".test.js") && basename(join(path, "..")) === "rules";
 
 /**
  * The members and tests the arguments name: members before `--`, test paths after it; every member when none.
@@ -133,7 +149,7 @@ const runFiles = async (tests, flags, root) => {
       nodeArgs.push(t.path);
       node = await capture("node", nodeArgs, { cwd: t.member.dir, env });
     }
-    if (nodeOnlyRun || nodeOnly(t.path)) return { t, node, native: null };
+    if (nodeOnlyRun || nodeOnly(t.path) || ruleTest(t.path)) return { t, node, native: null };
     const nativeArgs = ["run", "--optimization", opt];
     if (manifest !== null) nativeArgs.push("--ffi", manifest);
     nativeArgs.push(t.path);
