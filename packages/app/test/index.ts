@@ -24,6 +24,8 @@ export interface OpenAppOptions {
   adapters?: readonly AdapterType[];
   /** Whether the manifest's seeds load; `true` when absent. */
   seed?: boolean;
+  /** `false` runs no extension (a public suite); `{ off }` leaves the named ones out. */
+  extensions?: false | { off: readonly string[] };
 }
 
 /** An app opened for a test: its run, the run's stores and controllers, and its restart, quit and stop. */
@@ -94,7 +96,7 @@ class TestHost extends AppHost {
 export const openApp = async (manifest: AppManifest, options: OpenAppOptions = {}): Promise<OpenedApp> => {
   const adapters = options.adapters ?? [];
   const host = new TestHost(options.args, adapters);
-  const run = new AppRun(manifest, host, adapters.length === 0, options.seed !== false);
+  const run = new AppRun(manifest, host, adapters.length === 0, options.seed !== false, options.extensions === false ? false : options.extensions?.off ?? []);
   await run.start();
   return new OpenedApp(run, host);
 };

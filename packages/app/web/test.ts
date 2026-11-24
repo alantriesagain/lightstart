@@ -34,6 +34,8 @@ export interface OpenPageOptions {
   adapters?: readonly AdapterType[];
   /** Whether the manifest's seeds load; `true` when absent. */
   seed?: boolean;
+  /** `false` runs no extension (a public suite); `{ off }` leaves the named ones out. */
+  extensions?: false | { off: readonly string[] };
   /** Where the run's stores open: `new WorkerStores(spawn)` for a `worker: true` app; absent, every store opens on the page. */
   stores?: WebStoresFeature;
 }
@@ -184,7 +186,7 @@ export class OpenedPage {
 export const openPage = async (manifest: AppManifest, options: OpenPageOptions = {}): Promise<OpenedPage> => {
   const adapters = options.adapters ?? [];
   const host = new PageHost(options.path ?? "/", options.args, adapters, options.stores);
-  const run = new AppRun(manifest, host, adapters.length === 0, options.seed !== false);
+  const run = new AppRun(manifest, host, adapters.length === 0, options.seed !== false, options.extensions === false ? false : options.extensions?.off ?? []);
   const root = document.documentElement;
   const previous = { dark: root.classList.contains("dark"), colorScheme: root.style.colorScheme };
   await run.start();

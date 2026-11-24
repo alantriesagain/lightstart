@@ -22,12 +22,15 @@ const thenOf = (value: unknown): Promise<unknown> | null =>
   (typeof value === "object" && value !== null && "then" in value ? value as Promise<unknown> : null);
 
 /** Name and start every controller the manifest carries; answers the handles it started. */
-export const startControllers = async (manifest: AppManifest): Promise<unknown[]> => {
+export const startControllers = (manifest: AppManifest): Promise<unknown[]> => startControllerList(manifest.controllers.map((entry) => entry.controller));
+
+/** Name and start `list`'s controllers in order, then wait for each to be ready; answers them. */
+export const startControllerList = async (list: readonly unknown[]): Promise<unknown[]> => {
   const controllers: unknown[] = [];
   const handles: Record<string, unknown>[] = [];
-  for (const entry of manifest.controllers) {
-    controllers.push(entry.controller);
-    const handle = recordOf(entry.controller);
+  for (const controller of list) {
+    controllers.push(controller);
+    const handle = recordOf(controller);
     if (handle !== null) handles.push(handle);
   }
   nameControllers(handles);

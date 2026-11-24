@@ -20,7 +20,9 @@ import { stripBase, withQuery } from "@lightstart/router/url";
 import type { MatchedRoute, RouteConfig, RouterAdapter, RouterOptions } from "@lightstart/router/contracts.ts";
 import { expandRoutes } from "./routes.ts";
 import type { QueryOptions, Row, WriteOptions } from "@lightstart/light/model/types.ts";
-import { startControllers, stopControllers } from "./controllers.ts";
+import { startControllerList, startControllers, stopControllers } from "./controllers.ts";
+import { activeExtensions, mergeRoutes } from "./extensions.ts";
+import type { AppExtension } from "./extensions.ts";
 import type { App } from "./index.ts";
 import type { AppManifest } from "./manifest.ts";
 import type { AdapterType, StoreHost } from "./stores.ts";
@@ -339,12 +341,18 @@ export class AppRun {
   private overrideTransition: boolean | undefined = undefined;
   private overrideFrom: NavigationSource | undefined = undefined;
   private readonly seed: boolean;
+  /** `false` runs no extension; a list of names leaves those out beside the app's own `off`. */
+  private readonly extensionChoice: false | readonly string[];
+  /** The extensions running now, in start order. */
+  extensions: readonly AppExtension[] = [];
+  private withdrawals: (() => void)[] = [];
 
-  constructor(manifest: AppManifest, host: AppHost, memoryOnly = false, seed = true) {
+  constructor(manifest: AppManifest, host: AppHost, memoryOnly = false, seed = true, extensions: false | readonly string[] = []) {
     this.manifest = manifest;
     this.host = host;
     this.memoryOnly = memoryOnly;
     this.seed = seed;
+    this.extensionChoice = extensions;
   }
 
   get app(): App {
@@ -367,9 +375,25 @@ export class AppRun {
   private async open(): Promise<void> {
     this.store = await this.host.openStores(this.manifest, this.memoryOnly);
     if (this.seed) await this.seedStores();
-    this.controllers = await startControllers(this.manifest);
+    this.extensions = this.chooseExtensions();
+    for (const extension of this.extensions)
+      for (const entry of extension.fills) this.withdrawals.push(entry.fill(extension.name));
+    const own = await startControllers(this.manifest);
+    const added = await startControllerList(this.extensions.flatMap((extension) => [...extension.controllers]));
+    this.controllers = [...own, ...added];
+    for (const extension of this.extensions) if (extension.connected !== null) await extension.connected();
     this.route();
     await this.host.mount(this);
+  }
+
+  /** The manifest's extensions that run: none when the run was asked for none, else all but the app's and the run's `off`. */
+  private chooseExtensions(): readonly AppExtension[] {
+    const all = this.manifest.extensions ?? [];
+    if (this.extensionChoice === false) return [];
+    const off = [...this.app.extensionsOff, ...this.extensionChoice];
+    const { active, unknown } = activeExtensions(all, off);
+    for (const name of unknown) console.warn(`[@lightstart/app] extensions.off names "${name}", which no extension is called`);
+    return active;
   }
 
   /** Add each seed's rows once, into a model whose store is still empty; an error names the model and a bad row's index. */
@@ -437,7 +461,7 @@ export class AppRun {
   }
 
   private route(): void {
-    const routes = this.manifest.routes;
+    const routes = mergeRoutes(this.manifest.routes, this.extensions);
     currentMatch.value = null;
     currentRoute.value = null;
     currentView.value = null;
@@ -507,8 +531,14 @@ export class AppRun {
     currentView.value = null;
     currentParams.value = {};
     currentRoute.value = null;
+    for (let i = this.extensions.length - 1; i >= 0; i--) {
+      const disconnected = this.extensions[i].disconnected;
+      if (disconnected !== null) await disconnected();
+    }
     await stopControllers(this.controllers);
     this.controllers = [];
+    for (const withdraw of this.withdrawals.splice(0)) withdraw();
+    this.extensions = [];
     const store = this.store;
     this.store = null;
     if (store !== null) await store.close();

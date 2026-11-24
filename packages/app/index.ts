@@ -94,6 +94,8 @@ export interface AppConfig {
   root?: string;
   /** The layout tag a top-level route wraps its view in unless the route declares its own `layout`; none when absent. */
   layout?: string;
+  /** Extensions to leave out, by name (`{ off: ["social"] }`); every discovered extension runs when absent. */
+  extensions?: { off?: readonly string[] };
   /** The arguments the app takes; the host fills them from its source (argv, the URL) into `args`. */
   args?: ArgsSchema;
 }
@@ -169,6 +171,8 @@ export class App {
   readonly root: string | undefined;
   /** The default layout tag for top-level routes, when the config names one. */
   readonly layout: string | undefined;
+  /** The extensions `defineApp({ extensions: { off } })` leaves out. */
+  readonly extensionsOff: readonly string[];
   /** The argument schema the config declares; empty when it declares none. */
   readonly argsSchema: ArgsSchema;
   /** The values the host parsed. */
@@ -205,6 +209,7 @@ export class App {
     this.stores = stores;
     this.root = config.root;
     this.layout = config.layout;
+    this.extensionsOff = config.extensions?.off ?? [];
     this.argsSchema = config.args ?? {};
   }
 
@@ -224,6 +229,9 @@ export class App {
 /** The app of the config `src/app.ts` declares. */
 export const defineApp = (config: AppConfig): App => new App(config);
 
+export { defineSlot, Slot, SlotEntry } from "./slots.ts";
+export { defineExtension, AppExtension } from "./extensions.ts";
+export type { ExtensionDefinition } from "./extensions.ts";
 export { pageHead } from "./head.ts";
 export type { PageHead } from "./head.ts";
 export { appBase, appUrl } from "./base.ts";

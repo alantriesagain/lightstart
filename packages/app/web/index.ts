@@ -9,13 +9,15 @@
  * (`web/args.ts`). The routes
  * follow the browser's history, the theme preset is applied as CSS variables,
  * and the root view is mounted in the page, `<app-container>` drawing the view
- * the routes answer. The views were imported by the generated manifest, so
- * every tag exists before the root view is made.
+ * the routes answer and `<app-slot>` drawing the items an extension filled a
+ * slot with. The views were imported by the generated manifest, so every tag
+ * exists before the root view is made.
  */
 
 import View, { configureView } from "@lightstart/light";
 import { flushUpdates } from "@lightstart/light/view/core";
-import { html } from "@lightstart/light/html";
+import { element, html, key } from "@lightstart/light/html";
+import T from "@lightstart/light/types";
 import { effect } from "@lightstart/light/signals";
 import { configureNavigation } from "@lightstart/light/navigation";
 import { listen } from "@lightstart/router/listen";
@@ -36,6 +38,7 @@ import type { OutletPosition } from "../outlet.ts";
 import { absoluteImageOf, alternatesOf, canonicalOf, currentHead, documentTitleOf } from "../head.ts";
 import type { Head } from "../head.ts";
 import { MemoryAdapterType, AdapterType } from "../stores.ts";
+import { Slot } from "../slots.ts";
 import type { WebArgsFeature, WebStoresFeature, WebTransitionFeature, WebTransitionPort, WebUtilitiesFeature } from "./features.ts";
 
 export { currentParams, currentRoute, currentView, href, navigate, url } from "../run.ts";
@@ -174,11 +177,32 @@ class AppContainer extends View {
   }
 }
 
+/** The tag an item names, when it names one as a string. */
+const tagOf = (item: object): string | null => {
+  const tag = Reflect.get(item, "tag");
+  return typeof tag === "string" ? tag : null;
+};
+
+/** Every item a slot holds, each drawn by the tag it names with the slot's context and the item set on it; keyed by the item, so its element stays across a redraw. */
+class AppSlot extends View.props({ slot: T.object({ defaultValue: null, attribute: false }), context: T.any({ attribute: false }) }) {
+
+  render(): unknown {
+    const slot: unknown = this.slot;
+    if (!(slot instanceof Slot)) return html``;
+    const children = slot.items.value.flatMap((item) => {
+      const tag = tagOf(item);
+      return tag === null ? [] : [key(item, element(tag, { ".context": this.context, ".item": item }))];
+    });
+    return html`${children}`;
+  }
+}
+
 let registered = false;
 
 const registerContainer = (): void => {
   if (registered) return;
   View.register("app-container", AppContainer);
+  View.register("app-slot", AppSlot);
   registered = true;
 };
 

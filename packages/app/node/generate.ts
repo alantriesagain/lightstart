@@ -245,11 +245,12 @@ export const routesOf = async (routes: string): Promise<Record<string, unknown> 
   }
 };
 
-const manifestSource = (project: string, app: string, extension: ".ts" | ".js", models: string[], content: string | null, seeds: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[]): string => {
+const manifestSource = (project: string, app: string, extension: ".ts" | ".js", models: string[], content: string | null, seeds: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[], extensions: readonly string[]): string => {
   const lines: string[] = [];
   if (extension === ".ts") lines.push('import type { AppManifest } from "@lightstart/app/manifest.ts";');
   lines.push(`import app from "${specifierFor(project, app)}";`);
   for (const specifier of appImports) lines.push(`import ${JSON.stringify(specifier)};`);
+  extensions.forEach((specifier, index) => lines.push(`import extension${String(index)} from ${JSON.stringify(specifier)};`));
   models.forEach((file, index) => lines.push(`import model${String(index)} from "${specifierFor(project, file)}";`));
   if (content !== null) lines.push(`import content from ${JSON.stringify(content)};`);
   seeds.forEach((file, index) => lines.push(`import seed${String(index)} from "${specifierFor(project, file)}";`));
@@ -264,6 +265,7 @@ const manifestSource = (project: string, app: string, extension: ".ts" | ".js", 
   lines.push(extension === ".ts" ? "const manifest: AppManifest = {" : "const manifest = {");
   lines.push("  app,");
   if (rootFile !== null) lines.push("  rootView,");
+  if (extensions.length > 0) lines.push(`  extensions: [${extensions.map((_specifier, index) => `extension${String(index)}`).join(", ")}],`);
   if (models.length === 0) lines.push("  models: [],");
   else {
     lines.push("  models: [");
@@ -339,6 +341,30 @@ export const packageJsonOf = (require: ReturnType<typeof createRequire>, name: s
     return null;
   }
 };
+
+/** The dependencies whose package.json names a `light.extension` module, sorted by package name. */
+const extensionPackages = (project: string): string[] => {
+  const require = createRequire(join(project, "package.json"));
+  const found: Array<{ name: string; module: string }> = [];
+  for (const name of dependencyNames(project)) {
+    const path = packageJsonOf(require, name);
+    if (path === null) continue;
+    const pkg = readJson(path);
+    if (!isRecord(pkg) || !isRecord(pkg["light"])) continue;
+    const extension = pkg["light"]["extension"];
+    if (typeof extension !== "string") continue;
+    const module = extension.replace(/^\.\//, "");
+    if (module.length === 0) continue;
+    found.push({ name, module });
+  }
+  return found.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)).map((entry) => `${entry.name}/${entry.module}`);
+};
+
+/** The extensions the manifest imports: the dependencies' package modules, then the app's own `src/extensions` files, both sorted. */
+const extensionImports = (project: string, helpers: Pick<GenerationHelpers, "specifierFor">): string[] => [
+  ...extensionPackages(project),
+  ...flatFiles(join(project, "src", "extensions")).map((file) => helpers.specifierFor(project, file)),
+];
 
 interface LocalePackage {
   name: string;
@@ -608,7 +634,8 @@ export const generate = async (projectPath: string, options: GenerateOptions = {
   const content = await writeContent(project, dir, models, extension, helpers);
   const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
   const appImports = [...locales.imports, ...prepared.imports];
-  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, app, extension, models, content.specifier, seeds, controllers, views, routes, rootFile, appImports));
+  const extensions = extensionImports(project, helpers);
+  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, app, extension, models, content.specifier, seeds, controllers, views, routes, rootFile, appImports, extensions));
   const written = await part.write(project, dir, main, helpers);
 
   return {
