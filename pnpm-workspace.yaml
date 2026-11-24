@@ -23,6 +23,7 @@ packages:
   - 'packages/content'
   - 'packages/pwa'
   - 'packages/mobile'
+  - 'packages/cloudflare'
   - 'packages/maps'
   - 'packages/qr'
   - 'packages/camera'

@@ -29,6 +29,7 @@
     "@lightstart/build": "workspace:*",
     "@lightstart/camera": "workspace:*",
     "@lightstart/cli": "workspace:*",
+    "@lightstart/cloudflare": "workspace:*",
     "@lightstart/create": "workspace:*",
     "@lightstart/design": "workspace:*",
     "@lightstart/dev": "workspace:*",

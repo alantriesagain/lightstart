@@ -1,0 +1,45 @@
+{
+  "name": "@lightstart/cloudflare",
+  "version": "0.1.0",
+  "description": "Deploys a light app to Cloudflare Pages: light cf:deploy uploads a build with the wrangler it pins.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/cloudflare"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "cloudflare",
+    "pages",
+    "deploy",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "node/",
+    "cli/",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/cli": "workspace:*",
+    "wrangler": "4.130.0"
+  },
+  "devDependencies": {
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
