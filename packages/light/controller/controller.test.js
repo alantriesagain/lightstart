@@ -256,6 +256,13 @@ describe("@lightstart/light/controller/define.ts", () => {
       assert.throws(() => defineController({ props: {} }), /needs a string/);
     });
 
+    it("should call a function default as a factory and keep a T.function default as the function", () => {
+      const handler = () => "handled";
+      const ctrl = defineController({ name: "factory-defaults", props: { seen: T.object({ defaultValue: () => new Map() }), onPick: T.function({ defaultValue: handler }) } });
+      assert.ok(ctrl.seen instanceof Map);
+      assert.equal(ctrl.onPick, handler);
+    });
+
     it("should throw on a property/member collision and on a $-prefixed name at define time", () => {
       assert.throws(
         () => defineController({ name: "x", props: { bump: 1 }, bump() {} }),

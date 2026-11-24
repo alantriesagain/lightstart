@@ -120,7 +120,7 @@ const createController = (definition: Record<string, unknown>): Record<string, u
 
   const make = (adopt: (instance: Record<string, unknown>) => void, after: Promise<void> | undefined): Record<string, unknown> => {
     const defs = Object.fromEntries(Object.entries(properties)
-      .map(([key, prop]) => [key, { default: prop.defaultValue, pack: prop.pack, unpack: prop.unpack }]));
+      .map(([key, prop]) => [key, { default: prop.$type === "function" ? () => prop.defaultValue : prop.defaultValue, pack: prop.pack, unpack: prop.unpack }]));
     const store: StoreCore = createStore(defs, { name, accessors: false });
 
     const teardowns = new Teardowns();

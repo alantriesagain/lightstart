@@ -147,6 +147,30 @@ describe("light - framework member names", () => {
     );
   });
 
+  it("calls a function default once per element, and keeps a T.function default as the function", async () => {
+    const tag = getUniqueTag("factory-default");
+    const handler = () => "handled";
+    View.define(tag, {
+      props: {
+        seen: T.object({ defaultValue: () => new Map() }),
+        onPick: T.function({ defaultValue: handler }),
+      },
+      render() {
+        return null;
+      },
+    });
+    const a = document.createElement(tag);
+    const b = document.createElement(tag);
+    document.body.append(a, b);
+    await a.$requestUpdate();
+    await b.$requestUpdate();
+    assert.ok(a.seen instanceof Map && b.seen instanceof Map);
+    assert.notEqual(a.seen, b.seen);
+    assert.equal(a.onPick, handler);
+    a.remove();
+    b.remove();
+  });
+
   it("frees the old engine names as properties: state, emit, own, ready, config, update, get, keys", async () => {
     const tag = getUniqueTag("freed-names");
     View.define(tag, {

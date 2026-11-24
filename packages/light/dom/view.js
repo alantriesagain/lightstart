@@ -8,7 +8,7 @@
  * is the host-neutral ViewCore in view/core.js, whose methods this class
  * carries on its own prototype.
  */
-import { cloneDefault, isReactive, normalizeProperties, parse } from "../types/index.js";
+import { cloneDefault, isReactive, normalizeProperties, parse, startOf } from "../types/index.js";
 import { createStore } from "../signals/store.ts";
 import { assertDefinitionKeys, composeDefinition, isThenable, LIFECYCLE_HOOKS } from "../view/definition.js";
 import { UNSLOTTED_TAG, hasRootPart, isMoving, projectSlots, render, topLevelPair, unprojectUnits } from "../html/index.js";
@@ -25,10 +25,11 @@ const offBrowser = /** @type {Record<symbol, unknown>} */ (/** @type {unknown} *
 const elements = /** @type {CustomElementRegistry} */ (globalThis.customElements ?? offBrowser.registry);
 
 /**
- * Store field specs from a properties schema. Defaults are wrapped in a
- * factory returning the declared value by reference; the store must not
- * structured-clone or invoke a `defaultValue`, matching how views have always
- * shared defaults.
+ * Store field specs from a properties schema. Each default is wrapped in a
+ * factory answering the field's start: a function `defaultValue` is called per
+ * instance (not on a `T.function()` field), as a controller's and a
+ * `reactive: false` field's are, and an object is shared by reference, never
+ * structured-cloned, matching how views have always shared defaults.
  *
  * @param {PropertiesSchema} properties
  */
@@ -36,7 +37,7 @@ const storeDefs = (properties) =>
   Object.fromEntries(
     Object.entries(properties ?? {})
       .filter(([, prop]) => isReactive(prop))
-      .map(([key, prop]) => [key, { default: () => prop.defaultValue }]),
+      .map(([key, prop]) => [key, { default: () => startOf(prop) }]),
   );
 
 /** @import { TypeDefinition } from "../types/types.ts" */
