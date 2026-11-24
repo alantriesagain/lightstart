@@ -58,20 +58,24 @@ export default defineExtension("test", {
     await generate(ctx.projectDir);
     const files = args.files ?? [];
     if (!isApp(ctx.projectDir) || files.length === 0) return;
-    api.run(async (input) => {
-      const { node, browser } = partitionTestFiles(input.files);
-      let passed = true;
-      if (node.length > 0) {
-        const nodePassed = await runUnderNode(node, input.projectDir);
-        report("node", node.length, nodePassed);
-        passed = passed && nodePassed;
-      }
-      if (browser.length > 0) {
-        const browserPassed = await runInChromium(browser, input, await baseOf(input.projectDir));
-        report("browser", browser.length, browserPassed);
-        passed = passed && browserPassed;
-      }
-      return passed;
+    api.group({
+      name: "app",
+      description: "An app's named files: browser tests in Chromium, the rest under node",
+      async run(input) {
+        const { node, browser } = partitionTestFiles(input.files);
+        let passed = true;
+        if (node.length > 0) {
+          const nodePassed = await runUnderNode(node, input.projectDir);
+          report("node", node.length, nodePassed);
+          passed = passed && nodePassed;
+        }
+        if (browser.length > 0) {
+          const browserPassed = await runInChromium(browser, input, await baseOf(input.projectDir));
+          report("browser", browser.length, browserPassed);
+          passed = passed && browserPassed;
+        }
+        return passed;
+      },
     });
   },
 });
