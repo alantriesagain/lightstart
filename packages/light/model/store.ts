@@ -180,7 +180,8 @@ export function createStore({ models, databases = {}, defaultAdapter = "indexedd
     },
 
     async count(model, given): Promise<number> {
-      return adapterFor(model).count(model, queryOf(given).where);
+      const query = queryOf(given);
+      return query.locale === undefined ? adapterFor(model).count(model, query.where) : adapterFor(model).count(model, query.where, { locale: query.locale });
     },
 
     async exists(model, where): Promise<boolean> {

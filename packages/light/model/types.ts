@@ -310,7 +310,7 @@ export interface StorageAdapter {
   insert(model: string, row: Row, opts?: WriteOptions): Promise<Row>;
   update(model: string, row: Row, opts?: WriteOptions): Promise<Row>;
   delete(model: string, id: string | number, opts?: WriteOptions): Promise<unknown>;
-  count(model: string, where?: WhereClause): Promise<number>;
+  count(model: string, where?: WhereClause, opts?: Pick<QueryOptions, "locale">): Promise<number>;
   close(): Promise<unknown>;
   insertMany?(model: string, rows: Row[], opts?: WriteOptions): Promise<Row[]>;
   /** Drop whatever the adapter caches for `model`, so the next read fetches again. */

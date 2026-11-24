@@ -295,6 +295,15 @@ describe("store: reads", () => {
     assert.deepEqual(await store.facets("account", ["kind"]), { kind: { yes: 1 } });
     assert.deepEqual(await store.facets("note", ["title"]), {});
   });
+
+  it("count hands the adapter the query's locale, and nothing when it has none", async () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    const { store } = setup({ extra: { async count(model, where, opts) { seen.push(opts); return 0; } } });
+    await store.count("account", { where: { kind: "cash" }, locale: "pt" });
+    await store.count("account", { where: { kind: "cash" } });
+    assert.deepEqual(seen, [{ locale: "pt" }, undefined]);
+  });
 });
 
 describe("store: import, export, close", () => {
