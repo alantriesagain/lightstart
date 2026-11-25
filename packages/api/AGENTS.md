@@ -12,6 +12,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `server/crud.ts` | `crudApp`: the `/api/<model>` routes on a `@lightstart/server` `App` |
 | `server/endpoint.ts` | `defineEndpoint`, `Endpoint` and its request, access and method shapes |
 | `server/app.ts` | `serverApp`: the endpoints first, then `crudApp` |
+| `server/contribution.ts` | `defineServerContribution`, `ServerContribution` |
+| `node/contributions.ts` | `contributionEntries`, `contributedModels`: the dependencies declaring `light.server` |
 | `server/index.ts` | The server entry |
 | `page/adapter.ts` | `ApiAdapterType`, the `api` store over fetch, and `configureApi` |
 | `node/migrate.ts` | `planMigration` (pure), `existingTables`, `existingIndexes`, `migrateLocal` |
@@ -32,6 +34,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - `.light/server.ts` imports the server models and `src/endpoints` files sorted, skips tests and `.d.ts`, writes only when its content changes, and is always TypeScript. `light serve` builds it once at startup, so a model or endpoint change needs a restart.
 - TypeScript with erasable syntax; no `any`. Comments are a JSDoc module header and JSDoc on exports. Tests are plain scripts on `@lightstart/test/assert.ts`.
 
+- A server contribution's `models` stay static (no environment), since migrations read them; `serverModels` merges them before the app's own, the app's winning a name. The generated `createServer` takes the first contributed `caller`, then the one passed, then nobody.
+
 ## Contracts others depend on
 
 | Contract | Who relies on it |
@@ -41,6 +45,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `defineEndpoint`, `serverApp` | an app's endpoints and `.light/server.ts` |
 | `.light/server.ts` and its `createServer` | `light serve` and the deploy |
 | `adapter: "api"`, `configureApi({ token, fetch, prefix })` | an app's page, and auth's token |
+| `light.server` in a package's `package.json`, `defineServerContribution` | a package adding tables, endpoints or the caller (`@lightstart/auth`) |
 | `planMigration` | `light db:migrate` and a remote migration |
 
 ## Gates

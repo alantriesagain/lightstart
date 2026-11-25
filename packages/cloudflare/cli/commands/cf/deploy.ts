@@ -24,6 +24,7 @@ export default defineCommand({
       return 1;
     }
     ctx.log.log(`${plan.production ? "Production" : "Preview"} deploy of ${plan.buildDir} to the Pages project ${plan.project}`);
+    ctx.log.log(plan.server ? "The app's server is bundled as _worker.js" : "No app server; the build is uploaded as is");
     if (args["dry-run"] === true) {
       for (const step of wranglerSteps(plan)) ctx.log.log(`wrangler ${step.join(" ")}`);
       return 0;

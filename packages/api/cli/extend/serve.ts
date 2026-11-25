@@ -7,7 +7,7 @@
  * server model or an endpoint and restart `light serve`.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { defineExtension } from "@lightstart/cli";
@@ -41,6 +41,25 @@ const projectHasApi = (projectDir: string): boolean => {
   return false;
 };
 
+const DEV_SECRET = "light-serve-development-secret-not-for-deploys";
+
+/** The project's `.env` as the server's environment in development: `KEY=VALUE` lines, quotes stripped, comments skipped. */
+const localEnv = (project: string): Record<string, unknown> => {
+  const file = join(project, ".env");
+  const env: Record<string, unknown> = {};
+  if (!existsSync(file)) return env;
+  for (const raw of readFileSync(file, "utf8").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (line === "" || line.startsWith("#")) continue;
+    const at = line.indexOf("=");
+    if (at <= 0) continue;
+    let value = line.slice(at + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) value = value.slice(1, -1);
+    env[line.slice(0, at).replace(/^export\s+/, "").trim()] = value;
+  }
+  return env;
+};
+
 /** A development-only caller: an `x-light-user` id, with `x-light-admin: 1` making it an admin. */
 const devCaller = (request: Request): Caller => {
   const id = request.headers.get("x-light-user");
@@ -59,7 +78,12 @@ export default defineExtension("serve", {
       const entry = await import(pathToFileURL(join(ctx.projectDir, ".light", "server.ts")).href);
       const createServer = (entry as { createServer?: unknown }).createServer;
       if (typeof createServer !== "function") throw new Error(".light/server.ts exports no createServer");
-      const server = (createServer as (options: { db: unknown; caller: (request: Request) => Caller }) => App)({ db: d1Of(Database.open(file)), caller: devCaller });
+      const env = localEnv(ctx.projectDir);
+      if (env["JWT_SECRET"] === undefined) {
+        env["JWT_SECRET"] = DEV_SECRET;
+        ctx.log.log("No JWT_SECRET in .env: sessions are signed with a development secret, never one to deploy with");
+      }
+      const server = (createServer as (options: { db: unknown; env: Record<string, unknown>; caller: (request: Request) => Caller }) => App)({ db: d1Of(Database.open(file)), env, caller: devCaller });
       const mount = new App()
         .all("/api", async (c) => server.dispatch(c))
         .all("/api/*", async (c) => server.dispatch(c));

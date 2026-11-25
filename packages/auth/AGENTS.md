@@ -11,11 +11,12 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `server/models.ts` | `authModels`: `users` and `auth_codes`, `$permissions: none` |
 | `server/routes.ts` | `authEndpoints`: the `/api/auth/*` endpoints, `MAX_TRIES`, `RESEND_MS` |
 | `server/caller.ts` | `callerFromRequest(env, db?)` |
+| `server/contribute.ts` | The server contribution `light.server` names: `authModels`, `authEndpoints` with `mailerFrom(env)`, `callerFromRequest(env, db)` |
 | `server/mailer.ts` | `resendMailer`, `consoleMailer`, `mailerFrom` |
 | `page/controller.ts` | The `auth` controller |
 | `page/session.ts` | The token store and `configureAuth` |
 | `page/next.ts` | `safeNext` |
-| `test/` | `server.test.ts` (over `serverApp` and `d1Of`), `page.test.ts` (over a fake fetch) |
+| `test/` | `server.test.ts` (over `serverApp` and `d1Of`), `page.test.ts` (over a fake fetch), `contribute.test.ts` (a project declaring the package: its tables, entry and routes) |
 
 ## Rules the sources keep
 

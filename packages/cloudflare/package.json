@@ -34,10 +34,14 @@
     "./*": "./*"
   },
   "dependencies": {
+    "@lightstart/api": "workspace:*",
     "@lightstart/cli": "workspace:*",
+    "esbuild": "^0.28.2",
     "wrangler": "4.130.0"
   },
   "devDependencies": {
+    "@lightstart/light": "workspace:*",
+    "@lightstart/sqlite": "workspace:*",
     "@lightstart/test": "workspace:*",
     "@types/node": "^26.6.5",
     "typescript": "^6.0.3"
