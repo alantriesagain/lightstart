@@ -300,13 +300,25 @@ importers:
 
   packages/cloudflare:
     dependencies:
+      '@lightstart/api':
+        specifier: workspace:*
+        version: link:../api
       '@lightstart/cli':
         specifier: workspace:*
         version: link:../cli
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       wrangler:
         specifier: 4.130.0
         version: 4.130.0
     devDependencies:
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/sqlite':
+        specifier: workspace:*
+        version: link:../sqlite
       '@lightstart/test':
         specifier: workspace:*
         version: link:../test

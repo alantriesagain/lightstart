@@ -4,18 +4,12 @@ Sign-in by a code mailed to an address, and a JWT session. No passwords. The ser
 
 ## The server
 
-```js
-// the app's server (src/server.js, or wherever createServer is called)
-import { authEndpoints, authModels, callerFromRequest, mailerFrom } from "@lightstart/auth/server";
+Declaring the package is the whole setup. Its `package.json` names a server contribution (`light.server`), so every app on `@lightstart/api` that depends on it gets three things with nothing to wire:
+- the `users` and `auth_codes` tables, which `light db:migrate` creates;
+- the routes below;
+- the session as the caller for its endpoints and `$permissions`.
 
-const server = createServer({
-  models: { ...authModels, ...models },
-  endpoints: [...authEndpoints({ mailer: mailerFrom(env, console.log) }), ...endpoints],
-  db: () => env.DB,
-  caller: callerFromRequest(env, () => env.DB),
-  env,
-});
-```
+Locally, `light serve` mails codes to its console. Deployed, they go through Resend when `RESEND_API_KEY` is set.
 
 | Route | Body | Answers |
 |---|---|---|

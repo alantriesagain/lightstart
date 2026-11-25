@@ -2,15 +2,18 @@
  * @file The deploy, apart from the command: the project's Pages project name
  * (`src/cloudflare` or the package's name), the credentials (the environment
  * first, then the project's `.env`), the build to upload (`.deployed/current`
- * or a named build), and the wrangler invocations that create the project and
- * upload the build. `planDeploy` only reads; `runDeploy` runs the plan.
+ * or a named build), whether the app has a server to bundle, and the wrangler
+ * invocations that create the project and upload the build or its staged
+ * copy. `planDeploy` only reads; `runDeploy` runs the plan.
  */
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { createRequire } from "node:module";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
+
+import { hasServer, stageDeploy } from "./worker.ts";
 
 /** What one deploy will do. */
 export interface DeployPlan {
@@ -22,6 +25,8 @@ export interface DeployPlan {
   branch: string;
   /** Whether it is the production deploy. */
   production: boolean;
+  /** Whether the app has a server (`@lightstart/api`) bundled as `_worker.js`. */
+  server: boolean;
   /** The environment wrangler runs with, the credentials under wrangler's names. */
   env: Record<string, string>;
 }
@@ -101,13 +106,19 @@ export const planDeploy = async (project: string, options: DeployOptions = {}): 
   env["CLOUDFLARE_ACCOUNT_ID"] = accountId ?? "";
   env["CLOUDFLARE_API_TOKEN"] = apiToken ?? "";
   const production = options.production === true;
-  return { project: await projectNameOf(project), buildDir: buildDirOf(project, options.build), branch: production ? "main" : "preview", production, env };
+  return { project: await projectNameOf(project), buildDir: buildDirOf(project, options.build), branch: production ? "main" : "preview", production, server: hasServer(project), env };
 };
 
-/** The wrangler arguments that create the Pages project and upload the build. */
+/** The folder a plan uploads: the build itself, or its staged copy when the app has a server. */
+export const uploadDirOf = (plan: DeployPlan): string => {
+  if (!plan.server) return plan.buildDir;
+  return join(dirname(plan.buildDir), "..", "staged", basename(plan.buildDir));
+};
+
+/** The wrangler arguments that create the Pages project and upload the build (or its staged copy). */
 export const wranglerSteps = (plan: DeployPlan): string[][] => [
   ["pages", "project", "create", plan.project, "--production-branch", "main"],
-  ["pages", "deploy", plan.buildDir, "--project-name", plan.project, "--branch", plan.branch, "--commit-dirty=true"],
+  ["pages", "deploy", uploadDirOf(plan), "--project-name", plan.project, "--branch", plan.branch, "--commit-dirty=true"],
 ];
 
 /** The wrangler this package pins: its JavaScript entry, run with node. */
@@ -116,8 +127,12 @@ export const wranglerEntry = (): string => {
   return join(require.resolve("wrangler/package.json"), "..", "bin", "wrangler.js");
 };
 
-/** Run a plan: create the project (an existing one is fine), then upload; answers wrangler's exit code. */
-export const runDeploy = (plan: DeployPlan, cwd: string, log: (line: string) => void): number => {
+/** Run a plan: stage the app's server when it has one, create the project (an existing one is fine), then upload; answers wrangler's exit code. */
+export const runDeploy = async (plan: DeployPlan, cwd: string, log: (line: string) => void): Promise<number> => {
+  if (plan.server) {
+    const staged = await stageDeploy(plan.buildDir, cwd);
+    log(`Bundled the app's server into ${staged}/_worker.js`);
+  }
   const [create, upload] = wranglerSteps(plan);
   const entry = wranglerEntry();
   const made = spawnSync(process.execPath, [entry, ...(create ?? [])], { cwd, env: plan.env, encoding: "utf8" });

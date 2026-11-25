@@ -79,15 +79,25 @@ The handler is handed `{ request, params, query, body, caller, db, env }`: the F
 
 `serverApp({ models, endpoints, db, caller, env = {}, prefix = "/api", maxLimit = 100 })` from `@lightstart/api/server` answers one `@lightstart/server` `App`: every endpoint first, then `crudApp` for the models. An endpoint's method and path win over a CRUD route; two endpoints with the same method and path are refused, naming the pair.
 
-`@lightstart/api` writes the app's `.light/server.ts` for `light serve` and the deploy. It imports each server model and each `src/endpoints/*.{ts,js}` default export, and exports:
+`@lightstart/api` writes the app's `.light/server.ts` for `light serve` and the deploy. It imports each dependency's server contribution, each server model and each `src/endpoints/*.{ts,js}` default export. It exports `models`, `endpoints` and `createServer({ db, env, caller? })`, which builds `serverApp` from the contributions and the app's own pieces.
 
-```ts
-export const models = { todo: todoSchema };
-export const endpoints = [accept];
-export const createServer = (options) => serverApp({ models, endpoints, ...options });
-```
+The entry is always TypeScript, and is written only when its content changes. With the package declared, `light serve`:
+- writes the entry;
+- migrates `.data/api.db` to the server models, contributed tables included;
+- reads the project's `.env` as the server's environment, signing with a development-only `JWT_SECRET` when it has none and saying so;
+- answers `/api/*` from `createServer` over `d1Of`.
 
-The entry is always TypeScript, and is written only when its content changes. With the package declared, `light serve` writes the entry, migrates `.data/api.db` to the server models, and answers `/api/*` from `createServer` over `d1Of`. Until auth lands, the caller comes from the development-only headers `x-light-user: <id>` and `x-light-admin: 1`. The entry is built when the server starts, so restart `light serve` after changing a server model or an endpoint.
+Without a contributed caller, the caller comes from the development-only headers `x-light-user: <id>` and `x-light-admin: 1`. The entry is built when the server starts, so restart `light serve` after changing a server model or an endpoint.
+
+## A package's part of the server
+
+A package adds to every app's server that declares it by naming a module in its `package.json`, `"light": { "server": "./server/contribute.ts" }`. That module default-exports `defineServerContribution({ models, endpoints, caller })`:
+
+- `models` are server models by table name. They're static, so `light db:migrate` (local and `--remote`) creates their tables, and the app's own model of the same name wins.
+- `endpoints(env)` answers endpoints made from the server's environment, registered before the app's.
+- `caller(env, db)`, the first one any contribution brings, answers who makes each request, for every endpoint and `$permissions` check.
+
+Contributions merge in package-name order. `@lightstart/auth` is one: its `users` and `auth_codes` tables, `/api/auth/*`, and the session as the caller, with nothing for the app to wire.
 
 ## The page
 

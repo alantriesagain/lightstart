@@ -1,14 +1,18 @@
 /**
  * @file Write an app's `.light/server.ts`, the one entry `light serve` and the
- * deploy share. It imports each server model's module and each
- * `src/endpoints/*.{ts,js}` default export, and exports `models`, `endpoints`
- * and `createServer(options)`, which calls `serverApp` with them. The file is
+ * deploy share. It imports each dependency's server contribution, each
+ * server model's module and each `src/endpoints/*.{ts,js}` default export,
+ * and exports `models`, `endpoints` and `createServer({ db, env, caller? })`,
+ * which merges the contributions (their models and endpoints first, the app's
+ * own winning a model name; the first contributed caller answering for the
+ * app, else the one given, else nobody) and calls `serverApp`. The file is
  * written only when its content changes, and the answer says whether it did.
  */
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 
+import { contributionEntries, type ContributionEntry } from "./contributions.ts";
 import { serverModelEntries } from "./models.ts";
 
 const isSource = (name: string): boolean => (name.endsWith(".ts") || name.endsWith(".js")) && !name.endsWith(".d.ts") && !name.includes(".test.");
@@ -25,7 +29,7 @@ export const endpointFiles = (project: string): string[] => {
 
 const specifierFor = (from: string, to: string): string => relative(from, to).split(sep).join("/");
 
-const sourceOf = (project: string, models: readonly { name: string; file: string }[], endpoints: readonly string[]): string => {
+const sourceOf = (project: string, models: readonly { name: string; file: string }[], endpoints: readonly string[], contributions: readonly ContributionEntry[]): string => {
   const dir = join(project, ".light");
   const lines: string[] = [];
   lines.push("/**");
@@ -33,8 +37,9 @@ const sourceOf = (project: string, models: readonly { name: string; file: string
   lines.push(" */");
   lines.push("");
   lines.push('import { serverApp } from "@lightstart/api/server";');
-  lines.push('import type { Endpoint, ServerOptions } from "@lightstart/api/server";');
+  lines.push('import type { Caller, DatabaseSource, Endpoint, ServerContribution } from "@lightstart/api/server";');
   lines.push('import type { ModelSchema } from "@lightstart/light/model/types.ts";');
+  contributions.forEach((entry, index) => lines.push(`import contribution${String(index)} from ${JSON.stringify(entry.specifier)};`));
   models.forEach((model, index) => lines.push(`import model${String(index)} from ${JSON.stringify(specifierFor(dir, model.file))};`));
   endpoints.forEach((file, index) => lines.push(`import endpoint${String(index)} from ${JSON.stringify(specifierFor(dir, file))};`));
   lines.push("");
@@ -55,7 +60,31 @@ const sourceOf = (project: string, models: readonly { name: string; file: string
   }
   lines.push(endpoints.length === 0 ? "export const endpoints: Endpoint[] = [];" : `export const endpoints: Endpoint[] = [${endpoints.map((_file, index) => `endpoint${String(index)}`).join(", ")}];`);
   lines.push("");
-  lines.push('export const createServer = (options: Omit<ServerOptions, "models" | "endpoints">) => serverApp({ models, endpoints, ...options });');
+  lines.push(`const contributions: ServerContribution[] = [${contributions.map((_entry, index) => `contribution${String(index)}`).join(", ")}];`);
+  lines.push("");
+  lines.push("/** What `createServer` takes: the database, the environment, and the caller to use when no contribution brings one. */");
+  lines.push("export interface CreateServerOptions {");
+  lines.push("  db: DatabaseSource;");
+  lines.push("  env?: Record<string, unknown>;");
+  lines.push("  caller?: (request: Request) => Caller | Promise<Caller>;");
+  lines.push("}");
+  lines.push("");
+  lines.push("export const createServer = (options: CreateServerOptions) => {");
+  lines.push("  const env = options.env ?? {};");
+  lines.push("  const merged: Record<string, ModelSchema> = {};");
+  lines.push("  const added: Endpoint[] = [];");
+  lines.push("  let caller = options.caller ?? ((): Caller => null);");
+  lines.push("  let contributed = false;");
+  lines.push("  for (const contribution of contributions) {");
+  lines.push("    Object.assign(merged, contribution.models ?? {});");
+  lines.push("    if (contribution.endpoints !== undefined) added.push(...contribution.endpoints(env));");
+  lines.push("    if (!contributed && contribution.caller !== undefined) {");
+  lines.push("      caller = contribution.caller(env, options.db);");
+  lines.push("      contributed = true;");
+  lines.push("    }");
+  lines.push("  }");
+  lines.push("  return serverApp({ models: { ...merged, ...models }, endpoints: [...added, ...endpoints], db: options.db, caller, env });");
+  lines.push("};");
   lines.push("");
   return lines.join("\n");
 };
@@ -66,7 +95,7 @@ export const writeServerEntry = async (project: string): Promise<boolean> => {
   const entry = join(dir, "server.ts");
   const models = await serverModelEntries(project);
   const endpoints = endpointFiles(project);
-  const content = sourceOf(project, models, endpoints);
+  const content = sourceOf(project, models, endpoints, contributionEntries(project));
   const before = existsSync(entry) ? readFileSync(entry, "utf8") : null;
   if (before === content) return false;
   mkdirSync(dirname(entry), { recursive: true });

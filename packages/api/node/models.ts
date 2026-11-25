@@ -12,6 +12,7 @@ import { pathToFileURL } from "node:url";
 import { appOf } from "@lightstart/app/node/generate.ts";
 
 import type { ModelSchema } from "@lightstart/light/model/types.ts";
+import { contributedModels } from "./contributions.ts";
 
 /** One server model: its name, the file it lives in, and its schema. */
 export interface ServerModelEntry {
@@ -80,9 +81,9 @@ export const serverModelEntries = async (project: string): Promise<ServerModelEn
   return entries;
 };
 
-/** The server models of the project, by table name. */
+/** The server models of the project, by table name: what its dependencies contribute, then its own, its own winning a name. */
 export const serverModels = async (project: string): Promise<Record<string, ModelSchema>> => {
-  const models: Record<string, ModelSchema> = {};
+  const models: Record<string, ModelSchema> = await contributedModels(project);
   for (const entry of await serverModelEntries(project)) models[entry.name] = entry.schema;
   return models;
 };
