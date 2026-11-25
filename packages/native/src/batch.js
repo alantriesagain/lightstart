@@ -86,8 +86,8 @@ export const batchesOf = (tests, size, manifestOf) => {
 };
 
 /**
- * The program that runs `files` one after another: arm, import the test, wait for its `done()`,
- * then put back the environment the program started with.
+ * The program that runs `files` one after another: a marker line, arm, import the test, wait for
+ * its `done()`, then put back the environment the program started with; a last marker at the end.
  * @param {string} assert the assert module's real path
  * @param {string[]} files the tests' absolute paths
  * @returns {string}
@@ -113,9 +113,65 @@ export const batchProgram = (assert, files) => {
   ];
   files.forEach((file, i) => {
     const name = "finished" + String(i);
-    lines.push("", "const " + name + " = arm();", "await import(" + JSON.stringify(file) + ");", "await " + name + ";", "restore();");
+    lines.push("", "console.log(" + JSON.stringify(MARK + String(i)) + ");", "const " + name + " = arm();", "await import(" + JSON.stringify(file) + ");", "await " + name + ";", "restore();");
   });
+  lines.push("", "console.log(" + JSON.stringify(MARK + "end") + ");");
   return lines.join("\n") + "\n";
+};
+
+/** The line a batch program prints before each test (its index) and after the last ("end"). */
+export const MARK = "@@ light test, file ";
+
+/**
+ * A batch's output by test: each marker's index to what the program printed until the next marker.
+ * @param {string} out
+ * @returns {Map<string, string>}
+ */
+const sectionsOf = (out) => {
+  /** @type {Map<string, string>} */
+  const sections = new Map();
+  /** @type {string | null} */
+  let key = null;
+  /** @type {string[]} */
+  let lines = [];
+  for (const line of out.split("\n"))
+    if (line.startsWith(MARK)) {
+      if (key !== null) sections.set(key, lines.join("\n"));
+      key = line.slice(MARK.length);
+      lines = [];
+    } else if (key !== null) lines.push(line);
+  if (key !== null) sections.set(key, lines.join("\n"));
+  return sections;
+};
+
+/**
+ * For each of a failed batch's `count` tests, whether it passed there all the same: the marker
+ * after it printed (its `done()` came), its own output holds a PASS tally and no FAIL line, and
+ * the native run printed the same for it. The rest run again alone. `native` is null for a batch
+ * run under node alone; `withNative` says whether a native run was expected.
+ * @param {number} count
+ * @param {string} node
+ * @param {string | null} native
+ * @param {boolean} withNative
+ * @returns {boolean[]}
+ */
+export const passedInBatch = (count, node, native, withNative) => {
+  const byNode = sectionsOf(node);
+  const byNative = native === null ? null : sectionsOf(native);
+  /**
+   * @param {Map<string, string>} sections
+   * @param {number} i
+   */
+  const clean = (sections, i) => {
+    const own = sections.get(String(i));
+    return own !== undefined && sections.has(i + 1 < count ? String(i + 1) : "end") && /^PASS \d+\/\d+$/m.test(own) && !/^FAIL /m.test(own);
+  };
+  /** @type {boolean[]} */
+  const out = [];
+  for (let i = 0; i < count; i++)
+    if (withNative && byNative === null) out.push(false);
+    else out.push(clean(byNode, i) && (byNative === null || (clean(byNative, i) && byNative.get(String(i)) === byNode.get(String(i)))));
+  return out;
 };
 
 /**

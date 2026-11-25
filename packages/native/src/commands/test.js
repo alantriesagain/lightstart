@@ -12,11 +12,12 @@
  * the ones before it are in; a run past $TEST_TIMEOUT milliseconds (15 minutes by default) is killed
  * and fails.
  * Tests that can share a program run $BATCH to one (default 8, `src/batch.js`): one native build
- * for the batch, the outputs compared as a file's are, the batch's files run alone when it fails.
+ * for the batch, the outputs compared as a file's are, the tests that did not pass in a failed batch
+ * run again alone.
  */
 import { existsSync, readdirSync } from "node:fs";
 import { basename, join, relative } from "node:path";
-import { assertFor, batchesOf, writeBatch } from "../batch.js";
+import { assertFor, batchesOf, passedInBatch, writeBatch } from "../batch.js";
 import { ffiHeader, nativeOnly, nodeOnly, nodePreload, resolveFfi } from "../ffi.js";
 import { prepare, prepareProject } from "../prepare.js";
 import { Run, capture, pool } from "../run.js";
@@ -156,8 +157,8 @@ const failedRuns = (node, native) => (node !== null && node.code !== 0) || (nati
 
 /**
  * `tests` run under node and natively from their members' folders, a batch of them to a program
- * ($BATCH or --batch, default 8; 1 runs each alone). A batch that fails runs again file by file, so
- * a failure is reported as it would be alone. A run past --timeout or $TEST_TIMEOUT milliseconds
+ * ($BATCH or --batch, default 8; 1 runs each alone). In a batch that fails, the tests that did not
+ * pass in it run again alone, so a failure is reported as it would be alone. A run past --timeout or $TEST_TIMEOUT milliseconds
  * (900000 by default, 0 for none) is killed with what it started and fails. Each result prints, in
  * file order, once the ones before it are in.
  * @param {TestFile[]} tests
@@ -251,6 +252,7 @@ const runFiles = async (tests, flags, root) => {
     }
   };
   const batches = batchesOf(runnable, size, manifestOf);
+  let failedBatches = 0;
   let again = 0;
   await pool(batches, jobs, async (b) => {
     /** @type {Outcome[]} */
@@ -260,17 +262,30 @@ const runFiles = async (tests, flags, root) => {
       const member = b.tests[0].member;
       const program = writeBatch(b, /** @type {string} */ (assertFor(member.dir)));
       const { node, native } = await runPath(program, member, b.manifest, true, !nodeOnlyRun);
-      if (!failedRuns(node, native)) done = b.tests.map((t) => new Outcome(t, new Run(0, ""), nodeOnlyRun ? null : new Run(0, "")));
+      const passed = new Outcome(b.tests[0], new Run(0, ""), nodeOnlyRun ? null : new Run(0, ""));
+      if (!failedRuns(node, native)) done = b.tests.map((t) => new Outcome(t, passed.node, passed.native));
       else {
-        again++;
-        for (const t of b.tests) done.push(await runAlone(t, b.manifest));
+        failedBatches++;
+        const clean = passedInBatch(b.tests.length, node === null ? "" : node.out, native === null ? null : native.out, !nodeOnlyRun);
+        for (let i = 0; i < b.tests.length; i++)
+          if (clean[i]) done.push(new Outcome(b.tests[i], passed.node, passed.native));
+          else {
+            again++;
+            done.push(await runAlone(b.tests[i], b.manifest));
+          }
       }
     }
     for (const o of done) byTest.set(o.t, o);
     flush();
   });
   flush();
-  const programs = batches.length < runnable.length ? ", " + String(batches.length) + (batches.length === 1 ? " program" : " programs") + (again > 0 ? " (" + String(again) + (again === 1 ? " batch" : " batches") + " run again file by file)" : "") : "";
+  /**
+   * @param {number} n
+   * @param {string} one
+   * @param {string} many
+   */
+  const plural = (n, one, many) => String(n) + " " + (n === 1 ? one : many);
+  const programs = batches.length < runnable.length ? ", " + plural(batches.length, "program", "programs") + (failedBatches > 0 ? " (" + plural(again, "test", "tests") + " run again alone, from " + plural(failedBatches, "batch", "batches") + ")" : "") : "";
   console.log(String(runnable.length) + " tests in " + String(Math.round((Date.now() - start) / 1000)) + " s, " + String(jobs) + " at a time, " + (nodeOnlyRun ? "node only" : opt + " builds") + programs);
   return status;
 };

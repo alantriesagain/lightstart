@@ -10,7 +10,7 @@ import { cpSync, mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync, write
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
-import { assertFor, batchProgram, batchable, batchesOf } from "../src/batch.js";
+import { MARK, assertFor, batchProgram, batchable, batchesOf, passedInBatch } from "../src/batch.js";
 import { TestFile } from "../src/commands/test.js";
 import { findProject } from "../src/project.js";
 
@@ -95,6 +95,18 @@ test("batchProgram arms, imports and waits for each file in turn, then puts the 
   assert.ok(a > 0 && b > a, text);
 });
 
+test("passedInBatch: a test passed in a failed batch when its done() came, its own output passed, and native printed the same", () => {
+  const m = (i) => MARK + String(i) + "\n";
+  const node = m(0) + "ok a\nPASS 1/1\n" + m(1) + "FAIL b\nFAIL 0/1\n" + m(2) + "ok c\nPASS 1/1\n" + m(3) + "ok d\n";
+  assert.deepEqual(passedInBatch(4, node, null, false), [true, false, true, false]);
+  // Natively c printed something else, and d never reached its done() in either run.
+  const native = m(0) + "ok a\nPASS 1/1\n" + m(1) + "FAIL b\nFAIL 0/1\n" + m(2) + "ok c, natively\nPASS 1/1\n" + m(3) + "ok d\n";
+  assert.deepEqual(passedInBatch(4, node, native, true), [true, false, false, false]);
+  // The last test needs the end marker; a native run that was expected and did not happen passes nothing.
+  assert.deepEqual(passedInBatch(1, m(0) + "ok a\nPASS 1/1\n" + m("end"), null, false), [true]);
+  assert.deepEqual(passedInBatch(1, m(0) + "ok a\nPASS 1/1\n" + m("end"), null, true), [false]);
+});
+
 test("light test --node-only runs passing files as one program, each with its own tally", async () => {
   const app = makeApp({ "a.test.ts": passing("a"), "b.test.ts": passing("b"), "c.test.ts": passing("c") });
   const { code, out } = lightTest(app, ["--node-only", "--jobs", "1"]);
@@ -113,7 +125,8 @@ test("a failing file and a throwing one in a batch: the batch runs again file by
   assert.match(out, /FAIL [^\n]*\/test\/b\.test\.ts \(node=1\)\n--- node\nFAIL one and one\n  expected: "3"\n  actual:   "2"\nFAIL 0\/1\n/);
   assert.match(out, /FAIL [^\n]*\/test\/c\.test\.ts \(node=1\)\n--- node\nFAIL boom\n/);
   assert.match(out, /PASS [^\n]*\/test\/d\.test\.ts \(node only\)/);
-  assert.match(out, /4 tests in \d+ s, 1 at a time, node only, 1 program \(1 batch run again file by file\)\n/);
+  // a passed in the batch; b failed, c exited, d never ran: those three run again alone.
+  assert.match(out, /4 tests in \d+ s, 1 at a time, node only, 1 program \(3 tests run again alone, from 1 batch\)\n/);
 });
 
 test("the environment a file changed is put back before the next one", async () => {
@@ -133,7 +146,7 @@ test("a file that never ends: killed past --timeout, reported as timed out, the 
   assert.match(out, /PASS [^\n]*\/test\/a\.test\.ts \(node only\)/);
   assert.match(out, /FAIL [^\n]*\/test\/b\.test\.ts \(node=1, timed out after 2 s\)\n--- node\nok started\n/);
   assert.match(out, /PASS [^\n]*\/test\/c\.test\.ts \(node only\)/);
-  assert.match(out, /3 tests in \d+ s, 1 at a time, node only, 1 program \(1 batch run again file by file\)\n/);
+  assert.match(out, /3 tests in \d+ s, 1 at a time, node only, 1 program \(2 tests run again alone, from 1 batch\)\n/);
 });
 
 test("--batch 1 runs every file alone, as before batching", async () => {
