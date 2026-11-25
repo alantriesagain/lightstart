@@ -1,0 +1,59 @@
+{
+  "name": "@lightstart/api",
+  "version": "0.1.0",
+  "description": "An app's server models: /api/<model> CRUD with permissions over a D1-shaped database, migrations, and the page's api adapter.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/api"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "api",
+    "crud",
+    "d1",
+    "sqlite",
+    "permissions",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "server/",
+    "page/",
+    "node/",
+    "cli/",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./server": "./server/index.ts",
+    "./page": "./page/adapter.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/server": "workspace:*",
+    "@lightstart/sqlite": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  },
+  "light": {
+    "adapters": {
+      "api": "./page/adapter.ts#ApiAdapterType"
+    }
+  }
+}

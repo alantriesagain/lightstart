@@ -43,6 +43,7 @@ Reach for these before writing your own; each package's README is its reference.
 | A routes table outside an app | `@lightstart/router` | `RouterCore` over a browser or memory history; light's `Navigation` contract |
 | A component catalogue | `@lightstart/showcase` | `showcase-catalogue`, `showcase-component-doc` and the theme tools, over the components' `tags.json` and demos |
 | An HTTP backend | `@lightstart/server` | routes, middleware and plugins over one `Context`; node, fetch and lambda adapters |
+| An app's server models over HTTP | `@lightstart/api` | a store with `adapter: "api"`; `crudApp` answers `/api/<model>` over a D1-shaped database with each schema's `$permissions` (`public`, `auth`, `owner`, `none`); `light db:migrate`; `configureApi({ token })` on the page |
 | SQLite | `@lightstart/sqlite` | one synchronous driver, node's or native |
 | Markdown, syntax colours | `@lightstart/markdown`, `@lightstart/highlight` | `parse`; a line tokenizer for terminal views and `lc-code-block` |
 | Markdown files as an app's content | `@lightstart/content` | `content/<model>/*.md`, frontmatter and a body; `collect` at build, `renderContent` on the page with no parser; a read-only `content` store for a large catalogue, built to `content/<model>.json` and read by `where`/`order`/`fields`/`count` |
