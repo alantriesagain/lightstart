@@ -2,8 +2,9 @@
  * @file A redirect to a target the request supplied (a `?next=` after sign-in), refused unless it
  * stays on this origin. A path (`/x`, `/x?y#z`) or an absolute `http(s)://` URL whose host and
  * port are `c.host`'s (what a trusted proxy forwarded included) is allowed and written as it
- * arrived; a protocol-relative target, a backslash, another scheme, leading whitespace or a control
- * character, userinfo, another host and an empty target answer the fallback instead.
+ * arrived; a protocol-relative target, a backslash, another scheme, a leading space, a control
+ * character anywhere (a browser drops tabs and newlines, so `/<tab>/evil.example` would become
+ * `//evil.example`), userinfo, another host and an empty target answer the fallback instead.
  */
 import type { Context } from "./context.ts";
 import { authorityOf } from "./origin.ts";
@@ -30,10 +31,11 @@ const absoluteAuthority = (target: string): string | null => {
 };
 
 const safeTarget = (c: Context, target: string): boolean => {
-  if (target === "") return false;
-  const first = target.charCodeAt(0);
-  if (first <= 32 || first === 127) return false;
-  if (target.indexOf("\\") >= 0) return false;
+  if (target === "" || target.charCodeAt(0) === 32) return false;
+  for (let i = 0; i < target.length; i++) {
+    const code = target.charCodeAt(i);
+    if (code < 32 || code === 127 || code === 92) return false;
+  }
   if (target.startsWith("/")) return !target.startsWith("//");
   const authority = absoluteAuthority(target);
   return authority !== null && authority === c.host.toLowerCase();
