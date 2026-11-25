@@ -25,6 +25,7 @@ packages:
   - 'packages/mobile'
   - 'packages/cloudflare'
   - 'packages/api'
+  - 'packages/auth'
   - 'packages/maps'
   - 'packages/qr'
   - 'packages/camera'
