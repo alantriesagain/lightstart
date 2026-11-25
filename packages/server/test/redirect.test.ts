@@ -14,8 +14,8 @@ import { TrustProxy } from "../plugins/proxy.ts";
 import { done, eq, eqn } from "@lightstart/test/assert.ts";
 
 const go = (c: Context): Reply => {
-  const target = c.header("x-target") ?? "";
-  const fallback = c.header("x-fallback") ?? "/";
+  const target = c.query("next") ?? "";
+  const fallback = c.query("back") ?? "/";
   const status = Number(c.header("x-status") ?? "302");
   return safeRedirect(c, target, fallback, status);
 };
@@ -24,10 +24,8 @@ const drive = (app: App, target: string, host: string, fallback: string, status:
   const headers: Record<string, string> = {};
   for (const [name, value] of Object.entries(extra)) headers[name] = value;
   headers["host"] = host;
-  headers["x-target"] = target;
-  headers["x-fallback"] = fallback;
   headers["x-status"] = String(status);
-  return request(app, "GET", "/go", { headers });
+  return request(app, "GET", `/go?next=${encodeURIComponent(target)}&back=${encodeURIComponent(fallback)}`, { headers });
 };
 
 const location = (reply: Reply): string => reply.headers.get("location") ?? "(none)";
@@ -84,11 +82,25 @@ const main = async (): Promise<void> => {
   eq("a custom fallback for a refused target", location(customFallback), "/login");
   eqn("a custom fallback for a refused target, 307", customFallback.status, 307);
 
+  const offsite = await drive(app, "//evil.example", "shop.example", "https://evil.example", 302, {});
+  eq("a fallback to another host is refused too, and / answered", location(offsite), "/");
+  const splitFallback = await drive(app, "//evil.example", "shop.example", "/\r\nset-cookie: a=1", 302, {});
+  eq("a fallback with a CRLF is refused, and / answered", location(splitFallback), "/");
+  const crlf = await drive(app, "/\r\nlocation: https://evil.example", "shop.example", "/fallback", 302, {});
+  eq("a CRLF in the target cannot add a header", location(crlf) + " " + String(crlf.headers.all("location").length), "/fallback 1");
+
   const proxied = new App().plugin(new TrustProxy({ trust: true })).get("/go", go);
   const forwarded = await drive(proxied, "https://shop.example/x", "internal.example", "/fallback", 302, { "x-forwarded-host": "shop.example" });
   eq("the host a trusted proxy forwarded is the one matched", location(forwarded), "https://shop.example/x");
   const mismatch = await drive(proxied, "https://internal.example/x", "internal.example", "/fallback", 302, { "x-forwarded-host": "shop.example" });
   eq("the connection's own host is not, behind the proxy", location(mismatch), "/fallback");
+
+  const secure = await drive(proxied, "https://shop.example/x", "internal.example", "/fallback", 302, { "x-forwarded-host": "shop.example:443", "x-forwarded-proto": "https" });
+  eq("https's default port matches no port", location(secure), "https://shop.example/x");
+  const explicit = await drive(proxied, "https://shop.example:443/x", "internal.example", "/fallback", 302, { "x-forwarded-host": "shop.example", "x-forwarded-proto": "https" });
+  eq("and no port matches an explicit :443", location(explicit), "https://shop.example:443/x");
+  const otherPort = await drive(proxied, "https://shop.example:8443/x", "internal.example", "/fallback", 302, { "x-forwarded-host": "shop.example", "x-forwarded-proto": "https" });
+  eq("another port is still another origin", location(otherPort), "/fallback");
 
   done();
 };

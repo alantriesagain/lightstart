@@ -3,8 +3,25 @@
  * order they were added. A repeated name keeps every value, so two `set-cookie` headers are two
  * entries and reach the wire as two lines; `get` joins a repeated name with ", ", as Fetch's
  * `Headers` does for every name but `set-cookie`. The node adapter writes `flat()` in one
- * `writeHead` call and the fetch adapter builds a `Headers` from the same pairs.
+ * `writeHead` call and the fetch adapter builds a `Headers` from the same pairs. A value holding a
+ * CR, LF or NUL, or a name holding one of those, a space or a colon, throws as it is added: every
+ * adapter is safe from a header split even where it writes the lines itself (the websocket
+ * upgrade, the native build), so a value taken from a request can never add a header.
  */
+const unsafe = (text: string, name: boolean): boolean => {
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    if (code === 13 || code === 10 || code === 0) return true;
+    if (name && (code === 32 || code === 58)) return true;
+  }
+  return false;
+};
+
+const guard = (name: string, value: string): void => {
+  if (name === "" || unsafe(name, true)) throw new Error(`The header name ${JSON.stringify(name)} is not a header name`);
+  if (unsafe(value, false)) throw new Error(`The header ${name} has a CR, LF or NUL in its value, which would split the reply`);
+};
+
 export class HeaderList {
   readonly names: string[] = [];
   readonly values: string[] = [];
@@ -15,6 +32,7 @@ export class HeaderList {
   }
 
   private setLower(name: string, value: string): void {
+    guard(name, value);
     this.deleteLower(name);
     this.names.push(name);
     this.values.push(value);
@@ -27,6 +45,7 @@ export class HeaderList {
 
   /** `append` for a name that is already lower-cased, as every one the package writes is. */
   appendLower(name: string, value: string): void {
+    guard(name, value);
     this.names.push(name);
     this.values.push(value);
   }
