@@ -1,0 +1,51 @@
+{
+  "name": "@lightstart/auth",
+  "version": "0.1.0",
+  "description": "Sign-in by email code with a JWT session: /api/auth on @lightstart/api's server, and the page's auth controller.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/auth"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "auth",
+    "jwt",
+    "otp",
+    "sign-in",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "server/",
+    "page/",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./server": "./server/index.ts",
+    "./page": "./page/index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/api": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/server": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/sqlite": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
