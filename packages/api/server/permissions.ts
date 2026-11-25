@@ -48,8 +48,8 @@ export const readPermissions = (schema: ModelSchema | undefined): Permissions | 
 /** The level `permissions` gives `operation`, `auth` when it says nothing. */
 export const permissionFor = (permissions: Permissions | undefined, operation: Operation): PermissionLevel => permissions?.[operation] ?? "auth";
 
-/** The fields an anonymous reader of a `public` model may see (an empty list means none). */
-export const publicFields = (permissions: Permissions | undefined): string[] => permissions?.public ?? [];
+/** The fields an anonymous reader of a `public` model may see: its `public` list, or every field (null) when it names none. */
+export const publicFields = (permissions: Permissions | undefined): string[] | null => permissions?.public ?? null;
 
 /**
  * Whether `caller` may do `operation` under `permissions`, plus the owner

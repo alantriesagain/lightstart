@@ -150,7 +150,8 @@ const main = async (): Promise<void> => {
   eq("an owner create stamps the caller", JSON.stringify(check({ create: "owner", ownerField: "owner" }, "create", { id: "alice" }).stamp), JSON.stringify({ owner: "alice" }));
   eq("an owner read is scoped", JSON.stringify(check({ read: "owner", ownerField: "owner" }, "read", { id: "alice" }).scope), JSON.stringify({ owner: "alice" }));
   eq("a missing key means auth", permissionFor(undefined, "write"), "auth");
-  eq("public fields default to none", JSON.stringify(publicFields(undefined)), JSON.stringify([]));
+  eq("with no public list an anonymous reader sees every field", JSON.stringify(publicFields(undefined)), "null");
+  eq("a public list is the exact projection", JSON.stringify(publicFields({ read: "public", public: ["id", "title"] })), '["id","title"]');
   eq("readPermissions finds the block", JSON.stringify(readPermissions(models["task"])), JSON.stringify(models["task"]?.["$permissions"]));
 
   db.close();
