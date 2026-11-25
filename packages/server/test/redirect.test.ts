@@ -64,6 +64,12 @@ const main = async (): Promise<void> => {
   await refused("leading whitespace", " /x");
   await refused("leading tab", "\t/x");
   await refused("leading newline", "\nhttps://shop.example/x");
+  await refused("a tab after the slash, which a browser drops", "/\t/evil.example");
+  await refused("a newline after the slash", "/\n/evil.example");
+  await refused("a carriage return after the slash", "/\r/evil.example");
+  await refused("a tab inside the scheme's slashes", "https:/\t/evil.example");
+  await refused("a control character deep in a path", "/x/\u0001y");
+  await refused("DEL in a path", "/x\u007f");
   await refused("another host", "https://evil.example/x");
   await refused("userinfo on the matching host", "http://a@shop.example/x");
   await refused("userinfo on another host", "http://a@evil.example");
