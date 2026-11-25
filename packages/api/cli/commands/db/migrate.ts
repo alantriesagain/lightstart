@@ -8,69 +8,11 @@
  * not migrated.
  */
 
-import { existsSync, readdirSync } from "node:fs";
-import { basename, join } from "node:path";
-import { pathToFileURL } from "node:url";
-import { appOf } from "@lightstart/app/node/generate.ts";
+import { join } from "node:path";
 import { defineCommand } from "@lightstart/cli";
 import type { ModelSchema } from "@lightstart/light/model/types.ts";
+import { serverModels } from "../../../node/models.ts";
 import { existingIndexes, existingTables, migrateLocal, planMigration } from "../../../node/migrate.ts";
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-
-const modelFiles = (dir: string): string[] => {
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((name) => name.endsWith(".ts") || name.endsWith(".js"))
-    .filter((name) => !name.endsWith(".d.ts") && !name.includes(".test."))
-    .sort()
-    .map((name) => join(dir, name));
-};
-
-const apiStoresOf = async (project: string): Promise<Set<string>> => {
-  const found = appOf(project);
-  const stores = new Set<string>();
-  if (found === null) return stores;
-  const module: unknown = await import(`${pathToFileURL(found.path).href}?mtime=${String(Date.now())}`);
-  const config = isRecord(module) ? module["default"] : undefined;
-  const declared = isRecord(config) ? config["stores"] : undefined;
-  if (!isRecord(declared)) return stores;
-  for (const [store, value] of Object.entries(declared)) {
-    if (!isRecord(value)) continue;
-    const adapter = value["adapter"];
-    let name: unknown = adapter;
-    if (typeof adapter === "function") {
-      try {
-        name = (adapter as (args: unknown) => unknown)(isRecord(config) ? config["args"] : undefined);
-      } catch {
-        name = undefined;
-      }
-    }
-    if (name === "api") stores.add(store);
-  }
-  return stores;
-};
-
-const schemaOf = (value: unknown): ModelSchema | null => {
-  if (!isRecord(value)) return null;
-  const schema = isRecord(value["schema"]) ? value["schema"] : isRecord(value["$schema"]) ? value["$schema"] : null;
-  return schema === null ? null : (schema as ModelSchema);
-};
-
-const serverModels = async (project: string): Promise<Record<string, ModelSchema>> => {
-  const apiStores = await apiStoresOf(project);
-  const models: Record<string, ModelSchema> = {};
-  if (apiStores.size === 0) return models;
-  for (const file of modelFiles(join(project, "src", "models"))) {
-    const module: unknown = await import(`${pathToFileURL(file).href}?mtime=${String(Date.now())}`);
-    const schema = schemaOf(isRecord(module) ? module["default"] : undefined);
-    if (schema === null) continue;
-    const store = typeof schema.$store === "string" ? schema.$store : "main";
-    if (!apiStores.has(store)) continue;
-    models[basename(file).replace(/\.(ts|js)$/, "")] = schema;
-  }
-  return models;
-};
 
 /** The `light db:migrate` command. */
 export default defineCommand({

@@ -7,4 +7,6 @@
 
 export type { Caller, Operation, PermissionCheck, PermissionLevel, Permissions } from "./server/permissions.ts";
 export type { CrudOptions } from "./server/crud.ts";
+export type { DatabaseSource, ServerOptions } from "./server/app.ts";
+export type { Endpoint, EndpointAccess, EndpointDefinition, EndpointHandler, EndpointMethod, EndpointRequest } from "./server/endpoint.ts";
 export type { D1Like, D1MetaLike, D1Result, D1StatementLike } from "./server/d1.ts";

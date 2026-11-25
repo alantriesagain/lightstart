@@ -139,6 +139,9 @@ importers:
         specifier: workspace:*
         version: link:../sqlite
     devDependencies:
+      '@lightstart/dev':
+        specifier: workspace:*
+        version: link:../dev
       '@lightstart/test':
         specifier: workspace:*
         version: link:../test
