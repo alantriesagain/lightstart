@@ -87,12 +87,15 @@ test("batchesOf: a member's batchable tests with the same manifest together, at 
 });
 
 test("batchProgram arms, imports and waits for each file in turn, then puts the environment back", () => {
-  const text = batchProgram("/x/assert.ts", ["/t/a.test.ts", "/t/b.test.ts"]);
+  const text = batchProgram("/x/assert.ts", ["/t/a.test.ts", "/t/b.test.ts"], 0);
   assert.match(text, /^\/\/ Written by light test: 2 tests in one program/);
   assert.match(text, /import \{ arm \} from "\/x\/assert\.ts";/);
   const a = text.indexOf('const finished0 = arm();\nawait import("/t/a.test.ts");\nawait finished0;\nrestore();');
   const b = text.indexOf('const finished1 = arm();\nawait import("/t/b.test.ts");\nawait finished1;\nrestore();');
   assert.ok(a > 0 && b > a, text);
+  // With a time, each test's done() is waited for at most that long.
+  const timed = batchProgram("/x/assert.ts", ["/t/a.test.ts"], 5000);
+  assert.ok(timed.includes('if (!(await within(import("/t/a.test.ts").then(() => finished0), 5000))) {\n  console.log(' + JSON.stringify(MARK + "timed out") + ");\n  process.exit(1);\n}"), timed);
 });
 
 test("passedInBatch: a test passed in a failed batch when its done() came, its own output passed, and native printed the same", () => {
@@ -146,7 +149,8 @@ test("a file that never ends: killed past --timeout, reported as timed out, the 
   assert.match(out, /PASS [^\n]*\/test\/a\.test\.ts \(node only\)/);
   assert.match(out, /FAIL [^\n]*\/test\/b\.test\.ts \(node=1, timed out after 2 s\)\n--- node\nok started\n/);
   assert.match(out, /PASS [^\n]*\/test\/c\.test\.ts \(node only\)/);
-  assert.match(out, /3 tests in \d+ s, 1 at a time, node only, 1 program \(2 tests run again alone, from 1 batch\)\n/);
+  // b is reported from the batch, timed out there; only c, which never started, runs again.
+  assert.match(out, /3 tests in \d+ s, 1 at a time, node only, 1 program \(1 test run again alone, from 1 batch\)\n/);
 });
 
 test("--batch 1 runs every file alone, as before batching", async () => {
@@ -154,6 +158,17 @@ test("--batch 1 runs every file alone, as before batching", async () => {
   const { code, out } = lightTest(app, ["--node-only", "--jobs", "1", "--batch", "1"]);
   assert.equal(code, 0, out);
   assert.match(out, /2 tests in \d+ s, 1 at a time, node only\n/);
+});
+
+test("a batch that ran out of time under node is not built natively; its finished tests run again alone, both ways", async () => {
+  const hangs = 'import { done, ok } from "@lightstart/light/native/assert.ts";\nok("started", true);\nsetInterval(() => {}, 1000);\nawait new Promise<void>(() => {});\ndone();\n';
+  const app = makeApp({ "a.test.ts": passing("a"), "b.test.ts": hangs });
+  const { code, out } = lightTest(app, ["--jobs", "1", "--timeout", "3000"]);
+  assert.equal(code, 1, out);
+  // Under node b ran out of its time in the batch, so the batch was not built natively, and a, which passed only under node, runs again alone.
+  assert.match(out, /PASS [^\n]*\/test\/a\.test\.ts\n/);
+  assert.match(out, /FAIL [^\n]*\/test\/b\.test\.ts \(node=1, timed out after 3 s\)\n--- node\nok started\n/);
+  assert.match(out, /2 tests in \d+ s, 1 at a time, dev builds, 1 program \(1 test run again alone, from 1 batch\)\n/);
 });
 
 test("natively a batch builds one program, its output the same as under node", async () => {

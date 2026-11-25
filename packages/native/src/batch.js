@@ -87,12 +87,15 @@ export const batchesOf = (tests, size, manifestOf) => {
 
 /**
  * The program that runs `files` one after another: a marker line, arm, import the test, wait for
- * its `done()`, then put back the environment the program started with; a last marker at the end.
+ * its `done()` (the import and the wait at most `timeoutMs`, when it is above 0: past it a timeout
+ * marker and exit 1), then put back the environment the program started with; a last marker at the
+ * end.
  * @param {string} assert the assert module's real path
  * @param {string[]} files the tests' absolute paths
+ * @param {number} timeoutMs
  * @returns {string}
  */
-export const batchProgram = (assert, files) => {
+export const batchProgram = (assert, files, timeoutMs) => {
   const lines = [
     "// Written by light test: " + String(files.length) + " tests in one program, one after another.",
     "import { arm } from " + JSON.stringify(assert) + ";",
@@ -111,16 +114,57 @@ export const batchProgram = (assert, files) => {
     "  for (const [k, v] of started) if (process.env[k] !== v) process.env[k] = v;",
     "};",
   ];
+  if (timeoutMs > 0)
+    lines.push(
+      "const within = (finished: Promise<void>, ms: number): Promise<boolean> =>",
+      "  new Promise<boolean>((resolve) => {",
+      "    const timer = setTimeout(() => resolve(false), ms);",
+      "    finished.then(() => {",
+      "      clearTimeout(timer);",
+      "      resolve(true);",
+      "    });",
+      "  });",
+    );
   files.forEach((file, i) => {
     const name = "finished" + String(i);
-    lines.push("", "console.log(" + JSON.stringify(MARK + String(i)) + ");", "const " + name + " = arm();", "await import(" + JSON.stringify(file) + ");", "await " + name + ";", "restore();");
+    lines.push("", "console.log(" + JSON.stringify(MARK + String(i)) + ");", "const " + name + " = arm();");
+    if (timeoutMs > 0)
+      lines.push("if (!(await within(import(" + JSON.stringify(file) + ").then(() => " + name + "), " + String(timeoutMs) + "))) {", "  console.log(" + JSON.stringify(MARK + LATE) + ");", "  process.exit(1);", "}");
+    else lines.push("await import(" + JSON.stringify(file) + ");", "await " + name + ";");
+    lines.push("restore();");
   });
   lines.push("", "console.log(" + JSON.stringify(MARK + "end") + ");");
   return lines.join("\n") + "\n";
 };
 
-/** The line a batch program prints before each test (its index) and after the last ("end"). */
+/** The line a batch program prints before each test (its index), after the last ("end"), and when one runs out of time. */
 export const MARK = "@@ light test, file ";
+const LATE = "timed out";
+
+/**
+ * The index of the test a batch's output says ran out of its time, or null.
+ * @param {string} out
+ * @returns {string | null}
+ */
+export const lateIn = (out) => {
+  /** @type {string | null} */
+  let last = null;
+  for (const line of out.split("\n"))
+    if (line === MARK + LATE) return last;
+    else if (line.startsWith(MARK)) last = line.slice(MARK.length);
+  return null;
+};
+
+/**
+ * What a batch printed for its test `index` ("" when it never started).
+ * @param {string} out
+ * @param {string} index
+ * @returns {string}
+ */
+export const sectionIn = (out, index) => {
+  const own = sectionsOf(out).get(index);
+  return own === undefined ? "" : own + "\n";
+};
 
 /**
  * A batch's output by test: each marker's index to what the program printed until the next marker.
@@ -178,11 +222,12 @@ export const passedInBatch = (count, node, native, withNative) => {
  * Write `batch`'s program, unless the same text is already there, and answer its path.
  * @param {Batch} batch
  * @param {string} assert
+ * @param {number} timeoutMs each test's time, 0 for none
  * @returns {string}
  */
-export const writeBatch = (batch, assert) => {
+export const writeBatch = (batch, assert, timeoutMs) => {
   const files = batch.tests.map((t) => t.path);
-  const text = batchProgram(assert, files);
+  const text = batchProgram(assert, files, timeoutMs);
   const member = batch.tests[0].member.dir;
   const id = createHash("sha256")
     .update(member + "\n" + (batch.manifest ?? "") + "\n" + files.join("\n"))

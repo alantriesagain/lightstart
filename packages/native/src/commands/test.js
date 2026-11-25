@@ -17,7 +17,7 @@
  */
 import { existsSync, readdirSync } from "node:fs";
 import { basename, join, relative } from "node:path";
-import { assertFor, batchesOf, passedInBatch, writeBatch } from "../batch.js";
+import { assertFor, batchesOf, lateIn, passedInBatch, sectionIn, writeBatch } from "../batch.js";
 import { ffiHeader, nativeOnly, nodeOnly, nodePreload, resolveFfi } from "../ffi.js";
 import { prepare, prepareProject } from "../prepare.js";
 import { Run, capture, pool } from "../run.js";
@@ -184,28 +184,30 @@ const runFiles = async (tests, flags, root) => {
     return header === null ? null : resolveFfi(t.member, header);
   };
   /**
-   * `path` run under node (unless `withNode` is false) and natively (unless `withNative` is false).
+   * `path` run under node (unless `withNode` is false) and natively (unless `withNative` is false),
+   * each killed past `ms`; not natively when node ran out of time.
    * @param {string} path
    * @param {Member} member
    * @param {string | null} manifest
    * @param {boolean} withNode
    * @param {boolean} withNative
+   * @param {number | undefined} ms
    * @returns {Promise<{ node: Run | null, native: Run | null }>}
    */
-  const runPath = async (path, member, manifest, withNode, withNative) => {
+  const runPath = async (path, member, manifest, withNode, withNative, ms) => {
     let node = null;
     if (withNode) {
       const preload = manifest === null ? null : nodePreload(manifest);
       const nodeArgs = ["--no-warnings"];
       if (preload !== null) nodeArgs.push("--experimental-vm-modules", "--import", preload);
       nodeArgs.push(path);
-      node = await capture("node", nodeArgs, { cwd: member.dir, env, timeoutMs });
+      node = await capture("node", nodeArgs, { cwd: member.dir, env, timeoutMs: ms });
     }
-    if (!withNative || (node !== null && node.timedOut)) return { node, native: null };
+    if (!withNative || (node !== null && (node.timedOut || lateIn(node.out) !== null))) return { node, native: null };
     const nativeArgs = ["run", "--optimization", opt];
     if (manifest !== null) nativeArgs.push("--ffi", manifest);
     nativeArgs.push(path);
-    const native = await capture(scriptc, nativeArgs, { cwd: member.dir, env, timeoutMs });
+    const native = await capture(scriptc, nativeArgs, { cwd: member.dir, env, timeoutMs: ms });
     return { node, native };
   };
   /**
@@ -216,8 +218,22 @@ const runFiles = async (tests, flags, root) => {
    */
   const runAlone = async (t, manifest) => {
     const withNative = !(nodeOnlyRun || nodeOnly(t.path) || ruleTest(t.path));
-    const { node, native } = await runPath(t.path, t.member, manifest, !nativeOnly(t.path), withNative);
+    const { node, native } = await runPath(t.path, t.member, manifest, !nativeOnly(t.path), withNative, timeoutMs);
     return new Outcome(t, node, native);
+  };
+  /**
+   * What a batch's run printed for test `index`, as that test's own run: exit 1 and timed out when
+   * the batch says the test ran out of its time there.
+   * @param {Run | null} run
+   * @param {string} index
+   * @returns {Run | null}
+   */
+  const ownRun = (run, index) => {
+    if (run === null) return null;
+    const late = lateIn(run.out) === index;
+    const own = new Run(late ? 1 : 0, sectionIn(run.out, index));
+    own.timedOut = late;
+    return own;
   };
   /**
    * A run's exit code as the FAIL line says it, and its time when it ran out of it.
@@ -260,15 +276,18 @@ const runFiles = async (tests, flags, root) => {
     if (b.tests.length === 1) done = [await runAlone(b.tests[0], b.manifest)];
     else {
       const member = b.tests[0].member;
-      const program = writeBatch(b, /** @type {string} */ (assertFor(member.dir)));
-      const { node, native } = await runPath(program, member, b.manifest, true, !nodeOnlyRun);
+      const program = writeBatch(b, /** @type {string} */ (assertFor(member.dir)), timeoutMs ?? 0);
+      const backstop = timeoutMs === undefined ? undefined : timeoutMs * b.tests.length;
+      const { node, native } = await runPath(program, member, b.manifest, true, !nodeOnlyRun, backstop);
       const passed = new Outcome(b.tests[0], new Run(0, ""), nodeOnlyRun ? null : new Run(0, ""));
       if (!failedRuns(node, native)) done = b.tests.map((t) => new Outcome(t, passed.node, passed.native));
       else {
         failedBatches++;
         const clean = passedInBatch(b.tests.length, node === null ? "" : node.out, native === null ? null : native.out, !nodeOnlyRun);
+        const late = [node === null ? null : lateIn(node.out), native === null ? null : lateIn(native.out)];
         for (let i = 0; i < b.tests.length; i++)
           if (clean[i]) done.push(new Outcome(b.tests[i], passed.node, passed.native));
+          else if (late.includes(String(i))) done.push(new Outcome(b.tests[i], ownRun(node, String(i)), ownRun(native, String(i))));
           else {
             again++;
             done.push(await runAlone(b.tests[i], b.manifest));
