@@ -29,6 +29,7 @@ export default defineExtension("test", {
     all: { flag: true, description: "Test every workspace member, not only the project" },
     "node-only": { flag: true, description: "Run under node alone, skipping the native build" },
     jobs: { description: "Tests at a time (default: $JOBS or 4)" },
+    batch: { description: "Tests to one program, natively built once (default: $BATCH or 8; 1 runs each alone)" },
   },
   setup(ctx, args, api) {
     const project = projectAt(ctx.projectDir);
@@ -53,6 +54,8 @@ export default defineExtension("test", {
     const flags: string[] = [];
     if (args["node-only"]) flags.push("--node-only");
     if (args.jobs !== undefined) flags.push("--jobs", args.jobs);
+    if (args.batch !== undefined) flags.push("--batch", args.batch);
+    if (args.timeout !== undefined) flags.push("--timeout", args.timeout);
     api.run(async () => {
       if (!all && project !== null && names.length === 0) return (await runProject(project, flags, tests)) === 0;
       const root = workspaceRoot ?? findRoot(ctx.projectDir);
