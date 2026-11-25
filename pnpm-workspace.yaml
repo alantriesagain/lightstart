@@ -24,6 +24,7 @@ packages:
   - 'packages/pwa'
   - 'packages/mobile'
   - 'packages/cloudflare'
+  - 'packages/api'
   - 'packages/maps'
   - 'packages/qr'
   - 'packages/camera'

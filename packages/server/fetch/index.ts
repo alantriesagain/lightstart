@@ -200,7 +200,7 @@ export const toResponse = (reply: Reply, method: string): Response => {
   const init = { status: reply.status, headers };
   if (bodiless(method, reply.status)) return new Response(null, init);
   if (reply.text !== null) return new Response(reply.text, init);
-  if (reply.bytes !== null) return new Response(reply.bytes, init);
+  if (reply.bytes !== null) return new Response(arrayBacked(reply.bytes), init);
   const body = reply.stream;
   if (body === null) return new Response(null, init);
   const writers: StreamWriter[] = [];
@@ -223,6 +223,9 @@ export const toResponse = (reply: Reply, method: string): Response => {
   });
   return new Response(source, init);
 };
+
+/** `bytes` over a plain `ArrayBuffer`, as a `Response` body must be: the same view, or a copy when it sits on a shared buffer. */
+const arrayBacked = (bytes: Uint8Array): Uint8Array<ArrayBuffer> => (bytes.buffer instanceof ArrayBuffer ? (bytes as Uint8Array<ArrayBuffer>) : new Uint8Array(bytes));
 
 /** A Fetch handler for `app`: `(request, env?, ctx?) => Promise<Response>`, the shape a Worker exports. */
 export const toFetch = (app: App, options: FetchOptions = {}) => {

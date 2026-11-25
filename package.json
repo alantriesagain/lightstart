@@ -25,6 +25,7 @@
     "@lightstart/components": "workspace:*"
   },
   "devDependencies": {
+    "@lightstart/api": "workspace:*",
     "@lightstart/app": "workspace:*",
     "@lightstart/build": "workspace:*",
     "@lightstart/camera": "workspace:*",
