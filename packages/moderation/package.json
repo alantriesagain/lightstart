@@ -37,7 +37,7 @@
   ],
   "exports": {
     ".": "./index.ts",
-    "./server": "./server/contribute.ts",
+    "./server": "./server/index.ts",
     "./page": "./page/index.ts",
     "./*": "./*"
   },

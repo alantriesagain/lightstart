@@ -11,6 +11,7 @@ what a change to it has to keep.
 | `types.ts` | The shared types, the `$moderated` schema directive, `StorageLike` |
 | `server/models.ts` | `moderationModels`: `submission` and `moderation_avatars`, `$permissions: none` |
 | `server/policy.ts` | `submissionPolicy`: `beforeCreate`, `beforeUpdate`, `beforeRemove`, and the model publishing |
+| `server/index.ts` | `@lightstart/moderation/server`: `forgetUser`, the policy and kinds, the models, the file and image helpers, for an app's endpoints and `src/server.js` |
 | `server/contribute.ts` | The contribution `light.server` names: models, `moderationEndpoints` |
 | `server/image.ts` | `readImageDataUrl`, `IMAGE_LIMITS` |
 | `server/avatar.ts` | `avatar`, `sizedPicture`, `queueProviderAvatar` |

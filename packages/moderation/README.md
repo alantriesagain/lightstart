@@ -174,7 +174,7 @@ Wire it from auth's `onUserDeleted` in the app's `src/server.js`:
 ```js
 // src/server.js
 import { registerAuthHooks } from "@lightstart/auth/server";
-import { forgetUser } from "@lightstart/moderation";
+import { forgetUser } from "@lightstart/moderation/server";
 
 registerAuthHooks({ onUserDeleted: (id, db) => forgetUser(db, id) });
 ```
