@@ -37,6 +37,20 @@ const main = async (): Promise<void> => {
   ok("resultTarget defaults to none", defaults.resultTarget === undefined);
   ok("cameraApp defaults to none", defaults.cameraApp === undefined);
 
+  const withStrings = resolveMobile({ appId: "com.example.app", strings: { light_push_project_id: "demo" } }, { name: "app", base: "" });
+  ok("strings pass through resolved", withStrings.strings?.["light_push_project_id"] === "demo");
+  const refusal = (strings: unknown): string => {
+    try {
+      resolveMobile({ appId: "com.example.app", strings: strings as Record<string, string> }, { name: "app", base: "" });
+      return "";
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error);
+    }
+  };
+  ok("a string named app_name is refused", refusal({ app_name: "x" }).includes("app_name"));
+  ok("a name that is not a resource name is refused", refusal({ "Push-Id": "x" }).includes("Push-Id"));
+  ok("a value that is not a string is refused", refusal({ ok_name: 3 }).includes("ok_name"));
+
   const captureOnly = resolveMobile({ appId: "com.example.app", resultTarget: { capture: "/camera" } }, { name: "app", base: "" });
   eq("resultTarget capture is kept", captureOnly.resultTarget?.capture ?? "", "/camera");
   ok("resultTarget pick is absent with capture only", captureOnly.resultTarget?.pick === undefined);

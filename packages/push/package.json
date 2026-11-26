@@ -1,0 +1,77 @@
+{
+  "name": "@lightstart/push",
+  "version": "0.1.0",
+  "description": "Push notifications through Firebase Cloud Messaging: devices registered per account, sendPush from server code, the page's push controller and the Android add-on.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/push"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "push",
+    "fcm",
+    "notifications",
+    "android",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "types.ts",
+    "server/",
+    "page/",
+    "android/",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./server": "./server/index.ts",
+    "./page": "./page/index.ts",
+    "./*": "./*"
+  },
+  "light": {
+    "server": "./server/contribute.ts",
+    "android": {
+      "sources": "android",
+      "entry": "PushAddon",
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "services": [
+        {
+          "name": "PushService",
+          "actions": [
+            "com.google.firebase.MESSAGING_EVENT"
+          ]
+        }
+      ],
+      "dependencies": [
+        "com.google.firebase:firebase-messaging:25.1.3"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lightstart/api": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/mobile": "workspace:*",
+    "@lightstart/server": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/cli": "workspace:*",
+    "@lightstart/sqlite": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}

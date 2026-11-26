@@ -138,7 +138,10 @@ const addonServicesToken = (addons: MobileAddon[]): string =>
   mergeAddonUses(addons)
     .services.map((service) => {
       const type = service.foregroundServiceType === undefined ? "" : ` android:foregroundServiceType="${xml(service.foregroundServiceType)}"`;
-      return `\n\n        <service android:name="dev.lightstart.mobile.addons.${service.name}" android:exported="${service.exported === true ? "true" : "false"}"${type} />`;
+      const open = `\n\n        <service android:name="dev.lightstart.mobile.addons.${service.name}" android:exported="${service.exported === true ? "true" : "false"}"${type}`;
+      const actions = service.actions ?? [];
+      if (actions.length === 0) return `${open} />`;
+      return `${open}>\n            <intent-filter>${actions.map((action) => `\n                <action android:name="${xml(action)}" />`).join("")}\n            </intent-filter>\n        </service>`;
     })
     .join("");
 
@@ -158,6 +161,7 @@ const addonDependenciesToken = (addons: MobileAddon[]): string => {
 const tokensOf = (mobile: ResolvedMobile, targetSdk: number, addons: MobileAddon[]): Record<string, string> => ({
   APP_ID: mobile.appId,
   APP_NAME: xml(mobile.name),
+  APP_STRINGS: Object.entries(mobile.strings ?? {}).map(([name, value]) => `\n    <string name="${name}">${xml(value)}</string>`).join(""),
   GRADLE_NAME: gradleName(mobile.name),
   VERSION_NAME: mobile.version.name,
   VERSION_CODE: String(mobile.version.code),

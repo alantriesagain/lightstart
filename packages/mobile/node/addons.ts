@@ -27,6 +27,8 @@ export interface MobileAddonService {
   name: string;
   foregroundServiceType?: string;
   exported?: boolean;
+  /** Intent actions the service answers, written as one `<intent-filter>` inside it (`com.google.firebase.MESSAGING_EVENT`). */
+  actions?: string[];
 }
 
 /** A package's `light.android` declaration, as read and validated. */
@@ -107,8 +109,10 @@ const permissionOf = (value: unknown, addon: string, index: number): MobileAddon
   return permission;
 };
 
+const ACTION_NAME = /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$/;
+
 const serviceOf = (value: unknown, addon: string, index: number): MobileAddonService => {
-  if (!isRecord(value)) throw new Error(`${addon} has light.android.services[${index}] that is not an object; use { name, foregroundServiceType?, exported? }`);
+  if (!isRecord(value)) throw new Error(`${addon} has light.android.services[${index}] that is not an object; use { name, foregroundServiceType?, exported?, actions? }`);
   const name = value["name"];
   if (!nonEmpty(name) || !CLASS_NAME.test(name))
     throw new Error(`${addon} has light.android.services[${index}].name that is not a Kotlin class name`);
@@ -122,9 +126,13 @@ const serviceOf = (value: unknown, addon: string, index: number): MobileAddonSer
   const exported = value["exported"];
   if (exported !== undefined && typeof exported !== "boolean")
     throw new Error(`${addon} has light.android.services[${index}].exported that is not a boolean`);
+  const actions = value["actions"];
+  if (actions !== undefined && (!Array.isArray(actions) || actions.length === 0 || !actions.every((action) => typeof action === "string" && ACTION_NAME.test(action))))
+    throw new Error(`${addon} has light.android.services[${index}].actions that is not a list of intent action names (com.example.ACTION)`);
   const service: MobileAddonService = { name };
   if (foregroundServiceType !== undefined) service.foregroundServiceType = foregroundServiceType;
   if (exported !== undefined) service.exported = exported;
+  if (actions !== undefined) service.actions = actions as string[];
   return service;
 };
 
@@ -183,7 +191,7 @@ const samePermission = (a: MobileAddonPermission, b: MobileAddonPermission): boo
   a.name === b.name && a.maxSdkVersion === b.maxSdkVersion && a.usesPermissionFlags === b.usesPermissionFlags;
 
 const sameService = (a: MobileAddonService, b: MobileAddonService): boolean =>
-  a.name === b.name && a.foregroundServiceType === b.foregroundServiceType && a.exported === b.exported;
+  a.name === b.name && a.foregroundServiceType === b.foregroundServiceType && a.exported === b.exported && (a.actions ?? []).join(" ") === (b.actions ?? []).join(" ");
 
 /**
  * Merge what the add-ons ask the manifest for, keeping each name once. Two

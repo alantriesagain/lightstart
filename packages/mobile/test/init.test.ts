@@ -82,6 +82,9 @@ const main = (): void => {
     ok("the add-on's permission flags reach the manifest", manifest.includes('android:name="android.permission.BLUETOOTH_SCAN"') && manifest.includes('android:usesPermissionFlags="neverForLocation"'));
     ok("the add-on's feature reaches the manifest", manifest.includes('android:name="android.hardware.microphone"') && manifest.includes('android:required="false"'));
     ok("the add-on's service reaches the manifest", manifest.includes('android:name="dev.lightstart.mobile.addons.EchoService"') && manifest.includes('android:exported="false"') && manifest.includes('android:foregroundServiceType="dataSync"'));
+    ok("a service's actions are its intent filter", /<service android:name="dev\.lightstart\.mobile\.addons\.EchoService"[^>]*>\s*<intent-filter>\s*<action android:name="dev\.lightstart\.echo\.PING" \/>\s*<\/intent-filter>\s*<\/service>/.test(manifest));
+    const strings = text(project, "app/src/main/res/values/strings.xml");
+    ok("the app's strings sit beside app_name, escaped", strings.includes('<string name="app_name">') && strings.includes('<string name="echo_greeting">Hello &amp; welcome</string>'));
 
     const leftovers = files(join(project, "mobile", "android"))
       .filter((path) => !path.endsWith(".jar"))

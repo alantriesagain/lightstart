@@ -765,6 +765,34 @@ importers:
         specifier: ^26.6.5
         version: 26.6.5
 
+  packages/push:
+    dependencies:
+      '@lightstart/api':
+        specifier: workspace:*
+        version: link:../api
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/mobile':
+        specifier: workspace:*
+        version: link:../mobile
+    devDependencies:
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/sqlite':
+        specifier: workspace:*
+        version: link:../sqlite
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/pwa:
     dependencies:
       '@lightstart/app':
