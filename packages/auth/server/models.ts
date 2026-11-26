@@ -9,13 +9,14 @@ import type { ModelSchema } from "@lightstart/light/model/types.ts";
 const NOBODY = { read: "none", create: "none", write: "none", delete: "none" };
 
 /**
- * The auth tables: a person (`users`, `email` unique) and the live sign-in
- * code for an address (`auth_codes`, holding the code's hash, never the code).
+ * The auth tables: a person (`users`, `email` unique and NULL for an account
+ * an identity made) and the live sign-in code for an address (`auth_codes`,
+ * holding the code's hash, never the code).
  */
 export const authModels = {
   users: {
     id: { $type: "string", required: true },
-    email: { $type: "string", required: true, unique: true, index: true },
+    email: { $type: "string", unique: true, index: true },
     name: { $type: "string", defaultValue: "" },
     admin: { $type: "boolean", defaultValue: false },
     $permissions: NOBODY,

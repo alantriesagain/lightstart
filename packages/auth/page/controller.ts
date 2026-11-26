@@ -23,6 +23,9 @@ export interface AuthError {
 /** What every auth call answers: the success payload, or `AuthError`. */
 export type AuthResult<T extends object = Record<string, unknown>> = ({ ok: true } & T) | AuthError;
 
+/** What signing in with an identity answers: a device still waiting, a session, or why it failed. */
+export type IdentityResult = { pending: true } | { ok: true; user: AuthUser } | AuthError;
+
 type Outcome = ({ ok: true; body: unknown; token: string | null }) | AuthError;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -116,6 +119,24 @@ const auth = defineController({
     const result = await this._send("POST", "/verify", { body: { email, code } });
     if (!result.ok) return result;
     const record = isRecord(result.body) ? result.body : {};
+    const token = typeof record["token"] === "string" ? record["token"] : null;
+    const user = userOf(record);
+    if (token === null || user === null) return { error: "The server answered no session", status: 502 };
+    writeToken(token);
+    this.user = user;
+    return { ok: true, user };
+  },
+
+  /**
+   * Trade an identity's redemption for a session: a waiting one answers
+   * `{ pending: true }`, a signed-in one stores the token and sets `user`.
+   * A session held now is linked to the identity.
+   */
+  async signInWithIdentity(name: string, body: Record<string, unknown> = {}): Promise<IdentityResult> {
+    const result = await this._send("POST", `/identity/${encodeURIComponent(name)}`, { auth: true, body });
+    if (!result.ok) return result;
+    const record = isRecord(result.body) ? result.body : {};
+    if (record["pending"] === true) return { pending: true };
     const token = typeof record["token"] === "string" ? record["token"] : null;
     const user = userOf(record);
     if (token === null || user === null) return { error: "The server answered no session", status: 502 };

@@ -73,7 +73,7 @@ export default defineEndpoint({
 
 `method` is `GET` by default and `access` is `auth`. A `public` endpoint answers anyone, an `auth` one answers 401 without a caller, and an `admin` one answers 401 without a caller and 403 for a caller who is not an admin.
 
-The handler is handed `{ request, params, query, body, caller, db, env }`: the Fetch `Request`, the path's parameters by name (`/api/meetups/:id/accept` gives `params.id`), the query as a plain `Record<string, string>`, the JSON body of a non-GET request with a JSON content type (else `null`), the resolved caller, the `D1Like` database, and the server's environment. It answers a `Response` (passed through, keeping its status), a string (as `text/plain`), or any other value (as JSON). A thrown `HttpError` keeps its status.
+The handler is handed `{ request, params, query, body, rawBody, caller, db, env }`: the Fetch `Request`, the path's parameters by name (`/api/meetups/:id/accept` gives `params.id`), the query as a plain `Record<string, string>`, the JSON body of a non-GET request with a JSON content type (else `null`), that body exactly as it arrived as text (`rawBody`, what a webhook's signature is checked against; never re-serialize `body` for that), the resolved caller, the `D1Like` database, and the server's environment. It answers a `Response` (passed through, keeping its status), a string (as `text/plain`), or any other value (as JSON). A thrown `HttpError` keeps its status.
 
 ## The app's server
 

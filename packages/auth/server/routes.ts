@@ -8,6 +8,7 @@
 import { HttpError } from "@lightstart/server";
 import { defineEndpoint, type Caller, type D1Like, type Endpoint } from "@lightstart/api/server";
 
+import { identityNamed } from "./identities.ts";
 import { signToken } from "./jwt.ts";
 import type { Mailer } from "./mailer.ts";
 
@@ -193,6 +194,58 @@ const verifyCode = (options: AuthOptions) => async (request: {
   return { token: await tokenOf(user, request.env), user: await answerUser(user, request.db, request.env, options.hooks) };
 };
 
+const sessionOf = async (
+  user: Row,
+  db: D1Like,
+  env: Record<string, unknown>,
+  hooks: AuthHooks | undefined,
+): Promise<Row> => ({ token: await tokenOf(user, env), user: await answerUser(user, db, env, hooks) });
+
+const identity = (options: AuthOptions) => async (request: {
+  params: Record<string, string>;
+  body: unknown;
+  caller: Caller;
+  db: D1Like;
+  env: Record<string, unknown>;
+}): Promise<unknown> => {
+  const found = identityNamed(request.params["name"] ?? "");
+  if (found === undefined) throw new HttpError(404, "no such identity");
+  const answer = await found.redeem(request.body, request.db, request.env);
+
+  if ("pending" in answer) {
+    return new Response(JSON.stringify({ pending: true }), {
+      status: 202,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  if ("error" in answer) throw new HttpError(answer.status, answer.error);
+
+  const caller = request.caller;
+  if (caller !== null) {
+    if (answer.userId !== null && answer.userId !== caller.id) {
+      throw new HttpError(409, "linked to another account");
+    }
+    if (answer.userId === null) await answer.link(caller.id);
+    const user = await userRowOf(request.db, caller.id);
+    if (user === null) throw new HttpError(401, "authentication required");
+    return sessionOf(user, request.db, request.env, options.hooks);
+  }
+
+  if (answer.userId === null) {
+    const id = crypto.randomUUID();
+    const name = answer.name ?? "";
+    await request.db.prepare("INSERT INTO users (id, email, name, admin) VALUES (?, NULL, ?, ?)").bind(id, name, 0).run();
+    await answer.link(id);
+    const created = await userRowOf(request.db, id);
+    if (created === null) throw new HttpError(500, "could not create the account");
+    return sessionOf(created, request.db, request.env, options.hooks);
+  }
+
+  const user = await userRowOf(request.db, answer.userId);
+  if (user === null) throw new HttpError(401, "authentication required");
+  return sessionOf(user, request.db, request.env, options.hooks);
+};
+
 const me = (options: AuthOptions) => async (request: {
   caller: Caller;
   db: D1Like;
@@ -259,12 +312,14 @@ const remove = (options: AuthOptions) => async (request: {
 
 /**
  * The auth routes, as definitions to hand `serverApp`'s `endpoints`:
- * `POST /api/auth/otp`, `POST /api/auth/verify`, and the signed-in
- * `GET /me`, `PATCH /profile`, `POST /refresh` and `POST /delete`.
+ * `POST /api/auth/otp`, `POST /api/auth/verify`, the public
+ * `POST /identity/:name` an identity answers, and the signed-in `GET /me`,
+ * `PATCH /profile`, `POST /refresh` and `POST /delete`.
  */
 export const authEndpoints = (options: AuthOptions): Endpoint[] => [
   defineEndpoint({ path: "/api/auth/otp", method: "POST", access: "public", handler: requestCode(options) }),
   defineEndpoint({ path: "/api/auth/verify", method: "POST", access: "public", handler: verifyCode(options) }),
+  defineEndpoint({ path: "/api/auth/identity/:name", method: "POST", access: "public", handler: identity(options) }),
   defineEndpoint({ path: "/api/auth/me", method: "GET", access: "auth", handler: me(options) }),
   defineEndpoint({ path: "/api/auth/profile", method: "PATCH", access: "auth", handler: profile(options) }),
   defineEndpoint({ path: "/api/auth/refresh", method: "POST", access: "auth", handler: refresh(options) }),

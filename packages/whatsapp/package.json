@@ -1,0 +1,55 @@
+{
+  "name": "@lightstart/whatsapp",
+  "version": "0.1.0",
+  "description": "Connecting an account to WhatsApp, and signing in with it, by a code the person sends from their own WhatsApp; Meta's webhook, the code tables, and the page's controller.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/whatsapp"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "whatsapp",
+    "sign-in",
+    "webhook",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "server/",
+    "page/",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./server": "./server/index.ts",
+    "./page": "./page/index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/api": "workspace:*",
+    "@lightstart/auth": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/visitor": "workspace:*"
+  },
+  "light": {
+    "server": "./server/contribute.ts"
+  },
+  "devDependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/server": "workspace:*",
+    "@lightstart/sqlite": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}

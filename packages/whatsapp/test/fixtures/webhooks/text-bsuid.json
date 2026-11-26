@@ -1,0 +1,34 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "102290129340398",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": { "display_phone_number": "15550783881", "phone_number_id": "106540352242922" },
+            "contacts": [
+              {
+                "profile": { "name": "Bruno", "username": "bruno.rio" },
+                "wa_id": "5521987654321",
+                "user_id": "BR.13491208655302741918"
+              }
+            ],
+            "messages": [
+              {
+                "from": "5521987654321",
+                "from_user_id": "BR.13491208655302741918",
+                "id": "wamid.HBgNNTUyMTk4NzY1NDMyMRUCABIYFDNBQjEyQzM0RDU2RTc4RjkwQTFCAA==",
+                "timestamp": "1759320060",
+                "type": "text",
+                "text": { "body": "code 731205" }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "102290129340398",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": { "display_phone_number": "15550783881", "phone_number_id": "106540352242922" },
+            "contacts": [
+              {
+                "profile": { "name": "Carla", "username": "carla_m" },
+                "user_id": "AR.88231907716254409312"
+              }
+            ],
+            "messages": [
+              {
+                "id": "wamid.HBgVQVIuODgyMzE5MDc3MTYyNTQ0MDkzMTIVAgASGBQzQUQxRTJGM0E0QjVDNkQ3RTg5RgA=",
+                "timestamp": "1759320180",
+                "type": "contacts",
+                "from_user_id": "AR.88231907716254409312",
+                "contacts": [
+                  {
+                    "origin": "contact_request",
+                    "phones": [{ "phone": "+54 9 11 2345-6789", "wa_id": "5491123456789", "type": "MOBILE" }]
+                  }
+                ]
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

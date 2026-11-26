@@ -28,6 +28,8 @@ export interface EndpointRequest {
   query: Record<string, string>;
   /** The JSON body of a non-GET request with a JSON content type, else null. */
   body: unknown;
+  /** A non-GET request's body exactly as it arrived, as text, else null: what a signature over the body (a webhook's HMAC) is checked against. */
+  rawBody: string | null;
   /** Who makes the request, as the caller function resolved it. */
   caller: Caller;
   /** The database a handler reads and writes, awaited through `D1Like`. */
@@ -67,15 +69,17 @@ export const defineEndpoint = (definition: EndpointDefinition): Endpoint => ({
   handler: definition.handler,
 });
 
-/** The JSON body of a non-GET request with a JSON content type, else null. */
-export const bodyOfRequest = async (request: Request, method: string): Promise<unknown> => {
-  if (method === "GET" || method === "HEAD") return null;
+/** A non-GET request's body read once as text: `rawBody` exactly as it arrived, and `body` parsed from it when the content type is JSON (else null). */
+export const bodyOfRequest = async (request: Request, method: string): Promise<{ body: unknown; rawBody: string | null }> => {
+  if (method === "GET" || method === "HEAD") return { body: null, rawBody: null };
+  const rawBody = await request.text();
   const type = request.headers.get("content-type");
-  if (type === null) return null;
+  if (type === null) return { body: null, rawBody };
   const mime = type.split(";")[0]?.trim().toLowerCase() ?? "";
-  if (mime !== "application/json" && !mime.endsWith("+json")) return null;
+  if (mime !== "application/json" && !mime.endsWith("+json")) return { body: null, rawBody };
+  if (rawBody.trim() === "") return { body: null, rawBody };
   try {
-    return await request.json();
+    return { body: JSON.parse(rawBody) as unknown, rawBody };
   } catch {
     throw new HttpError(400, "invalid JSON body");
   }
