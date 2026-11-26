@@ -20,7 +20,14 @@ what a change to it has to keep.
 | `page/moderation.ts` | `moderated`, `configureModeration`, `submitToServer`, `viewerFromToken` |
 | `page/photo.ts` | `photoFor`, `ownPhotoOf`, `dataUrlOf` |
 | `page/index.ts` | The page surface |
-| `test/` | `contribute.test.ts` (a project declaring api, auth and moderation), `policy.test.ts` (the phases over `d1Of`), `forget.test.ts`, `moderated.test.ts` (the decorator over a fake store) |
+| `queue/slots.ts` | `queueKinds`, the `queue.kinds` slot a kind describes itself through |
+| `queue/lib.ts` | `titleOf`, `submissionItem`, `groupOf`, `groupItems`, `movesOf`, `payloadFields`, `sentAt` |
+| `queue/controller.ts` | `moderationQueue`: the pending list and `approve`, `reject`, `remove` |
+| `queue/extension.ts` | The `moderation` extension: `/admin/queue`, its controller and the avatar kind |
+| `views/queue*.ts` | The five `moderation-queue-*` tags |
+| `locales/{en,pt,es}.js` | The words those tags draw |
+| `tags.json` | The package's tag table, named by `package.json`'s `light.tags` |
+| `test/` | `contribute.test.ts` (a project declaring api, auth and moderation), `policy.test.ts` (the phases over `d1Of`), `forget.test.ts`, `moderated.test.ts` (the decorator over a fake store), `queue.test.ts` (the controller over a fake fetch), `queue.browser.test.js` (the page in Chromium) |
 
 ## Rules the sources keep
 
@@ -59,6 +66,8 @@ what a change to it has to keep.
 | `forgetUser` and auth's `onUserDeleted` | account deletion |
 | `light.server` in `package.json` and the contributed models | `light db:migrate`, `light serve`, the deploy |
 | `configureModeration`, `moderated` | an app's page |
+| `queueKinds`, `QueueKind` and the `moderation-queue-*` tags | an app or a package with kinds of its own in the queue |
+| `moderationQueue` and the `light.extension` route `/admin/queue` | an app that installs the review queue |
 
 ## Gates
 
@@ -68,4 +77,10 @@ From the repository root:
 light typecheck @lightstart/moderation
 light test @lightstart/moderation
 light check --all
+```
+
+From `packages/moderation`, one browser file per run:
+
+```bash
+light test test/queue.browser.test.js
 ```

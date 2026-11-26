@@ -27,6 +27,10 @@
     "types.ts",
     "server/",
     "page/",
+    "queue/",
+    "views/",
+    "locales/",
+    "tags.json",
     "README.md",
     "AGENTS.md",
     "LICENSE"
@@ -41,8 +45,10 @@
     "@lightstart/api": "workspace:*",
     "@lightstart/app": "workspace:*",
     "@lightstart/auth": "workspace:*",
-    "@lightstart/light": "workspace:*",
+    "@lightstart/components": "workspace:*",
     "@lightstart/images": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/router": "workspace:*",
     "@lightstart/visitor": "workspace:*"
   },
   "devDependencies": {
@@ -53,6 +59,9 @@
     "@lightstart/server": "workspace:*"
   },
   "light": {
-    "server": "./server/contribute.ts"
+    "server": "./server/contribute.ts",
+    "extension": "./queue/extension.ts",
+    "tags": "tags.json",
+    "locales": true
   }
 }

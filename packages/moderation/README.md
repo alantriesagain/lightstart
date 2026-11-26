@@ -7,9 +7,9 @@ on the sender's own device as a pending row of that model, the admin approves
 or rejects it, and only an approved one is published. Nobody is told they were
 rejected: their pending row stays with them.
 
-This is the core of the package: the server contribution, the page decorator
-and the photo kind. The review queue under `/admin` (`extensions/queue/`) comes
-later.
+This is the core of the package plus the review queue: the server
+contribution, the page decorator, the photo kind, and the `/admin/queue`
+extension an app gets with the package.
 
 ## A moderated model
 
@@ -198,6 +198,53 @@ posts to `/api/moderation/submit` with the session token) and the provenance
 function. `submitToServer(kind, payload)` is the default submitter;
 `viewerFromToken()` reads the account id from the auth token.
 
+## The review queue
+
+Declaring the package also installs its extension (`light.extension`):
+`/admin/queue` draws the pending submissions from
+`GET /api/moderation/pending`, grouped under the heading each kind names, with
+the selected item's detail beside the list. The page shows a sign-in state to a
+signed-out reader and a not-allowed state to an account that is not an admin.
+The server refuses a non-admin's calls regardless of what the page draws.
+
+The controller is `moderationQueue`: `items`, `loading`, `message` and `busy`
+are its state; `load()` reads the queue again; `approve(id)`,
+`reject(id, note?)` and `remove(id)` call the review endpoints with the same
+bearer token `@lightstart/auth` hands `@lightstart/api`. None of them throws: a
+failure is the controller's `message`.
+
+A project or a package describes the kinds it accepts through `queueKinds`
+(`@lightstart/moderation`), a slot of `QueueKind` items:
+
+```js
+import { queueKinds } from "@lightstart/moderation";
+
+queueKinds.fill({
+  kind: "claim",
+  label: "Claim",
+  group: "Claims",
+  icon: "flag",
+  detail: "meetup-claim-detail", // a tag drawn with `.item`
+  title: (record) => String(record.payload?.place ?? "A claim"),
+});
+```
+
+`label` and `icon` are the row's; `group` is the heading it sits under (Other
+for a kind nothing describes); `detail` names the tag drawn as its detail, and
+without one the payload is read out as fields, an image as an image. `title`
+reads a record's own title, and `terminal` says a kind's review settles it, so
+it never waits to be published. The package fills its own `avatar` kind with
+the photo view.
+
+The five tags are `moderation-queue` (the page), `moderation-queue-detail`,
+`moderation-queue-payload`, `moderation-queue-photo` and
+`moderation-queue-sent`. Their words live under `moderation-queue-*` in
+`locales/{en,pt,es}.js`.
+
+`moderation-queue-sent` draws the items it is given; the admin endpoints do not
+read another account's whole history, so loading a person's submissions is the
+host's part.
+
 ## Files
 
 | File | Runtime | Role |
@@ -213,10 +260,16 @@ function. `submitToServer(kind, payload)` is the default submitter;
 | `server/forget.ts` | server | `forgetUser`, for account deletion |
 | `page/moderation.ts` | browser | the `$moderated` decorator, `configureModeration`, `submitToServer` |
 | `page/photo.ts` | browser | `photoFor`, `ownPhotoOf`, `dataUrlOf` |
+| `queue/slots.ts` | every | `queueKinds`, the slot a kind describes itself through |
+| `queue/lib.ts` | every | titles, grouping, review moves and a payload read as fields |
+| `queue/controller.ts` | browser | `moderationQueue`: the pending list and the review moves |
+| `queue/extension.ts` | browser | the `/admin/queue` extension, its route, controller and avatar kind |
+| `views/queue*.ts` | browser | the five `moderation-queue-*` tags |
+| `locales/{en,pt,es}.js` | browser | their words, named by `light.locales` |
+| `tags.json` | browser | the package's tag table, named by `light.tags` |
 
 ## Not yet
 
-- The review queue extension (`extensions/queue/`).
 - The device controller for a photo you sent (the source's `avatar` controller).
 - A page helper that speaks the queue for a kind that is no model.
 

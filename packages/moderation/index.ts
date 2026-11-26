@@ -12,6 +12,7 @@ import { event } from "@lightstart/light/signals";
 import type { ModerationPublished, PendingMarker } from "./types.ts";
 
 export type * from "./types.ts";
+export { queueKinds } from "./queue/slots.ts";
 
 /** Where a submission is: waiting, approved and waiting to be published, published, refused, or replaced by a newer one from the same person. */
 export const SUBMISSION_STATUSES = ["pending", "approved", "published", "rejected", "replaced"] as const;
