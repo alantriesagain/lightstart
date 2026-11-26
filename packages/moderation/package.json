@@ -1,0 +1,58 @@
+{
+  "name": "@lightstart/moderation",
+  "version": "0.1.0",
+  "description": "What people send waits in a review queue while the sender sees it as theirs: moderated models, submissions, publishing on approval, and the review queue as an app extension.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/moderation"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "moderation",
+    "review",
+    "queue",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "types.ts",
+    "server/",
+    "page/",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./server": "./server/contribute.ts",
+    "./page": "./page/index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/api": "workspace:*",
+    "@lightstart/app": "workspace:*",
+    "@lightstart/auth": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/images": "workspace:*",
+    "@lightstart/visitor": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/sqlite": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3",
+    "@lightstart/server": "workspace:*"
+  },
+  "light": {
+    "server": "./server/contribute.ts"
+  }
+}

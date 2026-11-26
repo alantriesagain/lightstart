@@ -94,7 +94,7 @@ Without a contributed caller, the caller comes from the development-only headers
 A package adds to every app's server that declares it by naming a module in its `package.json`, `"light": { "server": "./server/contribute.ts" }`. That module default-exports `defineServerContribution({ models, endpoints, caller })`:
 
 - `models` are server models by table name. They're static, so `light db:migrate` (local and `--remote`) creates their tables, and the app's own model of the same name wins.
-- `endpoints(env)` answers endpoints made from the server's environment, registered before the app's.
+- `endpoints(env, models)` answers endpoints made from the server's environment and every server model the app's server holds (the app's and the contributed), registered before the app's. A package that acts on models an app marks (moderation's `$moderated`) reads them here.
 - `caller(env, db)`, the first one any contribution brings, answers who makes each request, for every endpoint and `$permissions` check.
 
 Contributions merge in package-name order. `@lightstart/auth` is one: its `users` and `auth_codes` tables, `/api/auth/*`, and the session as the caller, with nothing for the app to wire.

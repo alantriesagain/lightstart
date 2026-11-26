@@ -30,6 +30,7 @@ packages:
   - 'packages/images'
   - 'packages/notifications'
   - 'packages/push'
+  - 'packages/moderation'
   - 'packages/maps'
   - 'packages/qr'
   - 'packages/camera'

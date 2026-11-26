@@ -683,6 +683,40 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  packages/moderation:
+    dependencies:
+      '@lightstart/api':
+        specifier: workspace:*
+        version: link:../api
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@lightstart/images':
+        specifier: workspace:*
+        version: link:../images
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/visitor':
+        specifier: workspace:*
+        version: link:../visitor
+    devDependencies:
+      '@lightstart/sqlite':
+        specifier: workspace:*
+        version: link:../sqlite
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/native:
     dependencies:
       '@lightstart/light':
@@ -776,10 +810,16 @@ importers:
       '@lightstart/mobile':
         specifier: workspace:*
         version: link:../mobile
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
     devDependencies:
       '@lightstart/app':
         specifier: workspace:*
         version: link:../app
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
       '@lightstart/sqlite':
         specifier: workspace:*
         version: link:../sqlite
