@@ -34,6 +34,11 @@ export interface StoreConfig {
   worker?: boolean;
 }
 
+/** One named build a tree ships: the extensions it leaves out, so a public build runs without its signed-in parts. */
+export interface AppProfile {
+  extensions?: { off?: readonly string[] };
+}
+
 /** What `src/app.ts` declares: the few choices a project makes. */
 export interface AppConfig {
   /** The app's name, used as its stores' default name and the document title. */
@@ -96,6 +101,11 @@ export interface AppConfig {
   layout?: string;
   /** Extensions to leave out, by name (`{ off: ["social"] }`); every discovered extension runs when absent. */
   extensions?: { off?: readonly string[] };
+  /**
+   * Named builds from one tree (`light build --profile public`), each leaving extensions out; an app
+   * with no profiles ships one build. A name is lower-case letters, digits and dashes, starting with a letter.
+   */
+  profiles?: Record<string, AppProfile>;
   /** The arguments the app takes; the host fills them from its source (argv, the URL) into `args`. */
   args?: ArgsSchema;
 }
@@ -173,6 +183,8 @@ export class App {
   readonly layout: string | undefined;
   /** The extensions `defineApp({ extensions: { off } })` leaves out. */
   readonly extensionsOff: readonly string[];
+  /** The named builds the config declares, each leaving extensions out; empty when it declares none. */
+  readonly profiles: Record<string, AppProfile>;
   /** The argument schema the config declares; empty when it declares none. */
   readonly argsSchema: ArgsSchema;
   /** The values the host parsed. */
@@ -210,6 +222,11 @@ export class App {
     this.root = config.root;
     this.layout = config.layout;
     this.extensionsOff = config.extensions?.off ?? [];
+    const profiles = config.profiles ?? {};
+    for (const name of Object.keys(profiles)) {
+      if (!/^[a-z][a-z0-9-]*$/.test(name)) throw new Error(`The profile name "${name}" is not lower-case letters, digits and dashes starting with a letter`);
+    }
+    this.profiles = profiles;
     this.argsSchema = config.args ?? {};
   }
 
@@ -236,3 +253,4 @@ export { pageHead } from "./head.ts";
 export type { PageHead } from "./head.ts";
 export { appBase, appUrl } from "./base.ts";
 export type { BaseConfig } from "./base.ts";
+export { currentProfile, runningExtensions } from "./run.ts";

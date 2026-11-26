@@ -29,6 +29,8 @@ export type AppSeeds = Readonly<Record<string, readonly Row[]>>;
 /** What a project's folders add up to; the generated `.light/app.ts` default-exports one. */
 export interface AppManifest {
   app: App;
+  /** The profile `light build --profile` (or `light serve --profile`) generated; none when absent. */
+  profile?: string;
   /** The root view's class, for a terminal host; the generation reads it from the root view file's default export. */
   rootView?: unknown;
   models: readonly AppModel[];

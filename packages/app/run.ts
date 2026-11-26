@@ -78,6 +78,12 @@ export interface CurrentRoute {
 /** The matched route now, or null before a run, without routes, and after the run stops. */
 export const currentRoute = signal<CurrentRoute | null>(null);
 
+/** The build profile the manifest was generated with (`light build --profile`); null without one and after the run stops. */
+export const currentProfile = signal<string | null>(null);
+
+/** The extensions running now, in start order; empty after the run stops. */
+export const runningExtensions = signal<readonly string[]>([]);
+
 const pathParamNamesOf = (route: RouteConfig | null): string[] => {
   const names: string[] = [];
   if (route === null) return names;
@@ -364,6 +370,7 @@ export class AppRun {
     this.app.args.values = this.host.args(this.app);
     setAppBase(this.app.base);
     appLayout = this.app.layout ?? null;
+    currentProfile.value = this.manifest.profile ?? null;
     await this.open();
     this.app.lifecycle = {
       restart: (next?: Record<string, unknown>): Promise<void> => this.restart(next),
@@ -382,6 +389,7 @@ export class AppRun {
     const added = await startControllerList(this.extensions.flatMap((extension) => [...extension.controllers]));
     this.controllers = [...own, ...added];
     for (const extension of this.extensions) if (extension.connected !== null) await extension.connected();
+    runningExtensions.value = this.extensions.map((extension) => extension.name);
     this.route();
     await this.host.mount(this);
   }
@@ -390,7 +398,9 @@ export class AppRun {
   private chooseExtensions(): readonly AppExtension[] {
     const all = this.manifest.extensions ?? [];
     if (this.extensionChoice === false) return [];
-    const off = [...this.app.extensionsOff, ...this.extensionChoice];
+    const profile = this.manifest.profile === undefined ? undefined : this.app.profiles[this.manifest.profile];
+    const profileOff = profile?.extensions?.off ?? [];
+    const off = [...this.app.extensionsOff, ...profileOff, ...this.extensionChoice];
     const { active, unknown } = activeExtensions(all, off);
     for (const name of unknown) console.warn(`[@lightstart/app] extensions.off names "${name}", which no extension is called`);
     return active;
@@ -531,6 +541,8 @@ export class AppRun {
     currentView.value = null;
     currentParams.value = {};
     currentRoute.value = null;
+    currentProfile.value = null;
+    runningExtensions.value = [];
     for (let i = this.extensions.length - 1; i >= 0; i--) {
       const disconnected = this.extensions[i].disconnected;
       if (disconnected !== null) await disconnected();

@@ -98,17 +98,19 @@ export default defineExtension("build", {
   args: {
     prerender: { flag: true, description: "Render every concrete route into its own index.html" },
     renderer: { choices: ["markup", "browser"] as const, description: "How to prerender: light's markup host in node (default) or headless Chromium" },
+    profile: { description: "Build the app's named profile (defineApp({ profiles }))" },
   },
   async setup(_ctx, args, api) {
     const found = appOf(api.options.root);
     if (found !== null) api.options.base = (await infoOf(found.path)).base;
-    const given = args as { prerender?: unknown; renderer?: unknown } | undefined;
+    const given = args as { prerender?: unknown; renderer?: unknown; profile?: unknown } | undefined;
     const wanted = given?.prerender === true;
     const chosen = given?.renderer === "browser" || given?.renderer === "markup" ? given.renderer : undefined;
+    const profile = typeof given?.profile === "string" && given.profile !== "" ? given.profile : undefined;
     api.steps.before("page", {
       name: "app",
       async run(ctx) {
-        await generate(ctx.root, { dev: false });
+        await generate(ctx.root, { dev: false, profile });
       },
     });
     api.steps.after("html", {

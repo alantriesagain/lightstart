@@ -34,7 +34,7 @@ import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import { fileIO } from "./file.ts";
 import { callMounted, handlerOf } from "./root.ts";
 
-export { currentParams, currentRoute, currentView, href, navigate, url } from "../run.ts";
+export { currentParams, currentProfile, currentRoute, currentView, href, navigate, runningExtensions, url } from "../run.ts";
 
 /** The baked class tables a terminal app carries, one per scheme. */
 export interface TuiClasses {
