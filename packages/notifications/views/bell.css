@@ -1,0 +1,17 @@
+:where(.notifications-bell, notifications-bell) {
+  position: relative;
+  display: inline-flex;
+
+  lc-badge[data-count] {
+    --lc-badge-border-radius: 9999px;
+    --lc-badge-padding-x: 0.3rem;
+    --lc-badge-padding-y: 0;
+    --lc-badge-font-size: var(--notifications-bell-count-size, 0.6875rem);
+    --lc-badge-line-height: var(--notifications-bell-count-height, 1.125rem);
+    --lc-badge-corner-top: var(--notifications-bell-count-top, -0.25rem);
+    --lc-badge-corner-right: var(--notifications-bell-count-right, -0.25rem);
+    min-width: var(--notifications-bell-count-height, 1.125rem);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+}

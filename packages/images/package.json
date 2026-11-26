@@ -1,0 +1,50 @@
+{
+  "name": "@lightstart/images",
+  "version": "0.1.0",
+  "description": "Image variants (a thumbnail, a card) made from a photo, with their metadata and the URLs to them.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/images"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "images",
+    "thumbnails",
+    "resize",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "types.ts",
+    "paths.js",
+    "metadata.js",
+    "resize.js",
+    "normalize.js",
+    "browser.js",
+    "cli/",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/cli": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}

@@ -526,6 +526,22 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  packages/images:
+    dependencies:
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
+    devDependencies:
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/kernel:
     dependencies:
       '@lightstart/lib':
@@ -682,6 +698,28 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
+
+  packages/notifications:
+    dependencies:
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/components':
+        specifier: workspace:*
+        version: link:../components
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+    devDependencies:
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/p2p:
     dependencies:
@@ -907,6 +945,31 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
+
+  packages/visitor:
+    dependencies:
+      '@lightstart/api':
+        specifier: workspace:*
+        version: link:../api
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+    devDependencies:
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/sqlite':
+        specifier: workspace:*
+        version: link:../sqlite
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/workspace:
     dependencies:

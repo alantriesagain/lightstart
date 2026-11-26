@@ -1,0 +1,13 @@
+:where(.notifications-sheet, notifications-sheet) {
+  --lc-bottom-sheet-nav-height: 0px;
+  --lc-bottom-sheet-sheet-height: auto;
+  --lc-bottom-sheet-max-height: var(--notifications-sheet-max-height, 80dvh);
+  --lc-bottom-sheet-padding: var(--notifications-sheet-padding, 1rem);
+  --lc-bottom-sheet-safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  .notifications-sheet-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--notifications-sheet-gap, 0.75rem);
+  }
+}
