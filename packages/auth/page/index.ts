@@ -4,7 +4,7 @@
  */
 
 export { default, default as auth } from "./controller.ts";
-export type { AuthError, AuthResult, IdentityResult } from "./controller.ts";
+export type { AuthError, AuthResult, IdentityResult, OAuthResult } from "./controller.ts";
 export { authFetch, authPrefix, configureAuth, readToken, TOKEN_KEY, writeToken } from "./session.ts";
 export type { AuthOptions, AuthStorage } from "./session.ts";
 export { safeNext } from "./next.ts";

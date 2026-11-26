@@ -41,7 +41,7 @@ const main = async (): Promise<void> => {
     writeFileSync(join(project, "src", "endpoints", "whoami.js"), 'import { defineEndpoint } from "@lightstart/api/server";\nexport default defineEndpoint({ path: "/api/whoami", access: "auth", handler: ({ caller }) => ({ id: caller.id }) });\n');
 
     const models = await serverModels(project);
-    eq("the server models hold the contributed tables and the app's own", Object.keys(models).sort().join(","), "auth_codes,note,users");
+    eq("the server models hold the contributed tables and the app's own", Object.keys(models).sort().join(","), "auth_codes,auth_handoffs,note,oauth_accounts,users");
 
     await writeServerEntry(project);
     const source = readFileSync(join(project, ".light", "server.ts"), "utf8");

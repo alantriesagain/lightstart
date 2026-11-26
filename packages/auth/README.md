@@ -5,7 +5,7 @@ Sign-in by a code mailed to an address, and a JWT session. No passwords. The ser
 ## The server
 
 Declaring the package is the whole setup. Its `package.json` names a server contribution (`light.server`), so every app on `@lightstart/api` that depends on it gets three things with nothing to wire:
-- the `users` and `auth_codes` tables, which `light db:migrate` creates;
+- the `users`, `auth_codes`, `oauth_accounts` and `auth_handoffs` tables, which `light db:migrate` creates;
 - the routes below;
 - the session as the caller for its endpoints and `$permissions`.
 
@@ -58,6 +58,33 @@ With no session, a null `userId` makes an account with a NULL email, calls `link
 
 `registerIdentity` keeps a module-level registry, so registering a name twice from different objects throws naming it; `identityNamed(name)` reads one and `resetIdentities()` clears them for a test.
 
+## OAuth
+
+Google and GitHub sign-in use the same `users` rows and session as a mailed code. A provider is enabled only while both its variables are non-empty:
+
+| Provider | Variables |
+|---|---|
+| Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| GitHub | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` |
+
+The redirect URI is `${AUTH_ORIGIN}/api/auth/oauth/<provider>/callback` when `AUTH_ORIGIN` is a string (a trailing slash is stripped); otherwise it is the request's own origin. `AUTH_ORIGIN` is worth setting behind a proxy or a custom domain, since the request's headers are never trusted for it.
+
+| Route | Answers |
+|---|---|
+| `GET /api/auth/providers` | `{ providers: string[] }`: the enabled ones, sorted |
+| `GET /api/auth/oauth/:provider/start?next=<path>` | a 302 to the provider, after `safeNext(next)` and a state cookie |
+| `GET /api/auth/oauth/:provider/callback?code&state` | a 302 to `next` with `#auth_code=<code>` or `#auth_error=<reason>` |
+| `POST /api/auth/oauth/redeem` | `{ token, user }` for a `{ code }`, once, within a minute |
+
+Sign-in uses PKCE (S256) and a signed, `HttpOnly`, `Secure`, `SameSite=Lax` state cookie living 10 minutes. The callback refuses a missing, tampered, expired or mismatched state as `#auth_error=state`; a provider's refusal as `denied`; a failed exchange or profile read as `provider`; and an account whose email is missing or unverified as `email`. The callback redirects carry `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
+
+Linking follows the verified email and never merges two accounts blindly:
+- a `(provider, provider_id)` already linked signs in that user (a link whose user is gone is dropped and rebuilt);
+- otherwise a user whose email matches the verified address, lower-cased and trimmed, is linked;
+- otherwise a user is made with that email and the provider's name, then linked.
+
+The hand-off in `#auth_code` is random, stored only as an HMAC, single-use, and expires after 60 seconds. Redeeming it answers the same `{ token, user }` as `/api/auth/verify`, so `sessionFields` hooks apply. Deleting an account also deletes its provider links and hand-offs.
+
 ## The page
 
 ```js
@@ -68,8 +95,9 @@ const signedIn = await auth.verifyCode("me@example.com", "123456"); // { ok, use
 if (signedIn.ok) navigate(safeNext(currentRoute.value?.query.next));
 ```
 
-`auth` is a `defineController` literal named `auth`. A view follows `user` and `loaded` with `sync: "auth"`.
-- **Methods:** `requestCode`, `verifyCode`, `signInWithIdentity`, `signOut`, `updateProfile`, `deleteAccount` and `reload`. Each answers `{ ok } | { error, status }` and never throws; a network failure has status 0. `signInWithIdentity(name, body)` also answers `{ pending: true }` for a waiting device.
+`auth` is a `defineController` literal named `auth`. A view follows `user`, `loaded` and `oauthError` with `sync: "auth"`.
+- **Methods:** `requestCode`, `verifyCode`, `signInWithIdentity`, `providers`, `signInWithOAuth`, `completeOAuth`, `signOut`, `updateProfile`, `deleteAccount` and `reload`. Each answers `{ ok } | { error, status }` and never throws; a network failure has status 0. `signInWithIdentity(name, body)` also answers `{ pending: true }` for a waiting device.
+- **OAuth:** `providers()` answers `{ ok: true, providers }`. `signInWithOAuth(provider, next?)` sends the page to the start route with `safeNext(next)`. `completeOAuth()` reads and drops `location.hash`: `#auth_code=…` redeems the hand-off and stores the token, `#auth_error=…` answers that code with status 0, and neither answers `{ ok: false, none: true }`. The controller runs it from `connected()`, so a returning redirect signs in on load, and keeps the last failure in `oauthError`.
 - **The token** lives in `localStorage`, and `configureApi({ token })` hands it to every `api` store request.
 - **A 401** on a call that carried the session signs out.
 - **`safeNext(target)`** is the page's mirror of `@lightstart/server`'s `safeRedirect` for a path. It refuses a protocol-relative target, a backslash, a control character anywhere, an absolute URL and leading whitespace, and answers `/` instead.
@@ -77,5 +105,4 @@ if (signedIn.ok) navigate(safeNext(currentRoute.value?.query.next));
 ## Not yet
 
 - A per-address limit on code requests exists, but no per-IP limit across addresses.
-- OAuth (Google, GitHub).
 - Read-only admin sessions.
