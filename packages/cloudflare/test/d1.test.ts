@@ -89,9 +89,10 @@ const main = async (): Promise<void> => {
 
   const schema = fakeFetch((request) => {
     const sql = sqlOf(request);
-    if (sql.includes("type = 'table'")) return query([{ name: "todo" }, { name: "notes" }]);
+    if (sql.includes("type = 'table'")) return query([{ name: "_cf_KV" }, { name: "todo" }, { name: "sqlite_sequence" }, { name: "notes" }]);
     if (sql.includes("PRAGMA table_info")) {
       const table = /table_info\("([^"]+)"\)/.exec(sql)?.[1];
+      if (table === "_cf_KV" || table === "sqlite_sequence") throw new Error(`not authorized: SQLITE_AUTH on ${table}`);
       return query(table === "todo" ? [{ name: "id" }, { name: "title" }] : [{ name: "id" }, { name: "body" }]);
     }
     if (sql.includes("type = 'index'")) return query([{ name: "idx_todo_title" }]);
@@ -99,7 +100,7 @@ const main = async (): Promise<void> => {
   });
   const reader = cloudflareApi({ accountId, apiToken: token, fetch: schema.fetch });
   const read = await remoteSchema(reader, "u-1");
-  eq("remoteSchema reads each table's columns", JSON.stringify(read.columns), '{"todo":["id","title"],"notes":["id","body"]}');
+  eq("remoteSchema reads each table's columns, D1's and SQLite's own left out", JSON.stringify(read.columns), '{"todo":["id","title"],"notes":["id","body"]}');
   eq("remoteSchema reads the index names", JSON.stringify(read.indexes), '["idx_todo_title"]');
 
   const planned = fakeFetch((request) => {

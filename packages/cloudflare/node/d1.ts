@@ -154,13 +154,16 @@ export const remoteQuery = async (
   return first["results"].filter(isRecord);
 };
 
-/** Every table's columns and the database's index names, in the shape `planMigration` takes. */
+/** D1's own tables (`_cf_KV` in every new database) and SQLite's: D1 refuses `PRAGMA table_info` on them, and no model names them. */
+const internalTable = (name: string): boolean => name.startsWith("_cf_") || name.startsWith("sqlite_");
+
+/** Every table's columns, D1's and SQLite's own left out, and the database's index names, in the shape `planMigration` takes. */
 export const remoteSchema = async (api: CloudflareApi, uuid: string): Promise<RemoteSchema> => {
   const tables = await remoteQuery(api, uuid, "SELECT name FROM sqlite_master WHERE type = 'table'");
   const columns: Record<string, string[]> = {};
   for (const row of tables) {
     const name = row["name"];
-    if (typeof name !== "string") continue;
+    if (typeof name !== "string" || internalTable(name)) continue;
     const info = await remoteQuery(api, uuid, `PRAGMA table_info(${quoteIdentifier(name)})`);
     columns[name] = info
       .map((column) => (typeof column["name"] === "string" ? column["name"] : ""))
