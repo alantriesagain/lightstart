@@ -134,6 +134,7 @@ its `package.json` under `light.android`:
 | `permissions` | Permission names, or `{ name, maxSdkVersion?, usesPermissionFlags? }`, written into the manifest |
 | `features` | `{ name, required? }`, written as `<uses-feature>` |
 | `services` | `{ name, foregroundServiceType?, exported? }`, written as `<service>` |
+| `services[].actions` | Intent actions the service answers, written as one `<intent-filter>` inside its `<service>` (`com.google.firebase.MESSAGING_EVENT`) |
 | `dependencies` | Gradle coordinates, each written as `implementation '…'` |
 
 `usesPermissionFlags` is a `|`-separated list of Android flag names, such as
@@ -198,6 +199,10 @@ a request replies.
 A project opts an add-on out with `defineMobile({ addons: { disable:
 ["@example/location-addon"] } })`. A name there that matches no discovered
 add-on is a warning, not an error.
+
+## String resources
+
+`defineMobile({ strings: { name: "value" } })` writes each beside `app_name` in `res/values/strings.xml`, escaped, for an add-on that reads its settings from resources (a push add-on's Firebase project). Names are lower-case resource names, and `app_name` is the shell's own. `mobile:sync` rewrites them with the rest of the config-derived files.
 
 ## The page API
 

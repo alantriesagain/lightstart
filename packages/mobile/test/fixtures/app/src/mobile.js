@@ -9,4 +9,5 @@ export default defineMobile({
   shareTarget: { path: "/capture", types: ["image/*", "video/*", "text/plain"] },
   resultTarget: { capture: "/camera", pick: "/pick" },
   cameraApp: "com.example.camera",
+  strings: { echo_greeting: "Hello & welcome" },
 });

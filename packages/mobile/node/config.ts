@@ -150,6 +150,20 @@ const cameraAppOf = (value: unknown, path: string): string | undefined => {
 };
 
 /** Fill a config's defaults from the app identity and refuse values Android cannot use. */
+const RESOURCE_NAME = /^[a-z_][a-z0-9_]*$/;
+
+/** `strings` checked: lower-case resource names, string values, and never `app_name`, which the shell writes. */
+const stringsOf = (value: unknown, where: string): Record<string, string> => {
+  if (!isRecord(value)) throw new Error(`${where} has strings that is not an object of names to values`);
+  const out: Record<string, string> = {};
+  for (const [name, text] of Object.entries(value)) {
+    if (!RESOURCE_NAME.test(name) || name === "app_name") throw new Error(`${where} has strings.${name}, which is not a resource name (lower-case letters, digits and _) or is app_name`);
+    if (typeof text !== "string") throw new Error(`${where} has strings.${name} that is not a string`);
+    out[name] = text;
+  }
+  return out;
+};
+
 export const resolveMobile = (config: MobileConfig, identity: AppIdentity): ResolvedMobile => {
   const name = config.name ?? identity.title ?? identity.name;
   const version = { name: config.version?.name ?? "0.1.0", code: positive(config.version?.code, 1, "version.code") };
@@ -167,5 +181,6 @@ export const resolveMobile = (config: MobileConfig, identity: AppIdentity): Reso
   if (cameraApp !== undefined) resolved.cameraApp = cameraApp;
   const addons = addonsOf(config.addons, "src/mobile");
   if (addons !== undefined) resolved.addons = addons;
+  if (config.strings !== undefined) resolved.strings = stringsOf(config.strings, "src/mobile");
   return resolved;
 };
