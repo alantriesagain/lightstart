@@ -90,6 +90,21 @@ const fakeFetch = ((input: RequestInfo | URL, init?: RequestInit): Promise<Respo
     return Promise.resolve(respond({ token, user }));
   }
 
+  if (path.startsWith("/api/auth/identity/") && method === "POST") {
+    const name = decodeURIComponent(path.slice("/api/auth/identity/".length));
+    if (name === "unknown") return Promise.resolve(respond({ error: "no such identity" }, 404));
+    if (name === "waiting") return Promise.resolve(respond({ pending: true }, 202));
+    const key = `identity-${name}`;
+    let user = users.get(key);
+    if (user === undefined) {
+      user = { id: key, email: null, name: "", admin: false };
+      users.set(key, user);
+    }
+    const token = `token-${key}`;
+    tokens.set(token, key);
+    return Promise.resolve(respond({ token, user }));
+  }
+
   if (path === "/api/auth/me" && method === "GET") {
     const current = session();
     if (current === null) return Promise.resolve(respond({ error: "Unauthorized" }, 401));
@@ -175,6 +190,19 @@ const main = async (): Promise<void> => {
     eqn("a network failure has status 0", failed.status, 0);
     ok("a network failure carries a message", failed.error.length > 0);
   }
+
+  const pending = await auth.signInWithIdentity("waiting", {});
+  ok("signInWithIdentity answers pending", "pending" in pending && pending.pending === true);
+
+  const identified = await auth.signInWithIdentity("fake", { id: "wa-1" });
+  ok("signInWithIdentity answers ok", "user" in identified);
+  if ("user" in identified) eq("signInWithIdentity sets the user", text(identified.user.id), "identity-fake");
+  eq("signInWithIdentity stores the token", text(readToken()), "token-identity-fake");
+  eq("the controller holds the identity's user", text(auth.user?.id), "identity-fake");
+
+  const missingIdentity = await auth.signInWithIdentity("unknown", {});
+  ok("an unknown identity answers an error", "status" in missingIdentity);
+  if ("status" in missingIdentity) eqn("with its status", missingIdentity.status, 404);
 
   await auth.verifyCode("ada@example.com", CODE);
   const authHeaders: Array<string | null> = [];

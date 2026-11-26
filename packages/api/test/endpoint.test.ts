@@ -46,7 +46,7 @@ const main = async (): Promise<void> => {
       path: "/api/echo/:id",
       method: "POST",
       access: "public",
-      handler: (r) => ({ params: r.params, query: r.query, body: r.body }),
+      handler: (r) => ({ params: r.params, query: r.query, body: r.body, rawBody: r.rawBody }),
     }),
     defineEndpoint({ path: "/api/text", access: "public", handler: () => "plain words" }),
     defineEndpoint({ path: "/api/response", access: "public", handler: () => new Response("made", { status: 201 }) }),
@@ -75,9 +75,10 @@ const main = async (): Promise<void> => {
   const echo = await send("/api/echo/42?tag=a", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ value: 3 }),
+    body: '{ "value" : 3 }',
   });
   const echoed = await json(echo);
+  eq("the raw body arrives exactly as sent, spacing and all", String(echoed["rawBody"]), '{ "value" : 3 }');
   eq("the path parameters arrive", String((echoed["params"] as JsonObject)["id"]), "42");
   eq("the query arrives as a plain record", String((echoed["query"] as JsonObject)["tag"]), "a");
   eqn("the JSON body arrives", Number((echoed["body"] as JsonObject)["value"]), 3);

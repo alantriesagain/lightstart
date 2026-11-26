@@ -31,6 +31,7 @@ packages:
   - 'packages/notifications'
   - 'packages/push'
   - 'packages/moderation'
+  - 'packages/whatsapp'
   - 'packages/maps'
   - 'packages/qr'
   - 'packages/camera'

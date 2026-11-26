@@ -76,11 +76,13 @@ export const serverApp = (options: ServerOptions): App => {
       if (refused !== null) return refused;
       const params: Record<string, string> = {};
       for (const name of names) params[name] = c.param(name) ?? "";
+      const { body, rawBody } = await bodyOfRequest(request, endpoint.method);
       const value = await endpoint.handler({
         request,
         params,
         query: queryOf(request),
-        body: await bodyOfRequest(request, endpoint.method),
+        body,
+        rawBody,
         caller,
         db: await resolveDatabase(options.db),
         env: options.env ?? {},

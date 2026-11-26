@@ -36,6 +36,28 @@ Hooks are `{ onUserDeleted(id, db, env), sessionFields(id, db, env) }`. `session
 
 `mailerFrom(env, log)` picks the mailer: Resend (`RESEND_API_KEY`, from `AUTH_FROM_EMAIL`) when the key is set, else a console mailer that logs the code, for development.
 
+## Identities
+
+A package adds another way in by registering an identity when its server contribution is imported:
+
+```ts
+import { registerIdentity } from "@lightstart/auth/server";
+
+registerIdentity({
+  name: "whatsapp",
+  redeem: async (body, db, env) => ({ userId: null, name: "Sam", link: async (userId) => { /* keep it */ } }),
+});
+```
+
+`POST /api/auth/identity/:name` (public) calls the identity's `redeem`, which answers one of:
+- `{ pending: true }`: the route answers 202 and the device asks again;
+- `{ error, status }`: that status, with the message;
+- `{ userId: string | null, name?: string, link(userId) }`, the account the identity names.
+
+With no session, a null `userId` makes an account with a NULL email, calls `link(newId)` and answers `{ token, user }`; an existing `userId` signs that account in (401 when it is gone). With a session, a null `userId` links the identity to the caller and answers the caller's session; the caller's own `userId` answers it; another account's is 409 `{ error: "linked to another account" }`, since accounts are never merged. An unknown name is 404.
+
+`registerIdentity` keeps a module-level registry, so registering a name twice from different objects throws naming it; `identityNamed(name)` reads one and `resetIdentities()` clears them for a test.
+
 ## The page
 
 ```js
@@ -47,7 +69,7 @@ if (signedIn.ok) navigate(safeNext(currentRoute.value?.query.next));
 ```
 
 `auth` is a `defineController` literal named `auth`. A view follows `user` and `loaded` with `sync: "auth"`.
-- **Methods:** `requestCode`, `verifyCode`, `signOut`, `updateProfile`, `deleteAccount` and `reload`. Each answers `{ ok } | { error, status }` and never throws; a network failure has status 0.
+- **Methods:** `requestCode`, `verifyCode`, `signInWithIdentity`, `signOut`, `updateProfile`, `deleteAccount` and `reload`. Each answers `{ ok } | { error, status }` and never throws; a network failure has status 0. `signInWithIdentity(name, body)` also answers `{ pending: true }` for a waiting device.
 - **The token** lives in `localStorage`, and `configureApi({ token })` hands it to every `api` store request.
 - **A 401** on a call that carried the session signs out.
 - **`safeNext(target)`** is the page's mirror of `@lightstart/server`'s `safeRedirect` for a path. It refuses a protocol-relative target, a backslash, a control character anywhere, an absolute URL and leading whitespace, and answers `/` instead.
@@ -56,5 +78,4 @@ if (signedIn.ok) navigate(safeNext(currentRoute.value?.query.next));
 
 - A per-address limit on code requests exists, but no per-IP limit across addresses.
 - OAuth (Google, GitHub).
-- Identities an app adds (a WhatsApp code).
 - Read-only admin sessions.
