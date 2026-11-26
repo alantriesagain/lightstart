@@ -33,6 +33,8 @@ packages:
   - 'packages/moderation'
   - 'packages/whatsapp'
   - 'packages/billing'
+  - 'packages/pix'
+  - 'packages/play-billing'
   - 'packages/maps'
   - 'packages/qr'
   - 'packages/camera'

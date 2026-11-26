@@ -1,0 +1,11 @@
+{
+  "play-checkout": {
+    "module": "page/checkout.ts",
+    "style": null,
+    "extends": null,
+    "uses": [
+      "lc-button"
+    ],
+    "loads": []
+  }
+}
