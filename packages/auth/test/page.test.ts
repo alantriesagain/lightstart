@@ -105,6 +105,23 @@ const fakeFetch = ((input: RequestInfo | URL, init?: RequestInit): Promise<Respo
     return Promise.resolve(respond({ token, user }));
   }
 
+  if (path === "/api/auth/providers" && method === "GET") {
+    return Promise.resolve(respond({ providers: ["github", "google"] }));
+  }
+
+  if (path === "/api/auth/oauth/redeem" && method === "POST") {
+    if (body["code"] !== "good") return Promise.resolve(respond({ error: "invalid or expired code" }, 401));
+    const email = "oauth@example.com";
+    let user = users.get(email);
+    if (user === undefined) {
+      user = { id: "u-oauth", email, name: "OAuth Person", admin: false };
+      users.set(email, user);
+    }
+    const token = `token-${email}`;
+    tokens.set(token, email);
+    return Promise.resolve(respond({ token, user }));
+  }
+
   if (path === "/api/auth/me" && method === "GET") {
     const current = session();
     if (current === null) return Promise.resolve(respond({ error: "Unauthorized" }, 401));
@@ -220,6 +237,61 @@ const main = async (): Promise<void> => {
     eq(`safeNext refuses ${JSON.stringify(target)}`, safeNext(target), "/");
   eq("safeNext keeps a path with a query and hash", safeNext("/x?y#z"), "/x?y#z");
   eq("safeNext keeps the root", safeNext("/"), "/");
+
+  const providers = await auth.providers();
+  ok("providers answers ok", providers.ok === true);
+  if (providers.ok) eq("providers lists what the server knows", JSON.stringify(providers.providers), JSON.stringify(["github", "google"]));
+
+  const globals = globalThis as unknown as {
+    location?: { href: string; hash: string; pathname: string; search: string };
+    history?: { replaceState: (data: unknown, title: string, url: string) => void };
+  };
+  const previousLocation = globals.location;
+  const previousHistory = globals.history;
+  const browser = { href: "", hash: "", pathname: "/app", search: "?a=1" };
+  globals.location = browser;
+  globals.history = {
+    replaceState(_data: unknown, _title: string, url: string): void {
+      const hashAt = url.indexOf("#");
+      browser.hash = hashAt < 0 ? "" : url.slice(hashAt);
+      const rest = hashAt < 0 ? url : url.slice(0, hashAt);
+      const queryAt = rest.indexOf("?");
+      browser.pathname = queryAt < 0 ? rest : rest.slice(0, queryAt);
+      browser.search = queryAt < 0 ? "" : rest.slice(queryAt);
+    },
+  };
+
+  auth.signInWithOAuth("google", "//evil.example");
+  eq("signInWithOAuth sends the page to the start route", browser.href, "/api/auth/oauth/google/start?next=%2F");
+  auth.signInWithOAuth("github", "/after?x=1");
+  eq("signInWithOAuth keeps a safe next", browser.href, "/api/auth/oauth/github/start?next=%2Fafter%3Fx%3D1");
+
+  browser.hash = "#auth_code=good";
+  const completed = await auth.completeOAuth();
+  ok("completeOAuth with a code signs in", completed.ok === true);
+  if (completed.ok) eq("completeOAuth answers the user", text(completed.user.email), "oauth@example.com");
+  eq("completeOAuth drops the fragment", browser.hash, "");
+  eq("completeOAuth stores the token", text(readToken()), "token-oauth@example.com");
+  eq("completeOAuth clears the error", text(auth.oauthError), "null");
+
+  browser.hash = "#auth_error=denied";
+  const refused = await auth.completeOAuth();
+  ok("completeOAuth with an error answers it", "error" in refused);
+  if ("error" in refused) {
+    eq("with the provider's code", refused.error, "denied");
+    eqn("and status 0", refused.status, 0);
+  }
+  eq("completeOAuth drops the error fragment", browser.hash, "");
+  eq("and keeps it in oauthError", text(auth.oauthError), "denied");
+
+  browser.hash = "";
+  const nothing = await auth.completeOAuth();
+  ok("completeOAuth with nothing answers none", nothing.ok === false && "none" in nothing && nothing.none === true);
+
+  if (previousLocation === undefined) delete globals.location;
+  else globals.location = previousLocation;
+  if (previousHistory === undefined) delete globals.history;
+  else globals.history = previousHistory;
 
   await auth.dispose();
   done();

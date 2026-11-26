@@ -1,7 +1,7 @@
 {
   "name": "@lightstart/auth",
   "version": "0.1.0",
-  "description": "Sign-in by email code with a JWT session: /api/auth on @lightstart/api's server, and the page's auth controller.",
+  "description": "Sign-in by email code, Google or GitHub with a JWT session: /api/auth on @lightstart/api's server, and the page's auth controller.",
   "type": "module",
   "license": "MIT",
   "homepage": "https://lightstart.dev",
@@ -17,6 +17,9 @@
     "auth",
     "jwt",
     "otp",
+    "oauth",
+    "google",
+    "github",
     "sign-in",
     "light"
   ],

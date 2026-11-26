@@ -11,6 +11,7 @@ import { defineEndpoint, type Caller, type D1Like, type Endpoint } from "@lights
 import { identityNamed } from "./identities.ts";
 import { signToken } from "./jwt.ts";
 import type { Mailer } from "./mailer.ts";
+import { oauthEndpoints } from "./oauth.ts";
 
 /** The life of a sign-in code, in milliseconds: ten minutes. */
 export const CODE_TTL_MS = 10 * 60 * 1000;
@@ -148,12 +149,12 @@ const tokenOf = async (user: Row, env: Record<string, unknown>): Promise<string>
   return signToken(payload, secretOf(env));
 };
 
-const findOrCreateUser = async (db: D1Like, email: string): Promise<Row> => {
+const findOrCreateUser = async (db: D1Like, email: string, name?: string): Promise<Row> => {
   const existing = await db.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
   if (existing !== null) return existing;
   const id = crypto.randomUUID();
-  const name = email.split("@")[0] ?? email;
-  await db.prepare("INSERT INTO users (id, email, name, admin) VALUES (?, ?, ?, ?)").bind(id, email, name, 0).run();
+  const accountName = name !== undefined && name !== "" ? name : (email.split("@")[0] ?? email);
+  await db.prepare("INSERT INTO users (id, email, name, admin) VALUES (?, ?, ?, ?)").bind(id, email, accountName, 0).run();
   const created = await userRowOf(db, id);
   if (created === null) throw new HttpError(500, "could not create the account");
   return created;
@@ -345,6 +346,8 @@ const remove = (options: AuthOptions) => async (request: {
   if (caller === null) throw new HttpError(401, "authentication required");
   const deleted = hooksFor(options.hooks)?.onUserDeleted;
   if (deleted !== undefined) await deleted(caller.id, request.db, request.env);
+  await request.db.prepare("DELETE FROM oauth_accounts WHERE user_id = ?").bind(caller.id).run();
+  await request.db.prepare("DELETE FROM auth_handoffs WHERE user_id = ?").bind(caller.id).run();
   await request.db.prepare("DELETE FROM users WHERE id = ?").bind(caller.id).run();
   return { ok: true };
 };
@@ -352,8 +355,9 @@ const remove = (options: AuthOptions) => async (request: {
 /**
  * The auth routes, as definitions to hand `serverApp`'s `endpoints`:
  * `POST /api/auth/otp`, `POST /api/auth/verify`, the public
- * `POST /identity/:name` an identity answers, and the signed-in `GET /me`,
- * `PATCH /profile`, `POST /refresh` and `POST /delete`.
+ * `POST /identity/:name` an identity answers, the public OAuth sign-in
+ * routes, and the signed-in `GET /me`, `PATCH /profile`, `POST /refresh` and
+ * `POST /delete`.
  */
 export const authEndpoints = (options: AuthOptions): Endpoint[] => [
   defineEndpoint({ path: "/api/auth/otp", method: "POST", access: "public", handler: requestCode(options) }),
@@ -363,4 +367,14 @@ export const authEndpoints = (options: AuthOptions): Endpoint[] => [
   defineEndpoint({ path: "/api/auth/profile", method: "PATCH", access: "auth", handler: profile(options) }),
   defineEndpoint({ path: "/api/auth/refresh", method: "POST", access: "auth", handler: refresh(options) }),
   defineEndpoint({ path: "/api/auth/delete", method: "POST", access: "auth", handler: remove(options) }),
+  ...oauthEndpoints({
+    ...(options.now === undefined ? {} : { now: options.now }),
+    async session(userId, db, env) {
+      const user = await userRowOf(db, userId);
+      if (user === null) return null;
+      const answer = await sessionOf(user, db, env, hooksFor(options.hooks));
+      return { token: String(answer["token"]), user: answer["user"] as Row };
+    },
+    createUser: findOrCreateUser,
+  }),
 ];

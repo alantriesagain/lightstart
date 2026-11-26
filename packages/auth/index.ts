@@ -1,6 +1,6 @@
 /**
- * @file @lightstart/auth: sign-in by a code mailed to an address, and a JWT
- * session. `./server` answers `/api/auth/*` and resolves the caller
+ * @file @lightstart/auth: sign-in by a code mailed to an address, Google or
+ * GitHub, and a JWT session. `./server` answers `/api/auth/*` and resolves the caller
  * `@lightstart/api`'s server takes; `./page` is the `auth` controller.
  */
 

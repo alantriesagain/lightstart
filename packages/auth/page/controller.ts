@@ -11,6 +11,7 @@
 import { defineController } from "@lightstart/light/controller";
 import { configureApi } from "@lightstart/api/page";
 import type { AuthUser } from "../server/types.ts";
+import { safeNext } from "./next.ts";
 import { authFetch, authPrefix, readToken, writeToken } from "./session.ts";
 
 /** Why a call failed: the server's message, and its status (0 for a network failure). */
@@ -25,6 +26,9 @@ export type AuthResult<T extends object = Record<string, unknown>> = ({ ok: true
 
 /** What signing in with an identity answers: a device still waiting, a session, or why it failed. */
 export type IdentityResult = { pending: true } | { ok: true; user: AuthUser } | AuthError;
+
+/** What completing an OAuth redirect answers: the session, an error fragment, or no fragment to handle. */
+export type OAuthResult = { ok: true; user: AuthUser } | { ok: false; none: true } | AuthError;
 
 type Outcome = ({ ok: true; body: unknown; token: string | null }) | AuthError;
 
@@ -73,12 +77,14 @@ const auth = defineController({
   props: {
     user: null as AuthUser | null,
     loaded: false,
+    oauthError: null as string | null,
   },
 
   async connected() {
     configureApi({ token: () => readToken() });
     const token = readToken();
     if (token !== null && token !== "") await this.reload();
+    await this.completeOAuth();
     this.loaded = true;
   },
 
@@ -143,6 +149,80 @@ const auth = defineController({
     writeToken(token);
     this.user = user;
     return { ok: true, user };
+  },
+
+  /** The OAuth providers this deployment has configured, sorted. */
+  async providers(): Promise<{ ok: true; providers: string[] } | AuthError> {
+    const result = await this._send("GET", "/providers");
+    if (!result.ok) return result;
+    const record = isRecord(result.body) ? result.body : {};
+    const list = record["providers"];
+    if (!Array.isArray(list)) return { error: "The server answered no providers", status: 502 };
+    const providers: string[] = [];
+    for (const entry of list) {
+      if (typeof entry !== "string") return { error: "The server answered no providers", status: 502 };
+      providers.push(entry);
+    }
+    return { ok: true, providers };
+  },
+
+  /**
+   * Send the page to `provider`'s authorize endpoint, to come back at its
+   * callback with `next` (passed through `safeNext`) as the path to land on
+   * after sign-in.
+   */
+  signInWithOAuth(provider: string, next?: string): void {
+    if (typeof location === "undefined") return;
+    location.href = `${urlOf(`/oauth/${encodeURIComponent(provider)}/start`)}?next=${encodeURIComponent(safeNext(next))}`;
+  },
+
+  /**
+   * Complete an OAuth redirect: with `auth_code` in the fragment, drop the
+   * fragment, redeem the hand-off and store the session; with `auth_error`,
+   * drop it and answer that code with status 0; with neither, answer
+   * `{ ok: false, none: true }`. The last failure is kept in `oauthError`.
+   */
+  async completeOAuth(): Promise<OAuthResult> {
+    if (typeof location === "undefined" || typeof location.hash !== "string") return { ok: false, none: true };
+    const hash = location.hash;
+    if (hash === "" || hash === "#") return { ok: false, none: true };
+    const params = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+    const code = params.get("auth_code");
+    const failure = params.get("auth_error");
+    if (code === null && failure === null) return { ok: false, none: true };
+
+    this._dropFragment();
+    if (failure !== null) {
+      this.oauthError = failure;
+      return { error: failure, status: 0 };
+    }
+    if (code === null || code === "") {
+      this.oauthError = "provider";
+      return { error: "provider", status: 0 };
+    }
+
+    this.oauthError = null;
+    const result = await this._send("POST", "/oauth/redeem", { body: { code } });
+    if (!result.ok) {
+      this.oauthError = result.error;
+      return result;
+    }
+    const record = isRecord(result.body) ? result.body : {};
+    const token = typeof record["token"] === "string" ? record["token"] : null;
+    const user = userOf(record);
+    if (token === null || user === null) {
+      this.oauthError = "The server answered no session";
+      return { error: "The server answered no session", status: 502 };
+    }
+    writeToken(token);
+    this.user = user;
+    return { ok: true, user };
+  },
+
+  _dropFragment(): void {
+    if (typeof location === "undefined" || typeof history === "undefined") return;
+    const rest = `${location.pathname}${location.search}`;
+    history.replaceState(null, "", rest === "" ? "/" : rest);
   },
 
   /** Drop the token and the user; the next call carries no session. */
