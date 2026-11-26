@@ -1,0 +1,66 @@
+{
+  "name": "@lightstart/pix",
+  "version": "0.1.0",
+  "description": "Paying with Pix: the BR Code a payer scans, as text and a QR, and the checkout view, as a @lightstart/billing method.",
+  "type": "module",
+  "types": "./index.ts",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/pix"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "pix",
+    "brcode",
+    "payments",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "types.ts",
+    "lib/",
+    "server/",
+    "views/",
+    "locales/",
+    "tags.json",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./server": "./server/index.ts",
+    "./*": "./*"
+  },
+  "light": {
+    "server": "./server/contribute.ts",
+    "tags": "tags.json",
+    "locales": true
+  },
+  "dependencies": {
+    "@lightstart/api": "workspace:*",
+    "@lightstart/app": "workspace:*",
+    "@lightstart/auth": "workspace:*",
+    "@lightstart/billing": "workspace:*",
+    "@lightstart/components": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/qr": "workspace:*",
+    "@lightstart/router": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/server": "workspace:*",
+    "@lightstart/sqlite": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}

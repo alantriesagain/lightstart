@@ -1,0 +1,14 @@
+{
+  "pix-checkout": {
+    "module": "views/checkout.ts",
+    "style": null,
+    "extends": null,
+    "uses": [
+      "lc-input",
+      "lc-button",
+      "lc-clipboard",
+      "qr-code"
+    ],
+    "loads": []
+  }
+}

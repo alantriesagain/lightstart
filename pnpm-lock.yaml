@@ -234,7 +234,13 @@ importers:
       '@lightstart/light':
         specifier: workspace:*
         version: link:../light
+      '@lightstart/router':
+        specifier: workspace:*
+        version: link:../router
     devDependencies:
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
       '@lightstart/sqlite':
         specifier: workspace:*
         version: link:../sqlite
@@ -820,6 +826,86 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  packages/pix:
+    dependencies:
+      '@lightstart/api':
+        specifier: workspace:*
+        version: link:../api
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@lightstart/billing':
+        specifier: workspace:*
+        version: link:../billing
+      '@lightstart/components':
+        specifier: workspace:*
+        version: link:../components
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/qr':
+        specifier: workspace:*
+        version: link:../qr
+      '@lightstart/router':
+        specifier: workspace:*
+        version: link:../router
+    devDependencies:
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
+      '@lightstart/sqlite':
+        specifier: workspace:*
+        version: link:../sqlite
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/play-billing:
+    dependencies:
+      '@lightstart/api':
+        specifier: workspace:*
+        version: link:../api
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@lightstart/billing':
+        specifier: workspace:*
+        version: link:../billing
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/mobile':
+        specifier: workspace:*
+        version: link:../mobile
+    devDependencies:
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
+      '@lightstart/sqlite':
+        specifier: workspace:*
+        version: link:../sqlite
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/plugins:
     dependencies:
       '@lightstart/lib':
@@ -1094,6 +1180,9 @@ importers:
       '@lightstart/app':
         specifier: workspace:*
         version: link:../app
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
       '@lightstart/sqlite':
         specifier: workspace:*
         version: link:../sqlite
