@@ -62,7 +62,7 @@ The identity is registered when the package's server contribution module is impo
 
 ## Telling the app
 
-The webhook calls every hook registered with `registerWhatsappHook` once per confirmed code, after it has written the code's outcome:
+The webhook calls every hook registered with `registerWhatsappHook` once per confirmed code, after it has written the code's outcome. An app registers it in its `src/server.js`:
 
 ```js
 import { registerWhatsappHook } from "@lightstart/whatsapp/server";

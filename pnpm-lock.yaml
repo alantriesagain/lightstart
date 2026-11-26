@@ -220,6 +220,34 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  packages/billing:
+    dependencies:
+      '@lightstart/api':
+        specifier: workspace:*
+        version: link:../api
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+    devDependencies:
+      '@lightstart/sqlite':
+        specifier: workspace:*
+        version: link:../sqlite
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/build:
     dependencies:
       '@lightstart/cli':

@@ -33,6 +33,44 @@ export interface AuthHooks {
   sessionFields?(id: string, db: D1Like, env: Record<string, unknown>): unknown | Promise<unknown>;
 }
 
+const registered: AuthHooks[] = [];
+
+/**
+ * Add hooks every auth route runs beside the ones `authEndpoints` was built
+ * with: an app's `src/server.js` registers them (`onUserDeleted` to forget a
+ * person's rows in other packages, `sessionFields` to add to the session).
+ * Each `onUserDeleted` runs in order; `sessionFields` merge, a later one
+ * winning a field.
+ */
+export const registerAuthHooks = (hooks: AuthHooks): void => {
+  registered.push(hooks);
+};
+
+/** Forget every registered hook, for tests. */
+export const resetAuthHooks = (): void => {
+  registered.length = 0;
+};
+
+/** `own` and every registered hook, as one set. */
+const hooksFor = (own: AuthHooks | undefined): AuthHooks | undefined => {
+  const all = own === undefined ? [...registered] : [own, ...registered];
+  if (all.length === 0) return undefined;
+  return {
+    async onUserDeleted(id, db, env) {
+      for (const hooks of all) if (hooks.onUserDeleted !== undefined) await hooks.onUserDeleted(id, db, env);
+    },
+    async sessionFields(id, db, env) {
+      let merged: Record<string, unknown> | undefined;
+      for (const hooks of all) {
+        if (hooks.sessionFields === undefined) continue;
+        const extra: unknown = await hooks.sessionFields(id, db, env);
+        if (extra !== null && typeof extra === "object" && !Array.isArray(extra)) merged = { ...(merged ?? {}), ...(extra as Record<string, unknown>) };
+      }
+      return merged;
+    },
+  };
+};
+
 /** How `authEndpoints` is built. */
 export interface AuthOptions {
   /** Sends the code; `resendMailer` or `consoleMailer`. */
@@ -191,7 +229,7 @@ const verifyCode = (options: AuthOptions) => async (request: {
 
   await clearCode(request.db, email);
   const user = await findOrCreateUser(request.db, email);
-  return { token: await tokenOf(user, request.env), user: await answerUser(user, request.db, request.env, options.hooks) };
+  return { token: await tokenOf(user, request.env), user: await answerUser(user, request.db, request.env, hooksFor(options.hooks)) };
 };
 
 const sessionOf = async (
@@ -228,7 +266,7 @@ const identity = (options: AuthOptions) => async (request: {
     if (answer.userId === null) await answer.link(caller.id);
     const user = await userRowOf(request.db, caller.id);
     if (user === null) throw new HttpError(401, "authentication required");
-    return sessionOf(user, request.db, request.env, options.hooks);
+    return sessionOf(user, request.db, request.env, hooksFor(options.hooks));
   }
 
   if (answer.userId === null) {
@@ -238,12 +276,12 @@ const identity = (options: AuthOptions) => async (request: {
     await answer.link(id);
     const created = await userRowOf(request.db, id);
     if (created === null) throw new HttpError(500, "could not create the account");
-    return sessionOf(created, request.db, request.env, options.hooks);
+    return sessionOf(created, request.db, request.env, hooksFor(options.hooks));
   }
 
   const user = await userRowOf(request.db, answer.userId);
   if (user === null) throw new HttpError(401, "authentication required");
-  return sessionOf(user, request.db, request.env, options.hooks);
+  return sessionOf(user, request.db, request.env, hooksFor(options.hooks));
 };
 
 const me = (options: AuthOptions) => async (request: {
@@ -255,7 +293,7 @@ const me = (options: AuthOptions) => async (request: {
   if (caller === null) throw new HttpError(401, "authentication required");
   const user = await userRowOf(request.db, caller.id);
   if (user === null) throw new HttpError(401, "authentication required");
-  return { user: await answerUser(user, request.db, request.env, options.hooks) };
+  return { user: await answerUser(user, request.db, request.env, hooksFor(options.hooks)) };
 };
 
 const profile = (options: AuthOptions) => async (request: {
@@ -283,7 +321,7 @@ const profile = (options: AuthOptions) => async (request: {
   }
   const updated = await userRowOf(request.db, caller.id);
   if (updated === null) throw new HttpError(401, "authentication required");
-  return { user: await answerUser(updated, request.db, request.env, options.hooks) };
+  return { user: await answerUser(updated, request.db, request.env, hooksFor(options.hooks)) };
 };
 
 const refresh = (options: AuthOptions) => async (request: {
@@ -295,7 +333,7 @@ const refresh = (options: AuthOptions) => async (request: {
   if (caller === null) throw new HttpError(401, "authentication required");
   const user = await userRowOf(request.db, caller.id);
   if (user === null) throw new HttpError(401, "authentication required");
-  return { token: await tokenOf(user, request.env), user: await answerUser(user, request.db, request.env, options.hooks) };
+  return { token: await tokenOf(user, request.env), user: await answerUser(user, request.db, request.env, hooksFor(options.hooks)) };
 };
 
 const remove = (options: AuthOptions) => async (request: {
@@ -305,7 +343,8 @@ const remove = (options: AuthOptions) => async (request: {
 }): Promise<Row> => {
   const caller = request.caller;
   if (caller === null) throw new HttpError(401, "authentication required");
-  if (options.hooks?.onUserDeleted !== undefined) await options.hooks.onUserDeleted(caller.id, request.db, request.env);
+  const deleted = hooksFor(options.hooks)?.onUserDeleted;
+  if (deleted !== undefined) await deleted(caller.id, request.db, request.env);
   await request.db.prepare("DELETE FROM users WHERE id = ?").bind(caller.id).run();
   return { ok: true };
 };

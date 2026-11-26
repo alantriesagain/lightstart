@@ -1,6 +1,8 @@
 /**
  * @file Write an app's `.light/server.ts`, the one entry `light serve` and the
- * deploy share. It imports each dependency's server contribution, each
+ * deploy share. It imports each dependency's server contribution, then the
+ * app's own server setup (`src/server.ts` or `.js`, where it registers what
+ * packages read: billing's plans, auth's hooks, a WhatsApp hook), then each
  * server model's module and each `src/endpoints/*.{ts,js}` default export,
  * and exports `models`, `endpoints` and `createServer({ db, env, caller? })`,
  * which merges the contributions (their models and endpoints first, the app's
@@ -27,9 +29,18 @@ export const endpointFiles = (project: string): string[] => {
     .map((name) => join(dir, name));
 };
 
+/** The app's server setup, `src/server.ts` or `src/server.js`, or null; both is an error naming both. */
+export const serverSetupOf = (project: string): string | null => {
+  const ts = join(project, "src", "server.ts");
+  const js = join(project, "src", "server.js");
+  if (existsSync(ts) && existsSync(js)) throw new Error("The app has both src/server.ts and src/server.js; keep one of them");
+  if (existsSync(ts)) return ts;
+  return existsSync(js) ? js : null;
+};
+
 const specifierFor = (from: string, to: string): string => relative(from, to).split(sep).join("/");
 
-const sourceOf = (project: string, models: readonly { name: string; file: string }[], endpoints: readonly string[], contributions: readonly ContributionEntry[]): string => {
+const sourceOf = (project: string, models: readonly { name: string; file: string }[], endpoints: readonly string[], contributions: readonly ContributionEntry[], setup: string | null): string => {
   const dir = join(project, ".light");
   const lines: string[] = [];
   lines.push("/**");
@@ -40,6 +51,7 @@ const sourceOf = (project: string, models: readonly { name: string; file: string
   lines.push('import type { Caller, DatabaseSource, Endpoint, ServerContribution } from "@lightstart/api/server";');
   lines.push('import type { ModelSchema } from "@lightstart/light/model/types.ts";');
   contributions.forEach((entry, index) => lines.push(`import contribution${String(index)} from ${JSON.stringify(entry.specifier)};`));
+  if (setup !== null) lines.push(`import ${JSON.stringify(specifierFor(dir, setup))};`);
   models.forEach((model, index) => lines.push(`import model${String(index)} from ${JSON.stringify(specifierFor(dir, model.file))};`));
   endpoints.forEach((file, index) => lines.push(`import endpoint${String(index)} from ${JSON.stringify(specifierFor(dir, file))};`));
   lines.push("");
@@ -96,7 +108,7 @@ export const writeServerEntry = async (project: string): Promise<boolean> => {
   const entry = join(dir, "server.ts");
   const models = await serverModelEntries(project);
   const endpoints = endpointFiles(project);
-  const content = sourceOf(project, models, endpoints, contributionEntries(project));
+  const content = sourceOf(project, models, endpoints, contributionEntries(project), serverSetupOf(project));
   const before = existsSync(entry) ? readFileSync(entry, "utf8") : null;
   if (before === content) return false;
   mkdirSync(dirname(entry), { recursive: true });

@@ -37,6 +37,7 @@ const main = async (): Promise<void> => {
     writeFileSync(join(project, "package.json"), JSON.stringify({ name: "tiny", type: "module", dependencies: { "@lightstart/api": "workspace:*", "@lightstart/auth": "workspace:*" } }));
     writeFileSync(join(project, "src", "app.js"), 'import { defineApp } from "@lightstart/app";\nexport default defineApp({ name: "tiny", host: "web", stores: { server: { adapter: "api" } } });\n');
     writeFileSync(join(project, "src", "models", "note.js"), 'import { defineModel } from "@lightstart/light/model";\nexport default defineModel("note", { text: { $type: "string" }, owner: { $type: "string" }, $store: "server", $permissions: { read: "owner", create: "owner", ownerField: "owner" } });\n');
+    writeFileSync(join(project, "src", "server.js"), 'import { registerAuthHooks } from "@lightstart/auth/server";\nregisterAuthHooks({ onUserDeleted: (id) => { globalThis.__forgotten = id; }, sessionFields: () => ({ plan: "free" }) });\n');
     writeFileSync(join(project, "src", "endpoints", "whoami.js"), 'import { defineEndpoint } from "@lightstart/api/server";\nexport default defineEndpoint({ path: "/api/whoami", access: "auth", handler: ({ caller }) => ({ id: caller.id }) });\n');
 
     const models = await serverModels(project);
@@ -45,6 +46,7 @@ const main = async (): Promise<void> => {
     await writeServerEntry(project);
     const source = readFileSync(join(project, ".light", "server.ts"), "utf8");
     ok("the entry imports auth's contribution", source.includes('from "@lightstart/auth/server/contribute.ts"'));
+    ok("and the app's server setup after it", source.indexOf('import "../src/server.js";') > source.indexOf("@lightstart/auth/server/contribute.ts"));
 
     const entry = (await import(`${pathToFileURL(join(project, ".light", "server.ts")).href}?mtime=${String(Date.now())}`)) as Entry;
     const db = Database.open(":memory:");
@@ -63,7 +65,8 @@ const main = async (): Promise<void> => {
     ok("with no mail key the code goes to the console mailer", code.length === 6);
     const verified = await post("/api/auth/verify", { email: "me@example.com", code });
     eqn("the code signs in", verified.status, 200);
-    const token = String(((await verified.json()) as Row)["token"]);
+    const session = (await verified.json()) as Row;
+    const token = String(session["token"]);
 
     const who = await handle(new Request("http://app.test/api/whoami", { headers: { authorization: `Bearer ${token}` } }));
     eqn("the app's own endpoint sees the session as its caller", who.status, 200);
@@ -71,6 +74,9 @@ const main = async (): Promise<void> => {
     const note = await post("/api/note", { text: "mine" }, token);
     eqn("an owner model takes a signed-in write", note.status, 201);
     ok("stamped with the session's user", String(((await note.json()) as Row)["owner"]) !== "");
+    ok("src/server.js's sessionFields reach the session", (session["user"] as Row)["plan"] === "free");
+    eqn("deleting the account answers", (await post("/api/auth/delete", {}, token)).status, 200);
+    ok("and runs the onUserDeleted src/server.js registered", typeof Reflect.get(globalThis, "__forgotten") === "string");
   } finally {
     console.log = log;
     rmSync(project, { recursive: true, force: true });
