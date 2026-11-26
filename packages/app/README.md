@@ -268,6 +268,30 @@ The generation finds every extension: a dependency whose `package.json` says `"l
 
 `defineApp({ extensions: { off: ["social"] } })` leaves an extension out, as a public build without its signed-in parts does; `openApp(manifest, { extensions: false })` and `openPage` run a suite with none, or `{ extensions: { off } }` without some.
 
+## Profiles
+
+One tree ships more than one build through named profiles. A profile leaves extensions out, so a public build runs without its signed-in parts while a full build keeps them:
+
+```js
+export default defineApp({
+  name: "meetup",
+  host: "web",
+  profiles: { public: { extensions: { off: ["account", "social"] } } },
+});
+```
+
+`light build --profile public` writes the profile into the manifest it generates, and `light serve --profile public` does the same for the dev server, so the run leaves the profile's extensions out beside any `extensions.off` the app declares. A profile the app does not define is an error naming the ones it does. A name is lower-case letters, digits and dashes, starting with a letter; any other name is an error. A build with no `--profile` carries none. The extensions a profile leaves out are still bundled; they just never start.
+
+`currentProfile` is the profile the running manifest carries, or null without one and after the run stops. `runningExtensions` lists the names of the extensions running now in start order, set once they have started, so a view reads it while an extension's own fills and controllers do not; it is empty after the run stops. A view reads it to hide what needs an extension:
+
+```js
+import { runningExtensions } from "@lightstart/app/web";
+
+render() {
+  return runningExtensions.value.includes("account") ? html`<a href="/account">Your account</a>` : html``;
+}
+```
+
 ## The run
 
 One run, the same on every host (`run.ts`):

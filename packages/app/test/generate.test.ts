@@ -352,6 +352,35 @@ const main = async (): Promise<void> => {
     rmSync(jsApp, { recursive: true, force: true });
   }
 
+  const withProfiles = copy();
+  try {
+    writeFileSync(join(withProfiles, "src", "app.ts"), 'import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web", host: "web", url: "https://fixture.example", layout: "app-shell-layout", profiles: { public: { extensions: { off: ["social"] } } } });\n');
+    const profiled = await generate(withProfiles, { profile: "public" });
+    ok("a generation with a profile has an app", profiled !== null);
+    if (profiled === null) return done();
+    const source = readFileSync(profiled.manifest, "utf8");
+    ok("the manifest carries the chosen profile", source.includes('  profile: "public",'));
+
+    const plain = await generate(withProfiles);
+    ok("a generation with no profile changes the manifest", plain !== null && plain.changed);
+    ok("a generation with no profile writes no profile", plain !== null && !readFileSync(plain.manifest, "utf8").includes("profile:"));
+
+    const unknown = await generate(withProfiles, { profile: "private" }).then(
+      () => "",
+      (error: unknown) => (error instanceof Error ? error.message : String(error)),
+    );
+    ok("an unknown profile fails naming it and the ones it defines", unknown === 'The app has no profile "private"; it defines public');
+
+    writeFileSync(join(withProfiles, "src", "app.ts"), 'import { defineApp } from "@lightstart/app";\n\nexport default defineApp({ name: "fixture-web", host: "web" });\n');
+    const none = await generate(withProfiles, { profile: "private" }).then(
+      () => "",
+      (error: unknown) => (error instanceof Error ? error.message : String(error)),
+    );
+    ok("an app with no profiles defines none", none === 'The app has no profile "private"; it defines none');
+  } finally {
+    rmSync(withProfiles, { recursive: true, force: true });
+  }
+
   const withExtensions = copy();
   try {
     addExtensionPackage(withExtensions, "@acme/social", "extension.js");

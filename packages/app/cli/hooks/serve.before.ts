@@ -6,7 +6,8 @@
 import type { CommandContext } from "@lightstart/cli";
 import type { ServeBeforePayload } from "@lightstart/dev/hooks";
 import { generate } from "../../node/generate.ts";
+import { serveProfile } from "../serve-profile.ts";
 
 export default async function (ctx: CommandContext, _payload: ServeBeforePayload): Promise<void> {
-  await generate(ctx.projectDir);
+  await generate(ctx.projectDir, { profile: serveProfile() });
 }

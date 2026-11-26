@@ -41,7 +41,7 @@ import { MemoryAdapterType, AdapterType } from "../stores.ts";
 import { Slot } from "../slots.ts";
 import type { WebArgsFeature, WebStoresFeature, WebTransitionFeature, WebTransitionPort, WebUtilitiesFeature } from "./features.ts";
 
-export { currentParams, currentRoute, currentView, href, navigate, url } from "../run.ts";
+export { currentParams, currentProfile, currentRoute, currentView, href, navigate, runningExtensions, url } from "../run.ts";
 
 /** A running app: `stop()` takes the view down, disposes its controllers, stops following the routes and closes its stores. */
 export interface AppHandle {

@@ -183,13 +183,15 @@ export interface AppInfo {
   utilities: boolean;
   /** Whether the app declares any arguments. */
   args: boolean;
+  /** The names of the app's build profiles, sorted; empty when it declares none. */
+  profiles: string[];
 }
 
 /** Read `src/app.ts` without its views: the app module imports only `@lightstart/app`. */
 export const infoOf = async (app: string): Promise<AppInfo> => {
   try {
     const module = await import(`${pathToFileURL(app).href}?mtime=${String(Date.now())}`);
-    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; locales?: unknown; icons?: unknown; url?: unknown; base?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; utilities?: unknown; args?: unknown; argsSchema?: unknown } }).default;
+    const config = (module as { default?: { host?: unknown; root?: unknown; locale?: unknown; locales?: unknown; icons?: unknown; url?: unknown; base?: unknown; worker?: unknown; stores?: unknown; transitions?: unknown; utilities?: unknown; args?: unknown; argsSchema?: unknown; profiles?: unknown } }).default;
     const locale = config !== undefined && typeof config.locale === "string" && config.locale.length > 0 ? config.locale : "en";
     const declared = config !== undefined && Array.isArray(config.locales) ? config.locales.filter((item): item is string => typeof item === "string" && item.length > 0) : [];
     const locales = declared.length > 0 ? declared : [locale];
@@ -228,9 +230,10 @@ export const infoOf = async (app: string): Promise<AppInfo> => {
       transitions: config !== undefined && config.transitions === true,
       utilities: config !== undefined && config.utilities === true,
       args: config !== undefined && isRecord(config.argsSchema ?? config.args) && Object.keys(config.argsSchema ?? config.args ?? {}).length > 0,
+      profiles: config !== undefined && isRecord(config.profiles) ? Object.keys(config.profiles).sort() : [],
     };
   } catch {
-    return { host: "web", root: "app-root", locale: "en", locales: ["en"], icons: "lucide", url: undefined, base: "", worker: false, indexeddb: false, adapterNames: [], adapterFunction: false, contentStores: [], transitions: false, utilities: false, args: false };
+    return { host: "web", root: "app-root", locale: "en", locales: ["en"], icons: "lucide", url: undefined, base: "", worker: false, indexeddb: false, adapterNames: [], adapterFunction: false, contentStores: [], transitions: false, utilities: false, args: false, profiles: [] };
   }
 };
 
@@ -245,7 +248,7 @@ export const routesOf = async (routes: string): Promise<Record<string, unknown> 
   }
 };
 
-const manifestSource = (project: string, app: string, extension: ".ts" | ".js", models: string[], content: string | null, seeds: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[], extensions: readonly string[]): string => {
+const manifestSource = (project: string, app: string, extension: ".ts" | ".js", models: string[], content: string | null, seeds: string[], controllers: string[], views: string[], routes: string | null, rootFile: string | null, appImports: readonly string[], extensions: readonly string[], profile: string | undefined): string => {
   const lines: string[] = [];
   if (extension === ".ts") lines.push('import type { AppManifest } from "@lightstart/app/manifest.ts";');
   lines.push(`import app from "${specifierFor(project, app)}";`);
@@ -264,6 +267,7 @@ const manifestSource = (project: string, app: string, extension: ".ts" | ".js", 
   lines.push("");
   lines.push(extension === ".ts" ? "const manifest: AppManifest = {" : "const manifest = {");
   lines.push("  app,");
+  if (profile !== undefined) lines.push(`  profile: ${JSON.stringify(profile)},`);
   if (rootFile !== null) lines.push("  rootView,");
   if (extensions.length > 0) lines.push(`  extensions: [${extensions.map((_specifier, index) => `extension${String(index)}`).join(", ")}],`);
   if (models.length === 0) lines.push("  models: [],");
@@ -606,6 +610,8 @@ export const routesPathOf = (project: string): string | null => {
 export interface GenerateOptions {
   /** Whether to read `src/seed.dev` (or `.js`); `true` when absent. */
   dev?: boolean;
+  /** The named profile (`defineApp({ profiles })`) the manifest carries; none when absent. */
+  profile?: string;
 }
 
 /** Generate the project's `.light` manifest and entry; null when there is no `src/app.ts` or `src/app.js`. */
@@ -622,6 +628,11 @@ export const generate = async (projectPath: string, options: GenerateOptions = {
   const routes = routesPathOf(project);
 
   const info = await infoOf(app);
+  const profile = options.profile === undefined || options.profile === "" ? undefined : options.profile;
+  if (profile !== undefined && !info.profiles.includes(profile)) {
+    const list = info.profiles.join(", ");
+    throw new Error(`The app has no profile "${profile}"; it defines ${list || "none"}`);
+  }
   const extension = info.host === "tui" ? ".ts" : found.extension;
   const dir = join(project, ".light");
   mkdirSync(dir, { recursive: true });
@@ -635,7 +646,7 @@ export const generate = async (projectPath: string, options: GenerateOptions = {
   const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
   const appImports = [...locales.imports, ...prepared.imports];
   const extensions = extensionImports(project, helpers);
-  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, app, extension, models, content.specifier, seeds, controllers, views, routes, rootFile, appImports, extensions));
+  const wroteManifest = writeWhenChanged(manifest, manifestSource(project, app, extension, models, content.specifier, seeds, controllers, views, routes, rootFile, appImports, extensions, profile));
   const written = await part.write(project, dir, main, helpers);
 
   return {

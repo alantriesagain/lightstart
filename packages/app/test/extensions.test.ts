@@ -10,7 +10,7 @@ import { done, eq, ok } from "@lightstart/test/assert.ts";
 import { defineApp } from "../index.ts";
 import type { AppManifest } from "../manifest.ts";
 import { defineExtension } from "../extensions.ts";
-import { currentView, navigate } from "../run.ts";
+import { currentProfile, currentView, navigate, runningExtensions } from "../run.ts";
 import { defineSlot, resetSlotNames } from "../slots.ts";
 import { openApp } from "../test/index.ts";
 
@@ -129,6 +129,30 @@ const main = async (): Promise<void> => {
     route = error instanceof Error ? error.message : String(error);
   }
   ok("a route the app declares is an error naming the extension", route.includes("clash") && route.includes("already declared"));
+
+  const profiled: AppManifest = {
+    ...manifest(),
+    app: defineApp({ name: "extensions", host: "tui", profiles: { public: { extensions: { off: ["social"] } } } }),
+    profile: "public",
+  };
+  const publicRun = await openApp(profiled);
+  eq("a profile leaves its extensions out", ids(tabs.items.value), "you");
+  eq("currentProfile names the running profile", String(currentProfile.value), "public");
+  eq("runningExtensions lists the running names in start order", runningExtensions.value.join(","), "account");
+  await publicRun.stop();
+  eq("currentProfile is null after stop", String(currentProfile.value), "null");
+  eq("runningExtensions is empty after stop", runningExtensions.value.join(","), "");
+
+  const open = await openApp(manifest());
+  eq("a manifest with no profile runs no profile", String(currentProfile.value), "null");
+  eq("runningExtensions lists every extension in start order", runningExtensions.value.join(","), "social,account");
+  await open.stop();
+  eq("runningExtensions is empty after a plain stop", runningExtensions.value.join(","), "");
+
+  ok(
+    "a bad profile name throws",
+    thrown(() => defineApp({ name: "extensions", host: "tui", profiles: { Public: {} } })).includes("profile name"),
+  );
   done();
 };
 

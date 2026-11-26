@@ -9,10 +9,11 @@
 import type { CommandContext } from "@lightstart/cli";
 import type { ServeFileChangedPayload } from "@lightstart/dev/hooks";
 import { generate } from "../../node/generate.ts";
+import { serveProfile } from "../serve-profile.ts";
 
 const watched = (path: string): boolean => path.startsWith("src/") || path.startsWith("content/") || path.startsWith("icons/");
 
 export default async function (ctx: CommandContext, payload: ServeFileChangedPayload): Promise<void> {
   if (!watched(payload.path)) return;
-  await generate(ctx.projectDir);
+  await generate(ctx.projectDir, { profile: serveProfile() });
 }
