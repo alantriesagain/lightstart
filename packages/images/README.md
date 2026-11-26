@@ -46,7 +46,7 @@ The result is a new `File` with the resized bytes and the matching extension.
 `normalizeImages` caps every image in the configured dirs and writes its missing variants. It is idempotent: a metadata pre-scan finds the pending work first, and Chromium only launches when there is some.
 
 ```js
-import { imagesConfig, normalizeImages } from "@lightstart/images";
+import { imagesConfig, normalizeImages } from "@lightstart/images/node";
 
 await normalizeImages({ root, ...(await imagesConfig(root)) });
 ```
@@ -91,6 +91,8 @@ If Playwright is missing, `createResizer()` (and so the command and `normalizeIm
 
 ## API
 
+`@lightstart/images` holds what a page and a Worker share. The node resize and the normalize step are in `@lightstart/images/node`, since they reach Playwright and `node:fs`; a bundle of the main entry never does.
+
 | Export | What it does |
 |---|---|
 | `variantUrl(src, suffix)` | The sibling URL with `_suffix` before the extension, or `""` |
@@ -98,8 +100,8 @@ If Playwright is missing, `createResizer()` (and so the command and `normalizeIm
 | `isVariant(path, suffix)` | Whether a path already names that variant |
 | `imageSize(bytes)` | `{ type, width, height }` for JPEG/PNG/WebP, else `null` |
 | `resizeImage(file, options)` | A resized `File` for an upload (browser) |
-| `createResizer()` | A node resize engine over headless Chromium |
-| `DEFAULTS` | `dirs`, `maxPx`, `maxBytes`, `quality`, `variants` |
-| `imagesConfig(projectDir)` | `light.images` merged over `DEFAULTS` |
-| `scanPending(options)` | Sources that are oversized or miss a variant |
-| `normalizeImages(options)` | Cap and write variants; answers `{ processed, pending? }` |
+| `createResizer()` (`/node`) | A node resize engine over headless Chromium |
+| `DEFAULTS` (`/node`) | `dirs`, `maxPx`, `maxBytes`, `quality`, `variants` |
+| `imagesConfig(projectDir)` (`/node`) | `light.images` merged over `DEFAULTS` |
+| `scanPending(options)` (`/node`) | Sources that are oversized or miss a variant |
+| `normalizeImages(options)` (`/node`) | Cap and write variants; answers `{ processed, pending? }` |
