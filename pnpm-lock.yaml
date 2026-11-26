@@ -694,16 +694,25 @@ importers:
       '@lightstart/auth':
         specifier: workspace:*
         version: link:../auth
+      '@lightstart/components':
+        specifier: workspace:*
+        version: link:../components
       '@lightstart/images':
         specifier: workspace:*
         version: link:../images
       '@lightstart/light':
         specifier: workspace:*
         version: link:../light
+      '@lightstart/router':
+        specifier: workspace:*
+        version: link:../router
       '@lightstart/visitor':
         specifier: workspace:*
         version: link:../visitor
     devDependencies:
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
       '@lightstart/sqlite':
         specifier: workspace:*
         version: link:../sqlite

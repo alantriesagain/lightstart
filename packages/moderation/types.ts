@@ -251,3 +251,46 @@ export interface PendingPhoto {
 
 /** A schema the contribution adds, as a table. */
 export type SubmissionSchema = ModelSchema;
+
+/** One kind of thing the review queue lists, filled into the `queue.kinds` slot. */
+export interface QueueKind {
+  /** The submission kind, such as `avatar` or `place`. */
+  kind: string;
+  /** What the kind is called in the list. */
+  label: string;
+  /** The heading its items are grouped under. */
+  group: string;
+  /** The icon its rows draw. */
+  icon: string;
+  /** The tag drawn as its detail, with `.item` set; the payload is read as fields without one. */
+  detail?: string;
+  /** A row's title, from its record; the payload's name or title when absent. */
+  title?(record: Record<string, unknown>): string;
+  /** A kind its review settles: approval ends it and nothing is published. */
+  terminal?: boolean;
+}
+
+/** A submission as the review queue lists it. */
+export interface QueueItem {
+  id: string;
+  kind: string;
+  status: string;
+  title: string;
+  created: string;
+  userId: string;
+  /** The submission row, with its payload read into an object. */
+  record: Record<string, unknown>;
+}
+
+/** One payload field as the queue draws it: text, an image or JSON. */
+export interface QueuePayloadField {
+  key: string;
+  kind: "text" | "image" | "json";
+  value: string;
+}
+
+/** One heading of the queue and the items under it, newest first. */
+export interface QueueGroup {
+  label: string;
+  items: QueueItem[];
+}
