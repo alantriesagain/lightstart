@@ -8,6 +8,7 @@
 
 export { default as moderationContribution, moderatedOf, moderationEndpoints } from "./contribute.ts";
 export { forgetUser, forgetUserWith } from "./forget.ts";
+export { registerSubmissionKinds, registeredKind, resetSubmissionKinds } from "./kinds.ts";
 export { moderatedModelOf, submissionPolicy } from "./policy.ts";
 export { moderationModels } from "./models.ts";
 export { avatar, queueProviderAvatar, sizedPicture } from "./avatar.ts";

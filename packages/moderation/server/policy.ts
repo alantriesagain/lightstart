@@ -26,6 +26,7 @@
  * A rejection tells the sender nothing, and their row keeps its payload.
  */
 
+import { registeredKind } from "./kinds.ts";
 import { perAddress } from "@lightstart/visitor/server";
 import { buildInsertSQL, buildUpdateSQL } from "@lightstart/light/model/sql-builder";
 
@@ -175,7 +176,7 @@ const takeDown = async (def: SubmissionKind | null | undefined, ctx: SubmissionP
  * The rules for a project's submissions.
  */
 export const submissionPolicy = ({ kinds, moderated = {}, perAddress: addressMax = PER_ADDRESS_MINUTE }: SubmissionPolicyOptions): SubmissionPolicy => {
-  const kindOf = (kind: string): SubmissionKind | null => (Object.hasOwn(kinds, kind) ? kinds[kind] : null);
+  const kindOf = (kind: string): SubmissionKind | null => (Object.hasOwn(kinds, kind) ? (kinds[kind] ?? null) : registeredKind(kind));
 
   /**
    * A newer submission of a `single` kind was just published, so the older

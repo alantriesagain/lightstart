@@ -38,6 +38,10 @@ const main = async (): Promise<void> => {
     writeFileSync(join(project, "package.json"), JSON.stringify({ name: "tiny", type: "module", dependencies: { "@lightstart/api": "workspace:*", "@lightstart/auth": "workspace:*", "@lightstart/moderation": "workspace:*" } }));
     writeFileSync(join(project, "src", "app.js"), 'import { defineApp } from "@lightstart/app";\nexport default defineApp({ name: "tiny", host: "web", stores: { server: { adapter: "api" } } });\n');
     writeFileSync(
+      join(project, "src", "server.js"),
+      'import { registerSubmissionKinds } from "@lightstart/moderation/server";\nregisterSubmissionKinds({ tip: { terminal: true } });\n',
+    );
+    writeFileSync(
       join(project, "src", "models", "place.js"),
       'import { defineModel } from "@lightstart/light/model";\nexport default defineModel("place", { name: { $type: "string" }, provenance: { $type: "array" }, $moderated: { edit: true }, $store: "server", $permissions: { read: "public", create: "none", write: "none", delete: "none" } });\n',
     );
@@ -128,6 +132,9 @@ const main = async (): Promise<void> => {
     const back = await call("PATCH", `/api/moderation/submissions/${third}`, { status: "pending" }, bob.token);
     eqn("a rejected one can be taken back before publishing", back.status, 200);
     eqn("a published one is final", (await call("PATCH", `/api/moderation/submissions/${first}`, { status: "rejected" }, bob.token)).status, 409);
+
+    const tip = await call("POST", "/api/moderation/submit", { kind: "tip", payload: { text: "the beach is lovely at six" } }, alice.token);
+    eqn("a kind the app registered in src/server.js is accepted on the one submit route", tip.status, 201);
   } finally {
     console.log = log;
     rmSync(project, { recursive: true, force: true });

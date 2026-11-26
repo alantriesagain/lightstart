@@ -97,13 +97,23 @@ whatever the request says.
 
 ### Kinds
 
-A project that needs kinds of its own builds its endpoints with
-`moderationEndpoints({ kinds, models })` and a `submissionPolicy`. The default
-accepts `avatar` and each server model that declares `$moderated` (its payload
-is the row); `<model>.edit` only when it declares `$moderated: { edit: true }`.
-A table that doesn't declare it, such as `users`, `auth_codes` or the app's
-other server models, is never a kind: a submission can't be published into it or
-taken down from it, whatever the sender puts in `kind` or `targetType`.
+An app adds kinds of its own in its `src/server.js`, and the contributed
+endpoints accept them on the one submit route:
+
+```js
+// src/server.js
+import { registerSubmissionKinds } from "@lightstart/moderation/server";
+import { claim, report } from "./lib/account/kinds.js";
+
+registerSubmissionKinds({ claim, report });
+```
+
+Beside the registered kinds, the endpoints accept `avatar` and each server
+model that declares `$moderated` (its payload is the row);
+`<model>.edit` only when it declares `$moderated: { edit: true }`. A table that
+doesn't declare it, such as `users`, `auth_codes` or the app's other server
+models, is never published into or taken down from, whatever the sender puts
+in `kind` or `targetType`.
 
 Every key is optional.
 
