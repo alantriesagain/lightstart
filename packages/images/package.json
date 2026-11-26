@@ -24,6 +24,7 @@
   },
   "files": [
     "index.ts",
+    "node.ts",
     "types.ts",
     "paths.js",
     "metadata.js",
@@ -37,6 +38,7 @@
   ],
   "exports": {
     ".": "./index.ts",
+    "./node": "./node.ts",
     "./*": "./*"
   },
   "dependencies": {

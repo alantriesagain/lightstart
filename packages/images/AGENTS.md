@@ -6,7 +6,8 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Where | What |
 |---|---|
-| `index.ts` | The public surface |
+| `index.ts` | The public surface a page and a Worker share: no `fs`, no Playwright |
+| `node.ts` | `@lightstart/images/node`: the resize engine and the normalize step |
 | `types.ts` | `ResizeOp`, `ImageVariant`, `ImagesConfig`, `ResizeResult`, `Resizer` |
 | `paths.js` | `variantUrl`, `thumbUrl`, `isVariant` |
 | `metadata.js` | `imageSize`: JPEG SOF, PNG IHDR, WebP VP8/VP8L/VP8X |
