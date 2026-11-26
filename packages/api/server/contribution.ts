@@ -17,8 +17,8 @@ import type { Caller } from "./permissions.ts";
 export interface ServerContribution {
   /** Its server models, by table name; the app's own model of the same name wins. */
   models?: Record<string, ModelSchema>;
-  /** Its endpoints, made from the server's environment; registered before the app's. */
-  endpoints?: (env: Record<string, unknown>) => readonly Endpoint[];
+  /** Its endpoints, made from the server's environment and every server model the app's server holds (its own and the contributed); registered before the app's. */
+  endpoints?: (env: Record<string, unknown>, models: Record<string, ModelSchema>) => readonly Endpoint[];
   /** Who makes a request (a session's owner); the first contribution with one answers for the app. */
   caller?: (env: Record<string, unknown>, db: DatabaseSource) => (request: Request) => Caller | Promise<Caller>;
 }
