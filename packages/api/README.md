@@ -89,6 +89,15 @@ The entry is always TypeScript, and is written only when its content changes. Wi
 
 Without a contributed caller, the caller comes from the development-only headers `x-light-user: <id>` and `x-light-admin: 1`. The entry is built when the server starts, so restart `light serve` after changing a server model or an endpoint.
 
+## The app's server setup
+
+`src/server.ts` or `src/server.js`, when the app has one, is its server setup. The generated `.light/server.ts` imports it after every package contribution and before the server is made, in `light serve` and in the deploy alike. It's where an app registers what packages read on the server:
+- billing's plans (`registerBilling`);
+- auth's hooks (`registerAuthHooks({ onUserDeleted, sessionFields })`), for example moderation's `forgetUser` when an account goes;
+- a WhatsApp hook.
+
+It exports nothing and runs once per server.
+
 ## A package's part of the server
 
 A package adds to every app's server that declares it by naming a module in its `package.json`, `"light": { "server": "./server/contribute.ts" }`. That module default-exports `defineServerContribution({ models, endpoints, caller })`:

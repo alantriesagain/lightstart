@@ -169,17 +169,14 @@ stored, then its submission rows and its published photo. A failure throws
 before any row is gone, so the account stays in place and the next attempt
 finds the same files.
 
-Wire it from auth's `onUserDeleted` hook. The contributed auth endpoints take
-no hooks, so an app that deletes accounts builds its own:
+Wire it from auth's `onUserDeleted` in the app's `src/server.js`:
 
 ```js
-import { authEndpoints } from "@lightstart/auth/server";
+// src/server.js
+import { registerAuthHooks } from "@lightstart/auth/server";
 import { forgetUser } from "@lightstart/moderation";
 
-const endpoints = authEndpoints({
-  mailer,
-  hooks: { onUserDeleted: (id, db) => forgetUser(db, id, storage) },
-});
+registerAuthHooks({ onUserDeleted: (id, db) => forgetUser(db, id) });
 ```
 
 ## The page

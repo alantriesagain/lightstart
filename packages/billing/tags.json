@@ -1,0 +1,25 @@
+{
+  "payments-page": {
+    "module": "views/payments.ts",
+    "style": null,
+    "extends": null,
+    "uses": [
+      "lc-button",
+      "lc-segmented",
+      "lc-spinner",
+      "lc-list-row",
+      "payments-detail"
+    ],
+    "loads": []
+  },
+  "payments-detail": {
+    "module": "views/payments-detail.ts",
+    "style": null,
+    "extends": null,
+    "uses": [
+      "lc-button",
+      "lc-tag"
+    ],
+    "loads": []
+  }
+}

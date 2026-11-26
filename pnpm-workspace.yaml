@@ -32,6 +32,7 @@ packages:
   - 'packages/push'
   - 'packages/moderation'
   - 'packages/whatsapp'
+  - 'packages/billing'
   - 'packages/maps'
   - 'packages/qr'
   - 'packages/camera'

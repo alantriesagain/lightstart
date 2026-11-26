@@ -1,0 +1,67 @@
+{
+  "name": "@lightstart/billing",
+  "version": "0.1.0",
+  "description": "Paid features for any app: the plans it sells, the charges that pay for them, a ledger of the periods each account holds, and the admin payments view.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/billing"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "billing",
+    "payments",
+    "plans",
+    "entitlements",
+    "light"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.ts",
+    "types.ts",
+    "lib/",
+    "server/",
+    "page/",
+    "payments/",
+    "views/",
+    "locales/",
+    "tags.json",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./server": "./server/index.ts",
+    "./page": "./page/index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@lightstart/api": "workspace:*",
+    "@lightstart/app": "workspace:*",
+    "@lightstart/auth": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/router": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/app": "workspace:*",
+    "@lightstart/server": "workspace:*",
+    "@lightstart/sqlite": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  },
+  "light": {
+    "server": "./server/contribute.ts",
+    "extension": "./payments/extension.ts",
+    "tags": "tags.json",
+    "locales": true
+  }
+}

@@ -9,4 +9,4 @@ export { identityNamed, registerIdentity, resetIdentities, type Identity, type I
 export { signToken, verifyToken, TOKEN_TTL_SECONDS, type TokenPayload } from "./jwt.ts";
 export { consoleMailer, mailerFrom, resendMailer, type MailMessage, type Mailer, type ResendOptions } from "./mailer.ts";
 export { authModels } from "./models.ts";
-export { authEndpoints, CODE_TTL_MS, MAX_TRIES, RESEND_MS, type AuthHooks, type AuthOptions } from "./routes.ts";
+export { authEndpoints, CODE_TTL_MS, MAX_TRIES, RESEND_MS, registerAuthHooks, resetAuthHooks, type AuthHooks, type AuthOptions } from "./routes.ts";

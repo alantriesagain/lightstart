@@ -32,7 +32,7 @@ The session is an HS256 JWT (`{ sub, admin?, exp }`, 30 days) signed with `JWT_S
 
 `users` and `auth_codes` are `$permissions: none`, so the CRUD routes never expose them; only the auth routes touch them.
 
-Hooks are `{ onUserDeleted(id, db, env), sessionFields(id, db, env) }`. `sessionFields` adds fields to the person's own user wherever one is answered.
+Hooks are `{ onUserDeleted(id, db, env), sessionFields(id, db, env) }`, registered from the app's `src/server.js` with `registerAuthHooks` (every registered `onUserDeleted` runs in order; `sessionFields` merge). `sessionFields` adds fields to the person's own user wherever one is answered.
 
 `mailerFrom(env, log)` picks the mailer: Resend (`RESEND_API_KEY`, from `AUTH_FROM_EMAIL`) when the key is set, else a console mailer that logs the code, for development.
 
