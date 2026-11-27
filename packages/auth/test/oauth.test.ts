@@ -245,10 +245,19 @@ const main = async (): Promise<void> => {
   }
 
   {
-    const { handle } = setup({ ...baseEnv(), AUTH_ORIGIN: "https://app.example/base/" });
+    const { handle } = setup({ ...baseEnv(), AUTH_ORIGIN: "http://app.test/base/" });
     const { response } = await startOf(handle, "google");
     const location = new URL(response.headers.get("location") ?? "");
-    eq("AUTH_ORIGIN sets the redirect, trailing slash stripped", location.searchParams.get("redirect_uri") ?? "", "https://app.example/base/api/auth/oauth/google/callback");
+    eq("AUTH_ORIGIN sets the redirect, trailing slash stripped", location.searchParams.get("redirect_uri") ?? "", "http://app.test/base/api/auth/oauth/google/callback");
+  }
+
+  {
+    const { handle } = setup({ ...baseEnv(), AUTH_ORIGIN: "https://app.example" });
+    const response = await get(handle, `/api/auth/oauth/google/start?next=${encodeURIComponent("/saved")}`);
+    const cookie = cookieOf(response);
+    eqn("a start on another host goes to AUTH_ORIGIN's first", response.status, 302);
+    eq("to the same start there", response.headers.get("location") ?? "", "https://app.example/api/auth/oauth/google/start?next=%2Fsaved");
+    eq("with no state cookie set on the wrong host", cookie, "");
   }
 
   {

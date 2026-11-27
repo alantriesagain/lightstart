@@ -74,7 +74,7 @@ Google and GitHub sign-in use the same `users` rows and session as a mailed code
 | Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
 | GitHub | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` |
 
-The redirect URI is `${AUTH_ORIGIN}/api/auth/oauth/<provider>/callback` when `AUTH_ORIGIN` is a string (a trailing slash is stripped); otherwise it is the request's own origin. `AUTH_ORIGIN` is worth setting behind a proxy or a custom domain, since the request's headers are never trusted for it.
+The redirect URI is `${AUTH_ORIGIN}/api/auth/oauth/<provider>/callback` when `AUTH_ORIGIN` is a string (a trailing slash is stripped); otherwise it is the request's own origin. `AUTH_ORIGIN` is worth setting behind a proxy or a custom domain, since the request's headers are never trusted for it. With `AUTH_ORIGIN` set, a start that arrives on another host (`www.` beside the apex) is first sent to the same start on `AUTH_ORIGIN`'s host, so the state cookie is set where the provider brings the person back.
 
 `AUTH_OAUTH_REDIRECT_PATH` overrides the callback path for every provider: when it is set, the redirect URI is `${origin}${AUTH_OAUTH_REDIRECT_PATH}` in both the authorize request and the token exchange, so an app already registered at `https://<site>/auth/callback` keeps that address. It must start with one `/` and carry no second `/`, no `\` and no control character; anything else is refused with 500 naming the variable. Leave it unset for the default callback.
 

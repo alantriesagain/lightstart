@@ -298,9 +298,25 @@ const finish = (next: string, fragment: string): Response =>
     },
   });
 
+/**
+ * The same start on `AUTH_ORIGIN`'s host when the request came in on another
+ * (`www.` beside the apex): the state cookie is set where the provider brings
+ * the person back, or the callback finds none. Null when it is already there.
+ */
+const onConfiguredHost = (request: Request, env: Record<string, unknown>): Response | null => {
+  const configured = env["AUTH_ORIGIN"];
+  if (typeof configured !== "string" || configured === "") return null;
+  const target = new URL(configured).origin;
+  const url = new URL(request.url);
+  if (url.origin === target) return null;
+  return new Response(null, { status: 302, headers: { location: `${target}${url.pathname}${url.search}`, "cache-control": "no-store" } });
+};
+
 const start = (options: OAuthOptions) => async (request: EndpointRequest): Promise<Response> => {
   const provider = providerOf(request.params["provider"] ?? "", request.env);
   if (provider === null) throw new HttpError(404, "no such provider");
+  const moved = onConfiguredHost(request.request, request.env);
+  if (moved !== null) return moved;
   const secret = secretOf(request.env);
   const now = nowOf(options);
   const nonce = randomToken();
