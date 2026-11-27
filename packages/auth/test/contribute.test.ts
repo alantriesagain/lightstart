@@ -1,7 +1,8 @@
 // node-only
 /**
  * @file Auth as a server contribution: a project declaring `@lightstart/api`
- * and `@lightstart/auth` gets `users` and `auth_codes` among its server models
+ * and `@lightstart/auth` gets `users`, `auth_codes` and `auth_code_requests`
+ * among its server models
  * (so migrations create them), a generated `.light/server.ts` importing the
  * contribution, and a `createServer` answering `/api/auth/*` with sessions
  * resolved, the app's own endpoints and models beside them.
@@ -41,7 +42,7 @@ const main = async (): Promise<void> => {
     writeFileSync(join(project, "src", "endpoints", "whoami.js"), 'import { defineEndpoint } from "@lightstart/api/server";\nexport default defineEndpoint({ path: "/api/whoami", access: "auth", handler: ({ caller }) => ({ id: caller.id }) });\n');
 
     const models = await serverModels(project);
-    eq("the server models hold the contributed tables and the app's own", Object.keys(models).sort().join(","), "auth_codes,auth_handoffs,note,oauth_accounts,users");
+    eq("the server models hold the contributed tables and the app's own", Object.keys(models).sort().join(","), "auth_code_requests,auth_codes,auth_handoffs,note,oauth_accounts,users");
 
     await writeServerEntry(project);
     const source = readFileSync(join(project, ".light", "server.ts"), "utf8");

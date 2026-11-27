@@ -5,7 +5,7 @@ Sign-in by a code mailed to an address, and a JWT session. No passwords. The ser
 ## The server
 
 Declaring the package is the whole setup. Its `package.json` names a server contribution (`light.server`), so every app on `@lightstart/api` that depends on it gets three things with nothing to wire:
-- the `users`, `auth_codes`, `oauth_accounts` and `auth_handoffs` tables, which `light db:migrate` creates;
+- the `users`, `auth_codes`, `oauth_accounts`, `auth_handoffs` and `auth_code_requests` tables, which `light db:migrate` creates;
 - the routes below;
 - the session as the caller for its endpoints and `$permissions`.
 
@@ -23,6 +23,8 @@ Locally, `light serve` mails codes to its console. Deployed, they go through Res
 How the code is handled:
 - The address is lower-cased and trimmed.
 - A new code for the same address is refused within 30 seconds (429).
+- One client address may request 10 codes an hour, counted in the `auth_code_requests` table so the limit holds across Cloudflare isolates; the 11th is 429. The count is keyed by `clientIp`, which believes `CF-Connecting-IP` only when the request carries Cloudflare's runtime `cf` object, so a forged header elsewhere changes nothing. With no address (development, or a host that exposes none) there is no per-IP limit. Rows older than the window are deleted on each request. `codesPerIp: { max, seconds }` changes the policy, and `codesPerIp: false` turns it off.
+- The address digest is salted by `RATE_SALT`, falling back to `JWT_SECRET` as `rateSalt` does; with neither it is unsalted but the limit still applies.
 - A code takes 5 tries. Each try is counted in one statement before the comparison, so parallel guesses can't share a count.
 - The table keeps an HMAC of the code keyed by `JWT_SECRET` and the address, never the code.
 
@@ -104,5 +106,4 @@ if (signedIn.ok) navigate(safeNext(currentRoute.value?.query.next));
 
 ## Not yet
 
-- A per-address limit on code requests exists, but no per-IP limit across addresses.
 - Read-only admin sessions.

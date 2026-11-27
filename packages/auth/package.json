@@ -42,7 +42,8 @@
   "dependencies": {
     "@lightstart/api": "workspace:*",
     "@lightstart/light": "workspace:*",
-    "@lightstart/server": "workspace:*"
+    "@lightstart/server": "workspace:*",
+    "@lightstart/visitor": "workspace:*"
   },
   "devDependencies": {
     "@lightstart/app": "workspace:*",

@@ -203,6 +203,9 @@ importers:
       '@lightstart/server':
         specifier: workspace:*
         version: link:../server
+      '@lightstart/visitor':
+        specifier: workspace:*
+        version: link:../visitor
     devDependencies:
       '@lightstart/app':
         specifier: workspace:*
@@ -609,6 +612,9 @@ importers:
       '@lightstart/components':
         specifier: workspace:*
         version: link:../components
+      '@lightstart/create':
+        specifier: workspace:*
+        version: link:../create
       '@lightstart/server':
         specifier: workspace:*
         version: link:../server
