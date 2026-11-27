@@ -3,7 +3,8 @@
  * @file The per-IP limit on `POST /api/auth/otp`: an address that asks for
  * many codes is refused, a forged header without Cloudflare's `cf` is ignored,
  * a different address is unaffected, the limit can be turned off, old rows are
- * cleared and the per-address quiet period still holds.
+ * cleared and the per-address quiet period still holds. On Cloudflare a
+ * development mailer is refused rather than answer a code nobody receives.
  */
 
 import { applySchema } from "@lightstart/light/model/sql-builder";
@@ -64,6 +65,15 @@ const otp = (handle: Handle, email: string, ip: string | null, trusted: boolean)
 };
 
 const main = async (): Promise<void> => {
+  const logged: string[] = [];
+  const development = makeApp({ mailer: { development: true, send: (message: MailMessage) => void logged.push(message.text) } });
+  const refused = await otp(development.handle, "dev@example.com", "1.2.3.4", true);
+  eqn("on Cloudflare a development mailer is refused", refused.status, 503);
+  ok("the refusal names RESEND_API_KEY", (await refused.text()).includes("RESEND_API_KEY"));
+  eqn("refused, no code was logged", logged.length, 0);
+  eqn("off Cloudflare a development mailer sends", (await otp(development.handle, "dev@example.com", null, false)).status, 200);
+  eqn("off Cloudflare the code was logged", logged.length, 1);
+
   const limited = makeApp();
   for (let index = 0; index < 10; index++) {
     eqn(`code request ${index + 1} from 1.2.3.4 answers 200`, (await otp(limited.handle, `user${index}@example.com`, "1.2.3.4", true)).status, 200);

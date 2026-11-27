@@ -18,6 +18,8 @@ export interface MailMessage {
 export interface Mailer {
   /** Send one message; the answer is not read. */
   send(message: MailMessage): unknown | Promise<unknown>;
+  /** A mailer that only logs, for development: on Cloudflare the code route refuses it rather than answer a code nobody receives. */
+  development?: boolean;
 }
 
 /** How `resendMailer` is built. */
@@ -53,12 +55,13 @@ export const resendMailer = (options: ResendOptions): Mailer => ({
 
 /** A mailer that writes each message's text through `log`, for development. */
 export const consoleMailer = (log: (line: string) => void): Mailer => ({
+  development: true,
   send(message: MailMessage): void {
     log(message.text);
   },
 });
 
-/** Resend when `env.RESEND_API_KEY` is set, otherwise the console. */
+/** Resend when `env.RESEND_API_KEY` is set, otherwise the console, which a deployed Worker refuses. */
 export const mailerFrom = (env: Record<string, unknown>, log: (line: string) => void): Mailer => {
   const apiKey = env["RESEND_API_KEY"];
   if (typeof apiKey === "string" && apiKey !== "") {

@@ -36,7 +36,7 @@ The session is an HS256 JWT (`{ sub, admin?, exp }`, 30 days) signed with `JWT_S
 
 Hooks are `{ onUserDeleted(id, db, env), sessionFields(id, db, env) }`, registered from the app's `src/server.js` with `registerAuthHooks` (every registered `onUserDeleted` runs in order; `sessionFields` merge). `sessionFields` adds fields to the person's own user wherever one is answered.
 
-`mailerFrom(env, log)` picks the mailer: Resend (`RESEND_API_KEY`, from `AUTH_FROM_EMAIL`) when the key is set, else a console mailer that logs the code, for development.
+`mailerFrom(env, log)` picks the mailer: Resend (`RESEND_API_KEY`, from `AUTH_FROM_EMAIL`) when the key is set, else a console mailer that logs the code, for development. The console mailer is marked `development`, and on Cloudflare (a request carrying the runtime's `cf`) `/otp` refuses it with 503 naming `RESEND_API_KEY`, rather than answer a code nobody receives.
 
 ## Identities
 

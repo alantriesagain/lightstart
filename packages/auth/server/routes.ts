@@ -176,6 +176,10 @@ const requestCode = (options: AuthOptions) => async (request: {
   const email = emailOf(request.body);
   const now = (options.now ?? Date.now)();
 
+  if (options.mailer.development === true && isRecord(Reflect.get(request.request, "cf"))) {
+    throw new HttpError(503, "sign-in by email is not set up here: set RESEND_API_KEY (and AUTH_FROM_EMAIL)");
+  }
+
   const limit = options.codesPerIp === undefined ? CODES_PER_IP : options.codesPerIp;
   if (limit !== false) {
     await request.db
