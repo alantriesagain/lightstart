@@ -13,7 +13,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `server/routes.ts` | `authEndpoints`: the `/api/auth/*` endpoints, `MAX_TRIES`, `RESEND_MS` |
 | `server/caller.ts` | `callerFromRequest(env, db?)` |
 | `server/contribute.ts` | The server contribution `light.server` names: `authModels`, `authEndpoints` with `mailerFrom(env)`, `callerFromRequest(env, db)` |
-| `server/mailer.ts` | `resendMailer`, `consoleMailer`, `mailerFrom` |
+| `server/mailer.ts` | `resendMailer`, `cloudflareMailer`, `consoleMailer`, `mailerFrom` |
 | `page/controller.ts` | The `auth` controller |
 | `page/session.ts` | The token store and `configureAuth` |
 | `page/next.ts` | `safeNext` |
@@ -34,11 +34,11 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Contract | Who relies on it |
 |---|---|
-| The `/api/auth/*` routes and their bodies | the page controller, and apps calling them |
+| The `/api/auth/*` routes and their bodies, including the provider-less `GET /api/auth/oauth/callback` that reads the provider from the state cookie | the page controller, and apps calling them |
 | `authModels`, `authEndpoints`, `callerFromRequest`, `mailerFrom` | an app's server |
 | `registerIdentity`, the `Identity` and `IdentityAnswer` shapes, `/api/auth/identity/:name` | a package adding a way in, such as WhatsApp |
-| `JWT_SECRET`, `RESEND_API_KEY`, `AUTH_FROM_EMAIL` | the deploy's secrets |
-| The `auth` controller (`user`, `loaded`, its methods including `signInWithIdentity`), `safeNext` | an app's views |
+| `JWT_SECRET`, `RESEND_API_KEY`, `AUTH_FROM_EMAIL`, `CF_ACCOUNT_ID`, `CF_EMAIL_TOKEN`/`CF_API_TOKEN`, `FROM_EMAIL`, `AUTH_OAUTH_REDIRECT_PATH` | the deploy's secrets and the OAuth redirect an app registered |
+| The `auth` controller (`user`, `loaded`, its methods including `signInWithIdentity` and `forwardOAuthCallback`), `safeNext` | an app's views |
 
 ## Gates
 

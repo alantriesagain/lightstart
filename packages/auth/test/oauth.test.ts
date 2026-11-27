@@ -116,6 +116,18 @@ const callbackOf = (
   return handle(new Request(new URL(`/api/auth/oauth/${provider}/callback?${query}`, "http://app.test"), { headers }));
 };
 
+const callbackAt = (
+  handle: (request: Request) => Promise<Response>,
+  path: string,
+  cookie: string | null,
+  params: Record<string, string>,
+): Promise<Response> => {
+  const query = new URLSearchParams(params).toString();
+  const headers: Record<string, string> = {};
+  if (cookie !== null) headers["cookie"] = `lightstart_oauth=${cookie}`;
+  return handle(new Request(new URL(`${path}?${query}`, "http://app.test"), { headers }));
+};
+
 const splitLocation = (response: Response): { path: string; fragment: URLSearchParams } => {
   const location = response.headers.get("location") ?? "";
   const hash = location.indexOf("#");
@@ -375,6 +387,69 @@ const main = async (): Promise<void> => {
   {
     const { handle } = setup(baseEnv());
     ok("a hand-off with no code is 401", (await post(handle, "/api/auth/oauth/redeem", {})).status === 401);
+  }
+
+  {
+    const { handle } = setup({ ...baseEnv(), AUTH_OAUTH_REDIRECT_PATH: "/auth/callback" });
+    clock = Date.UTC(2026, 0, 1);
+    const { response, cookie, state } = await startOf(handle, "google");
+    const location = new URL(response.headers.get("location") ?? "");
+    eq(
+      "AUTH_OAUTH_REDIRECT_PATH sets the authorize redirect",
+      location.searchParams.get("redirect_uri") ?? "",
+      "http://app.test/auth/callback",
+    );
+    let exchange = "";
+    await withFetch(googleStub((body) => (exchange = body.get("redirect_uri") ?? "")), async () => {
+      await callbackOf(handle, "google", cookie, { code: "c", state: String(state["n"]) });
+    });
+    eq("and the token exchange's redirect matches", exchange, "http://app.test/auth/callback");
+  }
+
+  {
+    const { handle, binding } = setup(baseEnv());
+    clock = Date.UTC(2026, 0, 1);
+    const { cookie, state } = await startOf(handle, "google");
+    let handoff = "";
+    await withFetch(googleStub(), async () => {
+      const response = await callbackAt(handle, "/api/auth/oauth/callback", cookie, { code: "c", state: String(state["n"]) });
+      eqn("the provider-less callback answers 302", response.status, 302);
+      ok("it clears the cookie", (response.headers.get("set-cookie") ?? "").includes("Max-Age=0"));
+      handoff = splitLocation(response).fragment.get("auth_code") ?? "";
+    });
+    ok("it reads the provider from the cookie and hands off a code", handoff !== "");
+    const redeemed = await post(handle, "/api/auth/oauth/redeem", { code: handoff });
+    eqn("which redeems", redeemed.status, 200);
+    eqn("and creates a user", (await binding.prepare("SELECT * FROM users").all()).results?.length ?? 0, 1);
+  }
+
+  {
+    const { handle } = setup(baseEnv());
+    const response = await callbackAt(handle, "/api/auth/oauth/callback", null, { code: "c", state: "x" });
+    eqn("a provider-less callback with no cookie is 302", response.status, 302);
+    eq("and refuses the state", splitLocation(response).fragment.get("auth_error") ?? "", "state");
+    eq("landing on /", splitLocation(response).path, "/");
+    ok("and clears the cookie", (response.headers.get("set-cookie") ?? "").includes("Max-Age=0"));
+  }
+
+  {
+    const { handle } = setup(baseEnv());
+    const { response } = await startOf(handle, "google");
+    const cookie = response.headers.get("set-cookie") ?? "";
+    ok(
+      "the state cookie's Path covers the provider-less callback",
+      cookie.includes("; Path=/api/auth/oauth") && "/api/auth/oauth/callback".startsWith("/api/auth/oauth"),
+    );
+  }
+
+  for (const bad of ["//evil.com", "https://x"]) {
+    const { handle } = setup({ ...baseEnv(), AUTH_OAUTH_REDIRECT_PATH: bad });
+    const response = await get(handle, "/api/auth/oauth/google/start");
+    eqn(`AUTH_OAUTH_REDIRECT_PATH ${JSON.stringify(bad)} is refused`, response.status, 500);
+    ok(
+      `the refusal names the variable for ${JSON.stringify(bad)}`,
+      (await response.text()).includes("AUTH_OAUTH_REDIRECT_PATH"),
+    );
   }
 
   done();

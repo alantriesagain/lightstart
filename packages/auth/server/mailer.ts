@@ -1,7 +1,7 @@
 /**
- * @file How a sign-in code reaches the address that asked for it: Resend in
- * production, and a log line in development. Both are the small `Mailer`
- * shape the auth routes call.
+ * @file How a sign-in code reaches the address that asked for it: Resend or
+ * Cloudflare Email Service in production, and a log line in development. Each
+ * is the small `Mailer` shape the auth routes call.
  */
 
 /** One message the auth routes send. */
@@ -53,6 +53,59 @@ export const resendMailer = (options: ResendOptions): Mailer => ({
   },
 });
 
+/** How `cloudflareMailer` is built. */
+export interface CloudflareOptions {
+  /** The Cloudflare account the Email Service sends from. */
+  accountId: string;
+  /** A token scoped to sending email, or an account API token. */
+  apiToken: string;
+  /** The verified sender Cloudflare shows. */
+  from: string;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+/**
+ * A mailer over Cloudflare Email Service's REST API, with no binding. A send
+ * fails when the response is not ok or its body says `success: false`; the
+ * error is Cloudflare's `errors[0].message`, else `email send failed (<status>)`.
+ */
+export const cloudflareMailer = (options: CloudflareOptions): Mailer => ({
+  async send(message: MailMessage): Promise<void> {
+    const response = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${options.accountId}/email/sending/send`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${options.apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: message.to,
+          from: options.from,
+          subject: message.subject,
+          text: message.text,
+        }),
+      },
+    );
+    let body: unknown = null;
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+    const success = isRecord(body) ? body["success"] : undefined;
+    if (response.ok && success !== false) return;
+    let detail: string | null = null;
+    if (isRecord(body) && Array.isArray(body["errors"])) {
+      const first: unknown = body["errors"][0];
+      if (isRecord(first) && typeof first["message"] === "string") detail = first["message"];
+    }
+    throw new Error(detail ?? `email send failed (${response.status})`);
+  },
+});
+
 /** A mailer that writes each message's text through `log`, for development. */
 export const consoleMailer = (log: (line: string) => void): Mailer => ({
   development: true,
@@ -61,12 +114,24 @@ export const consoleMailer = (log: (line: string) => void): Mailer => ({
   },
 });
 
-/** Resend when `env.RESEND_API_KEY` is set, otherwise the console, which a deployed Worker refuses. */
+const nonEmpty = (value: unknown): string | null => (typeof value === "string" && value !== "" ? value : null);
+
+/**
+ * Resend when `env.RESEND_API_KEY` is set; else Cloudflare Email Service when
+ * `env.CF_ACCOUNT_ID`, `env.CF_EMAIL_TOKEN` (preferred) or `env.CF_API_TOKEN`,
+ * and a from address (`env.AUTH_FROM_EMAIL`, else `env.FROM_EMAIL`) are set;
+ * else the console, which a deployed Worker refuses.
+ */
 export const mailerFrom = (env: Record<string, unknown>, log: (line: string) => void): Mailer => {
-  const apiKey = env["RESEND_API_KEY"];
-  if (typeof apiKey === "string" && apiKey !== "") {
-    const from = env["AUTH_FROM_EMAIL"];
-    return resendMailer({ apiKey, from: typeof from === "string" && from !== "" ? from : "onboarding@resend.dev" });
+  const apiKey = nonEmpty(env["RESEND_API_KEY"]);
+  if (apiKey !== null) {
+    return resendMailer({ apiKey, from: nonEmpty(env["AUTH_FROM_EMAIL"]) ?? "onboarding@resend.dev" });
+  }
+  const accountId = nonEmpty(env["CF_ACCOUNT_ID"]);
+  const token = nonEmpty(env["CF_EMAIL_TOKEN"]) ?? nonEmpty(env["CF_API_TOKEN"]);
+  const from = nonEmpty(env["AUTH_FROM_EMAIL"]) ?? nonEmpty(env["FROM_EMAIL"]);
+  if (accountId !== null && token !== null && from !== null) {
+    return cloudflareMailer({ accountId, apiToken: token, from });
   }
   return consoleMailer(log);
 };
