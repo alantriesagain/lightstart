@@ -11,7 +11,7 @@ light cf:deploy --production # the production branch, the site's domains
 
 ## The project
 
-The Pages project is the package's name (its npm scope left out). An app that deploys elsewhere names it in `src/cloudflare.js` (or `.ts`), along with its D1 database and the secrets to push:
+The Pages project is the package's name (its npm scope left out). An app that deploys elsewhere names it in `src/cloudflare.js` (or `.ts`), along with its D1 database, its R2 bucket and the secrets to push:
 
 ```js
 import { defineCloudflare } from "@lightstart/cloudflare";
@@ -19,6 +19,7 @@ import { defineCloudflare } from "@lightstart/cloudflare";
 export default defineCloudflare({
   project: "my-site",
   d1: "my-site-db",
+  r2: "my-site-photos",
   secrets: ["JWT_SECRET", "RESEND_API_KEY", "AUTH_FROM_EMAIL"],
 });
 ```
@@ -54,6 +55,12 @@ An app that declares `@lightstart/api` has a server in `.light/server.ts`. `ligh
 
 `light db:migrate --remote` reads the remote tables' columns and index names over D1's HTTP API and runs `@lightstart/api`'s `planMigration`; `--dry-run` prints the plan and runs nothing. It needs `@lightstart/cloudflare` in the project, and the database set up first.
 
+## R2
+
+`defineCloudflare({ r2: "<bucket name>" })` names an R2 bucket: lower-case letters, digits and dashes, 3–63 characters, starting and ending with a letter or digit. `light cf:r2:setup` creates it when the account does not have it, and binds it to the Pages project as `STORAGE` (production and preview) through Cloudflare's API. It prints the bucket name and the project, never a credential. An account without R2 enabled is told to turn it on in the dashboard (R2 Object Storage) and run the command again.
+
+The `STORAGE` binding is where `@lightstart/moderation` publishes approved photos.
+
 ## Secrets
 
 `defineCloudflare({ secrets: [...] })` names them. `light cf:secrets` puts each from the project's `.env` onto the Pages project with `wrangler pages secret put`, the value on stdin, never printed or passed on the command line, and lists any name `.env` lacks. `--dry-run` lists the names and puts nothing.
@@ -67,6 +74,8 @@ An app that declares `@lightstart/api` has a server in `.light/server.ts`. `ligh
 `node/cloudflare-api.ts`: `cloudflareApi({ accountId, apiToken, fetch? })`, whose `get`, `post` and `patch` answer a response's `result` or throw Cloudflare's error messages.
 
 `node/d1.ts`: `credentialsOf`, `cloudflareConfigOf`, `d1Settings`, `databaseOf`, `ensureDatabase`, `bindDatabase`, `remoteQuery`, `remoteSchema`, `migrateRemote`.
+
+`node/r2.ts`: `r2Settings`, `bucketOf`, `ensureBucket`, `bindBucket`.
 
 `node/secrets.ts`: `secretsToPush(project)`, `pushSecrets(plan, runner)`, `secretRunner(env)`.
 
