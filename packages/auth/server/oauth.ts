@@ -217,8 +217,28 @@ const originOf = (request: Request, env: Record<string, unknown>): string => {
   return new URL(request.url).origin;
 };
 
-const redirectUriOf = (request: Request, env: Record<string, unknown>, provider: string): string =>
-  `${originOf(request, env)}/api/auth/oauth/${provider}/callback`;
+const redirectPathOf = (env: Record<string, unknown>): string | null => {
+  const raw = env["AUTH_OAUTH_REDIRECT_PATH"];
+  if (raw === undefined || raw === null) return null;
+  const valid =
+    typeof raw === "string" &&
+    raw.startsWith("/") &&
+    !raw.startsWith("//") &&
+    !raw.includes("\\") &&
+    ![...raw].some((char) => {
+      const code = char.charCodeAt(0);
+      return code < 32 || code === 127;
+    });
+  if (!valid) {
+    throw new HttpError(500, "AUTH_OAUTH_REDIRECT_PATH must be a path starting with / without //, \\ or control characters");
+  }
+  return raw;
+};
+
+const redirectUriOf = (request: Request, env: Record<string, unknown>, provider: string): string => {
+  const path = redirectPathOf(env);
+  return path === null ? `${originOf(request, env)}/api/auth/oauth/${provider}/callback` : `${originOf(request, env)}${path}`;
+};
 
 const nextOf = (raw: string | undefined): string => {
   const safe = safeNext(raw);
@@ -306,8 +326,8 @@ const start = (options: OAuthOptions) => async (request: EndpointRequest): Promi
   });
 };
 
-const callback = (options: OAuthOptions) => async (request: EndpointRequest): Promise<Response> => {
-  const provider = providerOf(request.params["provider"] ?? "", request.env);
+const callbackFor = (options: OAuthOptions, providerName: string) => async (request: EndpointRequest): Promise<Response> => {
+  const provider = providerOf(providerName, request.env);
   if (provider === null) throw new HttpError(404, "no such provider");
   const secret = secretOf(request.env);
   const now = nowOf(options);
@@ -378,6 +398,15 @@ const callback = (options: OAuthOptions) => async (request: EndpointRequest): Pr
   return finish(next, `auth_code=${encodeURIComponent(handoff)}`);
 };
 
+const providerlessCallback = (options: OAuthOptions) => async (request: EndpointRequest): Promise<Response> => {
+  const secret = secretOf(request.env);
+  const now = nowOf(options);
+  const rawCookie = parseCookies(request.request.headers.get("cookie")).get(COOKIE);
+  const state = rawCookie === undefined ? null : await readState(rawCookie, secret);
+  if (state === null || state.exp < now) return finish("/", "auth_error=state");
+  return callbackFor(options, state.p)(request);
+};
+
 const redeem = (options: OAuthOptions) => async (request: EndpointRequest): Promise<unknown> => {
   const secret = secretOf(request.env);
   if (!isRecord(request.body)) throw new HttpError(401, "invalid or expired code");
@@ -415,6 +444,12 @@ export const oauthEndpoints = (options: OAuthOptions): Endpoint[] => [
     }),
   }),
   defineEndpoint({ path: "/api/auth/oauth/:provider/start", method: "GET", access: "public", handler: start(options) }),
-  defineEndpoint({ path: "/api/auth/oauth/:provider/callback", method: "GET", access: "public", handler: callback(options) }),
+  defineEndpoint({
+    path: "/api/auth/oauth/:provider/callback",
+    method: "GET",
+    access: "public",
+    handler: (request) => callbackFor(options, request.params["provider"] ?? "")(request),
+  }),
+  defineEndpoint({ path: "/api/auth/oauth/callback", method: "GET", access: "public", handler: providerlessCallback(options) }),
   defineEndpoint({ path: "/api/auth/oauth/redeem", method: "POST", access: "public", handler: redeem(options) }),
 ];

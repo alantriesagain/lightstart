@@ -243,12 +243,21 @@ const main = async (): Promise<void> => {
   if (providers.ok) eq("providers lists what the server knows", JSON.stringify(providers.providers), JSON.stringify(["github", "google"]));
 
   const globals = globalThis as unknown as {
-    location?: { href: string; hash: string; pathname: string; search: string };
+    location?: { href: string; hash: string; pathname: string; search: string; replace: (url: string) => void };
     history?: { replaceState: (data: unknown, title: string, url: string) => void };
   };
   const previousLocation = globals.location;
   const previousHistory = globals.history;
-  const browser = { href: "", hash: "", pathname: "/app", search: "?a=1" };
+  let replaced = "";
+  const browser = {
+    href: "",
+    hash: "",
+    pathname: "/app",
+    search: "?a=1",
+    replace(url: string): void {
+      replaced = url;
+    },
+  };
   globals.location = browser;
   globals.history = {
     replaceState(_data: unknown, _title: string, url: string): void {
@@ -265,6 +274,21 @@ const main = async (): Promise<void> => {
   eq("signInWithOAuth sends the page to the start route", browser.href, "/api/auth/oauth/google/start?next=%2F");
   auth.signInWithOAuth("github", "/after?x=1");
   eq("signInWithOAuth keeps a safe next", browser.href, "/api/auth/oauth/github/start?next=%2Fafter%3Fx%3D1");
+
+  browser.search = "?code=abc&state=xyz";
+  replaced = "";
+  ok("forwardOAuthCallback answers true with a code", auth.forwardOAuthCallback() === true);
+  eq("and forwards to the provider-less callback", replaced, "/api/auth/oauth/callback?code=abc&state=xyz");
+
+  browser.search = "?error=access_denied&state=xyz";
+  replaced = "";
+  ok("forwardOAuthCallback forwards an error", auth.forwardOAuthCallback() === true);
+  eq("to the callback too", replaced, "/api/auth/oauth/callback?error=access_denied&state=xyz");
+
+  browser.search = "?a=1";
+  replaced = "";
+  ok("forwardOAuthCallback answers false without code or error", auth.forwardOAuthCallback() === false);
+  eq("and replaces nothing", replaced, "");
 
   browser.hash = "#auth_code=good";
   const completed = await auth.completeOAuth();

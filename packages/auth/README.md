@@ -9,7 +9,7 @@ Declaring the package is the whole setup. Its `package.json` names a server cont
 - the routes below;
 - the session as the caller for its endpoints and `$permissions`.
 
-Locally, `light serve` mails codes to its console. Deployed, they go through Resend when `RESEND_API_KEY` is set.
+Locally, `light serve` mails codes to its console. Deployed, they go through Resend when `RESEND_API_KEY` is set, or Cloudflare Email Service when `CF_ACCOUNT_ID`, a token and a from address are set.
 
 | Route | Body | Answers |
 |---|---|---|
@@ -36,7 +36,12 @@ The session is an HS256 JWT (`{ sub, admin?, exp }`, 30 days) signed with `JWT_S
 
 Hooks are `{ onUserDeleted(id, db, env), sessionFields(id, db, env) }`, registered from the app's `src/server.js` with `registerAuthHooks` (every registered `onUserDeleted` runs in order; `sessionFields` merge). `sessionFields` adds fields to the person's own user wherever one is answered.
 
-`mailerFrom(env, log)` picks the mailer: Resend (`RESEND_API_KEY`, from `AUTH_FROM_EMAIL`) when the key is set, else a console mailer that logs the code, for development. The console mailer is marked `development`, and on Cloudflare (a request carrying the runtime's `cf`) `/otp` refuses it with 503 naming `RESEND_API_KEY`, rather than answer a code nobody receives.
+`mailerFrom(env, log)` picks the mailer, in order:
+- Resend when `RESEND_API_KEY` is set, from `AUTH_FROM_EMAIL` (else `onboarding@resend.dev`);
+- Cloudflare Email Service when `CF_ACCOUNT_ID`, one of `CF_EMAIL_TOKEN`/`CF_API_TOKEN` and a from address are all non-empty. The from address is `AUTH_FROM_EMAIL`, else `FROM_EMAIL`; `CF_EMAIL_TOKEN` (a token scoped to sending) wins over `CF_API_TOKEN`. It calls `POST https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/email/sending/send` with `{ to, from, subject, text }` and no binding; a send fails on a non-ok answer or `success: false`, with Cloudflare's `errors[0].message` (else `email send failed (<status>)`), never the token;
+- otherwise a console mailer that logs the code, for development.
+
+`cloudflareMailer({ accountId, apiToken, from })` is exported beside `resendMailer` for a send built by hand. The console mailer is marked `development`, and on Cloudflare (a request carrying the runtime's `cf`) `/otp` refuses it with 503 naming `RESEND_API_KEY` and the Cloudflare variables, rather than answer a code nobody receives.
 
 ## Identities
 
@@ -71,12 +76,17 @@ Google and GitHub sign-in use the same `users` rows and session as a mailed code
 
 The redirect URI is `${AUTH_ORIGIN}/api/auth/oauth/<provider>/callback` when `AUTH_ORIGIN` is a string (a trailing slash is stripped); otherwise it is the request's own origin. `AUTH_ORIGIN` is worth setting behind a proxy or a custom domain, since the request's headers are never trusted for it.
 
+`AUTH_OAUTH_REDIRECT_PATH` overrides the callback path for every provider: when it is set, the redirect URI is `${origin}${AUTH_OAUTH_REDIRECT_PATH}` in both the authorize request and the token exchange, so an app already registered at `https://<site>/auth/callback` keeps that address. It must start with one `/` and carry no second `/`, no `\` and no control character; anything else is refused with 500 naming the variable. Leave it unset for the default callback.
+
 | Route | Answers |
 |---|---|
 | `GET /api/auth/providers` | `{ providers: string[] }`: the enabled ones, sorted |
 | `GET /api/auth/oauth/:provider/start?next=<path>` | a 302 to the provider, after `safeNext(next)` and a state cookie |
 | `GET /api/auth/oauth/:provider/callback?code&state` | a 302 to `next` with `#auth_code=<code>` or `#auth_error=<reason>` |
+| `GET /api/auth/oauth/callback?code&state` | the same, with the provider read from the signed state cookie; no valid cookie is `#auth_error=state` on `/` |
 | `POST /api/auth/oauth/redeem` | `{ token, user }` for a `{ code }`, once, within a minute |
+
+The `Path=/api/auth/oauth` state cookie covers both callbacks. A page route registered as the app's redirect (`AUTH_OAUTH_REDIRECT_PATH`) hands its query to the provider-less callback with `auth.forwardOAuthCallback()`.
 
 Sign-in uses PKCE (S256) and a signed, `HttpOnly`, `Secure`, `SameSite=Lax` state cookie living 10 minutes. The callback refuses a missing, tampered, expired or mismatched state as `#auth_error=state`; a provider's refusal as `denied`; a failed exchange or profile read as `provider`; and an account whose email is missing or unverified as `email`. The callback redirects carry `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
 
@@ -98,8 +108,8 @@ if (signedIn.ok) navigate(safeNext(currentRoute.value?.query.next));
 ```
 
 `auth` is a `defineController` literal named `auth`. A view follows `user`, `loaded` and `oauthError` with `sync: "auth"`.
-- **Methods:** `requestCode`, `verifyCode`, `signInWithIdentity`, `providers`, `signInWithOAuth`, `completeOAuth`, `signOut`, `updateProfile`, `deleteAccount` and `reload`. Each answers `{ ok } | { error, status }` and never throws; a network failure has status 0. `signInWithIdentity(name, body)` also answers `{ pending: true }` for a waiting device.
-- **OAuth:** `providers()` answers `{ ok: true, providers }`. `signInWithOAuth(provider, next?)` sends the page to the start route with `safeNext(next)`. `completeOAuth()` reads and drops `location.hash`: `#auth_code=…` redeems the hand-off and stores the token, `#auth_error=…` answers that code with status 0, and neither answers `{ ok: false, none: true }`. The controller runs it from `connected()`, so a returning redirect signs in on load, and keeps the last failure in `oauthError`.
+- **Methods:** `requestCode`, `verifyCode`, `signInWithIdentity`, `providers`, `signInWithOAuth`, `forwardOAuthCallback`, `completeOAuth`, `signOut`, `updateProfile`, `deleteAccount` and `reload`. Each answers `{ ok } | { error, status }` and never throws; a network failure has status 0. `signInWithIdentity(name, body)` also answers `{ pending: true }` for a waiting device.
+- **OAuth:** `providers()` answers `{ ok: true, providers }`. `signInWithOAuth(provider, next?)` sends the page to the start route with `safeNext(next)`. `forwardOAuthCallback()` is for a page route registered as the app's redirect: when `location.search` carries `code` or `error` it replaces the page with the provider-less callback plus that query and answers true, else false. `completeOAuth()` reads and drops `location.hash`: `#auth_code=…` redeems the hand-off and stores the token, `#auth_error=…` answers that code with status 0, and neither answers `{ ok: false, none: true }`. The controller runs it from `connected()`, so a returning redirect signs in on load, and keeps the last failure in `oauthError`.
 - **The token** lives in `localStorage`, and `configureApi({ token })` hands it to every `api` store request.
 - **A 401** on a call that carried the session signs out.
 - **`safeNext(target)`** is the page's mirror of `@lightstart/server`'s `safeRedirect` for a path. It refuses a protocol-relative target, a backslash, a control character anywhere, an absolute URL and leading whitespace, and answers `/` instead.

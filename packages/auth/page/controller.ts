@@ -177,6 +177,21 @@ const auth = defineController({
   },
 
   /**
+   * A page route a provider was registered to come back to hands its query to
+   * the provider-less callback: with `code` or `error` in `location.search`
+   * it replaces the page with the callback and answers true, else false.
+   */
+  forwardOAuthCallback(): boolean {
+    if (typeof location === "undefined" || typeof location.search !== "string") return false;
+    const search = location.search;
+    if (search === "") return false;
+    const params = new URLSearchParams(search);
+    if (!params.has("code") && !params.has("error")) return false;
+    location.replace(`${urlOf("/oauth/callback")}${search}`);
+    return true;
+  },
+
+  /**
    * Complete an OAuth redirect: with `auth_code` in the fragment, drop the
    * fragment, redeem the hand-off and store the session; with `auth_error`,
    * drop it and answer that code with status 0; with neither, answer
