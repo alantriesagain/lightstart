@@ -62,6 +62,24 @@ test("a call handed to trackWork is tracked, a call handed to anything else is n
   assert.equal(dropped.length, 1);
 });
 
+test("a chain handed to trackWork is tracked through every link", async () => {
+  const tracked = await runRuleOn(rule, {
+    "controllers/demo.js": wrap(`  connected() {
+    trackWork(ready.then(() => this.load()).then((got) => { this.got = got; }).catch(() => {}), "demo:load");
+  },
+  async load() {},`),
+  });
+  assert.equal(tracked.length, 0);
+  const dropped = await runRuleOn(rule, {
+    "controllers/demo.js": wrap(`  connected() {
+    trackWork(this.load(), "demo:load");
+    ready.then(() => {});
+  },
+  async load() {},`),
+  });
+  assert.equal(dropped.length, 1);
+});
+
 test("an arrow-valued hook is scanned too", async () => {
   const findings = await runRuleOn(rule, {
     "controllers/demo.js": wrap(`  connected: () => { helper.then(() => {}); },`),

@@ -33,13 +33,15 @@ const isHandedToTrackWork = (node) => {
 };
 
 /**
+ * Whether the call's promise is counted: returned, awaited, or handed to
+ * `trackWork` itself or as part of a chain (`trackWork(a.then(f).catch(g))`).
  * @param {Node} node
  * @param {Node} stop
  */
 const isTracked = (node, stop) => {
   if (isHandedToTrackWork(node)) return true;
   for (let cursor = node.parent; cursor && cursor !== stop; cursor = cursor.parent)
-    if (ts.isAwaitExpression(cursor) || ts.isReturnStatement(cursor)) return true;
+    if (ts.isAwaitExpression(cursor) || ts.isReturnStatement(cursor) || isHandedToTrackWork(cursor)) return true;
   return false;
 };
 
