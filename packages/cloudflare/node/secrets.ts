@@ -2,14 +2,17 @@
  * @file Secrets for the Pages project: `secretsToPush` reads the names
  * `src/cloudflare`'s `secrets` declares and their values from the project's
  * `.env`, listing any that is missing; `pushSecrets` sends each through
- * wrangler with the value on stdin, and the command prints only the names.
- * A value never reaches an argument or a message.
+ * wrangler with the value on stdin (wrangler writes production only), and
+ * `pushPreviewSecrets` puts them on the preview environment through the API,
+ * as the D1 binding covers both; the command prints only the names. A value
+ * never reaches an argument or a message.
  */
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import type { CloudflareApi } from "./cloudflare-api.ts";
 import { cloudflareConfigOf } from "./d1.ts";
 import { parseEnv, projectNameOf, wranglerEntry } from "./deploy.ts";
 
@@ -77,4 +80,19 @@ export const pushSecrets = (plan: SecretsPlan, runner: SecretRunner): string[] =
     put.push(secret.name);
   }
   return put;
+};
+
+/** Put every secret on the Pages project's preview environment in one API call, answering the names put; an error carries no value. */
+export const pushPreviewSecrets = async (plan: SecretsPlan, api: CloudflareApi): Promise<string[]> => {
+  if (plan.secrets.length === 0) return [];
+  const envVars: Record<string, { type: string; value: string }> = {};
+  for (const secret of plan.secrets) envVars[secret.name] = { type: "secret_text", value: secret.value };
+  const values = plan.secrets.map((secret) => secret.value).filter((value) => value !== "");
+  try {
+    await api.patch(`/pages/projects/${encodeURIComponent(plan.project)}`, { deployment_configs: { preview: { env_vars: envVars } } });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Putting the secrets on the preview environment failed: ${values.reduce((out, value) => out.split(value).join("<redacted>"), message)}`);
+  }
+  return plan.secrets.map((secret) => secret.name);
 };

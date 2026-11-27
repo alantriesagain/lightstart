@@ -63,7 +63,7 @@ The `STORAGE` binding is where `@lightstart/moderation` publishes approved photo
 
 ## Secrets
 
-`defineCloudflare({ secrets: [...] })` names them. `light cf:secrets` puts each from the project's `.env` onto the Pages project with `wrangler pages secret put`, the value on stdin, never printed or passed on the command line, and lists any name `.env` lacks. `--dry-run` lists the names and puts nothing.
+`defineCloudflare({ secrets: [...] })` names them. `light cf:secrets` puts each from the project's `.env` onto the Pages project: production with `wrangler pages secret put`, the value on stdin, and preview through Cloudflare's API (wrangler writes production only), so a preview deploy runs with the same secrets, as the D1 binding covers both. A value is never printed or passed on the command line, and the command lists any name `.env` lacks. `--dry-run` lists the names and puts nothing.
 
 ## Node API
 
