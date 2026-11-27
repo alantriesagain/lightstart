@@ -1,7 +1,8 @@
 /**
  * @file What `@lightstart/auth` adds to an app's server, declared in its
- * `package.json` (`light.server`): the `users`, `auth_codes`, `oauth_accounts`
- * and `auth_handoffs` tables, the `/api/auth/*` endpoints with the mailer the environment names, and the
+ * `package.json` (`light.server`): the `users`, `auth_codes`, `oauth_accounts`,
+ * `auth_handoffs` and `auth_code_requests` tables, the `/api/auth/*` endpoints
+ * with the mailer the environment names, and the
  * caller every request is checked as, read from its session.
  */
 

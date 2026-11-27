@@ -7,6 +7,7 @@
 
 import { HttpError } from "@lightstart/server";
 import { defineEndpoint, type Caller, type D1Like, type Endpoint } from "@lightstart/api/server";
+import { clientIp, perAddress } from "@lightstart/visitor/server";
 
 import { identityNamed } from "./identities.ts";
 import { signToken } from "./jwt.ts";
@@ -21,6 +22,9 @@ export const RESEND_MS = 30 * 1000;
 
 /** How many wrong tries a code takes before it is thrown away. */
 export const MAX_TRIES = 5;
+
+/** How many code requests one client IP may make in the window before it is refused: ten an hour. */
+export const CODES_PER_IP = { max: 10, seconds: 3600 } as const;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -80,6 +84,8 @@ export interface AuthOptions {
   hooks?: AuthHooks;
   /** The fields `/profile` may change, `["name"]` by default. */
   profileFields?: string[];
+  /** How many codes one client IP may request in a window, ten an hour by default; `false` turns the per-IP limit off. */
+  codesPerIp?: { max: number; seconds: number } | false;
   /** The clock, `Date.now` by default, so a test can move it. */
   now?: () => number;
 }
@@ -161,6 +167,7 @@ const findOrCreateUser = async (db: D1Like, email: string, name?: string): Promi
 };
 
 const requestCode = (options: AuthOptions) => async (request: {
+  request: Request;
   body: unknown;
   db: D1Like;
   env: Record<string, unknown>;
@@ -168,6 +175,26 @@ const requestCode = (options: AuthOptions) => async (request: {
   if (!isRecord(request.body)) throw new HttpError(400, "invalid email");
   const email = emailOf(request.body);
   const now = (options.now ?? Date.now)();
+
+  const limit = options.codesPerIp === undefined ? CODES_PER_IP : options.codesPerIp;
+  if (limit !== false) {
+    await request.db
+      .prepare("DELETE FROM auth_code_requests WHERE created < datetime('now', ?)")
+      .bind(`-${limit.seconds} seconds`)
+      .run();
+    const trusted = isRecord(Reflect.get(request.request, "cf"));
+    const ip = clientIp(request.request, { trusted });
+    if (ip !== null) {
+      const verdict = await perAddress(request.db, "auth_code_requests", {
+        env: request.env,
+        ip,
+        max: limit.max,
+        seconds: limit.seconds,
+        record: true,
+      });
+      if (verdict.limited) throw new HttpError(429, "too many requests");
+    }
+  }
 
   const previous = await codeRowOf(request.db, email);
   if (previous !== null) {
