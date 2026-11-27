@@ -9,15 +9,18 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `index.ts` | `defineCloudflare`, `CloudflareConfig` |
 | `node/deploy.ts` | `parseEnv`, `projectNameOf`, `buildDirOf`, `planDeploy`, `uploadDirOf`, `wranglerSteps`, `wranglerEntry`, `runDeploy` |
 | `node/worker.ts` | `hasServer`, `workerSource`, `bundleWorker`, `stageDeploy` |
-| `node/cloudflare-api.ts` | `cloudflareApi`: `get`, `post`, `patch` over an injectable fetch |
+| `node/cloudflare-api.ts` | `cloudflareApi`: `get`, `post`, `patch` over an injectable fetch; `CloudflareApiError` carries Cloudflare's message and error codes |
 | `node/d1.ts` | `credentialsOf`, `cloudflareConfigOf`, `d1Settings`, `databaseOf`, `ensureDatabase`, `bindDatabase`, `remoteQuery`, `remoteSchema`, `migrateRemote` |
+| `node/r2.ts` | `r2Settings`, `bucketOf`, `ensureBucket`, `bindBucket` |
 | `node/secrets.ts` | `secretsToPush`, `pushSecrets`, `secretRunner` |
 | `cli/commands/cf/deploy.ts` | `light cf:deploy` |
 | `cli/commands/cf/d1/setup.ts` | `light cf:d1:setup` |
+| `cli/commands/cf/r2/setup.ts` | `light cf:r2:setup` |
 | `cli/commands/cf/secrets.ts` | `light cf:secrets` |
 | `test/deploy.test.ts` | The plan without the network |
 | `test/worker.test.ts` | The server bundle and the staged deploy without the network |
 | `test/d1.test.ts` | D1 over a fake fetch |
+| `test/r2.test.ts` | R2 over a fake fetch |
 | `test/secrets.test.ts` | Secrets over a temp `.env` and a fake wrangler |
 
 ## Rules the sources keep
@@ -31,6 +34,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - wrangler is this package's pinned dependency, run with node from its own entry; `planDeploy` and `wranglerSteps` touch nothing, so tests never reach the network.
 - Every Cloudflare call goes through `cloudflareApi`'s injectable fetch and every wrangler run through an injectable runner, so no test reaches the API or wrangler. A secret value or the API token never reaches an argument, a log line or an error message.
 - D1's database name is `src/cloudflare`'s `d1`; `light cf:d1:setup` creates it when missing and binds it as `DB` in production and preview. `light db:migrate --remote` plans with `@lightstart/api`'s `planMigration` over `remoteSchema`, and `--dry-run` sends none of the statements.
+- R2's bucket name is `src/cloudflare`'s `r2`: lower-case letters, digits and dashes, 3-63 characters, starting and ending with a letter or digit. `light cf:r2:setup` creates it when missing and binds it as `STORAGE` in production and preview; Cloudflare's 10042 (R2 not enabled) is matched by code and becomes the enable-R2 message.
 - `src/cloudflare`'s `secrets` names go from `.env` through `wrangler pages secret put`, the value on stdin; a missing name is listed, not fatal.
 - TypeScript with erasable syntax; no `any`. Comments are a JSDoc module header and JSDoc on exports.
 
@@ -43,6 +47,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | `planDeploy`, `wranglerSteps`, `runDeploy` | a release script or another command |
 | `hasServer`, `bundleWorker`, `stageDeploy` | the server bundle and the staged deploy |
 | `cloudflareApi`, `d1Settings`, `databaseOf`, `migrateRemote`, `remoteSchema` | `light db:migrate --remote` and the D1 command |
+| `r2Settings`, `bucketOf`, `ensureBucket`, `bindBucket` | `light cf:r2:setup`, and `@lightstart/moderation`'s `STORAGE` binding |
 | `secretsToPush`, `pushSecrets` | `light cf:secrets` |
 
 ## Gates

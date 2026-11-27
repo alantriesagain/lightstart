@@ -40,6 +40,17 @@ const DEFAULT_BASE = "https://api.cloudflare.com/client/v4";
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+/** An API error carrying Cloudflare's message and its error codes, so a caller can match on a code. */
+export class CloudflareApiError extends Error {
+  readonly codes: number[];
+
+  constructor(message: string, codes: number[]) {
+    super(message);
+    this.name = "CloudflareApiError";
+    this.codes = codes;
+  }
+}
+
 const errorText = (payload: unknown, status: number): string => {
   if (isRecord(payload) && Array.isArray(payload["errors"])) {
     const messages = payload["errors"]
@@ -48,6 +59,13 @@ const errorText = (payload: unknown, status: number): string => {
     if (messages.length > 0) return messages.join("; ");
   }
   return `Cloudflare request failed (${status})`;
+};
+
+const errorCodes = (payload: unknown): number[] => {
+  if (!isRecord(payload) || !Array.isArray(payload["errors"])) return [];
+  return payload["errors"]
+    .map((error) => (isRecord(error) && typeof error["code"] === "number" ? error["code"] : Number.NaN))
+    .filter((code) => !Number.isNaN(code));
 };
 
 /** Build an account's API over an injectable fetch. */
@@ -70,7 +88,9 @@ export const cloudflareApi = (options: CloudflareApiOptions): CloudflareApi => {
     } catch {
       throw new Error(`Cloudflare request failed (${response.status})`);
     }
-    if (!isRecord(payload) || payload["success"] !== true) throw new Error(errorText(payload, response.status));
+    if (!isRecord(payload) || payload["success"] !== true) {
+      throw new CloudflareApiError(errorText(payload, response.status), errorCodes(payload));
+    }
     return payload["result"];
   };
 
