@@ -1,0 +1,52 @@
+{
+  "name": "@lightstart/anim",
+  "version": "0.1.0",
+  "description": "Animation primitives: easing curves, damped springs sampled into keyframe channels or integrated live, and dt-driven tweens and timelines.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://lightstart.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alantriesagain/light.git",
+    "directory": "packages/anim"
+  },
+  "bugs": {
+    "url": "https://github.com/alantriesagain/light/issues"
+  },
+  "keywords": [
+    "animation",
+    "easing",
+    "spring",
+    "tween",
+    "light"
+  ],
+  "files": [
+    "index.js",
+    "easing.js",
+    "spring.js",
+    "tween.js",
+    "channel.js",
+    "views/*.js",
+    "views/*.css",
+    "types.ts",
+    "README.md",
+    "AGENTS.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./types.ts",
+      "default": "./index.js"
+    },
+    "./*": "./*"
+  },
+  "peerDependencies": {
+    "@lightstart/light": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightstart/components": "workspace:*",
+    "@lightstart/light": "workspace:*",
+    "@lightstart/test": "workspace:*",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}
