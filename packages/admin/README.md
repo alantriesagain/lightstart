@@ -48,6 +48,8 @@ The package's `extension.ts` adds the route:
 { "/admin": { name: "admin-home", view: "admin-home", layout: "admin-shell" } }
 ```
 
+The package declares both `light.extension` and `light.tags`, so the generation defines `admin-shell` and `admin-home` while its extension runs; the project writes neither.
+
 A tool is another extension. It adds routes under `/admin/...` with the same
 `layout: "admin-shell"`, and fills the three slots this package exports:
 

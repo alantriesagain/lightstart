@@ -11,7 +11,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { icon } from "@lightstart/light/theme/icons.js";
 import type { IconEntry } from "@lightstart/light/theme";
-import { dependencyNames, packageJsonOf, workerPathOf } from "../node/generate.ts";
+import { dependencyNames, extensionPackages, packageJsonOf, workerPathOf } from "../node/generate.ts";
 import type { GenerationHelpers, HostGeneration, HostPrepared } from "../node/generate.ts";
 import { collectionOf, ownIcons, scanIcons } from "../node/icons.ts";
 import type { ScannedIcons } from "../node/icons.ts";
@@ -167,6 +167,19 @@ const writtenTags = (project: string, table: TagTable): string[] => {
     }
   }
   return [...found];
+};
+
+/** Every tag of a package whose extension is part of the manifest, whether or not the project's sources write it. */
+const extensionTags = (project: string, table: TagTable, dev: boolean): string[] => {
+  const active = new Set(
+    extensionPackages(project)
+      .filter((entry) => dev || !entry.devOnly)
+      .map((entry) => entry.name),
+  );
+  return Object.entries(table)
+    .filter(([, entry]) => active.has(entry.package))
+    .map(([tag]) => tag)
+    .sort();
 };
 
 /** The tags needed: the ones written, their bases and the tags they write, and so on. */
@@ -360,7 +373,8 @@ const writeComponents = (project: string, dir: string, helpers: GenerationHelper
   const iconPath = join(dir, "icons.css");
   const table = tableFor(project);
   const written = table === null ? [] : writtenTags(project, table);
-  const wanted = table === null ? new Set<string>() : neededTags(written, table);
+  const routed = table === null ? [] : extensionTags(project, table, helpers.dev);
+  const wanted = table === null ? new Set<string>() : neededTags([...written, ...routed], table);
   if (table === null || wanted.size === 0) {
     const found = remove(modulePath);
     const style = remove(stylePath);

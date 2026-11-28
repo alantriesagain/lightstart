@@ -85,6 +85,24 @@ const addTagPackage = (project: string, name: string, tag: string, module: strin
   declareDependency(project, name);
 };
 
+/** A fake package naming both a `light.tags` table and a `light.extension`; `devOnly` adds `light.devOnly`. */
+const addExtensionTagPackage = (project: string, name: string, tags: Record<string, { module: string; uses?: string[] }>, devOnly = false): void => {
+  const dir = join(project, "node_modules", name);
+  mkdirSync(dir, { recursive: true });
+  const light = devOnly ? { extension: "./extension.js", devOnly: true, tags: "tags.json" } : { extension: "./extension.js", tags: "tags.json" };
+  const table: Record<string, unknown> = {};
+  for (const [tag, entry] of Object.entries(tags)) {
+    const style = entry.module.replace(/\.js$/, ".css");
+    table[tag] = { module: entry.module, style, extends: null, uses: entry.uses ?? [], loads: [] };
+    writeFileSync(join(dir, entry.module), `import { defineComponent } from "@lightstart/light";\n\nexport default defineComponent({ tag: ${JSON.stringify(tag)} });\n`);
+    writeFileSync(join(dir, style), `:where(${tag}) {}\n`);
+  }
+  writeFileSync(join(dir, "package.json"), `${JSON.stringify({ name, version: "0.0.0", type: "module", light }, null, 2)}\n`);
+  writeFileSync(join(dir, "tags.json"), `${JSON.stringify(table, null, 2)}\n`);
+  writeFileSync(join(dir, "extension.js"), 'import { defineExtension } from "@lightstart/app/extensions.ts";\n\nexport default defineExtension({ name: "tool" });\n');
+  declareDependency(project, name);
+};
+
 /** A fake package under the project's node_modules, its package.json naming a module under `light.extension`; `devOnly` adds `light.devOnly`. */
 const addExtensionPackage = (project: string, name: string, module: string, devOnly = false): void => {
   const dir = join(project, "node_modules", name);
@@ -434,6 +452,74 @@ const main = async (): Promise<void> => {
     ok("an app's normal extension stays in a release", releaseSource.includes('"../src/extensions/local.js"'));
   } finally {
     rmSync(withDevExtensions, { recursive: true, force: true });
+  }
+
+  const withExtensionTags = copy();
+  try {
+    addTagPackage(withExtensionTags, "@acme/widgets", "wid-frame", "wid-frame.js");
+    addExtensionTagPackage(withExtensionTags, "@example/tool", {
+      "tool-panel": { module: "tool-panel.js", uses: ["wid-frame"] },
+      "tool-page": { module: "tool-page.js" },
+    });
+    const first = await generate(withExtensionTags);
+    ok("an extension-tags app has an app", first !== null);
+    if (first === null) return done();
+
+    const module = readFileSync(join(first.dir, "components.ts"), "utf8");
+    ok("every tag of a running extension's table is defined", module.includes("View.define(toolPanel);") && module.includes("View.define(toolPage);"));
+    ok("a tag it uses from another package is defined", module.includes("View.define(widFrame);"));
+    ok("the used tag is defined before the tag that uses it", module.indexOf("View.define(widFrame);") < module.indexOf("View.define(toolPanel);"));
+    ok("the extension's tags are imported from its package", module.includes('import toolPanel from "@example/tool/tool-panel.js";') && module.includes('import toolPage from "@example/tool/tool-page.js";'));
+
+    const style = readFileSync(join(first.dir, "components.css"), "utf8");
+    ok("the extension's stylesheets are imported", style.includes('@import "../node_modules/@example/tool/tool-panel.css";') && style.includes('@import "../node_modules/@example/tool/tool-page.css";'));
+    ok("the used tag's stylesheet is imported", style.includes('@import "../node_modules/@acme/widgets/wid-frame.css";'));
+    ok("the styles are in dependency order", style.indexOf("wid-frame.css") < style.indexOf("tool-panel.css"));
+
+    const manifest = readFileSync(first.manifest, "utf8");
+    ok("the manifest imports the components", manifest.includes('import "./components.ts";'));
+  } finally {
+    rmSync(withExtensionTags, { recursive: true, force: true });
+  }
+
+  const withDevExtensionTags = copy();
+  try {
+    addTagPackage(withDevExtensionTags, "@acme/widgets", "wid-frame", "wid-frame.js");
+    addExtensionTagPackage(
+      withDevExtensionTags,
+      "@example/tool",
+      {
+        "tool-panel": { module: "tool-panel.js", uses: ["wid-frame"] },
+        "tool-page": { module: "tool-page.js" },
+      },
+      true,
+    );
+    const release = await generate(withDevExtensionTags, { dev: false });
+    ok("a dev-only extension's tags are not defined in a release", release !== null && !existsSync(join(release.dir, "components.ts")) && !existsSync(join(release.dir, "components.css")));
+
+    writeFileSync(join(withDevExtensionTags, "src", "views", "app-home.ts"), 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppHome extends View {\n  render() {\n    return html`<tool-panel></tool-panel>`;\n  }\n}\n\nView.register("app-home", AppHome);\n');
+    const written = await generate(withDevExtensionTags, { dev: false });
+    ok("a release generation with a written tag has an app", written !== null);
+    if (written === null) return done();
+    const module = readFileSync(join(written.dir, "components.ts"), "utf8");
+    ok("a written dev-only tag is defined, with its used tag", module.includes("View.define(toolPanel);") && module.includes("View.define(widFrame);"));
+    ok("its other tags stay out of a release", !module.includes("toolPage"));
+    ok("only the written tag's styles are imported", readFileSync(join(written.dir, "components.css"), "utf8").includes("tool-panel.css") && !readFileSync(join(written.dir, "components.css"), "utf8").includes("tool-page.css"));
+  } finally {
+    rmSync(withDevExtensionTags, { recursive: true, force: true });
+  }
+
+  const withPlainTags = copy();
+  try {
+    addTagPackage(withPlainTags, "@acme/camera", "cam-preview", "cam-preview.js");
+    const untouched = await generate(withPlainTags);
+    ok("a tag package that is not an extension defines nothing unwritten", untouched !== null && !existsSync(join(untouched.dir, "components.ts")) && !existsSync(join(untouched.dir, "components.css")));
+
+    writeFileSync(join(withPlainTags, "src", "views", "app-home.ts"), 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppHome extends View {\n  render() {\n    return html`<cam-preview></cam-preview>`;\n  }\n}\n\nView.register("app-home", AppHome);\n');
+    const written = await generate(withPlainTags);
+    ok("a non-extension tag package still defines what the sources write", written !== null && existsSync(join(written.dir, "components.ts")) && readFileSync(join(written.dir, "components.ts"), "utf8").includes("View.define(camPreview);"));
+  } finally {
+    rmSync(withPlainTags, { recursive: true, force: true });
   }
   done();
 };

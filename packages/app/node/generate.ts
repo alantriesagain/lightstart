@@ -48,6 +48,8 @@ export interface GenerationHelpers {
   readonly extension: ".ts" | ".js";
   /** Whether the app declares `worker: true`, so the host writes its worker entry. */
   readonly worker: boolean;
+  /** Whether this generation includes dev-only parts (`src/seed.dev`, a package's dev-only extension). */
+  readonly dev: boolean;
   /** The app's choices the host's part of the generation reads. */
   readonly info: AppInfo;
   flatFiles(dir: string): string[];
@@ -347,12 +349,13 @@ export const packageJsonOf = (require: ReturnType<typeof createRequire>, name: s
 };
 
 interface PackageExtension {
+  name: string;
   specifier: string;
   devOnly: boolean;
 }
 
 /** The dependencies whose package.json names a `light.extension` module, sorted by package name. */
-const extensionPackages = (project: string): PackageExtension[] => {
+export const extensionPackages = (project: string): PackageExtension[] => {
   const require = createRequire(join(project, "package.json"));
   const found: Array<{ name: string; module: string; devOnly: boolean }> = [];
   for (const name of dependencyNames(project)) {
@@ -369,7 +372,7 @@ const extensionPackages = (project: string): PackageExtension[] => {
   }
   return found
     .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
-    .map((entry) => ({ specifier: `${entry.name}/${entry.module}`, devOnly: entry.devOnly }));
+    .map((entry) => ({ name: entry.name, specifier: `${entry.name}/${entry.module}`, devOnly: entry.devOnly }));
 };
 
 /** Whether an app's own extension file is dev-only by its `.dev.ts` or `.dev.js` name. */
@@ -655,7 +658,8 @@ export const generate = async (projectPath: string, options: GenerateOptions = {
   const main = join(dir, `main${extension}`);
   const part = await hostGeneration(info.host);
   const rootFile = part.rootView ? rootFileOf(views, info.root) : null;
-  const helpers = { extension, worker: info.worker, info, flatFiles, specifierFor, nameOf, writeWhenChanged };
+  const dev = options.dev !== false;
+  const helpers = { extension, worker: info.worker, dev, info, flatFiles, specifierFor, nameOf, writeWhenChanged };
   const locales = writeLocales(project, dir, info.locale, helpers);
   const content = await writeContent(project, dir, models, extension, helpers);
   const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
