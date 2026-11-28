@@ -90,4 +90,3 @@ export interface LiveSpring {
 }
 
 /** Re-export runtime types from the JS entry so the bare `@lightstart/anim` specifier surfaces both the type-only declarations above AND the JSDoc-inferred types of the runtime exports. */
-export * from "./index.js";

@@ -1,5 +1,5 @@
 /**
- * @lightstart/anim: easing curves, damped springs and dt-driven tweens.
+ * @file @lightstart/anim: easing curves, damped springs and dt-driven tweens.
  *
  * Two ways to move a value, deliberately kept apart:
  *   spring.js  BAKES motion into a `{t, value}` keyframe channel ahead of time
@@ -13,3 +13,4 @@ export { linear, easeIn, easeOut, easeInOut, easeInBack, easeOutBack, easeInOutB
 export { sampleSpring, simplifyChannel, springChannel, springDurationMs } from "./spring.js";
 export { cubicBezier, interpChannel } from "./channel.js";
 export { createTween, createTimeline, createSpring } from "./tween.js";
+export type * from "./types.ts";
