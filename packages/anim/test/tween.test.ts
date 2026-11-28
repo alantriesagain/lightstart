@@ -179,4 +179,14 @@ import { createTween, createTimeline, createSpring } from "../tween.js";
   eq("createSpring: is deterministic", JSON.stringify(run()), JSON.stringify(run()));
 }
 
+{
+  const tween = createTween({ from: 0, to: 10, ms: 100, easing: "linear" });
+  const step = tween.step;
+  eqn("a detached step still advances its tween", step(50), 5);
+  eqn("and the tween reads the value", tween.value, 5);
+  const spring = createSpring({ value: 0, target: 1 });
+  const setTarget = spring.setTarget;
+  ok("a detached spring method answers its spring", setTarget(2) === spring);
+}
+
 done();

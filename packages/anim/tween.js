@@ -6,6 +6,11 @@
  * Nothing here schedules itself. Every primitive is stepped by its owner (a
  * game loop, a test, a render tick) with a delta in milliseconds, so the whole
  * module is deterministic and node-safe.
+ *
+ * Each primitive is a class made inside its factory, its methods reaching it
+ * by name, so a detached `tween.step` still works. They are not object
+ * literals: scriptc does not show getters of an object literal the writes to
+ * the variables they close over when the module carries an `@import` of types.
  */
 
 /** @import { Tween, TweenConfig, Timeline, LiveSpring, LiveSpringConfig } from "./types.ts" */
@@ -30,17 +35,20 @@ export const createTween = ({ from = 0, to = 1, ms = 300, easing = "easeInOut", 
   /** @param {number} t */
   const valueAt = (t) => from + (to - from) * ease(easing, t);
 
-  const tween = {
-    value: from,
+  class Tween {
+    value = from;
+
     get done() {
       return done || cancelled;
-    },
+    }
+
     get elapsed() {
       return elapsed;
-    },
+    }
+
     get progress() {
       return span === 0 ? 1 : clamp01((elapsed - delay) / span);
-    },
+    }
 
     /** @param {number} dtMs */
     step(dtMs) {
@@ -57,11 +65,11 @@ export const createTween = ({ from = 0, to = 1, ms = 300, easing = "easeInOut", 
         onComplete?.(tween.value);
       }
       return tween.value;
-    },
+    }
 
     cancel() {
       cancelled = true;
-    },
+    }
 
     reset() {
       elapsed = 0;
@@ -69,9 +77,10 @@ export const createTween = ({ from = 0, to = 1, ms = 300, easing = "easeInOut", 
       cancelled = false;
       tween.value = from;
       return tween;
-    },
-  };
+    }
+  }
 
+  const tween = new Tween();
   return tween;
 };
 
@@ -86,13 +95,14 @@ export const createTimeline = () => {
   const entries = [];
   let elapsed = 0;
 
-  const timeline = {
+  class Timeline {
     get elapsed() {
       return elapsed;
-    },
+    }
+
     get done() {
       return entries.every((e) => e.started && e.tween.done);
-    },
+    }
 
     /**
      * @param {Tween} tween
@@ -101,7 +111,7 @@ export const createTimeline = () => {
     add(tween, at = 0) {
       entries.push({ tween, at, started: false });
       return timeline;
-    },
+    }
 
     /** @param {number} dtMs */
     step(dtMs) {
@@ -116,11 +126,11 @@ export const createTimeline = () => {
         entry.tween.step(dtMs);
       }
       return timeline;
-    },
+    }
 
     cancel() {
       for (const entry of entries) entry.tween.cancel();
-    },
+    }
 
     reset() {
       elapsed = 0;
@@ -129,9 +139,10 @@ export const createTimeline = () => {
         entry.tween.reset();
       }
       return timeline;
-    },
-  };
+    }
+  }
 
+  const timeline = new Timeline();
   return timeline;
 };
 
@@ -153,20 +164,23 @@ export const createSpring = ({ value = 0, target, stiffness = 170, damping = 26,
   let v = velocity;
   let goal = target ?? value;
 
-  const spring = {
+  class Spring {
     get value() {
       return x;
-    },
+    }
+
     get velocity() {
       return v;
-    },
+    }
+
     get target() {
       return goal;
-    },
+    }
+
     get atRest() {
       const amplitude = Math.max(Math.abs(goal - x), 1e-6);
       return Math.abs(x - goal) < amplitude * 0.005 && Math.abs(v) < amplitude * 0.05;
-    },
+    }
 
     /**
      * Move the goal without disturbing current position or velocity.
@@ -175,7 +189,7 @@ export const createSpring = ({ value = 0, target, stiffness = 170, damping = 26,
     setTarget(next) {
       goal = next;
       return spring;
-    },
+    }
 
     /**
      * Jump to a value, killing velocity. For teleports and resets.
@@ -186,7 +200,7 @@ export const createSpring = ({ value = 0, target, stiffness = 170, damping = 26,
       goal = next;
       v = 0;
       return spring;
-    },
+    }
 
     /** @param {number} dtMs */
     step(dtMs) {
@@ -200,8 +214,9 @@ export const createSpring = ({ value = 0, target, stiffness = 170, damping = 26,
         remaining -= stepMs;
       }
       return x;
-    },
-  };
+    }
+  }
 
+  const spring = new Spring();
   return spring;
 };
