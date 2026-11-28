@@ -1,0 +1,73 @@
+:where(admin-shell) {
+  display: block;
+  min-height: 100%;
+}
+
+:where(admin-shell) .admin-shell {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background: var(--color-canvas, #fff);
+  color: var(--color-text, #111);
+}
+
+:where(admin-shell) .admin-shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-border, #ddd);
+  padding: 0.75rem 1.25rem;
+}
+
+:where(admin-shell) .admin-shell-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+:where(admin-shell) .admin-shell-bell {
+  position: relative;
+}
+
+:where(admin-shell) .admin-shell-bell-count {
+  position: absolute;
+  top: -0.15rem;
+  right: -0.15rem;
+  pointer-events: none;
+}
+
+:where(admin-shell) .admin-shell-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+:where(admin-shell) .admin-shell-sidebar {
+  display: flex;
+  width: 14rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-right: 1px solid var(--color-border, #ddd);
+  padding: 1rem 0.75rem;
+}
+
+:where(admin-shell) .admin-shell-main {
+  flex: 1;
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+:where(admin-shell) .admin-shell-notifications {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
+  z-index: 20;
+  width: min(22rem, calc(100vw - 2rem));
+}
+
+:where(admin-shell) .admin-shell-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
