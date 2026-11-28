@@ -6,7 +6,7 @@
  */
 
 import { done, eq, eqn, ok } from "@lightstart/test/assert.ts";
-import { clearHistory, configureFiles, DevFilesBackend, files, history } from "../index.ts";
+import { adminConfig, clearHistory, configureFiles, DevFilesBackend, files, history, loadAdminSession, toolConfig } from "../index.ts";
 import type { FileEntry, FilesBackend } from "../index.ts";
 
 class MemoryBackend implements FilesBackend {
@@ -108,6 +108,19 @@ const main = async (): Promise<void> => {
   backend.entries.set("social/a.md", "outside");
   await history.undo();
   eq("a step still restores what it recorded after an outside change", (await files.read("social/a.md")) ?? "", "one");
+
+  class SessionBackend extends MemoryBackend {
+    async session() {
+      return { token: "session-token", folders: ["social"], title: "Session admin", tools: { alpha: { mode: "fast", nested: { on: true } } } };
+    }
+  }
+
+  eq("the page config is null before a session loads", JSON.stringify(adminConfig.value), "null");
+  configureFiles(new SessionBackend());
+  await loadAdminSession();
+  eq("a session fills the page config", adminConfig.value?.title ?? "", "Session admin");
+  eq("the tool's settings are answered by name", JSON.stringify(toolConfig("alpha")), JSON.stringify({ mode: "fast", nested: { on: true } }));
+  eq("an unknown tool has no settings", JSON.stringify(toolConfig("missing")), "{}");
 
   configureFiles(new DevFilesBackend());
   clearHistory();

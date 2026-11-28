@@ -7,6 +7,7 @@
  */
 
 import { pathProblem } from "./paths.ts";
+import { validateTools } from "./config.ts";
 
 /** What `src/admin.ts` (or `.js`) declares. */
 export interface AdminConfig {
@@ -14,6 +15,8 @@ export interface AdminConfig {
   title?: string;
   /** Project-relative folders the admin may read and write. */
   folders: string[];
+  /** Per-tool settings, a record of plain-data records; `{}` when absent. */
+  tools?: Record<string, Record<string, unknown>>;
 }
 
 /** Keep the config's literal type and check every folder the admin may touch. */
@@ -26,15 +29,17 @@ export const defineAdmin = (config: AdminConfig): AdminConfig => {
     if (problem !== null) throw new Error(`The admin folder "${folder}" is not allowed: ${problem}`);
     if (!folders.includes(folder)) folders.push(folder);
   }
-  return { ...config, folders };
+  const tools = config.tools === undefined ? undefined : validateTools(config.tools);
+  return tools === undefined ? { ...config, folders } : { ...config, folders, tools };
 };
 
-export type { AdminCommand, AdminSection } from "./slots.ts";
-export { adminCommands, adminSections } from "./slots.ts";
+export type { AdminCommand, AdminHeaderItem, AdminSection } from "./slots.ts";
+export { adminCommands, adminHeader, adminSections } from "./slots.ts";
 export type { AdminSession, FileEntry, FilesBackend } from "./files.ts";
 export { changed, configureFiles, DevFilesBackend, files, loadAdminSession } from "./files.ts";
 export { canRedo, canUndo, clearHistory, history, labels, redo, snapshot, undo } from "./history.ts";
 export type { ActiveDialog, ConfirmDialog, DialogKind, PromptDialog } from "./dialogs.ts";
 export { activeDialog, confirm, dialogs, message, notify, prompt, setPromptValue, settle } from "./dialogs.ts";
 export type { AdminNotification, AdminNotificationKind } from "./state.ts";
-export { addNotification, adminTitle, clearNotifications, notifications, notificationsOpen } from "./state.ts";
+export type { AdminPageConfig } from "./state.ts";
+export { addNotification, adminConfig, adminTitle, clearNotifications, notifications, notificationsOpen, toolConfig } from "./state.ts";

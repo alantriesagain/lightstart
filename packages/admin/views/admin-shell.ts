@@ -6,11 +6,11 @@
  */
 
 import View from "@lightstart/light";
-import { html, nothing } from "@lightstart/light/html";
+import { element, html, nothing } from "@lightstart/light/html";
 import { currentRoute } from "@lightstart/app/web";
 import { activeDialog, message, settle } from "../dialogs.ts";
 import { loadAdminSession } from "../files.ts";
-import { adminCommands, adminSections } from "../slots.ts";
+import { adminCommands, adminHeader, adminSections } from "../slots.ts";
 import type { AdminSection } from "../slots.ts";
 import { adminTitle, clearNotifications, notifications, notificationsOpen } from "../state.ts";
 
@@ -52,6 +52,7 @@ class AdminShell extends View {
 
   render() {
     const sections = adminSections.items.value;
+    const header = adminHeader.items.value;
     const path = currentRoute.value?.routePath ?? "";
     const dialog = activeDialog.value;
     const entries = notifications.value;
@@ -60,7 +61,10 @@ class AdminShell extends View {
     return html`
       <div class="admin-shell">
         <header class="admin-shell-header">
-          <lc-text class="admin-shell-title" level="1" size="lg">${adminTitle.value}</lc-text>
+          <div class="admin-shell-heading">
+            <lc-text class="admin-shell-title" level="1" size="lg">${adminTitle.value}</lc-text>
+            ${header.map((item) => element(item.tag, { "data-admin-header": item.id }))}
+          </div>
           <div class="admin-shell-actions">
             <lc-command-palette hide-trigger .docs=${this._docs()} .groups=${["Commands"]} @command-select=${(event: Event) => this._selectCommand(event)}></lc-command-palette>
             <span class="admin-shell-bell">

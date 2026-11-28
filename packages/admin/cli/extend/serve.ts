@@ -6,7 +6,7 @@
 
 import { defineExtension } from "@lightstart/cli";
 import type {} from "@lightstart/dev";
-import { adminFoldersOf, adminTitleOf, readAdmin } from "../../node/config.ts";
+import { adminFoldersOf, adminTitleOf, adminToolsOf, readAdmin } from "../../node/config.ts";
 import { createAdminApp, newAdminToken } from "../../node/serve.ts";
 
 export default defineExtension("serve", {
@@ -17,6 +17,7 @@ export default defineExtension("serve", {
         projectDir: ctx.projectDir,
         folders: adminFoldersOf(config),
         title: adminTitleOf(config),
+        tools: adminToolsOf(config),
         token: newAdminToken(),
       }),
     );

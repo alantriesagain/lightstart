@@ -29,6 +29,7 @@
     "extension.ts",
     "slots.ts",
     "paths.ts",
+    "config.ts",
     "files.ts",
     "history.ts",
     "state.ts",

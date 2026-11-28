@@ -10,7 +10,8 @@
 import { signal } from "@lightstart/light/signals";
 import type { Signal } from "@lightstart/light/signals";
 import { assertPath, withinFolder } from "./paths.ts";
-import { adminTitle } from "./state.ts";
+import { adminConfig, adminTitle } from "./state.ts";
+import { toolsOf } from "./config.ts";
 
 /** One entry of a listing. */
 export interface FileEntry {
@@ -26,6 +27,7 @@ export interface AdminSession {
   token: string;
   folders: readonly string[];
   title: string;
+  tools: Record<string, Record<string, unknown>>;
 }
 
 /** The store a tool reads and writes through; the dev file API is the default, GitHub can be another. */
@@ -53,6 +55,12 @@ const TOKEN_HEADER = "x-light-admin-token";
 
 const url = (path: string, base: string): string => `${base}?path=${encodeURIComponent(path)}`;
 
+/** Put a loaded session into the page state the shell and tools read. */
+const applySession = (session: AdminSession): void => {
+  adminTitle.value = session.title;
+  adminConfig.value = { title: session.title, folders: session.folders, tools: session.tools };
+};
+
 /** The dev file API as a `FilesBackend`: the session's token stays in memory, never in storage. */
 export class DevFilesBackend implements FilesBackend {
   private sessionPromise: Promise<AdminSession> | null = null;
@@ -74,9 +82,10 @@ export class DevFilesBackend implements FilesBackend {
         token: typeof data.token === "string" ? data.token : "",
         folders: Array.isArray(data.folders) ? data.folders.filter((folder): folder is string => typeof folder === "string") : [],
         title: typeof data.title === "string" && data.title.trim() !== "" ? data.title : "Admin",
+        tools: toolsOf(data.tools),
       };
       this.folders = session.folders;
-      adminTitle.value = session.title;
+      applySession(session);
       this.watch();
       return session;
     })();
@@ -179,7 +188,7 @@ export const configureFiles = (next: FilesBackend): void => {
 export const loadAdminSession = async (): Promise<void> => {
   if (backend.session === undefined) return;
   try {
-    await backend.session();
+    applySession(await backend.session());
   } catch {
     // A page without the dev server (a build preview) keeps the default title and folders.
   }
