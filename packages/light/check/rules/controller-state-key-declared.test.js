@@ -79,7 +79,7 @@ export default defineController({
 
 test("a dependency's controller, from the host's controller files, is a target like the project's own", async () => {
   const findings = await runRuleOn(rule, {
-    "node_modules/@lightstart/devices/controllers/devices.js": `import { defineController } from "@lightstart/light/controller";
+    "node_modules/@example/devices/controllers/devices.js": `import { defineController } from "@lightstart/light/controller";
 export default defineController({ name: "devices", props: { paired: [] } });
 `,
     "views/home.js": `import T from "@lightstart/light/types";
@@ -88,6 +88,6 @@ export default { tag: "fx-home", props: {
   gone: T.array({ sync: "devices" }),
 } };
 `,
-  }, { host: { controllerFiles: () => ["node_modules/@lightstart/devices/controllers/devices.js"] } });
+  }, { host: { controllerFiles: () => ["node_modules/@example/devices/controllers/devices.js"] } });
   assert.deepEqual(findings.map((f) => f.message.match(/binds "(\w+)"/)[1]), ["gone"]);
 });

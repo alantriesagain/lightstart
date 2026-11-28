@@ -59,7 +59,7 @@ light check --all
 node benchmarks/server/run.js --engines node,native                        # every contender's digest must match; read the ratios
 ```
 
-`pnpm verify` runs the first four with the workspace packages. A change to an adapter or to `Static` also reaches light's browser tests (`npm test` in `packages/light`, served by `test/serve.js`), widecode's desktop coverage (its backend compiles the desktop asset server), and in bootstrapp `packages/serve/src/request.test.ts`, `packages/p2p` (its relay and signalers' fake servers run on the node adapter) and `packages/cloudflare/pages/endpoints.test.js`.
+`pnpm verify` runs the first four with the workspace packages. A change to an adapter or to `Static` also reaches light's browser tests (`npm test` in `packages/light`, served by `test/serve.js`), widecode's desktop coverage (its backend compiles the desktop asset server), and in a downstream project `packages/serve/src/request.test.ts`, a package that ships P2P relay and signalers (their fake servers run on the node adapter) and a deploy package's Pages endpoints test.
 
 ## Known limits
 

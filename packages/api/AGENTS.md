@@ -29,7 +29,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 - The query string the adapter writes is the one `crudApp` reads; `end-to-end.test.ts` holds both to it. Change them together.
 - A schema without `$permissions` is `auth` for every operation; an admin is never row-scoped or capped; an `owner` row outside the caller's scope answers 404, never 403, so its existence is not revealed.
 - Names in `where`, `order`, `fields` and a body are checked against the schema's fields before any SQL; values are always bound.
-- `planMigration` touches no database; reading a database's columns and indexes is separate, so a remote run can feed it.
+- `planMigration` touches no database; reading a database's columns and indexes is separate, so a deploy package's own migration can feed it.
 - An endpoint route is registered before the CRUD fallback, so it wins over a CRUD route of the same method and path; two endpoints of one method and path are refused before the app is built. Access is checked before the body is read.
 - `.light/server.ts` imports the server models and `src/endpoints` files sorted, skips tests and `.d.ts`, writes only when its content changes, and is always TypeScript. `light serve` builds it once at startup, so a model or endpoint change needs a restart.
 - TypeScript with erasable syntax; no `any`. Comments are a JSDoc module header and JSDoc on exports. Tests are plain scripts on `@lightstart/test/assert.ts`.
@@ -41,12 +41,12 @@ What the package is and how to use it: [README.md](README.md). This file is what
 | Contract | Who relies on it |
 |---|---|
 | `$permissions` on a schema | an app's server models |
-| `crudApp` and its routes, `Caller` | the generated server app, auth, the Cloudflare deploy |
+| `crudApp` and its routes, `Caller` | the generated server app, auth, a deploy package |
 | `defineEndpoint`, `serverApp` | an app's endpoints and `.light/server.ts` |
 | `.light/server.ts` and its `createServer` | `light serve` and the deploy |
 | `adapter: "api"`, `configureApi({ token, fetch, prefix })` | an app's page, and auth's token |
 | `light.server` in a package's `package.json`, `defineServerContribution` | a package adding tables, endpoints or the caller (`@lightstart/auth`) |
-| `planMigration` | `light db:migrate` and a remote migration |
+| `planMigration` | `light db:migrate`, and a deploy package's own migration |
 
 ## Gates
 

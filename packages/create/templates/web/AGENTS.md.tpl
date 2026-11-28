@@ -80,15 +80,7 @@ A `View` subclass's render follows the signals it reads. A view written as a def
 
 ## Deploying
 
-`.deployed/current` is the whole site for a static host. To put it on Cloudflare Pages, add `@lightstart/cloudflare` and keep `CF_ACCOUNT_ID` and `CF_API_TOKEN` in `.env` (in `.gitignore`, never committed):
-
-```bash
-pnpm build
-light cf:deploy               # a preview at <branch>.<project>.pages.dev
-light cf:deploy --production  # the production branch: the project's domains
-```
-
-The Pages project is the package's name, or `defineCloudflare({ project })` in `src/cloudflare.__EXT__`; the first deploy creates it. Deploy a preview, open it, then production. `light cf:deploy --dry-run` shows the project, the build and the wrangler steps without uploading.
+`.deployed/current` is the whole site for a static host: run `pnpm build`, then upload that folder to any static host, or run the deploy command a deploy package in the project adds.
 
 ## Read more
 
@@ -99,4 +91,3 @@ The Pages project is the package's name, or `defineCloudflare({ project })` in `
 | Every `lc-*` tag, its props and its stylesheet | `@lightstart/components`'s README |
 | Forms from a model; translations | `@lightstart/form`'s and `@lightstart/i18n`'s READMEs |
 | `light serve`, `light build`, `light test`, `light check` | `@lightstart/dev`, `@lightstart/build`, `@lightstart/cli` |
-| `light cf:deploy` to Cloudflare Pages | `@lightstart/cloudflare` |

@@ -213,7 +213,7 @@ A package may wrap the adapter of every model whose schema declares a directive 
 ```javascript
 import { registerAdapterDecorator } from "@lightstart/light/model/adapter";
 
-registerAdapterDecorator("$moderated", (base, { model, schema, store, shadow, changed }) => ({
+registerAdapterDecorator("$reviewed", (base, { model, schema, store, shadow, changed }) => ({
   init: () => base.init(),
   get: (model, id, opts) => base.get(model, id, opts),
   insert: async (model, row, opts) => (opts?.direct ? base.insert(model, row, opts) : ...),

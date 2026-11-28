@@ -92,9 +92,9 @@ Without a contributed caller, the caller comes from the development-only headers
 ## The app's server setup
 
 `src/server.ts` or `src/server.js`, when the app has one, is its server setup. The generated `.light/server.ts` imports it after every package contribution and before the server is made, in `light serve` and in the deploy alike. It's where an app registers what packages read on the server:
-- billing's plans (`registerBilling`);
-- auth's hooks (`registerAuthHooks({ onUserDeleted, sessionFields })`), for example moderation's `forgetUser` when an account goes;
-- a WhatsApp hook.
+- a package's settings, such as its plans;
+- auth's hooks (`registerAuthHooks({ onUserDeleted, sessionFields })`), for example a package's cleanup when an account goes;
+- a package's webhook handler.
 
 It exports nothing and runs once per server.
 
@@ -102,8 +102,8 @@ It exports nothing and runs once per server.
 
 A package adds to every app's server that declares it by naming a module in its `package.json`, `"light": { "server": "./server/contribute.ts" }`. That module default-exports `defineServerContribution({ models, endpoints, caller })`:
 
-- `models` are server models by table name. They're static, so `light db:migrate` (local and `--remote`) creates their tables, and the app's own model of the same name wins.
-- `endpoints(env, models)` answers endpoints made from the server's environment and every server model the app's server holds (the app's and the contributed), registered before the app's. A package that acts on models an app marks (moderation's `$moderated`) reads them here.
+- `models` are server models by table name. They're static, so `light db:migrate` creates their tables locally, and a deploy package's own command migrates a remote database; the app's own model of the same name wins.
+- `endpoints(env, models)` answers endpoints made from the server's environment and every server model the app's server holds (the app's and the contributed), registered before the app's. A package that acts on models an app marks reads them here.
 - `caller(env, db)`, the first one any contribution brings, answers who makes each request, for every endpoint and `$permissions` check.
 
 Contributions merge in package-name order. `@lightstart/auth` is one: its `users` and `auth_codes` tables, `/api/auth/*`, and the session as the caller, with nothing for the app to wire.
@@ -117,7 +117,7 @@ The `api` adapter type is declared in `package.json` (`light.adapters`), so a st
 `light db:migrate` brings `.data/api.db` (or `--file`) to the server models: the models in `src/models/` whose `$store` names a store with `adapter: "api"`. It creates missing tables, adds missing columns, creates missing indexes, and prints each statement; `--dry-run` prints the plan only.
 
 From `@lightstart/api/node/migrate.ts`:
-- `planMigration(columns, models, indexes)` is pure, so a remote run reuses it;
+- `planMigration(columns, models, indexes)` is pure, so a deploy package's own migration reuses it;
 - `migrateLocal(file, models)`, `existingTables(file, models)` and `existingIndexes(file)` work on a local file.
 
 ## Not yet
