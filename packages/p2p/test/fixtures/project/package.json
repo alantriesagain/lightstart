@@ -1,8 +1,0 @@
-{
-  "name": "p2p-relay-fixture",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "@lightstart/p2p": "workspace:*"
-  }
-}

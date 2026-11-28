@@ -146,7 +146,7 @@ export default {
     layout: "app-shell",
     routes: {
       "/profile": { view: "app-profile", title: "Profile" },
-      "/billing": { view: "app-billing", title: "Billing" },
+      "/invoices": { view: "app-invoices", title: "Invoices" },
     },
   },
   "/plain": { view: "app-plain", layout: null },

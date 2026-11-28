@@ -51,7 +51,7 @@ A package adds another way in by registering an identity when its server contrib
 import { registerIdentity } from "@lightstart/auth/server";
 
 registerIdentity({
-  name: "whatsapp",
+  name: "chat",
   redeem: async (body, db, env) => ({ userId: null, name: "Sam", link: async (userId) => { /* keep it */ } }),
 });
 ```

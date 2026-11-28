@@ -116,7 +116,7 @@ const mod = await import("./lazy.js");
 
 test("imports() ignores a specifier quoted inside a comment", () => {
   const ctx = contextFromFiles({
-    "views/a.js": '/** consumers import { X } from "@lightstart/camera/commands.js" */\n// import "@lightstart/nope";\nimport T from "@lightstart/light/types";\nconst m = () => import("@lightstart/anim");',
+    "views/a.js": '/** consumers import { X } from "@example/camera/commands.js" */\n// import "@lightstart/nope";\nimport T from "@lightstart/light/types";\nconst m = () => import("@lightstart/anim");',
   });
   assert.deepEqual(ctx.imports("views/a.js").map((i) => [i.spec, i.kind]), [["@lightstart/light/types", "default"], ["@lightstart/anim", "dynamic"]]);
 });
@@ -346,10 +346,10 @@ test("controllers() reads every defineController call in the project's scripts, 
 
 test("a host's controller files are the dependency controllers; its adapter names join the ones the project registers", () => {
   const ctx = contextFromFiles({
-    "node_modules/@lightstart/devices/controllers/devices.js": 'export default defineController({ name: "devices" });',
+    "node_modules/@example/devices/controllers/devices.js": 'export default defineController({ name: "devices" });',
     "frontend.js": 'registerAdapter("custom", makeAdapter());\n// registerAdapter("commented", x);',
     "lib/doc.js": 'export const doc = createDocumentAdapter("notes-doc");',
-  }, { host: { controllerFiles: () => ["node_modules/@lightstart/devices/controllers/devices.js"], syncAdapters: ["local"] } });
+  }, { host: { controllerFiles: () => ["node_modules/@example/devices/controllers/devices.js"], syncAdapters: ["local"] } });
   assert.deepEqual(ctx.dependencyControllers().map((c) => c.name), ["devices"]);
   assert.deepEqual(ctx.controllers(), []);
   assert.deepEqual([...ctx.syncAdapters()].sort(), ["custom", "local", "notes-doc"]);

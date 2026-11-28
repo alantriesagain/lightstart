@@ -202,7 +202,7 @@ add-on is a warning, not an error.
 
 ## String resources
 
-`defineMobile({ strings: { name: "value" } })` writes each beside `app_name` in `res/values/strings.xml`, escaped, for an add-on that reads its settings from resources (a push add-on's Firebase project). Names are lower-case resource names, and `app_name` is the shell's own. `mobile:sync` rewrites them with the rest of the config-derived files.
+`defineMobile({ strings: { name: "value" } })` writes each beside `app_name` in `res/values/strings.xml`, escaped, for an add-on that reads its settings from resources (a location add-on's API key). Names are lower-case resource names, and `app_name` is the shell's own. `mobile:sync` rewrites them with the rest of the config-derived files.
 
 ## The page API
 

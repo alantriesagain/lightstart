@@ -49,7 +49,7 @@ export const hasAdapter = (type: string): boolean => ADAPTER_REGISTRY.has(type);
 
 /**
  * Register a decorator for the models whose schema declares `directive`
- * (`$moderated`, ...): the store wraps their routed adapter with
+ * (`$reviewed`, ...): the store wraps their routed adapter with
  * `factory(base, context)` once per model, so every read and write of such
  * a model passes through it.
  */

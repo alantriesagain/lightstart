@@ -57,9 +57,9 @@ export default defineController({ name: "journal", props: { a: "", b: "", c: "" 
 test("a document adapter the project creates, and a dependency's controller, bind", async () => {
   const findings = await runRuleOn(rule, {
     "lib/doc.js": `export const doc = createDocumentAdapter("notes-doc");`,
-    "node_modules/@lightstart/devices/controllers/devices.js": `export default defineController({ name: "devices", props: { paired: [] } });`,
+    "node_modules/@example/devices/controllers/devices.js": `export default defineController({ name: "devices", props: { paired: [] } });`,
     "views/home.js": `export default { tag: "fx-home", props: { a: T.object({ sync: "notes-doc" }), b: T.array({ sync: "devices" }), c: T.string({ sync: "local" }) } };`,
-  }, { host: { controllerFiles: () => ["node_modules/@lightstart/devices/controllers/devices.js"] } });
+  }, { host: { controllerFiles: () => ["node_modules/@example/devices/controllers/devices.js"] } });
   assert.deepEqual(findings.map((f) => f.message.match(/sync: "([\w-]+)"/)[1]), ["local"]);
   assert.match(findings[0].message, /adapters: notes-doc/);
 });

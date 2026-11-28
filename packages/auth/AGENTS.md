@@ -36,7 +36,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 |---|---|
 | The `/api/auth/*` routes and their bodies, including the provider-less `GET /api/auth/oauth/callback` that reads the provider from the state cookie | the page controller, and apps calling them |
 | `authModels`, `authEndpoints`, `callerFromRequest`, `mailerFrom` | an app's server |
-| `registerIdentity`, the `Identity` and `IdentityAnswer` shapes, `/api/auth/identity/:name` | a package adding a way in, such as WhatsApp |
+| `registerIdentity`, the `Identity` and `IdentityAnswer` shapes, `/api/auth/identity/:name` | a package adding a way in, such as a chat app |
 | `JWT_SECRET`, `RESEND_API_KEY`, `AUTH_FROM_EMAIL`, `CF_ACCOUNT_ID`, `CF_EMAIL_TOKEN`/`CF_API_TOKEN`, `FROM_EMAIL`, `AUTH_OAUTH_REDIRECT_PATH` | the deploy's secrets and the OAuth redirect an app registered |
 | The `auth` controller (`user`, `loaded`, its methods including `signInWithIdentity` and `forwardOAuthCallback`), `safeNext` | an app's views |
 

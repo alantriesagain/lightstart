@@ -58,7 +58,7 @@ export interface MobileConfig {
   shareTarget?: MobileShareTarget | MobileShareTarget[];
   resultTarget?: MobileResultTarget;
   cameraApp?: string;
-  /** String resources written beside `app_name` in `res/values/strings.xml`, for add-ons that read them (a push add-on's Firebase project). Names are lower-case resource names. */
+  /** String resources written beside `app_name` in `res/values/strings.xml`, for add-ons that read them (a location add-on's API key). Names are lower-case resource names. */
   strings?: Record<string, string>;
   addons?: MobileAddonsConfig;
 }
