@@ -6,7 +6,7 @@ What the package is and how to use it: [README.md](README.md). This file is what
 
 | Where | What |
 |---|---|
-| `index.js` | The public surface |
+| `index.ts` | The public surface: the runtime exports and the types |
 | `easing.js` | Named easing curves |
 | `channel.js` | Cubic-bezier timing and channel interpolation |
 | `spring.js` | Springs sampled into baked keyframe channels |

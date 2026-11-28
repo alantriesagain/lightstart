@@ -21,7 +21,7 @@
     "light"
   ],
   "files": [
-    "index.js",
+    "index.ts",
     "easing.js",
     "spring.js",
     "tween.js",
@@ -33,10 +33,7 @@
     "AGENTS.md"
   ],
   "exports": {
-    ".": {
-      "types": "./types.ts",
-      "default": "./index.js"
-    },
+    ".": "./index.ts",
     "./*": "./*"
   },
   "peerDependencies": {
