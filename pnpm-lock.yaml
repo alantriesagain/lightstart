@@ -109,6 +109,58 @@ importers:
         specifier: ^1.58.2
         version: 1.64.0
 
+  packages/admin:
+    dependencies:
+      '@lightstart/app':
+        specifier: workspace:*
+        version: link:../app
+      '@lightstart/cli':
+        specifier: workspace:*
+        version: link:../cli
+      '@lightstart/components':
+        specifier: workspace:*
+        version: link:../components
+      '@lightstart/dev':
+        specifier: workspace:*
+        version: link:../dev
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/router':
+        specifier: workspace:*
+        version: link:../router
+      '@lightstart/server':
+        specifier: workspace:*
+        version: link:../server
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/anim:
+    devDependencies:
+      '@lightstart/components':
+        specifier: workspace:*
+        version: link:../components
+      '@lightstart/light':
+        specifier: workspace:*
+        version: link:../light
+      '@lightstart/test':
+        specifier: workspace:*
+        version: link:../test
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/api:
     dependencies:
       '@lightstart/app':

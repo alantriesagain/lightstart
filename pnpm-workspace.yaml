@@ -34,4 +34,6 @@ packages:
   - 'packages/i18n'
   - 'packages/rpc'
   - 'packages/showcase'
+  - 'packages/anim'
+  - 'packages/admin'
   - 'benchmarks'
