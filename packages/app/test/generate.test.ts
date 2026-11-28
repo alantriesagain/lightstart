@@ -85,11 +85,12 @@ const addTagPackage = (project: string, name: string, tag: string, module: strin
   declareDependency(project, name);
 };
 
-/** A fake package under the project's node_modules, its package.json naming a module under `light.extension`. */
-const addExtensionPackage = (project: string, name: string, module: string): void => {
+/** A fake package under the project's node_modules, its package.json naming a module under `light.extension`; `devOnly` adds `light.devOnly`. */
+const addExtensionPackage = (project: string, name: string, module: string, devOnly = false): void => {
   const dir = join(project, "node_modules", name);
   mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "package.json"), `${JSON.stringify({ name, version: "0.0.0", type: "module", light: { extension: `./${module}` } }, null, 2)}\n`);
+  const light = devOnly ? { extension: `./${module}`, devOnly: true } : { extension: `./${module}` };
+  writeFileSync(join(dir, "package.json"), `${JSON.stringify({ name, version: "0.0.0", type: "module", light }, null, 2)}\n`);
   writeFileSync(join(dir, module), 'import { defineExtension } from "@lightstart/app/extensions.ts";\n\nexport default defineExtension({ name: "social" });\n');
   declareDependency(project, name);
 };
@@ -404,6 +405,35 @@ const main = async (): Promise<void> => {
     ok("a second extensions run changes nothing", second !== null && !second.changed);
   } finally {
     rmSync(withExtensions, { recursive: true, force: true });
+  }
+  const withDevExtensions = copy();
+  try {
+    addExtensionPackage(withDevExtensions, "@acme/hidden", "extension.js", true);
+    addExtensionPackage(withDevExtensions, "@acme/social", "extension.js");
+    const extensions = join(withDevExtensions, "src", "extensions");
+    mkdirSync(extensions);
+    writeFileSync(join(extensions, "local.js"), 'import { defineExtension } from "@lightstart/app/extensions.ts";\n\nexport default defineExtension({ name: "local" });\n');
+    writeFileSync(join(extensions, "local.dev.ts"), 'import { defineExtension } from "@lightstart/app/extensions.ts";\n\nexport default defineExtension({ name: "local-dev" });\n');
+
+    const development = await generate(withDevExtensions);
+    ok("the dev extensions app has an app", development !== null);
+    if (development === null) return done();
+    const devSource = readFileSync(development.manifest, "utf8");
+    ok("a dev-only package extension is imported with dev", devSource.includes('import extension0 from "@acme/hidden/extension.js";'));
+    ok("a normal package extension is imported with dev", devSource.includes('"@acme/social/extension.js"'));
+    ok("an app's .dev extension is imported with dev", devSource.includes('"../src/extensions/local.dev.ts"'));
+    ok("an app's normal extension is imported with dev", devSource.includes('"../src/extensions/local.js"'));
+
+    const release = await generate(withDevExtensions, { dev: false });
+    ok("a release generation changes the manifest", release !== null && release.changed);
+    if (release === null) return done();
+    const releaseSource = readFileSync(release.manifest, "utf8");
+    ok("a dev-only package extension is left out of a release", !releaseSource.includes("@acme/hidden"));
+    ok("an app's .dev extension is left out of a release", !releaseSource.includes("local.dev"));
+    ok("a normal package extension stays in a release", releaseSource.includes('"@acme/social/extension.js"'));
+    ok("an app's normal extension stays in a release", releaseSource.includes('"../src/extensions/local.js"'));
+  } finally {
+    rmSync(withDevExtensions, { recursive: true, force: true });
   }
   done();
 };

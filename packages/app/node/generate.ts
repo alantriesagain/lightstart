@@ -346,28 +346,43 @@ export const packageJsonOf = (require: ReturnType<typeof createRequire>, name: s
   }
 };
 
+interface PackageExtension {
+  specifier: string;
+  devOnly: boolean;
+}
+
 /** The dependencies whose package.json names a `light.extension` module, sorted by package name. */
-const extensionPackages = (project: string): string[] => {
+const extensionPackages = (project: string): PackageExtension[] => {
   const require = createRequire(join(project, "package.json"));
-  const found: Array<{ name: string; module: string }> = [];
+  const found: Array<{ name: string; module: string; devOnly: boolean }> = [];
   for (const name of dependencyNames(project)) {
     const path = packageJsonOf(require, name);
     if (path === null) continue;
     const pkg = readJson(path);
     if (!isRecord(pkg) || !isRecord(pkg["light"])) continue;
-    const extension = pkg["light"]["extension"];
+    const light = pkg["light"];
+    const extension = light["extension"];
     if (typeof extension !== "string") continue;
     const module = extension.replace(/^\.\//, "");
     if (module.length === 0) continue;
-    found.push({ name, module });
+    found.push({ name, module, devOnly: light["devOnly"] === true });
   }
-  return found.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)).map((entry) => `${entry.name}/${entry.module}`);
+  return found
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+    .map((entry) => ({ specifier: `${entry.name}/${entry.module}`, devOnly: entry.devOnly }));
 };
 
-/** The extensions the manifest imports: the dependencies' package modules, then the app's own `src/extensions` files, both sorted. */
-const extensionImports = (project: string, helpers: Pick<GenerationHelpers, "specifierFor">): string[] => [
-  ...extensionPackages(project),
-  ...flatFiles(join(project, "src", "extensions")).map((file) => helpers.specifierFor(project, file)),
+/** Whether an app's own extension file is dev-only by its `.dev.ts` or `.dev.js` name. */
+const devExtension = (file: string): boolean => nameOf(file).endsWith(".dev");
+
+/** The extensions the manifest imports: the dependencies' package modules, then the app's own `src/extensions` files, both sorted; a dev-only one only when `dev`. */
+const extensionImports = (project: string, helpers: Pick<GenerationHelpers, "specifierFor">, dev: boolean): string[] => [
+  ...extensionPackages(project)
+    .filter((entry) => dev || !entry.devOnly)
+    .map((entry) => entry.specifier),
+  ...flatFiles(join(project, "src", "extensions"))
+    .filter((file) => dev || !devExtension(file))
+    .map((file) => helpers.specifierFor(project, file)),
 ];
 
 interface LocalePackage {
@@ -645,7 +660,7 @@ export const generate = async (projectPath: string, options: GenerateOptions = {
   const content = await writeContent(project, dir, models, extension, helpers);
   const prepared = part.prepare === undefined ? { changed: false, imports: [] } : await part.prepare(project, dir, helpers);
   const appImports = [...locales.imports, ...prepared.imports];
-  const extensions = extensionImports(project, helpers);
+  const extensions = extensionImports(project, helpers, options.dev !== false);
   const wroteManifest = writeWhenChanged(manifest, manifestSource(project, app, extension, models, content.specifier, seeds, controllers, views, routes, rootFile, appImports, extensions, profile));
   const written = await part.write(project, dir, main, helpers);
 
