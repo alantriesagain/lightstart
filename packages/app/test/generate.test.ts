@@ -169,11 +169,11 @@ const main = async (): Promise<void> => {
     if (first === null) return done();
 
     const module = readFileSync(join(first.dir, "components.ts"), "utf8");
-    ok("the components module imports View", module.includes('import View from "@lightstart/light";'));
+    ok("the components module imports defineTag", module.includes('import { defineTag } from "@lightstart/app/web/tags.ts";'));
     ok("it imports the tag's module", module.includes('import lcCard from "@lightstart/components/layout/card.js";'));
-    ok("it defines the base before the tag", module.indexOf("View.define(lcContainer);") < module.indexOf("View.define(lcCard);"));
-    ok("it defines the used tag before the tag", module.indexOf("View.define(lcIcon);") < module.indexOf("View.define(lcCard);"));
-    eq("the order is topological with ties by tag", module, 'import View from "@lightstart/light";\nimport lcContainer from "@lightstart/components/layout/container.js";\nimport lcIcon from "@lightstart/components/display/icon.js";\nimport lcCard from "@lightstart/components/layout/card.js";\nimport lcLabel from "@lightstart/components/form/label.js";\nimport lcForm from "@lightstart/components/form/form.js";\nimport lcText from "@lightstart/components/display/text.js";\nimport { configureOnDemand } from "@lightstart/components/utils/on-demand.js";\n\nView.define(lcContainer);\nView.define(lcIcon);\nView.define(lcCard);\nView.define(lcLabel);\nView.define(lcForm);\nView.define(lcText);\n\nconfigureOnDemand((tag) => {\n  if (tag === "lc-accordion") return import("@lightstart/components/navigation/accordion.js").then((module) => View.define(module.default));\n  if (tag === "lc-button") return import("@lightstart/components/display/button.js").then((module) => View.define(module.default));\n  if (tag === "lc-checkbox") return import("@lightstart/components/form/checkbox.js").then((module) => View.define(module.default));\n  if (tag === "lc-color-picker") return import("@lightstart/components/form/color-picker.js").then((module) => View.define(module.default));\n  if (tag === "lc-file-upload") return import("@lightstart/components/form/file-upload.js").then((module) => View.define(module.default));\n  if (tag === "lc-input") return import("@lightstart/components/form/input.js").then((module) => View.define(module.default));\n  if (tag === "lc-select") return import("@lightstart/components/form/select.js").then((module) => View.define(module.default));\n  if (tag === "lc-textarea") return import("@lightstart/components/form/textarea.js").then((module) => View.define(module.default));\n  if (tag === "lc-week-hours") return import("@lightstart/components/form/week-hours.js").then((module) => View.define(module.default));\n  return Promise.resolve();\n});\n');
+    ok("it defines the base before the tag", module.indexOf('defineTag("lc-container", lcContainer);') < module.indexOf('defineTag("lc-card", lcCard);'));
+    ok("it defines the used tag before the tag", module.indexOf('defineTag("lc-icon", lcIcon);') < module.indexOf('defineTag("lc-card", lcCard);'));
+    eq("the order is topological with ties by tag", module, 'import { defineTag } from "@lightstart/app/web/tags.ts";\nimport lcContainer from "@lightstart/components/layout/container.js";\nimport lcIcon from "@lightstart/components/display/icon.js";\nimport lcCard from "@lightstart/components/layout/card.js";\nimport lcLabel from "@lightstart/components/form/label.js";\nimport lcForm from "@lightstart/components/form/form.js";\nimport lcText from "@lightstart/components/display/text.js";\nimport { configureOnDemand } from "@lightstart/components/utils/on-demand.js";\n\ndefineTag("lc-container", lcContainer);\ndefineTag("lc-icon", lcIcon);\ndefineTag("lc-card", lcCard);\ndefineTag("lc-label", lcLabel);\ndefineTag("lc-form", lcForm);\ndefineTag("lc-text", lcText);\n\nconfigureOnDemand((tag) => {\n  if (tag === "lc-accordion") return import("@lightstart/components/navigation/accordion.js").then((module) => defineTag("lc-accordion", module.default));\n  if (tag === "lc-button") return import("@lightstart/components/display/button.js").then((module) => defineTag("lc-button", module.default));\n  if (tag === "lc-checkbox") return import("@lightstart/components/form/checkbox.js").then((module) => defineTag("lc-checkbox", module.default));\n  if (tag === "lc-color-picker") return import("@lightstart/components/form/color-picker.js").then((module) => defineTag("lc-color-picker", module.default));\n  if (tag === "lc-file-upload") return import("@lightstart/components/form/file-upload.js").then((module) => defineTag("lc-file-upload", module.default));\n  if (tag === "lc-input") return import("@lightstart/components/form/input.js").then((module) => defineTag("lc-input", module.default));\n  if (tag === "lc-select") return import("@lightstart/components/form/select.js").then((module) => defineTag("lc-select", module.default));\n  if (tag === "lc-textarea") return import("@lightstart/components/form/textarea.js").then((module) => defineTag("lc-textarea", module.default));\n  if (tag === "lc-week-hours") return import("@lightstart/components/form/week-hours.js").then((module) => defineTag("lc-week-hours", module.default));\n  return Promise.resolve();\n});\n');
 
     eq("the style module has the theme first, then each stylesheet", readFileSync(join(first.dir, "components.css"), "utf8"), '@import "../node_modules/@lightstart/light/theme/theme.css";\n@import "./icons.css";\n@import "../node_modules/@lightstart/components/navigation/accordion.css";\n@import "../node_modules/@lightstart/components/display/button.css";\n@import "../node_modules/@lightstart/components/layout/container.css";\n@import "../node_modules/@lightstart/components/display/icon.css";\n@import "../node_modules/@lightstart/components/layout/card.css";\n@import "../node_modules/@lightstart/components/form/color-picker.css";\n@import "../node_modules/@lightstart/components/form/file-upload.css";\n@import "../node_modules/@lightstart/components/form/label.css";\n@import "../node_modules/@lightstart/components/form/checkbox.css";\n@import "../node_modules/@lightstart/components/form/form.css";\n@import "../node_modules/@lightstart/components/form/input.css";\n@import "../node_modules/@lightstart/components/form/select.css";\n@import "../node_modules/@lightstart/components/display/text.css";\n@import "../node_modules/@lightstart/components/form/textarea.css";\n@import "../node_modules/@lightstart/components/form/week-hours.css";\n');
 
@@ -259,7 +259,7 @@ const main = async (): Promise<void> => {
     const module = readFileSync(join(first.dir, "components.ts"), "utf8");
     ok("a component's module is imported from its package", module.includes('import lcCard from "@lightstart/components/layout/card.js";'));
     ok("the package's module is imported from its package", module.includes('import camPreview from "@acme/camera/cam-preview.js";'));
-    ok("the package's tag is defined", module.includes("View.define(camPreview);"));
+    ok("the package's tag is defined", module.includes('defineTag("cam-preview", camPreview);'));
 
     const style = readFileSync(join(first.dir, "components.css"), "utf8");
     ok("a component's style is imported from its package", style.includes('@import "../node_modules/@lightstart/components/layout/card.css";'));
@@ -466,9 +466,9 @@ const main = async (): Promise<void> => {
     if (first === null) return done();
 
     const module = readFileSync(join(first.dir, "components.ts"), "utf8");
-    ok("every tag of a running extension's table is defined", module.includes("View.define(toolPanel);") && module.includes("View.define(toolPage);"));
-    ok("a tag it uses from another package is defined", module.includes("View.define(widFrame);"));
-    ok("the used tag is defined before the tag that uses it", module.indexOf("View.define(widFrame);") < module.indexOf("View.define(toolPanel);"));
+    ok("every tag of a running extension's table is defined", module.includes('defineTag("tool-panel", toolPanel);') && module.includes('defineTag("tool-page", toolPage);'));
+    ok("a tag it uses from another package is defined", module.includes('defineTag("wid-frame", widFrame);'));
+    ok("the used tag is defined before the tag that uses it", module.indexOf('defineTag("wid-frame", widFrame);') < module.indexOf('defineTag("tool-panel", toolPanel);'));
     ok("the extension's tags are imported from its package", module.includes('import toolPanel from "@example/tool/tool-panel.js";') && module.includes('import toolPage from "@example/tool/tool-page.js";'));
 
     const style = readFileSync(join(first.dir, "components.css"), "utf8");
@@ -502,7 +502,7 @@ const main = async (): Promise<void> => {
     ok("a release generation with a written tag has an app", written !== null);
     if (written === null) return done();
     const module = readFileSync(join(written.dir, "components.ts"), "utf8");
-    ok("a written dev-only tag is defined, with its used tag", module.includes("View.define(toolPanel);") && module.includes("View.define(widFrame);"));
+    ok("a written dev-only tag is defined, with its used tag", module.includes('defineTag("tool-panel", toolPanel);') && module.includes('defineTag("wid-frame", widFrame);'));
     ok("its other tags stay out of a release", !module.includes("toolPage"));
     ok("only the written tag's styles are imported", readFileSync(join(written.dir, "components.css"), "utf8").includes("tool-panel.css") && !readFileSync(join(written.dir, "components.css"), "utf8").includes("tool-page.css"));
   } finally {
@@ -517,7 +517,7 @@ const main = async (): Promise<void> => {
 
     writeFileSync(join(withPlainTags, "src", "views", "app-home.ts"), 'import View from "@lightstart/light";\nimport { html } from "@lightstart/light/html";\n\nclass AppHome extends View {\n  render() {\n    return html`<cam-preview></cam-preview>`;\n  }\n}\n\nView.register("app-home", AppHome);\n');
     const written = await generate(withPlainTags);
-    ok("a non-extension tag package still defines what the sources write", written !== null && existsSync(join(written.dir, "components.ts")) && readFileSync(join(written.dir, "components.ts"), "utf8").includes("View.define(camPreview);"));
+    ok("a non-extension tag package still defines what the sources write", written !== null && existsSync(join(written.dir, "components.ts")) && readFileSync(join(written.dir, "components.ts"), "utf8").includes('defineTag("cam-preview", camPreview);'));
   } finally {
     rmSync(withPlainTags, { recursive: true, force: true });
   }
