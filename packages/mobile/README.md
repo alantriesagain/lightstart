@@ -358,7 +358,18 @@ device access, kiosk mode, OTA updates, icons, signing and release bundles.
 
 The package's tests are plain node-only scripts on `@lightstart/test/assert.ts`.
 The Gradle test runs offline and skips itself, naming the artifact, when the
-cache cannot build. From the repository root:
+cache cannot build.
+
+A package that ships an add-on tests it against a fixture app with
+`addonFixture(fixture, import.meta.url, prefix)` from
+`@lightstart/mobile/node/addon-fixture.ts`. It copies the fixture to a temp
+folder, links each `@lightstart` package the fixture declares as the calling
+package resolves it, and answers `{ project, run(args), remove() }`, `run`
+being the `light` CLI resolved the same way. The package lists the fixture's
+`@lightstart` dependencies, `@lightstart/cli` among them, as its own dev
+dependencies, so its tests run in any workspace.
+
+From the repository root:
 
 ```bash
 light check --all
