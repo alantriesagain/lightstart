@@ -1,0 +1,33 @@
+{
+  "admin-shell": {
+    "module": "views/admin-shell.ts",
+    "style": "views/admin-shell.css",
+    "extends": null,
+    "uses": [
+      "lc-alert-dialog",
+      "lc-badge",
+      "lc-button",
+      "lc-card",
+      "lc-command-palette",
+      "lc-empty-state",
+      "lc-input",
+      "lc-list-row",
+      "lc-modal",
+      "lc-nav-item",
+      "lc-text",
+      "lc-toast"
+    ],
+    "loads": []
+  },
+  "admin-home": {
+    "module": "views/admin-home.ts",
+    "style": "views/admin-home.css",
+    "extends": null,
+    "uses": [
+      "lc-card",
+      "lc-grid",
+      "lc-text"
+    ],
+    "loads": []
+  }
+}
