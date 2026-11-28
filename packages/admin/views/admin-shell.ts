@@ -119,4 +119,4 @@ class AdminShell extends View {
   }
 }
 
-View.register("admin-shell", AdminShell);
+export default AdminShell;

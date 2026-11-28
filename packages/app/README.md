@@ -380,7 +380,7 @@ A web project that declares a package whose `package.json` names a tag table und
 
 | Field | What |
 |---|---|
-| `module` | The tag module's path in the package, after the package name (`cam-preview.js` or `display/cam-preview.js`); it default-exports what `View.define` takes |
+| `module` | The tag module's path in the package, after the package name (`preview.js` or `display/preview.js`); it default-exports what `View.define` takes, or a `View` subclass, which is registered under the tag (a class view follows the signals it reads) |
 | `style` | The stylesheet's path in the package, or `null` when the tag has none; the generation imports it from `../node_modules/<package>/<style>` |
 | `extends` | The tag this one extends, or `null`; its module is defined first |
 | `uses` | The tags this one draws, defined before it |

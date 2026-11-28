@@ -24,4 +24,4 @@ class AdminHome extends View {
   }
 }
 
-View.register("admin-home", AdminHome);
+export default AdminHome;

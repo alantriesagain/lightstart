@@ -315,20 +315,20 @@ const identifier = (tag: string): string =>
     .join("");
 
 const moduleSource = (order: readonly string[], onDemand: readonly string[], table: TagTable): string => {
-  const lines = ['import View from "@lightstart/light";'];
+  const lines = ['import { defineTag } from "@lightstart/app/web/tags.ts";'];
   for (const tag of order) {
     const entry = table[tag];
     if (entry !== undefined) lines.push(`import ${identifier(tag)} from "${entry.package}/${entry.module}";`);
   }
   if (onDemand.length > 0) lines.push('import { configureOnDemand } from "@lightstart/components/utils/on-demand.js";');
   lines.push("");
-  for (const tag of order) lines.push(`View.define(${identifier(tag)});`);
+  for (const tag of order) lines.push(`defineTag(${JSON.stringify(tag)}, ${identifier(tag)});`);
   if (onDemand.length > 0) {
     // The on-demand helper is @lightstart/components': one branch per tag, each import typed on its own.
     lines.push("", "configureOnDemand((tag) => {");
     for (const tag of onDemand) {
       const entry = table[tag];
-      if (entry !== undefined) lines.push(`  if (tag === ${JSON.stringify(tag)}) return import("${entry.package}/${entry.module}").then((module) => View.define(module.default));`);
+      if (entry !== undefined) lines.push(`  if (tag === ${JSON.stringify(tag)}) return import("${entry.package}/${entry.module}").then((module) => defineTag(${JSON.stringify(tag)}, module.default));`);
     }
     lines.push("  return Promise.resolve();", "});");
   }

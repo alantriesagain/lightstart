@@ -32,8 +32,9 @@ import searchDef from "@lightstart/components/form/search.js";
 import textDef from "@lightstart/components/display/text.js";
 import toastDef from "@lightstart/components/feedback/toast.js";
 import adminExtension from "../../extension.ts";
-import "../../views/admin-home.ts";
-import "../../views/admin-shell.ts";
+import { defineTag } from "@lightstart/app/web/tags.ts";
+import AdminHome from "../../views/admin-home.ts";
+import AdminShell from "../../views/admin-shell.ts";
 import toolExtension from "../fixtures/tool.ts";
 
 class AdminTestRoot extends View {
@@ -43,6 +44,8 @@ class AdminTestRoot extends View {
 }
 
 View.register("app-root", AdminTestRoot);
+defineTag("admin-home", AdminHome);
+defineTag("admin-shell", AdminShell);
 
 const define = (tag: string, definition: unknown): void => {
   if (customElements.get(tag) === undefined) View.define(tag, definition as never);
