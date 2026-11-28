@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { AdminConfig } from "../index.ts";
 import { pathProblem } from "../paths.ts";
+import { validateTools } from "../config.ts";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -42,6 +43,7 @@ const configOf = (value: unknown, from: string): AdminConfig => {
   if (!Array.isArray(folders)) throw new Error(`${from} declares no folders array; use defineAdmin({ folders })`);
   const config: AdminConfig = { folders: validateFolders(folders) };
   if (typeof value["title"] === "string" && value["title"].trim() !== "") config.title = value["title"];
+  if (value["tools"] !== undefined) config.tools = validateTools(value["tools"]);
   return config;
 };
 
@@ -58,3 +60,6 @@ export const adminTitleOf = (config: AdminConfig | null): string => (config?.tit
 
 /** The folders the admin may touch: the config's, else none. */
 export const adminFoldersOf = (config: AdminConfig | null): string[] => (config === null ? [] : [...config.folders]);
+
+/** The per-tool settings the session answers: the config's, else none. */
+export const adminToolsOf = (config: AdminConfig | null): Record<string, Record<string, unknown>> => (config?.tools === undefined ? {} : config.tools);

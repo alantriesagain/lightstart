@@ -1,6 +1,7 @@
 /**
- * @file The page state the admin shell draws: the title the session answers,
- * the notifications a tool adds, and whether the notifications panel is open.
+ * @file The page state the admin shell draws: the title and per-tool settings
+ * the session answers, the notifications a tool adds, and whether the
+ * notifications panel is open.
  */
 
 import { signal } from "@lightstart/light/signals";
@@ -18,8 +19,21 @@ export interface AdminNotification {
   at: number;
 }
 
+/** What the session answered: the title, the allowed folders and per-tool settings. */
+export interface AdminPageConfig {
+  title: string;
+  folders: readonly string[];
+  tools: Record<string, Record<string, unknown>>;
+}
+
+/** The loaded session, or null until it arrives. */
+export const adminConfig: Signal<AdminPageConfig | null> = signal<AdminPageConfig | null>(null);
+
 /** The title the header draws: the config's, else "Admin". */
 export const adminTitle: Signal<string> = signal("Admin");
+
+/** One tool's settings from the loaded session; `{}` before it loads or when the tool has none. */
+export const toolConfig = (name: string): Record<string, unknown> => adminConfig.value?.tools[name] ?? {};
 
 /** The notifications the header's bell lists, oldest first. */
 export const notifications: Signal<readonly AdminNotification[]> = signal<readonly AdminNotification[]>([]);

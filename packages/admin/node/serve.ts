@@ -28,6 +28,8 @@ export interface AdminApiOptions {
   projectDir: string;
   folders: readonly string[];
   title: string;
+  /** Per-tool settings the session answers; `{}` when absent. */
+  tools?: Record<string, Record<string, unknown>>;
   /** The per-run token; 32 random bytes when absent. */
   token?: string;
   /** The dev server's own bind host, when it names one beyond the loopback names. */
@@ -220,13 +222,14 @@ const deleteFile = async (absolute: string): Promise<void> => {
 export const createAdminApp = (options: AdminApiOptions): App => {
   const token = options.token ?? newAdminToken();
   const folders = [...options.folders];
+  const tools = options.tools ?? {};
   const bodyLimit = options.bodyLimit ?? ADMIN_BODY_LIMIT;
   const app = new App();
 
   app.get("/__admin/session", (c) => {
     guardHost(c, options);
     guardOrigin(c);
-    return json({ token, folders, title: options.title });
+    return json({ token, folders, title: options.title, tools });
   });
 
   app.get("/__admin/files", async (c) => {

@@ -89,6 +89,9 @@ describe("@lightstart/admin", () => {
       assert.ok(await page.find("admin-shell admin-home"), "the admin home is drawn inside the shell");
       assert.ok(shell.querySelector("lc-nav-item"), "the sidebar has the tool's section");
       assert.ok((await page.shows("Tool")).includes("Tool"), "the section's title is on the page");
+      const header = shell.querySelector("header [data-admin-header='tool-note']");
+      assert.ok(header, "the tool's header item is drawn in the header");
+      assert.equal(header?.textContent, "Tool header", "the header item's custom element rendered");
 
       await page.navigate("/admin/tool");
       const tool = await page.find("admin-shell tool-page");

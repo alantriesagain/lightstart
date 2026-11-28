@@ -32,14 +32,15 @@ const main = async (): Promise<void> => {
     mkdirSync(join(project, "social", "posts"));
     writeFileSync(join(project, "social", "posts", "day.md"), "# Day\n");
     const token = "token-for-the-test-0123456789abcdef";
-    const handle = toFetch(createAdminApp({ projectDir: project, folders: ["social"], title: "Site Admin", token }));
+    const tools = { alpha: { mode: "fast", flags: ["a", "b"], nested: { on: true } } };
+    const handle = toFetch(createAdminApp({ projectDir: project, folders: ["social"], title: "Site Admin", tools, token }));
     const send = (path: string, init: RequestInit = {}): Promise<Response> => handle(new Request(new URL(path, "http://localhost:4321"), init));
     const fileHeaders = { [ADMIN_TOKEN]: token };
     const origin = { origin: "http://localhost:4321" };
 
     const session = await send("/__admin/session", { headers: origin });
     eqn("the session answers 200 same-origin", session.status, 200);
-    eq("it carries the token, folders and title", await session.text(), JSON.stringify({ token, folders: ["social"], title: "Site Admin" }));
+    eq("it carries the token, folders, title and tools", await session.text(), JSON.stringify({ token, folders: ["social"], title: "Site Admin", tools }));
     eq("it never grants CORS", session.headers.get("access-control-allow-origin") ?? "", "");
 
     eqn("a non-loopback host is refused", (await send("http://evil.example/__admin/session", { headers: origin })).status, 403);
@@ -96,6 +97,13 @@ const main = async (): Promise<void> => {
     ok("defineAdmin refuses node_modules", thrown(() => defineAdmin({ folders: ["node_modules"] })).includes("node_modules"));
     ok("defineAdmin refuses a dotfile", thrown(() => defineAdmin({ folders: [".drafts"] })).includes(".drafts"));
     ok("defineAdmin refuses a control character", thrown(() => defineAdmin({ folders: ["a\u0001b"] })).includes("control"));
+
+    ok("defineAdmin accepts plain tool settings", JSON.stringify(defineAdmin({ folders: [], tools }).tools) === JSON.stringify(tools));
+    ok("defineAdmin defaults no tool settings to none", defineAdmin({ folders: [] }).tools === undefined);
+    ok("defineAdmin refuses a tool that is not a record", thrown(() => defineAdmin({ folders: [], tools: { alpha: "fast" } as never })).includes("must be a record"));
+    ok("defineAdmin refuses a function setting", thrown(() => defineAdmin({ folders: [], tools: { alpha: { run: () => 1 } } })).includes("is a function"));
+    ok("defineAdmin refuses a class instance setting", thrown(() => defineAdmin({ folders: [], tools: { alpha: { at: new Date(0) } } })).includes("class instance"));
+    ok("defineAdmin refuses a non-finite number", thrown(() => defineAdmin({ folders: [], tools: { alpha: { n: Number.NaN } } })).includes("finite number"));
   } finally {
     rmSync(project, { recursive: true, force: true });
     rmSync(outside, { recursive: true, force: true });

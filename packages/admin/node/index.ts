@@ -4,6 +4,6 @@
  */
 
 export type { AdminConfig } from "../index.ts";
-export { adminFoldersOf, adminPathOf, adminTitleOf, readAdmin, validateFolders } from "./config.ts";
+export { adminFoldersOf, adminPathOf, adminTitleOf, adminToolsOf, readAdmin, validateFolders } from "./config.ts";
 export type { AdminApiOptions } from "./serve.ts";
 export { ADMIN_BODY_LIMIT, ADMIN_TOKEN_HEADER, createAdminApp, newAdminToken, resolveAdminPath } from "./serve.ts";

@@ -13,6 +13,7 @@ import { defineAdmin } from "@lightstart/admin";
 export default defineAdmin({
   title: "Site admin",
   folders: ["social"],
+  tools: { social: { feed: "home" } },
 });
 ```
 
@@ -26,11 +27,18 @@ admin read and write nothing.
 |---|---|
 | `title` | The shell's title; `"Admin"` when absent |
 | `folders` | Project-relative folders the admin may read and write |
+| `tools` | Per-tool settings, a record of plain-data records; `{}` when absent |
 
 A folder is relative, with forward slashes, no `..`, no leading slash, no
 control characters, and no segment that is a dotfile or `.git`, `node_modules`,
 `.light` or `.deployed`. `defineAdmin` checks them when the module loads, and the
 server checks every path again.
+
+`tools` names each tool's settings. Every tool is a record of settings, and every
+setting has to survive `JSON.stringify` unchanged: strings, finite numbers,
+booleans, nulls, arrays and plain objects. A function, symbol, `undefined`, a
+non-finite number, or a class instance such as a `Date` or a `Map` is refused when
+the config loads, naming the tool and setting.
 
 ## The extension and slots
 
@@ -41,17 +49,18 @@ The package's `extension.ts` adds the route:
 ```
 
 A tool is another extension. It adds routes under `/admin/...` with the same
-`layout: "admin-shell"`, and fills the two slots this package exports:
+`layout: "admin-shell"`, and fills the three slots this package exports:
 
 ```ts
 import { defineExtension } from "@lightstart/app";
-import { adminCommands, adminSections } from "@lightstart/admin";
+import { adminCommands, adminHeader, adminSections } from "@lightstart/admin";
 
 export default defineExtension({
   name: "social",
   fills: [
     adminSections.entry({ id: "social", title: "Social", icon: "calendar", path: "/admin/social", order: 10 }),
     adminCommands.entry({ id: "social-new", title: "New post", icon: "plus", run: () => openComposer() }),
+    adminHeader.entry({ id: "social-status", tag: "social-status-chip" }),
   ],
   routes: { "/admin/social": { name: "social", view: "social-page", layout: "admin-shell" } },
 });
@@ -59,8 +68,10 @@ export default defineExtension({
 
 `adminSections` holds `{ id, title, icon, path, order? }`: the sidebar entries.
 `adminCommands` holds `{ id, title, icon?, run(): unknown, order? }`: the command
-palette's commands. The shell marks the current section from `currentRoute`,
-opens the palette with Ctrl/Cmd+K, and runs the chosen command.
+palette's commands. `adminHeader` holds `{ id, tag, order? }`: the shell draws the
+custom element named by `tag` after the title. The shell marks the current section
+from `currentRoute`, opens the palette with Ctrl/Cmd+K, and runs the chosen
+command.
 
 ## files
 
@@ -132,7 +143,7 @@ notification list.
 
 | Request | Answer |
 |---|---|
-| `GET /__admin/session` | `{ token, folders, title }` |
+| `GET /__admin/session` | `{ token, folders, title, tools }` |
 | `GET /__admin/files?path=` | The file with a guessed content type, or 404 |
 | `PUT /__admin/files?path=` | Writes the body as bytes, making the parent folders |
 | `DELETE /__admin/files?path=` | Deletes the file |
@@ -158,15 +169,31 @@ The security is part of the API:
 
 The page reads `/__admin/session` once and keeps the token in memory.
 
+## The loaded config
+
+The session's title, folders and per-tool settings are page state:
+
+```ts
+import { adminConfig, toolConfig } from "@lightstart/admin";
+
+adminConfig.value;        // { title, folders, tools } | null until the session loads
+toolConfig("social");     // that tool's settings, or {} before the load or when it has none
+```
+
+`adminConfig` is null until `/__admin/session` answers. `toolConfig(name)` reads
+one tool's record from it, so a tool reads its own settings after the shell has
+loaded the session.
+
 ## Writing a tool
 
 A tool is an extension with a name, its `fills` of `adminSections` and
 `adminCommands`, and its routes under `/admin/...` with `layout: "admin-shell"`.
 Its views are ordinary `@lightstart/light` views registered with their tags (or
 a package's own `tags.json`). Its code reads and writes the project through
-`files`, wraps edits in `history.snapshot`, and asks the reader through
-`dialogs`. The shell, sidebar, palette, notifications, dialogs and toasts are
-already there.
+`files`, wraps edits in `history.snapshot`, asks the reader through `dialogs`,
+and reads its own settings with `toolConfig(name)`. It may put a small custom
+element in the header through `adminHeader`. The shell, sidebar, palette,
+notifications, dialogs and toasts are already there.
 
 ## Later
 
