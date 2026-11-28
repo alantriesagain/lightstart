@@ -264,6 +264,8 @@ export default defineExtension({
 });
 ```
 
+An extension can be dev-only: a dependency's `package.json` adds `"light": { "extension": "./extension.js", "devOnly": true }`, and an app's own file named `<name>.dev.ts` (or `.dev.js`) in `src/extensions/`. The generation includes a dev-only extension under `light serve`, `light test` and any run that asks for it, and leaves it out of a release `light build` (`generate(project, { dev: false })`) just as it leaves out `src/seed.dev`; a normal extension is in both.
+
 The generation finds every extension: a dependency whose `package.json` says `"light": { "extension": "./extension.js" }` (by package name), then the app's own `src/extensions/*.js` (by file name), and lists them in the manifest's `extensions`. The run fills their slots before the app's controllers start, so the first render sees them; starts their controllers after the app's, then calls `connected`; and adds their routes to the app's table, localized like the rest (a path declared twice is an error naming the extension). `stop` undoes it in reverse. Two extensions with one name is an error.
 
 `defineApp({ extensions: { off: ["social"] } })` leaves an extension out, as a public build without its signed-in parts does; `openApp(manifest, { extensions: false })` and `openPage` run a suite with none, or `{ extensions: { off } }` without some.
